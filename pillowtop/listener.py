@@ -687,51 +687,6 @@ class AliasedElasticPillow(BasicPillow):
             self.__module__, self.__class__.__name__, self.get_unique_id(), get_machine_id())
 
 
-class NetworkPillow(BasicPillow):
-    """
-    Basic network endpoint handler.
-    This is useful for the logstash/Splunk use cases.
-    """
-    endpoint_host = ""
-    endpoint_port = 0
-    transport_type = 'tcp'
-
-    def change_transport(self, doc_dict):
-        try:
-            address = (self.endpoint_host, self.endpoint_port)
-            if self.transport_type == 'tcp':
-                stype = socket.SOCK_STREAM
-            elif self.transport_type == 'udp':
-                stype = socket.SOCK_DGRAM
-            sock = socket.socket(type=stype)
-            sock.connect(address)
-            sock.send(simplejson.dumps(doc_dict), timeout=1)
-            return 1
-        except Exception, ex:
-            pillow_logging.error(
-                "PillowTop [%s]: transport to network socket error: %s" % (self.get_name(), ex))
-            return None
-
-
-class LogstashMonitoringPillow(NetworkPillow):
-    """
-    This is a logstash endpoint (but really just TCP) for our production monitoring/aggregation
-    of log information.
-    """
-
-    def __init__(self):
-        if settings.DEBUG:
-            #In a dev environment don't care about these
-            pillow_logging.info(
-                "[%s] Settings are DEBUG, suppressing the processing of these feeds" % self.get_name())
-
-    def processor(self, change):
-        if settings.DEBUG:
-            return {}
-        else:
-            return super(NetworkPillow, self).processor(change)
-
-
 def retry_on_connection_failure(fn):
     @wraps(fn)
     def _inner(*args, **kwargs):

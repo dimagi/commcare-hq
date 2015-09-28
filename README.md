@@ -39,11 +39,6 @@ The pillows depending on their config, need the following:
 
 Supported backends:
 
-- Network Listener
-
-  Currently this lets you arbitrarily send your changes results to a TCP socket. This is for the
-  logstash log consumption system.
-
 - Elastic Listener
 
   For elasticsearch endpoint to send json data directly to an elasticsearch index+type mapping.
