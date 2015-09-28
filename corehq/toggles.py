@@ -161,6 +161,13 @@ APP_BUILDER_ADVANCED = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
+APP_BUILDER_SHADOW_MODULES = StaticToggle(
+    'shadow-app-builder',
+    'Shadow Modules',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
     'include-multimedia-odk',
     'Include multimedia in ODK deploy',

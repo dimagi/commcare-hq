@@ -276,7 +276,7 @@
                           method="post" style="display: none">
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                {% if show_care_plan or show_advanced or True %}
+                {% if show_care_plan or show_advanced or show_shadow_modules %}
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
                             <i class="new-module-icon icon-plus icon-blue"></i>
@@ -301,7 +301,7 @@
                                 </a>
                             </li>
                             {% endif %}
-                            {% if True %}
+                            {% if show_shadow_modules %}
                             <li>
                                 <a href="#" class="new-module" data-type="shadow">
                                     {% trans "New Shadow Module" %}
