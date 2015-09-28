@@ -613,20 +613,22 @@ class HQMediaMixin(Document):
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
         details_name = '{}_details'.format(type)
-        if not hasattr(module, details_name):
+        try:
+            image = ApplicationMediaReference(
+                module[details_name].short.lookup_image,
+                media_class=CommCareImage,
+                **media_kwargs
+            ).as_dict()
+            return {
+                'image': image
+            }
+        except AttributeError:
             return {}
-
-        image = ApplicationMediaReference(
-            module[details_name].short.lookup_image,
-            media_class=CommCareImage,
-            **media_kwargs
-        ).as_dict()
-        return {
-            'image': image
-        }
 
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}
+        if item is None:
+            return menu_media
         to_language = media_kwargs.pop('to_language', self.default_language)
         image_ref = ApplicationMediaReference(
             item.icon_by_language(to_language),

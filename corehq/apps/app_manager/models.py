@@ -1776,6 +1776,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
                 return ReportModule.wrap(data)
+            elif doc_type == 'ShadowModule':
+                return ShadowModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -3551,6 +3553,129 @@ class ReportModule(ModuleBase):
 
     def uses_media(self):
         # for now no media support for ReportModules
+        return False
+
+
+class ShadowModule(ModuleBase):
+    """
+    A module that acts as a shortcut to another module. This module has its own
+    name, icon/audio, filter, and case list filter, but inherits all other properties
+    from its parent module.
+    """
+    module_type = 'shadow'
+    parent_module_id = StringProperty()
+    case_list_filter = StringProperty()
+
+    get_forms = IndexedSchema.Getter('forms')
+
+    @classmethod
+    def wrap(cls, data):
+        return super(ShadowModule, cls).wrap(data)
+
+    @property
+    def parent_module(self):
+        if self.parent_module_id:
+            return self._parent.get_module_by_unique_id(self.parent_module_id)
+        return {}
+
+    @property
+    def forms(self):
+        return self.parent_module.get('forms', [])
+
+    @property
+    def case_details(self):
+        return self.parent_module.get('case_details', None)
+
+    @property
+    def ref_details(self):
+        return self.parent_module.get('ref_details', None)
+
+    @property
+    def put_in_root(self):
+        return self.parent_module.get('put_in_root', False)
+
+    @property
+    def case_list(self):
+        return self.parent_module.get('case_list', {'show': False})
+
+    @property
+    def referral_list(self):
+        return self.parent_module.get('referral_list', None)
+
+    @property
+    def task_list(self):
+        return self.parent_module.get('task_list', None)
+
+    @property
+    def parent_select(self):
+        return self.parent_module.get('parent_select', None)
+
+    @parse_int([1])
+    def get_form(self, i):
+        if not self.parent_module:
+            return None
+        return self.parent_module.get_form(i)
+
+    def get_child_modules(self):
+        if not self.parent_module:
+            return []
+        return self.parent_module.get_child_modules()
+
+    @property
+    def root_module(self):
+        return self.parent_module.get('root_module', None)
+
+    def get_case_types(self):
+        if not self.parent_module:
+            return []
+        return self.parent_module.get_case_types()
+
+    def get_app(self):
+        if not self.parent_module:
+            return None
+        return self.parent_module.get_app()
+
+    def rename_lang(self, old_lang, new_lang):
+        pass
+
+    def validate_detail_columns(self, columns):
+        if not self.parent_module:
+            return []
+        return self.parent_module.validate_detail_columns(columns)
+
+    def get_form_by_unique_id(self, unique_id):
+        if not self.parent_module:
+            return None
+        return self.parent_module.get_form_by_unique_id(unique_id)
+
+    def validate_for_build(self):
+        return []
+
+    @memoized
+    def get_subcase_types(self):
+        if not self.parent_module:
+            return []
+        return self.parent_module.get_subcase_types()
+
+    @memoized
+    def all_forms_require_a_case(self):
+        if not self.parent_module:
+            return False
+        return self.parent_module.all_forms_require_a_case()
+
+    def get_details(self):
+        return ()
+
+    @classmethod
+    def new_module(cls, name, lang):
+        lang = lang or 'en'
+        module = ShadowModule(
+            name={lang: name or ugettext("Untitled Module")},
+        )
+        module.get_or_create_unique_id()
+        return module
+
+    def uses_media(self):
         return False
 
 

@@ -39,6 +39,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
     ParentSelect,
     ReportModule,
+    ShadowModule,
     SortElement,
     ReportAppConfig,
     FixtureSelect,
@@ -147,7 +148,7 @@ def _get_basic_module_view_context(app, module):
     case_type = module.case_type
     form_options = _case_list_form_options(app, module, case_type)
     # http://manage.dimagi.com/default.asp?178635
-    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
+    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select or not module.parent_select.active
     allow_case_list_form = _case_list_form_not_allowed_reason(
         module,
         AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
@@ -251,11 +252,14 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
         'detail_label': gettext_lazy('Case Detail'),
         'type': 'case',
         'model': 'case',
-        'sort_elements': module.case_details.short.sort_elements,
-        'short': module.case_details.short,
-        'long': module.case_details.long,
         'subcase_types': subcase_types,
     }
+    if module.case_details:
+        item.extend({
+            'sort_elements': module.case_details.short.sort_elements,
+            'short': module.case_details.short,
+            'long': module.case_details.long,
+        })
     case_properties = case_property_builder.get_properties(case_type_)
     if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
         usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
@@ -482,6 +486,12 @@ def _new_report_module(request, domain, app, name, lang):
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
 
+def _new_shadow_module(request, domain, app, name, lang):
+    module = app.add_module(ShadowModule.new_module(name, lang))
+    app.save()
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id)
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def delete_module(request, domain, app_id, module_unique_id):
@@ -693,7 +703,7 @@ def view_module(request, domain, app_id, module_id):
 
 common_module_validations = [
     (lambda app: app.application_version == APP_V1,
-     _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+     _('Please upgrade you app to > 2.0 in order to add this module'))
 ]
 
 FN = 'fn'
@@ -713,5 +723,9 @@ MODULE_TYPE_MAP = {
     'report': {
         FN: _new_report_module,
         VALIDATIONS: common_module_validations
-    }
+    },
+    'shadow': {
+        FN: _new_shadow_module,
+        VALIDATIONS: common_module_validations
+    },
 }
