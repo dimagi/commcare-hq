@@ -11,6 +11,7 @@ from pillowtop.feed.interface import Change
 
 
 class ChangeFeedPillowTest(SimpleTestCase):
+    # note: these tests require a valid kafka setup running
 
     def setUp(cls):
         cls._fake_couch = FakeCouchDb()
