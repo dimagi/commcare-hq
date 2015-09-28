@@ -321,12 +321,12 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @method_decorator(use_bootstrap3())
     def dispatch(self, request, *args, **kwargs):
-        self.first_app_id = self.kwargs.get("first_app_id", None)
-        self.second_app_id = self.kwargs.get("second_app_id", None)
         try:
+            self.first_app_id = self.kwargs["first_app_id"]
+            self.second_app_id = self.kwargs["second_app_id"]
             self.first_app = Application.get(self.first_app_id)
             self.second_app = Application.get(self.second_app_id)
-        except ResourceNotFound:
+        except (ResourceNotFound, KeyError):
             raise Http404()
 
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
