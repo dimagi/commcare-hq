@@ -171,6 +171,41 @@
             $formSelect.setCaseTypes();
         });
 
+        self._numRetries = 0;
+        self._handleError = function () {
+            if (self._numRetries > 3) {
+                $scope.formLoadError = 'default';
+                $scope.isLoaded = true;
+            }
+            self._numRetries ++;
+            self._initializeForm();
+        };
+
+        self._initializeForm = function () {
+            djangoRMI.get_initial_create_form_data({})
+                .success(function (data) {
+                    if (data.success) {
+                        if (_.isEmpty(data.apps)) {
+                            $scope.showNoAppsError = true;
+                        } else {
+                            self._modules = data.modules;
+                            self._forms = data.forms;
+                            self._case_types = data.case_types;
+                            self._placeholders = data.placeholders;
+                            $formSelect.setApps(data.apps);
+                            $formSelect.setModules();
+                            $formSelect.setForms();
+                            $formSelect.setCaseTypes();
+                        }
+                    } else {
+                        $scope.formLoadError = data.error;
+                    }
+                    $scope.isLoaded = true;
+                })
+                .error(self._handleError);
+        };
+        self._initializeForm();
+
         $scope.updateCaseTypes = function () {
             console.log(self._case_types);
             var case_types = self._case_types[$scope.createForm.application];
@@ -216,41 +251,6 @@
                 $scope.fetchingUrlError = 'default';
             });
         };
-
-        self._numRetries = 0;
-        self._handleError = function () {
-            if (self._numRetries > 3) {
-                $scope.formLoadError = 'default';
-                $scope.isLoaded = true;
-            }
-            self._numRetries ++;
-            self._initializeForm();
-        };
-
-        self._initializeForm = function () {
-            djangoRMI.get_initial_form_data({})
-                .success(function (data) {
-                    if (data.success) {
-                        if (_.isEmpty(data.apps)) {
-                            $scope.showNoAppsError = true;
-                        } else {
-                            self._modules = data.modules;
-                            self._forms = data.forms;
-                            self._case_types = data.case_types;
-                            self._placeholders = data.placeholders;
-                            $formSelect.setApps(data.apps);
-                            $formSelect.setModules();
-                            $formSelect.setForms();
-                            $formSelect.setCaseTypes();
-                        }
-                    } else {
-                        $scope.formLoadError = data.error;
-                    }
-                    $scope.isLoaded = true;
-                })
-                .error(self._handleError);
-        };
-        self._initializeForm();
     };
 
     list_exports.controller(exportsControllers);
