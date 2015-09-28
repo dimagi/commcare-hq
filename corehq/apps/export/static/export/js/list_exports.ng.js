@@ -47,12 +47,18 @@
                 });
         };
         self._getExportsList();
+
+        // For Bulk Export
         $scope.showBulkExportDownload = false;
+        $scope.bulkExportList = '';
 
         $scope.updateBulkStatus = function () {
-            $scope.showBulkExportDownload = _.any($scope.exports, function (exp) {
+            var selectedExports = _.filter($scope.exports, function (exp) {
                 return !!exp.addedToBulk;
-            })
+            });
+            $scope.showBulkExportDownload = !_.isEmpty(selectedExports);
+            $scope.bulkExportList = JSON.stringify(selectedExports);
+            $('input[name="export_list"]').val(JSON.stringify(selectedExports));
         };
         $scope.selectAll = function () {
             _.each($scope.exports, function (exp) {
