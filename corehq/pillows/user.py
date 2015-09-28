@@ -39,17 +39,6 @@ class UserPillow(AliasedElasticPillow):
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
-    @memoized
-    def calc_meta(self):
-        #todo: actually do this correctly
-
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return self.calc_mapping_hash({"es_meta": self.es_meta,
-                                       "mapping": self.default_mapping})
-
     def get_unique_id(self):
         return USER_INDEX
 
