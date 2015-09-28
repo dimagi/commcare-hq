@@ -232,7 +232,7 @@ class BasicPillow(object):
             lock = self.document_class.get_obj_lock_by_id(id)
             lock.acquire()
             return LockManager(self.couch_db.open_doc(id), lock)
-        elif changes_dict.get('doc', None):
+        elif changes_dict.get('doc', None) is not None:
             return changes_dict['doc']
         else:
             return self.couch_db.open_doc(id)
