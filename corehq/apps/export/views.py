@@ -258,10 +258,10 @@ class BaseEditCustomExportView(BaseModifyCustomExportView):
         messages.success(
             request,
             mark_safe(
-                _("Export <strong>%(export_name)s</strong> "
-                  "was saved.") % {
-                      'export_name': self.export_helper.custom_export.name
-                  }
+                _(
+                    "Export <strong>%(export_name)s</strong> "
+                    "was saved."
+                ) % {'export_name': self.export_helper.custom_export.name}
             )
         )
         return export_id
@@ -295,8 +295,8 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
         messages.success(
             request,
             mark_safe(
-                _("Export <strong>{}</strong> was deleted."
-                ).format(saved_export.name)
+                _("Export <strong>{}</strong> "
+                  "was deleted.").format(saved_export.name)
             )
         )
 
@@ -405,7 +405,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
                 'enddate': (
                     self.default_datespan.enddate.strftime('%Y-%m-%d')
                     if self.default_datespan.enddate is not None else ""
-                 ),
+                ),
                 'separator': DateRangePickerWidget.separator,
             },
             'allow_preview': bool(self.export_id),
@@ -440,7 +440,8 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     @property
     def export_list(self):
         exports = []
-        if (self.request.method == 'POST'
+        if (
+            self.request.method == 'POST'
             and 'export_list' in self.request.POST
             and not self.request.is_ajax()
         ):
