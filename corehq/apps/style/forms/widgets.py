@@ -51,6 +51,7 @@ class BootstrapRadioFieldRenderer(RadioFieldRenderer):
         for i, choice in enumerate(self.choices):
             yield BootstrapRadioInput(self.name, self.value, self.attrs.copy(), choice, i)
 
+
 class BootstrapRadioSelect(RadioSelect):
     renderer = BootstrapRadioFieldRenderer
 
@@ -174,7 +175,6 @@ class DateRangePickerWidget(Input):
         LAST_7 = 'last_7_days'
         LAST_MONTH = 'last_month'
         LAST_30_DAYS = 'last_30_days'
-
 
     class Media:
         """INCLUDE THIS MANUALLY IN YOUR TEMPLATE. ONLY HERE FOR REMINDER.
