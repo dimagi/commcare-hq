@@ -334,57 +334,6 @@ class PythonPillow(BasicPillow):
         super(PythonPillow, self).run()
 
 
-class BulkPillow(BasicPillow):
-    def bulk_builder(self, changes):
-        """
-        Generator function for bulk changes - note each individual change item goes through the pillowtop pathway individually
-        when loading the bulk item, and short of change_transport, it's identical. It would be slightly more efficient if the couch
-        load could be done in bulk for the actual documents, but it's not quite possible without gutting the existing pillowtop API
-        http://www.elasticsearch.org/guide/reference/api/bulk.html
-        bulk loader follows the following:
-        { "index" : { "_index" : "test", "_type" : "type1", "_id" : "1" } }\n
-        { "field1" : "value1" }\n
-        """
-        for change in changes:
-            try:
-                with lock_manager(self.change_trigger(change)) as t:
-                    if t is not None:
-                        tr = self.change_transform(t)
-                        if tr is not None:
-                            self.change_transport(tr)
-                            yield {
-                                "index": {
-                                    "_index": self.es_index,
-                                    "_type": self.es_type,
-                                    "_id": tr['_id']
-                                }
-                            }
-                            yield tr
-            except Exception, ex:
-                pillow_logging.error(
-                    "[%s] Error on change: %s, %s" % (
-                        self.get_name(),
-                        change['id'],
-                        ex
-                    )
-                )
-
-    def process_bulk(self, changes):
-        self.allow_updates = False
-        self.bulk = True
-        bstart = datetime.utcnow()
-        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
-        pillow_logging.info(
-            "%s,prepare_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0)))
-        send_start = datetime.utcnow()
-        self.send_bulk(bulk_payload)
-        pillow_logging.info(
-            "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
-
-    def send_bulk(self, payload):
-        raise NotImplementedError()
-
-
 def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
         except_on_failure=False, update=False, delete=False):
     """
@@ -429,7 +378,7 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
     return res
 
 
-class AliasedElasticPillow(BulkPillow):
+class AliasedElasticPillow(BasicPillow):
     """
     This pillow class defines it as being alias-able. That is, when you query it, you use an
     Alias to access it.
@@ -620,6 +569,19 @@ class AliasedElasticPillow(BulkPillow):
                 }
             )
             return None
+
+    def process_bulk(self, changes):
+        self.allow_updates = False
+        self.bulk = True
+        bstart = datetime.utcnow()
+        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
+        pillow_logging.info(
+            "%s,prepare_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0)))
+        send_start = datetime.utcnow()
+        self.send_bulk(bulk_payload)
+        pillow_logging.info(
+            "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
+
 
     def send_bulk(self, payload):
         es = self.get_es()
