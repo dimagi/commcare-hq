@@ -161,7 +161,14 @@ class BaseCreateCustomExportView(BaseExportView):
 
     def commit(self, request):
         export_id = self.export_helper.update_custom_export()
-        messages.success(request, _("Custom export created!"))
+        messages.success(
+            request,
+            mark_safe(
+                _("Export <strong>{}</strong> created.").format(
+                    self.export_helper.custom_export.name
+                )
+            )
+        )
         return export_id
 
     def get(self, request, *args, **kwargs):
@@ -202,10 +209,10 @@ class BaseCreateCustomExportView(BaseExportView):
 
             return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 
-        messages.warning(request, _("<strong>No data found for that form "
-                                    "(%s).</strong> Submit some data before creating an export!") %
+        messages.warning(request, _('<strong>No data found to export '
+                                    '"%s".</strong> Please submit data before creating this export.') %
                          xmlns_to_name(self.domain, export_tag[1], app_id=None), extra_tags="html")
-        return HttpResponseRedirect(ExcelExportReport.get_url(domain=self.domain))
+        return HttpResponseRedirect(self.export_home_url)
 
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):
@@ -243,7 +250,13 @@ class BaseEditCustomExportView(BaseModifyCustomExportView):
 
     def commit(self, request):
         export_id = self.export_helper.update_custom_export()
-        messages.success(request, _("Custom export saved!"))
+        messages.success(
+            request,
+            mark_safe(
+                _("Export <strong>%(export_name)s</strong> "
+                  "was saved.") % {
+                      'export_name': self.export_helper.custom_export.name
+                  }))
         return export_id
 
 
@@ -272,7 +285,13 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
         self.export_type = saved_export.type
         saved_export.delete()
         touch_exports(self.domain)
-        messages.success(request, _("Custom export was deleted."))
+        messages.success(
+            request,
+            mark_safe(
+                _("Export <strong>{}</strong> was deleted."
+                ).format(saved_export.name)
+            )
+        )
 
 
 BASIC_FORM_SCHEMA = {
