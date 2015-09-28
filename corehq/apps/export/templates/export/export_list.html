@@ -78,9 +78,9 @@
                             <tr>
                                 <th class="col-sm-6">{% trans 'Name' %}</th>
                                 <th class="col-sm-1">{% trans 'Edit' %}</th>
-                                <th class="col-sm-2">{% trans 'Download' %}</th>
+                                <th class="col-sm-2">{% trans 'Export' %}</th>
                                 <th class="col-sm-3">
-                                    {% trans 'Bulk Download:' %}
+                                    {% trans 'Bulk Export:' %}
                                     <button type="button"
                                             class="btn btn-xs btn-default"
                                             ng-click="selectAll()">
@@ -114,8 +114,8 @@
                                 </td>
                                 <td>
                                     <a href="{{ export.downloadUrl }}"
-                                       class="btn btn-primary"><i class="fa fa-download"></i>
-                                        {% trans 'Download' %}</a>
+                                       class="btn btn-primary">
+                                        {% trans 'Export' %}</a>
                                 </td>
                                 <td>
                                     <label class="label label-primary label-md noselect"
@@ -126,7 +126,7 @@
                                                ng-change="updateBulkStatus()"
                                                id="add-to-bulk-{{ export.id }}"
                                                style="margin-top: 10px;" />
-                                        &nbsp;{% trans "Add to Bulk Download" %}
+                                        &nbsp;{% trans "Add to Bulk Export" %}
                                     </label>
                                 </td>
                             </tr>
