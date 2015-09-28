@@ -3,6 +3,7 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -134,7 +135,7 @@ class FilterExportDownloadForm(forms.Form):
         (_USER_DEMO, ugettext_noop("Demo User")),
         (_USER_ADMIN, ugettext_noop("Admin User")),
         (_USER_UNKNOWN, ugettext_noop("Unknown Users")),
-        (_USER_SUPPLY, ugettext_noop("CommCare Supply")), # todo filter out supply
+        (_USER_SUPPLY, ugettext_noop("CommCare Supply")),
     ]
     type_or_group = forms.ChoiceField(
         label=ugettext_noop("User Types or Group"),
@@ -163,13 +164,20 @@ class FilterExportDownloadForm(forms.Form):
     def __init__(self, domain, timezone, *args, **kwargs):
         self.domain = domain
         self.timezone = timezone
+        if not isinstance(self.domain, Domain):
+            self.domain = Domain.get_by_name(self.domain)
+
         super(FilterExportDownloadForm, self).__init__(*args, **kwargs)
+
+        if not self.domain.uses_locations:
+            self.fields['user_types'].choices = self._USER_TYPES_CHOICES[:-1]
+
         self.fields['date_range'].help_text = _(
             "The timezone for this export is %(timezone)s."
         ) % {
             'timezone': self.timezone,
         }
-        default_datespan = datespan_from_beginning(self.domain, self.timezone)
+        default_datespan = datespan_from_beginning(self.domain.name, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
         )
@@ -211,7 +219,7 @@ class FilterExportDownloadForm(forms.Form):
                         ),
                     ),
                     CrispyTemplate('export/crispy_html/groups_help.html', {
-                        'domain': self.domain,
+                        'domain': self.domain.name,
                     }),
                 ),
                 ng_show="formData.type_or_group === 'group'",
@@ -238,7 +246,7 @@ class FilterExportDownloadForm(forms.Form):
             (True,) * HQUserType.count,
             user_filter_toggles
         )
-        return users_matching_filter(self.domain, user_filters)
+        return users_matching_filter(self.domain.name, user_filters)
 
     def _get_group(self):
         group = self.cleaned_data['group']
@@ -254,7 +262,7 @@ class FilterExportDownloadForm(forms.Form):
 
     def format_export_data(self, export):
         return {
-            'domain': self.domain,
+            'domain': self.domain.name,
             'sheet_name': export.name,
             'export_id': export.get_id,
             'export_type': self._export_type,
@@ -299,7 +307,7 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditCustomFormExportView
         return reverse(EditCustomFormExportView.urlname,
-                       args=(self.domain, export.get_id))
+                       args=(self.domain.name, export.get_id))
 
     def format_export_data(self, export):
         export_data = super(FilterFormExportDownloadForm, self).format_export_data(export)
@@ -317,7 +325,7 @@ class FilterCaseExportDownloadForm(FilterExportDownloadForm):
         if group:
             return SerializableFunction(case_group_filter, group=group)
         case_sharing_groups = [g.get_id for g in
-                               Group.get_case_sharing_groups(self.domain)]
+                               Group.get_case_sharing_groups(self.domain.name)]
         return SerializableFunction(case_users_filter,
                                     users=self._get_filtered_users(),
                                     groups=case_sharing_groups)
@@ -325,4 +333,4 @@ class FilterCaseExportDownloadForm(FilterExportDownloadForm):
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditCustomCaseExportView
         return reverse(EditCustomCaseExportView.urlname,
-                       args=(self.domain, export.get_id))
+                       args=(self.domain.name, export.get_id))
