@@ -8,7 +8,7 @@ from sqlalchemy.orm.session import sessionmaker
 import sys
 from ctable.models import SqlExtractMapping
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.utils import import_pillow_string
+from pillowtop.utils import get_pillow_instance
 from scripts.sh_verbose import ShVerbose
 import os
 from os.path import expanduser
@@ -110,7 +110,7 @@ class Command(BaseCommand):
             for m in SqlExtractMapping.view('ctable/by_name', include_docs=True)}
 
     def get_fluff_tables(self):
-        fluff_pillows = [import_pillow_string(x) for x in settings.PILLOWTOPS['fluff']]
+        fluff_pillows = [get_pillow_instance(x) for x in settings.PILLOWTOPS['fluff']]
         tables = set()
         for pillow in fluff_pillows:
             if pillow.save_direct_to_sql:
