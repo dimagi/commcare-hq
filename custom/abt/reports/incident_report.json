@@ -4,7 +4,9 @@
         "abtmali",
         "airsmadagascar",
         "airsrwanda",
-        "airsethiopia"
+        "airsethiopia",
+        "airszambia",
+        "airszimbabwe"
     ],
    "data_source_table":"supervisory",
    "report_id":"incident-report",
