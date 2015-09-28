@@ -3,6 +3,7 @@ from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import LabelCommand, CommandError, BaseCommand
 from optparse import make_option
 from pillowtop import get_pillow_by_name
+from pillowtop.feed.interface import Change
 
 
 class Command(BaseCommand):
@@ -75,6 +76,14 @@ class Command(BaseCommand):
         return ' ' not in id_string
 
     def handle_all(self, pillow, doc_ids):
+        def _change_from_couch_doc(couch_doc):
+            return Change(
+                id=couch_doc['_id'],
+                sequence_id=None,
+                document=couch_doc,
+                deleted=False,
+            )
+
         for doc in iter_docs(pillow.couch_db, doc_ids):
-            pillow.process_doc(doc)
+            pillow.process_change(_change_from_couch_doc(doc))
             self.log('PROCESSED [{}]'.format(doc['_id']))
