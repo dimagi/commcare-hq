@@ -249,9 +249,7 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
 
     def _get_datespan_filter(self):
         date_range = self.cleaned_data['date_range']
-        print "date_range", date_range
         dates = date_range.split(DateRangePickerWidget.separator)
-        print "dates", dates
         startdate = dateutil.parser.parse(dates[0])
         enddate = dateutil.parser.parse(dates[1])
         datespan = DateSpan(startdate, enddate)
@@ -261,14 +259,11 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
                                         datespan=datespan)
 
     def get_form_filter(self):
-        # todo is app_id ever not None for custom exports?
         form_filter = SerializableFunction(app_export_filter, app_id=None)
-
         datespan_filter = self._get_datespan_filter()
         if datespan_filter:
             form_filter &= datespan_filter
         form_filter &= self._get_user_or_group_filter()
-        # '&export_tag=["'+self.domain+'","'+xmlns+'","' + fileName +'"]' +
         return form_filter
 
 
