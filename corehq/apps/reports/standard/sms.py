@@ -249,7 +249,6 @@ class MessageLogReport(BaseCommConnectLogReport):
     ajax_pagination = True
 
     exportable = True
-    exportable_all = True
 
     def get_message_type_filter(self):
         filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
@@ -436,7 +435,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         ]
 
     @property
-    def get_all_rows(self):
+    def export_rows(self):
         return self._get_rows(paginate=False, contact_info=True)
 
 
