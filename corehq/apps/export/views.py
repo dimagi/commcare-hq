@@ -118,9 +118,7 @@ class BaseExportView(BaseProjectDataView):
         # interaction data. This should probably be rewritten as it's not exactly
         # clear what this view specifically needs to render.
         context = self.export_helper.get_context()
-        context.update({
-            'export_home_url': self.export_home_url,
-        })
+        context.update({'export_home_url': self.export_home_url})
         return context
 
     def commit(self, request):
