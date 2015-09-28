@@ -377,11 +377,13 @@ _username_help = """
     <i class="fa fa-circle-o-notch fa-spin"></i>
     %(checking)s
 </span>
-<span ng-if="usernameAvailabilityStatus === 'taken'">
+<span ng-if="usernameAvailabilityStatus === 'taken'"
+      style="word-wrap:break-word;">
     <i class="fa fa-remove"></i>
     {{ usernameStatusMessage }}
 </span>
-<span ng-if="usernameAvailabilityStatus === 'available'">
+<span ng-if="usernameAvailabilityStatus === 'available'"
+      style="word-wrap:break-word;">
     <i class="fa fa-check"></i>
     {{ usernameStatusMessage }}
 </span>
@@ -397,7 +399,7 @@ _username_help = """
 
 class NewMobileWorkerForm(forms.Form):
     username = forms.CharField(
-        max_length=80,
+        max_length=50,
         required=True,
         help_text=_username_help,
         label=ugettext_noop("Username"),
@@ -419,8 +421,11 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Password")
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, domain, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
+        email_string = u"@{}.commcarehq.org".format(domain)
+        max_chars_username = 80 - len(email_string)
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-4'
@@ -440,17 +445,21 @@ class NewMobileWorkerForm(forms.Form):
                                       " updateOn: 'default blur', "
                                       " debounce: {'default': 300, 'blur': 0} "
                                       "}",
-                    ng_model='mobileWorker.username'
+                    ng_model='mobileWorker.username',
+                    ng_maxlength=max_chars_username,
+                    maxlength=max_chars_username,
                 ),
                 crispy.Field(
                     'first_name',
                     ng_required="false",
-                    ng_model='mobileWorker.first_name'
+                    ng_model='mobileWorker.first_name',
+                    ng_maxlength="50",
                 ),
                 crispy.Field(
                     'last_name',
                     ng_required="false",
-                    ng_model='mobileWorker.last_name'
+                    ng_model='mobileWorker.last_name',
+                    ng_maxlength="50",
                 ),
                 crispy.Field(
                     'password',
