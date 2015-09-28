@@ -261,7 +261,9 @@ class BaseEditCustomExportView(BaseModifyCustomExportView):
                 _("Export <strong>%(export_name)s</strong> "
                   "was saved.") % {
                       'export_name': self.export_helper.custom_export.name
-                  }))
+                  }
+            )
+        )
         return export_id
 
 
