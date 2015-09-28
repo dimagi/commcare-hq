@@ -102,3 +102,13 @@ def empty(field):
     """Only return docs with a missing or null value for ``field``"""
     return OR(missing(field, exist=True, null=True),
               term(field, ''))
+
+
+def nested(path, filter_):
+    """Query nested documents which normally can't be queried directly"""
+    return {
+        "nested": {
+            "path": path,
+            "filter": filter_
+        }
+    }
