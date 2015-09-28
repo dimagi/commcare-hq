@@ -398,8 +398,14 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             'export_list_url': self.export_list_url,
             'max_column_size': self.max_column_size,
             'default_date_range': '%(startdate)s%(separator)s%(enddate)s' % {
-                'startdate': self.default_datespan.startdate.strftime('%Y-%m-%d'),
-                'enddate': self.default_datespan.enddate.strftime('%Y-%m-%d'),
+                'startdate': (
+                    self.default_datespan.startdate.strftime('%Y-%m-%d')
+                    if self.default_datespan.startdate is not None else ""
+                ),
+                'enddate': (
+                    self.default_datespan.enddate.strftime('%Y-%m-%d')
+                    if self.default_datespan.enddate is not None else ""
+                 ),
                 'separator': DateRangePickerWidget.separator,
             },
             'allow_preview': bool(self.export_id),
