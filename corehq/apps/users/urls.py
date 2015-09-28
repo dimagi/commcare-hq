@@ -6,7 +6,8 @@ from .views import (DefaultProjectUserSettingsView, DomainRequestView, EditWebUs
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
     BulkSMSVerificationView)
-from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
+from .views.mobile.users import (
+    UploadCommCareUsers, EditCommCareUserView,
     ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView,
     ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
     CommCareUserSelfRegistrationView, MobileWorkerListView,
