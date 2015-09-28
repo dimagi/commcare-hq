@@ -317,15 +317,10 @@ class MessageLogReport(BaseCommConnectLogReport):
         return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
                 and Domain.get_by_name(self.domain).uses_locations)
 
-    def _get_rows(self, paginate=True, contact_info=False):
-        message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
-        abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
-        abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
-
-        contact_cache = {}
+    def _get_queryset(self):
 
         def filter_by_types(data_):
-            filtered_types = {t.lower() for t in MessageTypeFilter.get_value(self.request, self.domain)}
+            filtered_types = set(MessageTypeFilter.get_value(self.request, self.domain))
             if not filtered_types:
                 return data_
 
@@ -337,11 +332,11 @@ class MessageLogReport(BaseCommConnectLogReport):
                 WORKFLOW_DEFAULT,
                 WORKFLOW_PERFORMANCE,
             )
-            incl_survey = MessageTypeFilter.OPTION_SURVEY.lower() in filtered_types
-            incl_other = MessageTypeFilter.OPTION_OTHER.lower() in filtered_types
+            incl_survey = MessageTypeFilter.OPTION_SURVEY in filtered_types
+            incl_other = MessageTypeFilter.OPTION_OTHER in filtered_types
             is_workflow_relevant = Q(workflow__in=relevant_workflows)
             workflow_filter = Q(is_workflow_relevant & Q(workflow__in=filtered_types))
-            survey_filter = ~Q(xforms_session_couch_id__exact=None)
+            survey_filter = Q(xforms_session_couch_id__isnull=False)
             other_filter = ~Q(is_workflow_relevant | survey_filter)
             # We can chain ANDs together, but not ORs, so we have to do all the ORs at the same time.
             if incl_survey and incl_other:
@@ -354,6 +349,13 @@ class MessageLogReport(BaseCommConnectLogReport):
                 filters = workflow_filter
             return data_.filter(filters)
 
+        def filter_by_location(data):
+            if not self.uses_locations:
+                return data
+            location_ids = self.get_location_filter()
+            # location_ids is a list of strings because SMS.location_id is a CharField, not a foreign key
+            return data.filter(location_id__in=location_ids)
+
         def order_by_col(data_):
             col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
             sort_col = self.request_params.get('iSortCol_0')
@@ -362,6 +364,26 @@ class MessageLogReport(BaseCommConnectLogReport):
                 if self.request_params.get('sSortDir_0') == 'desc':
                     data_ = data_.reverse()
             return data_
+
+        queryset = SMS.objects.filter(
+            domain=self.domain,
+            date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
+        ).exclude(
+            # Exclude outgoing messages that have not yet been processed
+            direction=OUTGOING,
+            processed=False
+        )
+        queryset = filter_by_types(queryset)
+        queryset = filter_by_location(queryset)
+        queryset = order_by_col(queryset)
+        return queryset
+
+    def _get_rows(self, paginate=True, contact_info=False):
+        message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
+        abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
+        abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
+
+        contact_cache = {}
 
         def get_phone_number(phone_number):
             if abbreviate_phone_number and phone_number is not None:
@@ -380,18 +402,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        data = SMS.objects.filter(
-            domain=self.domain,
-            date__range=(startdate, enddate),
-        ).exclude(
-            # Exclude outgoing messages that have not yet been processed
-            direction=OUTGOING,
-            processed=False
-        )
-        data = filter_by_types(data)
-        data = order_by_col(data)
+        data = self._get_queryset()
         if paginate and self.pagination:
             data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
@@ -411,13 +422,8 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     def total_records(self):
-        startdate = json_format_datetime(self.datespan.startdate_utc)
-        enddate = json_format_datetime(self.datespan.enddate_utc)
-        count = SMS.objects.filter(
-            domain=self.domain,
-            date__range=(startdate, enddate),
-        ).count()
-        return count
+        queryset = self._get_queryset()
+        return queryset.count()
 
     @property
     def shared_pagination_GET_params(self):
