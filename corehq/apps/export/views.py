@@ -150,7 +150,9 @@ class BaseExportView(BaseProjectDataView):
 
 
 class BaseCreateCustomExportView(BaseExportView):
-    # this view likely needs a lot more cleanup. will leave that for a later time...
+    """
+    todo: Refactor in v2 of redesign
+    """
 
     @property
     @memoized
