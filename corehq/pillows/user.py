@@ -1,5 +1,4 @@
 from casexml.apps.case.xform import is_device_report
-from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import ES_URLS, stream_es_query, get_es
