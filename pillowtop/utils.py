@@ -1,6 +1,5 @@
 from __future__ import division
 import inspect
-import warnings
 from datetime import datetime
 from dateutil.parser import parse
 import importlib
@@ -8,12 +7,16 @@ from django.conf import settings
 import pytz
 
 
-def import_pillow_string(full_class_str, instantiate=True):
+def get_pillow_instance(full_class_str):
+    pillow_class = get_pillow_class(full_class_str)
+    return pillow_class()
+
+
+def get_pillow_class(full_class_str):
     mod_path, pillow_class_name = full_class_str.rsplit('.', 1)
     try:
         mod = importlib.import_module(mod_path)
-        pillowtop_class = getattr(mod, pillow_class_name)
-        return pillowtop_class() if instantiate else pillowtop_class
+        return getattr(mod, pillow_class_name)
     except (AttributeError, ImportError):
         if getattr(settings, 'UNIT_TESTING', False):
             raise
@@ -29,8 +32,8 @@ def get_all_pillows(instantiate=True):
     if hasattr(settings, 'PILLOWTOPS'):
         for k, v in settings.PILLOWTOPS.items():
             for full_str in v:
-                pillowtop_class = import_pillow_string(full_str, instantiate=instantiate)
-                pillowtops.append(pillowtop_class)
+                pillow_class = get_pillow_class(full_str)
+                pillowtops.append(pillow_class() if instantiate else pillow_class)
 
     return pillowtops
 
@@ -40,7 +43,10 @@ def get_pillow_by_name(pillow_class_name, instantiate=True):
         for k, v in settings.PILLOWTOPS.items():
             for full_str in v:
                 if pillow_class_name in full_str:
-                    return import_pillow_string(full_str, instantiate=instantiate)
+                    if instantiate:
+                        return get_pillow_instance(pillow_class_name)
+                    else:
+                        return get_pillow_class(pillow_class_name)
 
 
 def force_seq_int(seq):
