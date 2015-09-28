@@ -1,4 +1,3 @@
-import json
 import dateutil
 from django import forms
 from django.core.urlresolvers import reverse
@@ -6,15 +5,24 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import group_filter, users_matching_filter, \
-    users_filter, datespan_export_filter, app_export_filter, case_group_filter, \
-    case_users_filter, datespan_from_beginning
+from corehq.apps.reports.util import (
+    group_filter,
+    users_matching_filter,
+    users_filter,
+    datespan_export_filter,
+    app_export_filter,
+    case_group_filter,
+    case_users_filter,
+    datespan_from_beginning,
+)
 from corehq.apps.style.crispy import B3MultiField, CrispyTemplate
-from corehq.apps.style.forms.widgets import Select2MultipleChoiceWidget, \
-    DateRangePickerWidget
+from corehq.apps.style.forms.widgets import (
+    Select2MultipleChoiceWidget,
+    DateRangePickerWidget,
+)
 from couchexport.util import SerializableFunction
 
-from crispy_forms.bootstrap import FormActions, InlineField
+from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
@@ -77,10 +85,13 @@ class CreateCaseExportTagForm(forms.Form):
         help_text=mark_safe(
             '<span ng-show="!!hasNoCaseTypes '
             '&& !!createForm.application">{}</span>'.format(
-            ugettext_noop("""Note: This application does not appear to be using
-            <a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management">
-            case management</a>.""")
-        )),
+                ugettext_noop(
+                    """Note: This application does not appear to be using
+<a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management">
+case management</a>."""
+                )
+            ),
+        ),
     )
 
     def __init__(self, *args, **kwargs):
