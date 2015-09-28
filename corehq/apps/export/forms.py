@@ -23,10 +23,6 @@ from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 
-class ExportFormValidationException(Exception):
-    pass
-
-
 class CreateFormExportForm(forms.Form):
     application = forms.CharField(required=False)
     module = forms.CharField(required=False)
