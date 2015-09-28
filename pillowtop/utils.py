@@ -22,6 +22,8 @@ def import_pillow_string(full_class_str, instantiate=True):
         pillowtop_class = getattr(mod, pillow_class_name)
         return pillowtop_class() if instantiate else pillowtop_class
     except (AttributeError, ImportError):
+        if getattr(settings, 'UNIT_TESTING', False):
+            raise
         raise ValueError("Could not find pillowtop class '%s'" % full_class_str)
 
 
