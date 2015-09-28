@@ -21,8 +21,8 @@ from corehq.apps.export.exceptions import (
     ExportAsyncException,
 )
 from corehq.apps.export.forms import (
-    CreateFormExportForm,
-    CreateCaseExportForm,
+    CreateFormExportTagForm,
+    CreateCaseExportTagForm,
     FilterFormExportDownloadForm,
     FilterCaseExportDownloadForm,
     ExportFormValidationException,
