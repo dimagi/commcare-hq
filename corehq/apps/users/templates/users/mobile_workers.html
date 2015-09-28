@@ -295,8 +295,22 @@ $(function () {
                         </div>
                     </div>
                 </div>
+                <div class="alert alert-info"
+                     ng-show="!!query && paginatedItems.length == 0 && !notLoaded && !hasError">
+                    {% blocktrans %}
+                    No Mobile Workers were found that matched your query.
+                    {% endblocktrans %}
+                </div>
+                <div class="alert alert-info"
+                     ng-show="!query && paginatedItems.length == 0 && !notLoaded && !hasError">
+                    {% blocktrans %}
+                        <strong>There are currently no Mobile Workers in this project.</strong>
+                        Please Create a new Mobile Worker above to get started.
+                    {% endblocktrans %}
+                </div>
                 <table class="table table-striped table-responsive"
-                       style="margin-bottom: 0;">
+                       style="margin-bottom: 0;"
+                       ng-show="paginatedItems.length > 0">
                     <thead>
                         <tr>
                             <th class="col-xs-3">{% trans "Username" %}</th>
@@ -430,13 +444,12 @@ $(function () {
                     </tbody>
                 </table>
                 <div class="alert alert-info"
-                     ng-hide="hasError"
-                     ng-show="notLoaded">
+                     ng-show="!!notLoaded && !hasError">
                     <i class="fa fa-circle-o-notch fa-spin"></i>
                     {% trans "Loading Workers..." %}
                 </div>
                 <div class="alert alert-danger"
-                     ng-show="hasError">
+                     ng-show="!!hasError">
                     {% blocktrans %}
                         <strong>There was an issue contacting the server.</strong>
                         Please check your internet connection.
