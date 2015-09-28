@@ -16,9 +16,5 @@ class ExportFormValidationException(Exception):
     pass
 
 
-class ExportPermissionsException(Exception):
-    pass
-
-
 class ExportAsyncException(Exception):
     pass
