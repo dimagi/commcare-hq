@@ -305,7 +305,6 @@ class FilterSpec(JsonObject):
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
-    required = BooleanProperty(default=False)
     datatype = DataTypeProperty(default='string')
 
     def get_display(self):

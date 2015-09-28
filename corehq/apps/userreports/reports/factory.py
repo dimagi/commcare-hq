@@ -20,7 +20,6 @@ def _build_date_filter(spec):
     return DatespanFilter(
         name=wrapped.slug,
         label=wrapped.get_display(),
-        required=wrapped.required,
     )
 
 
@@ -29,7 +28,6 @@ def _build_numeric_filter(spec):
     return NumericFilter(
         name=wrapped.slug,
         label=wrapped.get_display(),
-        required=wrapped.required,
     )
 
 
@@ -45,7 +43,6 @@ def _build_choice_list_filter(spec):
         name=wrapped.slug,
         datatype=wrapped.datatype,
         label=wrapped.display,
-        required=wrapped.required,
         choices=choices,
     )
 
@@ -57,7 +54,6 @@ def _build_dynamic_choice_list_filter(spec):
         datatype=wrapped.datatype,
         field=wrapped.field,
         label=wrapped.display,
-        required=wrapped.required,
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,
     )

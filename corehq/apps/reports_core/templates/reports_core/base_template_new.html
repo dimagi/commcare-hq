@@ -57,6 +57,8 @@
             extraCallbacks: [updateCharts]
         });
         $('#report-filters').submit(function(event) {
+            $('#reportHint').remove();
+            $('#reportContent').removeClass('hide');
             var postData = $(this).serialize();
             $.ajax({
                 url: $(this).attr("action"),
@@ -181,20 +183,27 @@
         {% endif %}
     </div>
 </div>
-{% block reportcharts %}
-<section id="chart-container" style="display: none;">
-</section>
-{% endblock %}
-{% block reporttable %}
-<div>
-    <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
-        <thead>
-        {{ headers.render_html|safe }}
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+<div id="reportHint" class="well">
+    <h4>{% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+    <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
 </div>
-{% endblock reporttable %}
+<div id="reportContent" class="hide">
+    {% block reportcharts %}
+    <section id="chart-container" style="display: none;">
+    </section>
+    {% endblock %}
+    {% block reporttable %}
+    <div>
+        <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
+            <thead>
+            {{ headers.render_html|safe }}
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    {% endblock reporttable %}
+</div>
+
 {% endblock main_column_content %}
 {% endblock main_column %}
