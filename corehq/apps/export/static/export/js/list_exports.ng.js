@@ -17,6 +17,13 @@
     exportsControllers.ListExportsController = function (
         $scope, djangoRMI
     ) {
+        /**
+         * This controller fetches a list of saved exports from
+         * subclasses of BaseExportListView.
+         *
+         * It also generates a list of exports selected for bulk exports.
+         */
+
         var self = {};
         $scope._ = _;  // allow use of underscore.js within the template
         $scope.hasLoaded = false;
