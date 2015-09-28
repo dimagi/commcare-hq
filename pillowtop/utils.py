@@ -24,6 +24,11 @@ def import_pillow_string(full_class_str, instantiate=True):
     except (AttributeError, ImportError):
         raise ValueError("Could not find pillowtop class '%s'" % full_class_str)
 
+
+def get_all_pillow_instances():
+    return get_all_pillows(instantiate=True)
+
+
 def get_all_pillows(instantiate=True):
     pillowtops = []
     if hasattr(settings, 'PILLOWTOPS'):
