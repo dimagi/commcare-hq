@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
+from django.utils.safestring import mark_safe
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
@@ -27,8 +28,10 @@ from corehq.apps.export.forms import (
     FilterCaseExportDownloadForm,
 )
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import FormExportSchema, CaseExportSchema
 from corehq.apps.reports.standard.export import (
@@ -44,7 +47,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.timezones.utils import get_timezone_for_user
 import couchexport
-from couchexport.models import SavedExportSchema, ExportSchema
+from couchexport.models import SavedExportSchema, ExportSchema, Format
 from couchexport.schema import build_latest_schema
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
@@ -158,7 +161,8 @@ class BaseCreateCustomExportView(BaseExportView):
     @property
     @memoized
     def export_helper(self):
-        return make_custom_export_helper(self.request, self.export_type, domain=self.domain)
+        return make_custom_export_helper(
+            self.request, self.export_type, domain=self.domain)
 
     def commit(self, request):
         export_id = self.export_helper.update_custom_export()
@@ -263,13 +267,13 @@ class BaseEditCustomExportView(BaseModifyCustomExportView):
 
 class EditCustomFormExportView(BaseEditCustomExportView):
     urlname = 'edit_custom_export_form'
-    page_title = ugettext_noop("Edit Form Custom Export")
+    page_title = ugettext_noop("Edit Form Export")
     export_type = 'form'
 
 
 class EditCustomCaseExportView(BaseEditCustomExportView):
     urlname = 'edit_custom_export_case'
-    page_title = ugettext_noop("Edit Case Custom Export")
+    page_title = ugettext_noop("Edit Case Export")
     export_type = 'case'
 
 
@@ -382,7 +386,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     @property
     @memoized
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, 7, self.timezone)
+        return datespan_from_beginning(self.domain, self.timezone)
 
     @property
     def page_context(self):
@@ -420,7 +424,9 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.export_id])
+        if self.export_id:
+            return reverse(self.urlname, args=(self.domain, self.export_id))
+        return reverse(self.urlname, args=(self.domain,))
 
     @property
     def export_list(self):
@@ -632,8 +638,8 @@ class DownloadFormExportView(BaseDownloadExportView):
     @property
     def parent_pages(self):
         return [{
-            'title': _("Export Forms"),
-            'url': '#',
+            'title': FormExportListView.page_title,
+            'url': reverse(FormExportListView.urlname, args=(self.domain,)),
         }]
 
     def get_filters(self, filter_form_data):
@@ -690,8 +696,8 @@ class DownloadCaseExportView(BaseDownloadExportView):
     @property
     def parent_pages(self):
         return [{
-            'title': _("Export Cases"),
-            'url': '#',
+            'title': CaseExportListView.page_title,
+            'url': reverse(CaseExportListView.urlname, args=(self.domain,)),
         }]
 
     def get_filters(self, filter_form_data):
@@ -747,12 +753,14 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         """
         raise NotImplementedError("must implement get_saved_exports")
 
-    @property
-    @memoized
-    def create_export_form(self):
-        """Returns the create saved export form.
+    def fmt_export_data(self, export):
+        """Returns the object used for each row (per export)
+        in the saved exports table. This data will eventually be processed as
+        a JSON object by angular.js.
+        :return dict
         """
-        raise NotImplementedError("must implement create_export_form")
+        raise NotImplementedError("must implement fmt_export_data")
+
     @allow_remote_invocation
     def get_exports_list(self, in_data):
         """Called by the ANGULAR.JS controller ListExports controller in
@@ -779,39 +787,56 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
 
     @property
     def create_export_form_title(self):
-        """Returns a string that is the title of the export form
+        """Returns a string that is displayed as the title of the create
+        export form below.
         """
-        raise NotImplementedError("must implement create_export_form_title")
+        raise NotImplementedError("must implement create_export_title")
 
     @property
-    def page_context(self):
-        return {
-            'create_export_form': self.create_export_form,
-            'create_export_form_title': self.create_export_form_title,
-        }
+    @memoized
+    def create_export_form(self):
+        """Returns a django form that gets the information necessary to create
+        an export tag, which is the first step in creating a new export.
 
-    def fmt_export_data(self, export):
-        """Return data for the export list table
+        This is either an instance of:
+        - CreateFormExportTagForm
+        - CreateCaseExportTagForm
+
+        This form is what will interact with the CreateExportController in
+        exports/list_exports.ng.js
         """
-        raise NotImplementedError("must implement fmt_export_data")
+        raise NotImplementedError("must implement create_export_form")
 
     @allow_remote_invocation
-    def get_exports_list(self, in_data):
-        saved_exports = self.get_saved_exports()
-        saved_exports = map(self.fmt_export_data, saved_exports)
-        return {
+    def get_initial_create_form_data(self, in_data):
+        """Called by the ANGULAR.JS controller CreateExportController in
+        exports/list_exports.ng.js.
+        :param in_data: dict passed by the  angular js controller.
+        :return: {
             'success': True,
-            'exports': saved_exports,
-        }
+            'apps': [{'id': '<app_id>', 'text': '<app_name>'}, ...],
+            the rest is dependent on form requirements, but as an example:
+                'modules': {
+                    '<app_id>': [{'id': '<module_id>', 'text': '<module_name>'}],
+                },
+                'placeholders': {
+                  'applications': "Select Application",
+                }
+            }
 
-    @allow_remote_invocation
-    def get_initial_form_data(self, in_data):
-        """Returns data needed to initialize the Create Export Form
+        Notes:
+        ----
+        This returned dict also provides additional selection information for
+        modules, forms, and case_types depending on what application is selected
+        and which form is being used.
+
+        This dict also returns placeholder info for the select2 widgets.
         """
-        raise NotImplementedError("Must implement get_intial_form_data")
+        NotImplementedError("Must implement get_intial_form_data")
 
     def get_create_export_url(self, form_data):
-        """Returns url to custom export creation form.
+        """Returns url to the custom export creation form with the export
+        tag appended.
         """
         raise NotImplementedError("Must implement generate_create_form_url")
 
@@ -840,7 +865,11 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
 
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
-    page_title = ugettext_noop("Form Exports")
+    page_title = ugettext_noop("Export Forms")
+
+    @property
+    def bulk_download_url(self):
+        return reverse(BulkDownloadFormExportView.urlname, args=(self.domain,))
 
     @memoized
     def get_saved_exports(self):
@@ -852,7 +881,7 @@ class FormExportListView(BaseExportListView):
     @property
     @memoized
     def create_export_form(self):
-        return CreateFormExportForm()
+        return CreateFormExportTagForm()
 
     @property
     def create_export_form_title(self):
@@ -872,7 +901,7 @@ class FormExportListView(BaseExportListView):
         }
 
     @allow_remote_invocation
-    def get_initial_form_data(self, in_data):
+    def get_initial_create_form_data(self, in_data):
         try:
             apps = get_apps_in_domain(self.domain)
             app_choices = map(
@@ -922,7 +951,7 @@ class FormExportListView(BaseExportListView):
         })
 
     def get_create_export_url(self, form_data):
-        create_form = CreateFormExportForm(form_data)
+        create_form = CreateFormExportTagForm(form_data)
         if not create_form.is_valid():
             raise ExportFormValidationException()
 
@@ -942,7 +971,11 @@ class FormExportListView(BaseExportListView):
 
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
-    page_title = ugettext_noop("Case Exports")
+    page_title = ugettext_noop("Export Cases")
+
+    @property
+    def bulk_download_url(self):
+        return reverse(BulkDownloadCaseExportView.urlname, args=(self.domain,))
 
     @memoized
     def get_saved_exports(self):
@@ -954,7 +987,7 @@ class CaseExportListView(BaseExportListView):
     @property
     @memoized
     def create_export_form(self):
-        return CreateCaseExportForm()
+        return CreateCaseExportTagForm()
 
     @property
     def create_export_form_title(self):
@@ -973,7 +1006,7 @@ class CaseExportListView(BaseExportListView):
         }
 
     @allow_remote_invocation
-    def get_initial_form_data(self, in_data):
+    def get_initial_create_form_data(self, in_data):
         try:
             apps = get_apps_in_domain(self.domain)
             app_choices = map(
@@ -1004,7 +1037,7 @@ class CaseExportListView(BaseExportListView):
         })
 
     def get_create_export_url(self, form_data):
-        create_form = CreateCaseExportForm(form_data)
+        create_form = CreateCaseExportTagForm(form_data)
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
