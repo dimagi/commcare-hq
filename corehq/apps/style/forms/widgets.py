@@ -227,10 +227,12 @@ class DateRangePickerWidget(Input):
             'separator': self.separator,
             'range_labels_json': json.dumps(self.range_labels),
             'startdate': (self.default_datespan.startdate.strftime('%m/%d/%Y')
-                          if isinstance(self.default_datespan, DateSpan)
+                          if (isinstance(self.default_datespan, DateSpan)
+                              and self.default_datespan.startdate is not None)
                           else ''),
             'enddate': (self.default_datespan.enddate.strftime('%m/%d/%Y')
-                        if isinstance(self.default_datespan, DateSpan)
+                        if (isinstance(self.default_datespan, DateSpan)
+                            and self.default_datespan.enddate is not None)
                         else ''),
         }
         output = """
