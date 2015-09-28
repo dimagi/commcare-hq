@@ -5,16 +5,16 @@ $(function () {
     ) {
         var now = moment();
         var ranges = {};
-        ranges[range_labels['last_7_days']] = [
+        ranges[range_labels.last_7_days] = [
             moment().subtract('7', 'days').startOf('days')
         ];
 
-        ranges[range_labels['last_month']] = [
+        ranges[range_labels.last_month] = [
             moment().subtract('1', 'months').startOf('month'),
             moment().subtract('1', 'months').endOf('month')
         ];
 
-        ranges[range_labels['last_30_days']] = [
+        ranges[range_labels.last_30_days] = [
             moment().subtract('30', 'days').startOf('days')
         ];
         $(this).daterangepicker({
