@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
+from corehq.apps.app_manager.models.common import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
     AutoSelectCase, CaseIndex, PreloadAction
 

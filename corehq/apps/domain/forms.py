@@ -50,7 +50,7 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
+from corehq.apps.app_manager.models.common import Application, FormBase, RemoteApp
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)

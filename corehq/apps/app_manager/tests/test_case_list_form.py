@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, PreloadAction, \
+from corehq.apps.app_manager.models.common import Application, Module, OpenCaseAction, PreloadAction, \
     WORKFLOW_MODULE, AdvancedModule, AdvancedOpenCaseAction, LoadUpdateAction, AutoSelectCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin

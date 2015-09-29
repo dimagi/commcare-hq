@@ -1,6 +1,6 @@
 from collections import namedtuple, defaultdict
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.models.common import Form
 from corehq.apps.performance_sms.exceptions import QueryResolutionError, MissingTemplateError
 from corehq.apps.performance_sms.parser import GLOBAL_NAMESPACE, USER_NAMESPACE, GROUP_NAMESPACE
 from corehq.apps.reports.daterange import get_daterange_start_end_dates

@@ -1,6 +1,6 @@
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.exceptions import CaseError
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     Application,
     Module,
     UpdateCaseAction,

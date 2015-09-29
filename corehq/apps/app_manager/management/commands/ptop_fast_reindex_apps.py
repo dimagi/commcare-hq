@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import ElasticReindexer
 from corehq.pillows.application import AppPillow
 

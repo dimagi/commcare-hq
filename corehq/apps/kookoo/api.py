@@ -16,7 +16,7 @@ from corehq.apps.smsforms.models import XFORMS_SESSION_IVR
 from corehq.apps.smsforms.util import form_requires_input
 from corehq.apps.ivr.api import (log_error, GatewayConnectionError,
     set_first_ivr_response)
-from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.models.common import Form
 
 
 API_ID = "KOOKOO"

@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
 
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models.common import Application, Module
 from corehq.apps.app_manager.const import APP_V2
 
 

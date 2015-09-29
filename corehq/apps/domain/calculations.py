@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
 from corehq.util.dates import iso_string_to_datetime
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES

@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _, ugettext_noop
 import dateutil
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime, timedelta

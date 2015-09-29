@@ -1,6 +1,6 @@
 import re
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
-from corehq.apps.app_manager.models import Application, load_app_template, ATTACHMENT_REGEX
+from corehq.apps.app_manager.models.common import Application, load_app_template, ATTACHMENT_REGEX
 from corehq.apps.app_manager.util import update_unique_ids
 from corehq.apps.es import AppES
 

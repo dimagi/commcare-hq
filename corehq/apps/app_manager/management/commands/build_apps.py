@@ -4,7 +4,7 @@ import time
 from django.core.management.base import BaseCommand
 from lxml import etree
 import os
-from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.models.common import Application, RemoteApp
 
 try:
     from guppy import hpy

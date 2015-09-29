@@ -7,7 +7,7 @@ from corehq.apps.app_manager.commcare_settings import (
     circular_dependencies,
     parse_condition_string,
 )
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 
 
 class CommCareSettingsTest(SimpleTestCase):

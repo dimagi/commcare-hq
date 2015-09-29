@@ -8,7 +8,6 @@ from corehq.apps.app_manager.models.common import (
     Application,
     FormAction,
     FormActionCondition,
-    FormSchedule,
     LoadUpdateAction,
     Module,
     OpenCaseAction,
@@ -16,6 +15,9 @@ from corehq.apps.app_manager.models.common import (
     UpdateCaseAction,
     OpenSubCaseAction,
     CaseIndex)
+from corehq.apps.app_manager.models.schedules import (
+    FormSchedule,
+)
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.util import new_careplan_module

@@ -2,7 +2,7 @@ import os
 from jsonobject import JsonObject
 import yaml
 from corehq.apps.userreports.specs import TypeProperty
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 

@@ -7,7 +7,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from django.core.cache import cache
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 

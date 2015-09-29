@@ -1,7 +1,7 @@
 from StringIO import StringIO
 from django.test import TestCase
 from django.test.client import Client
-from corehq.apps.app_manager.models import Application, APP_V1, Module
+from corehq.apps.app_manager.models.common import Application, APP_V1, Module
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser

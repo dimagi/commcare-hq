@@ -7,8 +7,9 @@ from corehq.apps.app_manager.exceptions import (
 )
 from dimagi.utils.web import json_response
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.schedules import (
     FormSchedule,
+    SchedulePhase,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
@@ -69,7 +70,6 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
 
 
 def get_schedule_context(form):
-    from corehq.apps.app_manager.models import SchedulePhase
     schedule_context = {}
     module = form.get_module()
 

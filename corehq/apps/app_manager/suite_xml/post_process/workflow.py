@@ -164,7 +164,7 @@ class WorkflowHelper(PostProcessor):
         return stack_frames
 
     def form_workflow_frames(self, if_prefix, module, form):
-        from corehq.apps.app_manager.models import (
+        from corehq.apps.app_manager.models.common import (
             WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
 

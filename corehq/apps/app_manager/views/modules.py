@@ -29,7 +29,7 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     AdvancedModule,
     CareplanModule,
     DeleteModuleRecord,

@@ -8,7 +8,7 @@ from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from couchexport.export import export_raw
 from couchexport.models import Format
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models.common import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.translations import \
     process_bulk_app_translation_upload, expected_bulk_app_sheet_rows, \

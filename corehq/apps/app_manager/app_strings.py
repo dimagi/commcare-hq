@@ -175,7 +175,7 @@ class AppStringsBase(object):
                 (u'The lookup table settings for your user are incorrect. '
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
 
-        from corehq.apps.app_manager.models import (
+        from corehq.apps.app_manager.models.common import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
             AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW
         )

@@ -3,7 +3,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from corehq.apps.app_manager.exceptions import SuiteValidationError
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.app_manager.suite_xml.utils import validate_suite
 from corehq.apps.app_manager.xform import XForm
 from dimagi.utils.couch.database import iter_docs

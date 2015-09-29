@@ -6,7 +6,7 @@ import os
 import codecs
 
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module
+from corehq.apps.app_manager.models.common import Application, DetailColumn, import_app, APP_V1, ApplicationBase, Module
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 

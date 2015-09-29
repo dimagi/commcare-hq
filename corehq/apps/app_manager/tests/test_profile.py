@@ -1,7 +1,7 @@
 # coding: utf-8
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 import xml.etree.ElementTree as ET
 

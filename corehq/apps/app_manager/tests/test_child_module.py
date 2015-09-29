@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.tests import AppFactory
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     AdvancedModule,
     Application,
     CaseIndex,

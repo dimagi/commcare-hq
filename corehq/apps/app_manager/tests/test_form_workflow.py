@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     FormLink,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,

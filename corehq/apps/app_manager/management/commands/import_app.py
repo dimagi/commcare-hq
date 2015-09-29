@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.urlresolvers import reverse
 import requests
 from requests.auth import HTTPDigestAuth
-from corehq.apps.app_manager.models import import_app
+from corehq.apps.app_manager.models.common import import_app
 
 
 class Command(BaseCommand):

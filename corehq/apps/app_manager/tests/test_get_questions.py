@@ -2,7 +2,7 @@ import os
 
 from django.test.testcases import SimpleTestCase
 
-from corehq.apps.app_manager.models import Application, Module, APP_V2
+from corehq.apps.app_manager.models.common import Application, Module, APP_V2
 
 QUESTIONS = [
     {

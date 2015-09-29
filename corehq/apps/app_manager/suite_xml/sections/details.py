@@ -295,7 +295,7 @@ class DetailsHelper(object):
 
 
 def get_default_sort_elements(detail):
-    from corehq.apps.app_manager.models import SortElement
+    from corehq.apps.app_manager.models.common import SortElement
 
     if not detail.columns:
         return []

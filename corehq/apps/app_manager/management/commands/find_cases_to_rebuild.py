@@ -2,7 +2,7 @@ from optparse import make_option
 
 from django.core.management import BaseCommand
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain
 from dimagi.utils.couch.database import iter_docs
 

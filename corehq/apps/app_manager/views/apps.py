@@ -52,7 +52,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     Application,
     ApplicationBase,
     DeleteApplicationRecord,
@@ -63,7 +63,7 @@ from corehq.apps.app_manager.models import (
     load_app_template,
     str_to_cls,
 )
-from corehq.apps.app_manager.models import import_app as import_app_util
+from corehq.apps.app_manager.models.common import import_app as import_app_util
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps

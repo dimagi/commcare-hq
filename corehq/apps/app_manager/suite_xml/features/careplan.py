@@ -8,7 +8,7 @@ class CareplanMenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import CareplanModule
+        from corehq.apps.app_manager.models.common import CareplanModule
 
         menus = []
 

@@ -1,6 +1,6 @@
 from django.test.testcases import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
+from corehq.apps.app_manager.models.common import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
     AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction, CaseIndex
 from mock import patch
 

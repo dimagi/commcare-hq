@@ -9,7 +9,7 @@ from corehq.apps.importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 from corehq.util.files import file_extention_from_filename
 from soil.util import expose_cached_download
 from soil import DownloadBase
