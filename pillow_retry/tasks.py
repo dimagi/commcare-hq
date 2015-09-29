@@ -58,11 +58,13 @@ def process_pillow_retry(error_doc_id):
 
 
         try:
-            from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
-            if isinstance(pillow, ConfigurableIndicatorPillow):
-                raise Exception('this is temporarily not supported!')
-            else:
-                pillow.process_change(change, is_retry_attempt=True)
+            try:
+                from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
+                if isinstance(pillow, ConfigurableIndicatorPillow):
+                    raise Exception('this is temporarily not supported!')
+            except ImportError:
+                pass
+            pillow.process_change(change, is_retry_attempt=True)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
             error_doc.add_attempt(ex_value, ex_tb)
