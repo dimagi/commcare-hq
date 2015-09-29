@@ -25,10 +25,6 @@ from corehq.apps.app_manager.models.common import (
     SortElement,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.models.schedules import (
-    FormSchedule,
-    ScheduleVisit,
-)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (

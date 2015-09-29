@@ -14,9 +14,7 @@ from corehq.apps.app_manager.models.common import (
     PreloadAction,
     UpdateCaseAction,
     OpenSubCaseAction,
-    CaseIndex)
-from corehq.apps.app_manager.models.schedules import (
-    FormSchedule,
+    CaseIndex,
 )
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
