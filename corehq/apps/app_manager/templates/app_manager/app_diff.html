@@ -1,0 +1,54 @@
+{% extends "style/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block stylesheets %}{{ block.super }}
+    {% compress css %}
+        <link type="text/css" rel="stylesheet" href="{% new_static 'app_manager/css/diff.css' %}"/>
+    {% endcompress %}
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>{{ first_app.name }}: Build #{{ first_app.version }} vs #{{ second_app.version }}</h1>
+    <p>See <a href="{% url "view_app" first_app.domain first_app.copy_of|default_if_none:first_app.get_id %}">original app</a> for the latest work in progress.</p>
+
+    <h2>Resource Files</h2>
+
+    <table class="table table-condensed">
+        {% for file_name, diff, adds, dels in diffs %}
+            <tr>
+                <td class="col-md-3">
+                    {% if diff %}
+                        <a class="toggle-next" href="#">{{ file_name }}</a>
+                    {% else %}
+                        {{ file_name }}
+                    {% endif %}
+                </td>
+                <td class="col-md-9">
+                    <span class="diff"><span class="insert">+{{ adds }}</span></span>
+                    /
+                    <span class="diff"><span class="delete">-{{ dels }}</span></span>
+                </td>
+            </tr>
+            {% if diff %}
+            <tr>
+                <td colspan="2">
+                    {{ diff|safe }}
+                </td>
+            </tr>
+            {% endif %}
+        {% empty %}
+            <tr><th>No Files</th></tr>
+        {% endfor %}
+    </table>
+    <script>
+        $(function(){
+            $('.toggle-next').click(function(e){
+                e.preventDefault();
+                $(this).parents('tr').next('tr').toggle();
+            }).trigger('click');
+        });
+    </script>
+</div>
+{% endblock %}

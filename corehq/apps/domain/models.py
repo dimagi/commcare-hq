@@ -725,7 +725,7 @@ class Domain(Document, SnapshotMixin):
                     comp.data_type_id = new_type_id
                     comp.save()
 
-            def get_lastest_app_id(doc_id):
+            def get_latest_app_id(doc_id):
                 app = get_app(self.name, doc_id).get_latest_saved()
                 if app:
                     return app._id, app.doc_type
@@ -736,7 +736,7 @@ class Domain(Document, SnapshotMixin):
                 if copy_by_id and doc_id not in copy_by_id:
                     continue
                 if not self.is_snapshot:
-                    doc_id, doc_type = get_lastest_app_id(doc_id) or (doc_id, doc_type)
+                    doc_id, doc_type = get_latest_app_id(doc_id) or (doc_id, doc_type)
                 component = self.copy_component(doc_type, doc_id, new_domain_name, user=user)
                 if component:
                     new_app_components[original_doc_id] = component
