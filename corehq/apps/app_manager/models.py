@@ -4674,7 +4674,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 yield form if bare else {
                     'type': 'module_form',
                     'module': module,
-                    'module_unique_id': module.unique_id,
                     'form': form
                 }
 
