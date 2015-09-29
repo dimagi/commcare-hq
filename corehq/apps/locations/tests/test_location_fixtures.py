@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import time
 from django.test import TestCase
 from corehq.apps.locations.models import SQLLocation, LocationType, Location
 from corehq.apps.locations.tests.util import delete_all_locations
