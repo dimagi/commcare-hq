@@ -304,7 +304,7 @@ def _get_app_diffs(first_app, second_app):
             'add_count': additions,
             'del_count': deletions,
         })
-    return sorted(diffs)
+    return sorted(diffs, key=lambda f: f['name'])
 
 
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
