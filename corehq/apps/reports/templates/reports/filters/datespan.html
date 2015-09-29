@@ -34,7 +34,7 @@
             var report_labels = JSON.parse('{{ report_labels|safe }}');
 
             $('#filter_range').createDateRangePicker(report_labels, separator);
-            $('#filter_range').on('apply', function(ev, picker) {
+            $('#filter_range').on('change', function(ev, picker) {
                 var dates = $(this).val().split(separator);
                 $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
                 $('#report_filter_datespan_startdate').val(dates[0]);
