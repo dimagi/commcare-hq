@@ -298,7 +298,12 @@ def _get_app_diffs(first_app, second_app):
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:
             diff_html = ""
-        diffs.append((name, diff_html, additions, deletions))
+        diffs.append({
+            'name': name,
+            'source': diff_html,
+            'add_count': additions,
+            'del_count': deletions,
+        })
     return sorted(diffs)
 
 
@@ -334,9 +339,9 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def page_context(self):
         return {
-            "first_app": self.first_app,
-            "second_app": self.second_app,
-            "diffs": self.app_diffs
+            "app": self.first_app,
+            "other_app": self.second_app,
+            "files": self.app_diffs
         }
 
     @property
