@@ -9,8 +9,6 @@ from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
-from corehq.dbaccessors.couchapps.all_docs import \
-    get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
@@ -725,7 +723,7 @@ class Domain(Document, SnapshotMixin):
                     comp.data_type_id = new_type_id
                     comp.save()
 
-            def get_lastest_app_id(doc_id):
+            def get_latest_app_id(doc_id):
                 app = get_app(self.name, doc_id).get_latest_saved()
                 if app:
                     return app._id, app.doc_type
@@ -736,7 +734,7 @@ class Domain(Document, SnapshotMixin):
                 if copy_by_id and doc_id not in copy_by_id:
                     continue
                 if not self.is_snapshot:
-                    doc_id, doc_type = get_lastest_app_id(doc_id) or (doc_id, doc_type)
+                    doc_id, doc_type = get_latest_app_id(doc_id) or (doc_id, doc_type)
                 component = self.copy_component(doc_type, doc_id, new_domain_name, user=user)
                 if component:
                     new_app_components[original_doc_id] = component
@@ -973,8 +971,13 @@ class Domain(Document, SnapshotMixin):
                     u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
                 )
         # delete all associated objects
-        for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
-            iter_bulk_delete(db, related_doc_ids, chunksize=500)
+        db = self.get_db()
+        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
+            startkey=[self.name],
+            endkey=[self.name, {}],
+            include_docs=False,
+        )]
+        iter_bulk_delete(db, related_doc_ids, chunksize=500)
         self._delete_web_users_from_domain()
         self._delete_sql_objects()
         super(Domain, self).delete()
