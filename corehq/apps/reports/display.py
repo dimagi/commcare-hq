@@ -1,12 +1,8 @@
-import json
-from django.core.cache import cache
 from django.utils.translation import ugettext as _
-
 from couchdbkit.exceptions import ResourceNotFound
-from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.reports.analytics import get_form_app_info
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
@@ -64,7 +60,7 @@ class FormDisplay(object):
         return [self.form["form"].get(field) for field in self.report.other_fields]
 
 
-class FormType(object):
+class _FormType(object):
     def __init__(self, domain, xmlns, app_id=None):
         self.domain = domain
         self.xmlns = xmlns
@@ -72,79 +68,43 @@ class FormType(object):
             self.app_id = app_id
         else:
             try:
-                form = FormType.forms_by_xmlns(domain, xmlns, app_id)
-                self.app_id = form['app']['id']
+                form_app_info = get_form_app_info(domain, xmlns, app_id)
+                self.app_id = form_app_info.app_id
             except Exception:
                 self.app_id = {}
 
-    def get_id_tuple(self):
-        return self.domain, self.xmlns, self.app_id or None
-
-
-    @property
-    @memoized
-    def metadata(self):
-        try:
-            return FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
-        except Exception:
-            return None
-
-    def get_label(self, html=False, lang=None):
-        if self.metadata:
-            form = self.metadata
-            if form.get('app'):
-                langs = form['app']['langs']
-                if lang:
-                    langs = [lang] + langs
-                app_name = form['app']['name']
-                module_name = form_name = None
-                if form.get('is_user_registration'):
-                    form_name = "User Registration"
-                    title = "%s > %s" % (app_name, form_name)
-                else:
-                    for lang in langs + form['module']['name'].keys():
-                        module_name = form['module']['name'].get(lang)
-                        if module_name is not None:
-                            break
-                    for lang in langs + form['form']['name'].keys():
-                        form_name = form['form']['name'].get(lang)
-                        if form_name is not None:
-                            break
-                    if module_name is None:
-                        module_name = "?"
-                    if form_name is None:
-                        form_name = "?"
-                    title = "%s > %s > %s" % (app_name, module_name, form_name)
-
-                if form.get('app_deleted'):
-                    title += ' [Deleted]'
-                if form.get('duplicate'):
-                    title += " [Multiple Forms]"
-
-                if html:
-                    name = u"<span>{title}</span>".format(title=title)
-                else:
-                    name = title
+    def get_label(self, html=False):
+        info = get_form_app_info(self.domain, self.xmlns, self.app_id)
+        if info and info.app_id:
+            langs = info.app_langs
+            app_name = info.app_name
+            if info.is_user_registration:
+                title = "{} > User Registration".format(app_name)
             else:
-                name = self.xmlns
+                module_name = _translate(info.module_name, langs) or '?'
+                form_name = _translate(info.form_name, langs) or '?'
+                title = "{} > {} > {}".format(app_name, module_name, form_name)
+
+            if info.app_deleted:
+                title += ' [Deleted]'
+            if info.duplicate:
+                title += " [Multiple Forms]"
+
+            if html:
+                name = u"<span>{title}</span>".format(title=title)
+            else:
+                name = title
         else:
             name = self.xmlns
         return name
 
-    @classmethod
-    def forms_by_xmlns(cls, domain, xmlns, app_id):
-        cache_key = 'corehq.apps.reports.display.FormType.forms_by_xmlns|{0}|{1}|{2}'.format(domain, xmlns, app_id)
-        form_json = cache.get(cache_key)
-        if form_json:
-            form = json.loads(form_json)
-        else:
-            form = get_db().view('exports_forms/by_xmlns', key=[domain, app_id, xmlns], group=True).one()
-            if form:
-                form = form['value']
-            # cache doc a short interval for the life of someone viewing the page
-            cache.set(cache_key, json.dumps(form), 30)
-        return form
+
+def _translate(translations, langs):
+    for lang in langs + translations.keys():
+        module_name = translations.get(lang)
+        if module_name is not None:
+            return module_name
 
 
 def xmlns_to_name(domain, xmlns, app_id, html=False):
-    return FormType(domain, xmlns, app_id).get_label(html=html)
+    return _FormType(domain, xmlns, app_id).get_label(html=html)
