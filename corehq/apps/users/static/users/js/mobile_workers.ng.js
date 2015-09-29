@@ -134,7 +134,7 @@
                     newWorker.editUrl = data.editUrl;
                     deferred.resolve(data);
                 } else {
-                    newWorker.creationStatus = STATUS.SUCCESS;
+                    newWorker.creationStatus = STATUS.WARNING;
                     deferred.reject(data);
                 }
             })
