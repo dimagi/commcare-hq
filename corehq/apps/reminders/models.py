@@ -892,6 +892,10 @@ class CaseReminderHandler(Document):
 
         return filter(filter_fcn, recipients)
 
+    def recipient_is_location(self, recipient):
+        return (isinstance(recipient, list) and
+                all([isinstance(obj, SQLLocation) for obj in recipient]))
+
     def fire(self, reminder):
         """
         Sends the content associated with the given CaseReminder's current event.
@@ -906,7 +910,7 @@ class CaseReminderHandler(Document):
             return False
 
         recipient = reminder.recipient
-        if self.recipient == RECIPIENT_LOCATION:
+        if self.recipient_is_location(recipient):
             # Use a better name here since recipient is a list of locations
             locations = recipient
 
@@ -1484,7 +1488,13 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
-            return get_wrapped_owner(get_owner_id(self.case))
+            owner_id = get_owner_id(self.case)
+
+            location = SQLLocation.by_location_id(owner_id)
+            if location:
+                return [location]
+
+            return get_wrapped_owner(owner_id)
         elif handler.recipient == RECIPIENT_PARENT_CASE:
             parent_case = None
             case = self.case

@@ -1059,8 +1059,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
             reminder_definition, reminder)
 
-        from corehq.apps.reminders.models import RECIPIENT_LOCATION
-        if recipient and reminder_definition.recipient == RECIPIENT_LOCATION:
+        if recipient and reminder_definition.recipient_is_location(recipient):
             if len(recipient) == 1:
                 recipient_type = (cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
                                   if reminder_definition.include_child_locations
