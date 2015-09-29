@@ -63,6 +63,7 @@
     - properties.logo_android_login
     - hq.auto_gps_capture
     - properties.cc-login-duration-seconds
+    - properties.cc-log-entity-detail-enabled
 
 - title: 'Advanced'
   id: app-settings-advanced

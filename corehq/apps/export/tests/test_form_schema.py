@@ -6,11 +6,11 @@ from fakecouch import FakeCouchDb
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.reports.models import FormQuestionSchema
 
 
-class FormQuestionSchemaTest(SimpleTestCase, TestFileMixin):
+class FormQuestionSchemaTest(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
 

@@ -31,11 +31,11 @@ from dimagi.utils.parsing import json_format_datetime
 
 def num_web_users(domain, *args):
     key = ["active", domain, 'WebUser']
-    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
+    row = CouchUser.get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
 def num_mobile_users(domain, *args):
-    row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
+    row = CouchUser.get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -270,7 +270,7 @@ def _all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
 
-    for row in get_db().view('users/by_domain', startkey=["active"],
+    for row in CouchUser.get_db().view('users/by_domain', startkey=["active"],
                              endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']

@@ -1,9 +1,9 @@
-import datetime
-from corehq.apps.commtrack.models import SupplyPointCase, StockState
+from corehq.apps.commtrack.models import SupplyPointCase
 from custom.ewsghana.reminders import SECOND_STOCK_ON_HAND_REMINDER, SECOND_INCOMPLETE_SOH_REMINDER
-from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE, IN_CHARGE_ROLE
+from custom.ewsghana.reminders.const import IN_CHARGE_ROLE, DAYS_UNTIL_LATE
 from custom.ewsghana.reminders.reminder import Reminder
 from custom.ewsghana.reminders.utils import user_has_reporting_location
+from custom.ewsghana.utils import report_status
 
 
 class SecondSOHReminder(Reminder):
@@ -15,28 +15,18 @@ class SecondSOHReminder(Reminder):
         return any([role != IN_CHARGE_ROLE for role in user.user_data.get('role', [])])
 
     def get_message_for_location(self, location):
-        now = datetime.datetime.utcnow()
-        date = now - datetime.timedelta(days=DAYS_UNTIL_LATE)
         supply_point = SupplyPointCase.get_by_location(location)
         if not supply_point:
             return
 
-        stock_states = StockState.objects.filter(
-            case_id=supply_point.get_id,
-            last_modified_date__gte=date
-        )
-        products = location.sql_location.products
-        location_products_ids = [product.product_id for product in products]
-        reported_products_ids = [stock_state.product_id for stock_state in stock_states]
-        missing_products_ids = set(location_products_ids) - set(reported_products_ids)
+        on_time_products, missing_products = report_status(location.sql_location, days_until_late=DAYS_UNTIL_LATE)
 
-        if not stock_states:
+        if not on_time_products:
             return SECOND_STOCK_ON_HAND_REMINDER, {}
-        elif missing_products_ids:
+        elif missing_products:
             products_names = ', '.join([
                 product.name
-                for product in products
-                if product.product_id in missing_products_ids
+                for product in missing_products
             ])
 
             return SECOND_INCOMPLETE_SOH_REMINDER, {'products': products_names}

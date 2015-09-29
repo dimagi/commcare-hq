@@ -9,13 +9,13 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.translations import \
     process_bulk_app_translation_upload, expected_bulk_app_sheet_rows, \
     expected_bulk_app_sheet_headers
 
 
-class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
+class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         """
@@ -272,7 +272,7 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBase):
         self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
 
 
-class BulkAppTranslationDownloadTest(SimpleTestCase, TestFileMixin):
+class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     file_path = ('data', 'bulk_app_translation', 'download')
     maxDiff = None

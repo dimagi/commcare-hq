@@ -107,6 +107,7 @@ class FieldColumn(ReportColumn):
         'default',
         'percent_of_total',
     ])
+    sortable = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, obj):
@@ -136,7 +137,7 @@ class FieldColumn(ReportColumn):
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
-                sortable=False,
+                sortable=self.sortable,
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description
@@ -305,7 +306,6 @@ class FilterSpec(JsonObject):
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
-    required = BooleanProperty(default=False)
     datatype = DataTypeProperty(default='string')
 
     def get_display(self):

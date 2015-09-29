@@ -106,7 +106,7 @@ def process_facility_task(api_object, facility, start_from=None):
 
 @celery.task(queue='background_queue', ignore_result=True)
 def resync_web_users(api_object):
-    web_users_sync = api_object.apis[4]
+    web_users_sync = api_object.apis[5]
     synchronization(web_users_sync, None, None, 100, 0)
 
 

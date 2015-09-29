@@ -286,8 +286,15 @@
   values_txt: "Whether searches can match similar strings"
   since: "2.15"
 
+- name: "Log Case Detail Views"
+  description: "Whether to log each time a user views case details. May reduce mobile performance."
+  id: "cc-log-entity-detail-enabled"
+  widget: bool
+  default: false
+  since: "2.24"
+
 - name: "Login Duration"
-  description: "Amount of time after which you will be logged out automatically"
+  description: "Length of time after which you will be logged out automatically"
   id: "cc-login-duration-seconds"
   values:      [   "86400",    "43200",   "28800",    "7200",   "3600",       "1800",        "900"]
   value_names: ["24 hours", "12 hours", "8 hours", "2 hours", "1 hour", "30 minutes", "15 minutes"]
