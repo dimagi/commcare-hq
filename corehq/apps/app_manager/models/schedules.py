@@ -128,4 +128,4 @@ class SchedulePhase(IndexedSchema):
         self.anchor = new_anchor
 
         if self.get_module().phase_anchors.count(new_anchor) > 1:
-            raise ScheduleError(_("You can't have more than one phase with the anchor {}").format(new_anchor)) 
+            raise ScheduleError(_("You can't have more than one phase with the anchor {}").format(new_anchor))

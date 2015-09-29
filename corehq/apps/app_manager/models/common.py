@@ -90,7 +90,6 @@ from corehq.apps.app_manager.exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
-    NoMatchingFilterException,
     RearrangeError,
     SuiteValidationError,
     VersioningError,
