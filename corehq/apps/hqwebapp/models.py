@@ -1192,8 +1192,8 @@ class ProjectUsersTab(UITab):
             items.append((_('Organization'), locations_config))
 
         elif users_have_locations(self.domain):  # This domain was downgraded
-            items.append((_('Locations'), [{
-                'title': _("Locations are no longer available"),
+            items.append((_('Organization'), [{
+                'title': _("No longer available"),
                 'url': reverse('downgrade_locations', args=[self.domain]),
                 'show_in_dropdown': True,
             }]))
