@@ -6,7 +6,7 @@ from django.dispatch import Signal
 from django.conf import settings
 from itertools import chain
 from django.db.models import signals
-from pillowtop.utils import import_pillow_string
+from pillowtop.utils import get_pillow_class
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
 from fluff.util import metadata as fluff_metadata
@@ -33,7 +33,7 @@ def catch_signal(app, **kwargs):
         table_pillow_map = {}
         pillows = list(chain.from_iterable(settings.PILLOWTOPS.values()))
         for pillow_string in pillows:
-            pillow_class = import_pillow_string(pillow_string, instantiate=False)
+            pillow_class = get_pillow_class(pillow_string)
             if issubclass(pillow_class, FluffPillow):
                 doc = pillow_class.indicator_class()
                 if doc.save_direct_to_sql:
