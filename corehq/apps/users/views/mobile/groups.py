@@ -4,11 +4,13 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django_prbac.utils import has_privilege
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.dbaccessors import users_have_locations
 from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
@@ -204,6 +206,10 @@ class EditGroupMembersView(BaseGroupsView):
             'num_users': len(self.member_ids),
             'user_form': self.user_selection_form,
             'domain_uses_case_sharing': self.domain_uses_case_sharing,
+            'needs_to_downgrade_locations': (
+                users_have_locations(self.domain) and
+                not has_privilege(self.request, privileges.LOCATIONS)
+            ),
         }
 
     @property
