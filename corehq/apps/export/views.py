@@ -973,7 +973,10 @@ class FormExportListView(BaseExportListView):
                     lambda f: {
                         'id': f['form'].get_unique_id(),
                         'text': _fmt_name(f['form'].name),
-                        'module': f.get('module_unique_id', '_registration'),
+                        'module': (
+                            f['module'].unique_id if 'module' in f
+                            else '_registration'
+                        ),
                     },
                     app.get_forms(bare=False)
                 )
