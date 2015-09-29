@@ -58,7 +58,6 @@
         var self = this;
         self.creationStatus = STATUS.NEW;
 
-
         self.username = data.username || '';
         self.first_name = data.first_name || '';
         self.last_name = data.last_name || '';
@@ -100,8 +99,8 @@
             $scope.usernameAvailabilityStatus = null;
             $scope.usernameStatusMessage = null;
 
-            if (!!mobileWorker) {
-                mobileWorker.creationStatus = USERNAME_STATUS.RETRIED;
+            if (!_.isEmpty(mobileWorker)) {
+                mobileWorker.creationStatus = STATUS.RETRIED;
                 $scope.mobileWorker = new MobileWorker({
                     customFields: mobileWorker.customFields,
                     username: mobileWorker.username
