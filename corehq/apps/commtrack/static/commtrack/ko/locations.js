@@ -1,15 +1,12 @@
-function LocationSettingsViewModel(commtrack_enabled) {
+function LocationSettingsViewModel(loc_types, commtrack_enabled) {
     this.loc_types = ko.observableArray();
+    this.loc_types($.map(loc_types, function(loc_type) {
+        return new LocationTypeModel(loc_type, commtrack_enabled);
+    }));
 
     this.json_payload = ko.observable();
 
     this.loc_types_error = ko.observable(false);
-
-    this.load = function(data) {
-        this.loc_types($.map(data.loc_types, function(e) {
-            return new LocationTypeModel(e, commtrack_enabled);
-        }));
-    };
 
     this.loc_type_options = function(loc_type) {
         return this.loc_types().filter(function(type) {
@@ -113,16 +110,16 @@ var get_fake_pk = function () {
     };
 }();
 
-function LocationTypeModel(data, commtrack_enabled) {
-    var name = data.name || '';
+function LocationTypeModel(loc_type, commtrack_enabled) {
+    var name = loc_type.name || '';
     var self = this;
-    this.pk = data.pk || get_fake_pk();
+    this.pk = loc_type.pk || get_fake_pk();
     this.name = ko.observable(name);
 
-    this.parent_type = ko.observable(data.parent_type);
-    this.tracks_stock = ko.observable(!data.administrative);
-    this.shares_cases = ko.observable(data.shares_cases);
-    this.view_descendants = ko.observable(data.view_descendants);
+    this.parent_type = ko.observable(loc_type.parent_type);
+    this.tracks_stock = ko.observable(!loc_type.administrative);
+    this.shares_cases = ko.observable(loc_type.shares_cases);
+    this.view_descendants = ko.observable(loc_type.view_descendants);
 
     this.name_error = ko.observable(false);
 
