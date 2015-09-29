@@ -128,6 +128,10 @@ class BaseGroupsView(BaseUserSettingsView):
         context = super(BaseGroupsView, self).main_context
         context.update({
             'all_groups': self.all_groups,
+            'needs_to_downgrade_locations': (
+                users_have_locations(self.domain) and
+                not has_privilege(self.request, privileges.LOCATIONS)
+            ),
         })
         return context
 
@@ -206,10 +210,6 @@ class EditGroupMembersView(BaseGroupsView):
             'num_users': len(self.member_ids),
             'user_form': self.user_selection_form,
             'domain_uses_case_sharing': self.domain_uses_case_sharing,
-            'needs_to_downgrade_locations': (
-                users_have_locations(self.domain) and
-                not has_privilege(self.request, privileges.LOCATIONS)
-            ),
         }
 
     @property
