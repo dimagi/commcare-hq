@@ -3,11 +3,40 @@
 {% load hq_shared_tags %}
 
 {% block main_column %}
-    <h1>Locations have been downgraded.</h1>
+<div class="span6">
+    <h2>{% trans "Organizations" %}</h2>
 
-    <form action="{% url "unassign_users" request.domain %}" method="POST">
-    <input type="hidden" name="redirect" value="{{ request.path }}">
-    <input value="{% trans "Unassign all users from locations" %}"
-           type="submit" class="btn btn-danger"></input>
-    </form>
+    <p>
+        {% blocktrans %}
+        Your project no longer has access to Organizations. To access
+        Organizations, you must subscribe to the Standard plan or higher. Until
+        you change your subscription or discontinue your use of Organizations,
+        you will not be able to add or remove mobile workers from groups. Fix
+        this using one of the options below:
+        {% endblocktrans %}
+    </p>
+
+    <p>
+        <a class="btn btn-primary" href="[button links to Current Subscription page]">
+            {% trans "Change your subscription" %}
+        </a>
+    </p>
+
+    <p>
+        <form action="{% url "unassign_users" request.domain %}" method="POST">
+            <input type="hidden" name="redirect" value="{{ request.path }}">
+            <input value="{% trans "Discontinue Organizations" %}"
+                   type="submit" class="btn btn-danger"></input>
+        </form>
+    </p>
+
+    <div class="alert alert-error">
+        {% blocktrans %}
+        WARNING: Case Sharing will be disabled when you discontinue
+        organizations. Any organization case sharing settings will be removed
+        and mobile workers assigned to case sharing organization levels will no
+        longer share cases.
+        {% endblocktrans %}
+    </div>
+</div>
 {% endblock %}
