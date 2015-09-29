@@ -9,6 +9,7 @@ from django.forms import Widget
 from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop as _
 
 from crispy_forms import layout as crispy
@@ -107,7 +108,7 @@ class QuestionSelect(Widget):
             '   optionsCaption: \' \''
             '"/>',
             flatatt(final_attrs),
-            self.render_options(choices),
+            mark_safe(self.render_options(choices)),
             value
         )
 
