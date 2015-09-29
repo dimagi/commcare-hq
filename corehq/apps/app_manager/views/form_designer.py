@@ -76,6 +76,19 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
     })
 
+    scheduler_data_nodes = []
+    if getattr(module, 'has_schedule', False):
+        scheduler_data_nodes = [
+            "unscheduled_visit",
+            "current_visit_number",
+            "next_visit",
+            "next_visit_date",
+            "next_due",
+        ]
+        scheduler_data_nodes.extend([u"next_{}".format(form_.schedule_form_id)
+            for form_ in module.get_forms() if form_.schedule_form_id])
+
+
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
@@ -87,6 +100,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'features': vellum_features,
         'plugins': vellum_plugins,
         'app_callout_templates': next(app_callout_templates),
+        'scheduler_data_nodes': scheduler_data_nodes,
     })
     return render(request, 'app_manager/form_designer.html', context)
 
