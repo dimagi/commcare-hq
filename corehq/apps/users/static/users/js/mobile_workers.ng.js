@@ -116,46 +116,6 @@
             $scope.workers.push($scope.mobileWorker);
             workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
         };
-
-        $scope.hasPending = false;
-        $scope.$watch(
-            function(scope) {
-                var pendingWorkers = _.filter(scope.workers, function (worker) {
-                    return worker.creationStatus === STATUS.PENDING;
-                });
-                return pendingWorkers.length > 0;
-            },
-            function (newVal) {
-                $scope.hasPending = newVal;
-            }
-        );
-
-        $scope.hasSuccess = false;
-        $scope.$watch(
-            function(scope) {
-                var successWorkers = _.filter(scope.workers, function (worker) {
-                    return worker.creationStatus === STATUS.SUCCESS;
-                });
-                return successWorkers.length > 0;
-            },
-            function (newVal) {
-                $scope.hasSuccess = newVal;
-            }
-        );
-
-        $scope.hasError = false;
-        $scope.$watch(
-            function(scope) {
-                var errorWorkers = _.filter(scope.workers, function (worker) {
-                    return worker.creationStatus === STATUS.WARNING;
-                });
-                return errorWorkers.length > 0;
-            },
-            function (newVal) {
-                $scope.hasError = newVal;
-            }
-        );
-
     };
 
     var mobileWorkerFactories = {};
