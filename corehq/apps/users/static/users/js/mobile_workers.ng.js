@@ -114,17 +114,7 @@
         $scope.submitNewMobileWorker = function () {
             $("#newMobileWorkerModal").modal('hide');
             $scope.workers.push($scope.mobileWorker);
-            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker)
-                .then(
-                    // success
-                    function (data) {
-                        // do nothing, the list handles it
-                    },
-                    // error
-                    function (data) {
-                        // do nothing, the list handles it
-                    }
-                );
+            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
         };
 
         $scope.hasPending = false;
