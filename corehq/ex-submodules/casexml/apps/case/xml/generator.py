@@ -62,6 +62,8 @@ class CaseXMLGeneratorBase(object):
     def get_index_element(self, index):
         elem = safe_element(index.identifier, index.referenced_id)
         elem.attrib = {"case_type": index.referenced_type}
+        if getattr(index, 'relationship') and index.relationship == "extension":
+            elem.attrib.update({"relationship": index.relationship})
         return elem
 
     def get_case_type_element(self):

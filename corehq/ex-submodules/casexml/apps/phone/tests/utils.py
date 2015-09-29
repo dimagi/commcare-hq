@@ -34,7 +34,14 @@ def generate_restore_payload(project, user, restore_id="", version=V1, state_has
 
         returns: the xml payload of the sync operation
     """
-    config = RestoreConfig(
+    return get_restore_config(
+        project, user, restore_id, version, state_hash, items, overwrite_cache, force_cache
+    ).get_payload().as_string()
+
+
+def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
+                       items=False, overwrite_cache=False, force_cache=False):
+    return RestoreConfig(
         project=project,
         user=user,
         params=RestoreParams(
@@ -48,7 +55,6 @@ def generate_restore_payload(project, user, restore_id="", version=V1, state_has
             force_cache=force_cache,
         )
     )
-    return config.get_payload().as_string()
 
 
 def generate_restore_response(project, user, restore_id="", version=V1, state_hash="", items=False):

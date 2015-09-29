@@ -1,4 +1,6 @@
 from celery.task import task
+from corehq.util.dates import unix_time
+from datetime import datetime
 import json
 import requests
 import urllib
@@ -127,7 +129,6 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_workflow(email, event, properties=None):
     """
     Record an event in KISSmetrics.
@@ -136,10 +137,16 @@ def track_workflow(email, event, properties=None):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
+    timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+    _track_workflow_task.delay(email, event, properties, timestamp)
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.record(email, event, properties if properties else {})
+        km.record(email, event, properties if properties else {}, timestamp)
         # TODO: Consider adding some error handling for bad/failed requests.
 
 

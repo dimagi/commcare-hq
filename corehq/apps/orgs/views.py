@@ -251,7 +251,9 @@ class OrgInvitationView(InvitationView):
     need = ["organization"]
 
     def added_context(self):
-        return {'organization': self.organization}
+        context = super(OrgInvitationView, self).added_context()
+        context.update({'organization': self.organization})
+        return context
 
     def validate_invitation(self, invitation):
         assert invitation.organization == self.organization

@@ -1,11 +1,15 @@
 {
     "domains": [
-        "airs",
         "abtmali",
+        "airs",
+        "airsethiopia",
         "airsmadagascar",
-        "airsethiopia"
+        "airsrwanda",
+        "airszambia",
+        "airszimbabwe"
     ],
     "config": {
+        "engine_id": "default",
         "base_item_expression": {
             "type": "abt_supervisor"
         },

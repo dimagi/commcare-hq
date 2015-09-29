@@ -395,8 +395,6 @@ class ScheduleFormXPath(object):
     def first_visit_phase_set(self):
         """
         returns the first due date if the case hasn't been visited yet.
-        if the first due date has passed, return the date when the case was opened
-        otherwise, returns the next due date of valid upcoming schedules
         """
         within_zeroth_phase = XPath.and_(
             XPath(self.current_schedule_phase).eq(XPath.string('')),  # No visits yet

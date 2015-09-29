@@ -3,10 +3,10 @@ import os
 import time
 from django.test.utils import override_settings
 from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
-from casexml.apps.phone.tests.utils import generate_restore_payload
+from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
-from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams
+from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams, CachedResponse
 from casexml.apps.case.xform import process_cases
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
@@ -97,17 +97,23 @@ class OtaRestoreTest(TestCase):
         )
 
     def testOverwriteCache(self):
-        restore_payload = generate_restore_payload(
+        restore_config = get_restore_config(
             self.project, dummy_user(), items=True, force_cache=True
         )
-        restore_payload_cached = generate_restore_payload(
+        restore_config_cached = get_restore_config(
             self.project, dummy_user(), items=True
         )
-        restore_payload_overwrite = generate_restore_payload(
+        restore_config_overwrite = get_restore_config(
             self.project, dummy_user(), items=True, overwrite_cache=True
         )
-        self.assertEqual(restore_payload, restore_payload_cached)
-        self.assertNotEqual(restore_payload, restore_payload_overwrite)
+        self.assertNotIsInstance(restore_config.get_payload(), CachedResponse)
+        self.assertIsInstance(restore_config_cached.get_payload(), CachedResponse)
+        self.assertNotIsInstance(restore_config_overwrite.get_payload(), CachedResponse)
+
+        # even cached responses change the sync log id so they are not the same
+        restore_payload = restore_config.get_payload().as_string()
+        self.assertNotEqual(restore_payload, restore_config_cached.get_payload().as_string())
+        self.assertNotEqual(restore_payload, restore_config_overwrite.get_payload().as_string())
 
     def testUserRestoreWithCase(self):
         file_path = os.path.join(os.path.dirname(__file__),

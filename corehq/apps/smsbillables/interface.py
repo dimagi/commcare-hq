@@ -56,7 +56,6 @@ class SMSBillablesInterface(GenericTabularReport):
             DataTablesColumn("Gateway Fee", sortable=False),
             DataTablesColumn("Usage Fee", sortable=False),
             DataTablesColumn("Message Log ID", sortable=False),
-            DataTablesColumn("Phone Number"),
             DataTablesColumn("Is Valid?", sortable=False),
             DataTablesColumn("Date Created"),
         )
@@ -67,7 +66,6 @@ class SMSBillablesInterface(GenericTabularReport):
             'date_sent',
             'domain',
             'direction',
-            'phone_number',
             'date_created',
         ]
         sort_index = int(self.request.GET.get('iSortCol_0', 2))
@@ -131,7 +129,6 @@ class SMSBillablesInterface(GenericTabularReport):
                 (sms_billable.usage_fee.amount
                  if sms_billable.usage_fee is not None else ""),
                 sms_billable.log_id,
-                sms_billable.phone_number,
                 sms_billable.is_valid,
                 sms_billable.date_created,
             ]

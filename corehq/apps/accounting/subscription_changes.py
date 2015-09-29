@@ -4,9 +4,10 @@ import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
-from corehq import privileges, Domain, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import get_active_reminders_by_domain_name
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
@@ -204,7 +205,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 print "Re-Activating %d archived roles." % num_archived_roles
         UserRole.unarchive_roles_for_domain(self.domain.name)
         return True
-
 
 
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):

@@ -12,6 +12,7 @@
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
 
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
@@ -24,16 +25,17 @@
     <script src="{% static 'cloudcare/js/post.js' %}"></script>
 
     {# touchforms includes #}
-    <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
     <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
 
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/build/fullform-ui.templates.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
+    <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+    <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
+    <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+    <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
+    <script src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
+    <script src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
+    <script src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
+    <script src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
 
     <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
@@ -58,7 +60,8 @@
         deleteSaved: "{% trans "Permanently delete this form? You will not be able to return to it later." %}",
         deleteSuccess: "{% trans "Form was deleted." %}",
         caseListError: "{% trans "Unable to load the case list. If you are using a filter expression please double check the syntax and try again. Please report an issue if this problem persists." %}",
-        dirty: "{% trans "You have not submitted this form. Click 'Cancel' to continue working on this form. If you click 'OK' you can resume work on this form later." %}"
+        navigateDirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' you can resume work on this form later." %}",
+        sidebarDirty: "{% trans "You have not submitted this form. Click ‘Cancel’ to continue working on this form. If you click 'OK' you can resume work on this form later." %}"
     };
 
     $(function () {
@@ -94,6 +97,7 @@
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled
         });
+
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
 
@@ -108,6 +112,10 @@
             enableOffline();
         }
 
+        $.subscribe('formplayer.dirty', function() {
+            window.mainView.router.view.dirty = true
+        });
+
     }());
 
 </script>
@@ -115,7 +123,7 @@
         $(function() {
            window.onbeforeunload = function() {
                if (window.mainView.router.view && window.mainView.router.view.dirty) {
-                   return translatedStrings.dirty;
+                   return translatedStrings.navigateDirty;
                }
            }
         }())
@@ -199,35 +207,10 @@
         </div>
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
-        <section id="webforms" style="min-width: 800px;"></section>
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            <hr/>
-            <div id="instance-xml-home" name="instance-xml-home">
-                <form class="form-horizontal debug-controls">
-                    <div class="control-group">
-                        <div class="controls">
-                            <label class="checkbox">
-                                <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
-                                <span class="help-block">
-                                {% blocktrans %}
-                                    When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
-                                {% endblocktrans %}
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-                </form>
-                <input id="evaluate-result" style="display: block;"/>
-                <section>
-                    <input id="xpath" name="xpath" value="/data/[your path here]" style="min-width: 300px;"/>
-                    <input id="evaluate-button" type="submit" value="Evaluate" />
-                </section>
-                <div id="question-viewer-pretty"></div>
-                <div id="xml-viewer-pretty"></div>
-            </div>
-        {% endif %}
+        <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }" style="min-width: 800px;"></section>
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}
+    {% include 'formplayer/fullform-ui/templates.html' %}
 
 {% endblock %}

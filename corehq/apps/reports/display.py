@@ -1,13 +1,67 @@
 import json
-from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
+from django.utils.translation import ugettext as _
+
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.users.models import CouchUser
+from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.timezones.conversions import ServerTime, PhoneTime
+from corehq.util.view_utils import absolute_reverse
 
 
 class StringWithAttributes(unicode):
     def replace(self, *args):
         string = super(StringWithAttributes, self).replace(*args)
         return StringWithAttributes(string)
+
+
+class FormDisplay(object):
+    def __init__(self, form_doc, report):
+        self.form = form_doc
+        self.report = report
+
+    @property
+    def form_data_link(self):
+        return "<a class='ajax_dialog' target='_new' href='%(url)s'>%(text)s</a>" % {
+            "url": absolute_reverse('render_form_data', args=[self.report.domain, self.form['_id']]),
+            "text": _("View Form")
+        }
+
+    @property
+    def username(self):
+        uid = self.form["form"]["meta"]["userID"]
+        username = self.form["form"]["meta"].get("username")
+        try:
+            if username not in ['demo_user', 'admin']:
+                full_name = get_cached_property(CouchUser, uid, 'full_name', expiry=7*24*60*60)
+                name = '"%s"' % full_name if full_name else ""
+            else:
+                name = ""
+        except (ResourceNotFound, IncompatibleDocument):
+            name = "<b>[unregistered]</b>"
+        return (username or _('No data for username')) + (" %s" % name if name else "")
+
+    @property
+    def submission_or_completion_time(self):
+        time = iso_string_to_datetime(safe_index(self.form, self.report.time_field.split('.')))
+        if self.report.by_submission_time:
+            user_time = ServerTime(time).user_time(self.report.timezone)
+        else:
+            user_time = PhoneTime(time, self.report.timezone).user_time(self.report.timezone)
+        return user_time.ui_string(USER_DATETIME_FORMAT_WITH_SEC)
+
+    @property
+    def readable_form_name(self):
+        return xmlns_to_name(self.report.domain, self.form.get("xmlns"), app_id=self.form.get("app_id"))
+
+    @property
+    def other_columns(self):
+        return [self.form["form"].get(field) for field in self.report.other_fields]
 
 
 class FormType(object):

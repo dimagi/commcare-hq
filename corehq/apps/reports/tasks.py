@@ -17,6 +17,7 @@ from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
+from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
@@ -230,13 +231,8 @@ def update_calculated_properties():
 
 
 def is_app_active(app_id, domain):
-    now = datetime.utcnow()
-    then = json_format_datetime(now - timedelta(days=30))
-    now = json_format_datetime(now)
+    return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
-    key = ['submission app', domain, app_id]
-    row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
-    return True if row else False
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def apps_update_calculated_properties():

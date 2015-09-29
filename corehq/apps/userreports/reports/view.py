@@ -129,10 +129,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return self.spec.ui_filters
 
     @cls_to_view_login_and_domain
-    def dispatch(self, request, report_config_id, **kwargs):
+    def dispatch(self, request, domain, subreport_slug, **kwargs):
         self.request = request
-        self.domain = request.domain
-        self.report_config_id = report_config_id
+        self.domain = domain
+        self.report_config_id = subreport_slug
         self.lang = self.request.couch_user.language or default_language()
         user = request.couch_user
         if self.has_permissions(self.domain, user):
@@ -142,7 +142,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             elif kwargs.get('render_as') == 'excel':
                 return self.excel_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
-                return self.get_ajax(request, **kwargs)
+                return self.get_ajax(request)
             self.content_type = None
             self.add_warnings(request)
             return super(ConfigurableReport, self).dispatch(request, self.domain, **kwargs)
@@ -181,12 +181,6 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
             if saved_report_config_id else None
 
-        datespan_filters = []
-        for f in self.datespan_filters:
-            copy = dict(f)
-            copy['display'] = localize(copy['display'], self.lang)
-            datespan_filters.append(copy)
-
         return {
             'report_configs': [
                 _get_context_for_saved_report(saved_report)
@@ -195,10 +189,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 )
             ],
             'default_config': _get_context_for_saved_report(saved_report_config),
-            'datespan_filters': [{
-                'display': _('Choose a date filter...'),
-                'slug': None,
-            }] + datespan_filters,
+            'datespan_filters': ReportConfig.datespan_filter_choices(self.datespan_filters, self.lang),
         }
 
     @property
@@ -216,11 +207,24 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     def headers(self):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
 
-    def get_ajax(self, request, domain=None, **kwargs):
+    def get_ajax(self, request):
         try:
             data_source = self.data_source
+            if len(data_source.columns) > 50:
+                raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
-            data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
+
+            sort_column = request.GET.get('iSortCol_0')
+            sort_order = request.GET.get('sSortDir_0', 'ASC')
+            echo = int(request.GET.get('sEcho', 1))
+            if sort_column and echo != 1:
+                data_source.set_order_by(
+                    [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
+                )
+            else:
+                # Use defined sort expression initially
+                data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
+
             total_records = data_source.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
@@ -271,7 +275,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @classmethod
     def url_pattern(cls):
         from django.conf.urls import url
-        pattern = r'^{slug}/(?P<report_config_id>[\w\-:]+)/$'.format(slug=cls.slug)
+        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
     @property
@@ -356,6 +360,12 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return file
 
 
+# Base class for classes that provide custom rendering for UCRs
+class CustomConfigurableReport(ConfigurableReport):
+    # Ensures that links in saved reports will hit CustomConfigurableReportDispatcher
+    slug = 'custom_configurable'
+
+
 class CustomConfigurableReportDispatcher(ReportDispatcher):
     slug = prefix = 'custom_configurable'
     map_name = 'CUSTOM_UCR'
@@ -367,14 +377,13 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         )
         return to_function(class_path)
 
-    def dispatch(self, request, report_config_id, **kwargs):
-        domain = kwargs['domain']
-        request.domain = domain
+    def dispatch(self, request, domain, subreport_slug, **kwargs):
+        report_config_id = subreport_slug
         try:
             report_class = self._report_class(domain, report_config_id)
         except BadSpecError:
             raise Http404
-        return report_class().dispatch(request, report_config_id, **kwargs)
+        return report_class().dispatch(request, domain, report_config_id, **kwargs)
 
     def get_report(self, domain, slug, config_id):
         try:
@@ -386,5 +395,5 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
     @classmethod
     def url_pattern(cls):
         from django.conf.urls import url
-        pattern = r'^{slug}/(?P<report_config_id>[\w\-:]+)/$'.format(slug=cls.slug)
+        pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)

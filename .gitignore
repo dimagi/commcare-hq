@@ -34,6 +34,7 @@ dump.rdb
 **/less/*.css
 /staticmedia*
 .transifexrc
+python_env
 
 submodules/formdesigner
 submodules/vellum/Vellum

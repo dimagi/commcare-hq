@@ -10,9 +10,11 @@
                      $testLabel = $('<span style="margin-left: 5px;" class="label" />');
             $testLinkButton.text("{% trans 'Test Link' %}");
             $testLinkButton.click(function () {
-                var url = $("#id_url").val();
-                var type = {{ repeater_type|to_javascript_string }};
-                jQuery.post("{% url "test_repeater" domain %}", {url: url, repeater_type: type}, function(data) {
+                var url = $("#id_url").val(),
+                    format = $("#id_format").val(),
+                    type = {{ repeater_type|to_javascript_string }},
+                    data = {url: url, repeater_type: type, format: format};
+                jQuery.post("{% url "test_repeater" domain %}", data, function(data) {
                     json_res = JSON.parse(data);
                     $testLabel.removeClass("hide label-important label-success");
                     if (json_res.status) {

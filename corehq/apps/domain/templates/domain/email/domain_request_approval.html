@@ -1,0 +1,23 @@
+{% load i18n %}
+<p>{% blocktrans %}Hi!{% endblocktrans %}</p>
+<p>
+  {% blocktrans %}
+    {{ inviter }} has approved your request to join the {{ domain }} project space at CommCareHQ.
+    This approval expires in {{ days }} day(s).
+  {% endblocktrans %}
+</p>
+<p>{% blocktrans %}CommCareHQ is a tool that helps manage frontline workers around the world.{% endblocktrans %}</p>
+<p>
+  {% blocktrans %}
+    To confirm this approval click <a href="{{ url }}">this link</a>.
+    If you are unable to click the link, copy and paste the following url into your browser. {{url}}
+  {% endblocktrans %}
+</p>
+<p>
+  {% blocktrans %}
+    If you think you have received this by mistake, you can go ahead and ignore this email.
+    To find out more about CommCareHQ, visit http://www.commcarehq.org/.
+  {% endblocktrans %}
+</p>
+<p>{% blocktrans %}Thanks for using our site!{% endblocktrans %}</p>
+<p>{% blocktrans %}-The CommCareHQ team{% endblocktrans %}</p>

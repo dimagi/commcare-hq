@@ -5,6 +5,8 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
+from soil import DownloadBase
+
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):
     response = {
@@ -38,14 +40,25 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
     return response
 
 
-def archive_forms(domain, user, uploaded_data):
+def archive_forms_old(domain, user, uploaded_data):
+    # used by excel archive forms
+    form_ids = [row.get('form_id') for row in uploaded_data]
+    from .interfaces import FormManagementMode
+    mode = FormManagementMode(FormManagementMode.ARCHIVE_MODE)
+    return archive_or_restore_forms(domain, user, form_ids, mode, from_excel=True)
+
+
+def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=None, from_excel=False):
     response = {
         'errors': [],
         'success': [],
     }
 
-    form_ids = [row.get('form_id') for row in uploaded_data]
     missing_forms = set(form_ids)
+    success_count = 0
+
+    if task:
+        DownloadBase.set_progress(task, 0, len(form_ids))
 
     for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
         xform = XFormInstance.wrap(xform_doc)
@@ -62,14 +75,29 @@ def archive_forms(domain, user, uploaded_data):
             username=user.username)
 
         try:
-            xform.archive(user=user.username)
-            response['success'].append(_(u"Successfully archived {form}").format(form=xform_string))
+            if archive_or_restore.is_archive_mode():
+                xform.archive(user=user.username)
+                message = _(u"Successfully archived {form}").format(form=xform_string)
+            else:
+                xform.unarchive(user=user.username)
+                message = _(u"Successfully unarchived {form}").format(form=xform_string)
+            response['success'].append(message)
+            success_count = success_count + 1
         except Exception as e:
             response['errors'].append(_(u"Could not archive {form}: {error}").format(
                 form=xform_string, error=e))
+
+        if task:
+            DownloadBase.set_progress(task, success_count, len(form_ids))
 
     for missing_form_id in missing_forms:
         response['errors'].append(
             _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
 
-    return response
+    if from_excel:
+        return response
+
+    response["success_count_msg"] = _("{success_msg} {count} form(s)".format(
+        success_msg=archive_or_restore.success_text,
+        count=success_count))
+    return {"messages": response}

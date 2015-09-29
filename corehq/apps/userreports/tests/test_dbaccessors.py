@@ -1,5 +1,5 @@
 from django.test import TestCase
-from corehq import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, \
     get_all_report_configs, get_number_of_report_configs_by_data_source
 

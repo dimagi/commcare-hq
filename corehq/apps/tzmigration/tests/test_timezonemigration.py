@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
-from corehq.apps.app_manager.tests import TestFileMixin
+from corehq.util.test_utils import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError

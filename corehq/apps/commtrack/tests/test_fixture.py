@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
@@ -15,7 +15,7 @@ from casexml.apps.phone.models import SyncLog
 import datetime
 
 
-class FixtureTest(CommTrackTest, TestFileMixin):
+class FixtureTest(CommTrackTest, TestXmlMixin):
 
     def _random_string(self, length):
         return ''.join(random.choice(string.ascii_lowercase)

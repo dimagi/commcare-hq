@@ -1,9 +1,9 @@
 import json
 from django.db.models import Q
-from corehq import Domain, toggles
 from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion, \
     Subscription, Subscriber, BillingContactInfo, SoftwarePlan
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.users.models import WebUser

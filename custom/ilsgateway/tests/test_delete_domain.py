@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.test import TestCase
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import LocationType, Location
 from corehq.apps.products.models import Product
 from custom.ilsgateway.models import ProductAvailabilityData, DeliveryGroupReport, SupplyPointWarehouseRecord, \

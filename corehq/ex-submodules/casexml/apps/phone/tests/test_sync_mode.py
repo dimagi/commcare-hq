@@ -46,7 +46,8 @@ class SyncBaseTest(TestCase):
         self.user = User(user_id=USER_ID, username=USERNAME,
                          password="changeme", date_joined=datetime(2011, 6, 9))
         # this creates the initial blank sync token in the database
-        restore_config = RestoreConfig(self.project, user=self.user)
+        restore_config = RestoreConfig(self.project, user=self.user,
+                                       cache_settings=RestoreCacheSettings(overwrite_cache=True))
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
         self.factory = CaseFactory(
             case_defaults={
@@ -591,6 +592,45 @@ class SyncTokenUpdateTest(SyncBaseTest):
             self.assertTrue(sync_log.phone_is_holding_case(case._id))
 
     @run_with_all_restore_configs
+    def test_create_relevant_owner_and_update_to_empty_owner_in_same_form(self):
+        case = self.factory.create_case(owner_id=USER_ID, update={'owner_id': ''}, strict=False)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        if isinstance(sync_log, SimplifiedSyncLog):
+            self.assertFalse(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_and_update_to_empty_owner_in_same_form(self):
+        case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': ''}, strict=False)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_child_case_and_close_parent_in_same_form(self):
+        # create the parent
+        parent_id = self.factory.create_case()._id
+        # create an irrelevent child and close the parent
+        child_id = uuid.uuid4().hex
+        child_id = 'child'
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={
+                    'create': True,
+                    'owner_id': 'irrelevant_1',
+                    'update': {'owner_id': 'irrelevant_2'},
+                    'strict': False
+                },
+                relationships=[CaseRelationship(
+                    CaseStructure(case_id=parent_id, attrs={'close': True}),
+                    relationship=PARENT_TYPE,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
+        # they should both be gone
+        self._testUpdate(self.sync_log._id, {}, {})
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', close=True)
@@ -605,6 +645,49 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 attrs={'owner_id': 'irrelevant', 'close': True},
             )
         )
+
+
+class ChangingOwnershipTest(SyncBaseTest):
+
+    def setUp(self):
+        super(ChangingOwnershipTest, self).setUp()
+        self.extra_owner_id = 'extra-owner-id'
+        self.user.additional_owner_ids = [self.extra_owner_id]
+        self.sync_log = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user)
+        )
+        self.assertTrue(self.extra_owner_id in self.sync_log.owner_ids_on_phone)
+
+        # since we got a new sync log, have to update the factory as well
+        self.factory.form_extras = {'last_sync_token': self.sync_log._id}
+
+    @run_with_all_restore_configs
+    def test_change_owner_list(self):
+        # create a case with the extra owner
+        case_id = self.factory.create_case(owner_id=self.extra_owner_id)._id
+
+        # make sure it's there
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case_id))
+
+        def _get_incremental_synclog_for_user(user, since):
+            incremental_restore_config = RestoreConfig(
+                self.project,
+                user=self.user,
+                params=RestoreParams(version=V2, sync_log_id=since),
+            )
+            return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
+
+        # make sure it's there on new sync
+        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=self.sync_log._id)
+        self.assertTrue(self.extra_owner_id in incremental_sync_log.owner_ids_on_phone)
+        self.assertTrue(incremental_sync_log.phone_is_holding_case(case_id))
+
+        # remove the owner id and confirm that owner and case are removed on next sync
+        self.user.additional_owner_ids = []
+        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
+        self.assertFalse(self.extra_owner_id in incremental_sync_log.owner_ids_on_phone)
+        self.assertFalse(incremental_sync_log.phone_is_holding_case(case_id))
 
 
 class SyncTokenCachingTest(SyncBaseTest):
@@ -663,8 +746,6 @@ class SyncTokenCachingTest(SyncBaseTest):
         restore_config = RestoreConfig(project=self.project, user=self.user)
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
-
-        self.assertEqual(original_payload.as_string(), cached_payload.as_string())
 
     @run_with_all_restore_configs
     def testCacheInvalidation(self):

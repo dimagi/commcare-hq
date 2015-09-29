@@ -1,11 +1,20 @@
 {% extends "users/base_template.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load i18n %}
 
 {% block main_column %}
     <form class="form form-horizontal" method="post" action="">
         {% bootstrap_form_errors registration_form %}
-        {% bootstrap_fieldset registration_form "Information for the person you would like to invite to your project" %}
-        <div class="form-actions"><button type="submit" class="btn btn-primary">Send Invite</button></div>
+        {% bootstrap_fieldset registration_form "Information for new web user" %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% if request_id %}
+                    {% trans "Add User" %}
+                {% else %}
+                    {% trans "Send Invite" %}
+                {% endif %}
+            </button>
+        </div>
     </form>
 {% endblock %}

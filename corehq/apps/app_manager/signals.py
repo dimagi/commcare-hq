@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.dispatch.dispatcher import Signal
 
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from couchforms.signals import successful_form_received, Certainty, ReceiverResult
 from couchforms.xml import ResponseNature

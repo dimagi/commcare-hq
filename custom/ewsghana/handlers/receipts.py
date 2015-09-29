@@ -1,4 +1,4 @@
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.exceptions import NotAUserClassError
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number

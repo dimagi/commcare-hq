@@ -1,5 +1,6 @@
 import logging
 try:
+    from .test_caching_utils import *
     from .test_cleanliness import *
     from .test_new_sync import *
     from .test_index_tree import *

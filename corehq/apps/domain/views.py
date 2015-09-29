@@ -3,16 +3,29 @@ import datetime
 from decimal import Decimal
 import logging
 import uuid
+import json
+import cStringIO
+
 from couchdbkit import ResourceNotFound
-from django.db import transaction
-from corehq.const import USER_DATE_FORMAT
-from custom.dhis2.forms import Dhis2SettingsForm
-from custom.dhis2.models import Dhis2Settings
 import dateutil
-from django.contrib import messages
 from django.core.paginator import Paginator
 from django.views.generic import View
 from django.db.models import Sum
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.shortcuts import redirect, render
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from PIL import Image
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+
+from corehq.const import USER_DATE_FORMAT
+from custom.dhis2.forms import Dhis2SettingsForm
+from custom.dhis2.models import Dhis2Settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -44,15 +57,8 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-
-from corehq import privileges, feature_previews, toggles
-from django_prbac.decorators import requires_privilege_raise404
+from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
-
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
@@ -64,12 +70,7 @@ from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-
-from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
-
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required
 )
@@ -78,27 +79,19 @@ from corehq.apps.domain.forms import (
     SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
-    SelectSubscriptionTypeForm, DimagiOnlyEnterpriseForm,
-    AdvancedExtendedTrialForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS)
+    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS)
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
-
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
     RepeatRecord
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-import json
 from dimagi.utils.post import simple_post
-import cStringIO
-from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
@@ -496,8 +489,9 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
+    format = request.POST['format']
     form = GenericRepeaterForm(
-        {"url": url},
+        {"url": url, "format": format},
         domain=domain,
         repeater_class=receiverwrapper.models.repeater_types[repeater_type]
     )
@@ -1303,7 +1297,8 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     def privacy_form(self):
         initial = {
             "secure_submissions": self.domain_object.secure_submissions,
-            "restrict_superusers": self.domain_object.restrict_superusers
+            "restrict_superusers": self.domain_object.restrict_superusers,
+            "allow_domain_requests": self.domain_object.allow_domain_requests,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial)
@@ -1699,7 +1694,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         if self.published_snapshot:
             for app in self.published_snapshot.full_applications():
                 base_app_id = app.copy_of if self.domain_object == self.published_snapshot else app.copied_from.copy_of
-                published_apps[base_app_id] = app
+                if base_app_id:
+                    published_apps[base_app_id] = app
         return published_apps
 
     @property
@@ -1820,9 +1816,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     m_file.save()
 
-            ignore = ['UserRole']
             if not request.POST.get('share_reminders', False):
-                ignore.append('CaseReminderHandler')
+                share_reminders = False
+            else:
+                share_reminders = True
 
             copy_by_id = set()
             for k in request.POST.keys():
@@ -1830,8 +1827,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                     copy_by_id.add(k[:-len("-publish")])
 
             old = self.domain_object.published_snapshot()
-            new_domain = self.domain_object.save_snapshot(ignore=ignore,
-                                                          copy_by_id=copy_by_id)
+            new_domain = self.domain_object.save_snapshot(
+                share_reminders=share_reminders, copy_by_id=copy_by_id)
             new_domain.license = new_license
             new_domain.description = request.POST['description']
             new_domain.short_description = request.POST['short_description']

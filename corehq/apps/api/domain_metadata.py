@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.v0_1 import (

@@ -70,7 +70,7 @@ class ReportDispatcher(View):
 
     def get_reports(self, domain=None):
         attr_name = self.map_name
-        import corehq
+        from corehq import reports
         domain_module = Domain.get_module_by_name(domain)
         if domain:
             project = Domain.get_by_name(domain)
@@ -82,7 +82,7 @@ class ReportDispatcher(View):
                 reports = reports(project)
             return tuple(reports)
 
-        corehq_reports = process(getattr(corehq, attr_name, ()))
+        corehq_reports = process(getattr(reports, attr_name, ()))
         custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports

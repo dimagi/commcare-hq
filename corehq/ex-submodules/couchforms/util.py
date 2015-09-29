@@ -27,7 +27,7 @@ from dimagi.utils.parsing import json_format_datetime
 import xml2json
 
 import couchforms
-from . import const
+from .const import BadRequest
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -459,7 +459,7 @@ class SubmissionPost(object):
         if not self.auth_context.is_valid():
             return self.failed_auth_response, None, []
 
-        if isinstance(self.instance, const.BadRequest):
+        if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message), None, []
 
         def process(xform):
@@ -504,7 +504,7 @@ class SubmissionPost(object):
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
-                            stock_result = process_stock(instance, case_db)
+                            stock_result = process_stock(xforms, case_db)
                         except known_errors as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't

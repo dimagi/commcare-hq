@@ -305,13 +305,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-PAGINATE_WEB_USERS = StaticToggle(
-    'paginate_web_users',
-    'Paginate Web Users',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
@@ -640,6 +633,13 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
+    'mobile_worker_self_registration',
+    'Allow mobile workers to self register',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
@@ -660,4 +660,11 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     "Support mobile sync bugs in older projects (2.9 and below).",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+VIEW_BUILD_SOURCE = StaticToggle(
+    'diff_builds',
+    'Allow users to view and diff build source files',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
