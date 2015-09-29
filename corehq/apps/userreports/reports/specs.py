@@ -107,6 +107,7 @@ class FieldColumn(ReportColumn):
         'default',
         'percent_of_total',
     ])
+    sortable = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, obj):
@@ -136,7 +137,7 @@ class FieldColumn(ReportColumn):
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
-                sortable=False,
+                sortable=self.sortable,
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description
