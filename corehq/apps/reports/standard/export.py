@@ -28,7 +28,7 @@ from corehq.apps.reports.models import HQGroupExportConfiguration, \
 from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 
 
 class ExportReport(DataInterface, ProjectReportParametersMixin):

@@ -1,7 +1,7 @@
 from django.test import TestCase
 import os
 import json
-from corehq.apps.app_manager.models import import_app
+from corehq.apps.app_manager.models.common import import_app
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.tests.util import MockContact, CONTACT_ID, q_and_a
 from corehq.apps.smsforms.models import SQLXFormsSession

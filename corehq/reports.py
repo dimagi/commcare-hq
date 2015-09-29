@@ -98,7 +98,7 @@ def REPORTS(project):
         )))
 
     if project.has_careplan:
-        from corehq.apps.app_manager.models import CareplanConfig
+        from corehq.apps.app_manager.models.common import CareplanConfig
         config = CareplanConfig.for_domain(project.name)
         if config:
             cp_reports = tuple(make_careplan_reports(config))

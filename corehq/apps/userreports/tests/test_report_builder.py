@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models.common import Application, Module
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.builder.forms import ConfigureListReportForm
 

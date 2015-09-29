@@ -1,7 +1,7 @@
 # coding=utf-8
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     AdvancedForm,
     AdvancedModule,
     AdvancedOpenCaseAction,

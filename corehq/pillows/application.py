@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 from corehq.pillows.mappings.app_mapping import APP_INDEX, APP_MAPPING
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow

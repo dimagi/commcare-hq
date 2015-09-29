@@ -7,7 +7,7 @@ from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
 from corehq.apps.orgs.models import Organization

@@ -20,7 +20,7 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
     RECIPIENT_SENDER, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS, METHOD_SMS)
-from corehq.apps.app_manager.models import import_app
+from corehq.apps.app_manager.models.common import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
 from couchforms.dbaccessors import get_forms_by_type

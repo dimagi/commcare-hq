@@ -3,7 +3,7 @@ from xml.etree import ElementTree
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     Application,
     AutoFilter,
     CustomDataAutoFilter,
