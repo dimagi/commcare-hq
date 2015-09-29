@@ -339,7 +339,7 @@ $(function () {
                                         data-toggle="modal"
                                         ng-show="!user.mark_activated"
                                         data-target="#activate_{{ user.user_id }}">
-                                        {% trans "Activate" %}
+                                        {% trans "Reactivate" %}
                                 </button>
                                 <span ng-show="user.mark_activated">
                                     <i class="fa fa-check"></i> {% trans "ACTIVE" %}
@@ -361,15 +361,29 @@ $(function () {
                                                     <span aria-hidden="true">&times;</span>
                                                     <span class="sr-only">{% trans "Close" %}</span>
                                                 </button>
-                                                <h4 class="modal-title">{% trans "Activate Mobile Worker" %}</h4>
+                                                <h4 class="modal-title">{% trans "Reactivate Mobile Worker" %}</h4>
                                             </div>
                                             <div class="modal-body">
-                                                <p class="lead well well-small">
+                                                <p class="lead">
+                                                    {% blocktrans %}
+                                                        Are you sure you want to <strong>reactivate</strong> this mobile worker?
+                                                    {% endblocktrans %}
+                                                </p>
+                                                <p class="lead">
                                                     <i class="fa fa-user"></i>
                                                     <strong>{{ user.username }}</strong>
-                                                    <span ng-if="!!user.name">({{ user.name }})</span>
+                                                    <span ng-if="!!user.name" class="text-center">({{ user.name }})</span>
                                                 </p>
-                                                <p class="lead">{% trans "Are you sure you want to ACTIVATE this worker?" %}</p>
+                                                <p>
+                                                    {% blocktrans %}
+                                                    Deactivated mobile workers are not able to log into new devices.<br />
+                                                    Read more about
+                                                    <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers'
+                                                       target="_blank">
+                                                        deactivating mobile workers
+                                                    </a> on our Help Site.
+                                                    {% endblocktrans %}
+                                                </p>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button"
@@ -379,7 +393,7 @@ $(function () {
                                                 </button>
                                                 <button type="submit"
                                                         class="btn btn-success">
-                                                    {% trans 'Activate' %}
+                                                    {% trans 'Reactivate' %}
                                                 </button>
                                             </div>
                                         </form>
@@ -417,12 +431,26 @@ $(function () {
                                                 <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
                                             </div>
                                             <div class="modal-body">
-                                                <p class="lead well well-small">
+                                                <p class="lead">
+                                                    {% blocktrans %}
+                                                        Are you sure you want to <strong>deactivate</strong> this mobile worker?
+                                                    {% endblocktrans %}
+                                                </p>
+                                                <p class="lead">
                                                     <i class="fa fa-user"></i>
                                                     <strong>{{ user.username }}</strong>
-                                                    <span ng-if="!!user.name">({{ user.name }})</span>
+                                                    <span ng-if="!!user.name" class="text-center">({{ user.name }})</span>
                                                 </p>
-                                                <p class="lead">{% trans "Are you sure you want to DEACTIVATE this worker?" %}</p>
+                                                <p>
+                                                    {% blocktrans %}
+                                                    Deactivated mobile workers are not able to log into new devices.<br />
+                                                    Read more about
+                                                    <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers'
+                                                       target="_blank">
+                                                        deactivating mobile workers
+                                                    </a> on our Help Site.
+                                                    {% endblocktrans %}
+                                                </p>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button"
