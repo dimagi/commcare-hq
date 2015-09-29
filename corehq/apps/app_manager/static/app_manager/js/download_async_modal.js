@@ -24,10 +24,10 @@ $(function(){
                 if (keep_polling) {
                     $.ajax({
                         url: data.download_url,
-                        success: function (resp, status, xhr) {
+                        success: function (resp) {
                             if (resp.trim().length) {
                                 self.$downloading.addClass("hide");
-                                self.$download_progress.removeClass("hide").html(resp);
+                                self.$download_progress.html(resp).removeClass("hide");
                                 if (self.$download_progress.find(".alert-success").length) {
                                     keep_polling = false;
                                 }

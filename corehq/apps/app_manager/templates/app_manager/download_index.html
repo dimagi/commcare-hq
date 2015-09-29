@@ -50,14 +50,12 @@
 {% block modals %}
     {{ block.super }}
     {% url "download_ccz" app.domain app.id as ccz_url %}
-    {% with "download_ccz" as download_ccz_id %}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id=download_ccz_id download_url=ccz_url %}
-    {% endwith %}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" download_url=ccz_url %}
 {% endblock %}
 
 {% block js-inline %}
     {{ block.super }}
     {% url "download_ccz" app.domain app.id as ccz_url %}
-    {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='download_ccz' download_url=ccz_url %}
+    {% include 'app_manager/partials/download_async_modal_inline.html' with element_id="download_ccz" download_url=ccz_url %}
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=default"></script>
 {% endblock js-inline %}

@@ -6,7 +6,7 @@
     {% compress css %}
         <link type="text/css" rel="stylesheet" href="{% new_static 'app_manager/css/diff.css' %}"/>
     {% endcompress %}
-{% endblock stylesheets %} 
+{% endblock stylesheets %}
 
 {% block page_header %}
     {{ app.name }}: Build #{{ app.version }} vs #{{ other_app.version }}
