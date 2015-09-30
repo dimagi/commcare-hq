@@ -54,12 +54,14 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
+        modified_on = datetime(2014, 11, 12, 15, 37, 49)
+        opened_on = datetime(2014, 11, 11, 23, 34, 34, 25)
         sample_doc = dict(
             _id='some-doc-id',
             doc_type="CommCareCase",
-            modified_on="2014-11-12T15:37:49",
+            modified_on=modified_on.isoformat() + 'Z',
             user_id="23407238074",
-            opened_on="2014-11-11T23:34:34",
+            opened_on=opened_on.isoformat() + 'Z',
             owner_id="0923409230948",
             name="priority ticket",
             domain=app.domain,
@@ -79,7 +81,13 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
             if result.column.id == "inserted_at":
                 self.assertEqual(result.column.datatype, 'datetime')
                 self.assertEqual(fake_time_now, result.value)
-            if result.column.id not in ["repeat_iteration", "inserted_at"]:
+            elif result.column.id == "modified_on":
+                self.assertEqual(result.column.datatype, 'datetime')
+                self.assertEqual(modified_on, result.value)
+            elif result.column.id == "opened_on":
+                self.assertEqual(result.column.datatype, 'datetime')
+                self.assertEqual(opened_on, result.value)
+            elif result.column.id not in ["repeat_iteration", "inserted_at"]:
                 self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)
                 if result.column.id in default_case_property_datatypes:
                     self.assertEqual(
