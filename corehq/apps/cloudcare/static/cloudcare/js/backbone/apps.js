@@ -517,7 +517,8 @@ cloudCare.AppView = Backbone.View.extend({
         this.model = app;
     },
     selectCase: function (caseModel) {
-        var self = this;
+        var self = this,
+            buttonUrl;
         self.formListView.caseView.selectCase(caseModel);
         if (caseModel) {
             var module = self.selectedModule;
@@ -527,7 +528,7 @@ cloudCare.AppView = Backbone.View.extend({
                 // Construct a button which will take the user to the form
 
                 var buttonText = "Enter " + form.getLocalized("name", self.options.language);
-                var buttonUrl = getFormEntryUrl(self.options.urlRoot,
+                buttonUrl = getFormEntryUrl(self.options.urlRoot,
                                                         form.get("app_id"),
                                                         form.get("module_index"),
                                                         form.get("index"),
@@ -541,7 +542,7 @@ cloudCare.AppView = Backbone.View.extend({
                 //       But, in the currently selected case heading we want a singular version
                 //       e.g. "Mother: Mary"
                 var buttonText = "View " + self.selectedModule.get("case_label")[self.options.language];
-                var buttonUrl = getChildSelectUrl(self.options.urlRoot,
+                buttonUrl = getChildSelectUrl(self.options.urlRoot,
                                                         form.get("app_id"),
                                                         form.get("module_index"),
                                                         form.get("index"),
