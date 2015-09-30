@@ -1,10 +1,10 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load i18n %}
 
 {% block title %}{% trans "CloudCare" %}{% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
+{% block page_breadcrumbs %}
+    <ul id="cloudcare-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
             <a href="{% url "cloudcare_default" domain %}"><strong>{% trans "CloudCare" %}</strong></a>
         </li>
