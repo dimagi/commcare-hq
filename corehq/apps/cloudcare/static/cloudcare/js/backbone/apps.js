@@ -556,9 +556,9 @@ cloudCare.AppView = Backbone.View.extend({
             ).addClass("btn btn-primary").appendTo(
                 self.formListView.caseView.detailsView.el
             );
-            $('<a />').attr('href', buttonUrl).attr('target', '_blank').text(translatedStrings.newWindow).appendTo(
+            $('<a class="btn btn-default"/>').attr('href', buttonUrl).attr('target', '_blank').text(translatedStrings.newWindow).appendTo(
                 self.formListView.caseView.detailsView.el
-            ).css("padding-left", "2em");
+            ).css("margin-left", "5px");
             self.formListView.enterForm.click(buttonOnClick);
         } else {
             if (self.formListView.enterForm) {
