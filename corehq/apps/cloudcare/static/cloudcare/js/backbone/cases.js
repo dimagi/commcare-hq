@@ -224,7 +224,7 @@ cloudCare.CaseListView = Backbone.View.extend({
             $panelBody,
             $panel;
         self.el = $('<section />').attr("id", "case-list").addClass("col-sm-7");
-        self.$el = $(self.el)
+        self.$el = $(self.el);
         $panel = $('<div class="panel panel-default"></div>')
             .append('<div class="panel-heading">Cases</div>');
 
