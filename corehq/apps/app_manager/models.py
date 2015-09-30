@@ -3563,7 +3563,7 @@ class ShadowModule(ModuleBase):
     from its parent module.
     """
     module_type = 'shadow'
-    parent_module_id = StringProperty()
+    source_module_id = StringProperty()
     case_list_filter = StringProperty()
 
     get_forms = IndexedSchema.Getter('forms')
@@ -3574,8 +3574,8 @@ class ShadowModule(ModuleBase):
 
     @property
     def parent_module(self):
-        if self.parent_module_id:
-            return self._parent.get_module_by_unique_id(self.parent_module_id)
+        if self.source_module_id:
+            return self._parent.get_module_by_unique_id(self.source_module_id)
         return {}
 
     @property
