@@ -3560,7 +3560,7 @@ class ShadowModule(ModuleBase):
     """
     A module that acts as a shortcut to another module. This module has its own
     name, icon/audio, filter, and case list filter, but inherits all other properties
-    from its parent module.
+    from its source module.
     """
     put_in_root = BooleanProperty(default=False)
     module_type = 'shadow'
@@ -3574,91 +3574,88 @@ class ShadowModule(ModuleBase):
         return super(ShadowModule, cls).wrap(data)
 
     @property
-    def parent_module(self):
+    def source_module(self):
         if self.source_module_id:
             return self._parent.get_module_by_unique_id(self.source_module_id)
-        return {}
+        return None
 
     @property
     def forms(self):
-        return self.parent_module.get('forms', [])
+        return []
 
     @property
     def case_details(self):
-        return self.parent_module.get('case_details', None)
+        if not self.source_module:
+            return None
+        return self.source_module.case_details
 
     @property
     def ref_details(self):
-        return self.parent_module.get('ref_details', None)
+        if not self.source_module:
+            return None
+        return self.source_module.ref_details
 
     @property
     def case_list(self):
-        return self.parent_module.get('case_list', {'show': False})
+        if not self.source_module:
+            return None
+        return self.source_module.case_list
 
     @property
     def referral_list(self):
-        return self.parent_module.get('referral_list', None)
+        if not self.source_module:
+            return None
+        return self.source_module.referral_list
 
     @property
     def task_list(self):
-        return self.parent_module.get('task_list', None)
+         return None
 
     @property
     def parent_select(self):
-        return self.parent_module.get('parent_select', None)
+        return ParentSelect(active=False)
 
     @parse_int([1])
     def get_form(self, i):
-        if not self.parent_module:
-            return None
-        return self.parent_module.get_form(i)
+        return None
 
     def get_child_modules(self):
-        if not self.parent_module:
-            return []
-        return self.parent_module.get_child_modules()
+        return []
 
     @property
     def root_module(self):
-        return self.parent_module.get('root_module', None)
+        return None
 
     def get_case_types(self):
-        if not self.parent_module:
+        if not self.source_module:
             return []
-        return self.parent_module.get_case_types()
+        return self.source_module.get_case_types()
 
     def get_app(self):
-        if not self.parent_module:
+        if not self.source_module:
             return None
-        return self.parent_module.get_app()
+        return self.source_module.get_app()
 
     def rename_lang(self, old_lang, new_lang):
         pass
 
     def validate_detail_columns(self, columns):
-        if not self.parent_module:
+        if not self.source_module:
             return []
-        return self.parent_module.validate_detail_columns(columns)
+        return self.source_module.validate_detail_columns(columns)
 
     def get_form_by_unique_id(self, unique_id):
-        if not self.parent_module:
-            return None
-        return self.parent_module.get_form_by_unique_id(unique_id)
-
-    def validate_for_build(self):
-        return []
+        return None
 
     @memoized
     def get_subcase_types(self):
-        if not self.parent_module:
+        if not self.source_module:
             return []
-        return self.parent_module.get_subcase_types()
+        return self.source_module.get_subcase_types()
 
     @memoized
     def all_forms_require_a_case(self):
-        if not self.parent_module:
-            return False
-        return self.parent_module.all_forms_require_a_case()
+        return False
 
     def get_details(self):
         return ()
@@ -3674,6 +3671,24 @@ class ShadowModule(ModuleBase):
 
     def uses_media(self):
         return False
+
+    def validate_for_build(self):
+        errors = super(ShadowModule, self).validate_for_build()
+        if self.case_list_filter:
+            try:
+                etree.XPath(self.case_list_filter)
+            except etree.XPathSyntaxError:
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.get_module_info(),
+                    'filter': self.case_list_filter,
+                })
+        if not self.source_module_id:
+            errors.append({
+                'type': 'no source module id',
+                'module': self.get_module_info()
+            })
+        return errors
 
 
 class VersionedDoc(LazyAttachmentDoc):

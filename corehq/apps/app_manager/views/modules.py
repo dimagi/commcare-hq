@@ -322,20 +322,27 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     """
     attributes = {
         "all": None,
-        "case_type": None, "put_in_root": None, "display_separately": None,
-        "name": None, "case_label": None, "referral_label": None,
-        'media_image': None, 'media_audio': None, 'has_schedule': None,
+        "case_label": None,
         "case_list": ('case_list-show', 'case_list-label'),
-        "task_list": ('task_list-show', 'task_list-label'),
+        "case_list-menu_item_media_audio": None,
+        "case_list-menu_item_media_image": None,
         "case_list_form_id": None,
         "case_list_form_label": None,
-        "case_list_form_media_image": None,
         "case_list_form_media_audio": None,
-        'case_list-menu_item_media_image': None,
-        'case_list-menu_item_media_audio': None,
-        "parent_module": None,
-        "root_module_id": None,
+        "case_list_form_media_image": None,
+        "case_type": None,
+        "display_separately": None,
+        "has_schedule": None,
+        "media_audio": None,
+        "media_image": None,
         "module_filter": None,
+        "name": None,
+        "parent_module": None,
+        "put_in_root": None,
+        "referral_label": None,
+        "root_module_id": None,
+        "source_module_id": None,
+        "task_list": ('task_list-show', 'task_list-label'),
     }
 
     if attr not in attributes:
@@ -384,6 +391,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("source_module_id"):
+        module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):
         module["display_separately"] = json.loads(request.POST.get("display_separately"))
     if should_edit("parent_module"):
