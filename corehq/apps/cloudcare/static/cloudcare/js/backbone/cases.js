@@ -371,7 +371,7 @@ cloudCare.CaseSelectionModel = Backbone.Model.extend({
 
 cloudCare.CaseSelectionView = Backbone.View.extend({
     el: $("#case-crumbs"),
-    template: _.template($("#template-crumbs").html()),
+    template: _.template($("#cloudcare-breadcrumbs").html()),
 
     initialize: function (){
         var self = this;
