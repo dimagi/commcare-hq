@@ -60,8 +60,8 @@ cloudCare.AppListView = Backbone.View.extend({
 
     render: function () {
         var self = this;
-        var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-        $("<li />").addClass("nav-header").text("Apps").appendTo(ul);
+        var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+        $("<li />").addClass("text-hq-nav-header").text("Apps").appendTo(ul);
         _(self.appList.models).each(function(item){
             self.appendItem(item);
         });
@@ -244,8 +244,8 @@ cloudCare.SessionListView = Backbone.View.extend({
         var self = this;
         $(self.el).html('');
         if (self.sessionList.length) {
-            var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-            $("<li />").addClass("nav-header").text("Incomplete Forms").appendTo(ul);
+            var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+            $("<li />").addClass("text-hq-nav-header").text("Incomplete Forms").appendTo(ul);
             _(self.sessionList.models).each(function(item){
                 self.appendItem(item);
             });
@@ -367,8 +367,8 @@ cloudCare.ModuleListView = Backbone.View.extend({
         this._moduleViews = {};
 
         var self = this;
-        var ul = $("<ul />").addClass("nav nav-list").appendTo($(this.el));
-        $("<li />").addClass("nav-header").text("Modules").appendTo(ul);
+        var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(this.el));
+        $("<li />").addClass("text-hq-nav-header").text("Modules").appendTo(ul);
         _(this.moduleList.models).each(function(item){
             self.appendItem(item);
         });
@@ -421,8 +421,8 @@ cloudCare.FormListView = Backbone.View.extend({
         var taskListOnly = self.model ? self.model.taskListOnly : false;
         $(self.el).html("");
         if (self.model) {
-	        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-	        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
+	        var formUl = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+	        $("<li />").addClass("text-hq-nav-header").text("Forms").appendTo(formUl);
 	        _(self.model.forms).each(function (form) {
                 if (!taskListOnly || form.get('index') === 'task-list') {
                     self.appendForm(form);

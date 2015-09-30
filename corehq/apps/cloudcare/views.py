@@ -48,6 +48,7 @@ from xml2json.lib import xml2json
 import requests
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+from corehq.apps.style.decorators import use_knockout_js
 from django.shortcuts import get_object_or_404
 
 
@@ -62,6 +63,8 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
     return render(request, "cloudcare/insufficient_privilege.html", context)
 
+
+@use_knockout_js()
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def cloudcare_main(request, domain, urlPath):
