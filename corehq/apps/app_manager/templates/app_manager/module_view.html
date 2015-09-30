@@ -224,6 +224,23 @@
                     </div>
                 </div>
                 {% block settings_fields %}
+                {% if module.module_type == 'shadow' %}
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Source Module" %}
+                    </label>
+                    <div class="controls">
+                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}">
+                        <option value="">{% trans "None" %}</option>
+                        {% for mod in app.modules %}
+                            {% if mod.id != module.id %}
+                                <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
+                            {% endif %}
+                        {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
                  <div class="control-group">
                     <label class="control-label">
                         {% trans "Menu Mode" %}
@@ -247,23 +264,6 @@
                         <option value="">{% trans "No Parent" %}</option>
                         {% for mod in valid_parent_modules %}
                             <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
-                        {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                {% endif %}
-                {% if module.module_type == 'shadow' %}
-                <div class="control-group">
-                    <label class="control-label">
-                        {% trans "Source Module" %}
-                    </label>
-                    <div class="controls">
-                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}">
-                        <option value="">{% trans "No Source" %}</option>
-                        {% for mod in app.modules %}
-                            {% if mod.id != module.id %}
-                                <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
-                            {% endif %}
                         {% endfor %}
                         </select>
                     </div>
