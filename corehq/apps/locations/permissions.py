@@ -6,6 +6,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
+from corehq.apps.users.models import CommCareUser
 from .models import SQLLocation
 from .util import get_xform_location
 
@@ -106,16 +107,28 @@ def can_edit_location_types(view_fn):
     return locations_access_required(_inner)
 
 
-def can_edit_form_location(domain, user, form):
+def can_edit_form_location(domain, web_user, form):
     # Domain admins can always edit locations.  If the user isn't an admin and
     # the location restriction is enabled, they can only edit forms that are
     # explicitly at or below them in the location tree.
     domain_obj = Domain.get_by_name(domain)
     if (not toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain)
-            or user_can_edit_any_location(user, domain_obj)):
+            or user_can_edit_any_location(web_user, domain_obj)):
         return True
 
-    location = get_xform_location(form)
-    if not location:
+    if domain_obj.supports_multiple_locations_per_user:
+        user_id = getattr(form.metadata, 'userID', None)
+        if not user_id:
+            return False
+
+        form_user = CommCareUser.get(user_id)
+        for location in form_user.locations:
+            if user_can_edit_location(web_user, location.sql_location, domain_obj):
+                return True
         return False
-    return user_can_edit_location(user, location, domain_obj)
+
+    else:
+        form_location = get_xform_location(form)
+        if not form_location:
+            return False
+        return user_can_edit_location(web_user, form_location, domain_obj)
