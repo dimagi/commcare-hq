@@ -2,6 +2,14 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block title %}
+    {% if request.couch_user.is_web_user %}
+        {% trans "Preview Form" %}
+    {% else %}
+        {% trans "CloudCare" %}
+    {% endif %}
+{% endblock %}
+
 {% block head %}
         {{ block.super }}
     {% include "imports/proptable.html" %}
