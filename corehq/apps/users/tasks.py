@@ -41,6 +41,16 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
         'messages': results
     }
 
+
+def run_case_post_save_signals(docs):
+    from corehq.apps.reminders.signals import case_changed_receiver as reminders_case_post_save
+    from corehq.apps.sms.models import case_changed_receiver as sms_case_post_save
+    for doc in docs:
+        case = CommCareCase.wrap(doc)
+        reminders_case_post_save(None, case)
+        sms_case_post_save(None, case)
+
+
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
 def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
     for doc in docs:
@@ -48,6 +58,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
         doc['-deletion_id'] = deletion_id
     CommCareCase.get_db().bulk_save(docs)
     _remove_indices_from_deleted_cases_task.delay(domain, [doc['_id'] for doc in docs])
+    run_case_post_save_signals(docs)
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
