@@ -24,7 +24,9 @@
     window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
     window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
     </script>
-    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
+    {% if module.module_type != 'shadow' %}
+        <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
+    {% endif %}
 {% endblock %}
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
@@ -58,6 +60,24 @@
                 requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
             };
 
+            {% if module.module_type == 'shadow' %}
+                console.log("this is a shadow module");
+            /*
+            // Create save button
+            var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
+            ShadowModuleDetailConfig = (function () {
+                this.saveButton = COMMCAREHQ.SaveButton.init({
+                    unsavedMessage: DetailScreenConfig.message.UNSAVED_MESSAGE,
+                    save: function () {
+                        that.save();
+                    }
+                });
+                this.on('change', function () {
+                    this.saveButton.fire('change');
+                });
+            }());
+            */
+            {% else %}
             var details = {{ details|JSON }};
             var lang = {{ lang|JSON }};
             var langs = {{ app.langs|JSON }};
@@ -94,6 +114,7 @@
                     ko.applyBindings(detailScreenConfig, $detail_home.get(0));
                 }
             }
+            {% endif %}
         });
         $(function () {
             $('#case_type').on('textchange', function () {
@@ -331,7 +352,10 @@
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% if module.module_type == 'shadow' %}
             {% include 'app_manager/partials/case_list_header.html' %}
-            {% include 'app_manager/partials/case_list_filtering.html' %}
+            <legend>
+                {% trans "Filtering" %}
+            </legend>
+            {% include 'app_manager/partials/case_list_filtering.html' with toggle=False %}
         {% else %}
             {% include 'app_manager/partials/case_list.html' %}
         {% endif %}

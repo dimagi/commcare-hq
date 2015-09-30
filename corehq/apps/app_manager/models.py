@@ -3587,9 +3587,7 @@ class ShadowModule(ModuleBase):
 
     @property
     def case_details(self):
-        if not self.source_module:
-            return None
-        return self.source_module.case_details
+        return None
 
     @property
     def ref_details(self):
@@ -3599,9 +3597,7 @@ class ShadowModule(ModuleBase):
 
     @property
     def case_list(self):
-        if not self.source_module:
-            return None
-        return self.source_module.case_list
+        return None
 
     @property
     def referral_list(self):

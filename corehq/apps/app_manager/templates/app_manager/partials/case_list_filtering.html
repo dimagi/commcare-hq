@@ -2,14 +2,16 @@
 
 <div data-bind="with: filter">
 
+    {% if toggle %}
     <div class="control-group">
         <button class="btn btn-small" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
             <i class="icon icon-plus"></i>
             {% trans "Add filter" %}
         </button>
     </div>
+    {% endif %}
 
-    <div data-bind="visible: showing">
+    <div {% if toggle %}data-bind="visible: showing"{% endif %}>
         <form class="form-horizontal">
             <div class="control-group">
                 <label class="control-label">
@@ -34,9 +36,11 @@
                     <input type="text" placeholder="Filter expression" class="ui-autocomplete-input"
                            data-bind="value: filterText"
                     >
+                    {% if toggle %}
                     <a data-bind="click: function(data){showing(false);}">
                         <i class="icon-remove icon-blue"></i>
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </form>
