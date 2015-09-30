@@ -2,7 +2,9 @@ import random
 import string
 
 from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.toggles import RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN
+from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN,
+                            MULTIPLE_LOCATIONS_PER_USER)
+from corehq.util.test_utils import flag_enabled
 from couchforms.models import XFormInstance
 
 from ..permissions import can_edit_form_location
@@ -46,6 +48,17 @@ class TestPermissions(LocationHierarchyTestCase):
         locationless_web_user = WebUser.create(self.domain, 'joeshmoe', 'password')
         self.assertCannotEdit(locationless_web_user, self.cambridge_form)
         self.assertCannotEdit(locationless_web_user, self.boston_form)
+
+    @flag_enabled(MULTIPLE_LOCATIONS_PER_USER)
+    def test_multiple_locations_per_user(self):
+        # Note also that location types must not be administrative for multiple
+        # locations per domain to work.  This was a pain to figure out...
+        multi_loc_user = self.make_mobile_user('Cambridge')
+        multi_loc_user.set_location(self.locations['Boston'].couch_location)
+        multi_loc_form = self.make_form(multi_loc_user)
+
+        self.assertCanEdit(self.middlesex_web_user, multi_loc_form)
+        self.assertCanEdit(self.massachusetts_web_user, multi_loc_form)
 
     #### The rest of this class is helper methods and setup ####
 

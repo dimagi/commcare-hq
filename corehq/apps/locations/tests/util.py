@@ -37,7 +37,7 @@ def _setup_location_types(domain, location_types):
             domain=domain,
             name=name,
             parent_type=previous,
-            administrative=True,
+            administrative=False,
         )
         location_types_dict[name] = previous = location_type
     return location_types_dict
