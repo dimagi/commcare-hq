@@ -1,19 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% if detail.type == 'case' %}
-<div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
-    {% blocktrans %}
-        This module doesn't currently use a case list.
-        Changes made here will have no effect until you use:
-        <ol>
-            <li>forms that require a case or</li>
-            <li>select the <strong>Case List Menu Item</strong> setting.</li>
-        </ol>
-    {% endblocktrans %}
-</div>
-{% endif %}
-<div data-bind="saveButton: shortScreen.saveButton"></div>
+{% include 'app_manager/partials/case_list_header.html' %}
+
 <div data-bind="with: customXMLViewModel">
     <div data-bind="visible: enabled">
         <legend>{% trans "Custom Case List XML" %}</legend>

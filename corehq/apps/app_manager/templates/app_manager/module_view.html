@@ -330,6 +330,7 @@
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% if module.module_type == 'shadow' %}
+            {% include 'app_manager/partials/case_list_header.html' %}
             {% include 'app_manager/partials/case_list_filtering.html' %}
         {% else %}
             {% include 'app_manager/partials/case_list.html' %}
