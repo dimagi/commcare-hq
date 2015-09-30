@@ -8,6 +8,7 @@ from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.xml import V2
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
@@ -43,12 +44,9 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
 
 
 def run_case_post_save_signals(docs):
-    from corehq.apps.reminders.signals import case_changed_receiver as reminders_case_post_save
-    from corehq.apps.sms.models import case_changed_receiver as sms_case_post_save
     for doc in docs:
         case = CommCareCase.wrap(doc)
-        reminders_case_post_save(None, case)
-        sms_case_post_save(None, case)
+        case_post_save.send(CommCareCase, case=case)
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
