@@ -1059,7 +1059,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
             reminder_definition, reminder)
 
-        if recipient and reminder_definition.recipient_is_location(recipient):
+        if recipient and reminder_definition.recipient_is_list_of_locations(recipient):
             if len(recipient) == 1:
                 recipient_type = (cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
                                   if reminder_definition.include_child_locations

@@ -892,7 +892,7 @@ class CaseReminderHandler(Document):
 
         return filter(filter_fcn, recipients)
 
-    def recipient_is_location(self, recipient):
+    def recipient_is_list_of_locations(self, recipient):
         return (isinstance(recipient, list) and
                 all([isinstance(obj, SQLLocation) for obj in recipient]))
 
@@ -910,7 +910,7 @@ class CaseReminderHandler(Document):
             return False
 
         recipient = reminder.recipient
-        if self.recipient_is_location(recipient):
+        if self.recipient_is_list_of_locations(recipient):
             # Use a better name here since recipient is a list of locations
             locations = recipient
 
