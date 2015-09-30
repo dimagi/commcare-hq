@@ -1305,7 +1305,10 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails.split(',')
+            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
+            if billing_contact_emails is None:
+                raise SubscriptionReminderError("This billing account doesn't have any contact emails")
+            billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
             template = 'accounting/subscription_ending_reminder_email.html'

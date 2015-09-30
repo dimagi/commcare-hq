@@ -46,4 +46,5 @@
 {% if include_modal %}
     {% url "download_multimedia_zip" domain app.get_id as multimedia_url%}
     {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' download_url=multimedia_url%}
+    {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=multimedia_url%}
 {% endif %}

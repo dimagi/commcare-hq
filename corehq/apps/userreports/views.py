@@ -11,6 +11,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
@@ -204,17 +205,15 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'worker': 'configure_worker_report',
             }
             url_name = url_names_map[self.report_type]
-            url_args = [
-                (f, self.form.cleaned_data[f])
-                for f in ['report_name', 'chart_type']
-            ] + [
-                (f, getattr(app_source, f))
-                for f in ['application', 'source_type', 'source']
-            ]
+            get_params = {
+                'report_name': self.form.cleaned_data['report_name'],
+                'chart_type': self.form.cleaned_data['chart_type'],
+                'application': app_source.application,
+                'source_type': app_source.source_type,
+                'source': app_source.source,
+            }
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain]) + '?' + '&'.join(
-                    ["{}={}".format(k, v) for k, v in url_args]
-                )
+                reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
             )
         else:
             return self.get(request, *args, **kwargs)

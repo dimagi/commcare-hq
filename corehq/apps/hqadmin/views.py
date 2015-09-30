@@ -1,15 +1,14 @@
 import HTMLParser
 import json
-import logging
 import socket
 from datetime import timedelta, datetime, date
 from collections import defaultdict
 from StringIO import StringIO
+
 import dateutil
 from django.core.mail import EmailMessage
 from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
-
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -17,7 +16,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
@@ -32,20 +31,18 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
+from couchdbkit import ResourceNotFound, Database
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
-from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop import get_all_pillows_json, get_pillow_by_name
-
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
@@ -74,10 +71,8 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.util import make_form_couch_key
-from corehq.apps.sms.models import SMSLog
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
@@ -89,7 +84,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
 from pillowtop.utils import get_pillow_json
@@ -147,39 +141,6 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     context.update({'tables': tables})
     context['hide_filters'] = True
     return render(request, template, context)
-
-
-@datespan_default
-@require_superuser
-def message_log_report(request):
-    show_dates = True
-    datespan = request.datespan
-    domains = Domain.get_all()
-
-    for dom in domains:
-        dom.sms_incoming = SMSLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_outgoing = SMSLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_total = SMSLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-
-    context = get_hqadmin_base_context(request)
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("Incoming Messages", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Outgoing Messages", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Total Messages", sort_type=DTSortType.NUMERIC)
-    )
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-
-    context.update({
-        "domains": domains,
-        "show_dates": show_dates,
-        "datespan": datespan
-    })
-
-    context['layout_flush_content'] = True
-    return render(request, "hqadmin/message_log_report.html", context)
 
 
 @require_POST
