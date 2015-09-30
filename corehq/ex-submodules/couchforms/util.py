@@ -638,9 +638,9 @@ class SubmissionPost(object):
                 status=201,
             ).response()
         else:
-            # default to something generic
             response = OpenRosaResponse(
-                message=u'✓',
+                # would have done ✓ but our test Nokias' fonts don't have that character
+                message=u'√',
                 nature=ResponseNature.SUBMIT_SUCCESS,
                 status=201,
             ).response()
