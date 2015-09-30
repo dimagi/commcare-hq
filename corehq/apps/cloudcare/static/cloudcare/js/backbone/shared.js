@@ -41,7 +41,8 @@ var Selectable = Backbone.View.extend({
         if (!this.selected) {
             window.mainView.router.setView(this);
             this.selected = true;
-            this.$el.addClass("info");
+            this.$el.addClass(this.$el.is('li') ? "active" : "info");
+
             if (typeof options === 'undefined' || !options.noEvents) {
                 this.trigger("selected");
             }
@@ -50,7 +51,7 @@ var Selectable = Backbone.View.extend({
     
     deselect: function () {
         this.selected = false;
-        this.$el.removeClass("info");
+        this.$el.removeClass(this.$el.is('li') ? "active" : "info");
     },
 
     disable: function () {
