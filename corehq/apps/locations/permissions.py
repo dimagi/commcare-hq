@@ -46,10 +46,10 @@ def user_can_edit_location(user, sql_location, project):
     if user_can_edit_any_location(user, project):
         return True
 
-    user_loc = user.get_location(sql_location.domain)
-    if user_loc:
-        user_loc = user_loc.sql_location
-    return user_loc is None or user_loc.is_direct_ancestor_of(sql_location)
+    user_loc = user.get_sql_location(sql_location.domain)
+    if not user_loc:
+        return False
+    return user_loc.is_direct_ancestor_of(sql_location)
 
 
 def user_can_view_location(user, sql_location, project):
