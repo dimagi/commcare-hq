@@ -355,6 +355,12 @@ class SQLLocation(MPTTModel):
         return list(self.get_ancestors(include_self=True)
                     .values_list('location_id', flat=True))
 
+    @classmethod
+    def by_location_id(cls, location_id):
+        try:
+            return cls.objects.get(location_id=location_id)
+        except cls.DoesNotExist:
+            return None
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
