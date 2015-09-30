@@ -532,7 +532,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
 
 class MessagingEventsReport(BaseMessagingEventReport):
-    name = ugettext_noop('Past Events')
+    name = ugettext_noop('Messaging History')
     slug = 'messaging_events'
     fields = [
         DatespanFilter,
