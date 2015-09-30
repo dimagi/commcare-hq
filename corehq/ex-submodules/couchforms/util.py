@@ -640,7 +640,7 @@ class SubmissionPost(object):
         else:
             response = OpenRosaResponse(
                 # would have done ✓ but our test Nokias' fonts don't have that character
-                message=u'√',
+                message=u'   √   ',
                 nature=ResponseNature.SUBMIT_SUCCESS,
                 status=201,
             ).response()
