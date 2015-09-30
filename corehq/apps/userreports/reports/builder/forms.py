@@ -118,6 +118,26 @@ class QuestionSelect(Widget):
         )
 
 
+class DataSourceProperty(namedtuple("DataSourceProperty", ["type", "id", "text", "column_id", "source"])):
+    """
+    A container class for information about data source properties
+
+    Class attributes:
+
+    type -- either "case_property", "form", or "meta"
+    id -- A string that uniquely identifies this property. For question based
+        properties this is the question id, for case based properties this is
+        the case property name.
+    text -- A human readable representation of the property source. For
+        questions this is the question label.
+    source -- For questions, this is a dict representing the question as returned
+        by Xform.get_questions(), for case properties and form metadata it is just
+        the name of the property.
+    column_id -- A string to be used as the column_id for data source indicators
+        based on this property.
+    """
+
+
 class DataSourceBuilder(object):
     """
     When configuring a report, one can use DataSourceBuilder to determine some
@@ -172,19 +192,19 @@ class DataSourceBuilder(object):
         """
         ret = []
         for prop in self.data_source_properties.values():
-            if prop['type'] == 'meta':
+            if prop.type == 'meta':
                 ret.append(make_form_meta_block_indicator(
-                    prop['source'], prop['column_id']
+                    prop.source, prop.column_id
                 ))
-            elif prop['type'] == "question":
+            elif prop.type == "question":
                 ret.append(make_form_question_indicator(
-                    prop['source'], prop['column_id']
+                    prop.source, prop.column_id
                 ))
-            elif prop['type'] == 'case_property' and prop['source'] == 'computed/owner_name':
-                ret.append(make_owner_name_indicator(prop['column_id']))
-            elif prop['type'] == 'case_property':
+            elif prop.type == 'case_property' and prop.source == 'computed/owner_name':
+                ret.append(make_owner_name_indicator(prop.column_id))
+            elif prop.type == 'case_property':
                 ret.append(make_case_property_indicator(
-                    prop['source'], prop['column_id']
+                    prop.source, prop.column_id
                 ))
         ret.append({
             "display_name": "Count",
@@ -201,16 +221,16 @@ class DataSourceBuilder(object):
         or columns in the data source or report.
 
         Keys are strings that uniquely identify properties.
-        Values are dicts representing the properties, ex:
+        Values are DataSourceProperty instances.
 
         >> self.data_source_properties
         {
-            "/data/question1": {
-                "type": "question",
-                "id": "/data/question1",
-                "text": "Enter the child's name",
-                "column_id": "data--question1",
-                "source": {
+            "/data/question1": DataSourceProperty(
+                type="question",
+                id="/data/question1",
+                text="Enter the child's name",
+                column_id="data--question1",
+                source={
                     'repeat': None,
                     'group': None,
                     'value': '/data/question1',
@@ -218,23 +238,15 @@ class DataSourceBuilder(object):
                     'tag': 'input',
                     'type': 'Text'
                 }
-            },
-            "meta/deviceID": {
-                "type": "meta",
-                "id": "meta/deviceID",
-                "text": "deviceID",
-                "column_id": "meta--deviceID",
-                "source": ("deviceID", "string")
-            }
+            ),
+            "meta/deviceID": DataSourceProperty(
+                type="meta",
+                id="meta/deviceID",
+                text="deviceID",
+                column_id="meta--deviceID",
+                source=("deviceID", "string")
+            )
         }
-
-        "id" is used as the value in selects/select2s in the form. Uniquely identifies questions.
-        "column_id" is used as the column name for this indicator. There are bugs
-        with slashes which requires this to be different from "id"
-        "text" will be used as the visible text in selects/select2s
-        "type" is "question", "case_property", or "meta"
-        For questions, "source" is the dict returned by Xform.get_questions, for
-        case properties and form metadata it is simply the name of the property.
         """
 
         if self.source_type == 'case':
@@ -446,7 +458,7 @@ class ConfigureNewReportBase(forms.Form):
         )
         self.data_source_properties = self.ds_builder.data_source_properties
         self._properties_by_column = {
-            p['column_id']: p for p in self.data_source_properties.values()
+            p.column_id: p for p in self.data_source_properties.values()
         }
 
         # NOTE: The corresponding knockout view model is defined in:
@@ -697,7 +709,7 @@ class ConfigureNewReportBase(forms.Form):
         )
 
     def _get_property_from_column(self, col):
-        return self._properties_by_column[col]['id']
+        return self._properties_by_column[col].id
 
     def _column_exists(self, column_id):
         """
@@ -733,18 +745,18 @@ class ConfigureNewReportBase(forms.Form):
 
         def _make_report_filter(conf, index):
             property = self.data_source_properties[conf["property"]]
-            col_id = property['column_id']
+            col_id = property.column_id
 
             selected_filter_type = conf['format']
             if not selected_filter_type:
-                if property['type'] == 'question':
+                if property.type == 'question':
                     filter_format = get_filter_format_from_question_type(
-                        property['source']['type']
+                        property.source['type']
                     )
                 else:
-                    assert property['type'] == 'meta'
+                    assert property.type == 'meta'
                     filter_format = get_filter_format_from_question_type(
-                        property['source'][1]
+                        property.source[1]
                     )
             else:
                 filter_format = filter_type_map[selected_filter_type]
@@ -818,12 +830,12 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     @property
     def _report_aggregation_cols(self):
         return [
-            self.data_source_properties[self.aggregation_field]['column_id']
+            self.data_source_properties[self.aggregation_field].column_id
         ]
 
     @property
     def _report_charts(self):
-        agg_col = self.data_source_properties[self.aggregation_field]['column_id']
+        agg_col = self.data_source_properties[self.aggregation_field].column_id
         return [{
             "type": "multibar",
             "x_axis_column": agg_col,
@@ -832,8 +844,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        agg_col_id = self.data_source_properties[self.aggregation_field]['column_id']
-        agg_disp = self.data_source_properties[self.aggregation_field]['text']
+        agg_col_id = self.data_source_properties[self.aggregation_field].column_id
+        agg_disp = self.data_source_properties[self.aggregation_field].text
         return [
             {
                 "format": "default",
@@ -853,7 +865,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
     @property
     def _group_by_choices(self):
-        return [(p['id'], p['text']) for p in self.data_source_properties.values()]
+        return [(p.id, p.text) for p in self.data_source_properties.values()]
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
@@ -868,7 +880,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
     @property
     def _report_charts(self):
-        agg = self.data_source_properties[self.aggregation_field]['column_id']
+        agg = self.data_source_properties[self.aggregation_field].column_id
         return [{
             "type": "pie",
             "aggregation_column": agg,
@@ -960,7 +972,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_columns(self):
-        agg_field_id = self.data_source_properties[self.aggregation_field]['column_id']
+        agg_field_id = self.data_source_properties[self.aggregation_field].column_id
 
         columns = super(ConfigureTableReportForm, self)._report_columns
 
@@ -1002,7 +1014,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
     def _report_aggregation_cols(self):
         # we want the bar chart behavior, which is reproduced here:
         return [
-            self.data_source_properties[self.aggregation_field]['column_id']
+            self.data_source_properties[self.aggregation_field].column_id
         ]
 
 
