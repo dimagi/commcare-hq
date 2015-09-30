@@ -31,6 +31,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from corehq.apps.locations.dbaccessors import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
@@ -1189,6 +1190,13 @@ class ProjectUsersTab(UITab):
                     'show_in_dropdown': True,
                 })
             items.append((_('Organization'), locations_config))
+
+        elif users_have_locations(self.domain):  # This domain was downgraded
+            items.append((_('Organization'), [{
+                'title': _("No longer available"),
+                'url': reverse('downgrade_locations', args=[self.domain]),
+                'show_in_dropdown': True,
+            }]))
 
         return items
 
