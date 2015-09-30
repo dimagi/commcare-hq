@@ -50,6 +50,7 @@ from corehq.apps.sms.models import (
     MessagingSubEvent,
     SMS,
 )
+from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import (SurveyKeyword,
     CaseReminderHandler)
@@ -678,6 +679,9 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
         return messaging_event
 
+    def _fmt_backend_name(self, sms):
+        return self._fmt(get_backend_name(sms.backend_id) or sms.backend_api)
+
     @property
     def rows(self):
         result = []
@@ -712,7 +716,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                             self._fmt(sms.text),
                             self._fmt(sms.phone_number),
                             self._fmt_direction(sms.direction),
-                            self._fmt(sms.backend_api),
+                            self._fmt_backend_name(sms),
                             self._fmt(status),
                         ])
             elif messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS_SURVEY,

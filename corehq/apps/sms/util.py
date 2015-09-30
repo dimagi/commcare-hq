@@ -3,12 +3,14 @@ import re
 import urllib
 import uuid
 import datetime
-
+from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import get_db
 from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.sms.mixin import MobileBackend
+from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
@@ -225,3 +227,20 @@ def touchforms_error_is_config_error(touchforms_error):
         'XPathUnhandledException',
         'XFormParseException',
     )])
+
+
+@quickcache(['backend_id'], timeout=5 * 60)
+def get_backend_name(backend_id):
+    """
+    Returns None if the backend is not found, otherwise
+    returns the backend's name.
+    """
+    if not backend_id:
+        return None
+
+    try:
+        doc = MobileBackend.get_db().get(backend_id)
+    except ResourceNotFound:
+        return None
+
+    return doc.get('name', None)
