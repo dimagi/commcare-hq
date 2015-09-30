@@ -49,7 +49,7 @@ def get_all_users_by_location(domain, location_id):
 def users_have_locations(domain):
     from corehq.apps.users.models import CouchUser
     return bool(CouchUser.get_db().view(
-        'locations/users_by_location_id',
+        'users_extra/users_by_location_id',
         startkey=[domain],
         endkey=[domain, {}],
         reduce=True,
@@ -59,7 +59,7 @@ def users_have_locations(domain):
 def get_users_assigned_to_locations(domain):
     from corehq.apps.users.models import CouchUser
     ids = [res['id'] for res in CouchUser.get_db().view(
-        'locations/users_by_location_id',
+        'users_extra/users_by_location_id',
         startkey=[domain],
         endkey=[domain, {}],
         include_docs=False,
