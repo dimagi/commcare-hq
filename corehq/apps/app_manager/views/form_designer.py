@@ -84,8 +84,9 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     })
 
     has_schedule = (
-            getattr(module, 'has_schedule', False) and
-            getattr(form, 'schedule', False) and form.schedule.enabled)
+        getattr(module, 'has_schedule', False) and
+        getattr(form, 'schedule', False) and form.schedule.enabled
+    )
     scheduler_data_nodes = []
     if has_schedule:
         scheduler_data_nodes = [
