@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 
@@ -75,11 +76,31 @@ def recursive_lookup(dict_object, keys):
 
 def transform_date(item):
     # postgres crashes on empty strings, but is happy to take null dates
-    return item or None
+    if item:
+        if isinstance(item, basestring):
+            try:
+                return datetime.strptime(item, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        elif isinstance(item, date):
+            return item
+    return None
 
 
 def transform_datetime(item):
-    return item or None
+    if item:
+        if isinstance(item, basestring):
+            for datetime_format in [
+                '%Y-%m-%dT%H:%M:%SZ',
+                '%Y-%m-%dT%H:%M:%S.%fZ',
+            ]:
+                try:
+                    return datetime.strptime(item, datetime_format)
+                except ValueError:
+                    pass
+        elif isinstance(item, datetime):
+            return item
+    return None
 
 
 def transform_int(item):
