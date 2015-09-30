@@ -4,10 +4,8 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch import Elasticsearch
 from psycopg2._psycopg import InterfaceError
-import pytz
 from datetime import datetime
 import hashlib
-import os
 import traceback
 import math
 import time
@@ -26,10 +24,10 @@ from pillowtop.checkpoints.manager import PillowCheckpointManagerInstance
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.couchdb import CachedCouchDB
 
-from couchdbkit.changes import ChangesStream
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
+from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.utils import get_current_seq
 
 
@@ -42,6 +40,7 @@ WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
+
 
 INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
                                     "merge.policy.merge_factor": 20,
@@ -112,41 +111,38 @@ class BasicPillow(object):
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 
-    def process_changes(self, forever):
-        """
-        Couchdbkit > 0.6.0 changes feed listener handler (api changes after this)
-        http://couchdbkit.org/docs/changes.html
-        """
-        extra_args = {'feed': 'continuous'} if forever else {}
-        extra_args.update(self.extra_args)
-        changes_stream = ChangesStream(
-            db=self.couch_db,
-            heartbeat=True,
-            since=self.get_last_checkpoint_sequence(),
-            filter=self.couch_filter,
+    def get_change_feed(self):
+        return CouchChangeFeed(
+            couch_db=self.couch_db,
+            couch_filter=self.couch_filter,
             include_docs=self.include_docs,
-            **extra_args
+            extra_couch_view_params=self.extra_args
         )
-        while True:
-            try:
-                for change in changes_stream:
-                    if change:
-                        try:
-                            self.processor(change)
-                        except Exception as e:
-                            notify_exception(None, u'processor error {}'.format(e))
-                            raise
-                    else:
-                        self.checkpoint_manager.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
-            except PillowtopCheckpointReset:
-                self.changes_seen = 0
+
+    def process_changes(self, since, forever):
+        """
+        Process changes from the changes stream.
+        """
+        try:
+            for change in self.get_change_feed().iter_changes(since=since, forever=forever):
+                if change:
+                    try:
+                        self.processor(change)
+                    except Exception as e:
+                        notify_exception(None, u'processor error {}'.format(e))
+                        raise
+                else:
+                    self.checkpoint_manager.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
+        except PillowtopCheckpointReset:
+            self.changes_seen = 0
+            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     def run(self):
         """
         Couch changes stream creation
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
-        self.process_changes(forever=True)
+        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     @memoized
     def get_name(self):
@@ -181,7 +177,6 @@ class BasicPillow(object):
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
-
         self.changes_seen += 1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             self.set_checkpoint(change)
