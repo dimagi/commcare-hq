@@ -48,7 +48,7 @@ class SubmissionErrorTest(TestCase):
                 "xml_submission_file": f
             })
             self.assertEqual(201, res.status_code)
-            self.assertIn(u"√".encode('utf-8'), res.content)
+            self.assertIn(u"   √   ".encode('utf-8'), res.content)
 
         with open(file) as f:
             res = self.client.post(self.url, {
