@@ -939,15 +939,16 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        def _make_column(conf):
+        def _make_column(conf, index):
             return {
                 "format": "default",
                 "aggregation": "simple",
-                "field": self.data_source_properties[conf['property']]['column_id'],
+                "field": self.data_source_properties[conf['property']].column_id,
+                "column_id": "column_{}".format(index),
                 "type": "field",
                 "display": conf['display_text']
             }
-        return [_make_column(conf) for conf in self.cleaned_data['columns']]
+        return [_make_column(conf, i) for i, conf in enumerate(self.cleaned_data['columns'])]
 
     @property
     def _report_aggregation_cols(self):
