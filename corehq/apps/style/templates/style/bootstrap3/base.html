@@ -150,14 +150,19 @@
                 </p>
             </div>
             <div class="container-fluid">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                            <a class="close" data-dismiss="alert" href="#">&times;</a>
-                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                        </div>
-                    {% endfor %}
-                {% endif %}
+                <div class="row">
+                    <div class="col-sm-12">
+                       {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                                    <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
             </div>
             {# todo: handle with angular #}
 {#            <div id="message-alerts" data-bind="foreach: alerts">#}
@@ -287,6 +292,7 @@
         <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-route.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-resource.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-message-format.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-messages.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-cookies.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
