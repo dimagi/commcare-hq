@@ -102,7 +102,7 @@ class LocationFixturesTest(TestCase):
         self.assertEqual(couch_location._id, location.location_id)
         self.assertEqual('winterfell', location.name)
         location_db = _location_footprint([location])
-        self.assertTrue(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
+        self.assertFalse(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
 
         # archive the location
         couch_location.archive()
