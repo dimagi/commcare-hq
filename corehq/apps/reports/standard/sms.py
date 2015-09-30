@@ -1,7 +1,7 @@
 import cgi
 from django.db.models import Q
 from django.core.urlresolvers import reverse
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from couchdbkit.resource import ResourceNotFound
@@ -518,14 +518,16 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         )
         return self.table_cell(display_text, display)
 
+    def get_survey_detail_url(self, subevent):
+        return "/a/%s/reports/survey_detail/?id=%s" % (self.domain, subevent.xforms_session_id)
+
     def get_survey_detail_link(self, subevent):
         form_name = subevent.form_name or _('Unknown')
         if not subevent.xforms_session_id:
             return self._fmt(form_name)
         else:
-            display = '<a target="_blank" href="/a/%s/reports/survey_detail/?id=%s">%s</a>' % (
-                self.domain,
-                subevent.xforms_session_id,
+            display = '<a target="_blank" href="%s">%s</a>' % (
+                self.get_survey_detail_url(subevent),
                 form_name,
             )
             return self.table_cell(form_name, display)
@@ -645,7 +647,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
     @property
     def template_context(self):
-        event = self.get_messaging_event()
+        event = self.messaging_event
         date = ServerTime(event.date).user_time(self.timezone).done()
         return {
             'messaging_event_date': date.strftime(SERVER_DATETIME_FORMAT),
@@ -664,8 +666,9 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Status')),
         )
 
+    @property
     @memoized
-    def get_messaging_event(self):
+    def messaging_event(self):
         messaging_event_id = self.request.GET.get('id', None)
 
         try:
@@ -679,15 +682,35 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
         return messaging_event
 
+    @property
+    @memoized
+    def messaging_subevents(self):
+        return MessagingSubEvent.objects.filter(parent=self.messaging_event)
+
     def _fmt_backend_name(self, sms):
         return self._fmt(get_backend_name(sms.backend_id) or sms.backend_api)
+
+    @property
+    def view_response(self):
+        subevents = self.messaging_subevents
+        if (
+            len(subevents) == 1 and
+            subevents[0].content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
+                                          MessagingEvent.CONTENT_IVR_SURVEY) and
+            subevents[0].xforms_session_id and
+            subevents[0].status != MessagingEvent.STATUS_ERROR
+        ):
+            # There's only one survey to report on here - just redirect to the
+            # survey detail page
+            return HttpResponseRedirect(self.get_survey_detail_url(subevents[0]))
+
+        return super(MessageEventDetailReport, self).view_response
 
     @property
     def rows(self):
         result = []
         contact_cache = {}
-        messaging_event = self.get_messaging_event()
-        for messaging_subevent in MessagingSubEvent.objects.filter(parent=messaging_event):
+        for messaging_subevent in self.messaging_subevents:
             doc_info = self.get_recipient_info(messaging_subevent.get_recipient_doc_type(),
                 messaging_subevent.recipient_id, contact_cache)
 
