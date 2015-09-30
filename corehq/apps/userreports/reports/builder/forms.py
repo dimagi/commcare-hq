@@ -115,8 +115,12 @@ class QuestionSelect(Widget):
         )
 
     def render_options(self, choices):
+
+        def escape(literal):
+            return literal.replace('&', '&amp;').replace("'", "&#39;")
+
         return json.dumps(
-            [{'value': v, 'label': l} for v, l in chain(self.choices, choices)]
+            [{'value': escape(v), 'label': escape(l)} for v, l in chain(self.choices, choices)]
         )
 
 
