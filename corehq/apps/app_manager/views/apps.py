@@ -76,10 +76,10 @@ def delete_app(request, domain, app_id):
     "Deletes an app from the database"
     app = get_app(domain, app_id)
     record = app.delete_app()
-    messages.success(request,
-        'You have deleted an application. <a href="%s" class="post-link">Undo</a>' % reverse(
-            'undo_delete_app', args=[domain, record.get_id]
-        ),
+    messages.success(
+        request,
+        _('You have deleted an application. <a href="%s" class="post-link">Undo</a>')
+        % reverse('undo_delete_app', args=[domain, record.get_id]),
         extra_tags='html'
     )
     app.save()

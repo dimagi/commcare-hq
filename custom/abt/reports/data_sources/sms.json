@@ -2,6 +2,7 @@
     "domains": [
         "airs",
         "airszambia",
+        "airszimbabwe",
         "airsrwanda",
         "airsethiopia",
         "abtmali",
@@ -434,7 +435,7 @@
                     "value_expression": {
                       "datatype": null,
                       "type": "property_name",
-                      "property_name": "level_1_name"
+                      "property_name": "level_1_data"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -730,7 +731,7 @@
                     "value_expression": {
                       "datatype": null,
                       "type": "property_name",
-                      "property_name": "level_2_name"
+                      "property_name": "level_2_data"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
