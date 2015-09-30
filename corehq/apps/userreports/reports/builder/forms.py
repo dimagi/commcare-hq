@@ -250,50 +250,58 @@ class DataSourceBuilder(object):
         """
 
         if self.source_type == 'case':
-            ret = OrderedDict(
-                (cp, {
-                    'type': 'case_property',
-                    'id': cp,
-                    'column_id': get_column_name(cp),
-                    'text': cp,
-                    'source': cp
-                }) for cp in self.case_properties
-            )
-            ret['computed/owner_name'] = {
-                'type': 'case_property',
-                'id': 'computed/owner_name',
-                'column_id': get_column_name('computed/owner_name'),
-                'text': 'owner_name (computed)',
-                'source': 'computed/owner_name'
-            }
-            return ret
-
-            # Note that owner_name is a special pseudo-case property.
-            # The report builder will create a related_doc indicator based
-            # on the owner_id of the case.
+            return self._get_data_source_properties_from_case(self.case_properties)
 
         if self.source_type == 'form':
-            ret = OrderedDict()
-            questions = self.source_xform.get_questions([])
-            ret.update(
-                (q['value'], {
-                    "type": "question",
-                    "id": q['value'],
-                    "column_id": get_column_name(q['value'].strip("/")),
-                    'text': q['label'],
-                    "source": q,
-                }) for q in questions
+            return self._get_data_source_properties_from_form(self.source_xform)
+
+    def _get_data_source_properties_from_case(self, case_properties):
+        properties = OrderedDict()
+        for property in case_properties:
+            properties[property] = DataSourceProperty(
+                type='case_property',
+                id=property,
+                column_id=get_column_name(property),
+                text=property,
+                source=property
             )
-            ret.update(
-                (p[0], {
-                    "type": "meta",
-                    "id": p[0],
-                    "column_id": get_column_name(p[0].strip("/")),
-                    'text': p[0],
-                    "source": p,
-                }) for p in FORM_METADATA_PROPERTIES
+        properties['computed/owner_name'] = self._get_owner_name_pseudo_property()
+        return properties
+
+    @staticmethod
+    def _get_owner_name_pseudo_property():
+        # owner_name is a special pseudo-case property for which
+        # the report builder will create a related_doc indicator based
+        # on the owner_id of the case.
+        return DataSourceProperty(
+            type='case_property',
+            id='computed/owner_name',
+            column_id=get_column_name('computed/owner_name'),
+            text='owner_name (computed)',
+            source='computed/owner_name'
+        )
+
+    @staticmethod
+    def _get_data_source_properties_from_form(xform):
+        properties = OrderedDict()
+        questions = xform.get_questions([])
+        for question in questions:
+            properties[question['value']] = DataSourceProperty(
+                type="question",
+                id=question['value'],
+                column_id=get_column_name(question['value'].strip("/")),
+                text=question['label'],
+                source=question,
             )
-            return ret
+        for prop in FORM_METADATA_PROPERTIES:
+            properties[prop[0]] = DataSourceProperty(
+                type="meta",
+                id=prop[0],
+                column_id=get_column_name(prop[0].strip("/")),
+                text=prop[0],
+                source=prop,
+            )
+        return properties
 
     @property
     @memoized
