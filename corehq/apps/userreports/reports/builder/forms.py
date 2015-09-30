@@ -102,11 +102,13 @@ class QuestionSelect(Widget):
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
-            '<input{0} data-bind=\''
-            '   questionsSelect: {1},'
-            '   value: "{2}",'
-            '   optionsCaption: " "'
-            '\'/>',
+            """
+            <input{0} data-bind='
+               questionsSelect: {1},
+               value: "{2}",
+               optionsCaption: " "
+            '/>
+            """,
             flatatt(final_attrs),
             mark_safe(self.render_options(choices)),
             value
