@@ -26,6 +26,16 @@
             $('.hq-help-template').each(function () {
                 COMMCAREHQ.transformHelpTemplate($(this), true);
             });
+
+            {% for tile in tiles %}
+                $("div[slug='{{ tile.slug }}'] a.trigger-analytics").each(
+                    function(){
+                        var $this = $(this);
+                        gaTrackLink($this, 'Report Builder', 'Create Report', '{{ tile.analytics_label }}');
+                        analytics.trackWorkflowLink($this, "Clicked on Report Builder Tile");
+                    }
+                );
+            {% endfor %}
         });
     </script>
 {% endblock %}
@@ -50,6 +60,7 @@
                     <div class="panel panel-dashboard panel-dashboard-small">
                         <div class="panel-heading">
                             <a href="{{ tile.url }}"
+                               class="trigger-analytics"
                                popover-title="{{ tile.title }}"
                                popover="{{ tile.helpText }}"
                                popover-trigger="mouseenter"
@@ -58,7 +69,7 @@
                         </div>
                         <div class="panel-body">
                             <a href="{{ tile.url }}"
-                               class="dashboard-link"
+                               class="dashboard-link trigger-analytics"
                                popover-title="{{ tile.title }}"
                                popover="{{ tile.helpText }}"
                                popover-trigger="mouseenter"
