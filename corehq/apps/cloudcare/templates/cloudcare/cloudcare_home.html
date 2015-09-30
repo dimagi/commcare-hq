@@ -19,7 +19,6 @@
 {% block js %} {{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
 
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
@@ -137,7 +136,7 @@
     </script>
 {% endblock %}
 
-{% block sidebar %}
+{% block page_navigation %}
 {% if sessions_enabled %}
     <div id="save-indicator" class="alert" style="display: none;"></div>
 {% endif %}
@@ -161,7 +160,7 @@
     </section>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% if request.couch_user.is_web_user %}
         <div class="alert fade in alert-block alert-full alert-warning ">
             <a class="close" data-dismiss="alert" href="#">&times;</a>
@@ -186,7 +185,7 @@
             (It may take a moment to start up once it has downloaded)
         {% endblocktrans %}
     </div>
-    <div id="cloudcare-main" style="position:relative;">
+    <div id="cloudcare-main">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
             {% blocktrans %}
