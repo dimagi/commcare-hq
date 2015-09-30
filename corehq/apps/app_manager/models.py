@@ -3562,6 +3562,7 @@ class ShadowModule(ModuleBase):
     name, icon/audio, filter, and case list filter, but inherits all other properties
     from its parent module.
     """
+    put_in_root = BooleanProperty(default=False)
     module_type = 'shadow'
     source_module_id = StringProperty()
     case_list_filter = StringProperty()
@@ -3589,10 +3590,6 @@ class ShadowModule(ModuleBase):
     @property
     def ref_details(self):
         return self.parent_module.get('ref_details', None)
-
-    @property
-    def put_in_root(self):
-        return self.parent_module.get('put_in_root', False)
 
     @property
     def case_list(self):
