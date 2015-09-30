@@ -192,7 +192,9 @@
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+    {% if module.module_type != 'shadow' %}
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    {% endif %}
     {% for detail in details %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -310,7 +312,11 @@
 
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-        {% include 'app_manager/partials/case_list.html' %}
+        {% if module.module_type == 'shadow' %}
+            {% include 'app_manager/partials/case_list_filtering.html' %}
+        {% else %}
+            {% include 'app_manager/partials/case_list.html' %}
+        {% endif %}
     </div>
     {% if detail.long %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">

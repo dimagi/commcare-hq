@@ -255,7 +255,7 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
         'subcase_types': subcase_types,
     }
     if module.case_details:
-        item.extend({
+        item.update({
             'sort_elements': module.case_details.short.sort_elements,
             'short': module.case_details.short,
             'long': module.case_details.long,
