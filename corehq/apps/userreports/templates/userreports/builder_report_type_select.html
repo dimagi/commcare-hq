@@ -43,7 +43,7 @@
     {% else %}
         <div class="row-fluid">
             {% for tile in tiles %}
-            <tile-{{ tile.ng_directive }}
+            <div
                     slug="{{ tile.slug }}"
                     title="{{ tile.title }}">
                 <div class="col-sm-2">
@@ -59,19 +59,16 @@
                         <div class="panel-body">
                             <a href="{{ tile.url }}"
                                class="dashboard-link"
-                               track-analytics=""
-                               process-external-link=""
                                popover-title="{{ tile.title }}"
                                popover="{{ tile.helpText }}"
                                popover-trigger="mouseenter"
-                               popover-placement="top"
-                               title="">
+                               popover-placement="top">
                                 <i class="dashboard-icon dashboard-icon-small {{ tile.icon }}"></i>
                             </a>
                         </div>
                     </div>
                 </div>
-            </tile-{{ tile.ng_directive }}>
+            </div>
             {% endfor %}
         </div>
     {% endif %}
