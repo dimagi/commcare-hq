@@ -137,8 +137,32 @@ for a continuous topoff based on the couchdb changes feed.
 As that's running, you can check `--stats` to monitor whether you're fully caught up.
 `--continuous` will also output "All caught up" each time it reaches the end of the changes feed.
 
-Once you're confident the two databases are in sync and sync'ing in realtime,
-edit `settings.py`:
+
+## Flipping the db
+
+Once you're confident the two databases are in sync and sync'ing in realtime, you'll need to make two commits.
+
+### Commit 1: Add a blocking django migration
+Add a blocking django migration to keep anyone from deploying before migrating:
+
+```
+./manage.py makemigrations --empty doctypemigrations
+```
+
+and then edit the generated file:
+
+```diff
+  from django.db import models, migrations
++ from corehq.doctypemigrations.djangomigrations import assert_initial_complete
++ from corehq.doctypemigrations.migrator_instances import users_migration
+
+      operations = [
++         migrations.RunPython(assert_initial_complete(users_migration))
+      ]
+```
+
+### Commit 2: Flip the db
+And then actually do the flip; edit `settings.py`:
 
 ```diff
   NEW_USERS_GROUPS_DB = 'users'
