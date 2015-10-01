@@ -11,7 +11,7 @@ from corehq.apps.sms.util import get_contact
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser
 from django.contrib.sites.models import Site
 from corehq.apps.users.util import format_username
 from django.conf import settings
