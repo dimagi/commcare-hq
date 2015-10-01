@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - hqpillow_retry-limit-update-bug  # danny 10/1
   - user-db-fixes  # danny 10/1
   - flip-users-db  # danny 10/1
   - vellum-staging # J$ 11/13
