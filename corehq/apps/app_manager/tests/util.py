@@ -69,8 +69,8 @@ def _check_shared(expected, actual, checker, extension):
     if not checker.check_output(expected, actual, 0):
         original_message = message = "{} mismatch\n\n".format(extension.upper())
         diff = difflib.unified_diff(
-            expected.splitlines(1),
             actual.splitlines(1),
+            expected.splitlines(1),
             fromfile='want.{}'.format(extension),
             tofile='got.{}'.format(extension)
         )
