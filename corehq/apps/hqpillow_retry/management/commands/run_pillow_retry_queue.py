@@ -23,6 +23,7 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         errors = PillowError.get_errors_to_process(
             utcnow=utcnow,
         )
+        errors.update(queued=True)
         return (dict(id=e['id'], key=e['date_next_attempt']) for e in errors)
 
     def get_items_to_be_processed(self, utcnow):
