@@ -100,3 +100,17 @@ class CommCareFeatureSupportMixin(object):
         # will look into it when there is a little more time. @orangejenny
         # return self._require_minimum_version('2.22')
         return False
+
+    @property
+    def enable_image_resize(self):
+        """
+        Image resize only supported > 2.23
+        """
+        return self._require_minimum_version('2.23')
+
+    @property
+    def enable_markdown_in_groups(self):
+        """
+        Markdown in groups only supported > 2.23
+        """
+        return self._require_minimum_version('2.23')

@@ -18,6 +18,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
+from corehq.elastic import es_wrapper
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
@@ -1037,6 +1038,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     def all(cls):
         return CouchUser.view("users/by_username", include_docs=True, reduce=False)
+
+    @classmethod
+    def username_exists(cls, username):
+        reduced = cls.view('users/by_username', key=username, reduce=True).all()
+        if reduced:
+            return reduced[0]['value'] > 0
+        return False
 
     @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):

@@ -490,8 +490,9 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
+    format = request.POST['format']
     form = GenericRepeaterForm(
-        {"url": url},
+        {"url": url, "format": format},
         domain=domain,
         repeater_class=receiverwrapper.models.repeater_types[repeater_type]
     )
@@ -1716,7 +1717,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         if self.published_snapshot:
             for app in self.published_snapshot.full_applications():
                 base_app_id = app.copy_of if self.domain_object == self.published_snapshot else app.copied_from.copy_of
-                published_apps[base_app_id] = app
+                if base_app_id:
+                    published_apps[base_app_id] = app
         return published_apps
 
     @property
@@ -1837,9 +1839,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     m_file.save()
 
-            ignore = ['UserRole']
             if not request.POST.get('share_reminders', False):
-                ignore.append('CaseReminderHandler')
+                share_reminders = False
+            else:
+                share_reminders = True
 
             copy_by_id = set()
             for k in request.POST.keys():
@@ -1847,8 +1850,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                     copy_by_id.add(k[:-len("-publish")])
 
             old = self.domain_object.published_snapshot()
-            new_domain = self.domain_object.save_snapshot(ignore=ignore,
-                                                          copy_by_id=copy_by_id)
+            new_domain = self.domain_object.save_snapshot(
+                share_reminders=share_reminders, copy_by_id=copy_by_id)
             new_domain.license = new_license
             new_domain.description = request.POST['description']
             new_domain.short_description = request.POST['short_description']

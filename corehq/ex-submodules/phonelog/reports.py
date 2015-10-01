@@ -25,6 +25,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
+from urllib import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,9 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
     total_records = 0
     default_rows = 100
     default_sort = {'date': 'asc'}
+    emailable = True
+    exportable = True
+    exportable_all = True
     inclusive = False
 
     @property
@@ -168,40 +172,31 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
             )
             return self._create_rows(logs, matching_id=log.id)
         else:
-            logs = DeviceReportEntry.objects.filter(
-                date__range=[self.datespan.startdate_param_utc,
-                             self.datespan.enddate_param_utc],
-                domain__exact=self.domain,
-            )
-            if self.errors_only:
-                logs = logs.filter(type__in=TAGS['error'] + TAGS['warning'])
-            elif 'tag' in self.filters:
-                logs = logs.filter(type__in=self.selected_tags)
-
-            if 'user' in self.filters:
-                user_q = Q(username__in=self.device_log_users)
-                if None in self.device_log_users:
-                    user_q |= Q(username=None)
-                logs = logs.filter(user_q)
-            if 'device' in self.filters:
-                logs = logs.filter(device_id__in=self.selected_devices)
-            return self._create_rows(logs)
+            logs = self._filter_logs()
+            range = slice(self.pagination.start,
+                          self.pagination.start + self.pagination.count + 1)
+            return self._create_rows(logs, range=range)
 
     @property
     def ordering(self):
         by, direction = self.get_sorting_block()[0].items()[0]
         return '-' + by if direction == 'desc' else by
 
-    def _create_rows(self, logs, matching_id=None):
+    def get_all_rows(self):
+        logs = self._filter_logs()
+        return self._create_rows(logs)
+
+    def _create_rows(self, logs, matching_id=None, range=None):
         _device_users_by_xform = memoized(device_users_by_xform)
         row_set = []
         user_query = self._filter_query_by_slug(DeviceLogUsersFilter.slug)
         device_query = self._filter_query_by_slug(DeviceLogDevicesFilter.slug)
-        paged = slice(self.pagination.start,
-                      self.pagination.start + self.pagination.count + 1)
 
         self.total_records = logs.count()
-        for log in logs.order_by(self.ordering)[paged]:
+        logs = logs.order_by(self.ordering)
+        if range:
+            logs = logs[range]
+        for log in logs:
             ui_date = (ServerTime(log.date)
                         .user_time(self.timezone).ui_string())
 
@@ -270,7 +265,25 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
                             device_users_fmt, device_fmt, log.msg, ver_format])
         return row_set
 
+    def _filter_logs(self):
+        logs = DeviceReportEntry.objects.filter(
+            date__range=[self.datespan.startdate_param_utc,
+                         self.datespan.enddate_param_utc],
+            domain__exact=self.domain,
+        )
+        if self.errors_only:
+            logs = logs.filter(type__in=TAGS['error'] + TAGS['warning'])
+        elif 'tag' in self.filters:
+            logs = logs.filter(type__in=self.selected_tags)
+
+        if 'user' in self.filters:
+            user_q = Q(username__in=self.device_log_users)
+            if None in self.device_log_users:
+                user_q |= Q(username=None)
+            logs = logs.filter(user_q)
+        if 'device' in self.filters:
+            logs = logs.filter(device_id__in=self.selected_devices)
+        return logs
+
     def _filter_query_by_slug(self, slug):
-        current_query = self.request.META['QUERY_STRING'].split('&')
-        return "&".join([query_item for query_item in current_query
-                         if not query_item.startswith(slug)])
+        return urlencode({k: v for (k, v) in self.request.GET.iteritems() if not k.startswith(slug)})

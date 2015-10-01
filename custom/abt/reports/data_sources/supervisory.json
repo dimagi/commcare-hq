@@ -1,10 +1,12 @@
 {
     "domains": [
-        "airs",
         "abtmali",
+        "airs",
+        "airsethiopia",
         "airsmadagascar",
         "airsrwanda",
-        "airsethiopia"
+        "airszambia",
+        "airszimbabwe"
     ],
     "config": {
         "engine_id": "default",

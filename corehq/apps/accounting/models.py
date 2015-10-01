@@ -672,7 +672,7 @@ class DefaultProductPlan(models.Model):
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
-            raise AccountingError("No default product plan was set up, did you forget to bootstrap plans?")
+            raise AccountingError("No default product plan was set up, did you forget to run cchq_software_plan_bootstrap?")
 
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
@@ -942,6 +942,7 @@ class Subscription(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
+    no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
@@ -998,7 +999,7 @@ class Subscription(models.Model):
         These are the attributes of a Subscription that can always be
         changed while the subscription is active (or reactivated)
         """
-        return ['do_not_invoice', 'salesforce_contract_id']
+        return ['do_not_invoice', 'no_invoice_reason', 'salesforce_contract_id']
 
     @property
     def is_renewed(self):
@@ -1111,6 +1112,7 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_start=None, date_end=None,
                             date_delay_invoicing=None, do_not_invoice=False,
+                            no_invoice_reason=None,
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None,
@@ -1143,6 +1145,7 @@ class Subscription(models.Model):
             self.date_delay_invoicing = date_delay_invoicing
 
         self.do_not_invoice = do_not_invoice
+        self.no_invoice_reason = no_invoice_reason
         self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
         if service_type is not None:
@@ -1161,7 +1164,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, **kwargs):
+                    do_not_invoice=None, no_invoice_reason=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1194,6 +1197,7 @@ class Subscription(models.Model):
             date_delay_invoicing=self.date_delay_invoicing,
             is_active=is_active_subscription(new_start_date, date_end),
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
+            no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
             **kwargs
@@ -1388,7 +1392,10 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails.split(',')
+            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
+            if billing_contact_emails is None:
+                raise SubscriptionReminderError("This billing account doesn't have any contact emails")
+            billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
             template = 'accounting/subscription_ending_reminder_email.html'

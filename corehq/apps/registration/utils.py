@@ -1,4 +1,5 @@
 import logging
+from django.utils.translation import ugettext
 import mailchimp
 import uuid
 from datetime import datetime, date, timedelta
@@ -11,6 +12,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -194,7 +196,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    name = form.cleaned_data['hr_name']
+    name = name_to_url(form.cleaned_data['hr_name'], "project")
     with CriticalSection(['request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
         new_domain = Domain(
@@ -299,7 +301,7 @@ USERS_LINK = 'http://groups.google.com/group/commcare-users'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-def send_domain_registration_email(recipient, domain_name, guid, username):
+def send_domain_registration_email(recipient, domain_name, guid, full_name):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
 
@@ -307,14 +309,15 @@ def send_domain_registration_email(recipient, domain_name, guid, username):
         "domain": domain_name,
         "pricing_link": PRICING_LINK,
         "registration_link": registration_link,
-        "username": username,
+        "full_name": full_name,
         "users_link": USERS_LINK,
         "wiki_link": WIKI_LINK,
+        'url_prefix': 'http://' + DNS_name,
     }
     message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
     message_html = render_to_string('registration/email/confirm_account.html', params)
 
-    subject = 'Welcome to CommCare HQ!'.format(**locals())
+    subject = ugettext('Please Confirm your CommCare HQ Account')
 
     try:
         send_html_email_async.delay(subject, recipient, message_html,

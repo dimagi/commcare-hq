@@ -79,13 +79,16 @@ property_name   | A reference to the property in a document |  `doc["name"]`
 property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
 switch          | A switch statement | `if doc["age"] == 21: "legal"` `elif doc["age"] == 60: ...` `else: ...`
+array_index     | An index into an array | `doc[1]`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
+nested          | A way to chain any two expressions together | `f1(f2(doc))`
+
 
 ### JSON snippets for expressions
 
-Here are JSON snippets for the four expression types. Hopefully they are self-explanatory.
+Here are JSON snippets for the various expression types. Hopefully they are self-explanatory.
 
 ##### Constant Expression
 
@@ -106,6 +109,7 @@ This expression returns `doc["age"]`:
 }
 ```
 An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
+
 ##### Property Path Expression
 
 This expression returns `doc["child"]["age"]`:
@@ -182,6 +186,24 @@ This expression returns the value of the expression for the case that matches th
 }
 ```
 
+##### Array Index Expression
+
+This expression returns `doc["siblings"][0]`:
+```json
+{
+    "type": "array_index",
+    "array_expression": {
+        "type": "property_name",
+        "property_name": "siblings"
+    },
+    "index_expression": {
+        "type": "constant",
+        "constant": 0
+    }
+}
+```
+It will return nothing if the siblings property is not a list, the index isn't a number, or the indexed item doesn't exist.
+
 ##### Iterator Expression
 
 ```json
@@ -225,6 +247,27 @@ This can be used to lookup a property in another document. Here's an example tha
     "value_expression": {
         "type": "property_name",
         "property_name": "owner_id"
+    }
+}
+```
+
+#### Nested expressions
+
+These can be used to nest expressions. This can be used, e.g. to pull a specific property out of an item in a list of objects.
+
+The following nested expression is the equivalent of a `property_path` expression to `["outer", "inner"]` and demonstrates the functionality.
+More examples can be found in the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "property_name",
+        "property_name": "outer"
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "inner"
     }
 }
 ```

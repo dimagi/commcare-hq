@@ -9,13 +9,13 @@ from corehq.apps.app_manager.models import (
     FormDatum)
 from corehq.apps.app_manager.const import AUTO_SELECT_RAW
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.feature_previews import MODULE_FILTER
 from corehq.toggles import NAMESPACE_DOMAIN
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
-class TestFormWorkflow(SimpleTestCase, TestFileMixin):
+class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_workflow')
 
     def setUp(self):
@@ -188,7 +188,6 @@ class TestFormWorkflow(SimpleTestCase, TestFileMixin):
                 <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
                 <datum id="case_id_new_visit_0" value="uuid()"/>
                 <command value="'m2'"/>
-                <datum id="case_id_load_visit_0" value="instance('commcaresession')/session/data/case_id_load_visit_0"/>
               </create>
             </stack>
         </partial>

@@ -31,7 +31,7 @@ class EntriesHelper(object):
     def __init__(self, app, modules=None):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
         self.app = app
-        self.modules = modules or app.get_modules()
+        self.modules = modules or list(app.get_modules())
         self.details_helper = DetailsHelper(self.app, self.modules)
 
     def get_datums_meta_for_form_generic(self, form):

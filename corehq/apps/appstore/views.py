@@ -10,6 +10,7 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
+from dimagi.utils.name_to_url import name_to_url
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.views.apps import clear_app_cache
 
@@ -261,7 +262,7 @@ def copy_snapshot(request, domain):
                 messages.error(request, form.errors)
                 return project_info(request, domain)
 
-            new_domain_name = form.cleaned_data['hr_name']
+            new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
             with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
                 try:
                     new_domain = dom.save_copy(new_domain_name,

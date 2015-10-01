@@ -1290,7 +1290,7 @@ header .balloon-a {
 }
 .toolbarModifier :focus,
 .toolbar button:focus,
-.configContainer > textarea:focus {
+.configContainer textarea.configCode:focus {
   outline: none;
 }
 div.toolbarModifier {
@@ -1549,7 +1549,7 @@ div.toolbarModifier-hints dl dd:after {
   width: 0;
 }
 .toolbarModifier-hints,
-.configContainer > textarea,
+.configContainer textarea.configCode,
 .CodeMirror {
   -webkit-border-radius: 3px;
   -webkit-background-clip: padding-box;
@@ -1563,7 +1563,7 @@ div.toolbarModifier-hints dl dd:after {
   line-height: 23.42px;
   line-height: 1.46rem;
 }
-.configContainer > textarea,
+.configContainer textarea.configCode,
 .CodeMirror pre,
 .CodeMirror-linenumber {
   font-size: 13.01px;
@@ -1577,7 +1577,7 @@ div.toolbarModifier-hints dl dd:after {
   padding: 0;
   margin: 0;
 }
-.configContainer > textarea {
+.configContainer textarea.configCode {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;

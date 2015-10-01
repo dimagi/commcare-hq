@@ -8,6 +8,7 @@ Use the following plugins:
     entities
     floatingspace
     undo (for change events)
+    widget
 
 If by chance this hasn't been updated you can also check build-config.js in
 lib/ckeditor/

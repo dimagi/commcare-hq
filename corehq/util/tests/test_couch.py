@@ -81,12 +81,14 @@ class GetDocMockTestCase(TestCase):
         self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
 
 
-class LoggingDB(object):
+class TestLoggingDB(object):
     def __init__(self):
         self.docs_saved = []
         self.num_writes = 0
 
-    def bulk_save(self, docs):
+    def bulk_save(self, docs, use_uuids=True, all_or_nothing=False, new_edits=None, **params):
+        """Method signature matches coucdbkit.client.Database.bulk_save
+        """
         self.docs_saved.extend(docs)
         self.num_writes += 1
         return [{'id': 'unique_id'} for doc in docs]
@@ -94,7 +96,7 @@ class LoggingDB(object):
 
 class IterDBSimpleTest(SimpleTestCase):
     def test_number_of_calls(self):
-        db = LoggingDB()
+        db = TestLoggingDB()
         with IterDB(db, chunksize=50) as iter_db:
             all_docs = range(105)
             for doc in all_docs:

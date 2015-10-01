@@ -21,6 +21,7 @@ function HQReportDataTables(options) {
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
     self.show_pagination = (options.show_pagination === undefined) ? true : options.bPaginate;
+    self.aaSorting = options.aaSorting || null;
     // a list of functions to call back to after ajax.
     // see user configurable charts for an example usage
     self.extraCallbacks = options.extraCallbacks;
@@ -78,6 +79,9 @@ function HQReportDataTables(options) {
                 sScrollX: "100%",
                 bSort: self.defaultSort
             };
+            if (self.aaSorting !== null) {
+                params.aaSorting = self.aaSorting;
+            }
 
             if(self.ajaxSource) {
                 params.bServerSide = true;

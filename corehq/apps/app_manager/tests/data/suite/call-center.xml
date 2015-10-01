@@ -77,9 +77,7 @@
     </field>
     <field>
       <header width="0">
-        <text>
-          <locale id="m0.case_short.case_top_of_tech_support_list_3.header"/>
-        </text>
+        <text/>
       </header>
       <template width="0">
         <text>

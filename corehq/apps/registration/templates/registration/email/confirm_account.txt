@@ -1,9 +1,9 @@
-Hi {{ username }},
+Dear {{ full_name }},
 
 Welcome to CommCare!
 
 As a first step, please confirm your email address and activate your new
-CommCare project titled, {{ domain }}. You will not be able to use your project
+CommCare project titled: {{ domain }}. You will not be able to use your project
 until you have confirmed your email address.
 
 {{ registration_link }}
@@ -17,3 +17,6 @@ The CommCare Team
 Dimagi, Inc.
 585 Massachusetts Ave, Suite 4
 Cambridge,  MA 02139 United States
+
+You received this message because we received a New User request
+www.commcarehq.org with your email address.
