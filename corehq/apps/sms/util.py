@@ -45,23 +45,6 @@ def validate_phone_number(phone_number):
         raise ValidationError(_("Invalid phone number format."))
 
 
-def domains_for_phone(phone):
-    """
-    Get domains attached to a phone number
-    """
-    view_results = CommCareUser.get_db().view("users_extra/phones_to_domains", key=phone)
-    return [row["value"] for row in view_results]
-
-
-def users_for_phone(phone):
-    """
-    Get users attached to a phone number
-    """
-    view_results = CommCareUser.get_db().view("users_extra/phones_to_domains", key=phone)
-    user_ids = set([row["id"] for row in view_results])
-    return [CouchUser.get(id) for id in user_ids]
-
-
 def format_message_list(message_list):
     """
     question = message_list[-1]
