@@ -2725,6 +2725,7 @@ class AdvancedModule(ModuleBase):
         is_new_phase = False
 
         if phase is None:
+            from corehq.apps.app_manager.models.schedules import SchedulePhase
             self.schedule_phases.append(SchedulePhase(anchor=anchor))
             # TODO: is there a better way of doing this?
             phase = list(self.get_schedule_phases())[-1]  # get the phase from the module so we know the _parent
