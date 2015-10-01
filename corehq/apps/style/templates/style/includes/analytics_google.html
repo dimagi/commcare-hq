@@ -44,40 +44,59 @@
          *      callback when finished.
          */
         function trackLinkHelper(element, trackFunction){
+
+            function incrementTrackCount($target){
+                var count = $target.data("track-link-count") || 0;
+                count++;
+                $target.data("track-link-count", count);
+                return count;
+            }
+            function decrementTrackCount($target){
+                var count = $target.data("track-link-count");
+                count--;
+                $target.data("track-link-count", count);
+                return count;
+            }
+            function getCaptureFlag($target){
+                // NOTE: This func also sets the value of the flag to true if its undifined.
+                var captureClicks = $target.data("track-link-capture-clicks");
+                if (captureClicks === undefined){
+                    captureClicks = true;
+                }
+                $target.data("track-link-capture-clicks", captureClicks);
+                return captureClicks;
+            }
+            function setCaptureFlag($target, val){
+                $target.data("track-link-capture-clicks", val);
+            }
+
             var eventHandler = function (event) {
                 var $this = $(this);
                 if (event.metaKey) {
                     // This page isn't being redirected
                     trackFunction();
                 } else {
+                    var $target = $(event.delegateTarget);
+
                     // Track how many trackLinkHelper-related handlers
                     // this event has, so we only actually click
                     // once, after they're all complete.
-                    var $target = $(event.delegateTarget);
-                    var count = $target.data("track-link-count") || 0;
-                    count++;
-                    $target.data("track-link-count", count);
+                    incrementTrackCount($target);
 
-                    // After all the tracking requests have been made, captureClicks
-                    // will be set to fault. This allows us to trigger the default
+                    // After all the tracking requests have been made, the capture flag
+                    // will be set to false. This allows us to trigger the default
                     // click action without entering an infinite loop.
-                    var captureClicks = $target.data("track-link-capture-clicks");
-                    if (captureClicks === undefined){
-                        captureClicks = true;
-                    }
-                    $target.data("track-link-capture-clicks", captureClicks);
+                    var shouldCaptureClicks = getCaptureFlag($target);
 
-                    if (captureClicks){
+                    if (shouldCaptureClicks){
                         event.preventDefault();
                         var callbackCalled = false;
                         var callback = function () {
                             if (!callbackCalled) {
                                 var $target = $(event.delegateTarget);
-                                var count = $target.data("track-link-count");
-                                count--;
-                                $target.data("track-link-count", count);
-                                if (!count) {
-                                    $target.data("track-link-capture-clicks", false);
+                                var count = decrementTrackCount($target);
+                                if (count === 0) {
+                                    setCaptureFlag(false);
                                     $target.trigger("click");
                                 }
                                 callbackCalled = true;
