@@ -232,6 +232,7 @@
         self.resetDownload = function () {
             self.downloadId = null;
             self._numErrors = 0;
+            self._numCeleryRetries = 0;
             self.downloadStatusData = null;
             self.showDownloadStatus = false;
             self.downloadError = null;
@@ -258,12 +259,20 @@
                         self._dealWithErrors(data);
                     }
                     if (_.isNull(data.is_alive)) {
-                        // celery process is down
-                        $interval.cancel(self._promise);
-                        self.showCeleryError = true;
+                        self._dealWithCeleryErrors();
                     }
                 })
                 .error(self._dealWithErrors);
+        };
+
+        self._dealWithCeleryErrors = function () {
+            // Sometimes the task handler for celery is a little slow to get
+            // started, so we have to try a few times.
+            if (self._numCeleryRetries > 10) {
+                $interval.cancel(self._promise);
+                self.showCeleryError = true;
+            }
+            self._numCeleryRetries ++;
         };
 
         self._dealWithErrors = function (data) {
