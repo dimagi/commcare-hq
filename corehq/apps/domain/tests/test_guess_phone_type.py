@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.domain.decorators import J2ME, guess_phone_type_from_user_agent, ANDROID, \
-    determine_authtype_from_user_agent
+    determine_authtype_from_request
 
 
 class TestPhoneType(SimpleTestCase):
@@ -150,4 +150,4 @@ class TestDetermineAuthType(SimpleTestCase):
         return FakeRequest(user_agent)
 
     def test_basic_is_default(self):
-        self.assertEqual('basic', determine_authtype_from_user_agent(self._mock_request('')))
+        self.assertEqual('basic', determine_authtype_from_request(self._mock_request('')))

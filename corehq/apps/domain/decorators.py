@@ -202,7 +202,7 @@ def guess_phone_type_from_user_agent(user_agent):
     return None
 
 
-def determine_authtype_from_user_agent(request, default='basic'):
+def determine_authtype_from_request(request, default='basic'):
     user_agent = request.META.get('HTTP_USER_AGENT')
     type_to_auth_map = {
         J2ME: 'digest',
@@ -219,7 +219,7 @@ def login_or_digest_or_basic(default='basic'):
             function_wrapper = {
                 'basic': login_or_basic_ex(allow_cc_users=True),
                 'digest': login_or_digest_ex(allow_cc_users=True),
-            }[determine_authtype_from_user_agent(request, default=default)]
+            }[determine_authtype_from_request(request, default=default)]
             if not function_wrapper:
                 return HttpResponseForbidden()
             return function_wrapper(fn)(request, *args, **kwargs)
