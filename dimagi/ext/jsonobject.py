@@ -69,8 +69,8 @@ class DateTimeProperty(AbstractDateProperty):
         return value, safe_strftime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
-re_trans_datetime = re.compile(r'^\d{4}-0[1-9]|1[0-2]-[12]\d|0[1-9]|3[01]T'
-                               r'[01]\d|2[0-3]:[0-5]\d:[0-5]\d(\.\d{6})?Z$')
+re_trans_datetime = re.compile(r'^(\d{4})-(0[1-9]|1[0-2])-([12]\d|0[1-9]|3[01])T'
+                               r'([01]\d|2[0-3]):([0-5]\d:[0-5]\d)(\.\d{6})?Z$')
 
 # this is like jsonobject.api.re_datetime,
 # but without the "time" part being optional
