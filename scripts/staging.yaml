@@ -45,8 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - remove-custom-success-message  # Danny 9/24
-  - migrate-users-db  # Danny 9/23
+  - flip-users-db  # danny 10/1
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
   - b3-tf+djangobower+new-mobile-workers # Ben 10/1
