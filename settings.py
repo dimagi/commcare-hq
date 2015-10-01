@@ -107,7 +107,7 @@ BOWER_INSTALLED_APPS = (
     'backbone#0.9.1',
 )
 
-BOWER_PATH = '/usr/bin/bower'
+BOWER_PATH = '/usr/local/bin/bower'
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -389,6 +389,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
+    'djangobower',
     'django_prbac',
     'djcelery',
     'djtables',
