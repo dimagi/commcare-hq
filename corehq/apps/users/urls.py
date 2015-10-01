@@ -43,8 +43,6 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^web/role/delete/$', 'delete_user_role', name='delete_user_role'),
 
     url(r'^httpdigest/?$', 'test_httpdigest'),
-
-    url(r'^audit_logs/$', 'audit_logs', name='user_audit_logs')
 ) + \
 patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/$', ListCommCareUsersView.as_view(), name=ListCommCareUsersView.urlname),

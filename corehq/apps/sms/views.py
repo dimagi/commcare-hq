@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from StringIO import StringIO
+import base64
 import logging
 from datetime import datetime, timedelta, time
 import re
@@ -15,7 +16,7 @@ from django.utils.decorators import method_decorator
 from casexml.apps.case.models import CommCareCase
 from corehq import privileges
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
@@ -28,7 +29,7 @@ from corehq.apps.sms.api import (
     DomainScopeValidationError,
     MessageMetadata,
 )
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.users.decorators import require_permission
@@ -44,7 +45,9 @@ from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
     InitiateAddSMSBackendForm, SubscribeSMSForm,
     SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-    DEFAULT, CUSTOM, SendRegistrationInviationsForm)
+    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
+    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
@@ -63,6 +66,7 @@ from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 from corehq.apps.domain.models import Domain
 from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -1494,6 +1498,19 @@ class SMSSettingsView(BaseMessagingSectionView):
     def previewer(self):
         return self.request.couch_user.is_previewer()
 
+    def get_welcome_message_recipient(self, domain_obj):
+        if (
+            domain_obj.enable_registration_welcome_sms_for_case and
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker
+        ):
+            return WELCOME_RECIPIENT_ALL
+        elif domain_obj.enable_registration_welcome_sms_for_case:
+            return WELCOME_RECIPIENT_CASE
+        elif domain_obj.enable_registration_welcome_sms_for_mobile_worker:
+            return WELCOME_RECIPIENT_MOBILE_WORKER
+        else:
+            return WELCOME_RECIPIENT_NONE
+
     @property
     @memoized
     def form(self):
@@ -1552,6 +1569,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     domain_obj.sms_case_registration_user_id,
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
+                "registration_welcome_message":
+                    self.get_welcome_message_recipient(domain_obj),
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
@@ -1619,6 +1638,12 @@ class SMSSettingsView(BaseMessagingSectionView):
                     "sms_case_registration_user_id"]
             else:
                 domain_obj.sms_case_registration_enabled = False
+
+            domain_obj.enable_registration_welcome_sms_for_case = \
+                form.enable_registration_welcome_sms_for_case
+
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker = \
+                form.enable_registration_welcome_sms_for_mobile_worker
 
             domain_obj.save()
             messages.success(request, _("Changes Saved."))
@@ -1765,3 +1790,34 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
             if not self.domain_object.sms_mobile_worker_registration_enabled:
                 raise Http404()
             return self.paginate_crud_response
+
+
+class InvitationAppInfoView(View, DomainViewMixin):
+    urlname = 'sms_registration_invitation_app_info'
+
+    @property
+    @memoized
+    def token(self):
+        token = self.kwargs.get('token')
+        if not token:
+            raise Http404()
+        return token
+
+    @property
+    @memoized
+    def invitation(self):
+        invitation = SelfRegistrationInvitation.by_token(self.token)
+        if not invitation:
+            raise Http404()
+        return invitation
+
+    def get(self, *args, **kwargs):
+        if not self.invitation.odk_url:
+            raise Http404()
+        url = str(self.invitation.odk_url).strip()
+        response = 'ccapp: %s signature: %s' % (url, sign(url))
+        response = base64.b64encode(response)
+        return HttpResponse(response)
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)

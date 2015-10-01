@@ -4,8 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.xml import V2
 from corehq import toggles
-from corehq.apps.domain.decorators import login_or_digest_ex, domain_admin_required, \
-    login_or_digest_or_basic
+from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
@@ -14,12 +13,9 @@ from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.util.view_utils import json_error
-from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
-from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
-from lxml import etree
 from soil import DownloadBase
 
 
@@ -79,42 +75,6 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
         ),
     )
     return restore_config.get_response()
-
-
-@login_or_digest_ex(allow_cc_users=True)
-def historical_forms(request, domain):
-    assert request.couch_user.is_member_of(domain)
-    user_id = request.couch_user.get_id
-    db = XFormInstance.get_db()
-    form_ids = {
-        f['id'] for f in db.view(
-            'reports_forms/all_forms',
-            startkey=["submission user", domain, user_id],
-            endkey=["submission user", domain, user_id, {}],
-            reduce=False,
-        )
-    }
-
-    def data():
-        yield (
-            '<OpenRosaResponse xmlns="http://openrosa.org/http/response" '
-            'items="{}">\n    <message nature="success"/>\n'
-            .format(len(form_ids))
-        )
-
-        for form_id in form_ids:
-            # this is a hack to call this method
-            # Should only hit couch once per form, to get the attachment
-            xml = XFormInstance(_id=form_id).get_xml_element()
-            if xml:
-                yield '    {}'.format(etree.tostring(xml))
-            else:
-                yield '    <XFormNotFound/>'
-            yield '\n'
-        yield '</OpenRosaResponse>\n'
-
-    # to make this not stream, just call list on data()
-    return HttpResponse(data(), content_type='application/xml')
 
 
 class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):

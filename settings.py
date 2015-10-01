@@ -228,6 +228,7 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
+    'corehq.form_processor',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -299,6 +300,7 @@ HQ_APPS = (
     'corehq.apps.dashboard',
     'corehq.util',
     'dimagi.ext',
+    'corehq.doctypemigrations',
 
     # custom reports
     'a5288',
@@ -339,6 +341,10 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.guinea_backup',
+
+    # tests only
+    # todo: figure out how to not put these into INSTALLED_APPS, TEST_APPS doesn't seem to work
+    'testapps.test_pillowtop',
 )
 
 TEST_APPS = ()
@@ -1059,7 +1065,6 @@ COUCHDB_APPS = [
     'builds',
     'case',
     'casegroups',
-    'callcenter',
     'cleanup',
     'cloudcare',
     'commtrack',
@@ -1138,6 +1143,7 @@ COUCHDB_APPS = [
     ('m4change', 'm4change'),
     ('export', 'meta'),
     'tdhtesting',
+    ('callcenter', 'meta'),
 
     # users and groups
     ('groups', USERS_GROUPS_DB),
@@ -1334,7 +1340,14 @@ PILLOWTOPS = {
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'incident_report.json')
+    os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'sms_indicator_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_country.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_1.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
 ]
 
 

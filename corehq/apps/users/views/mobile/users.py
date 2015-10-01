@@ -37,6 +37,7 @@ from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
+from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.users.util import can_add_extra_mobile_workers
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
@@ -166,6 +167,10 @@ class EditCommCareUserView(BaseFullEditUserView):
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
+            'needs_to_downgrade_locations': (
+                users_have_locations(self.domain) and
+                not has_privilege(self.request, privileges.LOCATIONS)
+            ),
         }
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({

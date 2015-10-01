@@ -3,11 +3,11 @@ from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, PreloadAction, \
     WORKFLOW_MODULE, AdvancedModule, AdvancedOpenCaseAction, LoadUpdateAction, AutoSelectCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from mock import patch
 
 
-class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
+class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_list_form')
 
     def _prep_case_list_form_app(self):
@@ -314,7 +314,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-mixed'), factory.app.create_suite())
 
 
-class CaseListFormFormTests(SimpleTestCase, TestFileMixin):
+class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'case_list_form'
 
     def setUp(self):

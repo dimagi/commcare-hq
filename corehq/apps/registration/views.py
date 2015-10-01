@@ -100,9 +100,11 @@ def register_user(request, domain_type=None):
                     'track_domain_registration': True,
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
+            context.update({'create_domain': form.cleaned_data['create_domain']})
         else:
             form = NewWebUserRegistrationForm(
                 initial={'domain_type': domain_type, 'email': prefilled_email, 'create_domain': True})
+            context.update({'create_domain': True})
 
         context.update({
             'form': form,
