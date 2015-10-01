@@ -756,7 +756,7 @@ class FormBase(DocumentSchema):
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         try:
-            d = get_db().view(
+            d = Application.get_db().view(
                 'app_manager/xforms_index',
                 key=form_unique_id
             ).one()
