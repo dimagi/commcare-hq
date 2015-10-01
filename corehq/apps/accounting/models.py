@@ -1585,7 +1585,7 @@ class InvoiceBase(models.Model):
 
     @property
     def contact_emails(self):
-        contact_emails = self.account.billingcontactinfo.emails
+        contact_emails = self.account.billingcontactinfo.emails if self.account.billingcontactinfo else None
         contact_emails = (contact_emails.split(',')
                           if contact_emails is not None else [])
         if not contact_emails:
