@@ -3676,6 +3676,9 @@ class ShadowModule(ModuleBase):
     def uses_media(self):
         return False
 
+    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
+        return []
+
     def validate_for_build(self):
         errors = super(ShadowModule, self).validate_for_build()
         if self.case_list_filter:
