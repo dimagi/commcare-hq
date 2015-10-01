@@ -45,10 +45,10 @@
 trunk: master
 name: autostaging
 branches:
-  - remove-custom-success-message  # Danny 9/24
-  - migrate-users-db  # Danny 9/23
+  - flip-users-db  # danny 10/1
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
+  - b3-tf+djangobower+new-mobile-workers # Ben 10/1
   - djangobower+new-mobile-workers # Ben 9/25
   - new-mobile-workers+exports-ui-changes  # 9/30 Danny
   - new-mobile-workers # Biyeun 8/25
@@ -56,12 +56,14 @@ branches:
   - sync-history-email # Cal 9/22
   - exports-ui-changes  # biyeun 9/28
   - djangobower # ben 9/25
+  - b3-tf # ben 10/1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
       - new-libs # Ben 9/3
+      - b3-tf # ben 10/1
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master

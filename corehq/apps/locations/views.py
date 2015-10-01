@@ -33,7 +33,8 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .dbaccessors import users_have_locations, get_users_assigned_to_locations
+from .analytics import users_have_locations
+from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
     is_locations_admin,
