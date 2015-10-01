@@ -614,6 +614,7 @@ def edit_shadow_module_details(request, domain, app_id, module_id):
     """
     Overwrite shadow module details, which is really just the case list filter.
     """
+    params = json_request(request.POST)
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     filter = params.get('filter', ())

@@ -61,26 +61,29 @@
             {% if module.module_type == 'shadow' %}
                 var ShadowModuleConfig = (function () {
                     "use strict";
-                    var filter_xpath = "{{ module.case_list_filter }}";
+                    var filter_xpath = {{ module.case_list_filter|JSON }};
                     var that = {
                         contextVariables: COMMCAREHQ.app_manager.module_view,
+                        save: function() {
+                            this.shortScreen.saveButton.ajax({
+                                url: "{% url "edit_shadow_module_details" domain app.id module.id %}",
+                                type: "POST",
+                                data: {
+                                    filter: JSON.stringify(this.filter.serialize()),
+                                },
+                                dataType: 'json',
+                                success: function (data) {
+                                    COMMCAREHQ.app_manager.updateDOM(data.update);
+                                }
+                            });
+                        },
                         shortScreen: {
                             saveButton: COMMCAREHQ.SaveButton.init({
                                 unsavedMessage: "You have unsaved configuration.",
                                 save: function () {
-                                    $.ajax({
-                                        url: "{% url "edit_shadow_module_details" domain app.id module.id %}",
-                                        type: "POST",
-                                        data: {
-                                            filter: that.filter.serialize(),
-                                        },
-                                        dataType: 'json',
-                                        success: function (data) {
-                                            COMMCAREHQ.app_manager.updateDOM(data.update);
-                                        }
-                                    });
+                                    that.save();
                                 },
-                            })
+                            }),
                         },
                     };
                     that.filter = new filterViewModel(filter_xpath ? filter_xpath : null, that.shortScreen.saveButton);
