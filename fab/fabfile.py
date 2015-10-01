@@ -567,6 +567,7 @@ def _deploy_without_asking():
             raise PreindexNotFinished()
 
         # handle static files
+        _execute_with_timing(_bower_install)
         _execute_with_timing(version_static)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
@@ -971,9 +972,16 @@ def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py bower install'.format(venv))
         sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
         sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
+
+
+@parallel
+@roles(ROLES_STATIC)
+def _bower_install(use_current_release=False):
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
+    with cd(env.code_root if not use_current_release else env.code_current):
+        sudo('{}/bin/python manage.py bower install'.format(venv))
 
 
 @roles(ROLES_DJANGO)
