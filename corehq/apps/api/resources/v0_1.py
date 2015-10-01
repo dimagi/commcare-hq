@@ -246,8 +246,6 @@ class CommCareUserResource(UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-
-
         show_archived = _safe_bool(bundle, 'archived')
         group_id = bundle.request.GET.get('group')
         if group_id:
@@ -256,6 +254,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
+
             return list(CommCareUser.by_domain(domain, strict=True, is_active=not show_archived))
 
 
