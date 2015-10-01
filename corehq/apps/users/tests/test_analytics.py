@@ -2,7 +2,7 @@ from django.test import TestCase
 from corehq.apps.users.analytics import update_analytics_indexes, get_count_of_active_commcare_users_in_domain, \
     get_count_of_inactive_commcare_users_in_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 
 class UserAnalyticsTest(TestCase):
@@ -27,6 +27,11 @@ class UserAnalyticsTest(TestCase):
             username='inactive',
             password='secret',
             is_active=False
+        )
+        cls.web_user = WebUser.create(
+            domain='test',
+            username='web',
+            password='secret',
         )
         update_analytics_indexes()
 
