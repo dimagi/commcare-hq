@@ -13,20 +13,21 @@ def update_analytics_indexes():
 
 
 def get_count_of_active_commcare_users_in_domain(domain):
-    return _get_count_of_users_in_domain('active', domain)
+    return _get_count_of_commcare_users_in_domain('active', domain)
 
 
 def get_count_of_inactive_commcare_users_in_domain(domain):
-    return _get_count_of_users_in_domain('inactive', domain)
+    return _get_count_of_commcare_users_in_domain('inactive', domain)
 
 
-def _get_count_of_users_in_domain(active_flag, domain):
+def _get_count_of_commcare_users_in_domain(active_flag, domain):
     result = CommCareUser.get_db().view(
         'users/by_domain',
-        startkey=[active_flag, domain],
-        endkey=[active_flag, domain, {}],
+        startkey=[active_flag, domain, 'CommCareUser'],
+        endkey=[active_flag, domain, 'CommCareUser', {}],
         group=True,
         group_level=2,
         stale=stale_ok(),
     ).one()
     return result['value'] if result else 0
+
