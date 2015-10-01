@@ -796,7 +796,7 @@ def _tag_commit():
     return diff_url
 
 
-@task
+@task(alias='deploy')
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
     _require_target()
