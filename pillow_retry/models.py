@@ -37,6 +37,7 @@ class PillowError(models.Model):
     domains = models.CharField(max_length=255, db_index=True, null=True)
     doc_type = models.CharField(max_length=255, db_index=True, null=True)
     doc_date = models.DateTimeField(null=True)
+    queued = models.BooleanField(default=False)
 
     @property
     def change_dict(self):
