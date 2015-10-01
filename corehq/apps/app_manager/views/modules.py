@@ -27,6 +27,7 @@ from corehq.apps.app_manager.util import (
 
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
+from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -475,7 +476,11 @@ def _new_report_module(request, domain, app, name, lang):
     module = app.add_module(ReportModule.new_module(name, lang))
     # by default add all reports
     module.report_configs = [
-        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        ReportAppConfig(
+            report_id=report._id,
+            header={lang: report.title},
+            uuid=random_hex(),
+        )
         for report in ReportConfiguration.by_domain(domain)
     ]
     app.save()
