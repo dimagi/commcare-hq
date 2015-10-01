@@ -56,7 +56,6 @@ def process_pillow_retry(error_doc_id):
             except ResourceNotFound:
                 change['deleted'] = True
 
-
         try:
             try:
                 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
