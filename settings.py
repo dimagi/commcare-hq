@@ -46,15 +46,6 @@ PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS 
 ####### Couch Config ######
 COUCH_DATABASE = 'http://localhost:5984/pillowtop'
 
-COUCHDB_DATABASES = [ (app, COUCH_DATABASE) for app in [
-    'pillowtop',
-    'pillow_retry',
-    'couch',
-    'ext',
-    # This is necessary for abstract classes in dimagi.utils.couch.undo
-    # otherwise breaks tests
-]]
-
 TEST_RUNNER = 'couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner'
 
 ####### # Email setup ########
@@ -93,3 +84,18 @@ LOGGING = {
         }
     }
 }
+
+try:
+    from localsettings import *
+except ImportError:
+    pass
+
+
+COUCHDB_DATABASES = [ (app, COUCH_DATABASE) for app in [
+    'pillowtop',
+    'pillow_retry',
+    'couch',
+    'ext',
+    # This is necessary for abstract classes in dimagi.utils.couch.undo
+    # otherwise breaks tests
+]]

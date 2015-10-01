@@ -10,7 +10,7 @@ install:
  - "psql -c 'create database pillowtop' -U postgres"
  - "pip install -e . --process-dependency-links"
  - "pip install coverage coveralls"
-script: coverage run `which django-admin.py` test --settings settings
+script: coverage run manage.py test
 after_success:
  - coveralls
 services:
