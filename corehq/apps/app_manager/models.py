@@ -3726,7 +3726,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         choices=['roman', 'native', 'custom-keys', 'qwerty'],
         default="roman"
     )
-    success_message = DictProperty()
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
@@ -4990,15 +4989,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not root_ids.issubset(module_ids):
             module_errors.append({'type': 'unknown root'})
         return module_errors
-
-    @classmethod
-    def get_by_xmlns(cls, domain, xmlns):
-        r = cls.get_db().view('exports_forms/by_xmlns',
-            key=[domain, {}, xmlns],
-            group=True,
-            stale=settings.COUCH_STALE_QUERY,
-        ).one()
-        return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)
