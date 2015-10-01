@@ -97,7 +97,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         ]
         scheduler_data_nodes.extend([
             u"next_{}".format(f.schedule_form_id)
-            for f in form.get_phase().get_forms
+            for f in form.get_phase().get_forms()
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
