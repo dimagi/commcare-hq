@@ -290,6 +290,31 @@ class ArrayIndexExpressionTest(SimpleTestCase):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
 
 
+class NestedExpressionTest(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.expression_spec = {
+            'type': 'nested',
+            'argument_expression': {
+                'type': 'property_name',
+                'property_name': 'outer',
+            },
+            'value_expression': {
+                'type': 'property_name',
+                'property_name': 'inner'
+            },
+        }
+        cls.expression = ExpressionFactory.from_spec(cls.expression_spec)
+
+    def test_basic(self):
+        self.assertEqual('value', self.expression({
+            'outer': {
+                'inner': 'value',
+            }
+        }))
+
+
 class IteratorExpressionTest(SimpleTestCase):
 
     def setUp(self):
