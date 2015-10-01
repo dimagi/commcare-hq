@@ -68,6 +68,7 @@ def process_pillow_retry(error_doc_id):
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
             error_doc.add_attempt(ex_value, ex_tb)
+            error_doc.queued = False
             error_doc.save()
         else:
             error_doc.delete()
