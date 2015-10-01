@@ -90,6 +90,7 @@ from corehq.apps.app_manager.views.modules import (
     delete_module,
     edit_module_attr,
     edit_module_detail_screens,
+    edit_shadow_module_details,
     edit_report_module,
     new_module,
     undo_delete_module,

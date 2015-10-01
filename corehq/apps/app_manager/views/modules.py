@@ -610,6 +610,23 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+def edit_shadow_module_details(request, domain, app_id, module_id):
+    """
+    Overwrite shadow module details, which is really just the case list filter.
+    """
+    app = get_app(domain, app_id)
+    module = app.get_module(module_id)
+    filter = params.get('filter', ())
+    if filter != ():
+        module.case_list_filter = filter
+
+    resp = {}
+    app.save(resp)
+    return json_response(resp)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
 def edit_report_module(request, domain, app_id, module_id):
     """
     Overwrite module case details. Only overwrites components that have been

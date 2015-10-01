@@ -3620,6 +3620,11 @@ class ShadowModule(ModuleBase):
     def get_child_modules(self):
         return []
 
+    def requires_case_details(self):
+        if not self.source_module:
+            return None
+        return self.source_module.requires_case_details()
+
     @property
     def root_module(self):
         return None
@@ -3663,6 +3668,7 @@ class ShadowModule(ModuleBase):
         lang = lang or 'en'
         module = ShadowModule(
             name={lang: name or ugettext("Untitled Module")},
+            case_list_filter="",
         )
         module.get_or_create_unique_id()
         return module

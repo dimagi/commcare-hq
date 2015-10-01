@@ -24,9 +24,7 @@
     window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
     window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
     </script>
-    {% if module.module_type != 'shadow' %}
-        <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
-    {% endif %}
+    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
@@ -61,22 +59,37 @@
             };
 
             {% if module.module_type == 'shadow' %}
-                console.log("this is a shadow module");
-            /*
-            // Create save button
-            var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
-            ShadowModuleDetailConfig = (function () {
-                this.saveButton = COMMCAREHQ.SaveButton.init({
-                    unsavedMessage: DetailScreenConfig.message.UNSAVED_MESSAGE,
-                    save: function () {
-                        that.save();
-                    }
+                var ShadowModuleConfig = (function () {
+                    "use strict";
+                    var filter_xpath = "{{ module.case_list_filter }}";
+                    var that = {
+                        contextVariables: COMMCAREHQ.app_manager.module_view,
+                        shortScreen: {
+                            saveButton: COMMCAREHQ.SaveButton.init({
+                                unsavedMessage: "You have unsaved configuration.",
+                                save: function () {
+                                    $.ajax({
+                                        url: "{% url "edit_shadow_module_details" domain app.id module.id %}",
+                                        type: "POST",
+                                        data: {
+                                            filter: that.filter.serialize(),
+                                        },
+                                        dataType: 'json',
+                                        success: function (data) {
+                                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                                        }
+                                    });
+                                },
+                            })
+                        },
+                    };
+                    that.filter = new filterViewModel(filter_xpath ? filter_xpath : null, that.shortScreen.saveButton);
+                    return that;
                 });
-                this.on('change', function () {
-                    this.saveButton.fire('change');
-                });
-            }());
-            */
+
+                var config = new ShadowModuleConfig();
+                var $list_home = $("#case-detail-screen-config-tab");
+                ko.applyBindings(config, $list_home.get(0));
             {% else %}
             var details = {{ details|JSON }};
             var lang = {{ lang|JSON }};
@@ -355,7 +368,7 @@
             <legend>
                 {% trans "Filtering" %}
             </legend>
-            {% include 'app_manager/partials/case_list_filtering.html' with toggle=False %}
+            {% include 'app_manager/partials/case_list_filtering.html' %}
         {% else %}
             {% include 'app_manager/partials/case_list.html' %}
         {% endif %}

@@ -38,7 +38,7 @@
     {% trans "Filtering and Sorting" %}
 </legend>
 
-{% include 'app_manager/partials/case_list_filtering.html' with toggle=True %}
+{% include 'app_manager/partials/case_list_filtering.html' %}
 
 <div data-bind="with: sortRows">
 {% if app.enable_multi_sort %}
