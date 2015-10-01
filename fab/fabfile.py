@@ -981,7 +981,7 @@ def _do_collectstatic(use_current_release=False):
 def _bower_install(use_current_release=False):
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py bower install -- --config.interactive=false'.format(venv))
+        sudo('{venv}/bin/python manage.py bower install'.format(venv=venv), user=env.sudo_user)
 
 
 @roles(ROLES_DJANGO)
