@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext_lazy as _
+from django.utils.translation import ugettext_noop, ugettext_lazy as _, ugettext
 from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
 
 DESC_BY_EDITION = {
@@ -272,7 +272,7 @@ class PricingTableFeatures(object):
             ) + (
                 mark_safe('<a target="_blank" href="%(url)s">%(click_here)s</a>.' % {
                     'url': reverse(PublicSMSRatesView.urlname),
-                    'click_here': _('Click Here'),
+                    'click_here': ugettext('Click Here'),
                 }),
             ) * 4,
             cls.USER_GROUPS: (True, True, True, True, True),
