@@ -103,7 +103,8 @@ class IterDB(object):
         except BulkSaveError as e:
             categorized_errors = categorize_bulk_save_errors(e)
             success_ids = {r['id'] for r in categorized_errors.pop(None, [])}
-            self.errors_by_type = categorized_errors
+            for error_type, error_ids in categorized_errors.items():
+                self.errors_by_type[error_type].extend(error_ids)
             self.error_ids.update(d['id'] for d in e.errors)
         else:
             success_ids = {d['id'] for d in results}

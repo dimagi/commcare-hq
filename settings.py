@@ -253,6 +253,7 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
+    'corehq.form_processor',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -1364,7 +1365,14 @@ PILLOWTOPS = {
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'incident_report.json')
+    os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'sms_indicator_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_country.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_1.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
 ]
 
 

@@ -14,8 +14,8 @@ $(function(){
         self.$downloading = self.$el.find("#" + self.el_id + "-downloading");
 
         self.init = function(){
-            self.$download_progress.hide();
-            self.$downloading.show();
+            self.$download_progress.addClass("hide");
+            self.$downloading.removeClass("hide");
         };
 
         self.startPollDownloadStatus = function(data){
@@ -26,8 +26,8 @@ $(function(){
                         url: data.download_url,
                         success: function (resp) {
                             if (resp.trim().length) {
-                                self.$downloading.hide();
-                                self.$download_progress.show().html(resp);
+                                self.$downloading.addClass("hide");
+                                self.$download_progress.html(resp).removeClass("hide");
                                 if (self.$download_progress.find(".alert-success").length) {
                                     keep_polling = false;
                                 }
@@ -44,7 +44,7 @@ $(function(){
             };
 
 
-            self.$el.on("hidden", function(){
+            self.$el.on("hidden hidden.bs.modal", function(){
                 keep_polling = false;
                 self.init();
             });
@@ -67,11 +67,11 @@ $(function(){
         };
 
         self.downloadError = function(text){
-            self.$downloading.hide();
-            self.$download_progress.show().html(text);
+            self.$downloading.addClass("hide");
+            self.$download_progress.removeClass("hide").html(text);
         };
 
-        self.$el.on("show", self.generateDownload);
+        self.$el.on("show show.bs.modal", self.generateDownload);
         self.init();
     };
 }());

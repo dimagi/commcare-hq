@@ -71,9 +71,11 @@
     "auth_context": {},
     "build_id": null,
     "date_header": null,
-    "domain": null,
+    "domain": "test-domain",
     "last_sync_token": null,
     "openrosa_headers": {},
     "path": null,
-    "submit_ip": null
+    "submit_ip": null,
+    "deprecated_form_id": null,
+    "orig_id": null
 }

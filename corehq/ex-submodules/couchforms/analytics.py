@@ -12,6 +12,7 @@ def update_analytics_indexes():
     so that calls to analytics functions return up-to-date
     """
     XFormInstance.get_db().view('reports_forms/all_forms', limit=1).all()
+    XFormInstance.get_db().view('exports_forms/by_xmlns', limit=1).all()
 
 
 def domain_has_submission_in_last_30_days(domain):
@@ -176,3 +177,49 @@ def get_number_of_submissions(domain, user_id, xmlns, app_id, start, end,
         stale=stale_ok(),
     ).first()
     return data['value'] if data else 0
+
+
+def get_form_analytics_metadata(domain, app_id, xmlns):
+    """
+    Returns metadata about the form, or None if no info found.
+
+    Here is an example structure:
+    {
+        "xmlns": "http://openrosa.org/formdesigner/5D563904-4038-4070-A0D4-CC421003E862",
+        "form": {
+            "name": {
+                "en": "Brogramming Project",
+                "es": "Projecto de brogramming"
+            },
+            "id": 1
+        },
+        "app": {
+            "langs": [
+                "es",
+                "en",
+                "fra"
+            ],
+            "name": "brogrammino",
+            "id": "10257bd886ba423eea19a562e95cec07"
+        },
+        "module": {
+            "name": {
+                "en": "Dimagi",
+                "es": "Brogramminos"
+            },
+            "id": 0
+        },
+        "app_deleted": false,
+        "submissions": 15
+    }
+    """
+    # todo: wrap this return value in a class/stucture
+    view_results = XFormInstance.get_db().view(
+        'exports_forms/by_xmlns',
+        key=[domain, app_id, xmlns],
+        stale=stale_ok(),
+        group=True
+    ).one()
+    if view_results:
+        return view_results['value']
+    return None

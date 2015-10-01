@@ -509,6 +509,30 @@ class TestActionSortKey(SimpleTestCase):
         for index, action in action_tuples:
             self.assertEqual(action, sorted_actions[index])
 
+
+class CaseRebuildSimpleTest(SimpleTestCase):
+
+    def test_rebuild_with_opened_on_in_update(self):
+        case = CommCareCase(
+            actions=[
+                CommCareCaseAction.wrap({
+                    "xform_id": "8166142bceefae35375abfdf285f9dfc",
+                    "user_id": "66925160e15a21bc6f332e967dc05647",
+                    "server_date": "2013-02-07T04:40:40Z",
+                    "action_type": "update",
+                    "updated_known_properties": {
+                        "opened_on": "2012-10-18T12:16:22Z",
+                        "external_id": "521",
+                        "owner_id": "ee042f33c890421794f69ed81e030882"
+                    },
+                })
+            ]
+        )
+        # this call failed hard before it was fixed
+        case.rebuild(strict=False)
+        self.assertEqual(case.opened_on, datetime(2012, 10, 18, 12, 16, 22))
+
+
 EMPTY_DATE = object()
 
 

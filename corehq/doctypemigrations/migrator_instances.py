@@ -22,3 +22,7 @@ users_migration = Migrator(
 
 def get_migrator_by_slug(slug):
     return Migrator.instances[slug]
+
+
+def get_migrator_slugs():
+    return sorted(Migrator.instances.keys())

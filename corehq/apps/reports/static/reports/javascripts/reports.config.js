@@ -83,7 +83,8 @@ var HQReport = function (options) {
     };
 
     self.saveDatespanToCookie = function () {
-        if (self.datespan) {
+        var validDate = /^\d{4}-\d{2}-\d{2}$/;
+        if (self.datespan && validDate.test(self.datespan.startdate) && validDate.test(self.datespan.enddate)) {
             $.cookie(self.datespanCookie+'.startdate', self.datespan.startdate,
                 {path: self.urlRoot, expires: 1});
             $.cookie(self.datespanCookie+'.enddate', self.datespan.enddate,

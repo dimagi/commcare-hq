@@ -7,6 +7,7 @@ import tempfile
 import re
 import itertools
 from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.util.spreadsheets.export import WorkBook
 import langcodes
 from datetime import datetime, timedelta, date
@@ -169,13 +170,15 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
             or request.couch_user.get_viewable_reports()):
         raise Http404
 
+    lang = request.couch_user.language or ucr_default_language()
+
     all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
     good_configs = []
     for config in all_configs:
         if config.is_configurable_report and not config.configurable_report:
             continue
 
-        good_configs.append(config)
+        good_configs.append(config.to_complete_json(lang=lang))
 
     def _is_valid(rn):
         # the _id check is for weird bugs we've seen in the wild that look like
@@ -558,13 +561,14 @@ class AddSavedReportConfigView(View):
             if field in update_config_data:
                 setattr(self.config, field, update_config_data[field])
 
-        # remove start and end date if the date range is "last xx days"
+        # remove start and end date if the date range is "last xx days" or none
         if self.saved_report_config_form.cleaned_data['date_range'] in [
             'last30',
             'last7',
             'lastn',
             'lastmonth',
             'lastyear',
+            None,
         ]:
             if "start_date" in self.config:
                 delattr(self.config, "start_date")

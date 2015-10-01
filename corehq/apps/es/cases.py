@@ -30,6 +30,7 @@ class CaseES(HQESQuery):
             is_closed,
             case_type,
             owner,
+            active_in_range,
         ] + super(CaseES, self).builtin_filters
 
 
@@ -51,3 +52,11 @@ def case_type(type_):
 
 def owner(owner_id):
     return filters.term('owner_id', owner_id)
+
+
+def active_in_range(gt=None, gte=None, lt=None, lte=None):
+    """Restricts cases returned to those with actions during the range"""
+    return filters.nested(
+        "actions",
+        filters.date_range("actions.date", gt, gte, lt, lte)
+    )
