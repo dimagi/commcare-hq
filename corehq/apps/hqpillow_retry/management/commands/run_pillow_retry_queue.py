@@ -22,8 +22,9 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
     @retry_on_connection_failure
     def _get_items(utcnow):
         errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
-        errors.update(queued=True)
-        return (dict(id=e['id'], key=e['date_next_attempt']) for e in errors)
+        error_pks = [error['id'] for error in errors]
+        PillowError.objects.filter(pk__in=error_pks).update(queued=True)
+        return [dict(id=e['id'], key=e['date_next_attempt']) for e in errors]
 
     @classmethod
     def get_items_to_be_processed(cls, utcnow):
