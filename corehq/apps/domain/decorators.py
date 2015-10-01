@@ -194,16 +194,22 @@ def guess_phone_type_from_user_agent(user_agent):
     A really dumb utility that guesses the phone type based on the user-agent header.
     """
     j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    return J2ME if user_agent and re.search(j2me_pattern, user_agent) else ANDROID
+    if user_agent:
+        if re.search(j2me_pattern, user_agent):
+            return J2ME
+        elif 'Android' in user_agent:
+            return ANDROID
+    return None
 
 
-def determine_authtype_from_user_agent(request):
+def determine_authtype_from_user_agent(request, default='basic'):
     user_agent = request.META.get('HTTP_USER_AGENT')
     type_to_auth_map = {
         J2ME: 'digest',
         ANDROID: 'basic',
     }
-    return type_to_auth_map[guess_phone_type_from_user_agent(user_agent)]
+    user_type = guess_phone_type_from_user_agent(user_agent)
+    return type_to_auth_map.get(user_type, default)
 
 
 def login_or_digest_or_basic(fn):
@@ -274,7 +280,7 @@ def login_required(view_func):
 ########################################################################################################
 #
 # Have to write this to be sure this decorator still works if DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME
-# is not defined - people may forget to do this, because it's not a standard, defined Django 
+# is not defined - people may forget to do this, because it's not a standard, defined Django
 # config setting
 
 def domain_admin_required_ex(redirect_page_name=None):
@@ -333,4 +339,3 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
-

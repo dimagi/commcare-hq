@@ -134,9 +134,9 @@ class TestPhoneType(SimpleTestCase):
         for android_agent in corpus:
             self.assertEqual(ANDROID, guess_phone_type_from_user_agent(android_agent), 'android user agent detection failed for {}'.format(android_agent))
 
-    def test_default_is_android(self):
+    def test_default_is_none(self):
         for empty in [None, '']:
-            self.assertEqual(ANDROID, guess_phone_type_from_user_agent(empty))
+            self.assertEqual(None, guess_phone_type_from_user_agent(empty))
 
 
 class TestDetermineAuthType(SimpleTestCase):
