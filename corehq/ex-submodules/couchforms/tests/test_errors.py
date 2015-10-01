@@ -1,11 +1,9 @@
 from django.test import TestCase
 from corehq.apps.receiverwrapper import submit_form_locally
-
-from corehq.form_processor.interfaces import FormProcessorInterface
+from couchforms.models import XFormError
 
 
 class CaseProcessingErrorsTest(TestCase):
-
     def test_no_case_id(self):
         """
         submit form with a case block that has no case_id
@@ -33,10 +31,16 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             'my_very_special_domain',
         )
-        xform_errors = FormProcessorInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
+        xform_errors = XFormError.view(
+            'domain/docs',
+            startkey=['my_very_special_domain', 'XFormError'],
+            endkey=['my_very_special_domain', 'XFormError', {}],
+            reduce=False,
+            include_docs=True,
+        ).all()
 
         related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.id == 'abc-easy-as-123']
+                          if xform_error.get_id == 'abc-easy-as-123']
         self.assertEqual(len(related_errors), 1)
         related_error = related_errors[0]
         self.assertEqual(related_error.problem,
@@ -67,10 +71,16 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             'my_very_special_domain',
         )
-        xform_errors = FormProcessorInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
+        xform_errors = XFormError.view(
+            'domain/docs',
+            startkey=['my_very_special_domain', 'XFormError'],
+            endkey=['my_very_special_domain', 'XFormError', {}],
+            reduce=False,
+            include_docs=True,
+        ).all()
 
         related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.id == 'abc-easy-as-456']
+                          if xform_error.get_id == 'abc-easy-as-456']
         self.assertEqual(len(related_errors), 1)
         related_error = related_errors[0]
         self.assertEqual(related_error.problem,
