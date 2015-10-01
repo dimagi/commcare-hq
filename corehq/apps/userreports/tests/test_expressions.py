@@ -292,27 +292,56 @@ class ArrayIndexExpressionTest(SimpleTestCase):
 
 class NestedExpressionTest(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.expression_spec = {
-            'type': 'nested',
-            'argument_expression': {
-                'type': 'property_name',
-                'property_name': 'outer',
-            },
-            'value_expression': {
-                'type': 'property_name',
-                'property_name': 'inner'
-            },
-        }
-        cls.expression = ExpressionFactory.from_spec(cls.expression_spec)
-
     def test_basic(self):
-        self.assertEqual('value', self.expression({
-            'outer': {
-                'inner': 'value',
+        expression = ExpressionFactory.from_spec({
+            "type": "nested",
+            "argument_expression": {
+                "type": "property_name",
+                "property_name": "outer"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "inner"
+            }
+        })
+        self.assertEqual('value', expression({
+            "outer": {
+                "inner": "value",
             }
         }))
+
+    def test_parent_case_id(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "nested",
+            "argument_expression": {
+                "type": "array_index",
+                "array_expression": {
+                    "type": "property_name",
+                    "property_name": "indices"
+                },
+                "index_expression": {
+                    "type": "constant",
+                    "constant": 0
+                }
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "referenced_id"
+            }
+        })
+        self.assertEqual(
+            'my_parent_id',
+            expression({
+                 "indices": [
+                       {
+                           "doc_type": "CommCareCaseIndex",
+                           "identifier": "parent",
+                           "referenced_type": "pregnancy",
+                           "referenced_id": "my_parent_id"
+                       }
+                 ],
+            })
+        )
 
 
 class IteratorExpressionTest(SimpleTestCase):
