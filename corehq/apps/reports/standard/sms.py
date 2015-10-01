@@ -15,7 +15,7 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
-from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter
+from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter, PhoneNumberFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -539,6 +539,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        PhoneNumberFilter,
     ]
 
     @property
@@ -553,6 +554,15 @@ class MessagingEventsReport(BaseMessagingEventReport):
         )
         header.custom_sort = [[0, 'desc']]
         return header
+
+    @property
+    @memoized
+    def phone_number_filter(self):
+        value = PhoneNumberFilter.get_value(self.request, self.domain)
+        if isinstance(value, basestring):
+            return value.strip()
+
+        return None
 
     def get_filters(self):
         source_filter = []
@@ -598,9 +608,6 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def rows(self):
         source_filter, content_type_filter = self.get_filters()
 
-        # We need to call distinct() on this because it's doing an
-        # outer join to sms_messagingsubevent in order to filter on
-        # subevent content types.
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
             Q(date__gte=self.datespan.startdate_utc),
@@ -608,7 +615,15 @@ class MessagingEventsReport(BaseMessagingEventReport):
             (Q(source__in=source_filter) |
                 Q(content_type__in=content_type_filter) |
                 Q(messagingsubevent__content_type__in=content_type_filter)),
-        ).distinct()
+        )
+
+        if self.phone_number_filter:
+            data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
+
+        # We need to call distinct() on this because it's doing an
+        # outer join to sms_messagingsubevent in order to filter on
+        # subevent content types.
+        data = data.distinct()
 
         result = []
         contact_cache = {}

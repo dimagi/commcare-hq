@@ -1,7 +1,7 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-<input id="{{ css_id }}" name="{{ slug }}" type="text" class="span6" value="{{ search_query }}">
+<input id="{{ css_id }}" name="{{ slug }}" type="text" class="{% block input_css_class %}span6{% endblock %}" value="{{ search_query }}">
     {% if search_help_inline %}
     <p class="help-block">
         <i class="icon icon-info-sign"></i>
