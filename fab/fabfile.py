@@ -568,8 +568,8 @@ def _deploy_without_asking():
             raise PreindexNotFinished()
 
         # handle static files
-        _execute_with_timing(_bower_install)
         _execute_with_timing(version_static)
+        _execute_with_timing(_bower_install)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
