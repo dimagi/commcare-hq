@@ -28,7 +28,7 @@ from dimagi.utils.parsing import json_format_datetime
 import xml2json
 
 import couchforms
-from .const import BadRequest
+from . import const
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -459,7 +459,7 @@ class SubmissionPost(object):
         if not self.auth_context.is_valid():
             return self.failed_auth_response, None, []
 
-        if isinstance(self.instance, BadRequest):
+        if isinstance(self.instance, const.BadRequest):
             return HttpResponseBadRequest(self.instance.message), None, []
 
         def process(xform):
