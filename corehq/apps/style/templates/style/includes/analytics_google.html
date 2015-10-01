@@ -93,7 +93,6 @@
                         var callbackCalled = false;
                         var callback = function () {
                             if (!callbackCalled) {
-                                var $target = $(event.delegateTarget);
                                 var count = decrementTrackCount($target);
                                 if (count === 0) {
                                     setCaptureFlag(false);
