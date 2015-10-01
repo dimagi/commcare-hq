@@ -3313,12 +3313,6 @@ class ReportAppConfig(DocumentSchema):
         if not self.uuid:
             self.uuid = random_hex()
 
-    @classmethod
-    def wrap(cls, obj):
-        # todo: can remove once existing ReportAppConfig have been migrated
-        _soft_assert_uuid(obj.get('uuid'), 'Check uuids for apps containing UCR %s' % obj.get('report_id'))
-        return super(ReportAppConfig, cls).wrap(obj)
-
     @property
     def report(self):
         from corehq.apps.userreports.models import ReportConfiguration
