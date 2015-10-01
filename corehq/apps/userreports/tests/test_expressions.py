@@ -332,14 +332,14 @@ class NestedExpressionTest(SimpleTestCase):
         self.assertEqual(
             'my_parent_id',
             expression({
-                 "indices": [
-                       {
-                           "doc_type": "CommCareCaseIndex",
-                           "identifier": "parent",
-                           "referenced_type": "pregnancy",
-                           "referenced_id": "my_parent_id"
-                       }
-                 ],
+                "indices": [
+                    {
+                        "doc_type": "CommCareCaseIndex",
+                        "identifier": "parent",
+                        "referenced_type": "pregnancy",
+                        "referenced_id": "my_parent_id"
+                    }
+                ],
             })
         )
 
