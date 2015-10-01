@@ -58,23 +58,37 @@
                     count++;
                     $target.data("track-link-count", count);
 
-                    event.preventDefault();
-                    var callbackCalled = false;
-                    var callback = function () {
-                        if (!callbackCalled) {
-                            var $target = $(event.delegateTarget);
-                            var count = $target.data("track-link-count");
-                            count--;
-                            $target.data("track-link-count", count);
-                            if (!count) {
-                                document.location = $this.attr('href');
+                    // After all the tracking requests have been made, captureClicks
+                    // will be set to fault. This allows us to trigger the default
+                    // click action without entering an infinite loop.
+                    var captureClicks = $target.data("track-link-capture-clicks");
+                    if (captureClicks === undefined){
+                        captureClicks = true;
+                    }
+                    $target.data("track-link-capture-clicks", captureClicks);
+
+                    if (captureClicks){
+                        event.preventDefault();
+                        var callbackCalled = false;
+                        var callback = function () {
+                            if (!callbackCalled) {
+                                var $target = $(event.delegateTarget);
+                                var count = $target.data("track-link-count");
+                                count--;
+                                $target.data("track-link-count", count);
+                                if (!count) {
+                                    $target.data("track-link-capture-clicks", false);
+                                    $target.trigger("click");
+                                }
+                                callbackCalled = true;
                             }
-                            callbackCalled = true;
-                        }
-                    };
-                    // callback might not get executed if, say, analytics.js can't be reached.
-                    setTimeout(callback, 2000);
-                    trackFunction(callback);
+                        };
+                        // This timeout guarantees that the callback will be called after 2 seconds
+                        // incase trackFunction() fails to call it. For example, this could happen
+                        // if the tracking service can't be reached.
+                        setTimeout(callback, 2000);
+                        trackFunction(callback);
+                    }
                 }
             };
             if (typeof element == 'string') {
