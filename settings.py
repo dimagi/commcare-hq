@@ -101,6 +101,7 @@ BOWER_INSTALLED_APPS = (
     'angular#1.4.4',
     'angular-route#1.4.4',
     'angular-resource#1.4.4',
+    'angular-message-format#1.4.4',
     'angular-messages#1.4.4',
     'angular-cookies#1.4.4',
     'less#1.7.3',
