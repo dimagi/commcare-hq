@@ -120,11 +120,13 @@
                     {% block tabs %}
                         {% format_main_menu %}
                     {% endblock %}
+                    <div class="btn-toolbar pull-right">
                     {% if request.user.is_authenticated %}
                         {% include 'style/includes/global_navigation_bar.html' %}
                     {% else %}
                         <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                     {% endif %}
+                    </div>
                 </nav>
                 {% format_subtab_menu %}
             </div>

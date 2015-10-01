@@ -54,7 +54,6 @@ from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
@@ -108,39 +107,11 @@ def get_rabbitmq_management_url():
     else:
         return None
 
+
 def get_hqadmin_base_context(request):
     return {
         "domain": None,
     }
-
-
-@require_superuser
-def commcare_version_report(request, template="hqadmin/commcare_version.html"):
-    apps = get_db().view('app_manager/applications_brief').all()
-    menu = CommCareBuildConfig.fetch().menu
-    builds = [item.build.to_string() for item in menu]
-    by_build = dict([(item.build.to_string(), {"label": item.label, "apps": []}) for item in menu])
-
-    for app in apps:
-        app = app['value']
-        app['id'] = app['_id']
-        if app.get('build_spec'):
-            build_spec = BuildSpec.wrap(app['build_spec'])
-            build = build_spec.to_string()
-            if by_build.has_key(build):
-                by_build[build]['apps'].append(app)
-            else:
-                by_build[build] = {"label": build_spec.get_label(), "apps": [app]}
-                builds.append(build)
-
-    tables = []
-    for build in builds:
-        by_build[build]['build'] = build
-        tables.append(by_build[build])
-    context = get_hqadmin_base_context(request)
-    context.update({'tables': tables})
-    context['hide_filters'] = True
-    return render(request, template, context)
 
 
 @require_POST

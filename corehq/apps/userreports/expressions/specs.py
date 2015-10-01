@@ -188,3 +188,17 @@ class RelatedDocExpressionSpec(JsonObject):
             return self._value_expression(doc, EvaluationContext(doc, 0))
         except ResourceNotFound:
             return None
+
+
+class NestedExpressionSpec(JsonObject):
+    type = TypeProperty('nested')
+    argument_expression = DictProperty(required=True)
+    value_expression = DictProperty(required=True)
+
+    def configure(self, argument_expression, value_expression):
+        self._argument_expression = argument_expression
+        self._value_expression = value_expression
+
+    def __call__(self, item, context=None):
+        argument = self._argument_expression(item, context)
+        return self._value_expression(argument, context)

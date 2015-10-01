@@ -1,16 +1,7 @@
 import json
+
+from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
 from corehq.util.couch import IterDB
-from corehq.util.couch_helpers import paginate_view
-
-
-def get_all_docs_with_doc_types(db, doc_types):
-    for doc_type in doc_types:
-        results = paginate_view(
-            db, 'all_docs/by_doc_type',
-            chunk_size=100, startkey=[doc_type], endkey=[doc_type, {}],
-            attachments=True, include_docs=True, reduce=False)
-        for result in results:
-            yield result['doc']
 
 
 def bulk_migrate(source_db, target_db, doc_types, filename):

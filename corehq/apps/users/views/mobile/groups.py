@@ -10,7 +10,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.dbaccessors import users_have_locations
+from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
