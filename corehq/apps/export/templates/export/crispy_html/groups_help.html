@@ -1,0 +1,11 @@
+{% load i18n %}
+<p ng-show="!!groupsLoading">
+    <i class="fa fa-spinner fa-spin"></i> {% trans "Loading Groups" %}
+</p>
+<p ng-show="!!hasError">{% trans "There was an issue loading groups. Using all groups by default." %}</p>
+<p ng-show="!groupsLoading && !hasGroups">
+    {% trans "You don't have any reporting groups set up." %}
+    <a href="{% url 'all_groups' domain %}"
+       class="btn btn-default"
+       target="_blank">{% trans "Manage Groups" %}</a>
+</p>
