@@ -256,7 +256,7 @@ class SharedDataProvider(object):
 
     def get_all_vhnd_forms(self):
         key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
-        return get_db().view(
+        return XFormInstance.get_db().view(
             'reports_forms/all_forms',
             startkey=key,
             endkey=key+[{}],

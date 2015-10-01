@@ -2,6 +2,7 @@ import copy
 from couchdbkit.exceptions import ResourceNotFound
 from django.utils.safestring import mark_safe
 import re
+from corehq.apps.app_manager.models import RemoteApp, Application
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.couch.cache import cache_core
@@ -256,7 +257,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         other_forms = list(all_forms.difference(std_app_forms))
 
         key = ["", self.domain]
-        remote_app_data = get_db().view('reports_apps/remote',
+        remote_app_data = RemoteApp.get_db().view('reports_apps/remote',
             reduce=False,
             startkey=key,
             endkey=key+[{}],
@@ -636,7 +637,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if endkey is None:
             endkey = startkey
         kwargs = dict(group=group) if group else dict(reduce=reduce)
-        return get_db().view('reports_forms/by_app_info',
+        return Application.get_db().view('reports_forms/by_app_info',
             startkey=startkey,
             endkey=endkey+[{}],
             **kwargs

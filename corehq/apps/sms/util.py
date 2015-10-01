@@ -5,7 +5,7 @@ import uuid
 import datetime
 
 from dimagi.utils.couch.database import get_db
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from django.template.loader import render_to_string
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -44,11 +44,12 @@ def validate_phone_number(phone_number):
         not phone_number_plus_re.match(phone_number)):
         raise ValidationError(_("Invalid phone number format."))
 
+
 def domains_for_phone(phone):
     """
     Get domains attached to a phone number
     """
-    view_results = get_db().view("users_extra/phones_to_domains", key=phone)
+    view_results = CommCareUser.get_db().view("users_extra/phones_to_domains", key=phone)
     return [row["value"] for row in view_results]
 
 
@@ -56,7 +57,7 @@ def users_for_phone(phone):
     """
     Get users attached to a phone number
     """
-    view_results = get_db().view("users_extra/phones_to_domains", key=phone)
+    view_results = CommCareUser.get_db().view("users_extra/phones_to_domains", key=phone)
     user_ids = set([row["id"] for row in view_results])
     return [CouchUser.get(id) for id in user_ids]
 
