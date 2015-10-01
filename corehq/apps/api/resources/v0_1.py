@@ -1,4 +1,3 @@
-
 # Standard library imports
 from functools import wraps
 from itertools import imap
@@ -6,6 +5,7 @@ import json
 
 # Django imports
 import datetime
+from corehq.apps.api.couch import UserQuerySetAdapter
 from dimagi.utils.couch.database import iter_docs
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
@@ -254,8 +254,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-
-            return list(CommCareUser.by_domain(domain, strict=True, is_active=not show_archived))
+            return UserQuerySetAdapter(domain, show_archived=show_archived)
 
 
 class WebUserResource(UserResource):
