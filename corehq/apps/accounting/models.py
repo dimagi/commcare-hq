@@ -1588,9 +1588,7 @@ class InvoiceBase(models.Model):
         contact_emails = self.account.billingcontactinfo.emails if self.account.billingcontactinfo else None
         contact_emails = contact_emails.split(',') if contact_emails else []
         if not contact_emails:
-            admins = WebUser.get_admins_by_domain(
-                self.get_domain()
-            )
+            admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [a.email if a.email else a.username for a in admins]
             logger.error(
                 "[BILLING] "
