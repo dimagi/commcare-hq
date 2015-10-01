@@ -212,21 +212,24 @@ def determine_authtype_from_user_agent(request, default='basic'):
     return type_to_auth_map.get(user_type, default)
 
 
-def login_or_digest_or_basic(fn):
-    @wraps(fn)
-    def _inner(request, *args, **kwargs):
-        function_wrapper = {
-            'basic': login_or_basic_ex(allow_cc_users=True),
-            'digest': login_or_digest_ex(allow_cc_users=True),
-        }[determine_authtype_from_user_agent(request)]
-        if not function_wrapper:
-            return HttpResponseForbidden()
-        return function_wrapper(fn)(request, *args, **kwargs)
-    return _inner
+def login_or_digest_or_basic(default='basic'):
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(request, *args, **kwargs):
+            function_wrapper = {
+                'basic': login_or_basic_ex(allow_cc_users=True),
+                'digest': login_or_digest_ex(allow_cc_users=True),
+            }[determine_authtype_from_user_agent(request, default=default)]
+            if not function_wrapper:
+                return HttpResponseForbidden()
+            return function_wrapper(fn)(request, *args, **kwargs)
+        return _inner
+    return decorator
 
 
 def login_or_api_key_ex(allow_cc_users=False):
     return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users)
+
 
 login_or_api_key = login_or_api_key_ex()
 
