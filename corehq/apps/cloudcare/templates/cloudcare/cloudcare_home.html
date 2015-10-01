@@ -16,36 +16,50 @@
     {% include "imports/fancy-code.html" %}
 {% endblock %}
 
-{% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'style/lib/Datatables-1.10.9/media/js/jquery.dataTables.js' %}"></script>
+{% block stylesheets %}
+    <link rel="stylesheet" href="{% new_static 'style/lib/jquery-ui-1.11.4/jquery-ui.css' %}">
+    <link rel="stylesheet" href="{% new_static 'formplayer/style/webforms.css' %}">
+    <link rel="stylesheet" href="{% new_static 'cloudcare/css/cloudcare.css' %}">
+{% endblock %}
 
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script src="{% static 'case/js/casexml.js' %}"></script>
-    <script src="{% static 'backbone/backbone-min.js' %}"></script>
-    <script src="{% static 'cloudcare/js/util.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
-    <script src="{% static 'cloudcare/js/post.js' %}"></script>
+{% block js %} {{ block.super }}
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% new_static 'style/lib/Datatables-1.10.9/media/js/jquery.dataTables.js' %}"></script>
+
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% new_static 'case/js/casexml.js' %}"></script>
+    <script src="{% new_static 'backbone/backbone-min.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
+
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% new_static 'style/lib/Datatables-1.10.9/media/js/jquery.dataTables.js' %}"></script>
+
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% new_static 'case/js/casexml.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/backbone.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
 
     {# touchforms includes #}
     <script src="{% new_static 'style/lib/jquery-ui-1.11.4/jquery-ui.min.js' %}"></script>
-    <link rel="stylesheet" href="{% new_static 'style/lib/jquery-ui-1.11.4/jquery-ui.min.css' %}">
 
-    <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-    <script src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
-    <script src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
-    <script src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
-    <script src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
-
-    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
-
+    <script src="{% new_static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/purify.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/shortcut.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
+    <script src="{% new_static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
+    <script src="{% new_static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
+    <script src="{% new_static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
