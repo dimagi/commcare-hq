@@ -1913,8 +1913,7 @@ class ResendEmailForm(forms.Form):
         ]
 
     def resend_email(self):
-        contact_emails = self.invoice.email_recipients
-        contact_emails += self.cleaned_data['additional_recipients']
+        contact_emails = set(self.invoice.email_recipients) | set(self.cleaned_data['additional_recipients'])
         if self.invoice.is_wire:
             record = WireBillingRecord.generate_record(self.invoice)
         else:
