@@ -209,7 +209,15 @@ def determine_authtype_from_request(request, default='basic'):
         ANDROID: 'basic',
     }
     user_type = guess_phone_type_from_user_agent(user_agent)
-    return type_to_auth_map.get(user_type, default)
+    if user_type is None and 'HTTP_AUTHORIZATION' in request.META:
+        if request.META['HTTP_AUTHORIZATION'].lower().startswith('digest'):
+            return 'digest'
+        elif request.META['HTTP_AUTHORIZATION'].lower().startswith('basic'):
+            return 'basic'
+        else:
+            return default
+    else:
+        return type_to_auth_map.get(user_type, default)
 
 
 def login_or_digest_or_basic(default='basic'):

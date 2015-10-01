@@ -142,12 +142,34 @@ class TestPhoneType(SimpleTestCase):
 class TestDetermineAuthType(SimpleTestCase):
 
     @staticmethod
-    def _mock_request(user_agent):
+    def _mock_request(user_agent='', auth_header=''):
         class FakeRequest(object):
-            def __init__(self, user_agent):
-                self.META = {'HTTP_USER_AGENT': user_agent}
+            def __init__(self, user_agent, auth_header):
+                self.META = {
+                    'HTTP_USER_AGENT': user_agent,
+                    'HTTP_AUTHORIZATION': auth_header,
+                }
 
-        return FakeRequest(user_agent)
+        return FakeRequest(user_agent, auth_header)
 
     def test_basic_is_default(self):
-        self.assertEqual('basic', determine_authtype_from_request(self._mock_request('')))
+        self.assertEqual('basic', determine_authtype_from_request(self._mock_request()))
+
+    def test_override_default(self):
+        self.assertEqual('digest', determine_authtype_from_request(self._mock_request(), default='digest'))
+
+    def test_digest_header_overrides_default(self):
+        self.assertEqual('digest',
+                         determine_authtype_from_request(self._mock_request(auth_header='Digest: whatever')))
+
+    def test_basic_header_overrides_default(self):
+        self.assertEqual('basic',
+                         determine_authtype_from_request(self._mock_request(auth_header='Basic: whatever'),
+                                                         default='digest'))
+
+    def test_user_agent_beats_header(self):
+        # todo: we may want to change the behavior of this test and have the header win.
+        # this is currently just to make sure we don't change existing behavior
+        self.assertEqual('basic',
+                         determine_authtype_from_request(self._mock_request(user_agent='Android',
+                                                                            auth_header='Digest: whatever')))
