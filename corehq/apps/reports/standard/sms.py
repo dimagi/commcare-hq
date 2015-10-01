@@ -432,6 +432,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             {'name': 'startdate', 'value': start_date},
             {'name': 'enddate', 'value': end_date},
             {'name': 'log_type', 'value': MessageTypeFilter.get_value(self.request, self.domain)},
+            {'name': 'location_id', 'value': AsyncLocationFilter.get_value(self.request, self.domain)},
         ]
 
     @property
