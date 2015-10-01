@@ -477,7 +477,7 @@ class Domain(Document, SnapshotMixin):
             startkey = [self.name, None]
             endkey = [self.name, None, {}]
 
-        return get_db().view('app_manager/applications',
+        return Application.get_db().view('app_manager/applications',
             startkey=startkey,
             endkey=endkey,
             include_docs=True,
@@ -1109,7 +1109,8 @@ class Domain(Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        return get_db().view("domain/snapshots",
+        from corehq.apps.app_manager.models import Application
+        return Application.get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],
             reduce=True,
