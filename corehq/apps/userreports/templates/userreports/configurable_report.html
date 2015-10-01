@@ -23,7 +23,8 @@
         $(function(){
             var $editReportButton = $("#edit-report-link");
             gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', '{{ report.spec.report_meta.builder_report_type }}');
-            analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
+            window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
+            window.analytics.usage("Report Viewer", "View Report", '{{ report.spec.report_meta.builder_report_type }}');
         });
     </script>
     {% endif %}
