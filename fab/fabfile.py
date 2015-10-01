@@ -70,6 +70,7 @@ RSYNC_EXCLUDE = (
 RELEASE_RECORD = 'RELEASES.txt'
 env.linewise = True
 env.colorize_errors = True
+env['sudo_prefix'] += '-H '
 
 if not hasattr(env, 'code_branch'):
     print ("code_branch not specified, using 'master'. "
