@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - user-db-fixes  # danny 10/1
   - flip-users-db  # danny 10/1
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
