@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
 
 
 class TransformedGetter(object):
@@ -79,7 +80,7 @@ def transform_date(item):
     if item:
         if isinstance(item, basestring):
             try:
-                return datetime.strptime(item, '%Y-%m-%d').date()
+                return iso_string_to_date(item)
             except ValueError:
                 pass
         elif isinstance(item, date):
@@ -90,14 +91,10 @@ def transform_date(item):
 def transform_datetime(item):
     if item:
         if isinstance(item, basestring):
-            for datetime_format in [
-                '%Y-%m-%dT%H:%M:%SZ',
-                '%Y-%m-%dT%H:%M:%S.%fZ',
-            ]:
-                try:
-                    return datetime.strptime(item, datetime_format)
-                except ValueError:
-                    pass
+            try:
+                return iso_string_to_datetime(item, strict=True)
+            except ValueError:
+                pass
         elif isinstance(item, datetime):
             return item
     return None
