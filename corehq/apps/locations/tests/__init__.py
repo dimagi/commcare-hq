@@ -6,6 +6,7 @@ from .test_location_set import *
 from .test_location_types import *
 from .test_location_utils import *
 from .test_locations import *
+from .test_permissions import *
 from .test_products_at_location import *
 from .test_reupholster import *
 from .test_site_code import *
