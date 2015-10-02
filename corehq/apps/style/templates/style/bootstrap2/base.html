@@ -67,7 +67,9 @@
                             {% block tabs %}
                                 {% format_main_menu %}
                             {% endblock %}
-                            {% include 'style/includes/global_navigation_bar.html' %}
+                            <div class="btn-toolbar pull-right">
+                                {% include 'style/includes/global_navigation_bar.html' %}
+                            </div>
                         </nav>
                     {% else %}
                         <nav>
