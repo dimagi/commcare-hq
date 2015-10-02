@@ -18,8 +18,8 @@
                 <dd class="hq-dd-userinfo">{{ couch_user|getattr:field.name }}</dd>
                 {% endif %}
                 {% endfor %}
-                <dt>{% trans 'Phone Numbers' %}</dt>
                 {% if phonenumbers %}
+                <dt>{% trans 'Phone Numbers' %}</dt>
                 <dd>
                     <ul>
                         {% for phonenumber in phonenumbers %}
