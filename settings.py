@@ -104,6 +104,7 @@ BOWER_INSTALLED_APPS = (
     'angular-message-format#1.4.4',
     'angular-messages#1.4.4',
     'angular-cookies#1.4.4',
+    'knockout-2.3.0-legacy=knockout.js#2.3',
     'less#1.7.3',
     'backbone#0.9.1',
 )
