@@ -34,9 +34,9 @@
             generator.{% endblocktrans %}</p>
             {% endif %}
             {% elif wizard.steps.current == 'backup' %}
-            <p>{% blocktrans %}Use this form for entering backup tokens for logging in.
-            These tokens have been generated for you to print and keep safe. Please
-            enter one of these backup tokens to login to your account.{% endblocktrans %}</p>
+            <p>{% blocktrans %}
+            Please enter the token given to you by your domain administrator.
+            {% endblocktrans %}</p>
             {% endif %}
 
             {% for global_error in form.non_field_errors %}
@@ -45,11 +45,11 @@
             </div>
             {% endfor %}
 
-            <form action="" method="post">{% csrf_token %}
+            <form action="" method="post" class="form-horizontal">{% csrf_token %}
                 {% include "two_factor/_wizard_forms.html" %}
 
                 {# hidden submit button to enable [enter] key #}
-                <div style="margin-left: -9999px"><input type="submit" value=""/></div>
+                <div style="display: none"><input type="submit" value=""/></div>
 
                 {% if other_devices %}
                 <p>{% trans "Or, alternatively, use one of your backup phones:" %}</p>
@@ -66,7 +66,7 @@
                 {% endfor %}</p>
                 {% endif %}
                 {% if backup_tokens %}
-                <p>{% trans "As a last resort, you can use a backup token:" %}</p>
+                <p>{% trans "Please contact your domain adminstrator if you need a backup token" %}</p>
                 <div class="row-fluid">
                     <div class="span6">
                         <button name="wizard_goto_step" type="submit" value="backup"
@@ -76,7 +76,9 @@
                 <br />
                 {% endif %}
 
+                <div class="form-actions">
                 {% include "two_factor/_wizard_actions.html" %}
+                </div>
             </form>
         </div>
         <div class="span4">
