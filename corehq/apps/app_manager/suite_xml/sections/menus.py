@@ -10,8 +10,6 @@ from corehq.feature_previews import MODULE_FILTER
 class MenuContributor(SuiteContributorByModule):
     def get_module_contributions(self, module):
         menus = []
-        if module.module_type == 'shadow':
-            return menus
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus():
                 menus.append(menu)
@@ -45,8 +43,8 @@ class MenuContributor(SuiteContributorByModule):
                 menu = Menu(**menu_kwargs)
 
             def get_commands():
-                for form in module.get_forms():
-                    command = Command(id=id_strings.form_command(form))
+                for form in module.source_module.get_forms() if module.module_type == 'shadow' else module.get_forms():
+                    command = Command(id=id_strings.form_command(form, module))
 
                     if form.requires_case():
                         form_datums = self.entries_helper.get_datums_meta_for_form_generic(form)

@@ -34,11 +34,13 @@ class EntriesHelper(object):
         self.modules = modules or list(app.get_modules())
         self.details_helper = DetailsHelper(self.app, self.modules)
 
-    def get_datums_meta_for_form_generic(self, form):
+    def get_datums_meta_for_form_generic(self, form, module=None):
+        if not module:
+            module = form.get_module()
         if form.form_type == 'module_form':
-            datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+            datums_meta = self.get_case_datums_basic_module(module, form)
         elif form.form_type == 'advanced_form':
-            datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+            datums_meta, _ = self.get_datum_meta_assertions_advanced(module, form)
             datums_meta.extend(EntriesHelper.get_new_case_id_datums_meta(form))
         else:
             raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
@@ -151,7 +153,7 @@ class EntriesHelper(object):
 
     def entry_for_module(self, module):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import Module, AdvancedModule, ShadowModule
+        from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
         for form in module.source_module.get_forms() if module.module_type == 'shadow' else module.get_forms():
             e = Entry()
@@ -159,7 +161,7 @@ class EntriesHelper(object):
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
                 e.command = LocalizedCommand(
-                    id=id_strings.form_command(form),
+                    id=id_strings.form_command(form, module),
                     menu_locale_id=id_strings.form_locale(form),
                     media_image=bool(len(form.all_image_paths())),
                     media_audio=bool(len(form.all_audio_paths())),
@@ -168,7 +170,7 @@ class EntriesHelper(object):
                 )
             else:
                 e.command = Command(
-                    id=id_strings.form_command(form),
+                    id=id_strings.form_command(form, module),
                     locale_id=id_strings.form_locale(form),
                     media_image=form.default_media_image,
                     media_audio=form.default_media_audio,
@@ -369,6 +371,7 @@ class EntriesHelper(object):
             else:
                 parent_filter = ''
 
+            detail_module = datum['module'].source_module if datum['module'].module_type == 'shadow' else datum['module']
             detail_persistent = None
             detail_inline = False
             for detail_type, detail, enabled in datum['module'].get_details():
@@ -377,7 +380,7 @@ class EntriesHelper(object):
                     and (detail.use_case_tiles or detail.custom_xml)
                     and enabled
                 ):
-                    detail_persistent = id_strings.detail(datum['module'], detail_type)
+                    detail_persistent = id_strings.detail(detail_module, detail_type)
                     detail_inline = bool(detail.pull_down_tile)
                     break
 
@@ -406,14 +409,14 @@ class EntriesHelper(object):
                     nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
                              + parent_filter + fixture_select_filter),
                     value="./@case_id",
-                    detail_select=self.details_helper.get_detail_id_safe(datum['module'], 'case_short'),
+                    detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
                     detail_confirm=(
-                        self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
+                        self.details_helper.get_detail_id_safe(detail_module, 'case_long')
                         if datum['index'] == 0 and not detail_inline else None
                     ),
                     detail_persistent=detail_persistent,
                     detail_inline=(
-                        self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
+                        self.details_helper.get_detail_id_safe(detail_module, 'case_long')
                         if detail_inline else None
                     )
                 ),
