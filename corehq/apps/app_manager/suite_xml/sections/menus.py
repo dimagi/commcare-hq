@@ -10,6 +10,8 @@ from corehq.feature_previews import MODULE_FILTER
 class MenuContributor(SuiteContributorByModule):
     def get_module_contributions(self, module):
         menus = []
+        if module.module_type == 'shadow':
+            return menus
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus():
                 menus.append(menu)

@@ -270,8 +270,10 @@
                         <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}">
                         <option value="">{% trans "None" %}</option>
                         {% for mod in app.modules %}
-                            {% if mod.id != module.id %}
-                                <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
+                            {% if mod.module_type == 'basic' %}
+                                {% if mod.id != module.id %}
+                                    <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
+                                {% endif %}
                             {% endif %}
                         {% endfor %}
                         </select>

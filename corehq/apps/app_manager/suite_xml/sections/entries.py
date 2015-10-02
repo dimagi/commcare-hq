@@ -101,7 +101,7 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_filter_xpath(module, delegation=False):
-        filter = module.case_details.short.filter
+        filter = module.case_list_filter if module.module_type == 'shadow' else module.case_details.short.filter
         if filter:
             xpath = '[%s]' % filter
         else:
@@ -151,9 +151,9 @@ class EntriesHelper(object):
 
     def entry_for_module(self, module):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import Module, AdvancedModule
+        from corehq.apps.app_manager.models import Module, AdvancedModule, ShadowModule
         results = []
-        for form in module.get_forms():
+        for form in module.source_module.get_forms() if module.module_type == 'shadow' else module.get_forms():
             e = Entry()
             e.form = form.xmlns
             # Ideally all of this version check should happen in Command/Display class

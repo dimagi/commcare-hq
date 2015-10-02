@@ -3586,18 +3586,10 @@ class ShadowModule(ModuleBase):
         return []
 
     @property
-    def case_details(self):
-        return None
-
-    @property
     def ref_details(self):
         if not self.source_module:
             return None
         return self.source_module.ref_details
-
-    @property
-    def case_list(self):
-        return None
 
     @property
     def referral_list(self):
