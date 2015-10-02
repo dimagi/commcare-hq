@@ -53,6 +53,7 @@ from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
@@ -3303,15 +3304,14 @@ class ReportAppConfig(DocumentSchema):
     header = DictProperty()
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
-    uuid = StringProperty(default='')
+    uuid = StringProperty(required=True)
 
     _report = None
 
-    @classmethod
-    def wrap(cls, obj):
-        # todo: can remove once existing ReportAppConfig have been migrated
-        _soft_assert_uuid(obj.get('uuid'), 'Check uuids for apps containing UCR %s' % obj.get('report_id'))
-        return super(ReportAppConfig, cls).wrap(obj)
+    def __init__(self, *args, **kwargs):
+        super(ReportAppConfig, self).__init__(*args, **kwargs)
+        if not self.uuid:
+            self.uuid = random_hex()
 
     @property
     def report(self):
