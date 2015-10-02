@@ -77,9 +77,9 @@ def login_and_domain_required(view_func):
                 if couch_user.is_member_of(domain) or domain.is_public:
                     if TWO_FACTOR_AUTH.enabled(domain) and not user.is_verified():
                         return TemplateResponse(
-                                request=req,
-                                template='two_factor/core/otp_required.html',
-                                status=403,
+                            request=req,
+                            template='two_factor/core/otp_required.html',
+                            status=403,
                         )
                     else:
                         return view_func(req, domain_name, *args, **kwargs)
