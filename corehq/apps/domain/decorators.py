@@ -1,5 +1,4 @@
 # Standard Library imports
-import base64
 from functools import wraps
 import logging
 
@@ -15,11 +14,8 @@ from django.utils.translation import ugettext as _
 
 # External imports
 from django_digest.decorators import httpdigest
-from corehq.apps.domain.auth import determine_authtype_from_request
+from corehq.apps.domain.auth import determine_authtype_from_request, basicauth
 from django_prbac.utils import has_privilege
-
-from django.http import HttpResponse
-from django.contrib.auth import authenticate, login
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -117,31 +113,6 @@ def api_key():
                 return view(request, *args, **kwargs)
 
             response = HttpUnauthorized()
-            return response
-        return wrapper
-    return real_decorator
-
-
-def basicauth(realm=''):
-    # stolen and modified from: https://djangosnippets.org/snippets/243/
-    def real_decorator(view):
-        def wrapper(request, *args, **kwargs):
-            if 'HTTP_AUTHORIZATION' in request.META:
-                auth = request.META['HTTP_AUTHORIZATION'].split()
-                if len(auth) == 2:
-                    if auth[0].lower() == "basic":
-                        uname, passwd = base64.b64decode(auth[1]).split(':', 1)
-                        user = authenticate(username=uname, password=passwd)
-                        if user is not None and user.is_active:
-                            login(request, user)
-                            request.user = user
-                            return view(request, *args, **kwargs)
-
-            # Either they did not provide an authorization header or
-            # something in the authorization attempt failed. Send a 401
-            # back to them to ask them to authenticate.
-            response = HttpResponse(status=401)
-            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
             return response
         return wrapper
     return real_decorator

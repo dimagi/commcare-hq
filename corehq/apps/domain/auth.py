@@ -1,4 +1,7 @@
+import base64
 import re
+from django.contrib.auth import authenticate, login
+from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 
 
@@ -49,3 +52,28 @@ def guess_phone_type_from_user_agent(user_agent):
         elif 'Android' in user_agent:
             return ANDROID
     return None
+
+
+def basicauth(realm=''):
+    # stolen and modified from: https://djangosnippets.org/snippets/243/
+    def real_decorator(view):
+        def wrapper(request, *args, **kwargs):
+            if 'HTTP_AUTHORIZATION' in request.META:
+                auth = request.META['HTTP_AUTHORIZATION'].split()
+                if len(auth) == 2:
+                    if auth[0].lower() == "basic":
+                        uname, passwd = base64.b64decode(auth[1]).split(':', 1)
+                        user = authenticate(username=uname, password=passwd)
+                        if user is not None and user.is_active:
+                            login(request, user)
+                            request.user = user
+                            return view(request, *args, **kwargs)
+
+            # Either they did not provide an authorization header or
+            # something in the authorization attempt failed. Send a 401
+            # back to them to ask them to authenticate.
+            response = HttpResponse(status=401)
+            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+            return response
+        return wrapper
+    return real_decorator
