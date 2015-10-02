@@ -2,7 +2,7 @@ import copy
 from couchdbkit.exceptions import ResourceNotFound
 from django.utils.safestring import mark_safe
 import re
-from corehq.apps.app_manager.models import RemoteApp, Application
+from corehq.apps.app_manager.models.common import RemoteApp, Application
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.couch.cache import cache_core
