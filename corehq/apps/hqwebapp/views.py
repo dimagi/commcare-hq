@@ -28,6 +28,7 @@ from django.core.urlresolvers import reverse
 from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from restkit import Resource
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
@@ -47,6 +48,7 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.toggles import TWO_FACTOR_AUTH
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
@@ -184,6 +186,12 @@ def redirect_to_default(req, domain=None):
                     url = reverse('landing_page')
             else:
                 url = reverse('landing_page')
+    elif TWO_FACTOR_AUTH.enabled(domain) and not req.user.is_verified():
+        return TemplateResponse(
+            request=req,
+            template='two_factor/core/otp_required.html',
+            status=403,
+        )
     else:
         if domain:
             domain = normalize_domain_name(domain)
