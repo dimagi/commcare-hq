@@ -1,6 +1,6 @@
 import base64
 import re
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 
@@ -65,7 +65,6 @@ def basicauth(realm=''):
                         uname, passwd = base64.b64decode(auth[1]).split(':', 1)
                         user = authenticate(username=uname, password=passwd)
                         if user is not None and user.is_active:
-                            login(request, user)
                             request.user = user
                             return view(request, *args, **kwargs)
 
