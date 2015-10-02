@@ -55,7 +55,3 @@ Type 'yes' to continue, or 'no' to cancel: """  % pillow_class_name)
         print "\tOld checkpoint: %s" % pillow_to_use.get_checkpoint()['seq']
         pillow_to_use.checkpoint_manager.reset_checkpoint()
         print "\n\tNew checkpoint reset to zero"
-
-
-
-
