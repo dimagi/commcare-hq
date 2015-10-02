@@ -148,6 +148,7 @@ class TestDetermineAuthType(SimpleTestCase):
                     'HTTP_USER_AGENT': user_agent,
                     'HTTP_AUTHORIZATION': auth_header,
                 }
+                self.GET = self.POST = {}
 
         return FakeRequest(user_agent, auth_header)
 
@@ -159,11 +160,11 @@ class TestDetermineAuthType(SimpleTestCase):
 
     def test_digest_header_overrides_default(self):
         self.assertEqual('digest',
-                         determine_authtype_from_request(self._mock_request(auth_header='Digest: whatever')))
+                         determine_authtype_from_request(self._mock_request(auth_header='Digest whatever')))
 
     def test_basic_header_overrides_default(self):
         self.assertEqual('basic',
-                         determine_authtype_from_request(self._mock_request(auth_header='Basic: whatever'),
+                         determine_authtype_from_request(self._mock_request(auth_header='Basic whatever'),
                                                          default='digest'))
 
     def test_user_agent_beats_header(self):
@@ -171,4 +172,4 @@ class TestDetermineAuthType(SimpleTestCase):
         # this is currently just to make sure we don't change existing behavior
         self.assertEqual('basic',
                          determine_authtype_from_request(self._mock_request(user_agent='Android',
-                                                                            auth_header='Digest: whatever')))
+                                                                            auth_header='Digest whatever')))
