@@ -90,7 +90,7 @@ from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types, XFormDeprecated
 from corehq.apps.reports.templatetags.xform_tags import render_form
 from corehq.apps.reports.filters.users import UserTypeFilter
-from corehq.apps.domain.decorators import (login_or_digest)
+from corehq.apps.domain.decorators import (login_or_digest, login_or_digest_or_basic)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases
@@ -431,7 +431,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseRedirect(next)
 
 
-@login_or_digest
+@login_or_digest_or_basic(default='digest')
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
