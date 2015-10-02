@@ -94,7 +94,7 @@ def swallow_programming_errors(fn):
     def decorated(request, domain, *args, **kwargs):
         try:
             return fn(request, domain, *args, **kwargs)
-        except ProgrammingError, e:
+        except ProgrammingError:
             messages.error(
                 request,
                 _('There was a problem processing your request. '
