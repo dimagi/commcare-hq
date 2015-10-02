@@ -5,4 +5,8 @@
           value="{{ wizard.steps.prev }}"
           class="btn btn-default btn-large">{% trans "Back" %}</button>
 {% endif %}
+{% if wizard.steps.current == 'auth' %}
 <button type="submit" class="btn btn-primary btn-large">{% trans "Sign In" %}</button>
+{% else %}
+<button type="submit" class="btn btn-primary btn-large">{% trans "Next" %}</button>
+{% endif %}
