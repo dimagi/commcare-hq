@@ -30,6 +30,7 @@ from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
 from two_factor.views import LoginView
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
@@ -56,6 +57,12 @@ from corehq.apps.domain.models import Domain
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
+
+two_factor_form_list = [
+    ('auth', EmailAuthenticationForm),
+    ('token', AuthenticationTokenForm),
+    ('backup', BackupTokenForm),
+]
 
 def pg_check():
     """check django db"""
@@ -217,7 +224,7 @@ def landing_page(req, template_name="home.html"):
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
-    return LoginView.as_view()(req)
+    return LoginView.as_view(form_list=two_factor_form_list)(req)
 
 
 def yui_crossdomain(req):
@@ -347,7 +354,9 @@ def _login(req, domain_name, template_name):
         })
 
     authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
-    return LoginView.as_view()(req)
+    form_list = two_factor_form_list
+    form_list[0] = ('auth', authentication_form)
+    return LoginView.as_view(form_list=form_list)(req)
 
 
 def login(req, domain_type='commcare'):
