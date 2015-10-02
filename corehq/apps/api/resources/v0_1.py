@@ -31,8 +31,8 @@ from couchforms.models import XFormInstance
 from corehq.apps.domain.decorators import (
     login_or_digest,
     login_or_basic,
-    login_or_api_key
-)
+    login_or_api_key,
+    determine_authtype_from_header)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -41,23 +41,6 @@ from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerial
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin
 from dimagi.utils.parsing import string_to_boolean
-
-
-def determine_authtype(request):
-    """
-    Guess the auth type, based on request.
-    """
-    auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    if auth_header.startswith('basic '):
-        return 'basic'
-    elif auth_header.startswith('digest '):
-        return 'digest'
-    elif all(ApiKeyAuthentication().extract_credentials(request)):
-        return 'api_key'
-
-    # the initial digest request doesn't have any authorization, so default to
-    # digest in order to send back
-    return 'digest'
 
 
 def api_auth(view_func):
@@ -87,7 +70,9 @@ class LoginAndDomainAuthentication(Authentication):
             'basic': login_or_basic,
             'api_key': login_or_api_key,
         }
-        return decorator_map[determine_authtype(request)]
+        # the initial digest request doesn't have any authorization, so default to
+        # digest in order to send back
+        return decorator_map[determine_authtype_from_header(request, default='digest')]
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
