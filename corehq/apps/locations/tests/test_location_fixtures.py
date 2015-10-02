@@ -73,7 +73,7 @@ class LocationFixturesTest(TestCase):
         )
         location.save()
 
-        SQLLocation.objects.filter(pk=1).update(last_modified=day_before_yesterday)
+        SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
         location_db = _location_footprint([location])
 
