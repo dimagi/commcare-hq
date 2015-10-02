@@ -77,12 +77,15 @@ class TestReportRunner(TestCase):
         )
         form.save()
 
+    def setUp(self):
+        OrganizationSummary.objects.all().delete()
+
     def test_report_runner(self):
         with mock.patch('custom.ilsgateway.tanzania.warehouse.updater.default_start_date',
                         return_value=datetime(2015, 9, 1)):
             report_run(TEST_DOMAIN)
+            self.assertEqual(OrganizationSummary.objects.filter(date__lte=datetime(2015, 9, 3)).count(), 7)
 
-            self.assertEqual(OrganizationSummary.objects.count(), 7)
             self.assertEqual(
                 GroupSummary.objects.filter(
                     org_summary__location_id=self.district1.get_id,
