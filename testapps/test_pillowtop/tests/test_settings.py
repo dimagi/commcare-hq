@@ -1,6 +1,6 @@
 import os
 from django.conf import settings
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 import json
 from pillowtop import get_all_pillow_instances
 from pillowtop.listener import AliasedElasticPillow
