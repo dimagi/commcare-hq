@@ -96,11 +96,10 @@ BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
 BOWER_INSTALLED_APPS = (
     'jquery#1.11.1',
     'jquery-1.7.1-legacy=jquery#1.7.1',
-    'underscore#1.6.0',
-    'underscore-legacy=underscore#1.4.4',
     'jquery-form#3.45.0',
     'jquery.cookie#1.4.1',
     'jquery-timeago#1.2.0',
+    'jquery-ui#1.11.4',
     'angular#1.4.4',
     'angular-route#1.4.4',
     'angular-resource#1.4.4',
@@ -112,8 +111,11 @@ BOWER_INSTALLED_APPS = (
     'knockout#3.1.0',
     'select2-3.4.5-legacy=select2#3.4.5',
     'less#1.7.3',
+    'underscore#1.6.0',
+    'underscore-legacy=underscore#1.4.4',
     'backbone#0.9.1',
     'bootstrap-daterangepicker#2.1.13',
+    'datatables#1.10.9',
 )
 
 BOWER_PATH = '/usr/local/bin/bower'
