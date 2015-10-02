@@ -1,0 +1,35 @@
+{% load i18n %}
+{{ greeting }}
+{% blocktrans %}
+    Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
+{% endblocktrans %}
+{% trans 'Statement No.' %}: {{ statement_number }}
+{% trans 'Project Space' %}: {{ domain }}
+{% trans 'Software Plan' %}: {{ plan_name }}
+{% trans 'Status' %}: {{ payment_status }}
+{% trans 'Amount Due this Month' %}: {{ amount_due }}
+{% trans 'Total Balance' %}: {{ total_balance }}
+{% if total_balance > 0 %}
+    {% trans 'Payment Due Date' %}: {{ date_due }}
+{% endif  %}
+{% blocktrans %}
+    You have selected to automatically pay this invoice using a credit card
+    with the last four digits {{ last_4 }}. Your credit card will automatically
+    be charged on the 15th day of this month. You can alter this
+    setting by logging into your project space on CommCareHQ and navigating to
+    Billing Statements.
+{% endblocktrans %}
+{% blocktrans %}
+    Thank you for using {{ plan_name }}. If you have any questions, please don't
+    hesitate to contact {{ invoicing_contact_email }}.
+{% endblocktrans %}
+{% blocktrans %}
+    Best Regards,
+    The CommCare HQ Team
+    www.commcarehq.org
+{% endblocktrans %}
+{% blocktrans %}
+    Statement From:
+    CommCare HQ and the corporation Dimagi, Inc.
+    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+{% endblocktrans %}
