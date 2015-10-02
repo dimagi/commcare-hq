@@ -804,7 +804,6 @@ class Domain(Document, SnapshotMixin):
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
-        db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
             new_doc.copy_history.append(id)
@@ -814,7 +813,7 @@ class Domain(Document, SnapshotMixin):
             new_doc.ensure_module_unique_ids(should_save=False)
         else:
             cls = str_to_cls[doc_type]
-
+            db = cls.get_db()
             if doc_type == 'CaseReminderHandler':
                 cur_doc = cls.get(id)
                 if not self.reminder_should_be_copied(cur_doc):

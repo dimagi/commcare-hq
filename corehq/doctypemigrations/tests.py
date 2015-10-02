@@ -23,6 +23,8 @@ class TestDocTypeMigrations(TestCase):
             )
         )
         delete_all_docs_by_doc_type(self.migration.source_db, self.migration.doc_types)
+        self.migration.target_db.delete_docs(_get_non_design_docs(self.migration.target_db))
+
         self.docs = [
             {'doc_type': 'CommCareUser', 'username': 'johnny@example.com'},
             {'doc_type': 'CommCareUser', 'username': 'fatima@example.com'},
