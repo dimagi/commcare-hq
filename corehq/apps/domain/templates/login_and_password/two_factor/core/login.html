@@ -55,7 +55,7 @@
                 <p>{% trans "Or, alternatively, use one of your backup phones:" %}</p>
                 {% for other in other_devices %}
                 <div class="row-fluid">
-                    <div class="span6">
+                    <div class="offset3 span6">
                         <button name="challenge_device" value="{{ other.persistent_id }}"
                                                         class="btn btn-default" type="submit">
                             {{ other|device_action }}
@@ -68,7 +68,7 @@
                 {% if backup_tokens %}
                 <p>{% trans "Please contact your domain adminstrator if you need a backup token" %}</p>
                 <div class="row-fluid">
-                    <div class="span6">
+                    <div class="offset3 span6">
                         <button name="wizard_goto_step" type="submit" value="backup"
                                                                       class="btn btn-default">{% trans "Use Backup Token" %}</button>
                     </div>
