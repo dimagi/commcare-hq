@@ -4,7 +4,10 @@ from django.conf import settings
 MIGRATION_MESSAGE = """
 Before you can merge you must run the {slug} doc_type migration.
 
-To do so, run
+For a full description, see
+https://github.com/dimagi/commcare-hq/blob/master/corehq/doctypemigrations/README.md#run-the-doctype-migration.
+
+For a quick fix locally, run
 
 ./manage.py run_doctype_migration {slug} --initial
 
