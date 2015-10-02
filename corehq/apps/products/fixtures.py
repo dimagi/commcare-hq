@@ -52,7 +52,15 @@ class ProductFixturesProvider(object):
     id = 'commtrack:products'
 
     def __call__(self, user, version, last_sync=None):
-        data_fn = lambda: Product.by_domain(user.domain, include_archived=True)
-        return _simple_fixture_generator(user, self.id, "product", PRODUCT_FIELDS, data_fn, last_sync)
+
+        def get_products():
+            return sorted(
+                Product.by_domain(user.domain, include_archived=True),
+                key=lambda product: product.code
+            )
+
+        return _simple_fixture_generator(
+            user, self.id, "product", PRODUCT_FIELDS, get_products, last_sync
+        )
 
 product_fixture_generator = ProductFixturesProvider()
