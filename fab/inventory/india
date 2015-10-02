@@ -58,6 +58,7 @@ _indiacloud3
 
 [riakcs:children]
 _indiacloud4
+_indiacloud2
 
 [stanchion:children]
 _indiacloud5
