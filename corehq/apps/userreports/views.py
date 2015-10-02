@@ -1,5 +1,6 @@
 from collections import namedtuple
 import datetime
+import functools
 import json
 import os
 import tempfile
@@ -86,6 +87,20 @@ def get_report_config_or_404(config_id, domain):
         return get_report_config(config_id, domain)
     except ReportConfigurationNotFoundError:
         raise Http404
+
+
+def swallow_programming_errors(fn):
+    @functools.wraps(fn)
+    def decorated(request, domain, *args, **kwargs):
+        try:
+            return fn(request, domain, *args, **kwargs)
+        except ProgrammingError, e:
+            messages.error(
+                request,
+                _('There was a problem processing your request. '
+                  'If you have recently modified your report data source please try again in a few minutes.'))
+            return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+    return decorated
 
 
 @login_and_domain_required
@@ -514,6 +529,7 @@ def data_source_json(request, domain, config_id):
 
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@swallow_programming_errors
 def preview_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
@@ -590,6 +606,7 @@ def process_url_params(params, columns):
 
 @login_or_basic
 @require_permission(Permissions.view_reports)
+@swallow_programming_errors
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
