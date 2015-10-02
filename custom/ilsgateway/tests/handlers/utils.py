@@ -145,7 +145,7 @@ def prepare_domain(domain_name):
     )
     subscription.is_active = True
     subscription.save()
-    ils_config = ILSGatewayConfig(enabled=True, domain=domain.name)
+    ils_config = ILSGatewayConfig(enabled=True, domain=domain.name, all_stock_data=True)
     ils_config.save()
     return domain
 
