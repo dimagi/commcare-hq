@@ -58,11 +58,6 @@ from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
 
-two_factor_form_list = [
-    ('auth', EmailAuthenticationForm),
-    ('token', AuthenticationTokenForm),
-    ('backup', BackupTokenForm),
-]
 
 def pg_check():
     """check django db"""
@@ -224,7 +219,7 @@ def landing_page(req, template_name="home.html"):
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
-    return LoginView.as_view(form_list=two_factor_form_list)(req)
+    return HQLoginView.as_view()(req)
 
 
 def yui_crossdomain(req):
@@ -353,10 +348,8 @@ def _login(req, domain_name, template_name):
             'allow_domain_requests': domain.allow_domain_requests,
         })
 
-    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
-    form_list = two_factor_form_list
-    form_list[0] = ('auth', authentication_form)
-    return LoginView.as_view(form_list=form_list)(req)
+    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    return auth_view.as_view()(req)
 
 
 def login(req, domain_type='commcare'):
@@ -383,6 +376,22 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     req.project = project
 
     return _login(req, domain, template_name)
+
+
+class HQLoginView(LoginView):
+    form_list = [
+        ('auth', EmailAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
+
+
+class CloudCareLoginView(LoginView):
+    form_list = [
+        ('auth', CloudCareAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
 
 
 def is_mobile_url(url):
