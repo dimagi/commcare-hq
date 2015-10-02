@@ -66,6 +66,7 @@ OBJECT_SIZE_MAP = {
 
 MOCK_REDIS_CACHE = None
 
+
 class CachedObjectMeta(dict):
     content_length = 0
     content_type = ""
@@ -82,7 +83,11 @@ class CachedObjectMeta(dict):
 
     @classmethod
     def wrap(cls, data):
-        ret = cls(size_key=data['size_key'], content_length=data['content_length'], content_type=data['content_type'])
+        ret = cls(
+            size_key=data.get('size_key', OBJECT_ORIGINAL),
+            content_length=data.get('content_length', 0),
+            content_type=data.get('content_type', 'application/octet-stream'),
+        )
         ret.__dict__ = data
         return ret
 
