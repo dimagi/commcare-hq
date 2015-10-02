@@ -114,10 +114,10 @@ class EntriesHelper(object):
         return xpath
 
     @staticmethod
-    def get_nodeset_xpath(case_type, module, use_filter):
+    def get_nodeset_xpath(case_type, filter_xpath=''):
         return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
             case_type=case_type,
-            filter_xpath=EntriesHelper.get_filter_xpath(module) if use_filter else '',
+            filter_xpath=filter_xpath,
         )
 
     @staticmethod
@@ -221,7 +221,7 @@ class EntriesHelper(object):
             elif isinstance(module, AdvancedModule):
                 e.datums.append(SessionDatum(
                     id='case_id_case_%s' % module.case_type,
-                    nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type, module, False)),
+                    nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
                     detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long')
@@ -403,10 +403,11 @@ class EntriesHelper(object):
                     filter_xpath_template.replace('$fixture_value', fixture_value)
                 )
 
+            xpath_filter = EntriesHelper.get_filter_xpath(module) if use_filter else ''
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
+                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], xpath_filter)
                              + parent_filter + fixture_select_filter),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
@@ -545,7 +546,7 @@ class EntriesHelper(object):
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             return SessionDatum(
                 id=action_.case_session_var,
-                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, target_module_, True) +
+                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, xpath_filter=EntriesHelper.get_filter_xpath(target_module_)) +
                          parent_filter_),
                 value="./@case_id",
                 detail_select=self.details_helper.get_detail_id_safe(target_module_, 'case_short'),
@@ -752,7 +753,7 @@ class EntriesHelper(object):
         parent_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
         e.datums.append(SessionDatum(
             id='case_id',
-            nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type, parent_module, False),
+            nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type),
             value="./@case_id",
             detail_select=self.details_helper.get_detail_id_safe(parent_module, 'case_short'),
             detail_confirm=self.details_helper.get_detail_id_safe(parent_module, 'case_long')
