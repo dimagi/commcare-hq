@@ -69,32 +69,45 @@ class DateTimeProperty(AbstractDateProperty):
         return value, safe_strftime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
-re_trans_datetime = re.compile(r'^(\d{4})-(0[1-9]|1[0-2])-([12]\d|0[1-9]|3[01])T'
-                               r'([01]\d|2[0-3]):([0-5]\d:[0-5]\d)(\.\d{6})?Z$')
+re_trans_datetime = re.compile("""
+    ^
+    (\d{4})  # year
+    -
+    (0[1-9]|1[0-2])  # month
+    -
+    ([12]\d|0[1-9]|3[01])  # day
+    T
+    ([01]\d|2[0-3])  # hour
+    :
+    [0-5]\d  # minute
+    :
+    [0-5]\d  # second
+    (\.\d{6})?  # millisecond (optional)
+    Z  # timezone
+    $
+""", re.VERBOSE)
 
 # this is like jsonobject.api.re_datetime,
 # but without the "time" part being optional
 # i.e. I just removed (...)? surrounding the second two lines
 re_loose_datetime = re.compile("""
     ^
-    (\d{4}) # year
+    (\d{4})  # year
     \D?
-    (0[1-9]|1[0-2]) # month
+    (0[1-9]|1[0-2])  # month
     \D?
-    ([12]\d|0[1-9]|3[01]) # day
+    ([12]\d|0[1-9]|3[01])  # day
     [ T]
-    ([01]\d|2[0-3]) # hour
+    ([01]\d|2[0-3])  # hour
     \D?
-    ([0-5]\d) # minute
+    ([0-5]\d)  # minute
     \D?
-    ([0-5]\d)? # seconds
+    ([0-5]\d)?  # second
     \D?
-    (\d{3,6})? # milliseconds
-    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)? # timezone
+    (\d{3,6})?  # millisecond
+    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)?  # timezone
     $
-    """
-    , re.VERBOSE
-)
+""", re.VERBOSE)
 
 
 class USecDateTimeMeta(object):
