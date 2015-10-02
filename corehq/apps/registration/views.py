@@ -151,7 +151,7 @@ def register_org(request, template="registration/org_request.html"):
 @login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
-    if domain_type not in DOMAIN_TYPES or request.couch_user.is_commcare_user():
+    if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
         raise Http404()
 
     context = get_domain_context(domain_type)

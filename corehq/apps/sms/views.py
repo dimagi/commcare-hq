@@ -263,8 +263,9 @@ def send_to_recipients(request, domain):
             else:
                 unknown_usernames.append(recipient)
 
-
-        login_ids = dict([(r['key'], r['id']) for r in get_db().view("users/by_username", keys=usernames, reduce=False).all()])
+        login_ids = {
+            r['key']: r['id'] for r in CommCareUser.get_db().view(
+                "users/by_username", keys=usernames, reduce=False).all()}
         for username in usernames:
             if username not in login_ids:
                 unknown_usernames.append(username)

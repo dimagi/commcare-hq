@@ -86,10 +86,35 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
+# Do not change, there's a weird bug with Django 1.7 that requires this to be bower_components when using
+# collectstatic
+BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
+
+BOWER_INSTALLED_APPS = (
+    'jquery#1.11.1',
+    'jquery-1.7.1-legacy=jquery#1.7.1',
+    'underscore#1.6.0',
+    'underscore-legacy=underscore#1.4.4',
+    'jquery-form#3.45.0',
+    'jquery.cookie#1.4.1',
+    'jquery-timeago#1.2.0',
+    'angular#1.4.4',
+    'angular-route#1.4.4',
+    'angular-resource#1.4.4',
+    'angular-message-format#1.4.4',
+    'angular-messages#1.4.4',
+    'angular-cookies#1.4.4',
+    'less#1.7.3',
+    'backbone#0.9.1',
+)
+
+BOWER_PATH = '/usr/local/bin/bower'
+
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
+    'djangobower.finders.BowerFinder',
 )
 
 STATICFILES_DIRS = ()
@@ -181,6 +206,7 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
+    'djangobower',
     'djkombu',
     'djangular',
     'couchdbkit.ext.django',
@@ -364,6 +390,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
+    'djangobower',
     'django_prbac',
     'djcelery',
     'djtables',
@@ -1054,7 +1081,7 @@ COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
 NEW_USERS_GROUPS_DB = 'users'
-USERS_GROUPS_DB = None
+USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
 
 COUCHDB_APPS = [
