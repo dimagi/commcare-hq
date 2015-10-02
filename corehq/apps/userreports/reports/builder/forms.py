@@ -757,7 +757,7 @@ class ConfigureNewReportBase(forms.Form):
 
             ret = {
                 "field": col_id,
-                "slug": "{}-{}".format(col_id, index),
+                "slug": "{}_{}".format(col_id, index),
                 "display": conf["display_text"],
                 "type": filter_format
             }
