@@ -356,6 +356,10 @@ class FormattedRow(object):
         self.id_index = id_index
         self.is_header_row = is_header_row
 
+    def __iter__(self):
+        for i in self.get_data():
+            yield i
+
     def has_id(self):
         return self.id is not None
 

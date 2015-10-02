@@ -9,6 +9,7 @@ from django.forms import Widget
 from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop as _
 
 from crispy_forms import layout as crispy
@@ -101,19 +102,25 @@ class QuestionSelect(Widget):
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
-            '<input{0} data-bind="'
-            '   questionsSelect: {1},'
-            '   value: \'{2}\','
-            '   optionsCaption: \' \''
-            '"/>',
+            """
+            <input{0} data-bind='
+               questionsSelect: {1},
+               value: "{2}",
+               optionsCaption: " "
+            '/>
+            """,
             flatatt(final_attrs),
-            self.render_options(choices),
+            mark_safe(self.render_options(choices)),
             value
         )
 
     def render_options(self, choices):
+
+        def escape(literal):
+            return literal.replace('&', '&amp;').replace("'", "&#39;")
+
         return json.dumps(
-            [{'value': v, 'label': l} for v, l in chain(self.choices, choices)]
+            [{'value': escape(v), 'label': escape(l)} for v, l in chain(self.choices, choices)]
         )
 
 

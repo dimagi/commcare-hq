@@ -181,6 +181,7 @@ def _location_to_fixture(location_db, location, type):
         'latitude',
         'longitude',
         'location_type',
+        'supply_point_id',
     ]
     for field in fixture_fields:
         field_node = Element(field)

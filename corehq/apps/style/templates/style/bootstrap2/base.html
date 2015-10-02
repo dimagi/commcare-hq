@@ -33,6 +33,7 @@
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
         <script type="text/javascript" src="{% static 'style/ko/global_handlers.ko.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/hq_extensions.jquery.js' %}"></script>
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
@@ -66,7 +67,9 @@
                             {% block tabs %}
                                 {% format_main_menu %}
                             {% endblock %}
-                            {% include 'style/includes/global_navigation_bar.html' %}
+                            <div class="btn-toolbar pull-right">
+                                {% include 'style/includes/global_navigation_bar.html' %}
+                            </div>
                         </nav>
                     {% else %}
                         <nav>

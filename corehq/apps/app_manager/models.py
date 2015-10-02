@@ -75,7 +75,9 @@ from corehq.apps.app_manager.util import (
     ParentCasePropertyBuilder,
     is_usercase_in_use,
     actions_use_usercase,
-    update_unique_ids)
+    update_unique_ids,
+    app_callout_templates,
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -754,7 +756,7 @@ class FormBase(DocumentSchema):
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         try:
-            d = get_db().view(
+            d = Application.get_db().view(
                 'app_manager/xforms_index',
                 key=form_unique_id
             ).one()
@@ -3724,7 +3726,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         choices=['roman', 'native', 'custom-keys', 'qwerty'],
         default="roman"
     )
-    success_message = DictProperty()
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
@@ -4013,6 +4014,29 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                             "subscription before using this feature."
                         ))
 
+    def validate_intents(self):
+        if domain_has_privilege(self.domain, privileges.CUSTOM_INTENTS):
+            return
+
+        if hasattr(self, 'get_forms'):
+            for form in self.get_forms():
+                intents = form.wrapped_xform().odk_intents
+                if intents:
+                    if not domain_has_privilege(self.domain, privileges.TEMPLATED_INTENTS):
+                        raise PermissionDenied(_(
+                            "Usage of integrations is not supported by your "
+                            "current subscription. Please upgrade your "
+                            "subscription before using this feature."
+                        ))
+                    else:
+                        templates = next(app_callout_templates)
+                        if len(set(intents) - set(t['id'] for t in templates)):
+                            raise PermissionDenied(_(
+                                "Usage of external integration is not supported by your "
+                                "current subscription. Please upgrade your "
+                                "subscription before using this feature."
+                            ))
+
     def validate_jar_path(self):
         build = self.get_build()
         setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
@@ -4086,6 +4110,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         try:
             self.validate_fixtures()
+            self.validate_intents()
             self.validate_jar_path()
             self.create_all_files()
         except (AppEditingError, XFormValidationError, XFormException,
@@ -4964,15 +4989,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not root_ids.issubset(module_ids):
             module_errors.append({'type': 'unknown root'})
         return module_errors
-
-    @classmethod
-    def get_by_xmlns(cls, domain, xmlns):
-        r = cls.get_db().view('exports_forms/by_xmlns',
-            key=[domain, {}, xmlns],
-            group=True,
-            stale=settings.COUCH_STALE_QUERY,
-        ).one()
-        return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)

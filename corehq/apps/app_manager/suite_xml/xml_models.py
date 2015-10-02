@@ -598,16 +598,14 @@ class Detail(OrderedXmlObject, IdNode):
                     result.add(datum.value)
 
         for field in self.get_all_fields():
-            try:
-                result.add(field.header.text.xpath_function)
-                result.add(field.template.text.xpath_function)
-            except AttributeError:
-                # Its a Graph detail
-                # convert Template to GraphTemplate
+            if field.template.form == 'graph':
                 s = etree.tostring(field.template.node)
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
                 for series in template.graph.series:
                     result.add(series.nodeset)
+            else:
+                result.add(field.header.text.xpath_function)
+                result.add(field.template.text.xpath_function)
 
         result.discard(None)
         return result

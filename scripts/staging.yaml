@@ -45,20 +45,26 @@
 trunk: master
 name: autostaging
 branches:
+  - changes-refactor  # cz 10/2
+  - user-db-fixes  # danny 10/1
+  - flip-users-db  # danny 10/1
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
+  - b3-tf+new-mobile-workers+django-bower+exports-ui-changes  # 10/1 BB
   - new-mobile-workers # Biyeun 8/25
+  - exports-ui-changes  # biyeun 9/28
+  - djangobower # ben 9/25
+  - b3-tf # ben 10/1
   - billing/post-pay # Farid 9/3
-  - dummy-ben
   - sync-history-email # Cal 9/22
-  - export-device-logs # Jenny 9/23
-  - changes-refactor  # cz 9/23
+  - two-factor-otp-only # j$ 10/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
       - new-libs # Ben 9/3
+      - b3-tf # ben 10/1
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -69,9 +75,11 @@ submodules:
     branches: []
   submodules/pillowtop-src:
     branches:
-      - changes-refactor  # cz 9/23
+      - changes-refactor  # cz 10/2
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
-
+  submodules/fluff-src:
+    branches:
+      - changes-refactor  # cz 10/2

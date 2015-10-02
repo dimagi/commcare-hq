@@ -236,9 +236,15 @@ class FormattedDetailColumn(object):
 class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
-    def header_width(self):
+    def header(self):
         if self.detail.display == 'short':
-            return 0
+            header = sx.Header(
+                text=sx.Text(),
+                width=self.template_width
+            )
+        else:
+            header = super(HideShortHeaderColumn, self).header
+        return header
 
 
 class HideShortColumn(HideShortHeaderColumn):
@@ -350,7 +356,6 @@ class EnumImage(Enum):
 
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
-
     template_width = "11%"
 
     XPATH_FUNCTION = u"if({xpath} = '', '*', if(today() - date({xpath}) > {column.late_flag}, '*', ''))"
@@ -478,6 +483,9 @@ class AttachmentXpathGenerator(BaseXpathGenerator):
 class PropertyXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
+        if self.column.model == 'product':
+            return self.column.field
+
         parts = self.column.field.split('/')
         if self.column.model == 'case':
             parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
