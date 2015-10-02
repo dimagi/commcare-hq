@@ -22,7 +22,7 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
         self.is_usercase_in_use_mock.return_value = True
         self.app = Application.wrap(self.get_json('suite-advanced'))

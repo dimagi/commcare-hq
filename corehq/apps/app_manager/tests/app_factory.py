@@ -155,7 +155,7 @@ class AppFactory(object):
 
     @staticmethod
     def advanced_form_autoloads(form, mode, value_key, value_source=None):
-        """See corehq.apps.app_manager.models.AutoSelectCase
+        """See corehq.apps.app_manager.models.common.AutoSelectCase
         """
         assert isinstance(form, AdvancedForm)
         form.actions.load_update_cases.append(LoadUpdateAction(

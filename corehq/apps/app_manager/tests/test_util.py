@@ -9,7 +9,7 @@ from mock import patch
 class SchemaTest(SimpleTestCase):
 
     def setUp(self):
-        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.models_is_usercase_in_use_mock = self.models_is_usercase_in_use_patch.start()
         self.models_is_usercase_in_use_mock.return_value = False
         self.util_is_usercase_in_use_patch = patch('corehq.apps.app_manager.util.is_usercase_in_use')

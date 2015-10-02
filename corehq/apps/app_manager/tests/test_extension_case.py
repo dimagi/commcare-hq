@@ -24,7 +24,7 @@ class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
         self.app = Application.new_app('domain', 'New App', APP_V2)
@@ -92,7 +92,7 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestXmlMixin):
         self.module.case_type = 'test_case_type'
         self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original'))
 
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
@@ -137,7 +137,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
         self.is_usercase_in_use_mock.return_value = True
 

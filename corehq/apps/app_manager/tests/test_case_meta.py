@@ -7,7 +7,7 @@ from mock import patch
 
 class CaseMetaTest(SimpleTestCase):
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
