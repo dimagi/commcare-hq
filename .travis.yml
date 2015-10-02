@@ -26,7 +26,7 @@ addons:
     - libblas-dev
     - liblapack-dev
 install:
-  - "git clone https://github.com/dimagi/commcarehq-venv.git"
+  - "git clone https://github.com/dimagi/commcarehq-venv.git --branch update-venv-sk --single-branch"
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
   - "bash -e scripts/uninstall-requirements.sh"
