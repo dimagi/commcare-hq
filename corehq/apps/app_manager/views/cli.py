@@ -12,7 +12,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 
 
 @json_error
-@login_or_digest_or_basic
+@login_or_digest_or_basic()
 def list_apps(request, domain):
     def app_to_json(app):
         return {
