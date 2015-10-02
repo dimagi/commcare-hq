@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 import time
 from pillowtop.checkpoints.manager import PillowCheckpointManager, PillowCheckpointManagerInstance
