@@ -203,6 +203,9 @@ class IndexedSchema(DocumentSchema):
     and need to know their own position within that list.
 
     """
+    class Meta:
+        app_label = 'app_manager'
+
     def with_id(self, i, parent):
         self._i = i
         self._parent = parent
@@ -244,6 +247,9 @@ class FormActionCondition(DocumentSchema):
     answer = StringProperty()
     operator = StringProperty(choices=['=', 'selected'], default='=')
 
+    class Meta:
+        app_label = 'app_manager'
+
     def is_active(self):
         return self.type in ('if', 'always')
 
@@ -253,6 +259,9 @@ class FormAction(DocumentSchema):
 
     """
     condition = SchemaProperty(FormActionCondition)
+
+    class Meta:
+        app_label = 'app_manager'
 
     def is_active(self):
         return self.condition.is_active()
@@ -286,21 +295,27 @@ class FormAction(DocumentSchema):
 
 
 class UpdateCaseAction(FormAction):
-
     update = DictProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
 
 class PreloadAction(FormAction):
-
     preload = DictProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     def is_active(self):
         return bool(self.preload)
 
 
 class UpdateReferralAction(FormAction):
-
     followup_date = StringProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     def get_followup_date(self):
         if self.followup_date:
@@ -311,18 +326,21 @@ class UpdateReferralAction(FormAction):
 
 
 class OpenReferralAction(UpdateReferralAction):
-
     name_path = StringProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
 
 class OpenCaseAction(FormAction):
-
     name_path = StringProperty()
     external_id = StringProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class OpenSubCaseAction(FormAction):
-
     case_type = StringProperty()
     case_name = StringProperty()
     reference_id = StringProperty()
@@ -334,9 +352,11 @@ class OpenSubCaseAction(FormAction):
 
     close_condition = SchemaProperty(FormActionCondition)
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class FormActions(DocumentSchema):
-
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
     close_case = SchemaProperty(FormAction)
@@ -352,6 +372,9 @@ class FormActions(DocumentSchema):
 
     subcases = SchemaListProperty(OpenSubCaseAction)
 
+    class Meta:
+        app_label = 'app_manager'
+
     def all_property_names(self):
         names = set()
         names.update(self.update_case.update.keys())
@@ -366,6 +389,9 @@ class CaseIndex(DocumentSchema):
     reference_id = StringProperty(default='parent')
     relationship = StringProperty(choices=['child', 'extension'], default='child')
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
@@ -376,6 +402,9 @@ class AdvancedAction(IndexedSchema):
     close_condition = SchemaProperty(FormActionCondition)
 
     __eq__ = DocumentSchema.__eq__
+
+    class Meta:
+        app_label = 'app_manager'
 
     def get_paths(self):
         for path in self.case_properties.values():
@@ -413,6 +442,9 @@ class AutoSelectCase(DocumentSchema):
     value_source = StringProperty()
     value_key = StringProperty(required=True)
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class LoadUpdateAction(AdvancedAction):
     """
@@ -428,6 +460,9 @@ class LoadUpdateAction(AdvancedAction):
     show_product_stock = BooleanProperty(default=False)
     product_program = StringProperty()
     case_index = SchemaProperty(CaseIndex)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @property
     def case_indices(self):
@@ -485,6 +520,9 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
     open_condition = SchemaProperty(FormActionCondition)
 
+    class Meta:
+        app_label = 'app_manager'
+
     def get_paths(self):
         for path in super(AdvancedOpenCaseAction, self).get_paths():
             yield path
@@ -523,6 +561,9 @@ class AdvancedFormActions(DocumentSchema):
 
     get_load_update_actions = IndexedSchema.Getter('load_update_cases')
     get_open_actions = IndexedSchema.Getter('open_cases')
+
+    class Meta:
+        app_label = 'app_manager'
 
     def get_all_actions(self):
         return itertools.chain(self.get_load_update_actions(), self.get_open_actions())
@@ -594,6 +635,9 @@ class AdvancedFormActions(DocumentSchema):
 
 
 class FormSource(object):
+    class Meta:
+        app_label = 'app_manager'
+
     def __get__(self, form, form_cls):
         if not form:
             return self
@@ -630,6 +674,9 @@ class FormSource(object):
 
 
 class CachedStringProperty(object):
+    class Meta:
+        app_label = 'app_manager'
+
     def __init__(self, key):
         self.get_key = key
 
@@ -652,6 +699,9 @@ class FormDatum(DocumentSchema):
     name = StringProperty()
     xpath = StringProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class FormLink(DocumentSchema):
     """
@@ -661,6 +711,9 @@ class FormLink(DocumentSchema):
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
     datums = SchemaListProperty(FormDatum)
+
+    class Meta:
+        app_label = 'app_manager'
 
 
 class FormBase(DocumentSchema):
@@ -688,6 +741,9 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, data):
@@ -956,6 +1012,9 @@ class FormBase(DocumentSchema):
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
+    class Meta:
+        app_label = 'app_manager'
+
     def get_app(self):
         return self._parent._parent
 
@@ -1043,6 +1102,8 @@ class IndexedFormBase(FormBase, IndexedSchema):
 
 
 class JRResourceProperty(StringProperty):
+    class Meta:
+        app_label = 'app_manager'
 
     def validate(self, value, required=True):
         super(JRResourceProperty, self).validate(value, required)
@@ -1058,6 +1119,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
     """
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, data):
@@ -1173,6 +1237,9 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_filter = StringProperty()
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
+
+    class Meta:
+        app_label = 'app_manager'
 
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
@@ -1435,6 +1502,9 @@ class UserRegistrationForm(FormBase):
     password_path = StringProperty(default='password')
     data_paths = DictProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
     def add_stuff_to_xform(self, xform):
         super(UserRegistrationForm, self).add_stuff_to_xform(xform)
         xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
@@ -1444,6 +1514,9 @@ class MappingItem(DocumentSchema):
     key = StringProperty()
     # lang => localized string
     value = DictProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     @property
     def key_as_variable(self):
@@ -1465,6 +1538,9 @@ class GraphAnnotations(IndexedSchema):
     x = StringProperty()
     y = StringProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class GraphSeries(DocumentSchema):
     config = DictProperty()
@@ -1473,6 +1549,9 @@ class GraphSeries(DocumentSchema):
     y_function = StringProperty()
     radius_function = StringProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class GraphConfiguration(DocumentSchema):
     config = DictProperty()
@@ -1480,6 +1559,9 @@ class GraphConfiguration(DocumentSchema):
     annotations = SchemaListProperty(GraphAnnotations)
     graph_type = StringProperty()
     series = SchemaListProperty(GraphSeries)
+
+    class Meta:
+        app_label = 'app_manager'
 
 
 class DetailTab(IndexedSchema):
@@ -1492,6 +1574,9 @@ class DetailTab(IndexedSchema):
     """
     header = DictProperty()
     starting_index = IntegerProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
 
 class DetailColumn(IndexedSchema):
@@ -1524,6 +1609,9 @@ class DetailColumn(IndexedSchema):
     calc_xpath = StringProperty(default=".")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @property
     def enum_dict(self):
@@ -1584,9 +1672,15 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class SortOnlyDetailColumn(DetailColumn):
     """This is a mock type, not intended to be part of a document"""
+
+    class Meta:
+        app_label = 'app_manager'
 
     @property
     def _i(self):
@@ -1614,6 +1708,9 @@ class CaseListLookupMixin(DocumentSchema):
     lookup_extras = SchemaListProperty()
     lookup_responses = SchemaListProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class Detail(IndexedSchema, CaseListLookupMixin):
     """
@@ -1634,6 +1731,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     use_case_tiles = BooleanProperty()
     persist_tile_on_forms = BooleanProperty()
     pull_down_tile = BooleanProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     def get_tab_spans(self):
         '''
@@ -1661,19 +1761,23 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
-
     label = DictProperty()
     show = BooleanProperty(default=False)
+
+    class Meta:
+        app_label = 'app_manager'
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
 
 class ParentSelect(DocumentSchema):
-
     active = BooleanProperty(default=False)
     relationship = StringProperty(default='parent')
     module_id = StringProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
 
 class FixtureSelect(DocumentSchema):
@@ -1694,10 +1798,16 @@ class FixtureSelect(DocumentSchema):
     variable_column = StringProperty()
     xpath = StringProperty(default='')
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class DetailPair(DocumentSchema):
     short = SchemaProperty(Detail)
     long = SchemaProperty(Detail)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, data):
@@ -1711,6 +1821,9 @@ class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
@@ -1723,6 +1836,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     module_filter = StringProperty()
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, data):
@@ -1915,6 +2031,9 @@ class Module(ModuleBase):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, data):
@@ -2150,6 +2269,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
     schedule = SchemaProperty(FormSchedule, default=None)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, data):
@@ -2450,6 +2572,9 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2772,6 +2897,9 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
     custom_case_updates = DictProperty()
     case_preload = DictProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
     @classmethod
     def wrap(cls, data):
         if cls is CareplanForm:
@@ -2857,6 +2985,9 @@ class CareplanGoalForm(CareplanForm):
     description_path = StringProperty(required=True, default='/data/description')
     close_path = StringProperty(required=True, default='/data/close_goal')
 
+    class Meta:
+        app_label = 'app_manager'
+
     @classmethod
     def new_form(cls, lang, name, mode):
         action = 'Update' if mode == 'update' else 'New'
@@ -2901,6 +3032,9 @@ class CareplanTaskForm(CareplanForm):
     description_path = StringProperty(required=True, default='/data/description')
     latest_report_path = StringProperty(required=True, default='/data/progress_group/progress_update')
     close_path = StringProperty(required=True, default='/data/task_complete')
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def new_form(cls, lang, name, mode):
@@ -2959,6 +3093,9 @@ class CareplanModule(ModuleBase):
     forms = SchemaListProperty(CareplanForm)
     goal_details = SchemaProperty(DetailPair)
     task_details = SchemaProperty(DetailPair)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def new_module(cls, name, lang, target_module_id, target_case_type):
@@ -3093,8 +3230,14 @@ class ReportGraphConfig(DocumentSchema):
     series_configs = DictProperty(DictProperty)
     config = DictProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class ReportAppFilter(DocumentSchema):
+    class Meta:
+        app_label = 'app_manager'
+
     def get_filter_value(self):
         raise NotImplementedError
 
@@ -3133,12 +3276,18 @@ _filter_type_to_func = {
 class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=_filter_type_to_func.keys())
 
+    class Meta:
+        app_label = 'app_manager'
+
     def get_filter_value(self, user):
         return _filter_type_to_func[self.filter_type](user)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
     custom_data_property = StringProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     def get_filter_value(self, user):
         from corehq.apps.reports_core.filters import Choice
@@ -3148,6 +3297,9 @@ class CustomDataAutoFilter(ReportAppFilter):
 class StaticChoiceFilter(ReportAppFilter):
     select_value = StringProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
     def get_filter_value(self, user):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=self.select_value, display=None)]
@@ -3155,6 +3307,9 @@ class StaticChoiceFilter(ReportAppFilter):
 
 class StaticChoiceListFilter(ReportAppFilter):
     value = StringListProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     def get_filter_value(self, user):
         from corehq.apps.reports_core.filters import Choice
@@ -3172,6 +3327,9 @@ class StaticDatespanFilter(ReportAppFilter):
         required=True,
     )
 
+    class Meta:
+        app_label = 'app_manager'
+
     def get_filter_value(self, user):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
         return DateSpan(startdate=start_date, enddate=end_date)
@@ -3188,6 +3346,9 @@ class ReportAppConfig(DocumentSchema):
     uuid = StringProperty(default='')
 
     _report = None
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, obj):
@@ -3385,6 +3546,9 @@ class ReportModule(ModuleBase):
     forms = []
     _loaded = False
 
+    class Meta:
+        app_label = 'app_manager'
+
     @property
     @memoized
     def reports(self):
@@ -3452,6 +3616,9 @@ class VersionedDoc(LazyAttachmentDoc):
     short_odk_media_url = StringProperty()
 
     _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url', 'short_odk_media_url']
+
+    class Meta:
+        app_label = 'app_manager'
 
     @property
     def id(self):
@@ -3663,6 +3830,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def wrap(cls, data):
@@ -4167,6 +4337,8 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
+    class Meta:
+        app_label = 'app_manager'
 
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
@@ -4215,6 +4387,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     @property
     @memoized
@@ -4948,6 +5123,9 @@ class RemoteApp(ApplicationBase):
 
     questions_map = DictProperty(required=False)
 
+    class Meta:
+        app_label = 'app_manager'
+
     def is_remote_app(self):
         return True
 
@@ -5125,8 +5303,10 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
 
 
 class DeleteApplicationRecord(DeleteRecord):
-
     app_id = StringProperty()
+
+    class Meta:
+        app_label = 'app_manager'
 
     def undo(self):
         app = ApplicationBase.get(self.app_id)
@@ -5135,10 +5315,12 @@ class DeleteApplicationRecord(DeleteRecord):
 
 
 class DeleteModuleRecord(DeleteRecord):
-
     app_id = StringProperty()
     module_id = IntegerProperty()
     module = SchemaProperty(ModuleBase)
+
+    class Meta:
+        app_label = 'app_manager'
 
     def undo(self):
         app = Application.get(self.app_id)
@@ -5149,12 +5331,14 @@ class DeleteModuleRecord(DeleteRecord):
 
 
 class DeleteFormRecord(DeleteRecord):
-
     app_id = StringProperty()
     module_id = IntegerProperty()
     module_unique_id = StringProperty()
     form_id = IntegerProperty()
     form = SchemaProperty(FormBase)
+
+    class Meta:
+        app_label = 'app_manager'
 
     def undo(self):
         app = Application.get(self.app_id)
@@ -5175,10 +5359,16 @@ class CareplanAppProperties(DocumentSchema):
     goal_conf = DictProperty()
     task_conf = DictProperty()
 
+    class Meta:
+        app_label = 'app_manager'
+
 
 class CareplanConfig(Document):
     domain = StringProperty()
     app_configs = SchemaDictProperty(CareplanAppProperties)
+
+    class Meta:
+        app_label = 'app_manager'
 
     @classmethod
     def for_domain(cls, domain):
