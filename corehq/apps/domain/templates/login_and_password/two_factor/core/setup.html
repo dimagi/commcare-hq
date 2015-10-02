@@ -4,8 +4,7 @@
 {% block focus-content %}
   <h1>{% block title %}{% trans "Enable Two-Factor Authentication" %}{% endblock %}</h1>
   {% if wizard.steps.current == 'welcome' %}
-    <p>{% blocktrans %}You are about to take your account security to the
-        next level. Follow the steps in this wizard to enable two-factor
+    <p>{% blocktrans %}Follow the steps in this wizard to enable two-factor
         authentication.{% endblocktrans %}</p>
   {% elif wizard.steps.current == 'method' %}
     <p>{% blocktrans %}Please select which authentication method you would
@@ -37,12 +36,14 @@
       account.{% endblocktrans %}</p>
   {% endif %}
 
-  <form action="" method="post">{% csrf_token %}
+  <form action="" method="post" class="form-horizontal">{% csrf_token %}
     {% include "two_factor/_wizard_forms.html" %}
 
     {# hidden submit button to enable [enter] key #}
-    <div style="margin-left: -9999px"><input type="submit" value=""/></div>
+    <div style="display: none"><input type="submit" value=""/></div>
 
+    <div class="form-actions">
     {% include "two_factor/_wizard_actions.html" %}
+    </div>
   </form>
 {% endblock %}
