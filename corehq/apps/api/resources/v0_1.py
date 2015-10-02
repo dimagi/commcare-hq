@@ -6,6 +6,7 @@ import json
 # Django imports
 import datetime
 from corehq.apps.api.couch import UserQuerySetAdapter
+from corehq.apps.domain.auth import determine_authtype_from_header
 from dimagi.utils.couch.database import iter_docs
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
@@ -13,7 +14,7 @@ from django.conf import settings
 
 # Tastypie imports
 from tastypie import fields
-from tastypie.authentication import Authentication, ApiKeyAuthentication
+from tastypie.authentication import Authentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest
 from tastypie.throttle import CacheThrottle
@@ -31,8 +32,7 @@ from couchforms.models import XFormInstance
 from corehq.apps.domain.decorators import (
     login_or_digest,
     login_or_basic,
-    login_or_api_key,
-    determine_authtype_from_header)
+    login_or_api_key)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 

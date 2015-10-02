@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.domain.decorators import J2ME, guess_phone_type_from_user_agent, ANDROID, \
-    determine_authtype_from_request
+from corehq.apps.domain.auth import J2ME, ANDROID, determine_authtype_from_request, guess_phone_type_from_user_agent
 
 
 class TestPhoneType(SimpleTestCase):
