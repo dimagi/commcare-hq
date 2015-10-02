@@ -58,7 +58,6 @@ from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
 
-
 def pg_check():
     """check django db"""
     try:
