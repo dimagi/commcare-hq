@@ -332,7 +332,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
         )
     return render(request, template, {
         'app': request.app,
-        'files': files,
+        'files': [{'name': f[0], 'source': f[1]} for f in files],
     })
 
 

@@ -17,6 +17,9 @@
                 }
             }
         }
+        // The following line is required to make sure ga is called in ga_track_event
+        // when no GOOGLE_ANALYTICS_ID is specified (useful for debugging)
+        ga.create = true;
     {% endif %}
         ga('create', '{{ GOOGLE_ANALYTICS_ID }}', {
             'userId': '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}',

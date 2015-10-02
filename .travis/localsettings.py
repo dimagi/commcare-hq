@@ -48,9 +48,8 @@ JAR_SIGN = dict(
     key_pass = "onetwothreefourfive",
 )
 
-# prod settings
+# soil settings
 SOIL_DEFAULT_CACHE = "redis"
-SOIL_BACKEND = "soil.CachedDownload"
 
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',

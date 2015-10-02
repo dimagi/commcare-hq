@@ -56,7 +56,7 @@ def paginate_releases(request, domain, app_id):
     else:
         start_build = {}
     timezone = get_timezone_for_user(request.couch_user, domain)
-    saved_apps = get_db().view('app_manager/saved_app',
+    saved_apps = Application.get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
         endkey=[domain, app_id],
         descending=True,
@@ -103,7 +103,7 @@ def current_app_version(request, domain, app_id):
     Return current app version and the latest release
     """
     app = get_app(domain, app_id)
-    latest = get_db().view('app_manager/saved_app',
+    latest = Application.get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, {}],
         endkey=[domain, app_id],
         descending=True,
@@ -298,8 +298,13 @@ def _get_app_diffs(first_app, second_app):
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:
             diff_html = ""
-        diffs.append((name, diff_html, additions, deletions))
-    return sorted(diffs)
+        diffs.append({
+            'name': name,
+            'source': diff_html,
+            'add_count': additions,
+            'del_count': deletions,
+        })
+    return sorted(diffs, key=lambda f: f['name'])
 
 
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
@@ -334,9 +339,9 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def page_context(self):
         return {
-            "first_app": self.first_app,
-            "second_app": self.second_app,
-            "diffs": self.app_diffs
+            "app": self.first_app,
+            "other_app": self.second_app,
+            "files": self.app_diffs
         }
 
     @property

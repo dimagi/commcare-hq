@@ -811,7 +811,7 @@ def make_phone_number_default(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.set_default_phone_number(phone_number)
     from corehq.apps.users.views.mobile import EditCommCareUserView
@@ -828,7 +828,7 @@ def delete_phone_number(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
     from corehq.apps.users.views.mobile import EditCommCareUserView
@@ -843,7 +843,7 @@ def verify_phone_number(request, domain, couch_user_id):
     but it can be passed as %-encoded GET parameters
     """
     if 'phone_number' not in request.GET:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
