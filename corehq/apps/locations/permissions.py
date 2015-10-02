@@ -2,7 +2,8 @@ from django_prbac.decorators import requires_privilege_raise404
 from corehq import privileges
 from functools import wraps
 from django.http import Http404
-from corehq import toggles, Domain
+from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from .models import SQLLocation

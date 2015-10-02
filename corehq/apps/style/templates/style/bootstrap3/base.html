@@ -49,6 +49,19 @@
         {% if request.use_select2 %}
         {% compress css %}
             <link type="text/css"
+                   rel="stylesheet"
+                   media="all"
+                   href="{% new_static 'style/lib/select2/select2.css' %}" />
+            <link type="text/css"
+                   rel="stylesheet"
+                   media="all"
+                   href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_select2_v4 %}
+        {% compress css %}
+            <link type="text/css"
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/lib/select2-4.0/dist/css/select2.min.css' %}" />
@@ -62,6 +75,7 @@
         <script type="text/javascript" src="{% new_static 'style/lib/jquery/plugins/jquery.form-3.51.0.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/underscore/underscore-1.6.0.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/hq_extensions.jquery.js' %}"></script>
         {% endcompress %}
 
         {% if formdesigner %}
@@ -106,11 +120,13 @@
                     {% block tabs %}
                         {% format_main_menu %}
                     {% endblock %}
+                    <div class="btn-toolbar pull-right">
                     {% if request.user.is_authenticated %}
                         {% include 'style/includes/global_navigation_bar.html' %}
                     {% else %}
                         <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                     {% endif %}
+                    </div>
                 </nav>
                 {% format_subtab_menu %}
             </div>
@@ -280,6 +296,12 @@
         {% endcompress %}
 
         {% if request.use_select2 %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_select2_v4 %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}

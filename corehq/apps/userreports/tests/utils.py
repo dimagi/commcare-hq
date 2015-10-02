@@ -2,8 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 import json
 import os
-from corehq import ReportConfiguration
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.util.dates import iso_string_to_date
 
 

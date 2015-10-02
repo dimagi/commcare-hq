@@ -2,9 +2,12 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from dimagi.utils.decorators.memoized import memoized
 from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -16,8 +19,30 @@ from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.models import Invitation, CouchUser, WebUser, DomainInvitation
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA256
+from Crypto.Signature import PKCS1_PSS
 
 logger = logging.getLogger(__name__)
+
+
+@memoized
+def get_hq_private_key():
+    if settings.HQ_PRIVATE_KEY:
+        return RSA.importKey(settings.HQ_PRIVATE_KEY)
+
+    raise Exception('No private key found in localsettings.HQ_PRIVATE_KEY')
+
+
+def sign(message):
+    """
+    Signs the SHA256 hash of message with HQ's private key, and returns
+    the binary signature. The scheme used is RSASSA-PSS.
+    """
+    private_key = get_hq_private_key()
+    sha256_hash = SHA256.new(message)
+    signature = PKCS1_PSS.new(private_key).sign(sha256_hash)
+    return signature
 
 
 def send_confirmation_email(invitation):
@@ -46,7 +71,10 @@ class InvitationView(object):
         username = self.request.user.username
         # Add zero-width space for better line breaking
         username = username.replace("@", "&#x200b;@")
-        return {'formatted_username': username}
+        return {
+            'create_domain': False,
+            'formatted_username': username,
+        }
 
     def validate_invitation(self, invitation):
         pass
@@ -110,6 +138,7 @@ class InvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
+        context = self.added_context()
         if request.user.is_authenticated():
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
@@ -140,7 +169,6 @@ class InvitationView(object):
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
-                context = self.added_context()
                 context.update({
                     'mobile_user': mobile_user,
                     "invited_user": invitation.email if request.couch_user.username != invitation.email else "",
@@ -153,10 +181,16 @@ class InvitationView(object):
                     # create the new user
                     user = activate_new_user(form)
                     user.save()
-                    messages.success(request, _("User account for %s created! You may now login.")
-                                                % form.cleaned_data["email"])
+                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     self._invite(invitation, user)
-                    return HttpResponseRedirect(reverse("login"))
+                    authenticated = authenticate(username=form.cleaned_data["email"],
+                                                 password=form.cleaned_data["password"])
+                    if authenticated is not None and authenticated.is_active:
+                        login(request, authenticated)
+                    if isinstance(invitation, DomainInvitation):
+                        return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
+                    else:
+                        return HttpResponseRedirect(reverse("homepage"))
             else:
                 if isinstance(invitation, DomainInvitation):
                     if CouchUser.get_by_username(invitation.email):
@@ -171,7 +205,8 @@ class InvitationView(object):
                 else:
                     form = NewWebUserRegistrationForm(initial={'email': invitation.email})
 
-        return render(request, self.template, {"form": form})
+        context.update({"form": form})
+        return render(request, self.template, context)
 
 
 def get_bulk_upload_form(context, context_key="bulk_upload"):

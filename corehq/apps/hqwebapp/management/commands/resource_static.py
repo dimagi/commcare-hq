@@ -7,7 +7,7 @@ from django.conf import settings
 from dimagi.utils import gitinfo
 from django.core import cache
 
-rcache = cache.get_cache('redis')
+rcache = cache.caches['redis']
 RESOURCE_PREFIX = '#resource_%s'
 
 

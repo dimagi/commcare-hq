@@ -1,7 +1,7 @@
 from django.core.management.base import LabelCommand, CommandError
 from django.conf import settings
 
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.util.view_utils import reverse

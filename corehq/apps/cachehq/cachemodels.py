@@ -19,9 +19,9 @@ class UserGenerationCache(GenerationCache):
     generation_key = '#gen#couch_user#'
     doc_types = ['CommCareUser', 'CouchUser', 'WebUser']
     views = [
-        "sms/phones_to_domains",
-        "hqadmin/users_over_time",
-        "hqadmin/emails",
+        "users_extra/phones_to_domains",
+        "users_extra/users_over_time",
+        "users_extra/emails",
         "users/by_domain",
         "users/phone_users_by_domain",
         "users/web_users_by_domain",
@@ -30,10 +30,9 @@ class UserGenerationCache(GenerationCache):
         "users/by_org_and_team",
         "users/by_username",
         "users/mailing_list_emails",
-        "domain/related_to_domain",
         "domain/old_users",
         "domain/docs",
-        "sms/phones_to_domains",
+        "users_extra/phones_to_domains",
         "eula_reports/non_eulized_users"
     ]
 
@@ -56,7 +55,6 @@ class UserRoleGenerationCache(GenerationCache):
     generation_key = '#gen#user_role#'
     doc_types = ['UserRole']
     views = [
-        'domain/related_to_domain',
         'users/roles_by_domain'
     ]
 

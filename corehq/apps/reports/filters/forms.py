@@ -3,6 +3,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseTagsFilter
+from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -154,14 +155,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Here we grab all forms ever submitted to this domain on CommCare HQ or all forms that the Applications
             for this domain know about.
         """
-        key = ["submission xmlns app", self.domain]
-        data = get_db().view('reports_forms/all_forms',
-            startkey=key,
-            endkey=key+[{}],
-            group=True,
-            group_level=4,
-        ).all()
-        all_submitted = set(self.get_xmlns_app_keys(data))
+        form_buckets = get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain)
+        all_submitted = {self.make_xmlns_app_key(xmlns, app_id)
+                         for xmlns, app_id in form_buckets}
         from_apps = set(self.application_forms)
         return list(all_submitted.union(from_apps))
 

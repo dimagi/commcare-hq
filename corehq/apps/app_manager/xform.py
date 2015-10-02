@@ -1553,25 +1553,25 @@ class XForm(WrappedNode):
                     form.default_name())
                 )
 
-        last_real_action = next(
-            (action for action in reversed(form.actions.load_update_cases) if not action.auto_select),
-            None
-        )
-
         module = form.get_module()
         has_schedule = (module.has_schedule and getattr(form, 'schedule', False) and form.schedule.enabled and
                         getattr(form.get_phase(), 'anchor', False))
+        last_real_action = next(
+            (action for action in reversed(form.actions.load_update_cases)
+             if not (action.auto_select) and action.case_type == module.case_type),
+            None
+        )
         adjusted_datums = {}
         if module.root_module:
             # for child modules the session variable for a case may have been
             # changed to match the parent module.
-            from corehq.apps.app_manager.suite_xml import SuiteGenerator
-            gen = SuiteGenerator(form.get_app())
+            from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+            gen = EntriesHelper(form.get_app())
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
             adjusted_datums = {
-                getattr(meta['action'], 'id', None): meta['datum'].id
+                getattr(meta.action, 'id', None): meta.datum.id
                 for meta in datums_meta
-                if meta['action']
+                if meta.action
             }
 
         for action in form.actions.get_load_update_actions():
@@ -1605,7 +1605,7 @@ class XForm(WrappedNode):
                 if action.close_condition.type != 'never':
                     update_case_block.add_close_block(self.action_relevance(action.close_condition))
 
-                if has_schedule:
+                if has_schedule and action == last_real_action:
                     self.add_casedb()
                     configure_visit_schedule_updates(update_case_block.update_block, action, session_case_id)
 
@@ -1675,6 +1675,7 @@ class XForm(WrappedNode):
                     reference_id,
                     parent_meta['action'].case_type,
                     ref,
+                    case_index.relationship,
                 )
 
             if action.close_condition.type != 'never':

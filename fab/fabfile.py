@@ -32,6 +32,7 @@ import posixpath
 import sh
 import sys
 import time
+import yaml
 from collections import defaultdict
 from distutils.util import strtobool
 
@@ -41,7 +42,6 @@ from fabric.colors import blue, red
 from fabric.context_managers import settings, cd, shell_env
 from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
-import yaml
 
 from .decorators import chief_hook
 
@@ -384,25 +384,6 @@ def webworkers():
 
 
 @task
-@roles(ROLES_ALL_SRC)
-def install_npm_packages():
-    """Install required NPM packages for server"""
-    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        with shell_env(HOME=env.home):
-            sudo("npm install")
-
-
-@roles(ROLES_ALL_SRC)
-@parallel
-def create_virtualenvs():
-    """set up virtualenv on remote host"""
-    require('virtualenv_root', provided_by=('staging', 'production', 'india'))
-
-    args = '--distribute --no-site-packages'
-    sudo('cd && virtualenv %s %s' % (args, env.virtualenv_root), shell=True)
-
-
-@task
 def remove_submodule_source(path):
     """
     Remove submodule source folder.
@@ -509,7 +490,16 @@ def update_code(use_current_release=False):
                 sudo('git clone {} {}'.format(env.code_repo, env.code_root))
 
     with cd(env.code_root if not use_current_release else env.code_current):
-        _update_git_repo(env.code_branch)
+        sudo('git remote prune origin')
+        sudo('git fetch origin {}'.format(env.code_branch))
+        sudo('git checkout %(code_branch)s' % env)
+        sudo('git reset --hard origin/%(code_branch)s' % env)
+        sudo('git submodule sync')
+        sudo('git submodule update --init --recursive')
+        # remove all untracked files, including submodules
+        sudo("git clean -ffd")
+        # remove all .pyc files in the project
+        sudo("find . -name '*.pyc' -delete")
 
 
 @roles(ROLES_DB_ONLY)
@@ -627,9 +617,6 @@ def _deploy_without_asking():
         if not done:
             raise PreindexNotFinished()
 
-        _execute_with_timing(install_npm_packages)
-        _execute_with_timing(update_touchforms)
-
         # handle static files
         _execute_with_timing(_prepare_static_files)
 
@@ -679,7 +666,8 @@ def update_current(release=None):
     """
     Updates the current release to the one specified or to the code_root
     """
-    if not files.exists(env.code_root):
+    if ((not release and not files.exists(env.code_root)) or
+            (release and not files.exists(release))):
         utils.abort('About to update current to non-existant release')
 
     sudo('ln -nfs {} {}'.format(release or env.code_root, env.code_current))
@@ -720,6 +708,76 @@ def copy_tf_localsettings():
         '{}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(
             env.code_current, env.code_root
         ))
+
+
+@task
+def rollback():
+    """
+    Rolls back the servers to the previous release if it exists and is same across servers. Note this will not
+    rollback the supervisor services.
+    """
+    number_of_releases = execute(get_number_of_releases)
+    if not all(map(lambda n: n > 1, number_of_releases)):
+        print red('Aborting because there are not enough previous releases.')
+        exit()
+
+    releases = execute(get_previous_release)
+
+    unique_releases = set(releases.values())
+    if len(unique_releases) != 1:
+        print red('Aborting because not all hosts would rollback to same release')
+        exit()
+
+    unique_release = unique_releases.pop()
+
+    if not unique_release:
+        print red('Aborting because release path is empty. '
+            'This probably means there are no releases to rollback to.')
+        exit()
+
+    if not console.confirm('Do you wish to rollback to release: {}'.format(unique_release), default=False):
+        print blue('Exiting.')
+        exit()
+
+    exists = execute(ensure_release_exists, unique_release)
+
+    if all(exists.values()):
+        print blue('Updating current and restarting services')
+        execute(update_current, unique_release)
+        execute(services_restart)
+        execute(mark_last_release_unsuccessful)
+    else:
+        print red('Aborting because not all hosts have release')
+        exit()
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def get_number_of_releases():
+    with cd(env.root):
+        return int(sudo("wc -l {} | awk '{{ print $1 }}'".format(RELEASE_RECORD)))
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def mark_last_release_unsuccessful():
+    # Removes last line from RELEASE_RECORD file
+    with cd(env.root):
+        sudo("sed -i '$d' {}".format(RELEASE_RECORD))
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def ensure_release_exists(release):
+    return files.exists(release)
+
+
+@roles(ROLES_ALL_SRC)
+@parallel
+def get_previous_release():
+    # Gets second to last line in RELEASES.txt
+    with cd(env.root):
+        return sudo('tail -2 {} | head -n 1'.format(RELEASE_RECORD))
 
 
 @task
@@ -795,7 +853,7 @@ def _tag_commit():
     return diff_url
 
 
-@task
+@task(alias='deploy')
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
     _require_target()
@@ -822,14 +880,6 @@ def awesome_deploy(confirm="yes"):
         print('┻┻┻┻┻┻')
 
     _deploy_without_asking()
-
-
-@task
-@roles(ROLES_ALL_SRC)
-def update_touchforms():
-    # npm bin allows you to specify the locally installed version instead of having to install grunt globally
-    with cd(os.path.join(env.code_root, 'submodules/touchforms-src/touchforms')):
-        sudo('PATH=$(npm bin):$PATH grunt build --force')
 
 
 @roles(ROLES_ALL_SRC)
@@ -916,7 +966,7 @@ def restart_services():
 
 
 @roles(ROLES_ALL_SERVICES)
-@chief_hook('Restarting services')
+@parallel
 def services_restart():
     """Stop and restart all supervisord services"""
     _require_target()
@@ -940,7 +990,7 @@ def _migrate():
 
 
 @roles(ROLES_DB_ONLY)
-@chief_hook('Flip ES aliases')
+@parallel
 def flip_es_aliases():
     """Flip elasticsearch aliases to the latest version"""
     _require_target()
@@ -952,18 +1002,20 @@ def flip_es_aliases():
 @roles(ROLES_STATIC)
 def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('%(virtualenv_root)s/bin/python manage.py compress --force' % env)
-    update_manifest(save=True)
+        sudo('{}/bin/python manage.py compress --force'.format(venv))
+    update_manifest(save=True, use_current_release=use_current_release)
 
 
 @parallel
 @roles(ROLES_STATIC)
 def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
+    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
-        sudo('%(virtualenv_root)s/bin/python manage.py fix_less_imports_collectstatic' % env)
+        sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
+        sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
 
 
 @roles(ROLES_DJANGO)
@@ -1150,7 +1202,7 @@ def stop_pillows():
 
 
 @roles(ROLES_CELERY)
-@chief_hook('Stopping celery')
+@parallel
 def stop_celery_tasks():
     _require_target()
     with cd(env.code_root):

@@ -59,7 +59,7 @@ redis_cache = {
 }
 CACHES = {
     'default': redis_cache,
-    'redis': redis_cache
+    'redis': redis_cache,
 }
 
 AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']

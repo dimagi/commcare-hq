@@ -1,5 +1,4 @@
 from django.core.urlresolvers import reverse
-from corehq import Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized
@@ -59,8 +58,6 @@ class Tile(object):
 
 
 class TileConfiguration(object):
-    """This is used by
-    """
 
     def __init__(self, title, slug, icon, context_processor_class,
                  url=None, urlname=None, is_external_link=False,

@@ -464,7 +464,7 @@
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
-                    <th>Reset pillow checkpoint</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: models">
@@ -491,6 +491,7 @@
                         / <span data-bind="text: db_seq"></span>
                     </td>
                     <td>
+                        {% if user_is_support %}
                         <button class="btn" type="button" data-bind="
                             click: reset_checkpoint,
                             disable: disabled">{% trans "Reset" %}</button>
@@ -498,6 +499,7 @@
                             click: start_stop,
                             text: start_stop_text,
                             disable: disabled"></button>
+                        {% endif %}
                         <button class="btn" type="button" data-bind="
                             click: refresh,
                             disable: disabled">

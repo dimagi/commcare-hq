@@ -3,7 +3,6 @@ import logging
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq import Domain
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -14,6 +13,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
+from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 

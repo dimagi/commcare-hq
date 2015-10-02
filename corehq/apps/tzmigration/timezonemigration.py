@@ -78,6 +78,11 @@ def _run_timezone_migration_for_domain(domain):
     if settings.UNIT_TESTING:
         delete_planning_db(domain)
     planning_db = prepare_planning_db(domain)
+    commit_plan(domain, planning_db)
+
+
+def commit_plan(domain, planning_db):
+    assert get_planning_db_filepath(domain) == planning_db.db_filepath
     for form in planning_db.get_forms():
         XFormInstance.get_db().save_doc(form)
     for case in planning_db.get_cases():

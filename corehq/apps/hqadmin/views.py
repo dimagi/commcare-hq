@@ -1,15 +1,14 @@
 import HTMLParser
 import json
-import logging
 import socket
 from datetime import timedelta, datetime, date
 from collections import defaultdict
 from StringIO import StringIO
+
 import dateutil
 from django.core.mail import EmailMessage
 from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
-
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -17,7 +16,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
@@ -32,19 +31,18 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
+from couchdbkit import ResourceNotFound, Database
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
-from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop import get_all_pillows_json, get_pillow_by_name
-
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
@@ -56,7 +54,6 @@ from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
@@ -73,10 +70,8 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.util import make_form_couch_key
-from corehq.apps.sms.models import SMSLog
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
@@ -88,7 +83,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
 from pillowtop.utils import get_pillow_json
@@ -113,107 +107,11 @@ def get_rabbitmq_management_url():
     else:
         return None
 
+
 def get_hqadmin_base_context(request):
     return {
         "domain": None,
     }
-
-
-@require_superuser
-def active_users(request):
-    keys = []
-    number_threshold = 15
-    date_threshold_days_ago = 90
-    date_threshold = json_format_datetime(datetime.utcnow() - timedelta(days=date_threshold_days_ago))
-    key = make_form_couch_key(None, user_id="")
-    for line in get_db().view("reports_forms/all_forms",
-        startkey=key,
-        endkey=key+[{}],
-        group_level=3):
-        if line['value'] >= number_threshold:
-            keys.append(line["key"])
-
-    final_count = defaultdict(int)
-
-    def is_valid_user_id(user_id):
-        if not user_id: return False
-        try:
-            get_db().get(user_id)
-            return True
-        except Exception:
-            return False
-
-    for time_type, domain, user_id in keys:
-        if get_db().view("reports_forms/all_forms",
-            reduce=False,
-            startkey=[time_type, domain, user_id, date_threshold],
-            limit=1):
-            if True or is_valid_user_id(user_id):
-                final_count[domain] += 1
-
-    return json_response({"break_down": final_count, "total": sum(final_count.values())})
-
-
-@require_superuser
-def commcare_version_report(request, template="hqadmin/commcare_version.html"):
-    apps = get_db().view('app_manager/applications_brief').all()
-    menu = CommCareBuildConfig.fetch().menu
-    builds = [item.build.to_string() for item in menu]
-    by_build = dict([(item.build.to_string(), {"label": item.label, "apps": []}) for item in menu])
-
-    for app in apps:
-        app = app['value']
-        app['id'] = app['_id']
-        if app.get('build_spec'):
-            build_spec = BuildSpec.wrap(app['build_spec'])
-            build = build_spec.to_string()
-            if by_build.has_key(build):
-                by_build[build]['apps'].append(app)
-            else:
-                by_build[build] = {"label": build_spec.get_label(), "apps": [app]}
-                builds.append(build)
-
-    tables = []
-    for build in builds:
-        by_build[build]['build'] = build
-        tables.append(by_build[build])
-    context = get_hqadmin_base_context(request)
-    context.update({'tables': tables})
-    context['hide_filters'] = True
-    return render(request, template, context)
-
-
-@datespan_default
-@require_superuser
-def message_log_report(request):
-    show_dates = True
-    datespan = request.datespan
-    domains = Domain.get_all()
-
-    for dom in domains:
-        dom.sms_incoming = SMSLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_outgoing = SMSLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_total = SMSLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-
-    context = get_hqadmin_base_context(request)
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("Incoming Messages", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Outgoing Messages", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Total Messages", sort_type=DTSortType.NUMERIC)
-    )
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-
-    context.update({
-        "domains": domains,
-        "show_dates": show_dates,
-        "datespan": datespan
-    })
-
-    context['layout_flush_content'] = True
-    return render(request, "hqadmin/message_log_report.html", context)
 
 
 @require_POST
@@ -440,6 +338,8 @@ def system_info(request):
     context['current_system'] = socket.gethostname()
     context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
 
+    context['user_is_support'] = hasattr(request, 'user') and SUPPORT.enabled(request.user.username)
+
     context.update(check_redis())
     context.update(check_rabbitmq())
     context.update(check_celery_health())
@@ -513,6 +413,29 @@ def pillow_operation_api(request):
             response.update(get_pillow_json(pillow))
         return json_response(response)
 
+    @any_toggle_enabled(SUPPORT)
+    def reset_pillow(request):
+        pillow.reset_checkpoint()
+        if supervisor.restart_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response("Checkpoint reset but failed to restart pillow. "
+                                "Restart manually to complete reset.")
+
+    @any_toggle_enabled(SUPPORT)
+    def start_pillow(request):
+        if supervisor.start_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
+    @any_toggle_enabled(SUPPORT)
+    def stop_pillow(request):
+        if supervisor.stop_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
     if pillow:
         try:
             supervisor = PillowtopSupervisorApi()
@@ -521,22 +444,11 @@ def pillow_operation_api(request):
 
         try:
             if operation == 'reset_checkpoint':
-                pillow.reset_checkpoint()
-                if supervisor.restart_pillow(pillow_name):
-                    return get_response()
-                else:
-                    return get_response("Checkpoint reset but failed to restart pillow. "
-                                        "Restart manually to complete reset.")
+                reset_pillow(request)
             if operation == 'start':
-                if supervisor.start_pillow(pillow_name):
-                    return get_response()
-                else:
-                    return get_response('Unknown error')
+                start_pillow(request)
             if operation == 'stop':
-                if supervisor.stop_pillow(pillow_name):
-                    return get_response()
-                else:
-                    return get_response('Unknown error')
+                stop_pillow(request)
             if operation == 'refresh':
                 return get_response()
         except SupervisorException as e:
@@ -866,7 +778,7 @@ def callcenter_test(request):
         }
 
     if user or user_case:
-        custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        custom_cache = None if enable_caching else cache.caches['dummy']
         cci = CallCenterIndicators(
             domain.name,
             domain.default_timezone,

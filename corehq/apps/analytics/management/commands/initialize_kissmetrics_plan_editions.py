@@ -8,4 +8,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for domain in Domain.get_all():
-            subscription_upgrade_or_downgrade.send_robust(domain, domain=domain)
+            subscription_upgrade_or_downgrade.send_robust(None, domain=domain)

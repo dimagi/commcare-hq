@@ -9,7 +9,7 @@ from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.users.models import WebUser, UserRole, Permissions
+from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser
 from custom.api.utils import apply_updates
 from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, \
@@ -17,6 +17,7 @@ from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, L
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
+from corehq.apps.programs.models import Program as CouchProgram
 
 
 class Group(JsonObject):
@@ -69,6 +70,7 @@ class EWSUser(JsonObject):
     supply_point = IntegerProperty()
     sms_notifications = BooleanProperty()
     organization = StringProperty()
+    program = StringProperty()
     groups = ListProperty(item_type=Group)
     contact = ObjectProperty(item_type=SMSUser, default=None)
 
@@ -455,7 +457,10 @@ class EWSApi(APISynchronization):
         return loc_parent.get_id
 
     def _set_in_charges(self, ews_user_id, location):
-        sms_user = self.sms_user_sync(self.endpoint.get_smsuser(ews_user_id))
+        ews_sms_user = self.endpoint.get_smsuser(ews_user_id)
+        sms_user = CouchUser.get_by_username(self.get_username(ews_sms_user)[0])
+        if not sms_user:
+            sms_user = self.sms_user_sync(ews_sms_user)
         FacilityInCharge.objects.get_or_create(
             location=location,
             user_id=sms_user.get_id
@@ -535,6 +540,12 @@ class EWSApi(APISynchronization):
                     self._set_in_charges(in_charge, sql_location)
         return location
 
+    def _set_program(self, web_user, program_code):
+        program = CouchProgram.get_by_code(self.domain, program_code)
+        if program:
+            dm = web_user.get_domain_membership(self.domain)
+            dm.program_id = program.get_id
+
     def web_user_sync(self, ews_webuser):
         username = ews_webuser.email.lower()
         if not username:
@@ -579,6 +590,9 @@ class EWSApi(APISynchronization):
         if dm.location_id != location_id:
             dm.location_id = location_id
 
+        if ews_webuser.program:
+            self._set_program(user, ews_webuser.program)
+
         if ews_webuser.contact:
             contact = self.sms_user_sync(ews_webuser.contact)
             if sql_location:
@@ -606,7 +620,6 @@ class EWSApi(APISynchronization):
         sms_user = super(EWSApi, self).sms_user_sync(ews_smsuser, **kwargs)
         if not sms_user:
             return None
-        sms_user.user_data['to'] = ews_smsuser.to
 
         if ews_smsuser.role:
             sms_user.user_data['role'] = [ews_smsuser.role]

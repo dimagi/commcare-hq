@@ -28,7 +28,7 @@ from corehq.apps.app_manager.models import (
     UpdateCaseAction,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestFileMixin, commtrack_enabled
+from corehq.apps.app_manager.tests.util import TestXmlMixin, commtrack_enabled
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     UserCaseXPath,
@@ -44,19 +44,15 @@ import commcare_translations
 from mock import patch
 
 
-class SuiteTest(SimpleTestCase, TestFileMixin):
+class SuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
         update_toggle_cache(MODULE_FILTER.slug, 'skelly', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
         update_toggle_cache(MODULE_FILTER.slug, 'example', True, NAMESPACE_DOMAIN)
-        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
-        self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
-        self.suite_xml_is_usercase_in_use_mock.return_value = True
 
     def tearDown(self):
-        self.suite_xml_is_usercase_in_use_patch.stop()
         clear_toggle_cache(MODULE_FILTER.slug, 'skelly', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
         clear_toggle_cache(MODULE_FILTER.slug, 'example', NAMESPACE_DOMAIN)
@@ -163,6 +159,20 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_advanced_suite_commtrack(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
+
+    @commtrack_enabled(True)
+    def test_product_list_custom_data(self):
+        # product data shouldn't be interpreted as a case index relationship
+        app = Application.wrap(self.get_json('suite-advanced'))
+        custom_path = 'product_data/is_bedazzled'
+        app.modules[1].product_details.short.columns[0].field = custom_path
+        suite_xml = app.create_suite()
+        for xpath in ['/template/text/xpath', '/sort/text/xpath']:
+            self.assertXmlPartialEqual(
+                '<partial><xpath function="{}"/></partial>'.format(custom_path),
+                suite_xml,
+                './detail[@id="m1_product_short"]/field[1]'+xpath,
+            )
 
     @commtrack_enabled(True)
     def test_autoload_supplypoint(self):
@@ -663,7 +673,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_detail'),
             app.create_suite(),
-            "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_data_entry'),
@@ -723,11 +733,13 @@ class RegexTest(SimpleTestCase):
                 interpolate_xpath(case, None),
 
 
-class FormFilterErrorTests(SimpleTestCase, TestFileMixin):
+class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
-        self.suite_xml_is_usercase_in_use_patch = patch('corehq.apps.app_manager.suite_xml.is_usercase_in_use')
+        self.suite_xml_is_usercase_in_use_patch = patch(
+            'corehq.apps.app_manager.suite_xml.sections.menus.is_usercase_in_use'
+        )
         self.suite_xml_is_usercase_in_use_mock = self.suite_xml_is_usercase_in_use_patch.start()
         self.factory = AppFactory(build_version='2.9')
 

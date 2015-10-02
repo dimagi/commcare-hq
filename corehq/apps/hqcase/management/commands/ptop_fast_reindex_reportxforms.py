@@ -8,7 +8,7 @@ class Command(ElasticReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
     doc_class = XFormInstance
-    view_name = 'hqadmin/domains_over_time'
+    view_name = 'couchforms/all_submissions_by_domain'
     pillow_class = ReportXFormPillow
     file_prefix = "ptop_fast_reindex_Report"
 
@@ -19,9 +19,9 @@ class Command(ElasticReindexer):
             rows = self.paginate_view(
                 self.db,
                 self.view_name,
-                startkey=[domain],
+                startkey=[domain, 'XFormInstance'],
                 reduce=False,
-                endkey=[domain, {}],
+                endkey=[domain, 'XFormInstance', {}],
                 **view_kwargs
             )
             for row in rows:

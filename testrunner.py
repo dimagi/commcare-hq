@@ -1,6 +1,7 @@
 from collections import defaultdict
 from functools import wraps
 from unittest.util import strclass
+from couchdbkit import Database, ResourceNotFound
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 import datetime
@@ -71,6 +72,24 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         }
 
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
+
+    def teardown_databases(self, old_config, **kwargs):
+        for db_uri in settings.EXTRA_COUCHDB_DATABASES.values():
+            db = Database(db_uri)
+            self._assert_is_a_test_db(db_uri)
+            self._delete_db_if_exists(db)
+        super(HqTestSuiteRunner, self).teardown_databases(old_config, **kwargs)
+
+    @staticmethod
+    def _assert_is_a_test_db(db_uri):
+        assert db_uri.endswith('_test'), db_uri
+
+    @staticmethod
+    def _delete_db_if_exists(db):
+        try:
+            db.server.delete_db(db.dbname)
+        except ResourceNotFound:
+            pass
 
     def get_all_test_labels(self):
         return [self._strip(app) for app in settings.INSTALLED_APPS

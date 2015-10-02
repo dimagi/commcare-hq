@@ -13,12 +13,14 @@ from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml
+from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml, \
+    get_single_balance_block, get_single_transfer_block
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
@@ -382,28 +384,28 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.assertEqual('XFormError', instance.doc_type)
         self.assertTrue('MissingProductId' in instance.problem)
 
-
-class BugSubmissionsTest(CommTrackSubmissionTest):
-
-    def test_submit_bad_case_id(self):
-        instance_id = uuid.uuid4().hex
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
-        xml_stub = balance_submission(amounts)
-        instance = submission_wrap(
-            instance_id,
-            self.products,
-            self.user,
-            'missing',
-            'missing-too',
-            xml_stub,
-        )
-        submit_form_locally(
-            instance=instance,
+    def test_blank_case_id_in_balance(self):
+        instance_id = submit_case_blocks(
+            case_blocks=get_single_balance_block(case_id='', product_id=self.products[0]._id, quantity=100),
             domain=self.domain.name,
         )
-        form = XFormInstance.get(instance_id)
-        self.assertEqual('XFormError', form.doc_type)
-        self.assertTrue('IllegalCaseId' in form.problem)
+        instance = XFormInstance.get(instance_id)
+        self.assertEqual('XFormError', instance.doc_type)
+        self.assertTrue('IllegalCaseId' in instance.problem)
+
+    def test_blank_case_id_in_transfer(self):
+        instance_id = submit_case_blocks(
+            case_blocks=get_single_transfer_block(
+                src_id='', dest_id='', product_id=self.products[0]._id, quantity=100,
+            ),
+            domain=self.domain.name,
+        )
+        instance = XFormInstance.get(instance_id)
+        self.assertEqual('XFormError', instance.doc_type)
+        self.assertTrue('IllegalCaseId' in instance.problem)
+
+
+class BugSubmissionsTest(CommTrackSubmissionTest):
 
     def test_device_report_submissions_ignored(self):
         """
@@ -429,7 +431,6 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             domain=self.domain.name,
         )
         self.assertEqual(0, StockTransaction.objects.count())
-
 
 
 class CommTrackSyncTest(CommTrackSubmissionTest):

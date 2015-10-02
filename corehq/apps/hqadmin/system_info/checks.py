@@ -13,7 +13,7 @@ def check_redis():
     redis_status = ""
     redis_results = ""
     if 'redis' in settings.CACHES:
-        rc = cache.get_cache('redis')
+        rc = cache.caches['redis']
         try:
             import redis
             redis_api = redis.StrictRedis.from_url('%s' % rc._server)

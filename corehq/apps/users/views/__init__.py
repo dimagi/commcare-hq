@@ -5,7 +5,8 @@ import urllib
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
-from corehq import Domain, privileges, toggles
+from corehq import privileges
+from corehq.apps.domain.models import Domain, toggles
 from corehq.apps.app_manager.models import Application
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
@@ -915,27 +916,6 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
 @login_and_domain_required
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
-
-
-@require_superuser
-def audit_logs(request, domain):
-    usernames = [user.username for user in WebUser.by_domain(domain)]
-    data = {}
-    for username in usernames:
-        data[username] = []
-        for doc in get_db().view('auditcare/urlpath_by_user_date',
-            startkey=[username],
-            endkey=[username, {}],
-            include_docs=True,
-            wrapper=lambda r: r['doc']
-        ).all():
-            try:
-                (d,) = re.search(r'^/a/([\w\-_\.]+)/', doc['request_path']).groups()
-                if d == domain:
-                    data[username].append(doc)
-            except Exception:
-                pass
-    return json_response(data)
 
 
 @domain_admin_required

@@ -151,7 +151,7 @@ class Command(BaseCommand):
         Role(slug=privileges.LOCATIONS, name='Locations', description=''),
         Role(slug=privileges.REPORT_BUILDER, name='User Configurable Report Builder', description=''),
         Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
-        Role(slug=privileges.DATA_CLEANUP, name='Data Cleanup Tools',
+        Role(slug=privileges.DATA_CLEANUP, name='Data Management',
              description='Tools for cleaning up data, including editing submissions and archiving forms.'),
         Role(slug=privileges.TEMPLATED_INTENTS, name='Templated Intents',
              description='Provides a dropdown for Android App Callouts'),

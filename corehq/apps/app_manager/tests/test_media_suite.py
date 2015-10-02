@@ -7,14 +7,14 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 
 import commcare_translations
 
 
-class MediaSuiteTest(SimpleTestCase, TestFileMixin):
+class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def test_all_media_paths(self):
@@ -108,7 +108,7 @@ class MediaSuiteTest(SimpleTestCase, TestFileMixin):
         self.assertEqual(len(app.all_media), 0)
 
 
-class LocalizedMediaSuiteTest(SimpleTestCase, TestFileMixin):
+class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     """
         For CC >= 2.21
         Tests following for form, module, case_list_menu, case_list_form

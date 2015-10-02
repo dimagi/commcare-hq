@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import absolute_import
 import hashlib
 import datetime
@@ -27,7 +28,7 @@ from dimagi.utils.parsing import json_format_datetime
 import xml2json
 
 import couchforms
-from . import const
+from .const import BadRequest
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -41,7 +42,6 @@ from .models import (
     doc_types,
 )
 from .signals import (
-    ReceiverResult,
     successful_form_received,
 )
 from .xml import ResponseNature, OpenRosaResponse
@@ -459,7 +459,7 @@ class SubmissionPost(object):
         if not self.auth_context.is_valid():
             return self.failed_auth_response, None, []
 
-        if isinstance(self.instance, const.BadRequest):
+        if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message), None, []
 
         def process(xform):
@@ -504,7 +504,7 @@ class SubmissionPost(object):
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
                             case_result = process_cases_with_casedb(xforms, case_db)
-                            stock_result = process_stock(instance, case_db)
+                            stock_result = process_stock(xforms, case_db)
                         except known_errors as e:
                             # errors we know about related to the content of the form
                             # log the error and respond with a success code so that the phone doesn't
@@ -514,8 +514,8 @@ class SubmissionPost(object):
                             # this is usually just one document, but if an edit errored we want
                             # to save the deprecated form as well
                             XFormInstance.get_db().bulk_save(xforms)
-                            response = self._get_open_rosa_response(instance,
-                                                                    None, None)
+                            response = self._get_open_rosa_response(
+                                instance, None)
                             return response, instance, cases
                         except Exception as e:
                             # handle / log the error and reraise so the phone knows to resubmit
@@ -580,7 +580,7 @@ class SubmissionPost(object):
                         for case in cases:
                             case_post_save.send(CommCareCase, case=case)
 
-                    responses, errors = self.process_signals(instance)
+                    errors = self.process_signals(instance)
                     if errors:
                         # .problems was added to instance
                         instance.save()
@@ -588,7 +588,7 @@ class SubmissionPost(object):
                 elif instance.doc_type == 'XFormDuplicate':
                     assert len(xforms) == 1
                     instance.save()
-            response = self._get_open_rosa_response(instance, responses, errors)
+            response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
 
     def get_response(self):
@@ -598,7 +598,6 @@ class SubmissionPost(object):
     @staticmethod
     def process_signals(instance):
         feedback = successful_form_received.send_robust(None, xform=instance)
-        responses = []
         errors = []
         for func, resp in feedback:
             if resp and isinstance(resp, Exception):
@@ -608,19 +607,17 @@ class SubmissionPost(object):
                     u"post-save signal %s for xform %s: %s: %s"
                 ) % (func, instance._id, type(resp).__name__, error_message))
                 errors.append(error_message)
-            elif resp and isinstance(resp, ReceiverResult):
-                responses.append(resp)
         if errors:
             instance.problem = ", ".join(errors)
-        return responses, errors
+        return errors
 
     @staticmethod
     def get_failed_auth_response():
         return HttpResponseForbidden('Bad auth')
 
-    def _get_open_rosa_response(self, instance, responses, errors):
+    def _get_open_rosa_response(self, instance, errors):
         if instance.doc_type == "XFormInstance":
-            response = self.get_success_response(instance, responses, errors)
+            response = self.get_success_response(instance, errors)
         else:
             response = self.get_failure_response(instance)
 
@@ -632,7 +629,7 @@ class SubmissionPost(object):
         return response
 
     @staticmethod
-    def get_success_response(doc, responses, errors):
+    def get_success_response(doc, errors):
 
         if errors:
             response = OpenRosaResponse(
@@ -640,14 +637,10 @@ class SubmissionPost(object):
                 nature=ResponseNature.SUBMIT_ERROR,
                 status=201,
             ).response()
-        elif responses:
-            # use the response with the highest priority if we got any
-            responses.sort()
-            response = HttpResponse(responses[-1].response, status=201)
         else:
-            # default to something generic
             response = OpenRosaResponse(
-                message="Thanks for submitting!",
+                # would have done ✓ but our test Nokias' fonts don't have that character
+                message=u'   √   ',
                 nature=ResponseNature.SUBMIT_SUCCESS,
                 status=201,
             ).response()

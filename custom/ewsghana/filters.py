@@ -13,7 +13,7 @@ from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSing
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.util import reverse
 from custom.common import ALL_OPTION
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from custom.ewsghana.utils import ews_date_format
 import settings
 
