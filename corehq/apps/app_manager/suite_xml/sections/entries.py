@@ -103,7 +103,7 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_filter_xpath(module, delegation=False):
-        filter = module.case_list_filter
+        filter = module.case_details.short.filter
         if filter:
             xpath = '[%s]' % filter
         else:

@@ -3677,24 +3677,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
 
     def validate_for_build(self):
         errors = super(ShadowModule, self).validate_for_build()
-        if self.case_list_filter:
-            try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
-                errors.append({
-                    'type': 'invalid filter xpath',
-                    'module': self.get_module_info(),
-                    'filter': self.case_list_filter,
-                })
-        if not self.source_module_id:
-            errors.append({
-                'type': 'no source module id',
-                'module': self.get_module_info()
-            })
-        return errors
-
-    def validate_for_build(self):
-        errors = super(ShadowModule, self).validate_for_build()
         for sort_element in self.detail_sort_elements:
             try:
                 validate_detail_screen_field(sort_element.field)
