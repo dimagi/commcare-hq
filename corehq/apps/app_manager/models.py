@@ -1941,6 +1941,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return False
 
+
 class ModuleDetailsMixin():
     @classmethod
     def wrap_details(cls, data):
@@ -3602,7 +3603,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
 
     @property
     def task_list(self):
-         return None
+        return None
 
     @parse_int([1])
     def get_form(self, i):

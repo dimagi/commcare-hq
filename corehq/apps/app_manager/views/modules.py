@@ -148,7 +148,7 @@ def _get_basic_module_view_context(app, module):
     case_type = module.case_type
     form_options = _case_list_form_options(app, module, case_type)
     # http://manage.dimagi.com/default.asp?178635
-    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select or not module.parent_select.active
+    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
     allow_case_list_form = _case_list_form_not_allowed_reason(
         module,
         AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)

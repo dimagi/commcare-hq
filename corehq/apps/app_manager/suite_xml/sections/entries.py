@@ -360,7 +360,8 @@ class EntriesHelper(object):
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
-        datums_meta = get_select_chain_meta(self.app, (module.source_module if module.module_type == 'shadow' else module))
+        datums_meta = get_select_chain_meta(self.app,
+                                            (module.source_module if module.module_type == 'shadow' else module))
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
@@ -544,10 +545,11 @@ class EntriesHelper(object):
         def get_manual_datum(action_, parent_filter_=''):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
+            filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
             return SessionDatum(
                 id=action_.case_session_var,
-                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, filter_xpath=EntriesHelper.get_filter_xpath(target_module_)) +
-                         parent_filter_),
+                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, filter_xpath=filter_xpath)
+                         + parent_filter_),
                 value="./@case_id",
                 detail_select=self.details_helper.get_detail_id_safe(target_module_, 'case_short'),
                 detail_confirm=(
