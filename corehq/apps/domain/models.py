@@ -984,6 +984,7 @@ class Domain(Document, SnapshotMixin):
         web_users = WebUser.by_domain(self.name)
         for web_user in web_users:
             web_user.delete_domain_membership(self.name)
+            web_user.save()
 
     def _delete_sql_objects(self):
         from casexml.apps.stock.models import DocDomainMapping

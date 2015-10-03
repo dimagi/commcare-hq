@@ -36,6 +36,8 @@ EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 BITLY_LOGIN = None
 BITLY_APIKEY = '*******'
 
+####### Bower ########
+BOWER_PATH = '/home/travis/bower'
 
 ####### Jar signing config ########
 
