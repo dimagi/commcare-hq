@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import models, migrations, IntegrityError
 
 
 def rename_static_data_source_pillow_errors(apps, schema_editor):
@@ -10,7 +10,10 @@ def rename_static_data_source_pillow_errors(apps, schema_editor):
     new_name = 'corehq.apps.userreports.pillow.StaticDataSourcePillow'
     for error_record in PillowError.objects.filter(pillow=old_name):
         error_record.pillow = new_name
-        error_record.save()
+        try:
+            error_record.save()
+        except IntegrityError:
+            error_record.delete()
 
 
 class Migration(migrations.Migration):
