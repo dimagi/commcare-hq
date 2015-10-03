@@ -253,13 +253,10 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
         'type': 'case',
         'model': 'case',
         'subcase_types': subcase_types,
+        'sort_elements': module.case_details.short.sort_elements,
+        'short': module.case_details.short,
+        'long': module.case_details.long,
     }
-    if hasattr(module, 'case_details'):
-        item.update({
-            'sort_elements': module.case_details.short.sort_elements,
-            'short': module.case_details.short,
-            'long': module.case_details.long,
-        })
     case_properties = case_property_builder.get_properties(case_type_)
     if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
         usercase_properties = prefix_usercase_properties(case_property_builder.get_properties(USERCASE_TYPE))
@@ -602,24 +599,6 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         module.parent_select = ParentSelect.wrap(parent_select)
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
-
-    resp = {}
-    app.save(resp)
-    return json_response(resp)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_shadow_module_details(request, domain, app_id, module_id):
-    """
-    Overwrite shadow module details, which is really just the case list filter.
-    """
-    params = json_request(request.POST)
-    app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    filter = params.get('filter', ())
-    if filter != ():
-        module.case_list_filter = filter
 
     resp = {}
     app.save(resp)

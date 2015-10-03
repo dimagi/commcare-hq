@@ -58,42 +58,6 @@
                 requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
             };
 
-            {% if module.module_type == 'shadow' %}
-                var ShadowModuleConfig = (function () {
-                    "use strict";
-                    var filter_xpath = {{ module.case_list_filter|JSON }};
-                    var that = {
-                        contextVariables: COMMCAREHQ.app_manager.module_view,
-                        save: function() {
-                            this.shortScreen.saveButton.ajax({
-                                url: "{% url "edit_shadow_module_details" domain app.id module.id %}",
-                                type: "POST",
-                                data: {
-                                    filter: JSON.stringify(this.filter.serialize()),
-                                },
-                                dataType: 'json',
-                                success: function (data) {
-                                    COMMCAREHQ.app_manager.updateDOM(data.update);
-                                }
-                            });
-                        },
-                        shortScreen: {
-                            saveButton: COMMCAREHQ.SaveButton.init({
-                                unsavedMessage: "You have unsaved configuration.",
-                                save: function () {
-                                    that.save();
-                                },
-                            }),
-                        },
-                    };
-                    that.filter = new filterViewModel(filter_xpath ? filter_xpath : null, that.shortScreen.saveButton);
-                    return that;
-                });
-
-                var config = new ShadowModuleConfig();
-                var $list_home = $("#case-detail-screen-config-tab");
-                ko.applyBindings(config, $list_home.get(0));
-            {% else %}
             var details = {{ details|JSON }};
             var lang = {{ lang|JSON }};
             var langs = {{ app.langs|JSON }};
@@ -130,7 +94,6 @@
                     ko.applyBindings(detailScreenConfig, $detail_home.get(0));
                 }
             }
-            {% endif %}
         });
         $(function () {
             $('#case_type').on('textchange', function () {
@@ -368,15 +331,7 @@
 
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-        {% if module.module_type == 'shadow' %}
-            {% include 'app_manager/partials/case_list_header.html' %}
-            <legend>
-                {% trans "Filtering" %}
-            </legend>
-            {% include 'app_manager/partials/case_list_filtering.html' %}
-        {% else %}
-            {% include 'app_manager/partials/case_list.html' %}
-        {% endif %}
+        {% include 'app_manager/partials/case_list.html' %}
     </div>
     {% if detail.long %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">

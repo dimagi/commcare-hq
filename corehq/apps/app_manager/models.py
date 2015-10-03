@@ -1941,8 +1941,64 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     def uses_usercase(self):
         return False
 
+class ModuleDetailsMixin():
+    @classmethod
+    def wrap_details(cls, data):
+        if 'details' in data:
+            try:
+                case_short, case_long, ref_short, ref_long = data['details']
+            except ValueError:
+                # "need more than 0 values to unpack"
+                pass
+            else:
+                data['case_details'] = {
+                    'short': case_short,
+                    'long': case_long,
+                }
+                data['ref_details'] = {
+                    'short': ref_short,
+                    'long': ref_long,
+                }
+            finally:
+                del data['details']
+        return data
 
-class Module(ModuleBase):
+    @property
+    def case_list_filter(self):
+        try:
+            return self.case_details.short.filter
+        except AttributeError:
+            return None
+
+    @property
+    def detail_sort_elements(self):
+        try:
+            return self.case_details.short.sort_elements
+        except Exception:
+            return []
+
+    def rename_lang(self, old_lang, new_lang):
+        super(Module, self).rename_lang(old_lang, new_lang)
+        for case_list in (self.case_list, self.referral_list):
+            case_list.rename_lang(old_lang, new_lang)
+
+    def export_json(self, dump_json=True, keep_unique_id=False):
+        source = self.to_json()
+        if not keep_unique_id:
+            for form in source['forms']:
+                del form['unique_id']
+        return json.dumps(source) if dump_json else source
+
+    def get_details(self):
+        return (
+            ('case_short', self.case_details.short, True),
+            ('case_long', self.case_details.long, True),
+            ('ref_short', self.ref_details.short, False),
+            ('ref_long', self.ref_details.long, False),
+        )
+
+
+class Module(ModuleBase, ModuleDetailsMixin):
     """
     A group of related forms, and configuration that applies to them all.
     Translates to a top-level menu on the phone.
@@ -1962,23 +2018,7 @@ class Module(ModuleBase):
 
     @classmethod
     def wrap(cls, data):
-        if 'details' in data:
-            try:
-                case_short, case_long, ref_short, ref_long = data['details']
-            except ValueError:
-                # "need more than 0 values to unpack"
-                pass
-            else:
-                data['case_details'] = {
-                    'short': case_short,
-                    'long': case_long,
-                }
-                data['ref_details'] = {
-                    'short': ref_short,
-                    'long': ref_long,
-                }
-            finally:
-                del data['details']
+        data = cls.wrap_details(data)
         return super(Module, cls).wrap(data)
 
     @classmethod
@@ -2036,33 +2076,6 @@ class Module(ModuleBase):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    def rename_lang(self, old_lang, new_lang):
-        super(Module, self).rename_lang(old_lang, new_lang)
-        for case_list in (self.case_list, self.referral_list):
-            case_list.rename_lang(old_lang, new_lang)
-
-    def get_details(self):
-        return (
-            ('case_short', self.case_details.short, True),
-            ('case_long', self.case_details.long, True),
-            ('ref_short', self.ref_details.short, False),
-            ('ref_long', self.ref_details.long, False),
-        )
-
-    @property
-    def detail_sort_elements(self):
-        try:
-            return self.case_details.short.sort_elements
-        except Exception:
-            return []
-
-    @property
-    def case_list_filter(self):
-        try:
-            return self.case_details.short.filter
-        except AttributeError:
-            return None
-
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
         if not self.forms and not self.case_list.show:
@@ -2111,16 +2124,6 @@ class Module(ModuleBase):
                         })
         return errors
 
-    def export_json(self, dump_json=True, keep_unique_id=False):
-        source = self.to_json()
-        if not keep_unique_id:
-            for form in source['forms']:
-                del form['unique_id']
-        return json.dumps(source) if dump_json else source
-
-    def export_jvalue(self):
-        return self.export_json(dump_json=False, keep_unique_id=True)
-    
     def requires(self):
         r = set(["none"])
         for form in self.get_forms():
@@ -2132,13 +2135,6 @@ class Module(ModuleBase):
         for val in ("referral", "case", "none"):
             if val in r:
                 return val
-
-    def detail_types(self):
-        return {
-            "referral": ["case_short", "case_long", "ref_short", "ref_long"],
-            "case": ["case_short", "case_long"],
-            "none": []
-        }[self.requires()]
 
     def requires_case_details(self):
         ret = False
@@ -2155,7 +2151,6 @@ class Module(ModuleBase):
         return all([form.requires == 'case' for form in self.get_forms()])
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-
         module_info = self.get_module_info()
 
         if needs_case_type and not self.case_type:
@@ -3558,7 +3553,7 @@ class ReportModule(ModuleBase):
         return False
 
 
-class ShadowModule(ModuleBase):
+class ShadowModule(ModuleBase, ModuleDetailsMixin):
     """
     A module that acts as a shortcut to another module. This module has its own
     name, icon/audio, filter, and case list filter, but inherits all other properties
@@ -3567,12 +3562,14 @@ class ShadowModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     module_type = 'shadow'
     source_module_id = StringProperty()
-    case_list_filter = StringProperty()
+    case_details = SchemaProperty(DetailPair)
+    parent_select = SchemaProperty(ParentSelect)
 
     get_forms = IndexedSchema.Getter('forms')
 
     @classmethod
     def wrap(cls, data):
+        data = cls.wrap_details(data)
         return super(ShadowModule, cls).wrap(data)
 
     @property
@@ -3584,6 +3581,12 @@ class ShadowModule(ModuleBase):
     @property
     def forms(self):
         return []
+
+    @property
+    def case_type(self):
+        if not self.source_module:
+            return None
+        return self.source_module.case_type
 
     @property
     def ref_details(self):
@@ -3601,10 +3604,6 @@ class ShadowModule(ModuleBase):
     def task_list(self):
          return None
 
-    @property
-    def parent_select(self):
-        return ParentSelect(active=False)
-
     @parse_int([1])
     def get_form(self, i):
         return None
@@ -3612,9 +3611,15 @@ class ShadowModule(ModuleBase):
     def get_child_modules(self):
         return []
 
+    @property
+    def requires(self):
+        if not self.source_module:
+            return 'none'
+        return self.source_module.requires
+
     def requires_case_details(self):
         if not self.source_module:
-            return None
+            return False
         return self.source_module.requires_case_details()
 
     @property
@@ -3631,14 +3636,6 @@ class ShadowModule(ModuleBase):
             return None
         return self.source_module.get_app()
 
-    def rename_lang(self, old_lang, new_lang):
-        pass
-
-    def validate_detail_columns(self, columns):
-        if not self.source_module:
-            return []
-        return self.source_module.validate_detail_columns(columns)
-
     def get_form_by_unique_id(self, unique_id):
         return None
 
@@ -3650,25 +3647,33 @@ class ShadowModule(ModuleBase):
 
     @memoized
     def all_forms_require_a_case(self):
-        return False
-
-    def get_details(self):
-        return ()
+        if not self.source_module:
+            return []
+        return self.source_module.all_forms_require_a_case()
 
     @classmethod
     def new_module(cls, name, lang):
         lang = lang or 'en'
+        detail = Detail(
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): ugettext("Name")},
+                field='name',
+                model='case',
+            )]
+        )
         module = ShadowModule(
-            name={lang: name or ugettext("Untitled Module")},
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
+            ),
         )
         module.get_or_create_unique_id()
         return module
 
     def uses_media(self):
         return False
-
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        return []
 
     def validate_for_build(self):
         errors = super(ShadowModule, self).validate_for_build()
@@ -3687,6 +3692,70 @@ class ShadowModule(ModuleBase):
                 'module': self.get_module_info()
             })
         return errors
+
+    def validate_for_build(self):
+        errors = super(ShadowModule, self).validate_for_build()
+        for sort_element in self.detail_sort_elements:
+            try:
+                validate_detail_screen_field(sort_element.field)
+            except ValueError:
+                errors.append({
+                    'type': 'invalid sort field',
+                    'field': sort_element.field,
+                    'module': self.get_module_info(),
+                })
+        if self.case_list_filter:
+            try:
+                etree.XPath(self.case_list_filter)
+            except etree.XPathSyntaxError:
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.get_module_info(),
+                    'filter': self.case_list_filter,
+                })
+        for detail in [self.case_details.short, self.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
+        return errors
+
+    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
+        module_info = self.get_module_info()
+
+        if needs_case_type and not self.case_type:
+            yield {
+                'type': 'no case type',
+                'module': module_info,
+            }
+
+        if needs_case_detail:
+            if not self.case_details.short.columns:
+                yield {
+                    'type': 'no case detail',
+                    'module': module_info,
+                }
+            columns = self.case_details.short.columns + self.case_details.long.columns
+            errors = self.validate_detail_columns(columns)
+            for error in errors:
+                yield error
+
+        if needs_referral_detail and not self.ref_details.short.columns:
+            yield {
+                'type': 'no ref detail',
+                'module': module_info,
+            }
 
 
 class VersionedDoc(LazyAttachmentDoc):

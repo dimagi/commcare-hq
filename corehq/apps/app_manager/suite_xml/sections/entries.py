@@ -103,7 +103,7 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_filter_xpath(module, delegation=False):
-        filter = module.case_list_filter if module.module_type == 'shadow' else module.case_details.short.filter
+        filter = module.case_list_filter
         if filter:
             xpath = '[%s]' % filter
         else:
@@ -371,7 +371,7 @@ class EntriesHelper(object):
             else:
                 parent_filter = ''
 
-            detail_module = datum['module'].source_module if datum['module'].module_type == 'shadow' else datum['module']
+            detail_module = module if module.module_type == 'shadow' else datum['module']
             detail_persistent = None
             detail_inline = False
             for detail_type, detail, enabled in datum['module'].get_details():
@@ -391,7 +391,7 @@ class EntriesHelper(object):
                         id=id_strings.fixture_session_var(datum['module']),
                         nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
                         value=datum['module'].fixture_select.variable_column,
-                        detail_select=id_strings.fixture_detail(datum['module'])
+                        detail_select=id_strings.fixture_detail(detail_module)
                     ),
                     case_type=None,
                     requires_selection=True,
