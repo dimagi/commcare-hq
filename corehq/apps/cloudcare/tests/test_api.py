@@ -9,7 +9,7 @@ from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+from toggle.caching import clear_toggle_cache, update_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser

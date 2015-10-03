@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 from corehq.apps.builds.models import BuildSpec
 from corehq import toggles
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+from toggle.caching import clear_toggle_cache, update_toggle_cache
 
 
 class ProfileTest(SimpleTestCase, TestXmlMixin):

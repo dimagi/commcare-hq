@@ -37,7 +37,7 @@ from corehq.apps.app_manager.xpath import (
 )
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+from toggle.caching import clear_toggle_cache, update_toggle_cache
 
 from lxml import etree
 import commcare_translations

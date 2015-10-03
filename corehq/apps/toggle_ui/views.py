@@ -7,8 +7,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
+from toggle.caching import clear_toggle_cache, update_toggle_document_in_cache
 from toggle.models import Toggle
-from toggle.shortcuts import clear_toggle_cache
 
 
 class ToggleBaseView(BasePageView):
@@ -116,6 +116,8 @@ class ToggleEditView(ToggleBaseView):
         toggle.enabled_users = item_list
         toggle.save()
 
+        # todo: maybe push all save and cache management logic into toggle.save()?
+        update_toggle_document_in_cache(toggle.slug, toggle)
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
         self.call_save_fn(changed_entries, currently_enabled)
         for item in changed_entries:

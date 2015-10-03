@@ -16,7 +16,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.feature_previews import MODULE_FILTER
 from corehq.toggles import NAMESPACE_DOMAIN
-from toggle.shortcuts import clear_toggle_cache, update_toggle_cache
+from toggle.caching import clear_toggle_cache, update_toggle_cache
 
 DOMAIN = 'domain'
 
