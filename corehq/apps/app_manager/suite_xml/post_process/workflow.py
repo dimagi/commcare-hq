@@ -103,7 +103,8 @@ class WorkflowHelper(PostProcessor):
                 to the stack frames that are required to by the target module and present in the source datums
                 list.
                 """
-                target_form_dm = self.get_frame_children(module.get_form(0), module_only=True)
+                # assume all forms in the module have the same datums
+                target_form_dm = self.get_form_datums(module.get_form(0))
 
                 def get_target_dm(case_type):
                     """Find the datum from the target form with the specified case type.
