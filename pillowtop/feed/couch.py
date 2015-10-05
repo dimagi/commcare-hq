@@ -29,7 +29,7 @@ class CouchChangeFeed(ChangeFeed):
 def change_from_couch_row(couch_change):
     return Change(
         id=couch_change['id'],
-        sequence_id=couch_change['seq'],
+        sequence_id=couch_change.get('seq', None),
         document=couch_change.get('doc', None),
         deleted=couch_change.get('deleted', False),
     )
