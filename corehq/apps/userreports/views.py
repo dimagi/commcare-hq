@@ -279,7 +279,7 @@ class ConfigureChartReport(ReportBuilderView):
                 )
             },
             'form': self.report_form,
-            'property_options': self.report_form.data_source_properties.values(),
+            'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
@@ -648,7 +648,7 @@ def data_source_status(request, domain, config_id):
 
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
-    report, _ = get_report_config_or_404(report_id, domain)
+    report = get_report_config_or_404(report_id, domain)[0]
     filter = report.get_ui_filter(filter_id)
     if filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
