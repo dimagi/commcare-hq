@@ -928,6 +928,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 'expr': "status"
             },
             {
+                'name': _('Case Type'),
+                'expr': "type",
+            },
+            {
                 'name': _('Date Opened'),
                 'expr': "opened_on",
                 'parse_date': True,
