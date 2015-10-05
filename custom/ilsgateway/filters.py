@@ -1,11 +1,11 @@
 import calendar
 from datetime import datetime
+from django.conf import settings
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseReportFilter
 from custom.common import ALL_OPTION
-import settings
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
