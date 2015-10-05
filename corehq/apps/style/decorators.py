@@ -1,21 +1,20 @@
-from corehq import toggles
+from functools import wraps
 from corehq.apps.style.utils import set_bootstrap_version3
 from crispy_forms.utils import set_template_pack
 
 
-def use_bootstrap3():
-    def decorate(fn):
-        """
-        Decorator to Toggle on the use of bootstrap 3.
-        """
-        def wrapped(request, *args, **kwargs):
-            # set bootstrap version in thread local
-            set_bootstrap_version3()
-            # set crispy forms template in thread local
-            set_template_pack('bootstrap3')
-            return fn(request, *args, **kwargs)
-        return wrapped
-    return decorate
+def use_bootstrap3(view_func):
+    """
+    Decorator to Toggle on the use of bootstrap 3.
+    """
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        # set bootstrap version in thread local
+        set_bootstrap_version3()
+        # set crispy forms template in thread local
+        set_template_pack('bootstrap3')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
 
 
 def use_select2():
