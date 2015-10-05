@@ -6,6 +6,7 @@ from django.conf import settings
 import math
 from django.db import models
 from django.db.models.aggregates import Count
+from pillowtop.feed.couch import change_from_couch_row
 
 ERROR_MESSAGE_LENGTH = 512
 
@@ -41,7 +42,7 @@ class PillowError(models.Model):
 
     @property
     def change_dict(self):
-        return json.loads(self.change) if self.change else {'id': self.doc_id}
+        return change_from_couch_row(json.loads(self.change) if self.change else {'id': self.doc_id})
 
     class Meta:
         app_label = 'pillow_retry'
