@@ -5,12 +5,12 @@ from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.tests.test_locations import LocationTestBase
 from corehq import toggles
 from corehq.apps.groups.exceptions import CantSaveException
+from corehq.apps.users.models import CommCareUser
 
 
 class LocationGroupTest(LocationTestBase):
     def setUp(self):
         super(LocationGroupTest, self).setUp()
-
         self.test_state = make_loc(
             'teststate',
             type='state',
@@ -107,6 +107,26 @@ class LocationGroupTest(LocationTestBase):
         group_obj = self.test_outlet.sql_location.case_sharing_group_object()
         with self.assertRaises(CantSaveException):
             group_obj.save()
+
+    def test_get_owner_ids(self):
+        loc_type = self.loc.location_type_object
+        self.assertFalse(loc_type.shares_cases)
+        owner_ids = self.user.get_owner_ids()
+        self.assertEqual(1, len(owner_ids))
+        self.assertEqual(self.user._id, owner_ids[0])
+
+        # change it so case sharing is enabled and make sure it is now included
+        loc_type.shares_cases = True
+        loc_type.save()
+        # we have to re-create the user object because various things are cached
+        user = CommCareUser.wrap(self.user.to_json())
+        owner_ids = user.get_owner_ids()
+        self.assertEqual(2, len(owner_ids))
+        self.assertEqual(self.loc._id, owner_ids[1])
+
+        # set it back to false in case other tests needed that
+        loc_type.shares_cases = False
+        loc_type.save()
 
     def test_custom_data(self):
         # need to put the location data on the
