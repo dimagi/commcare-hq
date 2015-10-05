@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from django.utils.html import escape
+from django.utils.encoding import force_text
 from lxml import etree
 import copy
 import re
@@ -347,7 +347,7 @@ def expected_bulk_app_sheet_rows(app):
                                 if isinstance(part, ItextOutput):
                                     value += "<output value=\"" + part.ref + "\"/>"
                                 else:
-                                    value += escape(part)
+                                    value += force_text(part).replace('<', '&lt;').replace('>', '&gt;')
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
