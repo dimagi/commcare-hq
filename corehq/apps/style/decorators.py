@@ -11,7 +11,7 @@ def use_bootstrap3(view_func):
     Example:
 
     @use_bootstrap3
-    def dispatch(request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
