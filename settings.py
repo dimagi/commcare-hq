@@ -155,6 +155,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -196,7 +197,10 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "corehq.util.context_processors.raven",
 ]
 
-TEMPLATE_DIRS = []
+location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
+TEMPLATE_DIRS = (
+    location('corehq/apps/domain/templates/login_and_password'),
+)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -220,6 +224,10 @@ DEFAULT_APPS = (
     'compressor',
     'mptt',
     'tastypie',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
