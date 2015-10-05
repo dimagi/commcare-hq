@@ -6,6 +6,8 @@ from pillow_retry.models import PillowError, Stub
 from django.test import TestCase
 from pillow_retry.tasks import process_pillow_retry
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.feed.couch import change_from_couch_row
+from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
 
 
@@ -18,6 +20,8 @@ def get_ex_tb(message, ex_class=None):
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
+    if not isinstance(change, Change):
+        change = change_from_couch_row(change)
     error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
         error.add_attempt(*get_ex_tb(message, ex_class=ex_class))
