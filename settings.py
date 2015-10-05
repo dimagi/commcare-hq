@@ -6,7 +6,6 @@ import sys
 import os
 from urllib import urlencode
 from django.contrib import messages
-from django.core.urlresolvers import reverse_lazy
 
 # odd celery fix
 import djcelery
@@ -179,7 +178,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
 ]
 
 location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
-TEMPLATE_DIRS =(
+TEMPLATE_DIRS = (
     location('corehq/apps/domain/templates/login_and_password'),
 )
 
