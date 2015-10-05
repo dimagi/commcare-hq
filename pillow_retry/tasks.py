@@ -52,9 +52,9 @@ def process_pillow_retry(error_doc_id):
         change = error_doc.change_dict
         if pillow.include_docs:
             try:
-                change['doc'] = pillow.couch_db.open_doc(change['id'])
+                change.document = pillow.couch_db.open_doc(change.id)
             except ResourceNotFound:
-                change['deleted'] = True
+                change.deleted = True
 
         try:
             try:

@@ -41,6 +41,9 @@ class Change(object):
     def pop(self, key, default):
         raise NotImplemented('This is a read-only dictionary!')
 
+    def to_dict(self):
+        return self._dict
+
 
 class ChangeFeed(object):
     """

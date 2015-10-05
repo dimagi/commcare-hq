@@ -6,7 +6,7 @@ from django.conf import settings
 import math
 from django.db import models
 from django.db.models.aggregates import Count
-from pillowtop.feed.couch import change_from_couch_row
+from pillowtop.feed.couch import change_from_couch_row, force_to_change
 
 ERROR_MESSAGE_LENGTH = 512
 
@@ -75,9 +75,9 @@ class PillowError(models.Model):
     @classmethod
     def get_or_create(cls, change, pillow, change_meta=None):
         pillow_path = path_from_object(pillow)
-
-        change.get('doc', None)
-        doc_id = change['id']
+        change = force_to_change(change)
+        change.document
+        doc_id = change.id
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow_path)
         except cls.DoesNotExist:
@@ -88,7 +88,7 @@ class PillowError(models.Model):
                 date_created=now,
                 date_last_attempt=now,
                 date_next_attempt=now,
-                change=json.dumps(change)
+                change=json.dumps(change.to_dict())
             )
 
             if change_meta:
