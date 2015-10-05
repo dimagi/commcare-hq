@@ -408,9 +408,9 @@ class AutoPayInvoicePaymentHandler(object):
 
     def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
+        receipt_email_template = 'accounting/invoice_receipt_email.html'
+        receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
         try:
-            receipt_email_template = 'accounting/invoice_receipt_email.html'
-            receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
             domain = invoice.subscription.account.created_by_domain
             product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
 
