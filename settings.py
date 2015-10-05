@@ -86,9 +86,17 @@ LOGGING = {
 }
 
 try:
+    import sys
+    UNIT_TESTING = 'test' == sys.argv[1]
+except IndexError:
+    UNIT_TESTING = False
+
+
+try:
     from localsettings import *
 except ImportError:
     pass
+
 
 
 COUCHDB_DATABASES = [ (app, COUCH_DATABASE) for app in [
