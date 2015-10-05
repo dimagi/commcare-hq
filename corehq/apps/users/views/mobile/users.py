@@ -726,6 +726,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         form.fields['phone_number'].required = True
         return form
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
