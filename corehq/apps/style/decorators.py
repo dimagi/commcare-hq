@@ -15,12 +15,12 @@ def use_bootstrap3(view_func):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
-    def _wrapped(request, *args, **kwargs):
+    def _wrapped(class_based_view, request, *args, **kwargs):
         # set bootstrap version in thread local
         set_bootstrap_version3()
         # set crispy forms template in thread local
         set_template_pack('bootstrap3')
-        return view_func(request, *args, **kwargs)
+        return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 
 
@@ -35,9 +35,9 @@ def use_select2(view_func):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
-    def _wrapped(request, *args, **kwargs):
+    def _wrapped(class_based_view, request, *args, **kwargs):
         request.use_select2 = True
-        return view_func(request, *args, **kwargs)
+        return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 
 
@@ -53,9 +53,9 @@ def use_select2_v4(view_func):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
-    def _wrapped(request, *args, **kwargs):
+    def _wrapped(class_based_view, request, *args, **kwargs):
         request.use_select2_v4 = True
-        return view_func(request, *args, **kwargs)
+        return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 
 
@@ -66,12 +66,12 @@ def use_knockout_js(view_func):
 
     Example:
 
-    @use_select2_v4
+    @use_knockout_js
     def dispatch(request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
-    def _wrapped(request, *args, **kwargs):
+    def _wrapped(class_based_view, request, *args, **kwargs):
         request.use_knockout_js = True
-        return view_func(request, *args, **kwargs)
+        return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
