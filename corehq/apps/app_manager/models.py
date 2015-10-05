@@ -3567,16 +3567,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
 
     get_forms = IndexedSchema.Getter('forms')
 
-    def __getattr__(self, name):
-        '''
-        Delegate a few properties to the source module
-        '''
-        if name in ['case_type', 'requires']:
-            if self.source_module_id:
-                return self.source_module.__getattr__(self, name)
-            return None
-        return object.__getattribute__(self, name)
-
     @classmethod
     def wrap(cls, data):
         data = cls.wrap_details(data)
@@ -3587,6 +3577,18 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if self.source_module_id:
             return self._parent.get_module_by_unique_id(self.source_module_id)
         return None
+
+    @property
+    def case_type(self):
+        if not self.source_module:
+            return None
+        return self.source_module.case_type
+
+    @property
+    def requires(self):
+        if not self.source_module:
+            return 'none'
+        return self.source_module.requires
 
     @parse_int([1])
     def get_form(self, i):
