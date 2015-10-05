@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.app_manager import get_case_data_sources, get_form_data_sources
 from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
+from dimagi.utils.parsing import json_format_datetime
 
 
 class AppManagerDataSourceConfigTest(SimpleTestCase):
@@ -59,9 +60,9 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         sample_doc = dict(
             _id='some-doc-id',
             doc_type="CommCareCase",
-            modified_on=modified_on.isoformat() + 'Z',
+            modified_on=json_format_datetime(modified_on),
             user_id="23407238074",
-            opened_on=opened_on.isoformat() + 'Z',
+            opened_on=json_format_datetime(opened_on),
             owner_id="0923409230948",
             name="priority ticket",
             domain=app.domain,
