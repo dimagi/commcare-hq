@@ -449,13 +449,11 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
     def get_keyword_display(self, keyword_id, content_cache):
         if keyword_id in content_cache:
-            args = content_cache[keyword_id]
-            return self.table_cell(*args)
+            return content_cache[keyword_id]
         try:
             keyword = SurveyKeyword.get(keyword_id)
             if keyword.deleted():
                 display = '%s %s' % (keyword.description, _('(Deleted Keyword)'))
-                display_text = display
             else:
                 urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
                     else EditNormalKeywordView.urlname)
@@ -463,36 +461,30 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
                     reverse(urlname, args=[keyword.domain, keyword_id]),
                     keyword.description,
                 )
-                display_text = keyword.description
-            args = (display_text, display)
         except ResourceNotFound:
-            args = ('-', '-')
+            display = '-'
 
-        content_cache[keyword_id] = args
-        return self.table_cell(*args)
+        content_cache[keyword_id] = display
+        return display
 
     def get_reminder_display(self, handler_id, content_cache):
         if handler_id in content_cache:
-            args = content_cache[handler_id]
-            return self.table_cell(*args)
+            return content_cache[handler_id]
         try:
             reminder_definition = CaseReminderHandler.get(handler_id)
             if reminder_definition.deleted():
                 display = '%s %s' % (reminder_definition.nickname, _('(Deleted Reminder)'))
-                display_text = display
             else:
                 urlname = EditScheduledReminderView.urlname
                 display = '<a target="_blank" href="%s">%s</a>' % (
                     reverse(urlname, args=[reminder_definition.domain, handler_id]),
                     reminder_definition.nickname,
                 )
-                display_text = reminder_definition.nickname
-            args = (display_text, display)
         except ResourceNotFound:
-            args = ('-', '-')
+            display = '-'
 
-        content_cache[handler_id] = args
-        return self.table_cell(*args)
+        content_cache[handler_id] = display
+        return display
 
     def get_content_display(self, event, content_cache):
         if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
@@ -507,7 +499,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
                 event.form_name or _('Unknown')))
 
         content_choices = dict(MessagingEvent.CONTENT_CHOICES)
-        return self._fmt(_(content_choices.get(event.content_type, '-')))
+        return _(content_choices.get(event.content_type, '-'))
 
     def get_event_detail_link(self, event):
         display_text = _('View Details')
@@ -516,7 +508,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             event.pk,
             display_text,
         )
-        return self.table_cell(display_text, display)
+        return display
 
     def get_survey_detail_url(self, subevent):
         return "/a/%s/reports/survey_detail/?id=%s" % (self.domain, subevent.xforms_session_id)
@@ -541,16 +533,17 @@ class MessagingEventsReport(BaseMessagingEventReport):
         EventTypeFilter,
         PhoneNumberFilter,
     ]
+    ajax_pagination = True
 
     @property
     def headers(self):
         header = DataTablesHeader(
             DataTablesColumn(_('Date')),
-            DataTablesColumn(_('Content')),
-            DataTablesColumn(_('Type')),
-            DataTablesColumn(_('Recipient')),
-            DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Detail')),
+            DataTablesColumn(_('Content'), sortable=False),
+            DataTablesColumn(_('Type'), sortable=False),
+            DataTablesColumn(_('Recipient'), sortable=False),
+            DataTablesColumn(_('Status'), sortable=False),
+            DataTablesColumn(_('Detail'), sortable=False),
         )
         header.custom_sort = [[0, 'desc']]
         return header
@@ -604,8 +597,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 if event.recipient_type == MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS
                 else None)
 
-    @property
-    def rows(self):
+    def get_queryset(self):
         source_filter, content_type_filter = self.get_filters()
 
         data = MessagingEvent.objects.filter(
@@ -624,10 +616,34 @@ class MessagingEventsReport(BaseMessagingEventReport):
         # outer join to sms_messagingsubevent in order to filter on
         # subevent content types.
         data = data.distinct()
+        return data
 
-        result = []
+    @property
+    def total_records(self):
+         return self.get_queryset().count()
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
+            {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
+            {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
+        ]
+
+    @property
+    def rows(self):
         contact_cache = {}
         content_cache = {}
+
+        data = self.get_queryset()
+        if self.request_params.get('sSortDir_0') == 'asc':
+            data = data.order_by('date')
+        else:
+            data = data.order_by('-date')
+
+        if self.pagination:
+            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for event in data:
             doc_info = self.get_recipient_info(event.get_recipient_doc_type(),
@@ -635,16 +651,14 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
             status = self.get_status_display(event)
-            result.append([
-                self._fmt_timestamp(timestamp),
+            yield [
+                self._fmt_timestamp(timestamp)['html'],
                 self.get_content_display(event, content_cache),
-                self.get_source_display(event),
-                self._fmt_recipient(event, doc_info),
-                self._fmt(status),
+                self.get_source_display(event, display_only=True),
+                self._fmt_recipient(event, doc_info)['html'],
+                status,
                 self.get_event_detail_link(event),
-            ])
-
-        return result
+            ]
 
 
 class MessageEventDetailReport(BaseMessagingEventReport):
