@@ -54,7 +54,7 @@ def get_feature_name(feature_type, product):
             Product.COMMCONNECT: _("Mobile Users"),
             Product.COMMTRACK: _("Facilities"),
         }[product],
-        FeatureType.SMS: _("Monthly SMS"),
+        FeatureType.SMS: _("SMS"),
     }[feature_type]
 
 
