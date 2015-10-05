@@ -356,7 +356,7 @@ def _login(req, domain_name, template_name):
         })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
-    return auth_view.as_view()(req)
+    return auth_view.as_view(extra_context=context)(req)
 
 
 def login(req, domain_type='commcare'):
@@ -391,9 +391,16 @@ class HQLoginView(LoginView):
         ('token', AuthenticationTokenForm),
         ('backup', BackupTokenForm),
     ]
+    extra_context = {}
+
+    def get_context_data(self, **kwargs):
+        context = super(HQLoginView, self).get_context_data(**kwargs)
+        context.update(self.extra_context)
+        return context
 
 
-class CloudCareLoginView(LoginView):
+
+class CloudCareLoginView(HQLoginView):
     form_list = [
         ('auth', CloudCareAuthenticationForm),
         ('token', AuthenticationTokenForm),
