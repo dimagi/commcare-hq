@@ -1,5 +1,6 @@
+from django.conf import settings
+
 import mailchimp
-import settings
 from corehq.apps.registration.utils import subscribe_user_to_mailchimp_list
 from corehq.apps.users.models import WebUser
 from django.core.management import BaseCommand
