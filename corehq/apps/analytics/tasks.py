@@ -202,7 +202,7 @@ def identify(email, properties):
         # TODO: Consider adding some error handling for bad/failed requests.
 
 
-@periodic_task(run_every=crontab(minute="0", hour="0"), queue='')
+@periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
