@@ -5,7 +5,15 @@ class Change(object):
     """
     A record of a change. Provides a dict-like interface for backwards compatibility with couch changes.
     """
+    PROPERTY_DICT_MAP = {
+        'id': 'id',
+        'sequence_id': 'seq',
+        'document': 'doc',
+        'deleted': 'deleted'
+    }
+
     def __init__(self, id, sequence_id, document=None, deleted=False):
+        self._dict = {}
         self.id = id
         self.sequence_id = sequence_id
         self.document = document
@@ -19,6 +27,11 @@ class Change(object):
 
     def __len__(self):
         return len(self._dict)
+
+    def __setattr__(self, name, value):
+        super(Change, self).__setattr__(name, value)
+        if name in self.PROPERTY_DICT_MAP:
+            self._dict[self.PROPERTY_DICT_MAP[name]] = value
 
     def __getitem__(self, key):
         return self._dict[key]
@@ -35,7 +48,7 @@ class Change(object):
     def __contains__(self, item):
         return item in self._dict
 
-    def get(self, key, default):
+    def get(self, key, default=None):
         return self._dict.get(key, default)
 
     def pop(self, key, default):

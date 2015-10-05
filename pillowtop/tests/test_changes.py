@@ -25,3 +25,32 @@ class TestCouchChange(SimpleTestCase):
             self.assertEqual(False, change.deleted)
             for key in couch_row:
                 self.assertEqual(couch_row[key], change[key])
+
+    def test_set_attr_id(self):
+        change = Change(id='first-id', sequence_id='')
+        self.assertEqual('first-id', change.id)
+        change.id = 'new-id'
+        self.assertEqual('new-id', change.id)
+        self.assertEqual('new-id', change.to_dict()['id'])
+
+    def test_set_attr_document(self):
+        change = Change(id='id', sequence_id='', document={})
+        self.assertEqual({}, change.document)
+        document = {'foo': 'bar'}
+        change.document = document
+        self.assertEqual(document, change.document)
+        self.assertEqual(document, change.to_dict()['doc'])
+
+    def test_set_attr_seq(self):
+        change = Change(id='id', sequence_id='seq')
+        self.assertEqual('seq', change.sequence_id)
+        change.sequence_id = 'seq-2'
+        self.assertEqual('seq-2', change.sequence_id)
+        self.assertEqual('seq-2', change.to_dict()['seq'])
+
+    def test_set_attr_deleted(self):
+        change = Change(id='id', sequence_id='', deleted=True)
+        self.assertTrue(change.deleted)
+        change.deleted = False
+        self.assertFalse(change.deleted)
+        self.assertFalse(change.to_dict()['deleted'])
