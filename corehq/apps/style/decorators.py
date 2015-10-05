@@ -4,8 +4,15 @@ from crispy_forms.utils import set_template_pack
 
 
 def use_bootstrap3(view_func):
-    """
-    Decorator to Toggle on the use of bootstrap 3.
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable Bootstrap3 features for the included template. This makes sure
+    that all crispy forms are in Boostrap3 mode, for instance.
+
+    Example:
+
+    @use_bootstrap3
+    def dispatch(request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
