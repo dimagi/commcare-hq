@@ -1,4 +1,5 @@
 from couchdbkit import ChangesStream
+from django.conf import settings
 from pillowtop.feed.interface import ChangeFeed, Change
 
 
@@ -32,3 +33,14 @@ def change_from_couch_row(couch_change):
         document=couch_change.get('doc', None),
         deleted=couch_change.get('deleted', False),
     )
+
+
+def force_to_change(dict_or_change):
+    if not isinstance(dict_or_change, Change):
+        if not settings.UNIT_TESTING:
+            from corehq.util.soft_assert import soft_assert
+            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True)
+            _assert(False, u"Change wasn't a Change object!", dict_or_change)
+        assert isinstance(dict_or_change, dict)
+        return change_from_couch_row(dict_or_change)
+    return dict_or_change
