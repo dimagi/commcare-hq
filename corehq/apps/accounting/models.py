@@ -2589,10 +2589,9 @@ class StripePaymentMethod(PaymentMethod):
             self.set_autopay(card, billing_account)
         return card
 
-    def set_default_card(self, card, save=True):
+    def set_default_card(self, card):
         self.customer.default_card = card
-        if save:
-            self.customer.save()
+        self.customer.save()
         return card
 
     def set_autopay(self, card, billing_account):
@@ -2615,12 +2614,11 @@ class StripePaymentMethod(PaymentMethod):
             self._update_autopay_status(card, billing_account, autopay=False)
             billing_account.remove_autopay_user()
 
-    def _update_autopay_status(self, card, billing_account, autopay, save=True):
+    def _update_autopay_status(self, card, billing_account, autopay):
         metadata = card.metadata.copy()
         metadata.update({self._auto_pay_card_metadata_key(billing_account): autopay})
         card.metadata = metadata
-        if save:
-            card.save()
+        card.save()
 
     def _remove_autopay_card(self, billing_account):
         autopay_card = self.get_autopay_card(billing_account)
