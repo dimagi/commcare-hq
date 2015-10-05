@@ -9,6 +9,8 @@ import zipfile
 import tempfile
 from wsgiref.util import FileWrapper
 
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
@@ -50,7 +52,6 @@ from corehq.elastic import (
 )
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from dimagi.utils.parsing import json_format_datetime
-import settings
 from couchforms.models import XFormInstance
 from corehq.apps.reports.models import FormExportSchema
 from dimagi.utils.couch.database import iter_docs
