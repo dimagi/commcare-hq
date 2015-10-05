@@ -59,13 +59,19 @@ def use_select2_v4(view_func):
     return _wrapped
 
 
-def use_knockout_js():
-    def decorate(fn):
-        """
-        Decorator to Toggle on the use of bootstrap 3.
-        """
-        def wrapped(request, *args, **kwargs):
-            request.use_knockout_js = True
-            return fn(request, *args, **kwargs)
-        return wrapped
-    return decorate
+def use_knockout_js(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable the inclusion of the knockout_js library at the base template
+    level.
+
+    Example:
+
+    @use_select2_v4
+    def dispatch(request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
+    """
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        request.use_knockout_js = True
+        return view_func(request, *args, **kwargs)
+    return _wrapped

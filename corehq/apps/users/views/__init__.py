@@ -390,7 +390,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     urlname = 'web_users'
 
     @use_bootstrap3
-    @method_decorator(use_knockout_js())
+    @use_knockout_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
