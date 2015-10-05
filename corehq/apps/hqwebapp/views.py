@@ -338,9 +338,9 @@ def _login(req, domain_name, template_name):
         else:
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain_name)
+        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
