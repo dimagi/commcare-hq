@@ -1,6 +1,9 @@
-from celery.task import task
+from celery.schedules import crontab
+from celery.task import task, periodic_task
+from corehq.apps.es.forms import FormES
+from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import json
 import requests
 import urllib
@@ -22,22 +25,56 @@ def _track_on_hubspot(webuser, properties):
     Note that property names must exist on hubspot prior to use.
     """
     # Note: Hubspot recommends OAuth instead of api key
-    # TODO: Use batch requests / be mindful of rate limit
 
+    _hubspot_post(
+        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            urllib.quote(webuser.username)
+        ),
+        data=json.dumps(
+            {'properties': [
+                {'property': k, 'value': v} for k, v in properties.items()
+            ]}
+        ),
+    )
+
+
+def _batch_track_on_hubspot(users_json):
+    """
+    Update or create contacts on hubspot in a batch request to prevent exceeding api rate limit
+
+    :param users_json: Json that matches the hubspot api format
+    [
+        {
+            "email": "testingapis@hubspot.com", #This can also be vid
+            "properties": [
+                {
+                    "property": "firstname",
+                    "value": "Codey"
+                },
+            ]
+        },
+    ]
+    :return:
+    """
+    _hubspot_post(url=u'/contacts/v1/contact/batch/', data=users_json)
+
+
+def _hubspot_post(url, data):
+    """
+    Lightweight wrapper to add hubspot api key and post data if the HUBSPOT_API_KEY is defined
+    :param url: url to post to
+    :param data: json data payload
+    :return:
+    """
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
-        req = requests.post(
-            u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-                urllib.quote(webuser.username)
-            ),
+        req = requests.port(
+            url,
             params={'hapikey': api_key},
-            data=json.dumps(
-                {'properties': [
-                    {'property': k, 'value': v} for k, v in properties.items()
-                ]}
-            ),
+            data=data
         )
-        req.raise_for_status()
+        req.raise_for_status
+
 
 
 def _get_user_hubspot_id(webuser):
@@ -163,3 +200,51 @@ def identify(email, properties):
         km = KISSmetrics.Client(key=api_key)
         km.set(email, properties)
         # TODO: Consider adding some error handling for bad/failed requests.
+
+
+@periodic_task(run_every=crontab(minute="0", hour="0"), queue='')
+def track_periodic_data():
+    """
+    Sync data that is neither event or page based with hubspot/Kissmetrics
+    :return:
+    """
+    # Start by getting a list of web users mapped to their domains
+    six_months_ago = date.today() - timedelta(days=180)
+    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email']).run().hits
+    # users_to_domains is a list of dicts
+
+    domains_to_forms = FormES().terms_facet('domain', 'domain').run().facets.domain.counts_by_term()
+    domains_to_mobile_users = UserES().mobile_users().terms_facet('domain', 'domain').run()\
+                                      .facets.domain.counts_by_term()
+
+    # For each web user, iterate through their domains and select the max number of form submissions and max number of
+    # mobile workers
+    submit = []
+    for user in users_to_domains:
+        email = user['email']
+        max_forms = 0
+        max_workers = 0
+        for _ in user.domains:
+            if domains_to_forms[email] > max_forms:
+                max_forms = domains_to_forms[email]
+            if domains_to_mobile_users[email] > max_workers:
+                max_workers = domains_to_mobile_users[email]
+
+        user_json = {
+            'email': email,
+            'properties': [
+                {
+                    'property': 'max_form_submissions_in_a_domain',
+                    'value': max_forms
+                },
+                {
+                    'property': 'max_mobile_workers_in_a_domain',
+                    'value': max_workers
+                }
+            ]
+        }
+
+        submit.append(user_json)
+
+    submit_json = json.dumps(submit)
+    _batch_track_on_hubspot(submit_json)

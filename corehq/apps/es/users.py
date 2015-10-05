@@ -30,7 +30,7 @@ from . import filters
 class UserES(HQESQuery):
     index = 'users'
     default_filters = {
-        'not_deleted': {"term": {"base_doc": "couchuser"}},
+        'not_deleted': {"term": {"base_doc": "CouchUser"}},
         'active': {"term": {"is_active": True}},
     }
     @property
@@ -91,6 +91,10 @@ def demo_users():
 
 def created(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('created_on', gt, gte, lt, lte)
+
+
+def last_logged_in(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('last_login', gt, gte, lt, lte)
 
 
 def user_ids(user_ids):
