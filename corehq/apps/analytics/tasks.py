@@ -68,7 +68,7 @@ def _hubspot_post(url, data):
     """
     api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
-        req = requests.port(
+        req = requests.post(
             url,
             params={'hapikey': api_key},
             data=data
@@ -213,8 +213,8 @@ def track_periodic_data():
     users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email']).run().hits
     # users_to_domains is a list of dicts
 
-    domains_to_forms = FormES().terms_facet('domain', 'domain').run().facets.domain.counts_by_term()
-    domains_to_mobile_users = UserES().mobile_users().terms_facet('domain', 'domain').run()\
+    domains_to_forms = FormES().terms_facet('domain', 'domain').size(0).run().facets.domain.counts_by_term()
+    domains_to_mobile_users = UserES().mobile_users().terms_facet('domain', 'domain').size(0).run()\
                                       .facets.domain.counts_by_term()
 
     # For each web user, iterate through their domains and select the max number of form submissions and max number of
@@ -224,11 +224,12 @@ def track_periodic_data():
         email = user['email']
         max_forms = 0
         max_workers = 0
-        for _ in user.domains:
-            if domains_to_forms[email] > max_forms:
-                max_forms = domains_to_forms[email]
-            if domains_to_mobile_users[email] > max_workers:
-                max_workers = domains_to_mobile_users[email]
+
+        for domain in user['domains']:
+            if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
+                max_forms = domains_to_forms[domain]
+            if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
+                max_workers = domains_to_mobile_users[domain]
 
         user_json = {
             'email': email,
@@ -243,7 +244,6 @@ def track_periodic_data():
                 }
             ]
         }
-
         submit.append(user_json)
 
     submit_json = json.dumps(submit)

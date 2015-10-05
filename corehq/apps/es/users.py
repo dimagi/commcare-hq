@@ -42,6 +42,7 @@ class UserES(HQESQuery):
             web_users,
             user_ids,
             location,
+            last_logged_in,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
