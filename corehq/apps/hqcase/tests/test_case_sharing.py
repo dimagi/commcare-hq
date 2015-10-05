@@ -25,7 +25,8 @@ class CaseSharingTest(TestCase):
             return CommCareUser.create(self.domain, format_username(username, self.domain), password)
 
         def create_group(name, *users):
-            group = Group(users=[user.user_id for user in users], name=name, domain=self.domain)
+            group = Group(users=[user.user_id for user in users], name=name, domain=self.domain,
+                          case_sharing=True)
             group.save()
             return group
 
