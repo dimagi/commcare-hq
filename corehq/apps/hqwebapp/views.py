@@ -399,7 +399,6 @@ class HQLoginView(LoginView):
         return context
 
 
-
 class CloudCareLoginView(HQLoginView):
     form_list = [
         ('auth', CloudCareAuthenticationForm),
