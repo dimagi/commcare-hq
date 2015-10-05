@@ -400,6 +400,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_extensions',
     'djangobower',
     'django_prbac',
+    'django_otp',
     'djcelery',
     'djtables',
     'djkombu',
@@ -408,6 +409,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'luna',
     'raven.contrib.django.raven_compat',
     'rosetta',
+    'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
 
