@@ -2,6 +2,7 @@ from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from casexml.apps.case.models import CommCareCase
 
+from casexml.apps.case.xform import process_cases
 from couchforms.util import process_xform
 from couchforms.models import doc_types, XFormInstance, XFormError
 from couchforms.exceptions import UnexpectedDeletedXForm
@@ -100,3 +101,9 @@ class FormProcessorInterface(object):
             for xform in xforms:
                 xform.save()
             return xforms[0]
+
+    @classmethod
+    @to_generic
+    def process_cases(cls, xform_generic, config=None):
+        xform = cls._get_xform(xform_generic.id)
+        return process_cases(xform, config)
