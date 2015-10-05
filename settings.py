@@ -1447,6 +1447,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
     ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
+    ('location_type_name', 'corehq.apps.locations.expressions.location_type_name'),
 ]
 
 CUSTOM_MODULES = [
