@@ -20,8 +20,6 @@ def get_ex_tb(message, ex_class=None):
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
-    if not isinstance(change, Change):
-        change = change_from_couch_row(change)
     error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
         error.add_attempt(*get_ex_tb(message, ex_class=ex_class))
@@ -34,12 +32,12 @@ class PillowRetryTestCase(TestCase):
 
     def test_id(self):
         id = '12345'
-        change_dict = {'id': id, 'seq': 54321, 'changes': [{'_rev': 'abc123'}]}
+        change_dict = {'id': id, 'seq': 54321}
         error = create_error(change_dict)
         self.assertEqual(error.doc_id, id)
         self.assertEqual(error.pillow, 'pillow_retry.tests.FakePillow')
-        self.assertEqual(error.change_dict, change_dict)
-
+        self.assertEqual(error.change_dict.id, id)
+        self.assertEqual(error.change_dict.sequence_id, 54321)
 
     def test_attempts(self):
         message = 'ex message'
@@ -199,7 +197,7 @@ class PillowRetryTestCase(TestCase):
         """
         id = 'test_doc'
         FakePillow.couch_db._docs[id] = {'id': id, 'property': 'value'}
-        change_dict = {'id': id, 'seq': 54321, 'changes': [{'_rev': 'abc123'}]}
+        change_dict = {'id': id, 'seq': 54321}
         error = create_error(change_dict)
         error.save()
         process_pillow_retry(error.id)
@@ -209,11 +207,8 @@ class PillowRetryTestCase(TestCase):
             PillowError.objects.get(id=error.id)
 
     def test_deleted_doc(self):
-        """
-        see FakePillow.process_change
-        """
         id = 'test_doc'
-        change_dict = {'id': id, 'seq': 54321, 'changes': [{'_rev': 'abc123'}]}
+        change_dict = {'id': id, 'seq': 54321}
         error = create_error(change_dict)
         error.save()
         # this used to error out
@@ -248,6 +243,7 @@ class PillowRetryTestCase(TestCase):
 
         errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
         self.assertEqual(len(errors), 2)
+
 
 class FakePillow(BasicPillow):
     couch_db = CachedCouchDB(Stub.get_db().uri, readonly=True)
