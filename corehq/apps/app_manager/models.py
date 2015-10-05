@@ -1943,6 +1943,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
 
 class ModuleDetailsMixin():
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+
     @classmethod
     def wrap_details(cls, data):
         if 'details' in data:
@@ -2009,13 +2017,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     case_label = DictProperty()
     referral_label = DictProperty()
     forms = SchemaListProperty(Form)
-    case_details = SchemaProperty(DetailPair)
-    ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
-    case_list = SchemaProperty(CaseList)
-    referral_list = SchemaProperty(CaseList)
-    task_list = SchemaProperty(CaseList)
-    parent_select = SchemaProperty(ParentSelect)
 
     @classmethod
     def wrap(cls, data):
@@ -3560,11 +3561,9 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     name, icon/audio, filter, and case list filter, but inherits all other properties
     from its source module.
     """
-    put_in_root = BooleanProperty(default=False)
     module_type = 'shadow'
     source_module_id = StringProperty()
-    case_details = SchemaProperty(DetailPair)
-    parent_select = SchemaProperty(ParentSelect)
+    forms = []
 
     get_forms = IndexedSchema.Getter('forms')
 
@@ -3580,37 +3579,14 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return None
 
     @property
-    def forms(self):
-        return []
-
-    @property
     def case_type(self):
         if not self.source_module:
             return None
         return self.source_module.case_type
 
-    @property
-    def ref_details(self):
-        if not self.source_module:
-            return None
-        return self.source_module.ref_details
-
-    @property
-    def referral_list(self):
-        if not self.source_module:
-            return None
-        return self.source_module.referral_list
-
-    @property
-    def task_list(self):
-        return None
-
     @parse_int([1])
     def get_form(self, i):
         return None
-
-    def get_child_modules(self):
-        return []
 
     @property
     def requires(self):
@@ -3623,22 +3599,10 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return False
         return self.source_module.requires_case_details()
 
-    @property
-    def root_module(self):
-        return None
-
     def get_case_types(self):
         if not self.source_module:
             return []
         return self.source_module.get_case_types()
-
-    def get_app(self):
-        if not self.source_module:
-            return None
-        return self.source_module.get_app()
-
-    def get_form_by_unique_id(self, unique_id):
-        return None
 
     @memoized
     def get_subcase_types(self):
