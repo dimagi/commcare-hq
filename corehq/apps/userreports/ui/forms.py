@@ -107,6 +107,14 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         self.domain = domain
         super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
 
+        from corehq import toggles
+        if toggles.LOCATIONS_IN_UCR.enabled(domain):
+            choices = self.fields['referenced_doc_type'].choices
+            choices.append(
+                ('Location', _('locations'))
+            )
+            self.fields['referenced_doc_type'].choices = choices
+
     def clean_table_id(self):
         # todo: validate table_id as [a-z][a-z0-9_]*
         table_id = self.cleaned_data['table_id']

@@ -255,6 +255,13 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LOCATIONS_IN_UCR = StaticToggle(
+    'locations_in_ucr',
+    'Add Locations as one of the Source Types for User Configurable Reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 REPORT_BUILDER = StaticToggle(
     'report_builder',
     'Report Builder',
