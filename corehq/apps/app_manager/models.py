@@ -1943,14 +1943,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
 
 class ModuleDetailsMixin():
-    case_details = SchemaProperty(DetailPair)
-    ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
-    case_list = SchemaProperty(CaseList)
-    referral_list = SchemaProperty(CaseList)
-    task_list = SchemaProperty(CaseList)
-    parent_select = SchemaProperty(ParentSelect)
-
     @classmethod
     def wrap_details(cls, data):
         if 'details' in data:
@@ -2081,6 +2073,14 @@ class Module(ModuleBase, ModuleDetailsMixin):
     case_label = DictProperty()
     referral_label = DictProperty()
     forms = SchemaListProperty(Form)
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+
 
     @classmethod
     def wrap(cls, data):
@@ -2143,7 +2143,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return self.get_form(index or -1)
 
     def validate_for_build(self):
-        errors = super(ModuleDetailsMixin, Module).validate_for_build()
+        return super(ModuleDetailsMixin, Module).validate_for_build()
 
     def requires(self):
         r = set(["none"])
@@ -3557,6 +3557,14 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     module_type = 'shadow'
     source_module_id = StringProperty()
     forms = []
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+
 
     get_forms = IndexedSchema.Getter('forms')
 
@@ -3631,7 +3639,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return module
 
     def validate_for_build(self):
-        errors = super(ModuleDetailsMixin, ShadowModule).validate_for_build()
+        return super(ModuleDetailsMixin, ShadowModule).validate_for_build()
 
     def uses_media(self):
         return False
