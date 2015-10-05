@@ -1998,8 +1998,8 @@ class ModuleDetailsMixin():
             ('ref_long', self.ref_details.long, False),
         )
 
-    def validate_for_build(self, cls):
-        errors = super(cls, self).validate_for_build()
+    def validate_details_for_build(self):
+        errors = []
         for sort_element in self.detail_sort_elements:
             try:
                 validate_detail_screen_field(sort_element.field)
@@ -2143,7 +2143,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return self.get_form(index or -1)
 
     def validate_for_build(self):
-        return super(ModuleDetailsMixin, Module).validate_for_build()
+        return super(Module, self).validate_for_build() + self.validate_details_for_build()
 
     def requires(self):
         r = set(["none"])
@@ -3639,7 +3639,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return module
 
     def validate_for_build(self):
-        return super(ModuleDetailsMixin, ShadowModule).validate_for_build()
+        return super(ShadowModule, self).validate_for_build() + self.validate_details_for_build()
 
     def uses_media(self):
         return False
