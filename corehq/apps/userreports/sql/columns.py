@@ -83,29 +83,23 @@ def _get_distinct_values(data_source_configuration, column_config, expansion_lim
     adapter = IndicatorSqlAdapter(data_source_configuration)
     too_many_values = False
 
-    try:
-        table = adapter.get_table()
-        if not table.exists(bind=adapter.engine):
-            return [], False
+    table = adapter.get_table()
+    if not table.exists(bind=adapter.engine):
+        return [], False
 
-        if column_config.field not in table.c:
-            raise ColumnNotFoundError(_(
-                'The column "{}" does not exist in the report source! '
-                'Please double check your report configuration.').format(column_config.field)
-            )
-        column = table.c[column_config.field]
+    if column_config.field not in table.c:
+        raise ColumnNotFoundError(_(
+            'The column "{}" does not exist in the report source! '
+            'Please double check your report configuration.').format(column_config.field)
+        )
+    column = table.c[column_config.field]
 
-        query = adapter.session_helper.Session.query(column).limit(expansion_limit + 1).distinct()
-        result = query.all()
-        distinct_values = [x[0] for x in result]
-        if len(distinct_values) > expansion_limit:
-            distinct_values = distinct_values[:expansion_limit]
-            too_many_values = True
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+    query = adapter.session_helper.Session.query(column).limit(expansion_limit + 1).distinct()
+    result = query.all()
+    distinct_values = [x[0] for x in result]
+    if len(distinct_values) > expansion_limit:
+        distinct_values = distinct_values[:expansion_limit]
+        too_many_values = True
 
     return distinct_values, too_many_values
 
