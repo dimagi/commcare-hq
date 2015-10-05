@@ -36,8 +36,8 @@ class PillowRetryTestCase(TestCase):
         error = create_error(change_dict)
         self.assertEqual(error.doc_id, id)
         self.assertEqual(error.pillow, 'pillow_retry.tests.FakePillow')
-        self.assertEqual(error.change_dict.id, id)
-        self.assertEqual(error.change_dict.sequence_id, 54321)
+        self.assertEqual(error.change_object.id, id)
+        self.assertEqual(error.change_object.sequence_id, 54321)
 
     def test_attempts(self):
         message = 'ex message'

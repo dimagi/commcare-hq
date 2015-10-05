@@ -41,7 +41,7 @@ class PillowError(models.Model):
     queued = models.BooleanField(default=False)
 
     @property
-    def change_dict(self):
+    def change_object(self):
         return change_from_couch_row(json.loads(self.change) if self.change else {'id': self.doc_id})
 
     class Meta:

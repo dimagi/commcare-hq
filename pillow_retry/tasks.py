@@ -49,7 +49,7 @@ def process_pillow_retry(error_doc_id):
                 release_lock(lock, True)
                 return
 
-        change = error_doc.change_dict
+        change = error_doc.change_object
         if pillow.include_docs:
             try:
                 change.document = pillow.couch_db.open_doc(change.id)
