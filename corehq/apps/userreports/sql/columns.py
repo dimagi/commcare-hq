@@ -2,7 +2,6 @@ import sqlalchemy
 from sqlagg import SumWhen
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
-from corehq.db import Session
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from fluff import TYPE_STRING
 from fluff.util import get_column_type
@@ -80,15 +79,13 @@ def _get_distinct_values(data_source_configuration, column_config, expansion_lim
     :param expansion_limit:
     :return:
     """
-    from corehq.apps.userreports.sql.adapter import get_indicator_table
-
+    from corehq.apps.userreports.sql import IndicatorSqlAdapter
+    adapter = IndicatorSqlAdapter(data_source_configuration)
     too_many_values = False
 
-    session = Session()
     try:
-        connection = session.connection()
-        table = get_indicator_table(data_source_configuration)
-        if not table.exists(bind=connection):
+        table = adapter.get_table()
+        if not table.exists(bind=adapter.engine):
             return [], False
 
         if column_config.field not in table.c:
@@ -98,8 +95,8 @@ def _get_distinct_values(data_source_configuration, column_config, expansion_lim
             )
         column = table.c[column_config.field]
 
-        query = sqlalchemy.select([column], limit=expansion_limit + 1).distinct()
-        result = connection.execute(query).fetchall()
+        query = adapter.session_helper.Session.query(column).limit(expansion_limit + 1).distinct()
+        result = query.all()
         distinct_values = [x[0] for x in result]
         if len(distinct_values) > expansion_limit:
             distinct_values = distinct_values[:expansion_limit]
