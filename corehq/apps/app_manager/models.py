@@ -2006,6 +2006,70 @@ class ModuleDetailsMixin():
             ('ref_long', self.ref_details.long, False),
         )
 
+    def validate_for_build(self, cls):
+        errors = super(cls, self).validate_for_build()
+        for sort_element in self.detail_sort_elements:
+            try:
+                validate_detail_screen_field(sort_element.field)
+            except ValueError:
+                errors.append({
+                    'type': 'invalid sort field',
+                    'field': sort_element.field,
+                    'module': self.get_module_info(),
+                })
+        if self.case_list_filter:
+            try:
+                etree.XPath(self.case_list_filter)
+            except etree.XPathSyntaxError:
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.get_module_info(),
+                    'filter': self.case_list_filter,
+                })
+        for detail in [self.case_details.short, self.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
+        return errors
+
+    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
+        module_info = self.get_module_info()
+
+        if needs_case_type and not self.case_type:
+            yield {
+                'type': 'no case type',
+                'module': module_info,
+            }
+
+        if needs_case_detail:
+            if not self.case_details.short.columns:
+                yield {
+                    'type': 'no case detail',
+                    'module': module_info,
+                }
+            columns = self.case_details.short.columns + self.case_details.long.columns
+            errors = self.validate_detail_columns(columns)
+            for error in errors:
+                yield error
+
+        if needs_referral_detail and not self.ref_details.short.columns:
+            yield {
+                'type': 'no ref detail',
+                'module': module_info,
+            }
+
 
 class Module(ModuleBase, ModuleDetailsMixin):
     """
@@ -2079,52 +2143,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return self.get_form(index or -1)
 
     def validate_for_build(self):
-        errors = super(Module, self).validate_for_build()
-        if not self.forms and not self.case_list.show:
-            errors.append({
-                'type': 'no forms or case list',
-                'module': self.get_module_info(),
-            })
-        for sort_element in self.detail_sort_elements:
-            try:
-                validate_detail_screen_field(sort_element.field)
-            except ValueError:
-                errors.append({
-                    'type': 'invalid sort field',
-                    'field': sort_element.field,
-                    'module': self.get_module_info(),
-                })
-        if self.case_list_filter:
-            try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
-                errors.append({
-                    'type': 'invalid filter xpath',
-                    'module': self.get_module_info(),
-                    'filter': self.case_list_filter,
-                })
-        if self.parent_select.active and not self.parent_select.module_id:
-            errors.append({
-                'type': 'no parent select id',
-                'module': self.get_module_info()
-            })
-        for detail in [self.case_details.short, self.case_details.long]:
-            if detail.use_case_tiles:
-                if not detail.display == "short":
-                    errors.append({
-                        'type': "invalid tile configuration",
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles may only be used for the case list (not the case details).')
-                    })
-                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
-                    if field not in col_by_tile_field:
-                        errors.append({
-                            'type': "invalid tile configuration",
-                            'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
-                        })
-        return errors
+        errors = super(ModuleDetailsMixin, Module).validate_for_build()
 
     def requires(self):
         r = set(["none"])
@@ -2151,32 +2170,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     @memoized
     def all_forms_require_a_case(self):
         return all([form.requires == 'case' for form in self.get_forms()])
-
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.case_details.short.columns:
-                yield {
-                    'type': 'no case detail',
-                    'module': module_info,
-                }
-            columns = self.case_details.short.columns + self.case_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
-
-        if needs_referral_detail and not self.ref_details.short.columns:
-            yield {
-                'type': 'no ref detail',
-                'module': module_info,
-            }
 
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
@@ -3637,72 +3630,11 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
+    def validate_for_build(self):
+        errors = super(ModuleDetailsMixin, ShadowModule).validate_for_build()
+
     def uses_media(self):
         return False
-
-    def validate_for_build(self):
-        errors = super(ShadowModule, self).validate_for_build()
-        for sort_element in self.detail_sort_elements:
-            try:
-                validate_detail_screen_field(sort_element.field)
-            except ValueError:
-                errors.append({
-                    'type': 'invalid sort field',
-                    'field': sort_element.field,
-                    'module': self.get_module_info(),
-                })
-        if self.case_list_filter:
-            try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
-                errors.append({
-                    'type': 'invalid filter xpath',
-                    'module': self.get_module_info(),
-                    'filter': self.case_list_filter,
-                })
-        for detail in [self.case_details.short, self.case_details.long]:
-            if detail.use_case_tiles:
-                if not detail.display == "short":
-                    errors.append({
-                        'type': "invalid tile configuration",
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles may only be used for the case list (not the case details).')
-                    })
-                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
-                    if field not in col_by_tile_field:
-                        errors.append({
-                            'type': "invalid tile configuration",
-                            'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
-                        })
-        return errors
-
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.case_details.short.columns:
-                yield {
-                    'type': 'no case detail',
-                    'module': module_info,
-                }
-            columns = self.case_details.short.columns + self.case_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
-
-        if needs_referral_detail and not self.ref_details.short.columns:
-            yield {
-                'type': 'no ref detail',
-                'module': module_info,
-            }
 
 
 class VersionedDoc(LazyAttachmentDoc):
