@@ -113,26 +113,30 @@ class HqAdminEmailHandler(AdminEmailHandler):
             formatted = '\n'.join('{item[0]}: {item[1]}'.format(item=item) for item in details.items())
             return 'Details:\n{}'.format(formatted)
 
-    def get_code(self, extracted_tb):
-        trace = next((trace for trace in extracted_tb if 'site-packages' not in trace[0]), None)
-        if not trace:
-            return None
+    @staticmethod
+    def get_code(extracted_tb):
+        try:
+            trace = next((trace for trace in extracted_tb if 'site-packages' not in trace[0]), None)
+            if not trace:
+                return None
 
-        filename = trace[0]
-        lineno = trace[1]
-        offset = 10
-        with open(filename) as f:
-            code_context = list(islice(f, lineno - offset, lineno + offset))
+            filename = trace[0]
+            lineno = trace[1]
+            offset = 10
+            with open(filename) as f:
+                code_context = list(islice(f, lineno - offset, lineno + offset))
 
-        return highlight(''.join(code_context),
-            PythonLexer(),
-            HtmlFormatter(
-                noclasses=True,
-                linenos='table',
-                hl_lines=[offset, offset],
-                linenostart=(lineno - offset + 1),
-        )
-        )
+            return highlight(''.join(code_context),
+                PythonLexer(),
+                HtmlFormatter(
+                    noclasses=True,
+                    linenos='table',
+                    hl_lines=[offset, offset],
+                    linenostart=(lineno - offset + 1),
+                )
+            )
+        except Exception as e:
+            return u"Unable to extract code. {}".format(e)
 
     @classmethod
     def _clean_subject(cls, subject):
