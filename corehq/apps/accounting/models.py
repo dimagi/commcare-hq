@@ -2645,18 +2645,14 @@ class StripePaymentMethod(PaymentMethod):
     def create_charge(self, card, amount_in_dollars, description=None):
         """ Charges a stripe card and returns a payment record """
         amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
-        try:
-            transaction = stripe.Charge.create(
-                card=card,
-                customer=self.customer,
-                amount=amount_in_cents,
-                currency=settings.DEFAULT_CURRENCY,
-                description=description if description else '',
-            )
-        except:
-            raise
-        else:
-            return PaymentRecord.create_record(self, transaction.id, amount_in_dollars)
+        transaction = stripe.Charge.create(
+            card=card,
+            customer=self.customer,
+            amount=amount_in_cents,
+            currency=settings.DEFAULT_CURRENCY,
+            description=description if description else '',
+        )
+        return PaymentRecord.create_record(self, transaction.id, amount_in_dollars)
 
 
 class PaymentRecord(models.Model):
