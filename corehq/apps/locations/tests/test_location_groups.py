@@ -216,6 +216,3 @@ class LocationGroupTest(LocationTestBase):
         fixture = location_fixture_generator(self.user, '2.0')
         self.assertEquals(len(fixture[0].findall('.//state')), 1)
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
-
-
-
