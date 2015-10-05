@@ -9,13 +9,14 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 
+
 class CaseSharingTest(TestCase):
+
     def setUp(self):
         """
         Two groups A and B, with users A1, A2 and B1, B2 respectively, and supervisor X who belongs to both.
         
         """
-
         self.domain = "test-domain"
         create_domain(self.domain)
         password = "****"
@@ -48,8 +49,6 @@ class CaseSharingTest(TestCase):
                 version=version
             )
             post_case_blocks([case_block], {'domain': self.domain})
-            CommCareCase.get(case_id)
-
             check_has_block(case_block, should_have, should_not_have, version=version)
 
         def update_and_test(case_id, owner=None, should_have=None, should_not_have=None, version=V1):
@@ -60,7 +59,6 @@ class CaseSharingTest(TestCase):
                 version=version
             )
             post_case_blocks([case_block], {'domain': self.domain})
-
             check_has_block(case_block, should_have, should_not_have, line_by_line=False, version=version)
 
         def check_has_block(case_block, should_have, should_not_have, line_by_line=True, version=V1):
@@ -68,6 +66,7 @@ class CaseSharingTest(TestCase):
                 check_user_has_case(self, user.to_casexml_user(), case_block, line_by_line=line_by_line, version=version)
             for user in should_not_have:
                 check_user_has_case(self, user.to_casexml_user(), case_block, should_have=False, line_by_line=line_by_line, version=version)
+
         for version in [V2]:
             create_and_test(
                 case_id='case-a-1',
@@ -110,7 +109,6 @@ class CaseSharingTest(TestCase):
                 should_not_have=[self.userA1, self.userA2],
                 version=version
             )
-
 
     def get_create_block(self, case_id, type, user_id, owner_id, name=None, version=V1, **kwargs):
         name = name or case_id
