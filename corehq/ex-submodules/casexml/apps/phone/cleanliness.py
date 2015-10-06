@@ -1,8 +1,7 @@
 from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.dbaccessors import get_reverse_indexed_case_ids, get_indexed_case_ids, \
-    get_all_reverse_indices_info
+from casexml.apps.case.dbaccessors import get_indexed_case_ids, get_all_reverse_indices_info
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_indexed_cases
