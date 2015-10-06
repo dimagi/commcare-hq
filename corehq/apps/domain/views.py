@@ -68,7 +68,12 @@ from corehq.apps.accounting.models import (
     StripePaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
-from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
+from corehq.apps.accounting.user_text import (
+    get_feature_name,
+    PricingTable,
+    DESC_BY_EDITION,
+    get_feature_recurring_interval,
+)
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
@@ -698,6 +703,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 ),
                 'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
+                'recurring_interval': get_feature_recurring_interval(feature_rate.feature.feature_type),
             }
 
             credit_lines = None
