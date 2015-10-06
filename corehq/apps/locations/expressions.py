@@ -16,10 +16,11 @@ class LocationTypeSpec(JsonObject):
             return None
 
         assert context.root_doc['domain']
-        return self.get_location_type(doc_id, context, context.root_doc['domain'])
+        return self._get_location_type(doc_id, context, context.root_doc['domain'])
 
+    @staticmethod
     @quickcache(['location_id', 'domain'], timeout=600)
-    def get_location_type(self, location_id, context, domain):
+    def _get_location_type(location_id, context, domain):
         sql_location = SQLLocation.objects.filter(
             domain=context.root_doc['domain'],
             location_id=location_id
