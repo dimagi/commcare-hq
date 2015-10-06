@@ -638,7 +638,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
     @property
     def total_records(self):
-         return self.get_queryset().count()
+        return self.get_queryset().count()
 
     @property
     def shared_pagination_GET_params(self):
