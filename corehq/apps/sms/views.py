@@ -8,6 +8,7 @@ import re
 import json
 from couchdbkit import ResourceNotFound
 import pytz
+from django.db.models import Q
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
@@ -37,8 +38,8 @@ from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
-    SMSLog, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage, MessagingEvent, SelfRegistrationInvitation
+    SMSLog, SMS, INCOMING, OUTGOING, ForwardingRule,
+    LastReadMessage, MessagingEvent, SelfRegistrationInvitation,
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
@@ -883,57 +884,56 @@ def api_history(request, domain):
     contact_id = request.GET.get("contact_id", None)
     start_date = request.GET.get("start_date", None)
     timezone = get_timezone_for_user(None, domain)
-    domain_obj = Domain.get_by_name(domain, strict=True)
+    domain_obj = Domain.get_by_name(domain)
+
+    if not contact_id:
+        return HttpResponse("[]")
 
     try:
-        assert contact_id is not None
         doc = get_contact(contact_id)
-        assert doc is not None
-        assert doc.domain == domain
     except Exception:
         return HttpResponse("[]")
 
-    query_start_date_str = None
+    if doc is None or doc.domain != domain:
+        return HttpResponse("[]")
+
+    query_start_date = None
     if start_date is not None:
         try:
             query_start_date = iso_string_to_datetime(start_date)
-            query_start_date += timedelta(seconds=1)
-            query_start_date_str = json_format_datetime(query_start_date)
         except Exception:
             pass
 
-    if query_start_date_str is not None:
-        data = SMSLog.view("sms/by_recipient",
-                           startkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, query_start_date_str],
-                           endkey=[doc.doc_type, contact_id, "SMSLog", INCOMING, {}],
-                           include_docs=True,
-                           reduce=False).all()
-        data += SMSLog.view("sms/by_recipient",
-                            startkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, query_start_date_str],
-                            endkey=[doc.doc_type, contact_id, "SMSLog", OUTGOING, {}],
-                            include_docs=True,
-                            reduce=False).all()
-    else:
-        data = SMSLog.view("sms/by_recipient",
-                           startkey=[doc.doc_type, contact_id, "SMSLog"],
-                           endkey=[doc.doc_type, contact_id, "SMSLog", {}],
-                           include_docs=True,
-                           reduce=False).all()
-    data.sort(key=lambda x : x.date)
+    data = SMS.objects.filter(
+        couch_recipient_doc_type=doc.doc_type,
+        couch_recipient=contact_id,
+        date__gt=query_start_date
+    )
+
+    if query_start_date is not None:
+        data = data.filter(
+            date__gt=query_start_date
+        )
+
+    if domain_obj.filter_surveys_from_chat:
+        if domain_obj.show_invalid_survey_responses_in_chat:
+            data = data.exclude(
+                xforms_session_couch_id__isnull=False,
+                ~Q(direction=INCOMING, invalid_survey_response=True)
+            )
+        else:
+            data = data.exclude(
+                xforms_session_couch_id__isnull=False
+            )
+
+    data = data.exclude(
+        direction=OUTGOING,
+        processed=False,
+    ).order_by('date')
+
     username_map = {}
     last_sms = None
     for sms in data:
-        # Don't show outgoing SMS that haven't been processed yet
-        if sms.direction == OUTGOING and not sms.processed:
-            continue
-        # Filter SMS that are tied to surveys if necessary
-        if ((domain_obj.filter_surveys_from_chat and 
-             sms.xforms_session_couch_id)
-            and not
-            (domain_obj.show_invalid_survey_responses_in_chat and
-             sms.direction == INCOMING and
-             sms.invalid_survey_response)):
-            continue
         if sms.direction == INCOMING:
             if doc.doc_type == "CommCareCase" and domain_obj.custom_case_username:
                 sender = doc.get_case_property(domain_obj.custom_case_username)
@@ -974,12 +974,12 @@ def api_history(request, domain):
             )
             if (not entry.message_timestamp or
                 entry.message_timestamp < last_sms.date):
-                entry.message_id = last_sms._id
+                entry.message_id = last_sms.couch_id
                 entry.message_timestamp = last_sms.date
                 entry.save()
             release_lock(lock, True)
         except:
-            logging.exception("Could not create/save LastReadMessage for message %s" % last_sms._id)
+            logging.exception("Could not create/save LastReadMessage for message %s" % last_sms.pk)
             # Don't let this block returning of the data
             pass
     return HttpResponse(json.dumps(result))
