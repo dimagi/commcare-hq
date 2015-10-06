@@ -1,7 +1,7 @@
 from optparse import make_option
 from django.core.management.base import LabelCommand
 import sys
-from pillowtop.utils import get_pillow_by_name, get_all_pillows
+from pillowtop import get_pillow_by_name, get_all_pillow_classes
 
 
 class Command(LabelCommand):
@@ -24,9 +24,9 @@ class Command(LabelCommand):
         """
 
         if not labels:
-            pillow_class_names = [pillow.__class__.__name__
-                                  for pillow in get_all_pillows()]
-            print "\nNo pillow class defined, options are:\n\t%s\n" % ('\n\t'.join(pillow_class_names))
+            pillow_class_names = [cls.__name__
+                                  for cls in get_all_pillow_classes()]
+            print "\nNo pillow class specified, options are:\n\t%s\n" % ('\n\t'.join(pillow_class_names))
             sys.exit()
 
         pillow_class_name = labels[0]
