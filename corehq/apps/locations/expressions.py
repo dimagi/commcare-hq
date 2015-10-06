@@ -4,7 +4,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject
 
 
-class LocationTypeSepc(JsonObject):
+class LocationTypeSpec(JsonObject):
     type = TypeProperty('location_type_name')
 
     def __call__(self, item, context=None):

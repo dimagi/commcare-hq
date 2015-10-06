@@ -1,5 +1,6 @@
 from .test_dbaccessors import *
 from .test_location_fixtures import *
+from .test_location_expressions import *
 from .test_location_import import *
 from .test_location_queries import *
 from .test_location_set import *
