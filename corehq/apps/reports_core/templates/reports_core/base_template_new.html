@@ -1,24 +1,15 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block stylesheets %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
-{% endblock %}
+
 {% block js %}{{ block.super }}
-    {% include "imports/datatables.html" %}
-    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
-    <script src="{% static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
+    <script src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% new_static 'reports_core/js/choice-list-api.js' %}"></script>
+    <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
+    <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -91,7 +82,7 @@
         });
 
         $(function() {
-            $('.header-popover').popout({
+            $('.header-popover').popover({
                 trigger: 'hover',
                 placement: 'bottom'
             });
@@ -110,19 +101,16 @@
     </script>
 {% endblock %}
 
-{% block head %}
-    {{ block.super }}
-{% endblock %}
 
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
-{% block page-title %}
+{% block page_title %}
 <div class="breadcrumb">
     <div id="report-title">{{ report.title }}</div>
 </div>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% block report_alerts %}
     <div id="report-error" class="alert alert-error hide">
         {% blocktrans %}

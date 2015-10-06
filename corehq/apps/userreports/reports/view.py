@@ -2,13 +2,15 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, \
+    use_select2, use_daterangepicker, use_jquery_ui
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext_noop as _
-from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import (
     cls_to_view_login_and_domain,
@@ -47,11 +49,15 @@ from no_exceptions.exceptions import Http403
 from corehq.apps.reports.datatables import DataTablesHeader
 
 
-class ConfigurableReport(JSONResponseMixin, TemplateView):
+class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
     emailable = True
+
+    @property
+    def section_url(self):
+        return "#"
 
     @property
     def is_static(self):
@@ -128,24 +134,35 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     def filters(self):
         return self.spec.ui_filters
 
-    @cls_to_view_login_and_domain
-    def dispatch(self, request, domain, subreport_slug, **kwargs):
-        self.request = request
-        self.domain = domain
-        self.report_config_id = subreport_slug
-        self.lang = self.request.couch_user.language or default_language()
-        user = request.couch_user
-        if self.has_permissions(self.domain, user):
+    @property
+    def report_config_id(self):
+        return self.kwargs['subreport_slug']
+
+    @property
+    def lang(self):
+        return self.request.couch_user.language or default_language()
+
+    @use_bootstrap3
+    @use_knockout_js
+    @use_select2
+    @use_daterangepicker
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
+        return original
+
+    def get(self, request, *args, **kwargs):
+        if self.has_permissions(self.domain, request.couch_user):
             self.get_spec_or_404()
             if kwargs.get('render_as') == 'email':
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':
                 return self.excel_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
-                return self.get_ajax(request)
+                return self.get_ajax(self.request)
             self.content_type = None
-            self.add_warnings(request)
-            return super(ConfigurableReport, self).dispatch(request, self.domain, **kwargs)
+            self.add_warnings(self.request)
+            return super(ConfigurableReport, self).get(request, *args, **kwargs)
         else:
             raise Http403()
 
@@ -156,9 +173,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         for warning in self.data_source.column_warnings:
             messages.warning(request, warning)
 
-    def get_context_data(self, **kwargs):
+
+    @property
+    def page_context(self):
         context = {
-            'domain': self.domain,
             'report': self,
             'filter_context': self.filter_context,
             'url': self.url,
