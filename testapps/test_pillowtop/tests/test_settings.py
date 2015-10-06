@@ -2,11 +2,14 @@ import os
 from django.conf import settings
 from django.test import TestCase
 import json
+from corehq.util.test_utils import TestFileMixin
 from pillowtop import get_all_pillow_instances
 from pillowtop.listener import AliasedElasticPillow
 
 
-class PillowtopSettingsTest(TestCase):
+class PillowtopSettingsTest(TestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
     maxDiff = None
 
     @classmethod
@@ -22,9 +25,7 @@ class PillowtopSettingsTest(TestCase):
 
     def test_instantiate_all(self):
         all_pillows = get_all_pillow_instances()
-        # todo: switch to TestFileMixin
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'all-pillow-meta.json')) as f:
-            expected_meta = json.loads(f.read())
+        expected_meta = self.get_json('all-pillow-meta')
         for pillow in all_pillows:
             self.assertEqual(expected_meta[pillow.__class__.__name__], _pillow_meta_from_instance(pillow))
 
