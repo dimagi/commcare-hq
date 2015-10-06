@@ -297,7 +297,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         ('module1_form1',
          (('What_does_this_look_like-label', 'What does this look like?', '', 'jr://file/commcare/image/data/What_does_this_look_like.png', ''),
           ('no_media-label', 'No media', '', '', ''),
-          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and bad &lt; xml.', '', '', '')))
+          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')))
     )
 
 
