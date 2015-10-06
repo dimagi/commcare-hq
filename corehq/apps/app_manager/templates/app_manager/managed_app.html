@@ -117,23 +117,19 @@
             $tabContent.on('mouseenter', '.collapse',
                 function () {
                     $(this).css('overflow','visible');
-                    console.log('hover')
                 }
             );
             $tabContent.on('mouseleave', '.collapse',
                 function () {
                     if (inSelectElement) { return; }
                     $(this).css('overflow','hidden');
-                    console.log('not hover')
                 }
             );
             $tabContent.on('focus', '.collapse', function() {
                 inSelectElement = true;
-                console.log('focus')
             })
             $tabContent.on('blur', '.collapse', function() {
                 inSelectElement = false;
-                console.log('blur')
             })
         });
     </script>
