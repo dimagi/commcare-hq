@@ -1801,6 +1801,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
     get_forms = IndexedSchema.Getter('forms')
 
+    get_suite_forms = IndexedSchema.Getter('forms')
+
     @parse_int([1])
     def get_form(self, i):
 
@@ -3589,6 +3591,11 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return 'none'
         return self.source_module.requires
+
+    def get_suite_forms(self):
+        if not self.source_module:
+            return []
+        return self.source_module.get_forms()
 
     @parse_int([1])
     def get_form(self, i):

@@ -43,8 +43,7 @@ class MenuContributor(SuiteContributorByModule):
                 menu = Menu(**menu_kwargs)
 
             def get_commands():
-                forms = module.source_module.get_forms() if module.module_type == 'shadow' else module.get_forms()
-                for form in forms:
+                for form in module.get_suite_forms():
                     command = Command(id=id_strings.form_command(form, module))
 
                     if form.requires_case():
