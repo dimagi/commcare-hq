@@ -598,13 +598,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
-    'messaging_status',
-    'View the Messaging Status and Error Reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 HSPH_HACK = StaticToggle(
     'hsph_hack',
     'Optmization hack for HSPH',
