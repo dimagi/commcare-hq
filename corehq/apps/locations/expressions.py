@@ -24,5 +24,5 @@ class LocationTypeSpec(JsonObject):
 
 
 def location_type_name(spec, context):
-    wrapped = LocationTypeSepc.wrap(spec)
+    wrapped = LocationTypeSpec.wrap(spec)
     return wrapped
