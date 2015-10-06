@@ -33,7 +33,7 @@
            "logenabled": "Enabled"
        }
    },
-   "domain": "example",
+   "domain": "domain",
    "build_langs": [
        "en",
        "fra"
