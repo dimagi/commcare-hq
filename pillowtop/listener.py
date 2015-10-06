@@ -13,7 +13,6 @@ import time
 from requests import ConnectionError
 import simplejson
 import rawes
-from django.conf import settings
 import sys
 
 from dimagi.utils.decorators.memoized import memoized
