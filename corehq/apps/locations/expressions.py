@@ -9,9 +9,11 @@ class LocationTypeSpec(JsonObject):
     type = TypeProperty('location_type_name')
     location_id_expression = DictProperty(required=True)
 
+    def configure(self, location_id_expression):
+        self._location_id_expression = location_id_expression
+
     def __call__(self, item, context=None):
-        location_id_expression = ExpressionFactory.from_spec(self.location_id_expression)
-        doc_id = location_id_expression(item, context)
+        doc_id = self._location_id_expression(item, context)
         if not doc_id:
             return None
 
@@ -33,4 +35,7 @@ class LocationTypeSpec(JsonObject):
 
 def location_type_name(spec, context):
     wrapped = LocationTypeSpec.wrap(spec)
+    wrapped.configure(
+        location_id_expression=ExpressionFactory.from_spec(wrapped.location_id_expression)
+    )
     return wrapped
