@@ -52,11 +52,11 @@ branches:
   - b3-tf+new-mobile-workers+django-bower+exports-ui-changes  # 10/1 BB
   - new-mobile-workers # Biyeun 8/25
   - exports-ui-changes  # biyeun 9/28
-  - djangobower # ben 9/25
   - b3-tf # ben 10/1
   - billing/post-pay # Farid 9/3
   - sync-history-email # Cal 9/22
   - two-factor-otp-only # j$ 10/2
+  - django-conf # NP 10/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -82,3 +82,6 @@ submodules:
   submodules/fluff-src:
     branches:
       - changes-refactor  # cz 10/2
+  submodules/auditcare-src:
+    branches:
+      - django-conf # NP 10/5
