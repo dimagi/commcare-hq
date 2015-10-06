@@ -310,6 +310,7 @@
                             type : "POST",
                             data : {
                                 contact_id : "{{ contact_id }}",
+                                vn_id: "{{ vn_id|default:'' }}",
                                 chat : "true",
                                 text : $("#text_box").val()
                             }
