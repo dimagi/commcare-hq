@@ -409,8 +409,26 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
         status = event.status
         error_code = event.error_code
+
+        # If we have a MessagingEvent with no error_code it means there's
+        # an error in the subevent
         if status == MessagingEvent.STATUS_ERROR and not error_code:
             error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
+
+        # If we have a MessagingEvent that's completed but it's tied to
+        # unfinished surveys, then mark it as being in progress
+        if (
+            isinstance(event, MessagingEvent) and
+            event.status == MessagingEvent.STATUS_COMPLETED and
+            MessagingSubEvent.objects.filter(
+                parent_id=event.pk,
+                content_type=MessagingEvent.CONTENT_SMS_SURVEY,
+                # without this line, django does a left join which is not what we want
+                xforms_session_id__isnull=False,
+                xforms_session__end_time__isnull=True
+            ).count() > 0
+        ):
+            status = MessagingEvent.STATUS_IN_PROGRESS
 
         status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
         error_message = (MessagingEvent.ERROR_MESSAGES.get(error_code, None)
