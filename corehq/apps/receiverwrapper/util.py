@@ -3,7 +3,7 @@ import re
 from couchdbkit import ResourceNotFound
 from django.core.cache import cache
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.domain.decorators import determine_authtype_from_user_agent
+from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from couchforms.models import DefaultAuthContext
 import couchforms
@@ -173,4 +173,4 @@ def determine_authtype(request):
     if request.GET.get('authtype'):
         return request.GET['authtype']
 
-    return determine_authtype_from_user_agent(request)
+    return determine_authtype_from_request(request)

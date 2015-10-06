@@ -13,6 +13,12 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.utils import back_to_main, bail
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.const import (
+    SCHEDULE_CURRENT_VISIT_NUMBER,
+    SCHEDULE_NEXT_DUE,
+    SCHEDULE_UNSCHEDULED_VISIT,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+)
 from corehq.apps.app_manager.util import (
     get_casedb_schema,
     get_session_schema,
@@ -34,6 +40,7 @@ logger = logging.getLogger(__name__)
 def form_designer(request, domain, app_id, module_id=None, form_id=None,
                   is_user_registration=False):
     app = get_app(domain, app_id)
+    module = None
 
     if is_user_registration:
         form = app.get_user_registration()
@@ -76,6 +83,25 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
     })
 
+    has_schedule = (
+        getattr(module, 'has_schedule', False) and
+        getattr(form, 'schedule', False) and form.schedule.enabled
+    )
+    scheduler_data_nodes = []
+    if has_schedule:
+        scheduler_data_nodes = [
+            SCHEDULE_CURRENT_VISIT_NUMBER,
+            SCHEDULE_NEXT_DUE,
+            SCHEDULE_UNSCHEDULED_VISIT,
+            SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+        ]
+        scheduler_data_nodes.extend([
+            u"next_{}".format(f.schedule_form_id)
+            for f in form.get_phase().get_forms()
+            if getattr(f, 'schedule', False) and f.schedule.enabled
+        ])
+
+
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
@@ -87,6 +113,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'features': vellum_features,
         'plugins': vellum_plugins,
         'app_callout_templates': next(app_callout_templates),
+        'scheduler_data_nodes': scheduler_data_nodes,
     })
     return render(request, 'app_manager/form_designer.html', context)
 

@@ -3,6 +3,7 @@ import os
 from uuid import uuid4
 import shutil
 import hashlib
+from copy import copy
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
@@ -379,12 +380,16 @@ class RestoreState(object):
     @property
     def use_clean_restore(self):
         def should_use_clean_restore(domain):
+            toggle_to_check = OWNERSHIP_CLEANLINESS_RESTORE
             if settings.UNIT_TESTING:
+                # disable randomness globally for tests since they already handle everything explicitly
+                toggle_to_check = copy(toggle_to_check)
+                toggle_to_check.randomness = 0
                 override = getattr(
                     settings, 'TESTS_SHOULD_USE_CLEAN_RESTORE', None)
                 if override is not None:
                     return override
-            return OWNERSHIP_CLEANLINESS_RESTORE.enabled(domain)
+            return toggle_to_check.enabled(domain)
 
         # this can be overridden explicitly in the params but will default to the domain setting
         if self.params.force_restore_mode == 'clean':

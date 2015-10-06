@@ -56,7 +56,7 @@ def paginate_releases(request, domain, app_id):
     else:
         start_build = {}
     timezone = get_timezone_for_user(request.couch_user, domain)
-    saved_apps = get_db().view('app_manager/saved_app',
+    saved_apps = Application.get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
         endkey=[domain, app_id],
         descending=True,
@@ -103,7 +103,7 @@ def current_app_version(request, domain, app_id):
     Return current app version and the latest release
     """
     app = get_app(domain, app_id)
-    latest = get_db().view('app_manager/saved_app',
+    latest = Application.get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, {}],
         endkey=[domain, app_id],
         descending=True,

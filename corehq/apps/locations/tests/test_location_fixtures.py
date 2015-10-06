@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType, Location
 from corehq.apps.locations.tests.util import delete_all_locations
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -65,7 +65,7 @@ class LocationFixturesTest(TestCase):
 
         location = SQLLocation(
             location_id="unique-id",
-            domain="test-domain",
+            domain=self.domain,
             name="Meereen",
             location_type=self.location_type,
             metadata={'queen': "Daenerys Targaryen",
@@ -73,7 +73,7 @@ class LocationFixturesTest(TestCase):
         )
         location.save()
 
-        SQLLocation.objects.filter(pk=1).update(last_modified=day_before_yesterday)
+        SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
         location_db = _location_footprint([location])
 
@@ -86,3 +86,29 @@ class LocationFixturesTest(TestCase):
         location_db = _location_footprint([location])
 
         self.assertTrue(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
+
+    def test_archiving_location_should_resync(self):
+        """
+        When locations are archived, we should resync them
+        """
+        couch_location = Location(
+            domain=self.domain,
+            name='winterfell',
+            location_type=self.location_type.name,
+        )
+        couch_location.save()
+        after_save = datetime.utcnow()
+        location = SQLLocation.objects.last()
+        self.assertEqual(couch_location._id, location.location_id)
+        self.assertEqual('winterfell', location.name)
+        location_db = _location_footprint([location])
+        self.assertFalse(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
+
+        # archive the location
+        couch_location.archive()
+        after_archive = datetime.utcnow()
+
+        location = SQLLocation.objects.last()
+        location_db = _location_footprint([location])
+        self.assertTrue(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
+        self.assertFalse(should_sync_locations(SyncLog(date=after_archive), location_db, self.user))

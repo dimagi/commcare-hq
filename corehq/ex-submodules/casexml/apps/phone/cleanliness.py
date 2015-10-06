@@ -114,9 +114,8 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
                 owner_doc_type, owner_id, domain
             ))
 
-    else:
-        cleanliness_object.last_checked = datetime.utcnow()
-        cleanliness_object.save()
+    cleanliness_object.last_checked = datetime.utcnow()
+    cleanliness_object.save()
 
 
 def hint_still_valid(domain, owner_id, hint):

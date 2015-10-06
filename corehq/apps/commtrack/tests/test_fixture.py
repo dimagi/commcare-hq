@@ -29,7 +29,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         self.product_names = get_product_name()
 
     def generate_product_xml(self, user, randomize_data=True):
-        products = ''
+        products = []
         product_list = Product.by_domain(user.domain)
         self._initialize_product_names(len(product_list))
         for i, product in enumerate(product_list):
@@ -58,7 +58,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
                 product_data = {}
                 custom_data_xml = ''
 
-            products += '''
+            product_xml = '''
                 <product id="{id}">
                     <name>{name}</name>
                     <unit>{unit}</unit>
@@ -91,7 +91,10 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
             product.product_data = product_data
             product.save()
 
-        return products
+            products.append((product, product_xml))
+
+        products.sort(key=lambda p: p[0].code)
+        return ''.join(product_xml for product, product_xml in products)
 
     def generate_product_fixture_xml(self, user, randomize_data=True):
         return """
