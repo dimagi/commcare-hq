@@ -39,7 +39,7 @@ class TestLocationTypeExpression(TestCase):
         cls.location.delete()
         cls.location_type.delete()
 
-    def testSpec(self):
+    def test_location_type_expression(self):
         doc = {"_id": "unique-id"}
         [result] = self.indicator.get_values(doc)
 
