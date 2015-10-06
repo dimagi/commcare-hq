@@ -73,6 +73,6 @@ var CreditItem = function (category, data, paymentHandler, can_purchase_credits)
      * Return the name with the recurring interval if it exists
      */
     self.getUsageName = function() {
-        return self.recurringInterval() ? self.recurringInterval() + ' ' + self.name() : self.name()
+        return self.recurringInterval() ? self.recurringInterval() + ' ' + self.name() : self.name();
     };
 };
