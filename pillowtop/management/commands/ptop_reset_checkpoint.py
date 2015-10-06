@@ -1,7 +1,7 @@
 from optparse import make_option
 from django.core.management.base import LabelCommand
 import sys
-from pillowtop import get_pillow_by_name, get_all_pillows
+from pillowtop.utils import get_pillow_by_name, get_all_pillows
 
 
 class Command(LabelCommand):
@@ -22,15 +22,14 @@ class Command(LabelCommand):
         """
         More targeted pillow checkpoint reset system - must specify the pillow class_name to reset the checkpoint
         """
-        pillow_class_name = labels[0]
 
         if not labels:
             pillow_class_names = [pillow.__class__.__name__
                                   for pillow in get_all_pillows()]
-            print ""
-            print "\nNo pillow class defined, options are: %s\n" % ('\n\t'.join(pillow_class_names))
+            print "\nNo pillow class defined, options are:\n\t%s\n" % ('\n\t'.join(pillow_class_names))
             sys.exit()
 
+        pillow_class_name = labels[0]
         pillow_to_use = get_pillow_by_name(pillow_class_name)
         if not pillow_to_use:
             print ""
