@@ -96,24 +96,27 @@ var StripeCard = function(card, baseUrl){
         });
     };
 
-    self.showDeleteConfirmation = ko.observable(false);
-    self.toggleDeleteConfirmation = function(){
-        self.showDeleteConfirmation(!self.showDeleteConfirmation());
-    };
-
-    self.deleteCard = function(card){
+    self.isDeleting = ko.observable(false);
+    self.deleteErrorMsg = ko.observable('');
+    self.deleteCard = function(card, button){
+        self.isDeleting(true);
+        self.deleteErrorMsg = ko.observable('');
         cardManager.cards.destroy(card);
         $.ajax({
             type: "DELETE",
             url: self.url
         }).success(function(data){
             cardManager.wrap(data);
+            $(button.currentTarget).closest(".modal").modal('hide');
+            $("#success-modal").modal('show');
         }).fail(function(data){
             var response = JSON.parse(data.responseText);
-            alert_user(response.error, "error");
+            self.deleteErrorMsg(response.error);
             if (response.cards){
                 cardManager.wrap(response);
             }
+        }).always(function(){
+            self.isDeleting(false);
         });
     };
 
