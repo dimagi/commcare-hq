@@ -114,17 +114,13 @@
             var inSelectElement = false,
                 $tabContent = $('.tab-content');
             $tabContent.css('overflow', 'visible');
-            $tabContent.on('mouseenter', '.collapse',
-                function () {
-                    $(this).css('overflow','visible');
-                }
-            );
-            $tabContent.on('mouseleave', '.collapse',
-                function () {
-                    if (inSelectElement) { return; }
-                    $(this).css('overflow','hidden');
-                }
-            );
+            $tabContent.on('mouseenter', '.collapse', function () {
+                $(this).css('overflow','visible');
+            });
+            $tabContent.on('mouseleave', '.collapse', function () {
+                if (inSelectElement) { return; }
+                $(this).css('overflow','hidden');
+            });
             $tabContent.on('focus', '.collapse', function() {
                 inSelectElement = true;
             })
