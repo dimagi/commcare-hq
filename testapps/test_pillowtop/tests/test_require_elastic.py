@@ -30,14 +30,6 @@ class RequireElasticsearchTest(SimpleTestCase):
     def test_no_fail_on_elasticsearch_errors(self):
         @require_elasticsearch
         def elasticsearch_fail():
-            es = Elasticsearch([{
-                    'host': 'example.com',
-                    'port': 9999,
-                }],
-                timeout=0.1,
-            )
+            es = Elasticsearch([{'host': 'example.com', 'port': 9999}], timeout=0.1)
             es.info()
         elasticsearch_fail()
-
-
-
