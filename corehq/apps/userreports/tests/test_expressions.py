@@ -1,4 +1,5 @@
 import copy
+from datetime import date, datetime
 from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
@@ -75,7 +76,14 @@ class PropertyExpressionTest(SimpleTestCase):
             (Decimal("5.3"), "decimal", "5.3"),
             ("5", "string", "5"),
             ("5", "string", 5),
-            (u"fo\u00E9", "string", u"fo\u00E9")
+            (u"fo\u00E9", "string", u"fo\u00E9"),
+            (date(2015, 9, 30), "date", "2015-09-30"),
+            (None, "date", "09/30/2015"),
+            (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30T19:04:27Z"),
+            (datetime(2015, 9, 30, 19, 4, 27, 113609), "datetime", "2015-09-30T19:04:27.113609Z"),
+            (None, "datetime", "2015-09-30 19:04:27Z"),
+            (None, "date", "2015-09-30T19:04:27Z"),
+            (None, "datetime", "2015-09-30"),
         ]:
             getter = ExpressionFactory.from_spec({
                 'type': 'property_name',

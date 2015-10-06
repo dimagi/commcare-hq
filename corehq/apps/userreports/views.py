@@ -659,9 +659,10 @@ def choice_list_api(request, domain, report_id, filter_id):
         if not isinstance(filter, DynamicChoiceListFilter):
             return []
 
-        table = get_indicator_table(data_source)
+        adapter = IndicatorSqlAdapter(data_source)
+        table = adapter.get_table()
         sql_column = table.c[filter.field]
-        query = Session.query(sql_column)
+        query = adapter.session_helper.Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
 
