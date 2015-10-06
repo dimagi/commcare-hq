@@ -117,6 +117,9 @@ BOWER_INSTALLED_APPS = (
     'bootstrap-daterangepicker#2.1.13',
     'd3#3.0',
     'nvd3#1.1.10-beta',
+    'datatables#1.10.9',
+    'dangrossman/bootstrap-daterangepicker#7435612692b33b85c72539d37c59bb7edd420c6f',
+    'jquery-ui#1.11.4',
 )
 
 BOWER_PATH = '/usr/local/bin/bower'
