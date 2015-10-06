@@ -25,7 +25,7 @@ class TestLocationTypeExpression(TestCase):
         cls.spec = {
             "type": "expression",
             "expression": {
-              "type": "location_type_name"
+                "type": "location_type_name"
             },
             "datatype": "string",
             "column_id": "col"
