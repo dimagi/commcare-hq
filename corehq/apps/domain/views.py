@@ -131,6 +131,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
     else:
         domain = Domain.get_by_name(last_visited_domain)
         if domain and domain.is_active:
+            # mirrors logic in login_and_domain_required
             if (
                 request.couch_user.is_member_of(domain) or domain.is_public
                 or (request.user.is_superuser and not domain.restrict_superusers)
