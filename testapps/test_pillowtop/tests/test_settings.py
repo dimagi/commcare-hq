@@ -34,7 +34,7 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
         # utility that should only be called manually
         with open(self.get_path('all-pillow-meta', 'json'), 'w') as f:
             f.write(
-                json.dumps({p.__class__.__name__: _pillow_meta_from_class(p) for p in pillow_classes},
+                json.dumps({cls.__name__: _pillow_meta_from_class(cls) for cls in pillow_classes},
                            indent=4)
             )
 
