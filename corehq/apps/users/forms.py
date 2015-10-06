@@ -18,7 +18,6 @@ from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
-from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models.common import validate_lang
@@ -117,12 +116,6 @@ class BaseUpdateUserForm(forms.Form):
             existing_user = CouchUser.from_django_user(django_user)
             existing_user.save()
             is_update_successful = True
-
-        if 'email' in self.cleaned_data:
-            old_email = existing_user.email
-            new_email = self.cleaned_data['email']
-            if old_email != new_email:
-                handle_changed_mailchimp_email(existing_user, old_email, new_email)
 
         for prop in self.direct_properties:
             setattr(existing_user, prop, self.cleaned_data[prop])

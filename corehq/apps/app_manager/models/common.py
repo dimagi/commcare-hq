@@ -3475,7 +3475,7 @@ class ReportAppConfig(DocumentSchema):
                                 )
                             ),
                         ),
-                    ] + list(_get_graph_fields()) + [
+                    ] + [
                         suite_models.Field(
                             header=suite_models.Header(
                                 text=suite_models.Text(
@@ -3490,7 +3490,7 @@ class ReportAppConfig(DocumentSchema):
                                 )
                             )
                         ),
-                    ],
+                    ] + list(_get_graph_fields()),
                 ),
                 self.data_detail(),
             ],

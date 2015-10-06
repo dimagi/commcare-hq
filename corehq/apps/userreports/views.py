@@ -648,7 +648,7 @@ def data_source_status(request, domain, config_id):
 
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
-    report, _ = get_report_config_or_404(report_id, domain)
+    report = get_report_config_or_404(report_id, domain)[0]
     filter = report.get_ui_filter(filter_id)
     if filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
@@ -659,9 +659,10 @@ def choice_list_api(request, domain, report_id, filter_id):
         if not isinstance(filter, DynamicChoiceListFilter):
             return []
 
-        table = get_indicator_table(data_source)
+        adapter = IndicatorSqlAdapter(data_source)
+        table = adapter.get_table()
         sql_column = table.c[filter.field]
-        query = Session.query(sql_column)
+        query = adapter.session_helper.Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
 

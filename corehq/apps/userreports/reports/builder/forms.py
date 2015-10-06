@@ -261,7 +261,8 @@ class DataSourceBuilder(object):
         if self.source_type == 'form':
             return self._get_data_source_properties_from_form(self.source_xform)
 
-    def _get_data_source_properties_from_case(self, case_properties):
+    @classmethod
+    def _get_data_source_properties_from_case(cls, case_properties):
         properties = OrderedDict()
         for property in case_properties:
             properties[property] = DataSourceProperty(
@@ -271,7 +272,7 @@ class DataSourceBuilder(object):
                 text=property,
                 source=property
             )
-        properties['computed/owner_name'] = self._get_owner_name_pseudo_property()
+        properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
         return properties
 
     @staticmethod

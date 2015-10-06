@@ -157,9 +157,9 @@ def active(domain, *args):
 
 def display_time(submission_time, display=True):
     if display:
-        return iso_string_to_datetime(submission_time).strftime(DISPLAY_DATE_FORMAT)
+        return submission_time.strftime(DISPLAY_DATE_FORMAT)
     else:
-        return submission_time
+        return json_format_datetime(submission_time)
 
 
 def first_form_submission(domain, display=True):
