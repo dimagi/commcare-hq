@@ -12,15 +12,18 @@ class LocationTypeSpec(JsonObject):
     def __call__(self, item, context=None):
         location_id_expression = ExpressionFactory.from_spec(self.location_id_expression)
         doc_id = location_id_expression(item, context)
-
         if not doc_id:
             return None
 
-        return self.get_location_type(doc_id, context)
+        assert context.root_doc['domain']
+        return self.get_location_type(doc_id, context, context.root_doc['domain'])
 
-    @quickcache(['location_id'], timeout=600)
-    def get_location_type(self, location_id, context):
-        sql_location = SQLLocation.objects.filter(location_id=location_id)
+    @quickcache(['location_id', 'domain'], timeout=600)
+    def get_location_type(self, location_id, context, domain):
+        sql_location = SQLLocation.objects.filter(
+            domain=context.root_doc['domain'],
+            location_id=location_id
+        )
         if sql_location:
             return sql_location[0].location_type.name
         else:
