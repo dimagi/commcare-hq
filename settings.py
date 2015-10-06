@@ -388,6 +388,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'djangobower',
     'django_prbac',
     'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
     'djcelery',
     'djtables',
     'gunicorn',
