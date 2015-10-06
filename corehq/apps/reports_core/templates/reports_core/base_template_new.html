@@ -123,88 +123,88 @@
 {% endblock %}
 
 {% block main_column %}
-{% block report_alerts %}
-<div id="report-error" class="alert alert-error hide">
-    {% blocktrans %}
-    There was an error rendering your report.
-    {% endblocktrans %}
-    <div id="error-message"></div>
-</div>
-<div id="report-warning" class="alert alert-warn hide">
-    {% blocktrans %}
-    Warning:
-    {% endblocktrans %}
-    <div id="warning-message"></div>
-</div>
-{% endblock report_alerts %}
-{% block main_column_content %}
-<div class="report-controls">
-    <form id="report-filters" class="form-horizontal" method="GET" action="">
-        <fieldset>
-            <legend><span>{% trans "Report Filters" %}</span></legend>
-            <input type="hidden" name="format" value="json"/>
-            {% for filter in report.filters %}
-                {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
-            {% endfor %}
-        </fieldset>
+    {% block report_alerts %}
+    <div id="report-error" class="alert alert-error hide">
+        {% blocktrans %}
+        There was an error rendering your report.
+        {% endblocktrans %}
+        <div id="error-message"></div>
+    </div>
+    <div id="report-warning" class="alert alert-warn hide">
+        {% blocktrans %}
+        Warning:
+        {% endblocktrans %}
+        <div id="warning-message"></div>
+    </div>
+    {% endblock report_alerts %}
+    {% block main_column_content %}
+    <div class="report-controls">
+        <form id="report-filters" class="form-horizontal" method="GET" action="">
+            <fieldset>
+                <legend><span>{% trans "Report Filters" %}</span></legend>
+                <input type="hidden" name="format" value="json"/>
+                {% for filter in report.filters %}
+                    {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
+                {% endfor %}
+            </fieldset>
 
-        <div class="report-filter-actions">
-            {% block report_filter_actions %}
-            <button type="submit" class="btn btn-primary"
-                    data-loading-text="{% trans "Generating Report..." %}"
-                    data-standard-text="{% trans "Apply" %}">
-                {% trans "Apply" %}
-            </button>
-            {% endblock %}
+            <div class="report-filter-actions">
+                {% block report_filter_actions %}
+                <button type="submit" class="btn btn-primary"
+                        data-loading-text="{% trans "Generating Report..." %}"
+                        data-standard-text="{% trans "Apply" %}">
+                    {% trans "Apply" %}
+                </button>
+                {% endblock %}
+            </div>
+        </form>
+
+        <div class="report-actions">
+            {% if report.show_filters %}
+                <a href="#reportFilters" class="btn" id="toggle-report-filters"
+                    data-toggle="collapse" data-open-text="{% trans "Show Filter Options" %}"
+                    data-close-text="{% trans "Hide Filter Options" %}">
+                    {% trans "Filter Options" %}
+                </a>
+            {% endif %}
+            {% if report.is_exportable %}
+                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                    <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+                </a>
+            {% endif %}
+            {% if report.is_emailable %}
+                <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+                    <i class="icon icon-envelope"></i> {% trans "Email report" %}
+                </a>
+            {% endif %}
+            {% if report.is_printable %}
+                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+                    <i class="icon icon-print"></i> {% trans "Print" %}
+                </a>
+            {% endif %}
         </div>
-    </form>
-
-    <div class="report-actions">
-        {% if report.show_filters %}
-            <a href="#reportFilters" class="btn" id="toggle-report-filters"
-                data-toggle="collapse" data-open-text="{% trans "Show Filter Options" %}"
-                data-close-text="{% trans "Hide Filter Options" %}">
-                {% trans "Filter Options" %}
-            </a>
-        {% endif %}
-        {% if report.is_exportable %}
-            <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
-                <i class="icon icon-share"></i> {% trans "Export to Excel" %}
-            </a>
-        {% endif %}
-        {% if report.is_emailable %}
-            <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
-                <i class="icon icon-envelope"></i> {% trans "Email report" %}
-            </a>
-        {% endif %}
-        {% if report.is_printable %}
-            <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
-                <i class="icon icon-print"></i> {% trans "Print" %}
-            </a>
-        {% endif %}
     </div>
-</div>
-<div id="reportHint" class="well">
-    <h4>{% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
-    <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
-</div>
-<div id="reportContent" class="hide">
-    {% block reportcharts %}
-    <section id="chart-container" style="display: none;">
-    </section>
-    {% endblock %}
-    {% block reporttable %}
-    <div>
-        <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
-            <thead>
-            {{ headers.render_html|safe }}
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+    <div id="reportHint" class="well">
+        <h4>{% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+        <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
     </div>
-    {% endblock reporttable %}
-</div>
+    <div id="reportContent" class="hide">
+        {% block reportcharts %}
+        <section id="chart-container" style="display: none;">
+        </section>
+        {% endblock %}
+        {% block reporttable %}
+        <div>
+            <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
+                <thead>
+                {{ headers.render_html|safe }}
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        {% endblock reporttable %}
+    </div>
 
-{% endblock main_column_content %}
-{% endblock main_column %}
+    {% endblock main_column_content %}
+{% endblock %}
