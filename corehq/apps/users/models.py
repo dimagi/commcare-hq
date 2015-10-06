@@ -1633,17 +1633,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         return CaseData.objects.filter(user_id=self._id).count()
 
-    def location_group_ids(self, for_user_id=None):
-        """
-        Return generated ID's that represent the virtual
-        groups used to send location data in the restore
-        payload.
-        """
-        if self.sql_location:
-            return [loc_group._id for loc_group in self.sql_location.get_case_sharing_groups(for_user_id)]
-        else:
-            return []
-
     def get_owner_ids(self):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])

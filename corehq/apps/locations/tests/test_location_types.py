@@ -80,13 +80,15 @@ class TestLocationTypeOwnership(TestCase):
         no_case_sharing_type = make_loc_type('no-case-sharing', domain=self.domain)
         location = make_loc('loc', type=no_case_sharing_type.name, domain=self.domain)
         self.user.set_location(location)
-        self.assertEqual([], self.user.location_group_ids())
+        self.assertEqual([], self.user.get_case_sharing_groups())
 
     def test_sharing_no_descendants(self):
         case_sharing_type = make_loc_type('case-sharing', domain=self.domain, shares_cases=True)
         location = make_loc('loc', type=case_sharing_type.name, domain=self.domain)
         self.user.set_location(location)
-        self.assertEqual([_group_id(location._id)], self.user.location_group_ids())
+        location_groups = self.user.get_case_sharing_groups()
+        self.assertEqual(1, len(location_groups))
+        self.assertEqual(_group_id(location._id), location_groups[0]._id)
 
     def test_assigned_loc_included_with_descendants(self):
         parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)
@@ -96,7 +98,7 @@ class TestLocationTypeOwnership(TestCase):
         self.user.set_location(parent_loc)
         self.assertEqual(
             set(map(_group_id, [parent_loc._id, child_loc._id])),
-            set(self.user.location_group_ids())
+            set([g._id for g in self.user.get_case_sharing_groups()])
         )
 
     def test_only_case_sharing_descendents_included(self):
@@ -109,7 +111,7 @@ class TestLocationTypeOwnership(TestCase):
         self.user.set_location(parent_loc)
         self.assertEqual(
             set(map(_group_id, [parent_loc._id, grandchild_loc._id])),
-            set(self.user.location_group_ids())
+            set([g._id for g in self.user.get_case_sharing_groups()])
         )
 
 
