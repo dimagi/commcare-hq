@@ -3551,8 +3551,8 @@ class ReportModule(ModuleBase):
 class ShadowModule(ModuleBase, ModuleDetailsMixin):
     """
     A module that acts as a shortcut to another module. This module has its own
-    name, icon/audio, filter, and case list filter, but inherits all other properties
-    from its source module.
+    settings (name, icon/audio, filter, etc.) and its own case list/detail, but
+    inherits case type and forms from its source module.
     """
     module_type = 'shadow'
     source_module_id = StringProperty()
