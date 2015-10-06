@@ -12,16 +12,15 @@ from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_twilio_gateway(apps):
+def bootstrap_twilio_gateway(apps, twilio_rates_filename):
     currency_class = apps.get_model('accounting', 'Currency') if apps else Currency
     sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
     sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     # iso -> provider -> rate
     def get_twilio_data():
-        twilio_file = open('corehq/apps/smsbillables/management/'
-                           'commands/pricing_data/twilio-international-sms-rates.csv')
-        twilio_csv = csv.reader(twilio_file)
+        twilio_file = open(twilio_rates_filename)
+        twilio_csv = csv.reader(twilio_file.read().splitlines())
         twilio_data = {}
         skip = 0
         for row in twilio_csv:
@@ -31,8 +30,8 @@ def bootstrap_twilio_gateway(apps):
             else:
                 try:
                     iso = row[0].lower()
-                    provider = row[1].split('-')[1].lower().replace(' ', '')
-                    rate = float(row[2])
+                    provider = row[2].split('-')[1].lower().replace(' ', '')
+                    rate = float(row[3])
                     if not(iso in twilio_data):
                         twilio_data[iso] = {}
                     twilio_data[iso][provider] = rate
