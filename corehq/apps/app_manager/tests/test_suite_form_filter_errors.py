@@ -5,6 +5,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from mock import patch
 
+
 class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 

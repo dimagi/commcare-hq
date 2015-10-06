@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
+
 class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
@@ -33,4 +34,3 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
 
     def test_image_format(self):
         self._test_format('picture', 'image')
-

@@ -7,6 +7,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
 )
 
+
 class RegexTest(SimpleTestCase):
 
     def test_regex(self):
