@@ -34,6 +34,8 @@ class OdmExportReportView(GenericReportView):
     name = "ODM Export"
     slug = "odm_export"
 
+    export_format_override = Format.CDISC_ODM
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(OdmExportReportView, self).__init__(request, base_context, domain, **kwargs)
 
