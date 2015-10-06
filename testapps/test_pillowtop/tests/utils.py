@@ -11,6 +11,3 @@ def require_elasticsearch(fn):
         except (requests_exceptions.ConnectionError, elasticsearch_exceptions.ConnectionError):
             pass
     return decorated
-
-
-
