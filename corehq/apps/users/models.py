@@ -1652,7 +1652,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return []
 
     def get_owner_ids(self):
-        from corehq.apps.groups.models import Group
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
