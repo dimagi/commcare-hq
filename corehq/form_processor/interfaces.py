@@ -29,6 +29,13 @@ class FormProcessorInterface(object):
         return xform
 
     @staticmethod
+    @to_generic
+    def create_case_from_generic(generic_case):
+        case = CommCareCase.from_generic(generic_case)
+        case.save()
+        return case
+
+    @staticmethod
     def get_attachment(xform_id, attachment_name):
         return XFormInstance.get_db().fetch_attachment(xform_id, attachment_name)
 
@@ -106,6 +113,15 @@ class FormProcessorInterface(object):
             setattr(xform, prop, value)
         xform.save()
         return xform
+
+    @classmethod
+    @to_generic
+    def update_case_properties(cls, case_generic, **properties):
+        case = cls._get_case(case_generic.id)
+        for prop, value in properties.iteritems():
+            setattr(case, prop, value)
+        case.save()
+        return case
 
     @staticmethod
     @to_generic

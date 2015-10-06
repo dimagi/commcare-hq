@@ -9,9 +9,11 @@ from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
-from corehq.apps.hqcase.dbaccessors import get_total_case_count
+from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.util.test_utils import TestFileMixin
+from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.generic import GenericCommCareCase, GenericCommCareCaseIndex
 from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case.xform import process_cases
 
 
 class SimpleCaseBugTests(SimpleTestCase):
@@ -23,55 +25,42 @@ class SimpleCaseBugTests(SimpleTestCase):
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-class CaseBugTest(TestCase):
+class CaseBugTest(TestCase, TestFileMixin):
     """
     Tests bugs that come up in case processing
     """
+    file_path = ('data', 'bugs')
+    root = os.path.dirname(__file__)
 
     def setUp(self):
         delete_all_cases()
 
-    def testConflictingIds(self):
+    def test_conflicting_ids(self):
         """
         If two forms share an ID it's a conflict
         """
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "id_conflicts.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        try:
-            process_cases(form)
-            self.fail("Previous statement should have raised an exception")
-        except Exception:
-            pass
+        xml_data = self.get_xml('id_conflicts')
+        form = FormProcessorInterface.post_xform(xml_data)
+        with self.assertRaises(IllegalCaseId):
+            FormProcessorInterface.process_cases(form)
 
-
-    def testStringFormatProblems(self):
+    def test_logging_string_format(self):
         """
-        If two forms share an ID it's a conflict
+        Ensure that logging string formats correctly
         """
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "string_formatting.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
+        xml_data = self.get_xml('string_formatting')
         form = post_xform_to_couch(xml_data)
         # before the bug was fixed this call failed
-        process_cases(form)
+        FormProcessorInterface.process_cases(form)
 
-
-    def testEmptyCaseId(self):
+    def test_empty_case_id(self):
         """
-        How do we do when submitting an empty case id?
+        Ensure that form processor fails on empty id
         """
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "empty_id.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        try:
-            process_cases(form)
-            self.fail("Empty Id should crash")
-        except:
-            pass
-
+        xml_data = self.get_xml('empty_id')
+        form = FormProcessorInterface.post_xform(xml_data)
+        with self.assertRaises(IllegalCaseId):
+            FormProcessorInterface.process_cases(form)
 
     def _testCornerCaseDatatypeBugs(self, value):
 
@@ -85,15 +74,11 @@ class CaseBugTest(TestCase):
                 'case_type': 'datatype-check',
             }
             format_args.update(custom_format_args)
-            for filename in ['bugs_in_case_create_datatypes.xml', 'bugs_in_case_update_datatypes.xml']:
-                file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", filename)
-                with open(file_path, "rb") as f:
-                    xml_data = f.read()
-                xml_data = xml_data.format(**format_args)
-                form = post_xform_to_couch(xml_data)
-                # before the bug was fixed this call failed
-                process_cases(form)
-                case = CommCareCase.get(case_id)
+            for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
+                xml_data = self.get_xml(filename).format(**format_args)
+                form = FormProcessorInterface.post_xform(xml_data)
+                [case] = FormProcessorInterface.process_cases(form)
+
                 self.assertEqual(format_args['user_id'], case.user_id)
                 self.assertEqual(format_args['case_name'], case.name)
                 self.assertEqual(format_args['case_type'], case.type)
@@ -104,99 +89,77 @@ class CaseBugTest(TestCase):
 
     def testDateInCasePropertyBug(self):
         """
-        How do we do when submitting a case name that looks like a date?
+        Submits a case name/case type/user_id that looks like a date
         """
         self._testCornerCaseDatatypeBugs('2011-11-16')
 
     def testIntegerInCasePropertyBug(self):
         """
-        How do we do when submitting a case name that looks like a number?
+        Submits a case name/case type/user_id that looks like a number
         """
         self._testCornerCaseDatatypeBugs('42')
 
     def testDecimalInCasePropertyBug(self):
         """
-        How do we do when submitting a case name that looks like a number?
+        Submits a case name/case type/user_id that looks like a decimal
         """
         self._testCornerCaseDatatypeBugs('4.06')
 
     def testDuplicateCasePropertiesBug(self):
         """
-        How do we do when submitting multiple values for the same property
-        in an update block
+        Submit multiple values for the same property in an update block
         """
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs",
-                                 "duplicate_case_properties.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        # before the bug was fixed this call failed
-        process_cases(form)
-        case = CommCareCase.get(form.xpath("form/case/@case_id"))
-        # make sure the property is there, but empty
+        xml_data = self.get_xml('duplicate_case_properties')
+        form = FormProcessorInterface.post_xform(xml_data)
+        [case] = FormProcessorInterface.process_cases(form)
         self.assertEqual("", case.foo)
 
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs",
-                                 "duplicate_case_properties_2.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
-        case = CommCareCase.get(form.xpath("form/case/@case_id"))
-        # make sure the property takes the last defined value
+        xml_data = self.get_xml('duplicate_case_properties_2')
+        form = FormProcessorInterface.post_xform(xml_data)
+        [case] = FormProcessorInterface.process_cases(form)
         self.assertEqual("2", case.bar)
 
     def testMultipleCaseBlocks(self):
         """
         How do we do when submitting a form with multiple blocks for the same case?
         """
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "multiple_case_blocks.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        # before the bug was fixed this call failed
-        process_cases(form)
-        case = CommCareCase.get(form.xpath("form/comunidad/case/@case_id"))
+        xml_data = self.get_xml('multiple_case_blocks')
+        form = FormProcessorInterface.post_xform(xml_data)
+        [case] = FormProcessorInterface.process_cases(form)
+
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
         self.assertEqual('TAMERLO', case.community_name)
 
-        ids = case.get_xform_ids_from_couch()
+        ids = case.xform_ids
         self.assertEqual(1, len(ids))
-        self.assertEqual(form._id, ids[0])
-
+        self.assertEqual(form.id, ids[0])
 
     def testLotsOfSubcases(self):
         """
         How do we do when submitting a form with multiple blocks for the same case?
         """
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "lots_of_subcases.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        # before the bug was fixed this call failed
-        process_cases(form)
-        self.assertEqual(11, get_total_case_count())
+        xml_data = self.get_xml('lots_of_subcases')
+        form = FormProcessorInterface.post_xform(xml_data)
+        cases = FormProcessorInterface.process_cases(form)
+        self.assertEqual(11, len(cases))
 
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
         case_id = 'immagetdeleted'
         deleted_doc_type = 'CommCareCase-Deleted'
-        post_case_blocks([
+        [xform, [case]] = post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
                       version=V2, update={'foo': 'bar'}).as_xml()
         ])
-        case = CommCareCase.get(case_id)
         self.assertEqual('bar', case.foo)
-        # hack copy how we delete things
-        case.doc_type = deleted_doc_type
-        case.save()
+        case = FormProcessorInterface.update_case_properties(case, doc_type=deleted_doc_type)
+
         self.assertEqual(deleted_doc_type, case.doc_type)
-        post_case_blocks([
+        [xform, [case]] = post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
                       version=V2, update={'foo': 'not_bar'}).as_xml()
         ])
-        case = CommCareCase.get(case_id)
         self.assertEqual('not_bar', case.foo)
         self.assertEqual(deleted_doc_type, case.doc_type)
 
@@ -207,33 +170,38 @@ class TestCaseHierarchy(TestCase):
         delete_all_cases()
 
     def test_normal_index(self):
-        cp = CommCareCase(
-            _id='parent',
+        cp = FormProcessorInterface.create_case_from_generic(GenericCommCareCase(
+            id='parent',
             name='parent',
             type='parent',
-        )
-        cp.save()
+        ))
 
-        cc = CommCareCase(
-            _id='child',
+        FormProcessorInterface.create_case_from_generic(GenericCommCareCase(
+            id='child',
             name='child',
             type='child',
-            indices=[CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')],
-        )
-        cc.save()
+            indices=[GenericCommCareCaseIndex(
+                identifier='parent',
+                referenced_type='parent',
+                referenced_id='parent'
+            )],
+        ))
 
         hierarchy = get_case_hierarchy(cp, {})
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
     def test_recursive_indexes(self):
-        c = CommCareCase(
-            _id='infinite-recursion',
+        c = FormProcessorInterface.create_case_from_generic(GenericCommCareCase(
+            id='infinite-recursion',
             name='infinite_recursion',
             type='bug',
-            indices=[CommCareCaseIndex(identifier='self', referenced_type='bug', referenced_id='infinite-recursion')],
-        )
-        c.save()
+            indices=[GenericCommCareCaseIndex(
+                identifier='self',
+                referenced_type='bug',
+                referenced_id='infinite-recursion'
+            )],
+        ))
         # this call used to fail with infinite recursion
         hierarchy = get_case_hierarchy(c, {})
         self.assertEqual(1, len(hierarchy['case_list']))
