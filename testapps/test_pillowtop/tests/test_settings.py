@@ -1,10 +1,9 @@
 import os
-from unittest import skip
 from django.conf import settings
 from django.test import TestCase
 import json
 from corehq.util.test_utils import TestFileMixin
-from pillowtop import get_all_pillow_instances, get_all_pillow_classes
+from pillowtop import get_all_pillow_classes
 from pillowtop.listener import AliasedElasticPillow
 
 
