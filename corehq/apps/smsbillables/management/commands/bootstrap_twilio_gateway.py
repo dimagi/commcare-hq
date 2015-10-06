@@ -93,6 +93,7 @@ def bootstrap_twilio_gateway(apps):
                 other_rate_twilio = twilio_data[iso]['other']
                 for _, subscriptions in mach_data[iso].values():
                     weighted_price += other_rate_twilio * subscriptions
+                    total_subscriptions += subscriptions
             if country_code is not None:
                 weighted_price = weighted_price / total_subscriptions
                 SmsGatewayFee.create_new(
