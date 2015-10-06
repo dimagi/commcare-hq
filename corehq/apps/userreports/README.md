@@ -1137,6 +1137,10 @@ CUSTOM_UCR_EXPRESSIONS = [
 ]
 ```
 
+Following are some custom expressions that are currently available.
+
+- `location_type_name`:  A way to get location type from a location document id. You can find an example in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+
 ## Inspecting database tables
 
 

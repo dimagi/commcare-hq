@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui import help_text
@@ -107,7 +108,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         self.domain = domain
         super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
 
-        from corehq import toggles
         if toggles.LOCATIONS_IN_UCR.enabled(domain):
             choices = self.fields['referenced_doc_type'].choices
             choices.append(
