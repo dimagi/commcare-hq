@@ -217,7 +217,6 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
     view_results = XFormInstance.get_db().view(
         'exports_forms/by_xmlns',
         key=[domain, app_id, xmlns],
-        stale=stale_ok(),
         group=True
     ).one()
     if view_results:
