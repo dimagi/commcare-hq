@@ -291,8 +291,8 @@ class WorkflowHelper(PostProcessor):
         This is based on the following algorithm:
 
         * Add the module the form is in to the stack (we'll call this `m`)
-        * Walk through all forms in the module, determine what datum selections are present in all of the modules
-          (this may be an empty set)
+        * Walk through all forms in the module, determine what datum selections
+          are present in all of the forms (this may be an empty set)
           * Basically if there are three forms that respectively load
             * f1: v1, v2, v3, v4
             * f2: v1, v2, v4

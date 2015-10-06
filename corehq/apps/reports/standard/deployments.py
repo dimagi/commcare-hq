@@ -5,7 +5,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
+from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
     BuildVersionSource
 from couchdbkit import ResourceNotFound
@@ -240,6 +240,13 @@ class SyncHistoryReport(DeploymentsReport):
                         sync_log.error_hash,
                     )
 
+            def _get_state_hash_display(sync_log):
+                try:
+                    return u'{:.10}...'.format(sync_log.get_state_hash())
+                except SyncLogAssertionError as e:
+                    return _(u'Error computing hash! {}').format(e)
+
+
             num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),
@@ -251,10 +258,10 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(sync_log.log_format)
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
                 columns.append(_fmt_error_info(sync_log))
-                columns.append('{:.10}...'.format(sync_log.get_state_hash()))
+                columns.append(_get_state_hash_display(sync_log))
                 columns.append(_naturaltime_with_hover(sync_log.last_submitted))
                 columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
-                                                     sync_log.hash_at_last_cached))
+                                                      sync_log.hash_at_last_cached))
 
             return columns
 
