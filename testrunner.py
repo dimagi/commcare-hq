@@ -49,6 +49,8 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         settings.INSTALLED_APPS = (tuple(settings.INSTALLED_APPS) +
                                    tuple(settings.TEST_APPS))
         settings.CELERY_ALWAYS_EAGER = True
+        # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
+        settings._PILLOWTOPS = settings.PILLOWTOPS
         settings.PILLOWTOPS = {}
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
