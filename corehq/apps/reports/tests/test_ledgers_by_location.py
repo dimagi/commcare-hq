@@ -17,9 +17,9 @@ from corehq.apps.reports.commtrack import LedgersByLocationDataSource
 class TestLedgersByLocation(TestCase):
     @classmethod
     def setUpClass(cls):
-        def make_stock_state(location, product, soh):
+        def make_stock_state(location, product, soh, section_id='stock'):
             return StockState.objects.create(
-                section_id='stock',
+                section_id=section_id,
                 sql_location=location,
                 case_id=uuid4().hex,
                 sql_product=product,
@@ -44,6 +44,7 @@ class TestLedgersByLocation(TestCase):
         cls.boston = make_location("Boston")
         make_stock_state(cls.boston, cls.aspirin, 135)
         make_stock_state(cls.boston, cls.bandaids, 43)
+        make_stock_state(cls.boston, cls.aspirin, 82, section_id='foo')
 
         cls.cambridge = make_location("Cambridge")
         make_stock_state(cls.cambridge, cls.aspirin, 414)
@@ -75,4 +76,12 @@ class TestLedgersByLocation(TestCase):
         self.assertEqual(boston.stock[self.bandaids.product_id], 43)
 
     def test_another_ledger_section(self):
-        self.fail()
+        report = LedgersByLocationDataSource(
+            'test',
+            params={'ledger_section': 'foo'},
+        )
+        for row in report.rows:
+            if row.location.name == "Boston":
+                self.assertEqual(row.stock[self.aspirin.product_id], 82)
+            else:
+                self.assertNotIn(self.aspirin.product_id, row.stock)
