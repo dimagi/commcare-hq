@@ -107,3 +107,5 @@ COUCHDB_DATABASES = [ (app, COUCH_DATABASE) for app in [
     # This is necessary for abstract classes in dimagi.utils.couch.undo
     # otherwise breaks tests
 ]]
+
+ALLOW_ELASTICSEARCH_TESTS = True
