@@ -3654,9 +3654,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             })
         return errors
 
-    def uses_media(self):
-        return False
-
 
 class VersionedDoc(LazyAttachmentDoc):
     """
