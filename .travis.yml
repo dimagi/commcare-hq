@@ -23,6 +23,7 @@ before_install:
   - "sudo service elasticsearch stop"
   - "curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.5.deb && sudo dpkg -i --force-confnew elasticsearch-0.90.5.deb"
   - "sudo service elasticsearch start"
+  - "sleep 10"
   - "curl http://localhost:9200/"  # print ES info
 addons:
   apt:
