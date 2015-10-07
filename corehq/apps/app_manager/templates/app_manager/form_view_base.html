@@ -83,7 +83,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
@@ -229,8 +229,8 @@
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
                 $('#cloudcare-preview-url').click(function(e) {
-                    ga_track_event('CloudCare', 'Click "Try in CloudCare"');
-                    analytics.workflow("Clicked Try in CloudCare");
+                    ga_track_event('CloudCare', 'Click "Preview Form"');
+                    analytics.workflow("Clicked Preview Form");
                 });
             {% endif %}
         {% endif %}
@@ -280,7 +280,7 @@
             {% if form.source and not is_user_registration %}
             <a id="cloudcare-preview-url" href="#" target="_blank" class="btn">
                 <i class="icon-play"></i>
-                {% trans "Try in CloudCare" %}
+                {% trans "Preview Form" %}
             </a>
             {% endif %}
         {% endif %}

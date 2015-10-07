@@ -31,6 +31,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
@@ -663,8 +664,9 @@ class ApplicationsTab(UITab):
     def dropdown_items(self):
         # todo async refresh submenu when on the applications page and
         # you change the application name
+        from corehq.apps.app_manager.models import Application
         key = [self.domain]
-        apps = get_db().view('app_manager/applications_brief',
+        apps = Application.get_db().view('app_manager/applications_brief',
                              reduce=False,
                              startkey=key,
                              endkey=key + [{}],).all()
@@ -1139,8 +1141,7 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if (feature_previews.LOCATIONS.enabled(self.domain) and
-                has_privilege(self._request, privileges.LOCATIONS)):
+        if has_privilege(self._request, privileges.LOCATIONS):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,
@@ -1189,6 +1190,13 @@ class ProjectUsersTab(UITab):
                     'show_in_dropdown': True,
                 })
             items.append((_('Organization'), locations_config))
+
+        elif users_have_locations(self.domain):  # This domain was downgraded
+            items.append((_('Organization'), [{
+                'title': _("No longer available"),
+                'url': reverse('downgrade_locations', args=[self.domain]),
+                'show_in_dropdown': True,
+            }]))
 
         return items
 
@@ -1455,10 +1463,6 @@ class AdminReportsTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('Message Logs Across All Domains'),
-                 'url': reverse('message_log_report')},
-                {'title': _('CommCare Versions'),
-                 'url': reverse('commcare_version_report')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
                 {'title': _('Loadtest Report'),

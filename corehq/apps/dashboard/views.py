@@ -41,7 +41,7 @@ def default_dashboard_url(request, domain):
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
-    @method_decorator(use_bootstrap3())
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
 

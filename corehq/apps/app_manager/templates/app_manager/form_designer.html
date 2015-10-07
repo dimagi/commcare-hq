@@ -43,7 +43,7 @@
                     "meta/timeStart",
                     "meta/timeEnd",
                     "meta/location"
-                ],
+                ].concat({{ scheduler_data_nodes|JSON }}),
                 onFormSave: function (data) {
                     COMMCAREHQ.app_manager.updateDOM(data.update);
                 },

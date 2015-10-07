@@ -86,10 +86,39 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
+# Do not change, there's a weird bug with Django 1.7 that requires this to be bower_components when using
+# collectstatic
+BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
+
+BOWER_INSTALLED_APPS = (
+    'jquery#1.11.1',
+    'jquery-1.7.1-legacy=jquery#1.7.1',
+    'underscore#1.6.0',
+    'underscore-legacy=underscore#1.4.4',
+    'jquery-form#3.45.0',
+    'jquery.cookie#1.4.1',
+    'jquery-timeago#1.2.0',
+    'angular#1.4.4',
+    'angular-route#1.4.4',
+    'angular-resource#1.4.4',
+    'angular-message-format#1.4.4',
+    'angular-messages#1.4.4',
+    'angular-cookies#1.4.4',
+    'angular-sanitize#1.4.4',
+    'knockout-2.3.0-legacy=knockout.js#2.3',
+    'knockout#3.1.0',
+    'select2-3.4.5-legacy=select2#3.4.5',
+    'less#1.7.3',
+    'backbone#0.9.1',
+)
+
+BOWER_PATH = '/usr/local/bin/bower'
+
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
+    'djangobower.finders.BowerFinder',
 )
 
 STATICFILES_DIRS = ()
@@ -181,6 +210,7 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
+    'djangobower',
     'djkombu',
     'djangular',
     'couchdbkit.ext.django',
@@ -228,6 +258,7 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
+    'corehq.form_processor',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -363,6 +394,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.yo',
     'crispy_forms',
     'django_extensions',
+    'djangobower',
     'django_prbac',
     'djcelery',
     'djtables',
@@ -929,11 +961,6 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
-# Mailchimp
-MAILCHIMP_APIKEY = ''
-MAILCHIMP_COMMCARE_USERS_ID = ''
-MAILCHIMP_MASS_EMAIL_ID = ''
-
 SQL_REPORTING_DATABASE_URL = None
 UCR_DATABASE_URL = None
 
@@ -1053,7 +1080,7 @@ COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
 NEW_USERS_GROUPS_DB = 'users'
-USERS_GROUPS_DB = None
+USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
 
 COUCHDB_APPS = [
@@ -1339,7 +1366,14 @@ PILLOWTOPS = {
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'incident_report.json')
+    os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'sms_indicator_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_country.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_1.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
 ]
 
 
@@ -1412,6 +1446,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
     ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
+    ('location_type_name', 'corehq.apps.locations.expressions.location_type_name'),
 ]
 
 CUSTOM_MODULES = [

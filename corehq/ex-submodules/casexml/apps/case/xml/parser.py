@@ -78,7 +78,7 @@ class CaseActionBase(object):
                 # normalize these by taking the last item
                 return val[-1]
             return val
-        
+
         kwargs = {}
         dynamic_properties = {}
         # if not a dict, it's probably an empty close block

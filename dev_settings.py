@@ -5,6 +5,7 @@ devs should have set.
 Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
+import os
 
 LOCAL_APPS = (
     'django_extensions',
@@ -39,3 +40,5 @@ DATABASES = {
         'PORT': '5432'
     }
 }
+
+BOWER_PATH = os.popen('which bower').read().strip()
