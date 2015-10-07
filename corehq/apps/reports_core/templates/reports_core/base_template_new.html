@@ -2,8 +2,16 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block stylesheets %}
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% new_static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+{% endblock %}
+
 {% block js %}
     <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% new_static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
 {% endblock %}
@@ -25,6 +33,7 @@
         };
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
+            paginationType: 'bs_normal',
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
             showAllRowsOption: {{ report_table.show_all_rows|JSON }},
