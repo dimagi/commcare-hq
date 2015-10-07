@@ -1,7 +1,8 @@
+from django.conf import settings
 from django.core.mail import mail_admins, send_mail
+
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
-import settings
 
 
 def _send_message(info, backend):

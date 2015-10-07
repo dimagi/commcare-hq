@@ -136,7 +136,7 @@ class BulkImportIndicatorsView(BaseSectionPageView, DomainViewMixin):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_edit_indicators)
-    @method_decorator(use_bootstrap3())
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BulkImportIndicatorsView, self).dispatch(request, *args, **kwargs)
 
