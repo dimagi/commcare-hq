@@ -13,7 +13,7 @@ from django.utils import html
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number
+from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
 from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.models import EWSGhanaConfig
@@ -453,4 +453,4 @@ def send_sms(domain, recipient, phone_number, message):
     if isinstance(phone_number, VerifiedNumber):
         send_sms_to_verified_number(phone_number, message)
     else:
-        send_sms(domain, recipient, phone_number, message)
+        core_send_sms(domain, recipient, phone_number, message)
