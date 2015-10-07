@@ -153,11 +153,13 @@ class ReportBuilderView(BaseDomainView):
 
     @property
     def section_url(self):
-        return "#"
+        return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
 
 
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/builder_report_type_select.html"
+    urlname = 'report_builder_select_type'
+    page_title = _('Select Report Type')
 
     @property
     def page_url(self):
@@ -246,12 +248,15 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/builder_data_source_select.html'
+    page_title = _('Create Report')
 
-    def dispatch(self, request, domain, report_type, **kwargs):
-        self.report_type = report_type
-        return super(ReportBuilderDataSourceSelect, self).dispatch(request, domain, **kwargs)
+    @property
+    def report_type(self):
+        return self.kwargs['report_type']
 
-    def get_context_data(self, **kwargs):
+
+    @property
+    def page_context(self):
         context = {
             "sources_map": self.form.sources_map,
             "domain": self.domain,
