@@ -691,8 +691,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_select2())
+    @use_bootstrap3
+    @use_select2
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
