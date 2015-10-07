@@ -56,7 +56,6 @@ branches:
   - billing/post-pay # Farid 9/3
   - sync-history-email # Cal 9/22
   - two-factor-otp-only # j$ 10/2
-  - django-conf # NP 10/5
   - shadow-modules # Jenny 10/6
 submodules:
   submodules/touchforms-src:
@@ -83,6 +82,3 @@ submodules:
   submodules/fluff-src:
     branches:
       - changes-refactor  # cz 10/2
-  submodules/auditcare-src:
-    branches:
-      - django-conf # NP 10/5
