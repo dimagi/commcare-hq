@@ -19,7 +19,8 @@ def require_explicit_elasticsearch_testing(fn):
             should_proceed = raw_input(
                 'Are you sure you want to run ElasticSearch tests?? '
                 'These may WIPE all the REAL indices on your computer?? (y/n)\n'
-                'NOTE: set ALLOW_ELASTICSEARCH_TESTS=True in your localsettings to disable this warning.\n').lower()
+                'NOTE: set ALLOW_ELASTICSEARCH_TESTS=True in your localsettings to disable this warning.\n'
+            ).lower()
             if should_proceed != 'y':
                 print 'Tests aborted!'
                 sys.exit()
@@ -27,4 +28,3 @@ def require_explicit_elasticsearch_testing(fn):
                 TESTS_ALLOWED = True
         return fn(*args, **kwargs)
     return decorated
-
