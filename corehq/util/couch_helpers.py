@@ -4,6 +4,7 @@ import hashlib
 from mimetypes import guess_type
 import datetime
 import threading
+from couchdbkit import ResourceNotFound
 
 
 class CouchAttachmentsBuilder(object):
@@ -143,7 +144,11 @@ def paginate_view(db, view_name, chunk_size,
         log_handler.view_starting(db, view_name, view_kwargs, total_emitted)
         start_time = datetime.datetime.utcnow()
         results = db.view(view_name, **view_kwargs)
-        len_results = len(results)
+        try:
+            len_results = len(results)
+        except ResourceNotFound:
+            results = []
+            len_results = 0
 
         for result in results:
             yield result
