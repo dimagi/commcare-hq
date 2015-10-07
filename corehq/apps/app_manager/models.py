@@ -3645,7 +3645,14 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return module
 
     def validate_for_build(self):
-        return super(ShadowModule, self).validate_for_build() + self.validate_details_for_build()
+        errors = super(ShadowModule, self).validate_for_build()
+        errors += self.validate_details_for_build()
+        if not self.source_module_id:
+            errors.append({
+                'type': 'no source module id',
+                'module': self.get_module_info()
+            })
+        return errors
 
     def uses_media(self):
         return False
