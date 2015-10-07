@@ -7,15 +7,14 @@ from couchdbkit.ext.django.loading import get_db
 #   for something that's pretty bound to our specific deploy workflow
 from corehq.preindex import PreindexPlugin
 from dimagi.utils.couch.sync_docs import DesignInfo
-from pillowtop.utils import get_all_pillows
-from dimagi.utils.couch import sync_docs
+from pillowtop.utils import get_all_pillow_classes
 
 
 class FluffPreindexPlugin(PreindexPlugin):
 
     def get_designs(self):
         designs = []
-        for pillow in get_all_pillows(instantiate=False):
+        for pillow in get_all_pillow_classes():
             if hasattr(pillow, 'indicator_class'):
                 app_label = pillow.indicator_class._meta.app_label
                 designs.append(DesignInfo(
