@@ -64,7 +64,7 @@ def insufficient_privilege(request, domain, *args, **kwargs):
     return render(request, "cloudcare/insufficient_privilege.html", context)
 
 
-@use_knockout_js()
+@use_knockout_js
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def cloudcare_main(request, domain, urlPath):
