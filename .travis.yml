@@ -1,5 +1,5 @@
 language: python
-sudo: false
+sudo: true
 cache: pip
 python:
   - "2.7"
@@ -19,6 +19,12 @@ before_install:
   - "curl http://localhost:5984/"  # print couch info
   - "uname -a"
   - "lsb_release -a"
+  # downgrade ES to the version we use: http://docs.travis-ci.com/user/database-setup/#Using-a-specific-version-of-ElasticSearch
+  - "sudo service elasticsearch stop"
+  - "curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.5.deb && sudo dpkg -i --force-confnew elasticsearch-0.90.5.deb"
+  - "sudo service elasticsearch start"
+  - "sleep 10"
+  - "curl http://localhost:9200/"  # print ES info
 addons:
   apt:
     packages:
@@ -48,6 +54,7 @@ services:
   - postgresql
   - couchdb
   - redis-server
+  - elasticsearch
 notifications:
   slack:
     secure: QROh5w8THwXzuj2fDB3GujwwGyHd1O5wPkZ2qUzNofbpQhOLK+Ayul/UPSmJuUtlTgtip6sBwrtI0E7ujRLyWIa9EJMMfiGdM8wr+Y1w08P6LbDqlmj8dGhUZznWb7rptJ2GeTx6jp4a6MUpc9LfKJMbDZ2Ro5Qe1jdp9wx1zdw=
