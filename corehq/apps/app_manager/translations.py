@@ -183,7 +183,7 @@ def make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
 def expected_bulk_app_sheet_headers(app):
     '''
     Returns lists representing the expected structure of bulk app translation
-    excel file uploads.
+    excel file uploads and downloads.
 
     The list will be in the form:
     [
@@ -231,6 +231,9 @@ def expected_bulk_app_sheet_headers(app):
 
 
 def expected_bulk_app_sheet_rows(app):
+    """
+    Data rows for bulk app translation download
+    """
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = {"Modules_and_forms": []}
@@ -563,14 +566,15 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         n for n in text_node.findall("./{f}value")
                         if 'form' not in n.attrib
                     )
+                    old_translation = etree.tostring(value_node.xml, method="text").strip()
                     markdown_node = text_node.find("./{f}value[@form='markdown']")
                     has_markdown = _looks_like_markdown(new_translation)
                     had_markdown = markdown_node.exists()
-                    vetoed_markdown = not had_markdown and _looks_like_markdown(etree.tostring(value_node.xml))
+                    vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
 
                     _update_translation_node(new_translation, value_node)
-                    if not(not has_markdown and not had_markdown    # not dealing with markdown at all
-                           or has_markdown and vetoed_markdown):    # looks like markdown, but markdown is off
+                    if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
+                           or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
                         _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
                                                  markdown_node,
                                                  {'form': 'markdown'})
