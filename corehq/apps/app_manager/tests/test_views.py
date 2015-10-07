@@ -11,8 +11,15 @@ from corehq.apps.builds.models import BuildSpec
 from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.models import AdvancedModule, Application, APP_V1, APP_V2, Module, \
-    ReportModule
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Application,
+    APP_V1,
+    APP_V2,
+    Module,
+    ReportModule,
+    ShadowModule,
+)
 from .test_form_versioning import BLANK_TEMPLATE
 
 
@@ -175,6 +182,15 @@ class TestViews(TestCase):
 
     def test_report_module(self):
         module = self.app.add_module(ReportModule.new_module("Module0", "en"))
+        self.app.save()
+        self._test_status_codes(['view_module'], {
+            'domain': self.domain.name,
+            'app_id': self.app.id,
+            'module_id': module.id,
+        })
+
+    def test_shadow_module(self):
+        module = self.app.add_module(ShadowModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
