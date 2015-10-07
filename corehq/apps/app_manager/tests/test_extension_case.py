@@ -142,24 +142,29 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         self.is_usercase_in_use_mock.return_value = True
 
         self.app = Application.new_app('domain', 'New App', APP_V2)
-        self.module = self.app.add_module(Module.new_module('Fish Module', None))
+        self.module = self.app.add_module(AdvancedModule.new_module('Fish Module', None))
         self.module.case_type = 'fish'
         self.form = self.module.new_form('New Form', None)
-        self.subcase = OpenSubCaseAction(
-            case_type='freshwater',
-            case_name='Wanda',
-            condition=FormActionCondition(type='always'),
-            case_properties={'name': '/data/question1'},
+        self.case_index = CaseIndex(
+            reference_id='host',
             relationship='extension',
         )
-        self.form.actions.subcases.append(self.subcase)
+        self.subcase = AdvancedOpenCaseAction(
+            case_type='freshwater',
+            case_name='Wanda',
+            open_condition=FormActionCondition(type='always'),
+            case_properties={'name': '/data/question1'},
+            case_indices=[self.case_index],
+        )
+        self.form.actions.open_cases.append(self.subcase)
         self.xform = XForm(self.get_xml('original'))
         self.add_subcase_block()
 
     def add_subcase_block(self):
         ### messy messy messy
         parent_node = self.xform.data_node
-        case_id = session_var(self.form.session_var_for_action(self.subcase))
+        action = next(self.form.actions.get_open_actions())
+        case_id = session_var(action.case_session_var)
         #name = 'subcase_0'
         subcase_node = _make_elem('{x}subcase_0')
         parent_node.append(subcase_node)
@@ -167,7 +172,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         self.subcase_block = CaseBlock(self.xform, path)
         subcase_node.insert(0, self.subcase_block.elem)
         self.subcase_block.add_create_block(
-            relevance=self.xform.action_relevance(self.subcase.condition),
+            relevance=self.xform.action_relevance(action.open_condition),
             case_name=self.subcase.case_name,
             case_type=self.subcase.case_type,
             delay_case_id=bool(self.subcase.repeat_context),
@@ -185,7 +190,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
             'host',
             self.form.get_case_type(),
             self.xform.resolve_path("case/@case_id"),
-            self.subcase.relationship,
+            self.subcase.case_indices[0].relationship,
         )
         self.assertXmlEqual(self.get_xml('open_subcase'), str(self.xform))
 
