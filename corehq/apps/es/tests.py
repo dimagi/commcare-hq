@@ -84,7 +84,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
                     "filter": {
                         "and": [
                             {"term": {"is_active": True}},
-                            {"term": {"base_doc": "CouchUser"}},
+                            {"term": {"base_doc": "couchuser"}},
                         ]
                     },
                     "query": {"match_all": {}}
