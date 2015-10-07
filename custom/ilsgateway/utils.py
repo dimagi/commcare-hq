@@ -1,5 +1,9 @@
 from datetime import datetime
+from decimal import Decimal
+from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.locations.models import LocationType, Location
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
@@ -64,3 +68,34 @@ def send_translated_message(user, message, **kwargs):
     with localize(user.get_language_code()):
         send_sms_to_verified_number(verified_number, message % kwargs)
         return True
+
+
+def make_loc(code, name, domain, type, metadata=None, parent=None):
+    name = name or code
+    location_type, _ = LocationType.objects.get_or_create(domain=domain, name=type)
+    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc.metadata = metadata or {}
+    loc.save()
+    if not location_type.administrative:
+        SupplyPointCase.create_from_location(domain, loc)
+        loc.save()
+    return loc
+
+
+def create_stock_report(location, products_quantities, date=datetime.utcnow()):
+    sql_location = location.sql_location
+    report = StockReport.objects.create(
+        form_id='test-form-id',
+        domain=sql_location.domain,
+        type='balance',
+        date=date
+    )
+    for product_code, quantity in products_quantities.iteritems():
+        StockTransaction(
+            stock_on_hand=Decimal(quantity),
+            report=report,
+            type='stockonhand',
+            section_id='stock',
+            case_id=sql_location.supply_point_id,
+            product_id=SQLProduct.objects.get(domain=sql_location.domain, code=product_code).product_id
+        ).save()

@@ -1,11 +1,8 @@
-from django.conf import settings
-
 from corehq.apps.groups.models import Group
-from dimagi.utils.decorators.memoized import memoized
-from pillowtop.listener import AliasedElasticPillow
 
 from .mappings.group_mapping import GROUP_INDEX, GROUP_MAPPING
 from .base import HQPillow
+
 
 class GroupPillow(HQPillow):
     """

@@ -22,7 +22,7 @@ class MainStyleGuideView(TemplateView):
 class BaseStyleGuideArticleView(TemplateView):
     template_name = 'styleguide/base_section.html'
 
-    @method_decorator(use_bootstrap3())
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseStyleGuideArticleView, self).dispatch(request, *args, **kwargs)
 

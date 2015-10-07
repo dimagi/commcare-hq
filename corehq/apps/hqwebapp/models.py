@@ -664,8 +664,9 @@ class ApplicationsTab(UITab):
     def dropdown_items(self):
         # todo async refresh submenu when on the applications page and
         # you change the application name
+        from corehq.apps.app_manager.models import Application
         key = [self.domain]
-        apps = get_db().view('app_manager/applications_brief',
+        apps = Application.get_db().view('app_manager/applications_brief',
                              reduce=False,
                              startkey=key,
                              endkey=key + [{}],).all()
@@ -1140,8 +1141,7 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if (feature_previews.LOCATIONS.enabled(self.domain) and
-                has_privilege(self._request, privileges.LOCATIONS)):
+        if has_privilege(self._request, privileges.LOCATIONS):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,

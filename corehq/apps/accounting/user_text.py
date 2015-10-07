@@ -54,8 +54,15 @@ def get_feature_name(feature_type, product):
             Product.COMMCONNECT: _("Mobile Users"),
             Product.COMMTRACK: _("Facilities"),
         }[product],
-        FeatureType.SMS: _("Monthly SMS"),
+        FeatureType.SMS: _("SMS"),
     }[feature_type]
+
+
+def get_feature_recurring_interval(feature_type):
+    if feature_type == FeatureType.SMS:
+        return _("Monthly")
+    else:
+        return None
 
 
 class PricingTableCategories(object):

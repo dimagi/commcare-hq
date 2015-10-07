@@ -61,6 +61,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.sms.models import SelfRegistrationInvitation
+from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
@@ -690,8 +691,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_select2())
+    @use_bootstrap3
+    @use_select2
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
@@ -944,9 +945,14 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     def new_commcare_user_form(self):
         if self.request.method == "POST":
             data = self.request.POST.dict()
-            return CommCareAccountForm(data, domain=self.domain)
-        return CommCareAccountForm(domain=self.domain)
+            form = CommCareAccountForm(data, domain=self.domain)
+        else:
+            form = CommCareAccountForm(domain=self.domain)
 
+        form.fields['phone_number'].required = True
+        return form
+
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
@@ -968,6 +974,9 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
 
             if 'location_id' in request.GET:
                 user.set_location(loc)
+
+            if phone_number:
+                initiate_sms_verification_workflow(user, phone_number)
 
             user_json = {'user_id': user._id, 'text': user.username_in_report}
             return self.render_json_response({"status": "success",

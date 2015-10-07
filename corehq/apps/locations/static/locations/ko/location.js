@@ -13,6 +13,7 @@ $(function() {
     var url = form_node.prop('action');
 
     $('#new_user').on('show', function() {
+        form_node.html('<i class="icon-refresh icon-spin"></i>');
         $.get(url, function(data) {
             form_node.html(data.form_html);
         });
@@ -23,6 +24,10 @@ $(function() {
         $.post(url, form_node.serialize(), function(data) {
             if (data.status === 'success') {
                 insert_new_user(data.user);
+                alert_user(
+                    TEMPLATE_STRINGS.new_user_success({name: data.user.text}),
+                    'success'
+                );
                 $('#new_user').modal('hide');
             } else {
                 form_node.html(data.form_html);
