@@ -30,6 +30,7 @@
         $scope.total = 0;
         $scope.maxSize = 8;
         $scope.default = {};
+        $scope.analytics = {};
 
         self.retries = 0;
 
@@ -91,6 +92,7 @@
             $scope.isLoading = false;
             $scope.default = data.response.default || {};
             $scope.helpText = data.response.helpText;
+            $scope.analytics = data.response.analytics;
         };
 
         self.retry = function () {
@@ -216,12 +218,20 @@
 
     dashboardDirectives.trackAnalyticsDirective = function (analyticsConfig) {
         var link = function ($scope, element, attrs) {
-            if (!_.isEmpty(attrs.analyticsUsageLabel)){
-                gaTrackLink(element, analyticsConfig.category, analyticsConfig.action, attrs.analyticsUsageLabel);
-            }
-            if (! _.isEmpty(attrs.analyticsWorkflowLabel)){
-                analytics.trackWorkflowLink(element, attrs.analyticsWorkflowLabel);
-            }
+
+            var eventTrackingSet = false;
+
+            $scope.$watch('analytics', function (currentVal, oldVal) {
+                if (!eventTrackingSet && !_.isEmpty(currentVal)) {
+                    eventTrackingSet = true;
+                    if (!_.isEmpty(currentVal.usage_label)) {
+                        gaTrackLink(element, analyticsConfig.category, analyticsConfig.action, currentVal.usage_label);
+                    }
+                    if (!_.isEmpty(currentVal.workflow_label)) {
+                        analytics.trackWorkflowLink(element, currentVal.workflow_label);
+                    }
+                }
+            });
         };
 
         return {
