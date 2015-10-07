@@ -55,7 +55,29 @@ class CasePillowTest(SimpleTestCase):
         pillow.processor(change, False)
         self.assertEqual(1, _get_doc_count(self.es, self.index))
         doc = self.es.get_source(self.index, doc_id)
+        self.assertEqual('CommCareCase', doc['doc_type'])
         self.assertEqual('mother', doc['type'])
+
+    def test_send_case_bulk(self):
+        # this structure determined based on seeing what bulk_reindex does
+        def make_bulk_row(doc):
+            return {
+                'key': [None, None, False],
+                'doc': doc,
+                'id': doc['_id'],
+                'value': None
+            }
+
+        doc_ids = [uuid.uuid4().hex for i in range(3)]
+        docs = [{'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'} for doc_id in doc_ids]
+        rows = [make_bulk_row(doc) for doc in docs]
+        pillow = CasePillow()
+        pillow.process_bulk(rows)
+        self.assertEqual(len(doc_ids), _get_doc_count(self.es, self.index))
+        for doc in docs:
+            es_doc = self.es.get_source(self.index, doc['_id'])
+            for prop in doc.keys():
+                self.assertEqual(doc[prop], es_doc[prop])
 
 
 def _get_doc_count(es, index, refresh_first=True):
