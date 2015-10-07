@@ -192,15 +192,18 @@ var COMMCAREHQ = (function () {
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
+            var iconClass = "icon-question-sign";
+            if (opts.bootstrap3){
+                iconClass = "fa fa-question-circle";
+            }
             var el = $(
                 '<div class="hq-help">' + 
                     '<a href="#">' +
-                        '<i class="icon-question-sign"></i></a></div>'
+                        '<i class="' + iconClass + '"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];
-
             attrs.map(function (attr) {
-                el.find('a').data(attr, opts[attr]);
+                el.find('a').attr("data-"+attr, opts[attr]);
             });
             if (wrap) {
                 el.hqHelp();
