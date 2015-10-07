@@ -3,7 +3,6 @@ from lxml import etree
 import os
 from django.conf import settings
 from django.core.management import BaseCommand
-import sys
 from corehq.apps.app_manager.util import all_apps_by_domain
 from custom.openclinica.utils import simplify, Item, get_matching_start, odm_nsmap
 import yaml

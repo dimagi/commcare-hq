@@ -7,4 +7,3 @@ CC_STUDY_SUBJECT_ID = 'screening_number'
 
 # Include audit logs in export document
 AUDIT_LOGS = True
-
