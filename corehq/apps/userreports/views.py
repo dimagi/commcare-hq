@@ -268,6 +268,7 @@ class ConfigureChartReport(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = _("Chart Report: {}")
+    report_type = 'chart'
     existing_report = None
 
     def get_context_data(self, **kwargs):
@@ -278,6 +279,7 @@ class ConfigureChartReport(ReportBuilderView):
                     self.request.GET.get('report_name', '')
                 )
             },
+            'report_type': self.report_type,
             'form': self.report_form,
             'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
@@ -329,6 +331,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 class ConfigureListReport(ConfigureChartReport):
     report_title = _("List Report: {}")
+    report_type = 'list'
 
     @property
     @memoized
@@ -338,6 +341,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 class ConfigureTableReport(ConfigureChartReport):
     report_title = _("Table Report: {}")
+    report_type = 'table'
 
     @property
     @memoized
@@ -347,6 +351,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 class ConfigureWorkerReport(ConfigureChartReport):
     report_title = _("Worker Report: {}")
+    report_type = 'worker'
 
     @property
     @memoized
