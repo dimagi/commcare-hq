@@ -141,7 +141,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Chart'),
                 slug='chart',
-                analytics_label="Chart",
+                analytics_label="chart",
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -151,7 +151,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
-                analytics_label="List",
+                analytics_label="list",
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -161,7 +161,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Worker Report'),
                 slug='worker-report',
-                analytics_label="Worker",
+                analytics_label="worker",
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -171,7 +171,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Data Table'),
                 slug='data-table',
-                analytics_label="Table",
+                analytics_label="table",
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
