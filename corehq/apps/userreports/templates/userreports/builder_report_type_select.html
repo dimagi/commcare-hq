@@ -27,15 +27,6 @@
                 COMMCAREHQ.transformHelpTemplate($(this), true);
             });
 
-            {% for tile in tiles %}
-                $("div[slug='{{ tile.slug }}'] a.trigger-analytics").each(
-                    function(){
-                        var $this = $(this);
-                        gaTrackLink($this, 'Report Builder', 'Create Report', '{{ tile.analytics_label }}');
-                        analytics.trackWorkflowLink($this, "Clicked on Report Builder Tile");
-                    }
-                );
-            {% endfor %}
         });
     </script>
 {% endblock %}

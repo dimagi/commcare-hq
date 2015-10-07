@@ -147,10 +147,6 @@ class ReportBuilderView(BaseDomainView):
         return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
 
 
-class ReportTypeTileConfiguration(TileConfiguration):
-    def __init__(self, *args, **kwargs):
-        self.analytics_label = kwargs.pop('analytics_label', None)
-        super(ReportTypeTileConfiguration, self).__init__(*args, **kwargs)
 
 
 class ReportBuilderTypeSelect(ReportBuilderView):
@@ -169,40 +165,44 @@ class ReportBuilderTypeSelect(ReportBuilderView):
     @property
     def tiles(self):
         return [
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
-                analytics_label="chart",
+                analytics_usage_label="Chart",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
                 help_text=_('A bar graph or a pie chart to show data from your cases or forms.'
                             ' You choose the property to graph.'),
             ),
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
-                analytics_label="list",
+                analytics_usage_label="List",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
                 help_text=_('A list of cases or form submissions.'
                             ' You choose which properties will be columns.'),
             ),
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Worker Report'),
                 slug='worker-report',
-                analytics_label="worker",
+                analytics_usage_label="Worker",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
                 help_text=_('A table of your mobile workers.'
                             ' You choose which properties will be the columns.'),
             ),
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Data Table'),
                 slug='data-table',
-                analytics_label="table",
+                analytics_usage_label="Table",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
