@@ -158,25 +158,23 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         )
         self.form.actions.open_cases.append(self.subcase)
         self.xform = XForm(self.get_xml('original'))
-        self.add_subcase_block()
+        path = 'subcase_0/'
+        self.subcase_block = CaseBlock(self.xform, path)
 
     def add_subcase_block(self):
-        ### messy messy messy
+
         parent_node = self.xform.data_node
         action = next(self.form.actions.get_open_actions())
         case_id = session_var(action.case_session_var)
-        #name = 'subcase_0'
         subcase_node = _make_elem('{x}subcase_0')
         parent_node.append(subcase_node)
-        path = 'subcase_0/'
-        self.subcase_block = CaseBlock(self.xform, path)
         subcase_node.insert(0, self.subcase_block.elem)
         self.subcase_block.add_create_block(
             relevance=self.xform.action_relevance(action.open_condition),
             case_name=self.subcase.case_name,
             case_type=self.subcase.case_type,
             delay_case_id=bool(self.subcase.repeat_context),
-            autoset_owner_id=True,
+            autoset_owner_id=autoset_owner_id_for_advanced_action(action),
             has_case_sharing=self.form.get_app().case_sharing,
             case_id=case_id
         )
@@ -186,6 +184,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         """
         CaseBlock index should allow the relationship to be set
         """
+        self.add_subcase_block()
         self.subcase_block.add_index_ref(
             'host',
             self.form.get_case_type(),
@@ -198,10 +197,16 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         """
         CaseBlock index relationship should default to "child"
         """
+        child = CaseIndex(
+            reference_id='host',
+            relationship='child',
+        )
+        self.subcase.case_indices = [child]
+        self.add_subcase_block()
         self.subcase_block.add_index_ref(
             'host',
             self.form.get_case_type(),
-            self.xform.resolve_path("case/@case_id")
+            self.xform.resolve_path("case/@case_id"),
         )
         self.assertXmlEqual(self.get_xml('open_subcase_child'), str(self.xform))
 
