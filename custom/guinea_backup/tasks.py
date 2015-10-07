@@ -1,11 +1,10 @@
 from datetime import date
 from celery.schedules import crontab
 from celery.task import periodic_task
+from django.conf import settings
 from django.core.management import call_command
 from corehq.util.soft_assert import soft_assert
 from .models import BackupRecord
-
-import settings
 
 GUINEA_CONTACT_TRACING_DOMAIN = 'guinea_contact_tracing'
 GUINEA_CONTACT_TRACING_DATABASE = 'guineact-backup'

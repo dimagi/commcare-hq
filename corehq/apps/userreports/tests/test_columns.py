@@ -3,7 +3,6 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
-from corehq.db import Session
 
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
@@ -111,7 +110,7 @@ class ChoiceListColumnDbTest(TestCase):
             'long_column': 'duplicate_choice_1',
         })
         # and query it back
-        q = Session.query(adapter.get_table())
+        q = adapter.get_query_object()
         self.assertEqual(1, q.count())
 
 

@@ -4,6 +4,17 @@ from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 
 
+class BasicFilterTest(SimpleTestCase):
+
+    def test_invalid_slug(self):
+        with self.assertRaises(BadSpecError):
+            FilterFactory.from_spec({
+                'type': 'property_match',
+                'property_name': 'foo',
+                'property_value': 'bar',
+                'slug': 'this-is-bad',
+            })
+
 
 class PropertyMatchFilterTest(SimpleTestCase):
 
