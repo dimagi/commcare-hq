@@ -1,37 +1,52 @@
 {% extends "reports_core/base_template_new.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load djangular_tags %}
+{% load compress %}
 
-{% block head %}{{ block.super }}
-    <style>
-        .btn-report-type {
-            min-height: 128px;
-            width: 100%;
-        }
-    </style>
-
-    {#  TODO - remove after migration to bootstrap 3  #}
-    {% include 'userreports/partials/col-style.html' %}
-    {% include 'userreports/partials/panel-style.html' %}
-
-{% endblock %}
+{% block stylesheets %}{{ block.super }}
+{% compress css %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% new_static 'dashboard/less/dashboard.less' %}" />
+{% endcompress %}
+{% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.transformHelpTemplate($(this), true);
-            });
-
+    <script type="text/javascript">
+    (function (angular, undefined) {
+        'use strict';
+        var dashboardApp = angular.module('dashboardApp', [
+            'ui.bootstrap',
+            'ngResource',
+            'ngRoute',
+            'ng.django.rmi',
+            'hq.dashboard'
+        ]);
+        dashboardApp.config(['$httpProvider', function($httpProvider) {
+            $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        }]);
+        dashboardApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+            djangoRMIProvider.configure({% djng_current_rmi %});
+        }]);
+        dashboardApp.constant('dashboardConfig', {
+            staticRoot: '{{ STATIC_URL }}'
         });
+        dashboardApp.constant('analyticsConfig', {
+            category: 'Report Builder',
+            action: 'Create Report'
+        });
+    }(window.angular));
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% if not has_apps %}
         <div style="padding: 1em; text-align: center">
             <p style="font-size: 1.5em">
@@ -42,36 +57,15 @@
         </div>
         {% include 'app_manager/partials/new_app_buttons.html' %}
     {% else %}
-        <div class="row-fluid">
-            {% for tile in tiles %}
-            <div
-                    slug="{{ tile.slug }}"
-                    title="{{ tile.title }}">
-                <div class="col-sm-2">
-                    <div class="panel panel-dashboard panel-dashboard-small">
-                        <div class="panel-heading">
-                            <a href="{{ tile.url }}"
-                               class="trigger-analytics"
-                               popover-title="{{ tile.title }}"
-                               popover="{{ tile.helpText }}"
-                               popover-trigger="mouseenter"
-                               popover-placement="bottom"
-                               title="">{{ tile.title }}</a>
-                        </div>
-                        <div class="panel-body">
-                            <a href="{{ tile.url }}"
-                               class="dashboard-link trigger-analytics"
-                               popover-title="{{ tile.title }}"
-                               popover="{{ tile.helpText }}"
-                               popover-trigger="mouseenter"
-                               popover-placement="top">
-                                <i class="dashboard-icon dashboard-icon-small {{ tile.icon }}"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+        <div ng-app="dashboardApp">
+            <div class="row-fluid">
+                {% for tile in tiles %}
+                    <tile-{{ tile.ng_directive }}
+                            slug="{{ tile.slug }}"
+                            title="{{ tile.title }}">
+                    </tile-{{ tile.ng_directive }}>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     {% endif %}
 {% endblock %}
