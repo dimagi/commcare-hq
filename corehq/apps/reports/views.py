@@ -7,6 +7,7 @@ import tempfile
 import re
 import itertools
 from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.util.spreadsheets.export import WorkBook
 import langcodes
 from datetime import datetime, timedelta, date
@@ -89,7 +90,7 @@ from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types, XFormDeprecated
 from corehq.apps.reports.templatetags.xform_tags import render_form
 from corehq.apps.reports.filters.users import UserTypeFilter
-from corehq.apps.domain.decorators import (login_or_digest)
+from corehq.apps.domain.decorators import (login_or_digest, login_or_digest_or_basic)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases
@@ -169,13 +170,15 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
             or request.couch_user.get_viewable_reports()):
         raise Http404
 
+    lang = request.couch_user.language or ucr_default_language()
+
     all_configs = ReportConfig.by_domain_and_owner(domain, user._id)
     good_configs = []
     for config in all_configs:
         if config.is_configurable_report and not config.configurable_report:
             continue
 
-        good_configs.append(config)
+        good_configs.append(config.to_complete_json(lang=lang))
 
     def _is_valid(rn):
         # the _id check is for weird bugs we've seen in the wild that look like
@@ -428,7 +431,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseRedirect(next)
 
 
-@login_or_digest
+@login_or_digest_or_basic(default='digest')
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
@@ -558,13 +561,14 @@ class AddSavedReportConfigView(View):
             if field in update_config_data:
                 setattr(self.config, field, update_config_data[field])
 
-        # remove start and end date if the date range is "last xx days"
+        # remove start and end date if the date range is "last xx days" or none
         if self.saved_report_config_form.cleaned_data['date_range'] in [
             'last30',
             'last7',
             'lastn',
             'lastmonth',
             'lastyear',
+            None,
         ]:
             if "start_date" in self.config:
                 delattr(self.config, "start_date")
@@ -1364,15 +1368,15 @@ def _form_instance_to_context_url(domain, instance):
     except ResourceNotFound:
         raise Http404(_('Application not found.'))
 
-    for module in build.get_modules():
-        for form in module.get_forms():
-            if form.xmlns == instance.xmlns:
-                return reverse(
-                    'cloudcare_form_context',
-                    args=[domain, instance.build_id, module.id, form.id],
-                    params={'instance_id': instance._id}
-                )
-    raise Http404(_('Missing module or form information!'))
+    form = build.get_form_by_xmlns(instance.xmlns)
+    if not form:
+        raise Http404(_('Missing module or form information!'))
+
+    return reverse(
+        'cloudcare_form_context',
+        args=[domain, instance.build_id, form.get_module().id, form.id],
+        params={'instance_id': instance._id}
+    )
 
 
 @require_form_view_permission

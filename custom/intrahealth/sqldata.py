@@ -211,12 +211,19 @@ class DispDesProducts(BaseSqlData):
             headers.add_column(DataTablesColumn(product.name))
         return headers
 
+
+
     @property
     def columns(self):
+        def get_prd_name(code):
+            try:
+                return SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                                              is_archived=False).name
+            except SQLProduct.DoesNotExist:
+                pass
         return [
             DatabaseColumn('Product Name', SimpleColumn('product_code'),
-                           format_fn=lambda code: SQLProduct.objects.get(code=code, domain=self.config['domain'],
-                                                                         is_archived=False).name),
+                           format_fn=lambda code: get_prd_name(code)),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
         ]

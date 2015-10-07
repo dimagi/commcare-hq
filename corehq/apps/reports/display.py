@@ -3,6 +3,7 @@ from django.core.cache import cache
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
+from couchforms.analytics import get_form_analytics_metadata
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -138,10 +139,7 @@ class FormType(object):
         if form_json:
             form = json.loads(form_json)
         else:
-            form = get_db().view('exports_forms/by_xmlns', key=[domain, app_id, xmlns], group=True).one()
-            if form:
-                form = form['value']
-            # cache doc a short interval for the life of someone viewing the page
+            form = get_form_analytics_metadata(domain, app_id, xmlns)
             cache.set(cache_key, json.dumps(form), 30)
         return form
 

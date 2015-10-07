@@ -1,16 +1,16 @@
 {% load i18n %}
 {% if not is_alive and not progress.percent %}
-    <p class="alert alert-error">
+    <p class="alert alert-error alert-danger">
     {% blocktrans %}
         Task processor not detected.
         There may be something wrong with your system.
-        If the download takes longer than normal to complete
+        If the download takes longer than normal to complete,
         please contact support for help.
     {% endblocktrans %}
     </p>
 {% else %}
     {% if progress.error %}
-        <p class="alert alert-error">
+        <p class="alert alert-error alert-danger">
             {% trans "Something went wrong! " %} {{ progress.error_message }}
         </p>
     {% else %}

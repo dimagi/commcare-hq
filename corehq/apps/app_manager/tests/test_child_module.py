@@ -13,7 +13,7 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.feature_previews import MODULE_FILTER
 from corehq.toggles import NAMESPACE_DOMAIN
 from toggle.shortcuts import clear_toggle_cache, update_toggle_cache
@@ -21,7 +21,7 @@ from toggle.shortcuts import clear_toggle_cache, update_toggle_cache
 DOMAIN = 'domain'
 
 
-class ModuleAsChildTestBase(TestFileMixin):
+class ModuleAsChildTestBase(TestXmlMixin):
     file_path = ('data', 'suite')
     child_module_class = None
 
@@ -309,7 +309,7 @@ class UserCaseOnlyModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         )
 
 
-class AdvancedSubModuleTests(SimpleTestCase, TestFileMixin):
+class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def test_form_rename_session_vars(self):
@@ -350,7 +350,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('child-module-rename-session-vars'), upd_guppy_form.render_xform())
 
 
-class BasicSubModuleTests(SimpleTestCase, TestFileMixin):
+class BasicSubModuleTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def test_parent_preload(self):

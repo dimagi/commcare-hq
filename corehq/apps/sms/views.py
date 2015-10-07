@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from StringIO import StringIO
+import base64
 import logging
 from datetime import datetime, timedelta, time
 import re
@@ -15,7 +16,7 @@ from django.utils.decorators import method_decorator
 from casexml.apps.case.models import CommCareCase
 from corehq import privileges
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
@@ -28,7 +29,7 @@ from corehq.apps.sms.api import (
     DomainScopeValidationError,
     MessageMetadata,
 )
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.users.decorators import require_permission
@@ -44,7 +45,9 @@ from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
     InitiateAddSMSBackendForm, SubscribeSMSForm,
     SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-    DEFAULT, CUSTOM, SendRegistrationInviationsForm)
+    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
+    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
@@ -63,6 +66,7 @@ from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 from corehq.apps.domain.models import Domain
 from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -259,8 +263,9 @@ def send_to_recipients(request, domain):
             else:
                 unknown_usernames.append(recipient)
 
-
-        login_ids = dict([(r['key'], r['id']) for r in get_db().view("users/by_username", keys=usernames, reduce=False).all()])
+        login_ids = {
+            r['key']: r['id'] for r in CommCareUser.get_db().view(
+                "users/by_username", keys=usernames, reduce=False).all()}
         for username in usernames:
             if username not in login_ids:
                 unknown_usernames.append(username)
@@ -382,22 +387,35 @@ def api_send_sms(request, domain):
     Expected post parameters:
         phone_number - the phone number to send to
         contact_id - the _id of a contact to send to (overrides phone_number)
+        vn_id - the _id of a VerifiedNumber to send to (overrides contact_id)
         text - the text of the message
         backend_id - the name of the MobileBackend to use while sending
     """
     if request.method == "POST":
         phone_number = request.POST.get("phone_number", None)
         contact_id = request.POST.get("contact_id", None)
+        vn_id = request.POST.get("vn_id", None)
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
         chat = request.POST.get("chat", None)
         contact = None
 
-        if (phone_number is None and contact_id is None) or (text is None):
+        if (phone_number is None and contact_id is None and not vn_id) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
 
         vn = None
-        if contact_id is not None:
+        if vn_id:
+            try:
+                vn = VerifiedNumber.get(vn_id)
+            except ResourceNotFound:
+                return HttpResponseBadRequest("VerifiedNumber not found.")
+
+            if vn.domain != domain:
+                return HttpResponseBadRequest("VerifiedNumber not found.")
+
+            phone_number = vn.phone_number
+            contact = vn.owner
+        elif contact_id is not None:
             try:
                 contact = get_contact(contact_id)
                 assert contact is not None
@@ -768,6 +786,7 @@ def get_contact_info(domain):
                 'case',
                 doc['phone_number'],
                 owner_id,
+                doc['_id'],
             ])
         elif doc['owner_doc_type'] == 'CommCareUser':
             mobile_worker_ids.append(owner_id)
@@ -776,6 +795,7 @@ def get_contact_info(domain):
                 'mobile_worker',
                 doc['phone_number'],
                 owner_id,
+                doc['_id'],
             ])
     contact_data = get_case_contact_info(domain_obj, case_ids)
     contact_data.update(get_mobile_worker_contact_info(domain_obj, mobile_worker_ids))
@@ -796,15 +816,16 @@ def get_contact_info(domain):
 def format_contact_data(domain, data):
     for row in data:
         contact_id = row[3]
+        vn_id = row[4]
         if row[1] == 'case':
             row[1] = _('Case')
-            row.append(reverse('case_details', args=[domain, contact_id]))
+            row[4] = reverse('case_details', args=[domain, contact_id])
         elif row[1] == 'mobile_worker':
             row[1] = _('Mobile Worker')
-            row.append(reverse(EditCommCareUserView.urlname, args=[domain, contact_id]))
+            row[4] = reverse(EditCommCareUserView.urlname, args=[domain, contact_id])
         else:
-            row.append('#')
-        row.append(reverse('sms_chat', args=[domain, contact_id]))
+            row[4] = '#'
+        row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
 @require_permission(Permissions.edit_data)
@@ -838,7 +859,7 @@ def chat_contact_list(request, domain):
 
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def chat(request, domain, contact_id):
+def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
     timezone = get_timezone_for_user(None, domain)
 
@@ -868,6 +889,7 @@ def chat(request, domain, contact_id):
         "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
         "custom_case_username": domain_obj.custom_case_username,
         "history_choices": history_choices,
+        "vn_id": vn_id,
     }
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)
@@ -1494,6 +1516,19 @@ class SMSSettingsView(BaseMessagingSectionView):
     def previewer(self):
         return self.request.couch_user.is_previewer()
 
+    def get_welcome_message_recipient(self, domain_obj):
+        if (
+            domain_obj.enable_registration_welcome_sms_for_case and
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker
+        ):
+            return WELCOME_RECIPIENT_ALL
+        elif domain_obj.enable_registration_welcome_sms_for_case:
+            return WELCOME_RECIPIENT_CASE
+        elif domain_obj.enable_registration_welcome_sms_for_mobile_worker:
+            return WELCOME_RECIPIENT_MOBILE_WORKER
+        else:
+            return WELCOME_RECIPIENT_NONE
+
     @property
     @memoized
     def form(self):
@@ -1552,6 +1587,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     domain_obj.sms_case_registration_user_id,
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
+                "registration_welcome_message":
+                    self.get_welcome_message_recipient(domain_obj),
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
@@ -1619,6 +1656,12 @@ class SMSSettingsView(BaseMessagingSectionView):
                     "sms_case_registration_user_id"]
             else:
                 domain_obj.sms_case_registration_enabled = False
+
+            domain_obj.enable_registration_welcome_sms_for_case = \
+                form.enable_registration_welcome_sms_for_case
+
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker = \
+                form.enable_registration_welcome_sms_for_mobile_worker
 
             domain_obj.save()
             messages.success(request, _("Changes Saved."))
@@ -1765,3 +1808,34 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
             if not self.domain_object.sms_mobile_worker_registration_enabled:
                 raise Http404()
             return self.paginate_crud_response
+
+
+class InvitationAppInfoView(View, DomainViewMixin):
+    urlname = 'sms_registration_invitation_app_info'
+
+    @property
+    @memoized
+    def token(self):
+        token = self.kwargs.get('token')
+        if not token:
+            raise Http404()
+        return token
+
+    @property
+    @memoized
+    def invitation(self):
+        invitation = SelfRegistrationInvitation.by_token(self.token)
+        if not invitation:
+            raise Http404()
+        return invitation
+
+    def get(self, *args, **kwargs):
+        if not self.invitation.odk_url:
+            raise Http404()
+        url = str(self.invitation.odk_url).strip()
+        response = 'ccapp: %s signature: %s' % (url, sign(url))
+        response = base64.b64encode(response)
+        return HttpResponse(response)
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)

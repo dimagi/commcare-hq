@@ -1,9 +1,10 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
-from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME
+from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME, CaseReminderHandler
 from corehq.apps.reports.commconnect import div, CommConnectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.graph_models import Axis, LineChart
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, WORKFLOW_REMINDER, WORKFLOW_BROADCAST
 from corehq.elastic import es_query, ES_URLS, es_histogram
 from dimagi.utils.couch.database import get_db
@@ -82,7 +83,7 @@ class SystemOverviewReport(BaseSystemOverviewReport):
                 number = len(facets[additional_workflow_facets[workflow][0]]["terms"])
             elif workflow == WORKFLOW_BROADCAST:
                 key = [self.domain, REMINDER_TYPE_ONE_TIME]
-                data = get_db().view('reminders/handlers_by_reminder_type',
+                data = CaseReminderHandler.get_db().view('reminders/handlers_by_reminder_type',
                     reduce=True,
                     startkey=key + [self.datespan.startdate_param_utc],
                     endkey=key + [self.datespan.enddate_param_utc],
@@ -155,14 +156,14 @@ class SystemUsersReport(BaseSystemOverviewReport):
 
         def verified_numbered_users(owner_type, ids=None, check_filters=False):
             if not ids and not check_filters:
-                data = get_db().view('sms/verified_number_by_domain',
+                data = VerifiedNumber.get_db().view('sms/verified_number_by_domain',
                     reduce=True,
                     startkey=[self.domain, owner_type],
                     endkey=[self.domain, owner_type, {}],
                 ).one()
                 return data["value"] if data else 0
             else:
-                owners = get_db().view('sms/verified_number_by_domain',
+                owners = VerifiedNumber.get_db().view('sms/verified_number_by_domain',
                     reduce=False,
                     startkey=[self.domain, owner_type],
                     endkey=[self.domain, owner_type, {}],

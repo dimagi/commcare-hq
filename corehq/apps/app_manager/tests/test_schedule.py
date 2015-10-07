@@ -13,10 +13,10 @@ from corehq.apps.app_manager.models import (
     FormActionCondition,
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
-class ScheduleTest(SimpleTestCase, TestFileMixin):
+class ScheduleTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):

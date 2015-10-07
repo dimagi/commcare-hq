@@ -128,14 +128,14 @@ class AWCHealthStatus(object):
          _("Registered Children (24 months old) who have "
            "attended at least one growth monitoring session between the age 22-24 months"),
          'child_22_24_months'),
-        ('ors_received',
-         _("Received ORS and Zinc treatment for diarrhoea"),
-         _("Registered children who received ORS and Zinc treatment if he/she contracts diarrhoea"),
-         'has_diarhea'),
         ('incidence_of_diarrhea',
          _("Incidence of diarrhea"),
          _("Incidence of diarrhea"),
          'beneficiaries'),
+        ('ors_received',
+         _("Received ORS and Zinc treatment for diarrhoea"),
+         _("Registered children who received ORS and Zinc treatment if he/she contracts diarrhoea"),
+         'has_diarhea'),
         ('child_breastfed',
          _("Exclusively breastfed for first 6 months"),
          _("Registered children (6 months old) who have been exclusively breastfed for first 6 months"),
@@ -247,9 +247,7 @@ class AWCHealthStatus(object):
     @property
     @memoized
     def beneficiaries(self):
-        # if len(self.all_cases) != self.pregnancies + self.children:
-            # raise ValueError("Hey wait a sec, that doesn't make sense!")
-        return len(self.all_cases)
+        return self.pregnancies + self.children
 
     @property
     @memoized

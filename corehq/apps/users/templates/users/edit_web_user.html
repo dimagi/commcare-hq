@@ -13,11 +13,13 @@
                 <dt>{% trans 'Username' %}</dt>
                 <dd>{{ couch_user.html_username|safe }}</dd>
                 {% for field in form_uneditable.visible_fields %}
+                {% if couch_user|getattr:field.name %}
                 <dt>{{ field.label }}</dt>
                 <dd class="hq-dd-userinfo">{{ couch_user|getattr:field.name }}</dd>
+                {% endif %}
                 {% endfor %}
-                <dt>{% trans 'Phone Numbers' %}</dt>
                 {% if phonenumbers %}
+                <dt>{% trans 'Phone Numbers' %}</dt>
                 <dd>
                     <ul>
                         {% for phonenumber in phonenumbers %}

@@ -6,6 +6,7 @@ from corehq.apps.sms.views import (
     EditDomainGatewayView,
     SMSSettingsView,
     ManageRegistrationInvitationsView,
+    InvitationAppInfoView,
 )
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
@@ -30,7 +31,8 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
     url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
     url(r'^chat_contact_list/$', 'chat_contact_list', name='chat_contact_list'),
-    url(r'^chat/(?P<contact_id>[\w-]+)/$', 'chat', name='sms_chat'),
+    url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
+    url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),
     url(r'^api/history/$', 'api_history', name='api_history'),
     url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
     url(r'^settings/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
@@ -41,6 +43,8 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^translations/upload/$', 'upload_sms_translations', name='upload_sms_translations'),
     url(r'^invitations/$', ManageRegistrationInvitationsView.as_view(),
         name=ManageRegistrationInvitationsView.urlname),
+    url(r'^app_info/(?P<token>[\w-]+)/$', InvitationAppInfoView.as_view(),
+        name=InvitationAppInfoView.urlname),
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',

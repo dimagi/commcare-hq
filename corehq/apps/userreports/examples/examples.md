@@ -291,6 +291,48 @@ In the example below, the indicator is inside a form group question called "impa
 }
 ```
 
+## Getting the parent case ID from a case
+
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "array_index",
+        "array_expression": {
+            "type": "property_name",
+            "property_name": "indices"
+        },
+        "index_expression": {
+            "type": "constant",
+            "constant": 0
+        }
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "referenced_id"
+    }
+}
+```
+
+## Getting the location type from a location doc id
+
+`location_id_expression` can be any expression that evaluates to a valid location id.
+
+```json
+{
+    "datatype":"string",
+    "type":"expression",
+    "expression": {
+        "type": "location_type_name",
+        "location_id_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+        }
+    },
+    "column_id": "district",
+}
+```
+
 # Base Item Expressions
 
 ## Emit multiple rows (one per non-empty case property)

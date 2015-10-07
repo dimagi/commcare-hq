@@ -1,4 +1,5 @@
 import copy
+from datetime import date, datetime
 from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
@@ -75,7 +76,14 @@ class PropertyExpressionTest(SimpleTestCase):
             (Decimal("5.3"), "decimal", "5.3"),
             ("5", "string", "5"),
             ("5", "string", 5),
-            (u"fo\u00E9", "string", u"fo\u00E9")
+            (u"fo\u00E9", "string", u"fo\u00E9"),
+            (date(2015, 9, 30), "date", "2015-09-30"),
+            (None, "date", "09/30/2015"),
+            (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30T19:04:27Z"),
+            (datetime(2015, 9, 30, 19, 4, 27, 113609), "datetime", "2015-09-30T19:04:27.113609Z"),
+            (None, "datetime", "2015-09-30 19:04:27Z"),
+            (None, "date", "2015-09-30T19:04:27Z"),
+            (None, "datetime", "2015-09-30"),
         ]:
             getter = ExpressionFactory.from_spec({
                 'type': 'property_name',
@@ -288,6 +296,60 @@ class ArrayIndexExpressionTest(SimpleTestCase):
 
     def test_empty_index(self):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
+
+
+class NestedExpressionTest(SimpleTestCase):
+
+    def test_basic(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "nested",
+            "argument_expression": {
+                "type": "property_name",
+                "property_name": "outer"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "inner"
+            }
+        })
+        self.assertEqual('value', expression({
+            "outer": {
+                "inner": "value",
+            }
+        }))
+
+    def test_parent_case_id(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "nested",
+            "argument_expression": {
+                "type": "array_index",
+                "array_expression": {
+                    "type": "property_name",
+                    "property_name": "indices"
+                },
+                "index_expression": {
+                    "type": "constant",
+                    "constant": 0
+                }
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "referenced_id"
+            }
+        })
+        self.assertEqual(
+            'my_parent_id',
+            expression({
+                "indices": [
+                    {
+                        "doc_type": "CommCareCaseIndex",
+                        "identifier": "parent",
+                        "referenced_type": "pregnancy",
+                        "referenced_id": "my_parent_id"
+                    }
+                ],
+            })
+        )
 
 
 class IteratorExpressionTest(SimpleTestCase):

@@ -1,0 +1,6 @@
+{% load hq_shared_tags %}
+
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+<script type="text/javascript">
+    new COMMCAREHQ.AsyncDownloader($("#{{element_id}}"), "{{download_url}}");
+</script>

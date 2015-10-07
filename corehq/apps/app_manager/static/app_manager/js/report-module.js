@@ -2,15 +2,6 @@
 //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
 var select2Separator = "\u001F";
 
-var makeUUID = function () {
-    var str = '';
-    // Composed of two 16-char strings
-    for(var i = 0; i < 2; i++) {
-        str += Math.random().toString(36).substring(2);
-    }
-    return str;
-};
-
 var ReportModule = (function () {
     function Config(dict) {
         var self = this;
@@ -224,7 +215,7 @@ var ReportModule = (function () {
         this.fullDisplay = display || {};
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
-        this.uuid = uuid || makeUUID();
+        this.uuid = uuid;
         this.reportId = ko.observable(report_id);
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);

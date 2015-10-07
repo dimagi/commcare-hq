@@ -389,8 +389,8 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_knockout_js())
+    @use_bootstrap3
+    @use_knockout_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
@@ -811,7 +811,7 @@ def make_phone_number_default(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.set_default_phone_number(phone_number)
     from corehq.apps.users.views.mobile import EditCommCareUserView
@@ -828,7 +828,7 @@ def delete_phone_number(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
     from corehq.apps.users.views.mobile import EditCommCareUserView
@@ -843,7 +843,7 @@ def verify_phone_number(request, domain, couch_user_id):
     but it can be passed as %-encoded GET parameters
     """
     if 'phone_number' not in request.GET:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
@@ -916,27 +916,6 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
 @login_and_domain_required
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
-
-
-@require_superuser
-def audit_logs(request, domain):
-    usernames = [user.username for user in WebUser.by_domain(domain)]
-    data = {}
-    for username in usernames:
-        data[username] = []
-        for doc in get_db().view('auditcare/urlpath_by_user_date',
-            startkey=[username],
-            endkey=[username, {}],
-            include_docs=True,
-            wrapper=lambda r: r['doc']
-        ).all():
-            try:
-                (d,) = re.search(r'^/a/([\w\-_\.]+)/', doc['request_path']).groups()
-                if d == domain:
-                    data[username].append(doc)
-            except Exception:
-                pass
-    return json_response(data)
 
 
 @domain_admin_required
