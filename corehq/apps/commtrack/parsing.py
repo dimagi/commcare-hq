@@ -51,12 +51,13 @@ from collections import namedtuple
 from decimal import Decimal
 import logging
 import datetime
+from django.utils.translation import ugettext as _
+from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
-from corehq.apps.commtrack.models import StockReportHelper, \
-    StockTransactionHelper
+from corehq.apps.commtrack.models import StockReportHelper, StockTransactionHelper
 from couchforms.models import XFormInstance
 from couchforms.util import adjust_datetimes
 from xml2json.lib import convert_xml_to_json
@@ -162,7 +163,8 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
         def get_transaction_helpers(ledger_instruction):
             src = ledger_instruction.src
             dest = ledger_instruction.dest
-            assert src or dest
+            if not (src or dest):
+                raise IllegalCaseId(_("Can't specify a transaction block with no src or dest case"))
             if src is not None:
                 yield make_transaction_helper(
                     ledger_instruction,

@@ -235,6 +235,9 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
+                        column.isCaseName = ko.computed(function () {
+                            return ko.utils.unwrapObservable(column.special) === 'case_name';
+                        });
                         column.showOptions = ko.observable(false);
                         column.newOption = ko.observable("");
                         column.addOption = function(e) {
@@ -302,9 +305,9 @@
                             display: table.display,
                             index: table.index,
                             columns: _(table.column_configuration()).filter(function (column) {
-                                return column.selected();
+                                return column.selected() && !(column.isCaseName() && self.custom_export.is_safe());
                             }).map(function (column) {
-                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special)),
+                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special )),
                                     col = {
                                         index: column.index,
                                         display: column.display,
@@ -618,7 +621,18 @@
                                         <td class="sortable-handle">
                                             <i class="icon-resize-vertical"></i>
                                         </td>
-                                        <td><input type="checkbox" class="field-include" data-bind="checked: selected" /></td>
+                                        <td>
+                                            <!--ko if: ($root.custom_export.is_safe() && isCaseName()) -->
+                                            <input type="checkbox"
+                                                   class="field-include"
+                                                   disabled="disabled" />
+                                            <!--/ko-->
+                                            <!--ko ifnot: ($root.custom_export.is_safe() && isCaseName()) -->
+                                            <input type="checkbox"
+                                                   class="field-include"
+                                                   data-bind="checked: selected" />
+                                            <!--/ko-->
+                                        </td>
                                         <td>
                                             <span data-bind="foreach: _niceField.tags">
                                                 <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
@@ -660,10 +674,15 @@
                                             <select data-bind="
                                                 value: transform || '',
                                                 foreach: $root.deid_options,
-                                                visible: index() !== 'id' || transform()
+                                                visible: (index() !== 'id' || transform()) && !isCaseName()
                                             ">
                                                 <option data-bind="value: value, text: label"></option>
                                             </select>
+
+                                            <span class="label label-info"
+                                                  data-bind="visible: $root.custom_export.is_safe() && isCaseName()">
+                                                {% trans "Cannot be published in De-Identified Export." %}
+                                            </span>
                                         </td>
                                         {% endif %}
                                     </tr>

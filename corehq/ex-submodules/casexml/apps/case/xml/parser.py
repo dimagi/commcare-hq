@@ -78,7 +78,7 @@ class CaseActionBase(object):
                 # normalize these by taking the last item
                 return val[-1]
             return val
-        
+
         kwargs = {}
         dynamic_properties = {}
         # if not a dict, it's probably an empty close block
@@ -196,10 +196,11 @@ class CaseIndex(object):
     """
     A class that holds an index to a case.
     """
-    def __init__(self, identifier, referenced_type, referenced_id):
+    def __init__(self, identifier, referenced_type, referenced_id, relationship='child'):
         self.identifier = identifier
         self.referenced_type = referenced_type
         self.referenced_id = referenced_id
+        self.relationship = relationship
     
 class CaseIndexAction(CaseActionBase):
     """
@@ -225,7 +226,8 @@ class CaseIndexAction(CaseActionBase):
         for id, data in block.items():
             if "@case_type" not in data:
                 raise CaseGenerationException("Invalid index, must have a case type attribute.")
-            indices.append(CaseIndex(id, data["@case_type"], data.get("#text", "")))
+            indices.append(CaseIndex(id, data["@case_type"], data.get("#text", ""),
+                                     data.get("@relationship", 'child')))
         return cls(block, indices)
     
 

@@ -21,6 +21,20 @@ def set_migration_started(domain):
         )
 
 
+def set_migration_not_started(domain):
+    progress, _ = TimezoneMigrationProgress.objects.get_or_create(pk=domain)
+    if progress.migration_status == MigrationStatus.IN_PROGRESS:
+        progress.migration_status = MigrationStatus.NOT_STARTED
+        progress.save()
+        # reset cache
+        get_migration_status(domain, strict=True)
+    else:
+        raise TimezoneMigrationProgressError(
+            'Cannot abort a migration that is in state {}'
+            .format(progress.migration_status)
+        )
+
+
 def set_migration_complete(domain):
     progress, _ = TimezoneMigrationProgress.objects.get_or_create(pk=domain)
     if progress.migration_status != MigrationStatus.COMPLETE:

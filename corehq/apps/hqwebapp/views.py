@@ -6,7 +6,6 @@ import os
 import re
 import sys
 import traceback
-import uuid
 
 from django.conf import settings
 from django.contrib import messages
@@ -33,6 +32,7 @@ from django.template.context import RequestContext
 from restkit import Resource
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
@@ -53,7 +53,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
-from couchforms.models import XFormInstance
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
@@ -77,10 +76,11 @@ def couch_check():
     # work, and if other error handling allows the request to get this far.
 
     try:
-        xforms = XFormInstance.view('reports_forms/all_forms', limit=1).all()
-    except:
-        xforms = None
-    return (isinstance(xforms, list), None)
+        results = Application.view('app_manager/builds_by_date', limit=1).all()
+    except Exception:
+        return False, None
+    else:
+        return isinstance(results, list), None
 
 
 def celery_check():
@@ -130,7 +130,7 @@ def hb_check():
 
 def redis_check():
     try:
-        redis = cache.get_cache('redis')
+        redis = cache.caches['redis']
         result = redis.set('serverup_check_key', 'test')
     except (InvalidCacheBackendError, ValueError):
         result = True  # redis not in use, ignore
@@ -343,6 +343,7 @@ def _login(req, domain_name, template_name):
             'domain': domain_name,
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
+            'allow_domain_requests': domain.allow_domain_requests,
         })
 
     authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
@@ -987,21 +988,15 @@ def quick_find(request):
         else:
             return json_response(doc_info)
 
-    try:
-        doc = get_db().get(query)
-    except ResourceNotFound:
-        pass
+    for db_name in (None, 'users', 'receiverwrapper', 'meta'):
+        try:
+            doc = get_db(db_name).get(query)
+        except ResourceNotFound:
+            pass
+        else:
+            return deal_with_couch_doc(doc)
     else:
-        return deal_with_couch_doc(doc)
-
-    try:
-        doc = Repeater.get_db().get(query)
-    except ResourceNotFound:
-        pass
-    else:
-        return deal_with_couch_doc(doc)
-
-    raise Http404()
+        raise Http404()
 
 
 def osdd(request, template='osdd.xml'):

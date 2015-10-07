@@ -8,8 +8,8 @@ from corehq.apps.reports.models import FormExportSchema
 from corehq.elastic import stream_es_query
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 import couchexport
-from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables, export_raw
-from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
+from couchexport.export import get_headers, get_writer, export_raw, get_formatted_rows
+from couchexport.models import DefaultExportSchema, Format, SavedExportSchema
 from couchexport.util import SerializableFunction
 
 from soil import DownloadBase
@@ -60,9 +60,9 @@ class BulkExport(object):
                 for doc in config.get_docs():
                     if self.export_objects[i].transform:
                         doc = self.export_objects[i].transform(doc)
-                    table = format_tables(create_intermediate_tables(doc, schemas[i]),
-                                          include_headers=isinstance(self, CustomBulkExport),
-                                          separator=self.separator)
+                    table = get_formatted_rows(
+                        doc, schemas[i], separator=self.separator,
+                        include_headers=isinstance(self, CustomBulkExport))
                     if isinstance(self, CustomBulkExport):
                         table = self.export_objects[i].trim(table, doc)
                     table = self.export_objects[i].parse_tables(table)
@@ -136,8 +136,9 @@ class ApplicationBulkExport(BulkExport):
             return []
         self.export_objects = []
         for schema_index in export_tags:
-            self.export_objects.append(FakeSavedExportSchema(index=schema_index,
-                                                             filter_function=SerializableFunction()))
+            self.export_objects.append(
+                DefaultExportSchema(index=schema_index,
+                                    filter_function=SerializableFunction()))
 
     def generate_table_headers(self, schemas, checkpoints):
         headers = []

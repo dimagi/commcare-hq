@@ -1,7 +1,7 @@
 import json
 import warnings
 from django.utils.translation import ugettext as _
-from jsonobject.exceptions import BadValueError
+from jsonobject.exceptions import BadValueError, WrappingAttributeError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.specs import (PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec,
     BooleanExpressionFilterSpec)
@@ -74,7 +74,7 @@ class FilterFactory(object):
         cls.validate_spec(spec)
         try:
             return cls.constructor_map[spec['type']](spec, context)
-        except (AssertionError, BadValueError) as e:
+        except (AssertionError, BadValueError, WrappingAttributeError) as e:
             raise BadSpecError(_('Problem creating filter from spec: {}, message is {}').format(
                 json.dumps(spec, indent=2),
                 str(e),

@@ -21,8 +21,10 @@
     {% block mobile-footer %}
     <footer>
         <small>{% trans "CommCare HQ Mobile is Copyright" %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></small>
+        {% block mobile-logout %}
         <br>
         <small><a href="{% url "logout" %}">{% trans "Logout" %}</a></small>
+        {% endblock %}
     </footer>
     {% endblock %}
 </div>

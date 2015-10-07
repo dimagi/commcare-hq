@@ -47,9 +47,17 @@ class LocationForm(forms.Form):
         required=False,
         widget=ParentLocWidget(),
     )
-    name = forms.CharField(max_length=100)
-    location_type = forms.CharField(widget=LocTypeWidget(), required=False)
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=100,
+    )
+    location_type = forms.CharField(
+        label=_('Organization Level'),
+        required=False,
+        widget=LocTypeWidget(),
+    )
     coordinates = forms.CharField(
+        label=_('Coordinates'),
         max_length=30,
         required=False,
         help_text=_("enter as 'lat lon' or 'lat, lon' "
@@ -78,6 +86,8 @@ class LocationForm(forms.Form):
 
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
+        if not self.is_new_location:
+            kwargs['initial']['location_type'] = self.location.location_type
         kwargs['initial']['parent_id'] = self.location.parent_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))

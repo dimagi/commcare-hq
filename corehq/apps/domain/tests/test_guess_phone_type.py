@@ -1,10 +1,10 @@
 from django.test import SimpleTestCase
-from corehq.apps.domain.decorators import J2ME, guess_phone_type_from_user_agent, ANDROID
+from corehq.apps.domain.auth import J2ME, ANDROID, determine_authtype_from_request, guess_phone_type_from_user_agent
 
 
 class TestPhoneType(SimpleTestCase):
 
-    def testJavaUserAgents(self):
+    def test_java_user_agents(self):
         corpus = [
             # observed from c2 submission
             'NokiaC2-01/5.0 (11.10) Profile/MIDP-2.1 Configuration/CLDC-1.1 Profile/MIDP-2.0 Configuration/CLDC-1.1',
@@ -111,7 +111,7 @@ class TestPhoneType(SimpleTestCase):
         for java_agent in corpus:
             self.assertEqual(J2ME, guess_phone_type_from_user_agent(java_agent), 'j2me user agent detection failed for {}'.format(java_agent))
 
-    def testAnroidUserAgents(self):
+    def test_android_user_agents(self):
         corpus = [
             # http://www.zytrax.com/tech/web/mobile_ids.html
             # android like things
@@ -133,6 +133,43 @@ class TestPhoneType(SimpleTestCase):
         for android_agent in corpus:
             self.assertEqual(ANDROID, guess_phone_type_from_user_agent(android_agent), 'android user agent detection failed for {}'.format(android_agent))
 
-    def testDefaultIsAndroid(self):
+    def test_default_is_none(self):
         for empty in [None, '']:
-            self.assertEqual(ANDROID, guess_phone_type_from_user_agent(empty))
+            self.assertEqual(None, guess_phone_type_from_user_agent(empty))
+
+
+class TestDetermineAuthType(SimpleTestCase):
+
+    @staticmethod
+    def _mock_request(user_agent='', auth_header=''):
+        class FakeRequest(object):
+            def __init__(self, user_agent, auth_header):
+                self.META = {
+                    'HTTP_USER_AGENT': user_agent,
+                    'HTTP_AUTHORIZATION': auth_header,
+                }
+                self.GET = self.POST = {}
+
+        return FakeRequest(user_agent, auth_header)
+
+    def test_basic_is_default(self):
+        self.assertEqual('basic', determine_authtype_from_request(self._mock_request()))
+
+    def test_override_default(self):
+        self.assertEqual('digest', determine_authtype_from_request(self._mock_request(), default='digest'))
+
+    def test_digest_header_overrides_default(self):
+        self.assertEqual('digest',
+                         determine_authtype_from_request(self._mock_request(auth_header='Digest whatever')))
+
+    def test_basic_header_overrides_default(self):
+        self.assertEqual('basic',
+                         determine_authtype_from_request(self._mock_request(auth_header='Basic whatever'),
+                                                         default='digest'))
+
+    def test_user_agent_beats_header(self):
+        # todo: we may want to change the behavior of this test and have the header win.
+        # this is currently just to make sure we don't change existing behavior
+        self.assertEqual('basic',
+                         determine_authtype_from_request(self._mock_request(user_agent='Android',
+                                                                            auth_header='Digest whatever')))

@@ -3,14 +3,15 @@ import uuid
 from django.test import TestCase
 
 from corehq.apps.userreports import tasks
-from corehq import ConfigurableReport, ReportConfiguration, Session
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
+from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.db import Session
 
 
 class ConfigurableReportViewTest(TestCase):

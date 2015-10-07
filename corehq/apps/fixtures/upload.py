@@ -7,7 +7,6 @@ from django.core.validators import ValidationError
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureTypeField, FixtureDataType, FixtureDataItem, FixtureItemField, \
     FieldList
-from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.util.spreadsheets.excel import WorksheetNotFound, \
@@ -240,6 +239,7 @@ def get_memoized_location(domain):
 
 
 def run_upload(domain, workbook, replace=False, task=None):
+    from corehq.apps.users.bulkupload import GroupMemoizer
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
     get_location = get_memoized_location(domain)

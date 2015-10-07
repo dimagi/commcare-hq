@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.api.urls import CommCareHqApi
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
-from custom.ewsghana.views import EWSConfigView, EWSGlobalStats, RemindersTester, InputStockView
+from custom.ewsghana.views import EWSConfigView, EWSGlobalStats, InputStockView
 
 hq_api = CommCareHqApi(api_name='v0.3')
 hq_api.register(EWSLocationResource())
@@ -18,7 +18,6 @@ urlpatterns = patterns('custom.ewsghana.views',
     url(r'^ews_resync_web_users/$', 'ews_resync_web_users', name='ews_resync_web_users'),
     url(r'^inventory_managment/$', 'inventory_management', name='inventory_managment'),
     url(r'^stockouts_product/$', 'stockouts_product', name='stockouts_product'),
-    url(r'^reminder_test/(?P<phone_number>\d+)/$', RemindersTester.as_view(), name='reminders_tester'),
     url(r'^ews_fix_locations/$', 'ews_fix_locations', name='ews_fix_locations'),
     url(r'^ews_add_products_to_locs/$', 'ews_add_products_to_locs', name='ews_add_products_to_locs'),
     url(r'^clear_products/$', 'clear_products', name='clear_products'),

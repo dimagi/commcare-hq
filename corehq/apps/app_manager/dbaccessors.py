@@ -22,10 +22,11 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     (Application or RemoteApp).
 
     """
+    from .models import Application
 
     if latest:
         try:
-            original_app = get_db().get(app_id)
+            original_app = Application.get_db().get(app_id)
         except ResourceNotFound:
             raise Http404()
         if not domain:
@@ -52,7 +53,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
             endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
 
-        latest_app = get_db().view(
+        latest_app = Application.get_db().view(
             couch_view,
             startkey=startkey,
             endkey=endkey,
@@ -105,3 +106,19 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
     remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
     wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
     return filter(remote_app_filter, wrapped_apps)
+
+
+def get_built_app_ids(domain):
+    """
+    Returns the app ids of all apps in the domain that have at least one build.
+    """
+    from .models import Application
+    result = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+    )
+    app_ids = [data.get('value', {}).get('copy_of') for data in result]
+    app_ids = list(set(app_ids))
+    return [app_id for app_id in app_ids if app_id]

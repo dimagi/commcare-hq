@@ -5,7 +5,7 @@ from django.test.utils import override_settings
 from jsonobject import JsonObject
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType, SimplifiedSyncAssertionError
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
     CaseState
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -210,11 +210,13 @@ class TestNewSyncSpecifics(TestCase):
         ], form_extras={'last_sync_token': sync_log._id})
 
         # doing it again should fail since they are no longer relevant
-        with self.assertRaises(SimplifiedSyncAssertionError):
-            factory.create_or_update_cases([
-                CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
-                CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
-            ], form_extras={'last_sync_token': sync_log._id})
+
+        # todo: add this back in when we add the assertion back. see SimplifiedSyncLog.prune_case
+        # with self.assertRaises(SimplifiedSyncAssertionError):
+        #     factory.create_or_update_cases([
+        #         CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
+        #         CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
+        #     ], form_extras={'last_sync_token': sync_log._id})
 
         # enabling the toggle should prevent the failure the second time
         # though we also need to hackily set the request object in the threadlocals

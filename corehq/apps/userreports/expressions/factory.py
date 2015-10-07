@@ -5,7 +5,8 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
-    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec
+    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
+    NestedExpressionSpec
 
 
 def _make_filter(spec, context):
@@ -45,6 +46,15 @@ def _switch_expression(spec, context):
     return wrapped
 
 
+def _array_index_expression(spec, context):
+    wrapped = ArrayIndexExpressionSpec.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.array_expression, context),
+        ExpressionFactory.from_spec(wrapped.index_expression, context),
+    )
+    return wrapped
+
+
 def _root_doc_expression(spec, context):
     wrapped = RootDocExpressionSpec.wrap(spec)
     wrapped.configure(ExpressionFactory.from_spec(wrapped.expression, context))
@@ -70,6 +80,15 @@ def _iterator_expression(spec, context):
     return wrapped
 
 
+def _nested_expression(spec, context):
+    wrapped = NestedExpressionSpec.wrap(spec)
+    wrapped.configure(
+        argument_expression=ExpressionFactory.from_spec(wrapped.argument_expression),
+        value_expression=ExpressionFactory.from_spec(wrapped.value_expression),
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -77,10 +96,12 @@ class ExpressionFactory(object):
         'property_name': _property_name_expression,
         'property_path': _property_path_expression,
         'conditional': _conditional_expression,
+        'array_index': _array_index_expression,
         'root_doc': _root_doc_expression,
         'related_doc': _related_doc_expression,
         'iterator': _iterator_expression,
         'switch': _switch_expression,
+        'nested': _nested_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

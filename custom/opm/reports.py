@@ -17,7 +17,7 @@ import urllib
 from dateutil import parser
 from dateutil.rrule import MONTHLY, rrule
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
@@ -256,7 +256,7 @@ class SharedDataProvider(object):
 
     def get_all_vhnd_forms(self):
         key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
-        return get_db().view(
+        return XFormInstance.get_db().view(
             'reports_forms/all_forms',
             startkey=key,
             endkey=key+[{}],
@@ -579,6 +579,12 @@ class CaseReportMixin(object):
     @property
     @memoized
     def cases(self):
+        if 'debug_case' in self.request.GET:
+            case = CommCareCase.get(self.request.GET['debug_case'])
+            if case.domain != DOMAIN:
+                raise Http404()
+            return [case]
+
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
@@ -746,6 +752,7 @@ class MetReport(CaseReportMixin, BaseReport):
                     case_row.five = ''
                     case_row.pay = '--'
                     case_row.payment_last_month = '--'
+                    case_row.cash = '--'
                     case_row.issue = _('Reporting period incomplete')
                     rows.append(case_row)
             except InvalidRow as e:

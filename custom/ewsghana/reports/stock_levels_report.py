@@ -8,7 +8,7 @@ from django.utils.timesince import timesince
 from math import ceil
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.es import UserES
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn

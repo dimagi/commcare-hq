@@ -11,16 +11,19 @@ from restkit.errors import NoMoreData
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
+from corehq.elastic import es_wrapper
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
@@ -541,6 +544,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
+    def add_as_web_user(self, domain, role, location_id=None, program_id=None):
+        project = Domain.get_by_name(domain)
+        self.add_domain_membership(domain=domain)
+        self.set_role(domain, role)
+        if project.commtrack_enabled:
+            self.get_domain_membership(domain).program_id = program_id
+        if project.uses_locations:
+            self.get_domain_membership(domain).location_id = location_id
+        self.save()
+
     def delete_domain_membership(self, domain, create_record=False):
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
@@ -1027,6 +1040,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return CouchUser.view("users/by_username", include_docs=True, reduce=False)
 
     @classmethod
+    def username_exists(cls, username):
+        reduced = cls.view('users/by_username', key=username, reduce=True).all()
+        if reduced:
+            return reduced[0]['value'] > 0
+        return False
+
+    @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
         flag = "active" if is_active else "inactive"
         doc_type = doc_type or cls.__name__
@@ -1251,16 +1271,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def save(self, **params):
         self.clear_quickcache_for_user()
-        # test no username conflict
-        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
-        if by_username and by_username['id'] != self._id:
-            raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
+        with CriticalSection(['username-check-%s' % self.username], timeout=120):
+            # test no username conflict
+            by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
+            if by_username and by_username['id'] != self._id:
+                raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-        if not self.to_be_deleted():
-            django_user = self.sync_to_django_user()
-            django_user.save()
+            if not self.to_be_deleted():
+                django_user = self.sync_to_django_user()
+                django_user.save()
 
-        super(CouchUser, self).save(**params)
+            super(CouchUser, self).save(**params)
 
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
@@ -1533,21 +1554,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def add_commcare_account(self, domain, device_id, user_data=None):
-        """
-        Adds a commcare account to this.
-        """
-        if self.domain and self.domain != domain:
-            raise self.Inconsistent("Tried to reinitialize commcare account to a different domain")
-        self.domain = domain
-        self.registering_device_id = device_id
-        self.user_data = user_data or {}
-        self.add_device_id(device_id=device_id)
-
-    def add_device_id(self, device_id, default=False, **kwargs):
-        """ Don't add phone devices if they already exist """
-        self.device_ids = _add_to_list(self.device_ids, device_id, default)
-
     def to_casexml_user(self):
         user = CaseXMLUser(
             user_id=self.userID,
@@ -1570,7 +1576,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_forms(self, deleted=False, wrap=True, include_docs=False):
         if deleted:
-            view_name = 'users/deleted_forms_by_user'
+            view_name = 'deleted_data/deleted_forms_by_user'
             startkey = [self.user_id]
         else:
             view_name = 'reports_forms/all_forms'
@@ -1605,7 +1611,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def _get_deleted_cases(self):
         case_ids = [r["id"] for r in CommCareCase.get_db().view(
-            'users/deleted_cases_by_user',
+            'deleted_data/deleted_cases_by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
@@ -1627,32 +1633,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         return CaseData.objects.filter(user_id=self._id).count()
 
-    def location_group_ids(self):
-        """
-        Return generated ID's that represent the virtual
-        groups used to send location data in the restore
-        payload.
-        """
-        def get_sharing_id(loc):
-            return loc.case_sharing_group_object(self._id)._id
-
-        if self.sql_location.location_type.view_descendants:
-            locs = (self.sql_location.get_descendants(include_self=True)
-                                     .filter(location_type__shares_cases=True))
-            return map(get_sharing_id, locs)
-        elif self.sql_location.location_type.shares_cases:
-            return [get_sharing_id(self.sql_location)]
-        else:
-            return []
-
     def get_owner_ids(self):
-        from corehq.apps.groups.models import Group
-
         owner_ids = [self.user_id]
-        owner_ids.extend(Group.by_user(self, wrap=False))
-
-        if self.project.uses_locations and self.location:
-            owner_ids.extend(self.location_group_ids())
+        owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
     def retire(self):
@@ -1701,19 +1684,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
-        # get faked location group object
+        # get faked location group objects
         groups = []
-        if self.location and self.location.location_type_object.shares_cases:
-            if self.location.location_type_object.view_descendants:
-                for loc in self.sql_location.get_descendants():
-                    groups.append(loc.case_sharing_group_object(
-                        self._id,
-                    ))
-
-            groups.append(self.sql_location.case_sharing_group_object(self._id))
+        if self.sql_location:
+            groups.extend(self.sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
-
         return groups
 
     @classmethod
@@ -1844,14 +1820,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
 
     @property
-    def _locations(self):
+    def locations(self):
         """
-        Hidden access to a users delgate location list.
+        This method is only used for domains with the multiple
+        locations per user flag set. It will error if you try
+        to call it on a normal domain.
+        """
+        if not self.project.supports_multiple_locations_per_user:
+            raise InvalidLocationConfig(
+                "Attempting to access multiple locations for a user in a domain that does not support this."
+            )
 
-        Should be removed (and this code moved back under
-        self.location) sometime after migration and things
-        are settled.
-        """
         from corehq.apps.locations.models import Location
         from corehq.apps.commtrack.models import SupplyPointCase
 
@@ -1874,20 +1853,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 yield Location.wrap(doc)
 
         return list(_gen())
-
-    @property
-    def locations(self):
-        """
-        This method is only used for domains with the multiple
-        locations per user flag set. It will error if you try
-        to call it on a normal domain.
-        """
-        if not self.project.supports_multiple_locations_per_user:
-            raise InvalidLocationConfig(
-                "Attempting to access multiple locations for a user in a domain that does not support this."
-            )
-
-        return self._locations
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
@@ -2320,6 +2285,14 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
                 yield web_user
 
     @classmethod
+    def get_users_by_permission(cls, domain, permission):
+        user_ids = cls.ids_by_domain(domain)
+        for user_doc in iter_docs(cls.get_db(), user_ids):
+            web_user = cls.wrap(user_doc)
+            if web_user.has_permission(domain, permission):
+                yield web_user
+
+    @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
@@ -2347,7 +2320,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         loc_id = self.get_location_id(domain)
         if loc_id:
             try:
-                return SQLLocation.objects.get(loc_id)
+                return SQLLocation.objects.get(location_id=loc_id)
             except SQLLocation.DoesNotExist:
                 pass
         return None
@@ -2410,9 +2383,56 @@ class InvalidUser(FakeUser):
     def is_member_of(self, domain_qs):
         return False
 
+
 #
 # Django  models go here
 #
+class DomainRequest(models.Model):
+    '''
+    Request to join domain. Requester might or might not already have an account.
+    '''
+    email = models.CharField(max_length=100, db_index=True)
+    full_name = models.CharField(max_length=100, db_index=True)
+    is_approved = models.BooleanField(default=False)
+    domain = models.CharField(max_length=255, db_index=True)
+
+    @classmethod
+    def by_domain(cls, domain, is_approved=False):
+        return DomainRequest.objects.filter(domain=domain)
+
+    @classmethod
+    def by_email(cls, domain, email, is_approved=False):
+        return DomainRequest.by_domain(domain, is_approved).filter(email=email).first()
+
+    def send_approval_email(self):
+        domain_name = Domain.get_by_name(self.domain).display_name()
+        params = {
+            'domain_name': domain_name,
+            'url': absolute_reverse("domain_homepage", args=[self.domain]),
+        }
+        text_content = render_to_string("users/email/new_domain_request.txt", params)
+        html_content = render_to_string("users/email/new_domain_request.html", params)
+        subject = _('Request to join %s approved') % domain_name
+        send_html_email_async.delay(subject, self.email, html_content, text_content=text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+    def send_request_email(self):
+        domain_name = Domain.get_by_name(self.domain).display_name()
+        params = {
+            'full_name': self.full_name,
+            'email': self.email,
+            'domain_name': domain_name,
+            'url': absolute_reverse("web_users", args=[self.domain]),
+        }
+        recipients = {u.get_email() for u in
+            WebUser.get_users_by_permission(self.domain, 'edit_web_users')}
+        text_content = render_to_string("users/email/request_domain_access.txt", params)
+        html_content = render_to_string("users/email/request_domain_access.html", params)
+        subject = _('Request from %s to join %s') % (self.full_name, domain_name)
+        send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+
+
 class Invitation(Document):
     email = StringProperty()
     invited_by = StringProperty()
@@ -2451,9 +2471,16 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                                args=[self.domain, self.get_id])
         params = {"domain": self.domain, "url": url, 'days': remaining_days,
                   "inviter": self.get_inviter().formatted_name}
-        text_content = render_to_string("domain/email/domain_invite.txt", params)
-        html_content = render_to_string("domain/email/domain_invite.html", params)
-        subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+
+        domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
+        if domain_request is None:
+            text_content = render_to_string("domain/email/domain_invite.txt", params)
+            html_content = render_to_string("domain/email/domain_invite.html", params)
+            subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+        else:
+            text_content = render_to_string("domain/email/domain_request_approval.txt", params)
+            html_content = render_to_string("domain/email/domain_request_approval.html", params)
+            subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[self.get_inviter().get_email()],

@@ -2,6 +2,7 @@
     "domains": ["up-nrhm"],
     "config": {
         "referenced_doc_type": "CommCareUser",
+        "engine_id": "default",
         "table_id": "location_hierarchy",
         "display_name": "Location Hierarchy",
         "configured_filter":  {

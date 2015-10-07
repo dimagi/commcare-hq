@@ -7,6 +7,8 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_TERMINATED,
     SCHEDULE_MAX_DATE,
     SCHEDULE_DATE_CASE_OPENED,
+    SCHEDULE_NEXT_DUE,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
@@ -393,23 +395,16 @@ class ScheduleFormXPath(object):
     def first_visit_phase_set(self):
         """
         returns the first due date if the case hasn't been visited yet.
-        if the first due date has passed, return the date when the case was opened
-        otherwise, returns the next due date of valid upcoming schedules
         """
         within_zeroth_phase = XPath.and_(
             XPath(self.current_schedule_phase).eq(XPath.string('')),  # No visits yet
             XPath(self.anchor).neq(XPath.string('')),
             self.within_form_relevancy(),
         )
-        first_due_date_or_date_opened = XPath.if_(
-            u"{} < today()".format(self.first_due_date()),
-            self.date_opened,
-            self.first_due_date()
-        )
 
         return XPath.if_(
             within_zeroth_phase,
-            first_due_date_or_date_opened,
+            self.first_due_date(),
             self.xpath_phase_set
         )
 
@@ -427,6 +422,31 @@ class ScheduleFormXPath(object):
             select_raw(last_visit_id)
         )
         return XPath(u"{} = 0".format(count))
+
+    @staticmethod
+    def next_visit_date(last_visit_dates):
+        """
+        Returns the next visit date given all the last visits
+        if($next_visit_date < today() and (current_schedule_phase = '' or last_visit_date_{all_forms} = ''),
+            $date_case_opened,
+            $next_visit_date)
+        """
+        # (last_visit_f1 = '' and last_visit_f2 = '' and ...)
+        no_visits = XPath.and_(*[u"${} = ''".format(last_visit)
+                                 for last_visit in last_visit_dates])
+
+        use_date_opened = XPath.and_(
+            XPath(u"${} < today()".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE)),
+            XPath.or_(
+                XPath(SCHEDULE_PHASE).eq(XPath.string('')),
+                no_visits
+            )
+        )
+        return XPath.if_(
+            use_date_opened,
+            u"${}".format(SCHEDULE_DATE_CASE_OPENED),
+            u"${}".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+        )
 
     def filter_condition(self, phase_id):
         """returns the `relevant` condition on whether to show this form in the list"""
@@ -631,3 +651,30 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
         self.last_visit_date = self.case_xpath.slash(SCHEDULE_LAST_VISIT_DATE).format(self.form.schedule_form_id)
         self.anchor = self.case_xpath.slash(self.phase.anchor)
         self.current_schedule_phase = self.case_xpath.slash(SCHEDULE_PHASE)
+
+    @staticmethod
+    def next_visit_date(forms, case_xpath):
+        """
+        Returns the next visit date given all the last visits
+        if($next_visit_date < today() and (current_schedule_phase = '' or last_visit_date_{all_forms} = ''),
+            $date_case_opened,
+            $next_due_visit)
+        """
+        last_visit_dates = [case_xpath.slash(SCHEDULE_LAST_VISIT_DATE).format(form.schedule_form_id)
+                            for form in forms]
+        # (last_visit_f1 = '' and last_visit_f2 = '' and ...)
+        no_visits = XPath.and_(*[u"{} = ''".format(last_visit)
+                                 for last_visit in last_visit_dates])
+
+        use_date_opened = XPath.and_(
+            XPath(u"/data/{} < today()".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE)),
+            XPath.or_(
+                XPath(case_xpath.slash(SCHEDULE_PHASE)).eq(XPath.string('')),
+                no_visits
+            )
+        )
+        return XPath.if_(
+            use_date_opened,
+            case_xpath.slash(SCHEDULE_DATE_CASE_OPENED),
+            u"/data/{}".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+        )

@@ -1,6 +1,7 @@
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.xform import cases_referenced_by_xform
+from corehq.apps.api.resources.v0_4 import XFormInstanceResource
 
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
     AppStructureRepeater, RegisterGenerator
@@ -54,9 +55,17 @@ class AppStructureGenerator(BasePayloadGenerator):
 
 
 @RegisterGenerator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
-class ShortFormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
+class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, form):
         cases = cases_referenced_by_xform(form)
         return json.dumps({'form_id': form._id,
                            'received_on': json_format_datetime(form.received_on),
                            'case_ids': [case._id for case in cases]})
+
+
+@RegisterGenerator(FormRepeater, "form_json", "JSON", is_default=False)
+class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+    def get_payload(self, repeat_record, form):
+        res = XFormInstanceResource()
+        bundle = res.build_bundle(obj=form)
+        return res.serialize(None, res.full_dehydrate(bundle), 'application/json')

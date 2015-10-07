@@ -1,6 +1,9 @@
 import json
 from celery.schedules import crontab
 from celery.task import periodic_task
+
+from django.conf import settings
+
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -11,7 +14,6 @@ from custom.m4change.fixtures.report_fixtures import get_last_n_months
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 from dimagi.utils.parsing import json_format_date
-import settings
 
 
 @periodic_task(run_every=crontab(hour="3", minute="0", day_of_week="*"),

@@ -13,6 +13,7 @@ xforms/
 /data/
 submissions/
 /export/
+/bower_components
 bad/
 *.log*
 CommCare.ja*
@@ -34,6 +35,7 @@ dump.rdb
 **/less/*.css
 /staticmedia*
 .transifexrc
+python_env
 
 submodules/formdesigner
 submodules/vellum/Vellum

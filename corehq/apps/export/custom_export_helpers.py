@@ -234,8 +234,11 @@ class FormCustomExportHelper(CustomExportHelper):
 
         def generate_additional_columns(requires_case):
             ret = []
+            # the default of the case_name_col MUST have selected = false, because
+            # there is no way to store selected = false in the current export schema
+            # as it only stores selected columns, not the selected states for all columns
             case_name_col = CustomColumn(slug='case_name', index=FORM_CASE_ID_PATH, display='info.case_name',
-                                         transform=CASENAME_TRANSFORM, show=True, selected=True)
+                                         transform=CASENAME_TRANSFORM, show=True, selected=False)
             if not requires_case:
                 case_name_col.show, case_name_col.selected, case_name_col.tag = False, False, 'deleted'
             matches = filter(case_name_col.match, column_conf)

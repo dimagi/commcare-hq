@@ -1,5 +1,6 @@
 from collections import namedtuple
 import datetime
+import functools
 import json
 import os
 import tempfile
@@ -11,6 +12,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
@@ -23,7 +25,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import ConfigurableReport, privileges, Session, toggles
+from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
@@ -45,10 +47,12 @@ from corehq.apps.userreports.reports.builder.forms import (
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
+    StaticReportConfiguration,
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
@@ -58,6 +62,7 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.db import Session
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -84,6 +89,20 @@ def get_report_config_or_404(config_id, domain):
         raise Http404
 
 
+def swallow_programming_errors(fn):
+    @functools.wraps(fn)
+    def decorated(request, domain, *args, **kwargs):
+        try:
+            return fn(request, domain, *args, **kwargs)
+        except ProgrammingError:
+            messages.error(
+                request,
+                _('There was a problem processing your request. '
+                  'If you have recently modified your report data source please try again in a few minutes.'))
+            return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+    return decorated
+
+
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def configurable_reports_home(request, domain):
@@ -93,8 +112,8 @@ def configurable_reports_home(request, domain):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def edit_report(request, domain, report_id):
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
-    return _edit_report_shared(request, domain, config)
+    config, is_static = get_report_config_or_404(report_id, domain)
+    return _edit_report_shared(request, domain, config, read_only=is_static)
 
 
 @login_and_domain_required
@@ -113,6 +132,12 @@ class ReportBuilderView(TemplateView):
         return super(ReportBuilderView, self).dispatch(request, domain, **kwargs)
 
 
+class ReportTypeTileConfiguration(TileConfiguration):
+    def __init__(self, *args, **kwargs):
+        self.analytics_label = kwargs.pop('analytics_label', None)
+        super(ReportTypeTileConfiguration, self).__init__(*args, **kwargs)
+
+
 class ReportBuilderTypeSelect(ReportBuilderView):
     template_name = "userreports/builder_report_type_select.html"
 
@@ -129,36 +154,40 @@ class ReportBuilderTypeSelect(ReportBuilderView):
     @property
     def tiles(self):
         return [
-            TileConfiguration(
+            ReportTypeTileConfiguration(
                 title=_('Chart'),
                 slug='chart',
+                analytics_label="Chart",
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
                 help_text=_('A bar graph or a pie chart to show data from your cases or forms.'
                             ' You choose the property to graph.'),
             ),
-            TileConfiguration(
+            ReportTypeTileConfiguration(
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
+                analytics_label="List",
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
                 help_text=_('A list of cases or form submissions.'
                             ' You choose which properties will be columns.'),
             ),
-            TileConfiguration(
+            ReportTypeTileConfiguration(
                 title=_('Worker Report'),
                 slug='worker-report',
+                analytics_label="Worker",
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
                 help_text=_('A table of your mobile workers.'
                             ' You choose which properties will be the columns.'),
             ),
-            TileConfiguration(
+            ReportTypeTileConfiguration(
                 title=_('Data Table'),
                 slug='data-table',
+                analytics_label="Table",
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -201,17 +230,15 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'worker': 'configure_worker_report',
             }
             url_name = url_names_map[self.report_type]
-            url_args = [
-                (f, self.form.cleaned_data[f])
-                for f in ['report_name', 'chart_type']
-            ] + [
-                (f, getattr(app_source, f))
-                for f in ['application', 'source_type', 'source']
-            ]
+            get_params = {
+                'report_name': self.form.cleaned_data['report_name'],
+                'chart_type': self.form.cleaned_data['chart_type'],
+                'application': app_source.application,
+                'source_type': app_source.source_type,
+                'source': app_source.source,
+            }
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain]) + '?' + '&'.join(
-                    ["{}={}".format(k, v) for k, v in url_args]
-                )
+                reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
             )
         else:
             return self.get(request, *args, **kwargs)
@@ -252,7 +279,7 @@ class ConfigureChartReport(ReportBuilderView):
                 )
             },
             'form': self.report_form,
-            'property_options': self.report_form.data_source_properties.values(),
+            'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
@@ -327,15 +354,15 @@ class ConfigureWorkerReport(ConfigureChartReport):
         return ConfigureWorkerReportForm
 
 
-def _edit_report_shared(request, domain, config):
+def _edit_report_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
-        form = ConfigurableReportEditForm(domain, config, data=request.POST)
+        form = ConfigurableReportEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
             form.save(commit=True)
             messages.success(request, _(u'Report "{}" saved!').format(config.title))
             return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
     else:
-        form = ConfigurableReportEditForm(domain, config)
+        form = ConfigurableReportEditForm(domain, config, read_only)
     context = _shared_context(domain)
     context.update({
         'form': form,
@@ -394,7 +421,7 @@ def import_report(request, domain):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def report_source_json(request, domain, report_id):
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    config, _ = get_report_config_or_404(report_id, domain)
     config._doc.pop('_rev', None)
     return json_response(config)
 
@@ -445,10 +472,8 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
-
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
-
     else:
         form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)
@@ -504,6 +529,7 @@ def data_source_json(request, domain, config_id):
 
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@swallow_programming_errors
 def preview_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
@@ -580,6 +606,7 @@ def process_url_params(params, columns):
 
 @login_or_basic
 @require_permission(Permissions.view_reports)
+@swallow_programming_errors
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
@@ -621,7 +648,7 @@ def data_source_status(request, domain, config_id):
 
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
-    report, _ = get_report_config_or_404(report_id, domain)
+    report = get_report_config_or_404(report_id, domain)[0]
     filter = report.get_ui_filter(filter_id)
     if filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
@@ -632,9 +659,10 @@ def choice_list_api(request, domain, report_id, filter_id):
         if not isinstance(filter, DynamicChoiceListFilter):
             return []
 
-        table = get_indicator_table(data_source)
+        adapter = IndicatorSqlAdapter(data_source)
+        table = adapter.get_table()
         sql_column = table.c[filter.field]
-        query = Session.query(sql_column)
+        query = adapter.session_helper.Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
 
@@ -654,9 +682,10 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 
 def _shared_context(domain):
-    custom_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
+    static_reports = list(StaticReportConfiguration.by_domain(domain))
+    static_data_sources = list(StaticDataSourceConfiguration.by_domain(domain))
     return {
         'domain': domain,
-        'reports': ReportConfiguration.by_domain(domain),
-        'data_sources': DataSourceConfiguration.by_domain(domain) + custom_data_sources,
+        'reports': ReportConfiguration.by_domain(domain) + static_reports,
+        'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
     }

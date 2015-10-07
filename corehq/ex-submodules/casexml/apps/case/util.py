@@ -13,7 +13,6 @@ from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
-from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 

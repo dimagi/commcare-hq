@@ -183,6 +183,12 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
 
+class OnlyUnarchivedLocationManager(LocationManager):
+    def get_queryset(self):
+        return (super(OnlyUnarchivedLocationManager, self).get_query_set()
+                .filter(is_archived=False))
+
+
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
@@ -208,6 +214,8 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
+    # This should really be the default location manager
+    active_objects = OnlyUnarchivedLocationManager()
 
     @property
     def get_id(self):
@@ -301,6 +309,13 @@ class SQLLocation(MPTTModel):
 
         return g
 
+    def get_case_sharing_groups(self, for_user_id=None):
+        if self.location_type.shares_cases:
+            yield self.case_sharing_group_object(for_user_id)
+        if self.location_type.view_descendants:
+            for sql_loc in self.get_descendants().filter(location_type__shares_cases=True):
+                yield sql_loc.case_sharing_group_object(for_user_id)
+
     def case_sharing_group_object(self, user_id=None):
         """
         Returns a fake group object that cannot be saved.
@@ -347,6 +362,12 @@ class SQLLocation(MPTTModel):
         return list(self.get_ancestors(include_self=True)
                     .values_list('location_id', flat=True))
 
+    @classmethod
+    def by_location_id(cls, location_id):
+        try:
+            return cls.objects.get(location_id=location_id)
+        except cls.DoesNotExist:
+            return None
 
 
 def _filter_for_archived(locations, include_archive_ancestors):

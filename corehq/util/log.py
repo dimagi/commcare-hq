@@ -1,6 +1,8 @@
 from collections import defaultdict
 from itertools import islice
+from logging import Filter
 import traceback
+from datetime import timedelta
 
 from pygments import highlight
 from pygments.lexers import PythonLexer
@@ -11,6 +13,7 @@ from django.core import mail
 from django.utils.log import AdminEmailHandler
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
+from corehq.util.view_utils import get_request
 
 
 def clean_exception(exception):
@@ -110,26 +113,30 @@ class HqAdminEmailHandler(AdminEmailHandler):
             formatted = '\n'.join('{item[0]}: {item[1]}'.format(item=item) for item in details.items())
             return 'Details:\n{}'.format(formatted)
 
-    def get_code(self, extracted_tb):
-        trace = next((trace for trace in extracted_tb if 'site-packages' not in trace[0]), None)
-        if not trace:
-            return None
+    @staticmethod
+    def get_code(extracted_tb):
+        try:
+            trace = next((trace for trace in extracted_tb if 'site-packages' not in trace[0]), None)
+            if not trace:
+                return None
 
-        filename = trace[0]
-        lineno = trace[1]
-        offset = 10
-        with open(filename) as f:
-            code_context = list(islice(f, lineno - offset, lineno + offset))
+            filename = trace[0]
+            lineno = trace[1]
+            offset = 10
+            with open(filename) as f:
+                code_context = list(islice(f, lineno - offset, lineno + offset))
 
-        return highlight(''.join(code_context),
-            PythonLexer(),
-            HtmlFormatter(
-                noclasses=True,
-                linenos='table',
-                hl_lines=[offset, offset],
-                linenostart=(lineno - offset + 1),
-        )
-        )
+            return highlight(''.join(code_context),
+                PythonLexer(),
+                HtmlFormatter(
+                    noclasses=True,
+                    linenos='table',
+                    hl_lines=[offset, offset],
+                    linenostart=(lineno - offset + 1),
+                )
+            )
+        except Exception as e:
+            return u"Unable to extract code. {}".format(e)
 
     @classmethod
     def _clean_subject(cls, subject):
@@ -161,3 +168,45 @@ class SensitiveErrorMail(ErrorMail):
         context['args'] = self.replacement
         context['kwargs'] = self.replacement
         return self.body.strip() % context
+
+
+class HQRequestFilter(Filter):
+    """
+    Filter that adds custom context to log records for HQ domain, username, and path.
+
+    This lets you add custom log formatters to include this information. For example,
+    the following format:
+
+    [%(username)s:%(domain)s] %(hq_url)s %(message)s
+
+    Will log:
+
+    [user@example.com:my-domain] /a/my-domain/apps/ [original message]
+    """
+
+    def filter(self, record):
+        request = get_request()
+        if request is not None:
+            record.domain = getattr(request, 'domain', '')
+            record.username = request.couch_user.username if getattr(request, 'couch_user', None) else ''
+            record.hq_url = request.path
+        else:
+            record.domain = record.username = record.hq_url = None
+        return True
+
+
+class SlowRequestFilter(Filter):
+    """
+    Filter that can be used to log a slow request or action.
+    Expects that LogRecords passed in will have a .duration property that is a timedelta.
+    Intended to be used primarily with the couchdbkit request_logger
+    """
+    def __init__(self, name='', duration=5):
+        self.duration_cutoff = timedelta(seconds=duration)
+        super(SlowRequestFilter, self).__init__(name)
+
+    def filter(self, record):
+        try:
+            return record.duration > self.duration_cutoff
+        except (TypeError, AttributeError):
+            return False

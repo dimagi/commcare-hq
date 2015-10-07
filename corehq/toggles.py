@@ -255,6 +255,13 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LOCATIONS_IN_UCR = StaticToggle(
+    'locations_in_ucr',
+    'Add Locations as one of the Source Types for User Configurable Reports',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 REPORT_BUILDER = StaticToggle(
     'report_builder',
     'Report Builder',
@@ -302,13 +309,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     "Enable the stock report handler to accept both stock and receipt values "
     "in the format 'soh abc 100.20'",
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
-PAGINATE_WEB_USERS = StaticToggle(
-    'paginate_web_users',
-    'Paginate Web Users',
-    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -463,11 +463,12 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
-OWNERSHIP_CLEANLINESS_RESTORE = StaticToggle(
+OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
     'enable_owner_cleanliness_restore',
     'Enable restoring with updated owner cleanliness logic.',
-    TAG_EXPERIMENTAL,
+    TAG_PRODUCT_CORE,
     namespaces=[NAMESPACE_DOMAIN],
+    randomness=.05,
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
@@ -597,13 +598,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
-    'messaging_status',
-    'View the Messaging Status and Error Reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 HSPH_HACK = StaticToggle(
     'hsph_hack',
     'Optmization hack for HSPH',
@@ -640,6 +634,13 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
+    'mobile_worker_self_registration',
+    'Allow mobile workers to self register',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
@@ -660,4 +661,11 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     "Support mobile sync bugs in older projects (2.9 and below).",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+)
+
+VIEW_BUILD_SOURCE = StaticToggle(
+    'diff_builds',
+    'Allow users to view and diff build source files',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
-from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView
+from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView, AppDiffView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -25,19 +25,20 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^modules-(?P<module_id>[\w-]+)/$', 'view_module', name='view_module'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
         'view_form', name='view_form'),
+    url(r'^get_form_datums/$', 'get_form_datums', name='get_form_datums'),
     url(r'^user_registration/$', 'view_user_registration',
         name='view_user_registration'),
     url(r'^user_registration/source/$', 'user_registration_source',
         name='user_registration_source'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
-        'form_source', name='form_source'),
+        'form_designer', name='form_source'),
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
     url(r'^update_build_comment/$', 'update_build_comment',
         name='update_build_comment'),
 )
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
-    url(r'^$', 'default', name='default_app'),
+    url(r'^$', 'view_app', name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', 'xform_display'),
     url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         'get_xform_source', name='get_xform_source'),
@@ -146,6 +147,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         include('corehq.apps.app_manager.download_urls')),
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
     url(r'^ng_template/(?P<template>[\w-]+)', DynamicTemplateView.as_view(), name='ng_template'),
+
+    url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
 )

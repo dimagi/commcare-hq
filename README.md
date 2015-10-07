@@ -181,6 +181,17 @@ that you have a 32bit version of Python installed.
 
     ./manage.py ptop_es_manage --flip_all_aliases
 
+### Installing Bower
+
+We use bower to manage our javascript dependencies. In order to download the required javascript packages, 
+you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
+
+    1. Install [npm](https://www.npmjs.com/)
+    2. Install bower `npm -g install bower`
+    3. Add `BOWER_PATH` to `localsettings.py`. Find your local bower path by using `which bower`
+    4. Run bower with `./manage.py bower install`
+
+
 ### Using LESS: 3 Options
 
 #### Option 1: Let Client Side Javascript (less.js) handle it for you
@@ -389,7 +400,7 @@ If you want to use CloudCare you will also need to run the Touchforms server and
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     # On Mac / Linux use Gunicorn as the multi-threaded server
-    ./manage.py run_gunicorn -w 3 --bind 0.0.0.0:8000
+    gunicorn deployment.gunicorn.commcarehq_wsgi:application -c deployment/gunicorn/gunicorn_conf.py -k gevent --bind 0.0.0.0:8000
 
     # on Windows use CherryPy
     > manage.py runcpserver port=8000

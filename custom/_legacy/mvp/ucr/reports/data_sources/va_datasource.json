@@ -2,6 +2,7 @@
     "domains": ["mvp-sauri", "mvp-mbola", "mvp-mwandama", "mvp-ruhiira", "mvp-koraro", "mvp-mayange",
                 "mvp-sada", "mvp-bonsaaso", "mvp-potou", "mvp-pampaida", "mvp-tiby"],
     "config": {
+        "engine_id": "default",
         "configured_filter": {
             "filters": [
                 {

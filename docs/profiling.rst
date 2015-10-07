@@ -53,11 +53,17 @@ Note that the files created are huge; this code should only be run locally.
 Creating a more useful output from the dump file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The raw profile files are not human readable, and you need to use something like `hotshot <https://docs.python.org/2/library/hotshot.html>`_ to make them useful.
-A script that will generate what is typically sufficient information to analyze these can be found `here <https://gist.github.com/czue/4947238>`_.
-You can read the source of that script to generate your own analysis, or just use it directly as follows::
+The raw profile files are not human readable, and you need to use something
+like `hotshot <https://docs.python.org/2/library/hotshot.html>`_ to make them
+useful.
+A script that will generate what is typically sufficient information to analyze
+these can be found in the `commcarehq-scripts`_ repository.
+You can read the source of that script to generate your own analysis, or just
+use it directly as follows::
 
-   ./prof.py /path/to/profile_dump.prof > /path/to/output_file.txt
+   $ ./reusable/convert_profile.py /path/to/profile_dump.prof
+
+.. _commcarehq-scripts: https://github.com/dimagi/commcarehq-scripts/blob/master/reusable/convert_profile.py
 
 
 Reading the output of the analysis file

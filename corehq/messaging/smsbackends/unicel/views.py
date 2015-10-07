@@ -1,5 +1,4 @@
 from django.http import HttpResponse
-from corehq.apps.sms.util import domains_for_phone, users_for_phone
 from corehq.messaging.smsbackends.unicel import api
 import json
 

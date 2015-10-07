@@ -1,4 +1,3 @@
-from corehq import Domain
 from corehq.apps.accounting.filters import (
     clean_options,
     DateRangeFilter,

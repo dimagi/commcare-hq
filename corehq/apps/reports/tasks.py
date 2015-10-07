@@ -9,6 +9,8 @@ import zipfile
 import tempfile
 from wsgiref.util import FileWrapper
 
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
@@ -17,6 +19,7 @@ from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
+from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
@@ -49,7 +52,6 @@ from corehq.elastic import (
 )
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from dimagi.utils.parsing import json_format_datetime
-import settings
 from couchforms.models import XFormInstance
 from corehq.apps.reports.models import FormExportSchema
 from dimagi.utils.couch.database import iter_docs
@@ -200,15 +202,15 @@ def update_calculated_properties():
         dom = r["name"]
         calced_props = {
             "_id": r["_id"],
-            "cp_n_web_users": int(all_stats["web_users"][dom]),
+            "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
-            "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
+            "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
             "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
             "cp_n_users_submitted_form": total_distinct_users([dom]),
             "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
             "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
-            "cp_n_cases": int(all_stats["cases"][dom]),
-            "cp_n_forms": int(all_stats["forms"][dom]),
+            "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
+            "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
             "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
             "cp_is_active": CALC_FNS["active"](dom),
@@ -230,13 +232,8 @@ def update_calculated_properties():
 
 
 def is_app_active(app_id, domain):
-    now = datetime.utcnow()
-    then = json_format_datetime(now - timedelta(days=30))
-    now = json_format_datetime(now)
+    return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
-    key = ['submission app', domain, app_id]
-    row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
-    return True if row else False
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def apps_update_calculated_properties():

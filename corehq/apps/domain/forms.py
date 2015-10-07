@@ -12,6 +12,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
 from dimagi.utils.decorators.memoized import memoized
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from corehq import privileges
@@ -19,7 +20,6 @@ from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
-import settings
 
 from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
@@ -411,7 +411,12 @@ class SubAreaMixin():
 
 
 class DomainGlobalSettingsForm(forms.Form):
-    hr_name = forms.CharField(label=ugettext_lazy("Project Name"))
+    hr_name = forms.CharField(
+        label=ugettext_lazy("Project Name"),
+        help_text=ugettext_lazy("This name will appear in the upper right corner "
+                                "when you are in this project. Changing this name "
+                                "will not change the URL of the project.")
+    )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -590,7 +595,7 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
         help_text=ugettext_lazy("If access to a project space is restricted only users added " +
-                    "to the domain and staff members will have access.")
+                                "to the domain and staff members will have access.")
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
@@ -602,9 +607,15 @@ class PrivacySecurityForm(forms.Form):
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
             "Read more about secure submissions here</a>"))
     )
+    allow_domain_requests = BooleanField(
+        label=ugettext_lazy("Web user requests"),
+        required=False,
+        help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
+    )
 
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+        domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []

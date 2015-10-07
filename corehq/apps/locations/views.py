@@ -24,6 +24,7 @@ from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -32,6 +33,8 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
+from .analytics import users_have_locations
+from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -73,7 +76,7 @@ class BaseLocationView(BaseDomainView):
 
 class LocationsListView(BaseLocationView):
     urlname = 'manage_locations'
-    page_title = ugettext_noop("Locations")
+    page_title = ugettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
     @property
@@ -110,7 +113,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
 
 class LocationTypesView(BaseLocationView):
     urlname = 'location_types'
-    page_title = ugettext_noop("Location Types")
+    page_title = ugettext_noop("Organization Levels")
     template_name = 'locations/settings.html'
 
     @method_decorator(can_edit_location_types)
@@ -120,29 +123,20 @@ class LocationTypesView(BaseLocationView):
     @property
     def page_context(self):
         return {
-            'settings': self.settings_context,
+            'location_types': self._get_loc_types(),
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
 
-    @property
-    def settings_context(self):
-        return {
-            'loc_types': map(
-                self._get_loctype_info,
-                LocationType.objects.by_domain(self.domain)
-            )
-        }
-
-    def _get_loctype_info(self, loctype):
-        return {
-            'pk': loctype.pk,
-            'name': loctype.name,
-            'parent_type': (loctype.parent_type.pk
-                            if loctype.parent_type else None),
-            'administrative': loctype.administrative,
-            'shares_cases': loctype.shares_cases,
-            'view_descendants': loctype.view_descendants
-        }
+    def _get_loc_types(self):
+        return [{
+            'pk': loc_type.pk,
+            'name': loc_type.name,
+            'parent_type': (loc_type.parent_type.pk
+                            if loc_type.parent_type else None),
+            'administrative': loc_type.administrative,
+            'shares_cases': loc_type.shares_cases,
+            'view_descendants': loc_type.view_descendants
+        } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
@@ -176,7 +170,7 @@ class LocationTypesView(BaseLocationView):
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
-                assert prop in loc_type, "Missing a location type property!"
+                assert prop in loc_type, "Missing an organization level property!"
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
@@ -200,7 +194,7 @@ class LocationTypesView(BaseLocationView):
                 if (SQLLocation.objects.filter(domain=self.domain,
                                                location_type=pk)
                                        .exists()):
-                    msg = _("You cannot delete location types that have locations")
+                    msg = _("You cannot delete organization levels that have locations")
                     messages.warning(self.request, msg)
                     return False
                 to_delete.append(pk)
@@ -581,7 +575,7 @@ class FacilitySyncView(BaseSyncView):
 
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
-    page_title = ugettext_noop('Location Import Status')
+    page_title = ugettext_noop('Organization Structure Import Status')
     template_name = 'style/bootstrap2/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
@@ -590,7 +584,7 @@ class LocationImportStatusView(BaseLocationView):
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
-            'title': _("Location Import Status"),
+            'title': _("Organization Structure Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
@@ -602,7 +596,7 @@ class LocationImportStatusView(BaseLocationView):
 
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
-    page_title = ugettext_noop('Upload Locations from Excel')
+    page_title = ugettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
     @method_decorator(can_edit_any_location)
@@ -621,8 +615,8 @@ class LocationImportView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse(
                     "location_export", args=(self.domain,)),
-                "adjective": _("location"),
-                "plural_noun": _("locations"),
+                "adjective": _("Organization Structure"),
+                "plural_noun": _("Organization Structure"),
             },
             "manage_consumption": _get_manage_consumption(),
         }
@@ -671,7 +665,7 @@ def location_importer_job_poll(request, domain, download_id,
 
     context.update({
         'on_complete_short': _('Import complete.'),
-        'on_complete_long': _('Location importing has finished'),
+        'on_complete_long': _('Organization Structure importing has finished'),
 
     })
     return render(request, template, context)
@@ -680,7 +674,7 @@ def location_importer_job_poll(request, domain, download_id,
 @locations_access_required
 def location_export(request, domain):
     if not LocationType.objects.filter(domain=domain).exists():
-        messages.error(request, _("You need to define location types before "
+        messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
@@ -811,3 +805,39 @@ def child_locations_for_select2(request, domain):
             locs = locs.filter(name__icontains=query)
 
         return json_response(map(loc_to_payload, locs[:10]))
+
+
+class DowngradeLocationsView(BaseDomainView):
+    """
+    This page takes the place of the location pages if a domain gets
+    downgraded, but still has users assigned to locations.
+    """
+    template_name = 'locations/downgrade_locations.html'
+    urlname = 'downgrade_locations'
+
+    def dispatch(self, *args, **kwargs):
+        if not users_have_locations(self.domain):  # irrelevant, redirect
+            redirect_url = reverse('users_default', args=[self.domain])
+            return HttpResponseRedirect(redirect_url)
+        return super(DowngradeLocationsView, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_url(self):
+        return self.page_url
+
+
+@domain_admin_required
+def unassign_users(request, domain):
+    """
+    Unassign all users from their locations.  This is for downgraded domains.
+    """
+    for user in get_users_assigned_to_locations(domain):
+        if user.is_web_user():
+            user.unset_location(domain)
+        elif user.is_commcare_user():
+            user.unset_location()
+
+    messages.success(request,
+                     _("All users have been unassigned from their locations"))
+    fallback_url = reverse('users_default', args=[domain])
+    return HttpResponseRedirect(request.POST.get('redirect', fallback_url))

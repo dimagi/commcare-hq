@@ -1,10 +1,12 @@
 from celery.task import task
+from corehq.util.dates import unix_time
+from datetime import datetime
 import json
 import requests
 import urllib
 import KISSmetrics
 
-from settings import ANALYTICS_IDS
+from django.conf import settings
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -22,7 +24,7 @@ def _track_on_hubspot(webuser, properties):
     # Note: Hubspot recommends OAuth instead of api key
     # TODO: Use batch requests / be mindful of rate limit
 
-    api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
         req = requests.post(
             u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
@@ -39,7 +41,7 @@ def _track_on_hubspot(webuser, properties):
 
 
 def _get_user_hubspot_id(webuser):
-    api_key = ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
+    api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
         req = requests.get(
             u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
@@ -68,7 +70,7 @@ def _link_account_with_cookie(form_id, webuser, cookies, meta):
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    hubspot_id = ANALYTICS_IDS.get('HUBSPOT_ID')
+    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_ID')
     hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
         url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
@@ -127,7 +129,6 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_workflow(email, event, properties=None):
     """
     Record an event in KISSmetrics.
@@ -136,10 +137,16 @@ def track_workflow(email, event, properties=None):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
+    timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
+    _track_workflow_task.delay(email, event, properties, timestamp)
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def _track_workflow_task(email, event, properties=None, timestamp=0):
+    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.record(email, event, properties if properties else {})
+        km.record(email, event, properties if properties else {}, timestamp)
         # TODO: Consider adding some error handling for bad/failed requests.
 
 
@@ -151,7 +158,7 @@ def identify(email, properties):
     :param properties: A dictionary or properties to set on the user.
     :return:
     """
-    api_key = ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
+    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
         km.set(email, properties)

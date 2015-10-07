@@ -7,6 +7,7 @@ from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name
 from corehq.apps.sms.mixin import SMSBackend, BadSMSConfigException, MobileBackend
 from corehq.apps.sms.models import CommConnectCase
+from corehq.apps.sms.util import get_contact
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
@@ -14,6 +15,7 @@ from corehq.apps.users.models import CommCareUser
 from django.contrib.sites.models import Site
 from corehq.apps.users.util import format_username
 from django.conf import settings
+from django.test import TestCase
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -482,3 +484,31 @@ class BackendTestCase(BaseAccountingTest):
         incoming("+9991234568", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
         current_num_users = num_mobile_users(self.domain)
         self.assertEqual(prev_num_users, current_num_users)
+
+
+class TestContactLookup(TestCase):
+    def setUp(self):
+        self.case = CommCareCase(domain='test-domain', name='test-case')
+        self.case.save()
+
+        self.user = CommCareUser.create('test-domain', 'test-user', '123')
+
+    def test_get_contact(self):
+        contact = get_contact(self.case.get_id)
+        self.assertEqual(contact.get_id, self.case.get_id)
+        self.assertTrue(isinstance(contact, CommConnectCase))
+
+        contact = get_contact(self.user.get_id)
+        self.assertEqual(contact.get_id, self.user.get_id)
+        self.assertTrue(isinstance(contact, CommCareUser))
+
+        try:
+            get_contact('this-id-should-not-be-found')
+        except Exception:
+            pass
+        else:
+            self.assertTrue(False)
+
+    def tearDown(self):
+        self.case.delete()
+        self.user.delete()

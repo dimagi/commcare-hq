@@ -85,8 +85,8 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
     def needs_full_check(domain, cleanliness_obj):
         # if it already is clean we don't need to do anything since that gets invalidated on submission
         # if dirty, first check the hint and only do a full check if it's not valid
-        return not cleanliness_object.is_clean and (
-            not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
+        return not cleanliness_obj.is_clean and (
+            not cleanliness_obj.hint or not hint_still_valid(domain, owner_id, cleanliness_obj.hint)
         )
 
     needs_check = needs_full_check(domain, cleanliness_object)
@@ -114,9 +114,8 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
                 owner_doc_type, owner_id, domain
             ))
 
-    else:
-        cleanliness_object.last_checked = datetime.utcnow()
-        cleanliness_object.save()
+    cleanliness_object.last_checked = datetime.utcnow()
+    cleanliness_object.save()
 
 
 def hint_still_valid(domain, owner_id, hint):

@@ -1,6 +1,7 @@
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
 from corehq.apps.analytics.tasks import track_user_sign_in_on_hubspot, HUBSPOT_COOKIE
+from corehq.util.decorators import handle_uncaught_exceptions
 from .tasks import identify
 
 from django.dispatch import receiver
@@ -25,8 +26,7 @@ def user_save_callback(sender, **kwargs):
 
 @receiver(commcare_domain_post_save)
 @receiver(subscription_upgrade_or_downgrade)
-def domain_save_callback(sender, **kwargs):
-    domain = kwargs.get("domain", None)
+def domain_save_callback(sender, domain, **kwargs):
     domain = ensure_domain_instance(domain)
     if domain:
         update_subscription_properties_by_domain(domain)
@@ -67,6 +67,7 @@ def update_subscription_properties_by_domain(domain):
 
 
 @receiver(user_logged_in)
+@handle_uncaught_exceptions(mail_admins=True)
 def track_user_login(sender, request, user, **kwargs):
     couch_user = CouchUser.from_django_user(user)
     if couch_user and couch_user.is_web_user():
