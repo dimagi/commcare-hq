@@ -220,8 +220,8 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     def parent_pages(self):
         return [{
-            'title': _("Mobile Workers"),
-            'url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+            'title': MobileWorkerListView.page_title,
+            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
         }]
 
     def post(self, request, *args, **kwargs):
@@ -238,236 +238,6 @@ class EditCommCareUserView(BaseFullEditUserView):
             return True
         else:
             return False
-
-
-class ListCommCareUsersView(BaseUserSettingsView):
-    template_name = "users/mobile/users_list.html"
-    urlname = 'commcare_users'
-    page_title = ugettext_noop("Mobile Workers")
-
-    DEFAULT_LIMIT = 10
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ListCommCareUsersView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def can_bulk_edit_users(self):
-        if not user_can_edit_any_location(self.request.couch_user, self.request.project):
-            return False
-        return has_privilege(self.request, privileges.BULK_USER_MANAGEMENT)
-
-    @property
-    def can_add_extra_users(self):
-        return can_add_extra_mobile_workers(self.request)
-
-    @property
-    def can_edit_user_archive(self):
-        return self.couch_user.can_edit_commcare_users and (
-            (self.show_inactive and self.can_add_extra_users) or not self.show_inactive)
-
-    @property
-    def can_edit_billing_info(self):
-        return self.couch_user.is_domain_admin(self.domain) or self.couch_user.is_superuser
-
-    def _escape_val_error(self, expression, default):
-        try:
-            return expression()
-        except ValueError:
-            return default
-
-    @property
-    def users_list_page(self):
-        return self._escape_val_error(
-            lambda: int(self.request.GET.get('page', 1)),
-            1
-        )
-
-    @property
-    def users_list_limit(self):
-        return self._escape_val_error(
-            lambda: int(self.request.GET.get('limit', self.DEFAULT_LIMIT)),
-            self.DEFAULT_LIMIT
-        )
-
-    @property
-    @memoized
-    def users_list_total(self):
-        if self.query:
-            return self.total_users_from_es
-        return CommCareUser.total_by_domain(self.domain, is_active=not self.show_inactive)
-
-    @property
-    @memoized
-    def more_columns(self):
-        return self._escape_val_error(
-            lambda: json.loads(self.request.GET.get('more_columns', 'false')),
-            False
-        )
-
-    @property
-    @memoized
-    def cannot_share(self):
-        return self._escape_val_error(
-            lambda: json.loads(self.request.GET.get('cannot_share', 'false')),
-            False
-        )
-
-    @property
-    @memoized
-    def show_inactive(self):
-        return self._escape_val_error(
-            lambda: json.loads(self.request.GET.get('show_inactive', 'false')),
-            False
-        )
-
-    @property
-    @memoized
-    def query(self):
-        return self.request.GET.get('query')
-
-    @property
-    def show_case_sharing(self):
-        return self.request.project.case_sharing_included()
-
-    def get_groups(self):
-        return Group.by_domain(self.domain)
-
-    @property
-    def page_context(self):
-        return {
-            'data_list': {
-                'page': self.users_list_page,
-                'limit': self.users_list_limit,
-                'total': self.users_list_total,
-            },
-            'groups': self.get_groups(),
-            'cannot_share': self.cannot_share,
-            'show_inactive': self.show_inactive,
-            'more_columns': self.more_columns,
-            'show_case_sharing': self.show_case_sharing,
-            'pagination_limit_options': (10, 20, 50, 100),
-            'query': self.query,
-            'can_bulk_edit_users': self.can_bulk_edit_users,
-            'can_add_extra_users': self.can_add_extra_users,
-            'can_edit_user_archive': self.can_edit_user_archive,
-            'can_edit_billing_info': self.can_edit_billing_info,
-        }
-
-
-
-
-class AsyncListCommCareUsersView(ListCommCareUsersView):
-    urlname = 'user_list'
-    es_results = None
-
-    @property
-    def sort_by(self):
-        return self.request.GET.get('sortBy', 'abc')
-
-    @property
-    def users_list_skip(self):
-        return (self.users_list_page - 1) * self.users_list_limit
-
-    @property
-    @memoized
-    def users(self):
-        if self.query:
-            return self.users_from_es
-
-        if self.cannot_share:
-            users = CommCareUser.cannot_share(
-                self.domain,
-                limit=self.users_list_limit,
-                skip=self.users_list_skip
-            )
-        else:
-            users = CommCareUser.by_domain(
-                self.domain,
-                is_active=not self.show_inactive,
-                limit=self.users_list_limit,
-                skip=self.users_list_skip
-            )
-        if self.sort_by == 'forms':
-            users.sort(key=lambda user: -user.form_count)
-        return users
-
-    def query_es(self):
-        q = {
-            "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
-            "sort": {'username.exact': 'asc'},
-        }
-        default_fields = ["username.exact", "last_name", "first_name"]
-        q["query"] = search_string_query(self.query, default_fields)
-        params = {
-            "domain": self.domain,
-            "is_active": not self.show_inactive,
-        }
-        self.es_results = es_query(params=params, q=q, es_url=ES_URLS["users"],
-                           size=self.users_list_limit, start_at=self.users_list_skip)
-
-    @property
-    @memoized
-    def users_from_es(self):
-        if self.es_results is None:
-            self.query_es()
-        users = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-        return [CommCareUser.wrap(user) for user in users]
-
-    @property
-    @memoized
-    def total_users_from_es(self):
-        if self.es_results is None:
-            self.query_es()
-        return self.es_results.get("hits", {}).get("total", 0)
-
-    def get_archive_text(self, is_active):
-        if is_active:
-            return _("As a result of deactivating, this user will no longer appear in reports. "
-                     "This action is reversable; you can reactivate this user by viewing "
-                     "'Show Deactivated Mobile Workers' and clicking 'Reactivate'.")
-        return _("This will reactivate the user, and the user will show up in reports again.")
-
-    @property
-    def users_list(self):
-        users_list = []
-        for user in self.users:
-            u_data = {
-                'user_id': user.user_id,
-                'status': "" if user.is_active else _("Deactivated"),
-                'edit_url': reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]),
-                'username': user.raw_username,
-                'full_name': user.full_name,
-                'joined_on': user.date_joined.strftime(USER_DATE_FORMAT),
-                'phone_numbers': user.phone_numbers,
-                'form_count': '--',
-                'case_count': '--',
-                'case_sharing_groups': [],
-                'archive_action_text': _("Deactivate") if user.is_active else _("Reactivate"),
-                'archive_action_desc': self.get_archive_text(user.is_active),
-                'archive_action_url': reverse('%s_commcare_user' % ('archive' if user.is_active else 'unarchive'),
-                    args=[self.domain, user.user_id]),
-                'archive_action_complete': False,
-            }
-            if self.more_columns:
-                u_data.update({
-                    'form_count': user.form_count,
-                    'case_count': user.analytics_only_case_count,
-                })
-                if self.show_case_sharing:
-                    u_data.update({
-                        'case_sharing_groups': [g.name for g in user.get_case_sharing_groups()],
-                    })
-            users_list.append(u_data)
-        return users_list
-
-    def render_to_response(self, context, **response_kwargs):
-        return HttpResponse(json.dumps({
-            'success': True,
-            'current_page': self.users_list_page,
-            'data_list_total': self.users_list_total,
-            'data_list': self.users_list,
-        }))
 
 
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
@@ -525,7 +295,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
                                "You may now add additional Mobile Workers.")
                 )
                 return HttpResponseRedirect(reverse(
-                    ListCommCareUsersView.urlname, args=[self.domain]
+                    MobileWorkerListView.urlname, args=[self.domain]
                 ))
         return self.get(request, *args, **kwargs)
 
@@ -544,7 +314,7 @@ def set_commcare_user_group(request, domain):
     for group in user.get_case_sharing_groups():
         group.remove_user(user)
     group.add_user(user)
-    return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
+    return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
@@ -571,7 +341,7 @@ def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
-    return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
+    return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
 @require_can_edit_commcare_users
 @require_POST
@@ -621,8 +391,8 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
     @property
     def parent_pages(self):
         return [{
-            'title': ListCommCareUsersView.page_title,
-            'url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+            'title': MobileWorkerListView.page_title,
+            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
         }]
 
 
@@ -1034,7 +804,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'title': _("Mobile Worker Upload Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
-            'next_url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+            'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
         return render(request, 'style/bootstrap2/soil_status_full.html', context)
