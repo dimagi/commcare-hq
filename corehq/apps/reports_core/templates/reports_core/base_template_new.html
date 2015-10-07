@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/two_column.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -106,9 +106,7 @@
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
 {% block page_title %}
-<div class="breadcrumb">
-    <div id="report-title">{{ report.title }}</div>
-</div>
+    {{ report.title }}
 {% endblock %}
 
 {% block page_content %}
