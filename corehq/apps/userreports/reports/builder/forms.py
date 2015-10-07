@@ -13,8 +13,9 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop as _
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import FormActions
+from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
+from corehq.apps.style import crispy as hqcrispy
 
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import (
@@ -369,8 +370,10 @@ class DataSourceForm(forms.Form):
         self.fields['chart_type'].required = self.report_type == "chart"
 
         self.helper = FormHelper()
-        self.helper.form_class = "form-horizontal"
+        self.helper.form_class = "form form-horizontal"
         self.helper.form_id = "report-builder-form"
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         chart_type_crispy_field = None
         if self.report_type == 'chart':
@@ -394,13 +397,12 @@ class DataSourceForm(forms.Form):
             crispy.Fieldset(
                 _('Data'), *report_source_crispy_fields
             ),
-            FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'create_new_report_builder_btn',
-                        _('Next'),
-                    )
-                ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Next'),
+                    type="submit",
+                    css_class="btn-primary",
+                )
             ),
         )
 
