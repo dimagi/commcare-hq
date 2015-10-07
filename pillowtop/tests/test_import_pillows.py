@@ -1,5 +1,5 @@
 from django.test import override_settings, SimpleTestCase
-from pillowtop import get_all_pillows
+from pillowtop import get_all_pillow_instances, get_all_pillow_classes
 from pillowtop.listener import BasicPillow
 from inspect import isclass
 
@@ -8,12 +8,12 @@ from inspect import isclass
 class PillowTopTestCase(SimpleTestCase):
 
     def test_import_pillows_class_only(self):
-        pillows = get_all_pillows(instantiate=False)
+        pillows = get_all_pillow_classes()
         self.assertEquals(len(pillows), 1)
         self.assertTrue(isclass(pillows[0]))
 
     def test_import_pillows(self):
-        pillows = get_all_pillows(instantiate=True)
+        pillows = get_all_pillow_instances()
         self.assertEquals(len(pillows), 1)
         self.assertFalse(isclass(pillows[0]))
 

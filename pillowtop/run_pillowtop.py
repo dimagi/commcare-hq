@@ -1,5 +1,5 @@
 import sys
-from pillowtop import get_all_pillows
+from pillowtop import get_all_pillow_instances
 import multiprocessing
 
 def _do_run_pillow(pillow_class):
@@ -13,7 +13,7 @@ def start_pillows(pillows=None):
     """
     Actual runner for running pillow processes. Use this to run pillows.
     """
-    run_pillows = pillows or get_all_pillows()
+    run_pillows = pillows or get_all_pillow_instances()
 
     try:
         while True:

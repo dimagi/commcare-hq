@@ -6,7 +6,7 @@ from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_error
 from pillow_retry.models import PillowError
-from pillowtop.utils import import_pillow_string, get_pillow_by_name
+from pillowtop.utils import get_pillow_by_name, get_pillow_instance
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
@@ -35,7 +35,7 @@ def process_pillow_retry(error_doc_id):
 
         pillow_class = error_doc.pillow
         try:
-            pillow = import_pillow_string(pillow_class)
+            pillow = get_pillow_instance(pillow_class)
         except ValueError:
             # all fluff pillows have module path of 'fluff' so can't be imported directly
             _, pillow_class_name = pillow_class.rsplit('.', 1)

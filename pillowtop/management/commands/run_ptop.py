@@ -3,7 +3,7 @@ from pillowtop.run_pillowtop import start_pillows, start_pillow
 from optparse import make_option
 import sys
 from django.conf import settings
-from pillowtop.utils import import_pillow_string, get_all_pillows
+from pillowtop.utils import get_all_pillow_instances, get_pillow_instance
 from django.core.management.base import NoArgsCommand
 
 
@@ -75,14 +75,14 @@ class Command(NoArgsCommand):
                 sys.exit()
             else:
                 pillow_idx = abbreviated_pillows.index(pillow_name)
-                start_pillow(import_pillow_string(all_pillows[pillow_idx]))
+                start_pillow(get_pillow_instance(all_pillows[pillow_idx]))
             sys.exit()
         elif list_checkpoints:
-            for pillow in get_all_pillows():
+            for pillow in get_all_pillow_instances():
                 print pillow.checkpoint_manager.checkpoint_id
             sys.exit()
         else:
             print "\nNo command set, please see --help for runtime instructions"
             sys.exit()
 
-        start_pillows(pillows=[import_pillow_string(x) for x in pillows_to_run])
+        start_pillows(pillows=[get_pillow_instance(x) for x in pillows_to_run])

@@ -13,7 +13,6 @@ import time
 from requests import ConnectionError
 import simplejson
 import rawes
-from django.conf import settings
 import sys
 
 from dimagi.utils.decorators.memoized import memoized
@@ -183,9 +182,6 @@ class BasicPillow(object):
 
         self.process_change(change)
 
-    def process_doc(self, doc_dict):
-        self.process_change({'id': doc_dict['_id'], 'doc': doc_dict})
-
     def process_change(self, change, is_retry_attempt=False):
         try:
             with lock_manager(self.change_trigger(change)) as t:
@@ -235,7 +231,7 @@ class BasicPillow(object):
             lock = self.document_class.get_obj_lock_by_id(id)
             lock.acquire()
             return LockManager(self.couch_db.open_doc(id), lock)
-        elif changes_dict.get('doc', None):
+        elif changes_dict.get('doc', None) is not None:
             return changes_dict['doc']
         else:
             return self.couch_db.open_doc(id)
@@ -334,57 +330,6 @@ class PythonPillow(BasicPillow):
         super(PythonPillow, self).run()
 
 
-class BulkPillow(BasicPillow):
-    def bulk_builder(self, changes):
-        """
-        Generator function for bulk changes - note each individual change item goes through the pillowtop pathway individually
-        when loading the bulk item, and short of change_transport, it's identical. It would be slightly more efficient if the couch
-        load could be done in bulk for the actual documents, but it's not quite possible without gutting the existing pillowtop API
-        http://www.elasticsearch.org/guide/reference/api/bulk.html
-        bulk loader follows the following:
-        { "index" : { "_index" : "test", "_type" : "type1", "_id" : "1" } }\n
-        { "field1" : "value1" }\n
-        """
-        for change in changes:
-            try:
-                with lock_manager(self.change_trigger(change)) as t:
-                    if t is not None:
-                        tr = self.change_transform(t)
-                        if tr is not None:
-                            self.change_transport(tr)
-                            yield {
-                                "index": {
-                                    "_index": self.es_index,
-                                    "_type": self.es_type,
-                                    "_id": tr['_id']
-                                }
-                            }
-                            yield tr
-            except Exception, ex:
-                pillow_logging.error(
-                    "[%s] Error on change: %s, %s" % (
-                        self.get_name(),
-                        change['id'],
-                        ex
-                    )
-                )
-
-    def process_bulk(self, changes):
-        self.allow_updates = False
-        self.bulk = True
-        bstart = datetime.utcnow()
-        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
-        pillow_logging.info(
-            "%s,prepare_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0)))
-        send_start = datetime.utcnow()
-        self.send_bulk(bulk_payload)
-        pillow_logging.info(
-            "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
-
-    def send_bulk(self, payload):
-        raise NotImplementedError()
-
-
 def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
         except_on_failure=False, update=False, delete=False):
     """
@@ -429,7 +374,7 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
     return res
 
 
-class AliasedElasticPillow(BulkPillow):
+class AliasedElasticPillow(BasicPillow):
     """
     This pillow class defines it as being alias-able. That is, when you query it, you use an
     Alias to access it.
@@ -621,6 +566,19 @@ class AliasedElasticPillow(BulkPillow):
             )
             return None
 
+    def process_bulk(self, changes):
+        self.allow_updates = False
+        self.bulk = True
+        bstart = datetime.utcnow()
+        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
+        pillow_logging.info(
+            "%s,prepare_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0)))
+        send_start = datetime.utcnow()
+        self.send_bulk(bulk_payload)
+        pillow_logging.info(
+            "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
+
+
     def send_bulk(self, payload):
         es = self.get_es()
         es.post('_bulk', data=payload)
@@ -661,7 +619,6 @@ class AliasedElasticPillow(BulkPillow):
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
-
     def get_unique_id(self):
         """
         a unique identifier for the pillow - typically the hash associated with the index
@@ -670,7 +627,9 @@ class AliasedElasticPillow(BulkPillow):
         return self.calc_meta()
 
     def calc_meta(self):
-        raise NotImplementedError("Need to implement your own meta calculator")
+        # todo: we should get rid of this and have subclasses override get_unique_id
+        # instead of calc_meta
+        raise NotImplementedError("Need to either override get_unique_id or implement your own meta calculator")
 
     def bulk_builder(self, changes):
         """
@@ -727,51 +686,6 @@ class AliasedElasticPillow(BulkPillow):
         """
         return "%s.%s.%s.%s" % (
             self.__module__, self.__class__.__name__, self.get_unique_id(), get_machine_id())
-
-
-class NetworkPillow(BasicPillow):
-    """
-    Basic network endpoint handler.
-    This is useful for the logstash/Splunk use cases.
-    """
-    endpoint_host = ""
-    endpoint_port = 0
-    transport_type = 'tcp'
-
-    def change_transport(self, doc_dict):
-        try:
-            address = (self.endpoint_host, self.endpoint_port)
-            if self.transport_type == 'tcp':
-                stype = socket.SOCK_STREAM
-            elif self.transport_type == 'udp':
-                stype = socket.SOCK_DGRAM
-            sock = socket.socket(type=stype)
-            sock.connect(address)
-            sock.send(simplejson.dumps(doc_dict), timeout=1)
-            return 1
-        except Exception, ex:
-            pillow_logging.error(
-                "PillowTop [%s]: transport to network socket error: %s" % (self.get_name(), ex))
-            return None
-
-
-class LogstashMonitoringPillow(NetworkPillow):
-    """
-    This is a logstash endpoint (but really just TCP) for our production monitoring/aggregation
-    of log information.
-    """
-
-    def __init__(self):
-        if settings.DEBUG:
-            #In a dev environment don't care about these
-            pillow_logging.info(
-                "[%s] Settings are DEBUG, suppressing the processing of these feeds" % self.get_name())
-
-    def processor(self, change):
-        if settings.DEBUG:
-            return {}
-        else:
-            return super(NetworkPillow, self).processor(change)
 
 
 def retry_on_connection_failure(fn):

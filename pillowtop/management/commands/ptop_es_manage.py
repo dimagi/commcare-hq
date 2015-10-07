@@ -5,7 +5,7 @@ import simplejson
 from corehq.elastic import get_es
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
-from pillowtop import get_all_pillows
+from pillowtop import get_all_pillow_instances
 
 
 class Command(LabelCommand):
@@ -50,7 +50,7 @@ class Command(LabelCommand):
         code_red = options['code_red']
         es = get_es()
 
-        pillows = get_all_pillows()
+        pillows = get_all_pillow_instances()
         aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
 
         if code_red:
