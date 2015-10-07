@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
     AutoSelectCase, CaseIndex, PreloadAction
@@ -124,6 +124,18 @@ class AppFactory(object):
                 action.case_indices = [CaseIndex(tag=form.actions.load_update_cases[-1].case_tag)]
 
             form.actions.open_cases.append(action)
+
+    @staticmethod
+    def form_uses_usercase(form, update=None, preload=None):
+        if form.form_type == 'module_form':
+            if update:
+                form.actions.usercase_update = UpdateCaseAction(update=update)
+                form.actions.usercase_update.condition.type = 'always'
+            if preload:
+                form.actions.usercase_preload = PreloadAction(preload=preload)
+                form.actions.usercase_preload.condition.type = 'always'
+        else:
+            AppFactory.advanced_form_autoloads(form, AUTO_SELECT_USERCASE, None)
 
     @classmethod
     def case_list_form_app_factory(cls):

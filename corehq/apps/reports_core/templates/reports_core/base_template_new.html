@@ -17,7 +17,7 @@
     <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -40,7 +40,7 @@
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
             showAllRowsOption: {{ report_table.show_all_rows|JSON }},
-
+            aaSorting: [],
             {% if headers.render_aoColumns %}aoColumns: {{ headers.render_aoColumns|JSON }},{% endif %}
             autoWidth: {{ headers.auto_width|JSON }},
             {% if headers.custom_sort %}customSort: {{ headers.custom_sort|JSON }},{% endif %}

@@ -107,6 +107,7 @@ class FieldColumn(ReportColumn):
         'default',
         'percent_of_total',
     ])
+    sortable = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, obj):
@@ -136,7 +137,7 @@ class FieldColumn(ReportColumn):
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
-                sortable=False,
+                sortable=self.sortable,
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description
@@ -296,13 +297,23 @@ class FilterChoice(JsonObject):
         return self.display or self.value
 
 
+def _validate_filter_slug(s):
+    if "-" in s:
+        raise Exception(_(
+            """
+            Filter slugs must be legal sqlalchemy bind parameter names.
+            '-' and other special character are prohibited
+            """
+        ))
+
+
 class FilterSpec(JsonObject):
     """
     This is the spec for a report filter - a thing that should show up as a UI filter element
     in a report (like a date picker or a select list).
     """
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
-    slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
+    slug = StringProperty(required=True, validators=_validate_filter_slug)  # this shows up as the ID in the filter HTML.
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     datatype = DataTypeProperty(default='string')

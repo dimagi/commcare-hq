@@ -94,7 +94,8 @@ def urgent_stockout():
         UrgentStockoutAlert(domain)
 
 
-@periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=58),
+# Thursday 13:54
+@periodic_task(run_every=crontab(day_of_week=4, hour=13, minute=58),
                queue='background_queue')
 def first_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -102,7 +103,8 @@ def first_soh_reminder():
         FirstSOHReminder(domain).send()
 
 
-@periodic_task(run_every=crontab(day_of_week=0, hour=13, minute=57),
+# Wednesday 13:57
+@periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=57),
                queue='background_queue')
 def second_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -110,7 +112,8 @@ def second_soh_reminder():
         SecondSOHReminder(domain).send()
 
 
-@periodic_task(run_every=crontab(day_of_week=2, hour=13, minute=54),
+# Wednesday 13:54
+@periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=54),
                queue='background_queue')
 def third_soh_to_super():
     domains = EWSGhanaConfig.get_all_enabled_domains()

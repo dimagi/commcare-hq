@@ -25,6 +25,7 @@
   default: "-1"
   values_txt: "Any positive integer. Represents period of purging in days." 
   since: "2.8"
+  force: true
 
 - name: "Logging Enabled"
   description: "Whether logging of incidents should be activated on the client."

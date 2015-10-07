@@ -22,6 +22,8 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueEr
 from PIL import Image
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -604,7 +606,19 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         Applies updates to a case
         """
         for k, v in update_action.updated_known_properties.items():
-            setattr(self, k, v)
+            try:
+                setattr(self, k, v)
+            except BadValueError as e:
+                soft_assert(notify_admins=True)(False, u'Error applying {}: {}'.format(
+                    unicode(update_action), e
+                ))
+                # todo: awkward hard-coded handling for legacy forms - can remove if these
+                # assertions go away: http://manage.dimagi.com/default.asp?182759
+                if k == 'opened_on' and isinstance(v, basestring):
+                    # this will reraise the exception if this wasn't a string date
+                    setattr(self, k, iso_string_to_datetime(v))
+                else:
+                    raise
 
         properties = self.properties()
         for item in update_action.updated_unknown_properties:
@@ -912,6 +926,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             {
                 'name': _('Status'),
                 'expr': "status"
+            },
+            {
+                'name': _('Case Type'),
+                'expr': "type",
             },
             {
                 'name': _('Date Opened'),

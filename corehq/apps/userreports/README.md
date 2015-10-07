@@ -83,10 +83,12 @@ array_index     | An index into an array | `doc[1]`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
+nested          | A way to chain any two expressions together | `f1(f2(doc))`
+
 
 ### JSON snippets for expressions
 
-Here are JSON snippets for the four expression types. Hopefully they are self-explanatory.
+Here are JSON snippets for the various expression types. Hopefully they are self-explanatory.
 
 ##### Constant Expression
 
@@ -245,6 +247,27 @@ This can be used to lookup a property in another document. Here's an example tha
     "value_expression": {
         "type": "property_name",
         "property_name": "owner_id"
+    }
+}
+```
+
+#### Nested expressions
+
+These can be used to nest expressions. This can be used, e.g. to pull a specific property out of an item in a list of objects.
+
+The following nested expression is the equivalent of a `property_path` expression to `["outer", "inner"]` and demonstrates the functionality.
+More examples can be found in the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "property_name",
+        "property_name": "outer"
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "inner"
     }
 }
 ```
@@ -1113,6 +1136,10 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
 ]
 ```
+
+Following are some custom expressions that are currently available.
+
+- `location_type_name`:  A way to get location type from a location document id. You can find an example in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
 
 ## Inspecting database tables
 

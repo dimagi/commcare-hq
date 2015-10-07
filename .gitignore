@@ -13,6 +13,7 @@ xforms/
 /data/
 submissions/
 /export/
+/bower_components
 bad/
 *.log*
 CommCare.ja*
