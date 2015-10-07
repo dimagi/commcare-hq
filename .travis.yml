@@ -20,7 +20,7 @@ before_install:
   - "uname -a"
   - "lsb_release -a"
   # downgrade ES to the version we use: http://docs.travis-ci.com/user/database-setup/#Using-a-specific-version-of-ElasticSearch
-  - "curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.5.deb && sudo dpkg -i --force-confnew elasticsearch-0.90.5.deb"
+  - "curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.5.deb && dpkg -i --force-confnew elasticsearch-0.90.5.deb"
 addons:
   apt:
     packages:
