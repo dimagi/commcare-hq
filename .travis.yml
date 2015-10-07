@@ -20,8 +20,10 @@ before_install:
   - "uname -a"
   - "lsb_release -a"
   # downgrade ES to the version we use: http://docs.travis-ci.com/user/database-setup/#Using-a-specific-version-of-ElasticSearch
+  - "sudo service elasticsearch stop"
   - "curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.5.deb && sudo dpkg -i --force-confnew elasticsearch-0.90.5.deb"
   - "curl http://localhost:9200/"  # print ES info
+  - "sudo service elasticsearch start"
 addons:
   apt:
     packages:
