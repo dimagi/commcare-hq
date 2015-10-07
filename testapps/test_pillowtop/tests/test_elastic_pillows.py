@@ -34,6 +34,16 @@ class CasePillowTest(SimpleTestCase):
             mapping['properties']['actions']['properties']['date']['format']
         )
 
+    def test_refresh_index(self):
+        pillow = CasePillow()
+        doc_id = uuid.uuid4().hex
+        doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
+        self.assertEqual(0, _get_doc_count(self.es, self.index))
+        self.es.create(self.index, 'case', doc, id=doc_id)
+        self.assertEqual(0, _get_doc_count(self.es, self.index, refresh_first=False))
+        pillow.refresh_index()
+        self.assertEqual(1, _get_doc_count(self.es, self.index, refresh_first=False))
+
     def test_send_case_to_es(self):
         pillow = CasePillow()
         doc_id = uuid.uuid4().hex
@@ -48,8 +58,9 @@ class CasePillowTest(SimpleTestCase):
         self.assertEqual('mother', doc['type'])
 
 
-def _get_doc_count(es, index):
-    # we have to call refresh or ES might have stale data
-    es.indices.refresh(index)
+def _get_doc_count(es, index, refresh_first=True):
+    if refresh_first:
+        # we default to calling refresh since ES might have stale data
+        es.indices.refresh(index)
     stats = es.indices.stats(index)
     return stats['indices'][index]['total']['docs']['count']
