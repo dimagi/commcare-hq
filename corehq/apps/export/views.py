@@ -362,8 +362,8 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_select2())
+    @use_bootstrap3
+    @use_select2
     def dispatch(self, *args, **kwargs):
         return super(BaseDownloadExportView, self).dispatch(*args, **kwargs)
 
@@ -763,8 +763,8 @@ class BulkDownloadCaseExportView(DownloadCaseExportView):
 class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_select2())
+    @use_bootstrap3
+    @use_select2
     def dispatch(self, *args, **kwargs):
         return super(BaseExportListView, self).dispatch(*args, **kwargs)
 
