@@ -1,1 +1,1 @@
-from .ledgers_by_location import LedgersByLocationDataSource
+from .ledgers_by_location import LedgersByLocationDataSource, LedgersByLocationReport
