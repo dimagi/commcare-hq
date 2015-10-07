@@ -390,7 +390,7 @@ ko.bindingHandlers.bootstrapCollapse = {
         $(element).on('click', 'a.accordion-toggle', function () {
             var $a = $(this);
             if (!$a.attr('href')) {
-                $a.parent().parent().find('.collapse').collapse('toggle');
+                $a.toggleClass('collapsed').parent().parent().find('.collapse').collapse('toggle');
             }
         });
     }
