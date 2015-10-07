@@ -276,7 +276,8 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        # if self.account.date_confirmed_extra_charges is not None:
+        if self.account.date_confirmed_extra_charges is not None:
+            return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountForExtraUsersView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
