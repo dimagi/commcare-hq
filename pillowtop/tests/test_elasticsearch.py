@@ -1,5 +1,6 @@
 import uuid
 from django.test import SimpleTestCase
+from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from .utils import require_explicit_elasticsearch_testing, get_doc_count
 
@@ -52,7 +53,6 @@ class ElasticPillowTest(SimpleTestCase):
     def test_mapping_initialization_on_pillow_creation(self):
         pillow = TestElasticPillow()
         mapping = pillow.get_index_mapping()[pillow.es_type]
-        # this is totally arbitrary, but something obscure enough that we can assume it worked
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
             pillow.default_mapping['properties']['doc_type']['index'],
@@ -69,4 +69,33 @@ class ElasticPillowTest(SimpleTestCase):
         pillow.refresh_index()
         self.assertEqual(1, get_doc_count(self.es, self.index, refresh_first=False))
 
+    def test_index_operations(self):
+        pillow = TestElasticPillow()
+        self.assertTrue(self.es.indices.exists(self.index))
+        self.assertTrue(pillow.index_exists())
+
+        # delete and check
+        pillow.delete_index()
+        self.assertFalse(self.es.indices.exists(self.index))
+        self.assertFalse(pillow.index_exists())
+
+        # create and check
+        pillow.create_index()
+        self.assertTrue(self.es.indices.exists(self.index))
+        self.assertTrue(pillow.index_exists())
+
+    def test_send_doc_to_es(self):
+        pillow = TestElasticPillow()
+        doc_id = uuid.uuid4().hex
+        doc = {'_id': doc_id, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
+        change = Change(
+            id=doc_id,
+            sequence_id=0,
+            document=doc
+        )
+        pillow.processor(change, False)
+        self.assertEqual(1, get_doc_count(self.es, self.index))
+        es_doc = self.es.get_source(self.index, doc_id)
+        for prop in doc:
+            self.assertEqual(doc[prop], es_doc[prop])
 
