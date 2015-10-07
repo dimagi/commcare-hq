@@ -4,25 +4,13 @@ from django.conf import settings
 MIGRATION_MESSAGE = """
 Before you can merge you must run the {slug} doc_type migration.
 
-For a full description, see
-https://github.com/dimagi/commcare-hq/blob/master/corehq/doctypemigrations/README.md#run-the-doctype-migration.
+If you're seeing this on your **dev machine**, run
 
-For a quick fix locally, run
-
+./manage.py sync_couchdb
 ./manage.py run_doctype_migration {slug} --initial
-
-In production you should then run
-
-./manage.py run_doctype_migration {slug} --continuous
-
-and deploy while that is running. (You don't need to do this locally.)
-
-Then rerun
-
 ./manage.py migrate
 
-or re-deploy and that should go smoothly.
-
+and that final migrate should go through without a hitch.
 
 After you migrate/update your code and everything's working fine, run
 
@@ -30,6 +18,11 @@ After you migrate/update your code and everything's working fine, run
 
 to delete the documents from the source db that have been copied to the target db
 
+
+If you're seeing this on a **production deploy** (or are just curious),
+you should read the full instructions here for the zero-downtime live swap:
+
+https://github.com/dimagi/commcare-hq/blob/master/corehq/doctypemigrations/README.md#run-the-doctype-migration.
 """
 
 
