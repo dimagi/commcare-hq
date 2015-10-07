@@ -55,14 +55,14 @@ class TestLedgersByLocation(TestCase):
     def tearDownClass(cls):
         delete_all_locations()
 
-    def test_show_all_rows(self):
+    def test_show_all_rows_ordered(self):
         report = LedgersByLocationDataSource(
             'test',
             params={'ledger_section': 'stock'},
         )
-        self.assertItemsEqual(
+        self.assertEqual(
             [row.location.name for row in report.rows],
-            [self.boston.name, self.cambridge.name, self.allston.name]
+            [self.allston.name, self.boston.name, self.cambridge.name]
         )
 
     def test_one_row(self):
@@ -70,7 +70,6 @@ class TestLedgersByLocation(TestCase):
             'test',
             params={'ledger_section': 'stock'},
         )
-        print report.rows
         boston = [row for row in report.rows if row.location.name == "Boston"][0]
         self.assertEqual(boston.stock[self.aspirin.product_id], 135)
         self.assertEqual(boston.stock[self.bandaids.product_id], 43)

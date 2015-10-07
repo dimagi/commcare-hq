@@ -28,7 +28,7 @@ class LedgersByLocationDataSource(object):
         return self.params.get('section_id', STOCK_SECTION_TYPE)
 
     def _get_rows(self):
-        for location in SQLLocation.objects.filter(domain=self.domain):
+        for location in SQLLocation.objects.filter(domain=self.domain).order_by('name'):
             # TODO pull out of loop
             stock = (StockState.objects
                      .filter(section_id=self.section_id,
