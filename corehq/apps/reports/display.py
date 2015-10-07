@@ -139,8 +139,8 @@ class FormType(object):
         if form_json:
             form = json.loads(form_json)
         else:
-            form_info = get_form_analytics_metadata(domain, app_id, xmlns)
-            cache.set(cache_key, json.dumps(form_info), 30)
+            form = get_form_analytics_metadata(domain, app_id, xmlns)
+            cache.set(cache_key, json.dumps(form), 30)
         return form
 
 
