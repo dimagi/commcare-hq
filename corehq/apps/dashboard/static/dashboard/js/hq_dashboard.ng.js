@@ -9,6 +9,11 @@
         staticRoot: '/'
     });
 
+    dashboard.constant('analyticsConfig', {
+        category: "Dashboard",
+        action: "Dashboard Action"
+    });
+
     var utils = {
         getTemplate: function (config, filename) {
             return config.staticRoot + 'dashboard/ng_partials/' + filename;
@@ -105,6 +110,7 @@
         $scope.url = '';
         $scope.isExternal = false;
         $scope.helpText = '';
+        $scope.analytics = {};
 
         self.retries = 0;
 
@@ -126,6 +132,7 @@
                 $scope.url = data.response.url;
                 $scope.isExternal = !!data.response.isExternal;
                 $scope.helpText = data.response.helpText;
+                $scope.analytics = data.response.analytics;
                 if ($scope.isExternal) {
                     $($scope.externalLink).attr('target', '_blank');
                 }
@@ -207,9 +214,14 @@
         };
     };
 
-    dashboardDirectives.trackAnalyticsDirective = function () {
-        // todo
+    dashboardDirectives.trackAnalyticsDirective = function (analyticsConfig) {
         var link = function ($scope, element, attrs) {
+            if (!_.isEmpty(attrs.analyticsUsageLabel)){
+                gaTrackLink(element, analyticsConfig.category, analyticsConfig.action, attrs.analyticsUsageLabel);
+            }
+            if (! _.isEmpty(attrs.analyticsWorkflowLabel)){
+                analytics.trackWorkflowLink(element, attrs.analyticsWorkflowLabel);
+            }
         };
 
         return {
