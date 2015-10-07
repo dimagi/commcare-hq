@@ -1,11 +1,12 @@
 from collections import namedtuple
 from dimagi.utils.decorators.memoized import memoized
+from no_exceptions.exceptions import Http400
 
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
 
 from .const import STOCK_SECTION_TYPE
-
 
 _Row = namedtuple('Row', "location stock")
 
@@ -26,6 +27,13 @@ class LedgersByLocationDataSource(object):
     @property
     def section_id(self):
         return self.params.get('section_id', STOCK_SECTION_TYPE)
+
+    @property
+    @memoized
+    def products(self):
+        if SQLProduct.objects.filter(domain=self.domain).count() > 20:
+            raise Http400("This domain has too many products.")
+        return list(SQLProduct.objects.filter(domain=self.domain))
 
     def _get_rows(self):
         for location in SQLLocation.objects.filter(domain=self.domain).order_by('name'):
