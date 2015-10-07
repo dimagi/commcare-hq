@@ -8,6 +8,10 @@ try:
     from corehq.apps.app_manager.tests.test_form_preparation_v2 import *
     from corehq.apps.app_manager.tests.test_days_ago_migration import *
     from corehq.apps.app_manager.tests.test_suite import *
+    from corehq.apps.app_manager.tests.test_advanced_suite import *
+    from corehq.apps.app_manager.tests.test_suite_formats import *
+    from corehq.apps.app_manager.tests.test_suite_regex import *
+    from corehq.apps.app_manager.tests.test_suite_form_filter_errors import *
     from corehq.apps.app_manager.tests.test_media_suite import *
     from corehq.apps.app_manager.tests.test_profile import *
     from corehq.apps.app_manager.tests.test_build_errors import *
