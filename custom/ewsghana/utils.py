@@ -4,6 +4,7 @@ from django.db.models.query_utils import Q
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import StockState, SupplyPointCase
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType, Location
 from datetime import timedelta, datetime
 from dateutil import rrule
@@ -13,7 +14,6 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number
-from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
 from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.models import EWSGhanaConfig
@@ -128,8 +128,10 @@ def assign_products_to_location(location, products):
 
 
 def prepare_domain(domain_name):
-    from corehq.apps.commtrack.tests import bootstrap_domain
-    domain = bootstrap_domain(domain_name)
+    domain = create_domain(domain_name)
+    domain.convert_to_commtrack()
+    domain.default_sms_backend_id = TEST_BACKEND
+    domain.save()
 
     def _make_loc_type(name, administrative=False, parent_type=None):
         return LocationType.objects.get_or_create(
@@ -208,16 +210,23 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
     return CommCareUser.wrap(user.to_json())
 
 
-def bootstrap_web_user(domain, username, password, email, location, user_data, phone_number):
+def bootstrap_web_user(domain, username, password, email, location, user_data, phone_number, first_name="",
+                       last_name="", program_id=None):
     web_user = WebUser.create(
         domain=domain,
         username=username,
         password=password,
         email=email
     )
+
+    web_user.first_name = first_name
+    web_user.last_name = last_name
+
     web_user.user_data = user_data
     web_user.set_location(domain, location)
-    web_user.save_verified_number(domain, phone_number, verified=True, backend_id=TEST_BACKEND)
+    dm = web_user.get_domain_membership(domain)
+    dm.program_id = program_id
+    web_user.phone_numbers = [phone_number]
     web_user.save()
     return web_user
 
