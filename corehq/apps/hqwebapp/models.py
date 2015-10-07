@@ -933,33 +933,6 @@ class MessagingTab(UITab):
 
     @property
     @memoized
-    def survey_urls(self):
-        survey_urls = []
-
-        if self.project.survey_management_enabled and self.can_use_inbound_sms:
-            survey_urls.extend([
-                {'title': _("Samples"),
-                 'url': reverse('sample_list', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Sample"),
-                      'urlname': 'edit_sample'},
-                     {'title': _("New Sample"),
-                      'urlname': 'add_sample'},
-                ]},
-                {'title': _("Surveys"),
-                 'url': reverse('survey_list', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Survey"),
-                      'urlname': 'edit_survey'},
-                     {'title': _("New Survey"),
-                      'urlname': 'add_survey'},
-                ]},
-            ])
-
-        return survey_urls
-
-    @property
-    @memoized
     def settings_urls(self):
         settings_urls = []
 
@@ -1003,7 +976,6 @@ class MessagingTab(UITab):
             (_("Performance Messaging"), self.performance_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
-            (_("Survey Management"), self.survey_urls),
             (_("Settings"), self.settings_urls)
         ):
             if urls:

@@ -3,7 +3,6 @@ from datetime import timedelta, datetime, date, time
 import re
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.reminders.dbaccessors import get_surveys_in_domain
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
