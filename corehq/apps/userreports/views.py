@@ -28,6 +28,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
+from corehq.apps.style.decorators import upgrade_knockout_js
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -125,6 +126,7 @@ def create_report(request, domain):
 class ReportBuilderView(TemplateView):
 
     @cls_to_view_login_and_domain
+    @upgrade_knockout_js
     @method_decorator(toggles.REPORT_BUILDER.required_decorator())
     @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, domain, **kwargs):
