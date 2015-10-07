@@ -1,6 +1,46 @@
 OpenClinica integration
 =======================
 
+Getting Started
+---------------
+
+If you are an OpenClinica administrator, this part is for you. If you
+are a Dimagi/CommCare project manager, field manager or developer, this
+is useful to know, but you should not miss the next sections,
+:ref:`important_assumptions` and :ref:`required_case_properties`.
+
+1. In OpenClinica, create the study, import the CRFs, and add all the
+   users who will be using CommCare.
+
+   When creating the users, please let the Dimagi/CommCare administrator
+   know the convention you use to set their usernames, or give them the
+   list of usernames. They will need this because the Study Metadata
+   that OpenClinica provides includes the first names and last names of
+   the users, but not their usernames, and corresponding users will need
+   to be created on CommCare with matching usernames.
+
+2. Save the Study Metadata from Study > "Download the study metadata
+   **here**". Give this to the Dimagi/CommCare developer or project
+   manager.
+
+   They will save the Study Metadata to CommCare, and add CommCare
+   mobile workers with the same usernames, first names and last names.
+
+3. Using CommCare, users will register subjects, and enter study data
+   throughout the project.
+
+4. In CommCareHQ, go to Reports > View All > Custom Reports: ODM Export.
+   The report will list all the study subjects and their study events.
+   Add all the subjects and schedule their events in OpenClinica. This
+   is necessary because OpenClinica does not import subjects or events
+   via ODM.
+
+5. Click the "Export" button on the report. This will create an ODM
+   document. Import the ODM document into Openclinica.
+
+
+.. _important_assumptions:
+
 Important Assumptions
 ---------------------
 
@@ -18,6 +58,8 @@ If the date has not changed, it is considered the same Study Event, and a new
 Item Group is created instead.
 
 
+.. _required_case_properties:
+
 Required Case Properties
 ------------------------
 
@@ -34,7 +76,7 @@ from OpenClinica. To retrieve:
 1. Log into OpenClinica
 2. Navigate to the study by clicking the study name at the top left of the
    page
-3. Download the study metadata be clicking on "Download the study metadata
+3. Download the study metadata by clicking on "Download the study metadata
    **here**."
 4. For this first OpenClinica integration project, study metadata is simply
    saved in `custom/openclinica/study_metadata.xml`, but future projects will
