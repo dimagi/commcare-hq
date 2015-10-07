@@ -136,6 +136,7 @@ class HtmlFileWriter(PartialHtmlFileWriter):
 
 class ExportWriter(object):
     max_table_name_size = 500
+    target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
     def open(self, header_table, file, max_column_size=2000, table_titles=None):
         """
@@ -471,6 +472,8 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
     """
     Write tables to a single CDISC ODM-formatted XML file.
     """
+    target_app = 'OpenClinica'  # Export button to say "Export to OpenClinica"
+
     def _init(self):
         from custom.openclinica.utils import get_study_constant
 

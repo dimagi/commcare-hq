@@ -35,8 +35,8 @@ is useful to know, but you should not miss the next sections,
    is necessary because OpenClinica does not import subjects or events
    via ODM.
 
-5. Click the "Export" button on the report. This will create an ODM
-   document. Import the ODM document into Openclinica.
+5. Click the "Export to OpenClinica" button on the report. This will
+   create an ODM document. Import the ODM document into OpenClinica.
 
 
 .. _important_assumptions:
