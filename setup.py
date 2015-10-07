@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pillowtop',
-    version='0.1.6',
+    version='0.1.7',
     description='A couchdbkit changes listener for doing backend processing',
     author='Dimagi',
     author_email='dev@dimagi.com',
