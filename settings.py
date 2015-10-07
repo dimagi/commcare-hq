@@ -1206,6 +1206,7 @@ BOWER_CORE_APPS = (
     'd3#3.0',
     'nvd3#1.1.10-beta',
     'datatables#1.10.9',
+    'datatables-bootstrap3#0.1',
 )
 
 BOWER_TEST_APPS = (
