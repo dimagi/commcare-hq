@@ -20,7 +20,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
-from corehq.apps.reminders.util import get_form_list
+from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
