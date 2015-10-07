@@ -506,8 +506,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if self.account.date_confirmed_extra_charges is not None:
-            return HttpResponseRedirect(reverse(CreateCommCareUserView.urlname, args=[self.domain]))
+        # if self.account.date_confirmed_extra_charges is not None:
         return super(ConfirmBillingAccountForExtraUsersView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -625,65 +624,6 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
             'title': ListCommCareUsersView.page_title,
             'url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
         }]
-
-
-class CreateCommCareUserView(BaseManageCommCareUserView):
-    template_name = "users/add_commcare_account.html"
-    urlname = 'add_commcare_account'
-    page_title = ugettext_noop("New Mobile Worker")
-
-    @property
-    @memoized
-    def custom_data(self):
-        return CustomDataEditor(
-            field_view=UserFieldsView,
-            domain=self.domain,
-            post_dict=self.request.POST if self.request.method == "POST" else None,
-        )
-
-    @property
-    @memoized
-    def new_commcare_user_form(self):
-        if self.request.method == "POST":
-            return CommCareAccountForm(self.request.POST, domain=self.domain)
-        return CommCareAccountForm(domain=self.domain)
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.new_commcare_user_form,
-            'data_fields_form': self.custom_data.form,
-        }
-
-    def dispatch(self, request, *args, **kwargs):
-        if not can_add_extra_mobile_workers(request):
-            return HttpResponseRedirect(reverse(ListCommCareUsersView.urlname, args=[self.domain]))
-        return super(CreateCommCareUserView, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
-            username = self.new_commcare_user_form.cleaned_data['username']
-            password = self.new_commcare_user_form.cleaned_data['password']
-            phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
-
-            if 'location_id' in request.GET:
-                loc = get_document_or_404(Location, self.domain, request.GET.get('location_id'))
-
-            couch_user = CommCareUser.create(
-                self.domain,
-                username,
-                password,
-                phone_number=phone_number,
-                device_id="Generated from HQ",
-                user_data=self.custom_data.get_data_to_save(),
-            )
-
-            if 'location_id' in request.GET:
-                couch_user.set_location(loc)
-
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
-                                                args=[self.domain, couch_user.userID]))
-        return self.get(request, *args, **kwargs)
 
 
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):

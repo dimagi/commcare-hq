@@ -1070,10 +1070,6 @@ class ProjectUsersTab(UITab):
                     'subpages': [
                         {'title': commcare_username,
                          'urlname': EditCommCareUserView.urlname},
-                        {'title': _('New Mobile Worker'),
-                         'urlname': 'add_commcare_account',
-                         'show_in_dropdown': True,
-                         'show_in_first_level': True},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
                         {'title': ConfirmBillingAccountForExtraUsersView.page_title,
