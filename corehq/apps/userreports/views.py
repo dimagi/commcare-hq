@@ -17,6 +17,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 from corehq.apps.analytics.tasks import track_workflow
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, Form
@@ -24,7 +25,7 @@ from corehq.apps.app_manager.models import Application, Form
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
-from corehq.apps.dashboard.models import IconContext, TileConfiguration
+from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
@@ -146,21 +147,52 @@ class ReportBuilderView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def section_name(self):
+        return _("Report Builder")
+
+    @property
+    def section_url(self):
+        return "#"
 
 
-
-class ReportBuilderTypeSelect(ReportBuilderView):
+class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/builder_report_type_select.html"
 
-    def get_context_data(self, **kwargs):
+    @property
+    def page_url(self):
+        return "#"
+
+    @property
+    def page_context(self):
         return {
             "has_apps": len(get_apps_in_domain(self.domain)) > 0,
-            "domain": self.domain,
             "report": {
                 "title": _("Create New Report")
             },
-            "tiles": self.tiles,
+            "tiles": [{
+                'title': tile.title,
+                'slug': tile.slug,
+                'ng_directive': tile.ng_directive,
+            } for tile in self.tiles],
         }
+
+    @allow_remote_invocation
+    def update_tile(self, in_data):
+        tile = self.make_tile(in_data['slug'], in_data)
+        print tile.context
+        return {
+            'response': tile.context,
+            'success': True,
+        }
+
+    def make_tile(self, slug, in_data):
+        config = self.slug_to_tile[slug]
+        return Tile(config, self.request, in_data)
+
+    @property
+    def slug_to_tile(self):
+        return dict([(a.slug, a) for a in self.tiles])
 
     @property
     def tiles(self):
