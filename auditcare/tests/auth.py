@@ -1,6 +1,7 @@
 import time
 from datetime import timedelta
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client
 from django.contrib.auth.models import User, AnonymousUser
@@ -10,8 +11,6 @@ from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 from auditcare import models
 from auditcare.tests.testutils import delete_all, get_latest_access
 from auditcare.utils import _thread_locals
-
-import settings
 
 
 class authenticationTestCase(TestCase):
@@ -128,4 +127,3 @@ class authenticationTestCase(TestCase):
     def testAuditViews(self):
         for v in settings.AUDIT_VIEWS:
             pass
-    

@@ -4,10 +4,10 @@ from dimagi.ext.couchdbkit import Document
 from dimagi.ext.jsonobject import JsonObject
 from django.db.models.signals import post_save
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.forms import model_to_dict
 
-import settings
 try:
     from dimagi.utils.threadlocals import get_current_user
 except:

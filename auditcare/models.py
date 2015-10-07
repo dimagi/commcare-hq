@@ -9,12 +9,11 @@ from datetime import datetime
 
 from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
-
-import settings
 
 log = logging.getLogger(__name__)
 
