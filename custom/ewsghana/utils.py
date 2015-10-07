@@ -9,8 +9,10 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -436,3 +438,10 @@ def report_status(sql_location, days_until_late=DAYS_UNTIL_LATE):
         stock_state.sql_product for stock_state in latest_stocks.filter(last_modified_date__lt=deadline)
     ]
     return [stock_state.sql_product for stock_state in on_time_stocks], missing_products + missing_stocks
+
+
+def send_sms(domain, recipient, phone_number, message):
+    if isinstance(phone_number, VerifiedNumber):
+        send_sms_to_verified_number(phone_number, message)
+    else:
+        send_sms(domain, recipient, phone_number, message)
