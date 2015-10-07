@@ -99,3 +99,23 @@ class ElasticPillowTest(SimpleTestCase):
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
 
+    def test_send_bulk(self):
+        # this structure determined based on seeing what bulk_reindex does
+        def make_bulk_row(doc):
+            return {
+                'key': [None, None, False],
+                'doc': doc,
+                'id': doc['_id'],
+                'value': None
+            }
+
+        doc_ids = [uuid.uuid4().hex for i in range(3)]
+        docs = [{'_id': doc_id, 'doc_type': 'MyCoolDoc', 'property': 'foo'} for doc_id in doc_ids]
+        rows = [make_bulk_row(doc) for doc in docs]
+        pillow = TestElasticPillow()
+        pillow.process_bulk(rows)
+        self.assertEqual(len(doc_ids), get_doc_count(self.es, self.index))
+        for doc in docs:
+            es_doc = self.es.get_source(self.index, doc['_id'])
+            for prop in doc.keys():
+                self.assertEqual(doc[prop], es_doc[prop])
