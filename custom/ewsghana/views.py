@@ -30,7 +30,7 @@ from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
 from custom.logistics.tasks import stock_data_task
-from custom.logistics.views import BaseConfigView, BaseRemindersTester
+from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
 
@@ -327,7 +327,6 @@ def non_administrative_locations_for_select2(request, domain):
             )
         else:
             return json_response(loc_to_payload(loc))
-
 
     locs = []
     user = request.couch_user
