@@ -4,7 +4,7 @@ import tempfile
 from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, \
-    use_select2, use_daterangepicker, use_jquery_ui
+    use_select2, use_daterangepicker, use_jquery_ui, use_nvd3
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -147,6 +147,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_select2
     @use_daterangepicker
     @use_jquery_ui
+    @use_nvd3
     def dispatch(self, request, *args, **kwargs):
         original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
         return original
