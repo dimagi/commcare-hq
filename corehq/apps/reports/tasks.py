@@ -9,6 +9,8 @@ import zipfile
 import tempfile
 from wsgiref.util import FileWrapper
 
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.indicators.utils import get_mvp_domains
@@ -50,7 +52,6 @@ from corehq.elastic import (
 )
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from dimagi.utils.parsing import json_format_datetime
-import settings
 from couchforms.models import XFormInstance
 from corehq.apps.reports.models import FormExportSchema
 from dimagi.utils.couch.database import iter_docs
@@ -201,15 +202,15 @@ def update_calculated_properties():
         dom = r["name"]
         calced_props = {
             "_id": r["_id"],
-            "cp_n_web_users": int(all_stats["web_users"][dom]),
+            "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
             "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
-            "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
+            "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
             "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
             "cp_n_users_submitted_form": total_distinct_users([dom]),
             "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
             "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
-            "cp_n_cases": int(all_stats["cases"][dom]),
-            "cp_n_forms": int(all_stats["forms"][dom]),
+            "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
+            "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
             "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
             "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
             "cp_is_active": CALC_FNS["active"](dom),

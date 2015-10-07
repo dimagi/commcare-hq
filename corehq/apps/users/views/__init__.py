@@ -389,8 +389,8 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_knockout_js())
+    @use_bootstrap3
+    @use_knockout_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)

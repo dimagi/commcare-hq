@@ -255,6 +255,13 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LOCATIONS_IN_UCR = StaticToggle(
+    'locations_in_ucr',
+    'Add Locations as one of the Source Types for User Configurable Reports',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 REPORT_BUILDER = StaticToggle(
     'report_builder',
     'Report Builder',
@@ -461,7 +468,7 @@ OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
     'Enable restoring with updated owner cleanliness logic.',
     TAG_PRODUCT_CORE,
     namespaces=[NAMESPACE_DOMAIN],
-    randomness=.01,
+    randomness=.05,
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
@@ -589,13 +596,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     'Basic modules can be child modules',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
-    'messaging_status',
-    'View the Messaging Status and Error Reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
 )
 
 HSPH_HACK = StaticToggle(
