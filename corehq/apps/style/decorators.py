@@ -52,3 +52,15 @@ def use_knockout_js():
             return fn(request, *args, **kwargs)
         return wrapped
     return decorate
+
+
+def upgrade_knockout_js():
+    def decorate(fn):
+        """
+        Decorator to Toggle on the use of knockout 3.0 in bootstrap2 pages
+        """
+        def wrapped(request, *args, **kwargs):
+            request.upgrade_knockout_js = True
+            return fn(request, *args, **kwargs)
+        return wrapped
+    return decorate
