@@ -305,7 +305,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
-            DataTablesColumn(_("Type")),
+            DataTablesColumn(_("Type"), sortable=False),
         )
         header.custom_sort = [[0, 'desc']]
         return header
