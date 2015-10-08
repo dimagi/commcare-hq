@@ -32,6 +32,9 @@ class PillowBase(object):
         """
         pass
 
+    def get_last_checkpoint_sequence(self):
+        return self.checkpoint.get_or_create()['seq']
+
     def get_checkpoint(self, verify_unchanged=False):
         return self.checkpoint.get_or_create(verify_unchanged=verify_unchanged)
 

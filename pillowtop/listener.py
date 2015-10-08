@@ -164,9 +164,6 @@ class BasicPillow(PillowBase):
         return "%s.%s.%s" % (
             self.__module__, self.__class__.__name__, get_machine_id())
 
-    def get_last_checkpoint_sequence(self):
-        return self.checkpoint.get_or_create()['seq']
-
     @property
     def since(self):
         # todo: see if we can remove this. It is hard to search for.
