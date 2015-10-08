@@ -1,5 +1,4 @@
 import re
-from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     USERCASE_TYPE,
     SCHEDULE_PHASE,
