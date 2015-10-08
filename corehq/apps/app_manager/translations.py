@@ -566,7 +566,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         n for n in text_node.findall("./{f}value")
                         if 'form' not in n.attrib
                     )
-                    old_translation = etree.tostring(value_node.xml, method="text").strip()
+                    old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
                     markdown_node = text_node.find("./{f}value[@form='markdown']")
                     has_markdown = _looks_like_markdown(new_translation)
                     had_markdown = markdown_node.exists()
