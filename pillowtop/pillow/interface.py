@@ -78,3 +78,25 @@ class PillowBase(object):
     @abstractmethod
     def processor(self, change, do_set_checkpoint=True):
         pass
+
+
+class ConstructedPillow(PillowBase):
+    """
+    An almost-implemented Pillow that relies on being passed the various constructor
+    arguments it needs.
+    """
+    __metaclass__ = ABCMeta
+
+    def __init__(self, document_store, checkpoint, change_feed):
+        self._document_store = document_store
+        self._checkpoint = checkpoint
+        self._change_feed = change_feed
+
+    def document_store(self):
+        return self._document_store
+
+    def checkpoint(self):
+        return self._checkpoint
+
+    def get_change_feed(self):
+        return self._change_feed
