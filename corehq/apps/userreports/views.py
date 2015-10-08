@@ -1,5 +1,6 @@
 from collections import namedtuple
 import datetime
+import functools
 import json
 import os
 import tempfile
@@ -27,6 +28,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
+from corehq.apps.style.decorators import upgrade_knockout_js
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -88,6 +90,20 @@ def get_report_config_or_404(config_id, domain):
         raise Http404
 
 
+def swallow_programming_errors(fn):
+    @functools.wraps(fn)
+    def decorated(request, domain, *args, **kwargs):
+        try:
+            return fn(request, domain, *args, **kwargs)
+        except ProgrammingError:
+            messages.error(
+                request,
+                _('There was a problem processing your request. '
+                  'If you have recently modified your report data source please try again in a few minutes.'))
+            return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+    return decorated
+
+
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def configurable_reports_home(request, domain):
@@ -110,6 +126,7 @@ def create_report(request, domain):
 class ReportBuilderView(TemplateView):
 
     @cls_to_view_login_and_domain
+    @upgrade_knockout_js
     @method_decorator(toggles.REPORT_BUILDER.required_decorator())
     @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, domain, **kwargs):
@@ -264,7 +281,7 @@ class ConfigureChartReport(ReportBuilderView):
                 )
             },
             'form': self.report_form,
-            'property_options': self.report_form.data_source_properties.values(),
+            'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
@@ -514,6 +531,7 @@ def data_source_json(request, domain, config_id):
 
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@swallow_programming_errors
 def preview_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
@@ -590,6 +608,7 @@ def process_url_params(params, columns):
 
 @login_or_basic
 @require_permission(Permissions.view_reports)
+@swallow_programming_errors
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
@@ -631,7 +650,7 @@ def data_source_status(request, domain, config_id):
 
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
-    report, _ = get_report_config_or_404(report_id, domain)
+    report = get_report_config_or_404(report_id, domain)[0]
     filter = report.get_ui_filter(filter_id)
     if filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
@@ -642,9 +661,10 @@ def choice_list_api(request, domain, report_id, filter_id):
         if not isinstance(filter, DynamicChoiceListFilter):
             return []
 
-        table = get_indicator_table(data_source)
+        adapter = IndicatorSqlAdapter(data_source)
+        table = adapter.get_table()
         sql_column = table.c[filter.field]
-        query = Session.query(sql_column)
+        query = adapter.session_helper.Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
 

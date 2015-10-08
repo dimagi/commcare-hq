@@ -45,18 +45,17 @@
 trunk: master
 name: autostaging
 branches:
-  - hqpillow_retry-limit-update-bug  # danny 10/1
   - user-db-fixes  # danny 10/1
-  - flip-users-db  # danny 10/1
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
-  - b3-tf+new-mobile-workers+django-bower+exports-ui-changes  # 10/1 BB
+  - exports-ui-changes+new-mobile-workers # BB 10/6
   - new-mobile-workers # Biyeun 8/25
   - exports-ui-changes  # biyeun 9/28
-  - djangobower # ben 9/25
   - b3-tf # ben 10/1
   - billing/post-pay # Farid 9/3
   - sync-history-email # Cal 9/22
+  - two-factor-otp-only # j$ 10/2
+  - shadow-modules # Jenny 10/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -77,5 +76,7 @@ submodules:
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
+    branches: []
+  submodules/fluff-src:
     branches: []
 

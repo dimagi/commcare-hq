@@ -63,6 +63,3 @@ def retrieve_download(request, download_id, template="soil/file_download.html"):
             return download.toHttpResponse()
 
     return render_to_response(template, context_instance=context)
-
-
-

@@ -113,15 +113,11 @@ def REPORTS(project):
             sms.MessagesReport,
         ])
 
-    if toggles.MESSAGING_STATUS_AND_ERROR_REPORTS.enabled(project.name):
-        messaging_reports.extend([
-            sms.MessagingEventsReport,
-            sms.MessageEventDetailReport,
-            sms.SurveyDetailReport,
-        ])
-
     # always have these historical reports visible
     messaging_reports.extend([
+        sms.MessagingEventsReport,
+        sms.MessageEventDetailReport,
+        sms.SurveyDetailReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,

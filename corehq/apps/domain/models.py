@@ -804,7 +804,6 @@ class Domain(Document, SnapshotMixin):
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
-        db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
             new_doc.copy_history.append(id)
@@ -814,7 +813,7 @@ class Domain(Document, SnapshotMixin):
             new_doc.ensure_module_unique_ids(should_save=False)
         else:
             cls = str_to_cls[doc_type]
-
+            db = cls.get_db()
             if doc_type == 'CaseReminderHandler':
                 cur_doc = cls.get(id)
                 if not self.reminder_should_be_copied(cur_doc):
@@ -985,6 +984,7 @@ class Domain(Document, SnapshotMixin):
         web_users = WebUser.by_domain(self.name)
         for web_user in web_users:
             web_user.delete_domain_membership(self.name)
+            web_user.save()
 
     def _delete_sql_objects(self):
         from casexml.apps.stock.models import DocDomainMapping
@@ -1174,45 +1174,6 @@ class Domain(Document, SnapshotMixin):
         """
         from corehq.apps.commtrack.util import make_domain_commtrack
         make_domain_commtrack(self)
-
-
-class DomainCounter(Document):
-    domain = StringProperty()
-    name = StringProperty()
-    count = IntegerProperty()
-
-    @classmethod
-    def get_or_create(cls, domain, name):
-        #TODO: Need to make this atomic
-        counter = cls.view("domain/counter",
-            key = [domain, name],
-            include_docs=True
-        ).one()
-        if counter is None:
-            counter = DomainCounter (
-                domain = domain,
-                name = name,
-                count = 0
-            )
-            counter.save()
-        return counter
-
-    @classmethod
-    def increment(cls, domain, name, amount=1):
-        num_tries = 0
-        while True:
-            try:
-                counter = cls.get_or_create(domain, name)
-                range_start = counter.count + 1
-                counter.count += amount
-                counter.save()
-                range_end = counter.count
-                break
-            except ResourceConflict:
-                num_tries += 1
-                if num_tries >= 500:
-                    raise
-        return (range_start, range_end)
 
 
 class TransferDomainRequest(models.Model):

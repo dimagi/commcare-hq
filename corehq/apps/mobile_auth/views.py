@@ -55,7 +55,7 @@ class FetchKeyRecords(object):
         )
 
 
-@login_or_digest_or_basic
+@login_or_digest_or_basic()
 @require_GET
 def fetch_key_records(request, domain):
     last_issued = request.GET.get('last_issued')

@@ -37,6 +37,9 @@ install:
   - "bash -e .travis/misc-setup.sh"
   - "cp .travis/localsettings.py localsettings.py"
   - "pip install coverage unittest2 mock"
+  - "npm install -g bower"
+  - "ln -nfs `which bower` /home/travis/bower"
+  - "python manage.py bower install"
 script: "coverage run manage.py test --noinput --failfast --traceback --testrunner=$TEST_RUNNER"
 after_success:
   - coverage report

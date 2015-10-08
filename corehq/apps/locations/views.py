@@ -123,29 +123,20 @@ class LocationTypesView(BaseLocationView):
     @property
     def page_context(self):
         return {
-            'settings': self.settings_context,
+            'location_types': self._get_loc_types(),
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
 
-    @property
-    def settings_context(self):
-        return {
-            'loc_types': map(
-                self._get_loctype_info,
-                LocationType.objects.by_domain(self.domain)
-            )
-        }
-
-    def _get_loctype_info(self, loctype):
-        return {
-            'pk': loctype.pk,
-            'name': loctype.name,
-            'parent_type': (loctype.parent_type.pk
-                            if loctype.parent_type else None),
-            'administrative': loctype.administrative,
-            'shares_cases': loctype.shares_cases,
-            'view_descendants': loctype.view_descendants
-        }
+    def _get_loc_types(self):
+        return [{
+            'pk': loc_type.pk,
+            'name': loc_type.name,
+            'parent_type': (loc_type.parent_type.pk
+                            if loc_type.parent_type else None),
+            'administrative': loc_type.administrative,
+            'shares_cases': loc_type.shares_cases,
+            'view_descendants': loc_type.view_descendants
+        } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
