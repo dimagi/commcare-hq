@@ -52,7 +52,7 @@ class PillowCheckpoint(object):
         self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
         self._last_checkpoint = checkpoint
 
-    def reset_checkpoint(self):
+    def reset(self):
         return self._manager.reset_checkpoint(self.checkpoint_id)
 
     def touch(self, min_interval):
