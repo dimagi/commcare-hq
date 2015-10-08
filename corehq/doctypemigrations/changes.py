@@ -7,7 +7,6 @@ CouchChange = namedtuple('CouchChange', ['id', 'rev', 'deleted', 'seq'])
 
 def stream_changes(db, since, limit):
     for change in ChangesStream(db=db, since=since, limit=limit):
-        print change
         yield CouchChange(
             id=change['id'], rev=change['changes'][0]['rev'], deleted=change.get('deleted', False),
             seq=change.get('seq'))
