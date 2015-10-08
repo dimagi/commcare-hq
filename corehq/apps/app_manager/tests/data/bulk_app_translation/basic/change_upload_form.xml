@@ -70,8 +70,8 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                         <value>question1: <output value="/data/question1"/> &lt; 5</value>
                     </text>
                     <text id="add_markdown-label">
-                        <value>add_markdown: ~~new markdown~~</value>
-                        <value form="markdown">add_markdown: ~~new markdown~~</value>
+                        <value>add_markdown: ~~new \u0939\u093f markdown~~</value>
+                        <value form="markdown">add_markdown: ~~new \u0939\u093f markdown~~</value>
                     </text>
                     <text id="remove_markdown-label">
                         <value>remove_markdown</value>
@@ -110,8 +110,8 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                         <value>question7</value>
                     </text>
                     <text id="add_markdown-label">
-                        <value>add_markdown: ~~new markdown~~</value>
-                        <value form="markdown">add_markdown: ~~new markdown~~</value>
+                        <value>add_markdown: ~~new \u0939\u093f markdown~~</value>
+                        <value form="markdown">add_markdown: ~~new \u0939\u093f markdown~~</value>
                     </text>
                     <text id="remove_markdown-label">
                         <value>remove_markdown</value>
