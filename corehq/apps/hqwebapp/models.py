@@ -923,7 +923,7 @@ class MessagingTab(UITab):
                  'url': reverse(ManageRegistrationInvitationsView.urlname, args=[self.domain])}
             )
 
-        if self.couch_user.is_previewer():
+        if self.couch_user.can_edit_data():
             contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
