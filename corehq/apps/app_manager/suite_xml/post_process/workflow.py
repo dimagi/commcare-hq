@@ -326,9 +326,11 @@ class CaseListFormWorkflow(object):
                     # This is true for registration forms where the case being created is a subcase
                     try:
                         target_dm = self.get_target_dm(target_form_dm, source_meta.case_type)
-                    except SuiteError:
+                    except ValueError:
                         if source_meta.requires_selection:
-                            raise
+                            raise SuiteError(
+                                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
+                            )
                     else:
                         used.add(source_meta)
                         meta = WorkflowDatumMeta.from_session_datum(source_meta)
@@ -338,9 +340,11 @@ class CaseListFormWorkflow(object):
                     source_case_type = self.get_case_type_created_by_form(form, target_module)
                     try:
                         target_dm = self.get_target_dm(target_form_dm, source_case_type)
-                    except SuiteError:
+                    except ValueError:
                         if not allow_missing:
-                            raise
+                            raise SuiteError(
+                                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
+                            )
                     else:
                         used.add(source_meta)
                         datum_meta = WorkflowDatumMeta.from_session_datum(target_dm)
@@ -368,16 +372,10 @@ class CaseListFormWorkflow(object):
     def get_target_dm(target_form_dm, case_type):
         """Find the datum from the target form with the specified case type.
         """
-        try:
-            [target_dm] = [
-                target_meta for target_meta in target_form_dm
-                if getattr(target_meta, 'case_type', None) == case_type
-            ]
-        except ValueError:
-            raise SuiteError(
-                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
-            )
-
+        [target_dm] = [
+            target_meta for target_meta in target_form_dm
+            if getattr(target_meta, 'case_type', None) == case_type
+        ]
         return target_dm
 
     @staticmethod
