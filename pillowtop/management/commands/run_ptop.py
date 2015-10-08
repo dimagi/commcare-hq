@@ -79,7 +79,7 @@ class Command(NoArgsCommand):
             sys.exit()
         elif list_checkpoints:
             for pillow in get_all_pillow_instances():
-                print pillow.checkpoint_manager.checkpoint_id
+                print pillow.checkpoint.checkpoint_id
             sys.exit()
         else:
             print "\nNo command set, please see --help for runtime instructions"

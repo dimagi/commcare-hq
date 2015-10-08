@@ -125,7 +125,7 @@ class BasicPillow(PillowBase):
 
     @property
     @memoized
-    def checkpoint_manager(self):
+    def checkpoint(self):
         return PillowCheckpoint(
             self.document_store,
             construct_checkpoint_doc_id_from_name(self.get_name()),
@@ -152,7 +152,7 @@ class BasicPillow(PillowBase):
                         notify_exception(None, u'processor error {}'.format(e))
                         raise
                 else:
-                    self.checkpoint_manager.touch(min_interval=CHECKPOINT_MIN_WAIT)
+                    self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         except PillowtopCheckpointReset:
             self.changes_seen = 0
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
@@ -170,7 +170,7 @@ class BasicPillow(PillowBase):
             self.__module__, self.__class__.__name__, get_machine_id())
 
     def get_last_checkpoint_sequence(self):
-        return self.checkpoint_manager.get_or_create()['seq']
+        return self.checkpoint.get_or_create()['seq']
 
     @property
     def since(self):
@@ -179,9 +179,9 @@ class BasicPillow(PillowBase):
 
     def set_checkpoint(self, change):
         pillow_logging.info(
-            "(%s) setting checkpoint: %s" % (self.checkpoint_manager.checkpoint_id, change['seq'])
+            "(%s) setting checkpoint: %s" % (self.checkpoint.checkpoint_id, change['seq'])
         )
-        self.checkpoint_manager.update_to(change['seq'])
+        self.checkpoint.update_to(change['seq'])
 
     def get_db_seq(self):
         return get_current_seq(self.couch_db)
