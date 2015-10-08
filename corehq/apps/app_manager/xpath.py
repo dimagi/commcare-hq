@@ -1,4 +1,5 @@
 import re
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
     USERCASE_TYPE,
     SCHEDULE_PHASE,
@@ -29,7 +30,7 @@ def dot_interpolate(string, replacement):
     return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
 
 
-def interpolate_xpath(string, case_xpath=None):
+def interpolate_xpath(string, case_xpath=None, module=None):
     """
     Replace xpath shortcuts with full value.
     """
@@ -45,6 +46,9 @@ def interpolate_xpath(string, case_xpath=None):
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),
     }
+    if module:
+        replacements['$fixture_value'] = session_var(id_strings.fixture_session_var(module))
+
     if case_xpath:
         replacements['#case'] = case_xpath
         replacements['#parent'] = CaseIDXPath(case_xpath + '/index/parent').case()
