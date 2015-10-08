@@ -55,7 +55,7 @@ class PillowCheckpoint(object):
     def reset_checkpoint(self):
         return self._manager.reset_checkpoint(self.checkpoint_id)
 
-    def touch_checkpoint(self, min_interval):
+    def touch(self, min_interval):
         """
         Update the checkpoint timestamp without altering the sequence.
         :param min_interval: minimum interval between timestamp updates

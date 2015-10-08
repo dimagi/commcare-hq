@@ -152,7 +152,7 @@ class BasicPillow(PillowBase):
                         notify_exception(None, u'processor error {}'.format(e))
                         raise
                 else:
-                    self.checkpoint_manager.touch_checkpoint(min_interval=CHECKPOINT_MIN_WAIT)
+                    self.checkpoint_manager.touch(min_interval=CHECKPOINT_MIN_WAIT)
         except PillowtopCheckpointReset:
             self.changes_seen = 0
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)

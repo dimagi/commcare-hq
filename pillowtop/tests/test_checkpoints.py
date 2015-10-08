@@ -69,13 +69,13 @@ class PillowCheckpointManagerInstanceTest(SimpleTestCase):
 
     def test_touch_checkpoint_noop(self):
         timestamp = self._manager.get_or_create_checkpoint()['timestamp']
-        self._manager.touch_checkpoint(min_interval=10)
+        self._manager.touch(min_interval=10)
         timestamp_back = self._manager.get_or_create_checkpoint()['timestamp']
         self.assertEqual(timestamp_back, timestamp)
 
     def test_touch_checkpoint_update(self):
         timestamp = self._manager.get_or_create_checkpoint()['timestamp']
         time.sleep(.1)
-        self._manager.touch_checkpoint(min_interval=0)
+        self._manager.touch(min_interval=0)
         timestamp_back = self._manager.get_or_create_checkpoint()['timestamp']
         self.assertNotEqual(timestamp_back, timestamp)
