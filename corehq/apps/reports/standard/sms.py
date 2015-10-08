@@ -426,8 +426,8 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     def shared_pagination_GET_params(self):
-        start_date = self.datespan.startdate_utc.strftime('%Y-%m-%d')
-        end_date = self.datespan.enddate_utc.strftime('%Y-%m-%d')
+        start_date = self.datespan.startdate.strftime('%Y-%m-%d')
+        end_date = self.datespan.enddate.strftime('%Y-%m-%d')
         return [
             {'name': 'startdate', 'value': start_date},
             {'name': 'enddate', 'value': end_date},
