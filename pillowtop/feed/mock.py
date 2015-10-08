@@ -22,7 +22,7 @@ class MockChangeFeed(ChangeFeed):
 class RandomChangeFeed(ChangeFeed):
     """
     A change feed that generates random changes, used in tests. Accepts in a total number of
-    chantes, as well as an (optional) `change_generator` function which should take in a sequence
+    changes, as well as an (optional) `change_generator` function which should take in a sequence
     ID and return a Change object
     """
 
