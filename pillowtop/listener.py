@@ -19,7 +19,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
-from pillowtop.checkpoints.manager import PillowCheckpointManagerInstance
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.couchdb import CachedCouchDB
 
@@ -126,7 +126,7 @@ class BasicPillow(PillowBase):
     @property
     @memoized
     def checkpoint_manager(self):
-        return PillowCheckpointManagerInstance(
+        return PillowCheckpoint(
             self.document_store,
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )

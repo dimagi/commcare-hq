@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, override_settings
 import time
-from pillowtop.checkpoints.manager import PillowCheckpointManager, PillowCheckpointManagerInstance
+from pillowtop.checkpoints.manager import PillowCheckpointManager, PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
@@ -29,7 +29,7 @@ class PillowCheckpointManagerInstanceTest(SimpleTestCase):
     def setUp(self):
         self._checkpoint_id = 'test-checkpoint-id'
         self._dao = MockDocumentStore()
-        self._manager = PillowCheckpointManagerInstance(self._dao, self._checkpoint_id)
+        self._manager = PillowCheckpoint(self._dao, self._checkpoint_id)
 
     def test_checkpoint_id(self):
         self.assertEqual(self._checkpoint_id, self._manager.checkpoint_id)

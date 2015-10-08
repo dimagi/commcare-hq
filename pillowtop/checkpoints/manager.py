@@ -30,7 +30,7 @@ class PillowCheckpointManager(object):
         self._dao.save_document(checkpoint_id, checkpoint_doc)
 
 
-class PillowCheckpointManagerInstance(object):
+class PillowCheckpoint(object):
 
     def __init__(self, dao, checkpoint_id):
         self._manager = PillowCheckpointManager(dao=dao)
