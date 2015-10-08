@@ -195,26 +195,29 @@ class BasicPillow(PillowBase):
                         self.change_transport(tr)
         except Exception, ex:
             if not is_retry_attempt:
-                try:
-                    # This breaks the module boundary by using a show function defined in commcare-hq
-                    # but it was decided that it wasn't worth the effort to maintain the separation.
-                    meta = self.couch_db.show('domain/domain_date', change['id'])
-                except ResourceNotFound:
-                    # Show function does not exist
-                    meta = None
-                error = PillowError.get_or_create(change, self, change_meta=meta)
-                error.add_attempt(ex, sys.exc_info()[2])
-                error.save()
-                pillow_logging.exception(
-                    "[%s] Error on change: %s, %s. Logged as: %s" % (
-                        self.get_name(),
-                        change['id'],
-                        ex,
-                        error.id
-                    )
-                )
+                self._handle_pillow_error(ex)
             else:
                 raise
+
+    def _handle_pillow_error(self, change, exception):
+        try:
+            # This breaks the module boundary by using a show function defined in commcare-hq
+            # but it was decided that it wasn't worth the effort to maintain the separation.
+            meta = self.couch_db.show('domain/domain_date', change['id'])
+        except ResourceNotFound:
+            # Show function does not exist
+            meta = None
+        error = PillowError.get_or_create(change, self, change_meta=meta)
+        error.add_attempt(exception, sys.exc_info()[2])
+        error.save()
+        pillow_logging.exception(
+            "[%s] Error on change: %s, %s. Logged as: %s" % (
+                self.get_name(),
+                change['id'],
+                exception,
+                error.id
+            )
+        )
 
     def change_trigger(self, changes_dict):
         """
