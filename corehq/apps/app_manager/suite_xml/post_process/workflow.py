@@ -312,16 +312,6 @@ class CaseListFormWorkflow(object):
         frame_case_not_created = StackFrameMeta(None, self.get_if_clause(case_count.eq(0), target_command))
         stack_frames.append(frame_case_not_created)
 
-        def get_case_type_created_by_form(form):
-            if form.form_type == 'module_form':
-                [reg_action] = form.get_registration_actions(target_module.case_type)
-                if reg_action == 'open_case':
-                    return form.get_module().case_type
-                else:
-                    return reg_action.case_type
-            elif form.form_type == 'advanced_form':
-                return form.get_registration_actions(target_module.case_type)[0].case_type
-
         def add_datums_for_target(module, source_form_dm, allow_missing=False):
             """
             Given a target module and a list of datums from the source module add children
@@ -330,28 +320,12 @@ class CaseListFormWorkflow(object):
             """
             target_form_dm = self.helper.get_frame_children(module.get_form(0), module_only=True)
 
-            def get_target_dm(case_type):
-                """Find the datum from the target form with the specified case type.
-                """
-                try:
-                    [target_dm] = [
-                        target_meta for target_meta in target_form_dm
-                        if getattr(target_meta, 'case_type', None) == case_type
-                    ]
-                except ValueError:
-                    raise SuiteError(
-
-                        "Return module for case list form has mismatching datums: {}".format(form.unique_id)
-                    )
-
-                return target_dm
-
             used = set()
             for source_meta in source_form_dm:
                 if source_meta.case_type:
                     # This is true for registration forms where the case being created is a subcase
                     try:
-                        target_dm = get_target_dm(source_meta.case_type)
+                        target_dm = self.get_target_dm(target_form_dm, source_meta.case_type)
                     except SuiteError:
                         if source_meta.requires_selection:
                             raise
@@ -361,9 +335,9 @@ class CaseListFormWorkflow(object):
                         frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                         frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                 else:
-                    source_case_type = get_case_type_created_by_form(form)
+                    source_case_type = self.get_case_type_created_by_form(form, target_module)
                     try:
-                        target_dm = get_target_dm(source_case_type)
+                        target_dm = self.get_target_dm(target_form_dm, source_case_type)
                     except SuiteError:
                         if not allow_missing:
                             raise
@@ -391,6 +365,22 @@ class CaseListFormWorkflow(object):
         return stack_frames
 
     @staticmethod
+    def get_target_dm(target_form_dm, case_type):
+        """Find the datum from the target form with the specified case type.
+        """
+        try:
+            [target_dm] = [
+                target_meta for target_meta in target_form_dm
+                if getattr(target_meta, 'case_type', None) == case_type
+            ]
+        except ValueError:
+            raise SuiteError(
+                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
+            )
+
+        return target_dm
+
+    @staticmethod
     def get_if_clause(case_count_xpath, target_command):
         return_to = session_var(RETURN_TO)
         return XPath.and_(
@@ -398,6 +388,17 @@ class CaseListFormWorkflow(object):
             return_to.eq(XPath.string(target_command)),
             case_count_xpath
         )
+
+    @staticmethod
+    def get_case_type_created_by_form(form, target_module):
+        if form.form_type == 'module_form':
+            [reg_action] = form.get_registration_actions(target_module.case_type)
+            if reg_action == 'open_case':
+                return form.get_module().case_type
+            else:
+                return reg_action.case_type
+        elif form.form_type == 'advanced_form':
+            return form.get_registration_actions(target_module.case_type)[0].case_type
 
 
 class StackFrameMeta(object):
