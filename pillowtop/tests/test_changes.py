@@ -60,28 +60,6 @@ class TestCouchChange(SimpleTestCase):
 class TestMockChangeFeed(SimpleTestCase):
 
     def test_len(self):
-        feed = RandomChangeFeed(5)
-        self.assertEqual(5, len(list(feed.iter_changes(0))))
-        self.assertEqual(3, len(list(feed.iter_changes(2))))
-        self.assertEqual(0, len(list(feed.iter_changes(5))))
-        self.assertEqual(0, len(list(feed.iter_changes(10))))
-
-    def test_results(self):
-        feed = RandomChangeFeed(5)
-        changes = feed.iter_changes(0)
-        ids = set()
-        for seq, change in enumerate(changes):
-            self.assertTrue(isinstance(change, Change))
-            self.assertEqual(seq, change.sequence_id)
-            self.assertEqual(None, change.document)
-            self.assertEqual(False, change.deleted)
-            self.assertTrue(change.id not in ids)
-            ids.add(change.id)
-
-
-class TestMockChangeFeed(SimpleTestCase):
-
-    def test_len(self):
         feed = MockChangeFeed(['test'] * 5)
         self.assertEqual(5, len(list(feed.iter_changes(0))))
         self.assertEqual(3, len(list(feed.iter_changes(2))))
