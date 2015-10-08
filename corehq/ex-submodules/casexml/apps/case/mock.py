@@ -300,7 +300,7 @@ class CaseStructure(object):
 
 
 class CaseIndex(object):
-    DEFAULT_RELATIONSHIP = 'parent'
+    DEFAULT_RELATIONSHIP = 'child'
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
     def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None):
