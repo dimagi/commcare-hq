@@ -94,10 +94,10 @@ class BasicPillow(PillowBase):
                 self.document_class.get_db() if self.document_class else None
             ))
 
-        if couch_to_use is None:
-            raise ValueError('Pillows are currently required to supply couch_db')
-        else:
-            self._couch_db = couch_to_use
+        # todo: add this back once it's actually required
+        # if couch_to_use is None:
+        #     raise ValueError('Pillows are currently required to supply couch_db')
+        self._couch_db = couch_to_use
 
         if self.use_locking:
             # document_class must be a CouchDocLockableMixIn
