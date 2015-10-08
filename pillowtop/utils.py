@@ -48,9 +48,9 @@ def get_pillow_by_name(pillow_class_name, instantiate=True):
             for full_str in v:
                 if pillow_class_name in full_str:
                     if instantiate:
-                        return get_pillow_instance(pillow_class_name)
+                        return get_pillow_instance(full_str)
                     else:
-                        return get_pillow_class(pillow_class_name)
+                        return get_pillow_class(full_str)
 
 
 def force_seq_int(seq):
