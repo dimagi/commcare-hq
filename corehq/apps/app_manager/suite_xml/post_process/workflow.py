@@ -321,9 +321,13 @@ class CaseListFormWorkflow(object):
             target_form_dm = self.helper.get_frame_children(module.get_form(0), module_only=True)
 
             used = set()
+
+            # This error is raised when we can't find a datum that matches the case type we're looking for among
+            # the list of datums that are common between all the forms in the module which implies that not all
+            # the forms have the same case management configuration.
             mismatched_datums_error = SuiteError(
-                "Module with Case List Registration Form is not properly configured. All forms" \
-                " in the module should have the same case management: {}".format(module.default_name())
+                "The '{}' module is not properly configured to have a Case List Registration Form. All forms"
+                " in the module should have the same case management configuration.".format(module.default_name())
             )
             for source_meta in source_form_dm:
                 if source_meta.case_type:
