@@ -287,7 +287,7 @@ class CaseStructure(object):
     @property
     def index(self):
         return {
-            r.relationship: (r.related_type, r.related_id)
+            r.relationship: (r.related_type, r.related_id, r.relationship)
             for r in self.relationships
         }
 
