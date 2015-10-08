@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+from pillowtop.logger import pillow_logging
 
 
 class PillowBase(object):
@@ -33,6 +34,12 @@ class PillowBase(object):
 
     def get_checkpoint(self, verify_unchanged=False):
         return self.checkpoint.get_or_create(verify_unchanged=verify_unchanged)
+
+    def set_checkpoint(self, change):
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (self.checkpoint.checkpoint_id, change['seq'])
+        )
+        self.checkpoint.update_to(change['seq'])
 
     def reset_checkpoint(self):
         self.checkpoint.reset_checkpoint()

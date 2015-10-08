@@ -173,12 +173,6 @@ class BasicPillow(PillowBase):
         # todo: see if we can remove this. It is hard to search for.
         return self.get_last_checkpoint_sequence()
 
-    def set_checkpoint(self, change):
-        pillow_logging.info(
-            "(%s) setting checkpoint: %s" % (self.checkpoint.checkpoint_id, change['seq'])
-        )
-        self.checkpoint.update_to(change['seq'])
-
     def get_db_seq(self):
         return get_current_seq(self.couch_db)
 
