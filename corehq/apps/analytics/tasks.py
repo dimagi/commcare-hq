@@ -213,7 +213,8 @@ def track_periodic_data():
     start_time = datetime.now()
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email']).run().hits
+    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
+                               .run().hits
     # users_to_domains is a list of dicts
     time_users_to_domains_query = datetime.now()
     domains_to_forms = FormES().terms_facet('domain', 'domain').size(0).run().facets.domain.counts_by_term()
@@ -222,8 +223,8 @@ def track_periodic_data():
                                       .facets.domain.counts_by_term()
     time_domains_to_mobile_users_query = datetime.now()
 
-    # For each web user, iterate through their domains and select the max number of form submissions and max number of
-    # mobile workers
+    # For each web user, iterate through their domains and select the max number of form submissions and
+    # max number of mobile workers
     submit = []
     for user in users_to_domains:
         email = user['email']
@@ -256,14 +257,16 @@ def track_periodic_data():
 
     _soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
     #TODO: Update this soft assert to only trigger if the timing is longer than a threshold
-    _soft_assert(False, 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, '
-                        'domains_to_mobile_workers: {}, end: {}, size of string post to hubspot (bytes): {}'.format(
-        start_time,
-        time_users_to_domains_query,
-        time_domains_to_forms_query,
-        time_domains_to_mobile_users_query,
-        end_time,
-        sys.getsizeof(submit_json)
-    ))
+    msg = 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, ' \
+          'domains_to_mobile_workers: {}, end: {}, size of string post to hubspot (bytes): {}'\
+        .format(
+            start_time,
+            time_users_to_domains_query,
+            time_domains_to_forms_query,
+            time_domains_to_mobile_users_query,
+            end_time,
+            sys.getsizeof(submit_json)
+        )
+    _soft_assert(False, msg)
 
     _batch_track_on_hubspot(submit_json)
