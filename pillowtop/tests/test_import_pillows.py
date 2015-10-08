@@ -22,4 +22,4 @@ class PillowTopTestCase(SimpleTestCase):
 
 
 class FakePillow(BasicPillow):
-    pass
+    _couch_db = object()  # hack to make tests pass since this is required
