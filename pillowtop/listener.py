@@ -101,6 +101,8 @@ class BasicPillow(object):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
+        if self.couch_db is None:
+            raise ValueError('Pillows are currently required to supply couch_db')
 
     @property
     @memoized
