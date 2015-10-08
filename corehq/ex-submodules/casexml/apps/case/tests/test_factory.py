@@ -29,8 +29,8 @@ class CaseStructureTest(SimpleTestCase):
             ]
         )
         self.assertEqual(
-            {CaseIndex.DEFAULT_RELATIONSHIP: (CaseIndex.DEFAULT_RELATED_CASE_TYPE, parent_case_id,
-                                              CaseIndex.DEFAULT_RELATIONSHIP)},
+            [{CaseIndex.DEFAULT_RELATIONSHIP: (CaseIndex.DEFAULT_RELATED_CASE_TYPE, parent_case_id,
+                                               CaseIndex.DEFAULT_RELATIONSHIP)}],
             structure.index,
         )
 
@@ -46,7 +46,7 @@ class CaseStructureTest(SimpleTestCase):
             ]
         )
         self.assertEqual(
-            {i[1]: (i[2], i[0], i[1]) for i in indices},
+            [{i[1]: (i[2], i[0], i[1])} for i in indices],
             structure.index,
         )
 

@@ -86,7 +86,7 @@ class IndexTest(TestCase):
             case_id=self.CASE_ID,
             user_id=USER_ID,
             owner_id=USER_ID,
-            index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
+            indices=[{'mom': ('mother-case', self.MOTHER_CASE_ID)}],
             version=V2
         ).as_xml()
 
@@ -99,7 +99,7 @@ class IndexTest(TestCase):
         update_index = CaseBlock(
             case_id=self.CASE_ID,
             user_id=USER_ID,
-            index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
+            indices=[{'mom': ('mother-case', '')}, {'dad': ('father-case', self.FATHER_CASE_ID)}],
             version=V2,
             date_modified=now,
         ).as_xml()
@@ -109,7 +109,7 @@ class IndexTest(TestCase):
             user_id=USER_ID,
             owner_id=USER_ID,
             create=True,
-            index={'dad': ('father-case', self.FATHER_CASE_ID)},
+            indices=[{'dad': ('father-case', self.FATHER_CASE_ID)}],
             version=V2,
             date_modified=now,
         ).as_xml()
@@ -124,7 +124,7 @@ class IndexTest(TestCase):
         update_index = CaseBlock(
             case_id=self.CASE_ID,
             user_id=USER_ID,
-            index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
+            indices=[{'mom': ('mother-case', self.MOTHER_CASE_ID)}],
             version=V2,
             date_modified=now,
         ).as_xml()
@@ -134,8 +134,8 @@ class IndexTest(TestCase):
             user_id=USER_ID,
             owner_id=USER_ID,
             create=True,
-            index={'mom': ('mother-case', self.MOTHER_CASE_ID),
-                   'dad': ('father-case', self.FATHER_CASE_ID)},
+            indices=[{'mom': ('mother-case', self.MOTHER_CASE_ID)},
+                     {'dad': ('father-case', self.FATHER_CASE_ID)}],
             version=V2,
             date_modified=now,
         ).as_xml()
@@ -155,7 +155,7 @@ class IndexTest(TestCase):
         ], form_extras={'domain': parent_domain})
 
         block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
-                          index={'bad': ('bad-case', case_in_other_domain)})
+                          indices=[{'bad': ('bad-case', case_in_other_domain)}])
 
         xform, _ = post_case_blocks([block.as_xml()],
                                     form_extras={'domain': child_domain})
@@ -172,7 +172,7 @@ class IndexTest(TestCase):
             case_id=self.CASE_ID,
             user_id=USER_ID,
             owner_id=USER_ID,
-            index={'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')},
+            indices=[{'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')}],
             version=V2
         ).as_xml()
 
@@ -192,9 +192,9 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_id='abcdef',
             case_type='at_risk',
             date_modified='2015-07-24',
-            index={
+            indices=[{
                 'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
-            },
+            }],
             version=V2,
         )
 
@@ -220,9 +220,9 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
-            index={
+            indices=[{
                 'parent': ('mother', '789abc', 'child')
-            },
+            }],
             version=V2,
         )
 
@@ -248,9 +248,9 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             case_id='123456',
             case_type='newborn',
             date_modified='2015-07-24',
-            index={
+            indices=[{
                 'parent': ('mother', '789abc')
-            },
+            }],
             version=V2,
         )
 
@@ -278,8 +278,8 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
                 case_id='abcdef',
                 case_type='at_risk',
                 date_modified='2015-07-24',
-                index={
+                indices=[{
                     'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
-                },
+                }],
                 version=V2,
             )

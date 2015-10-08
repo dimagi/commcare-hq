@@ -239,7 +239,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         updated_type = "updated_type"
         child = CaseBlock(
             create=False, case_id=child_id, user_id=USER_ID, version=V2,
-            index={index_id: (updated_type, parent_id)},
+            indices=[{index_id: (updated_type, parent_id)}],
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         parent_ref.referenced_type = updated_type
@@ -296,7 +296,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # delete the first index
         child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={index_id: (PARENT_TYPE, "")},
+                          indices=[{index_id: (PARENT_TYPE, "")}],
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {parent_id: [], child_id: []})
@@ -336,7 +336,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
         # delete the first index
         child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={index_id_1: (PARENT_TYPE, "")},
+                          indices=[{index_id_1: (PARENT_TYPE, "")}],
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {parent_id_1: [], parent_id_2: [],
@@ -473,7 +473,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
             user_id=USER_ID,
             owner_id=USER_ID,
             version=V2,
-            index={'mother': ('mother', parent_id)}
+            indices=[{'mother': ('mother', parent_id)}]
         ).as_xml()
         self._postFakeWithSyncToken(child, other_sync_log.get_id)
 
@@ -936,7 +936,7 @@ class MultiUserSyncTest(SyncBaseTest):
                 user_id=OTHER_USER_ID,
                 owner_id=USER_ID,
                 version=V2,
-                index={'mother': ('mother', mother_id)}
+                indices=[{'mother': ('mother', mother_id)}]
             ).as_xml(),
             latest_sync.get_id
         )
@@ -1093,7 +1093,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             owner_id=USER_ID,
             version=V2,
-            index={'mother': ('mother', parent_id)}
+            indices=[{'mother': ('mother', parent_id)}]
         ).as_xml() 
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 
@@ -1130,7 +1130,7 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=USER_ID,
             owner_id=USER_ID,
             version=V2,
-            index={'mother': ('mother', parent_id)}
+            indices=[{'mother': ('mother', parent_id)}]
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
 

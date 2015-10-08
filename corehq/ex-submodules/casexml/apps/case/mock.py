@@ -64,7 +64,7 @@ class CaseBlock(dict):
             update=None,
             close=False,
             # V2 only
-            index=None,
+            indices=None,
             version=V1,
             compatibility_mode=False,
             strict=True,
@@ -121,7 +121,7 @@ class CaseBlock(dict):
         self._id = case_id
         date_modified = date_modified or datetime.utcnow()
         update = copy.copy(update) if update else {}
-        index = copy.copy(index) if index else {}
+        indices = copy.copy(indices) if indices else {}
 
         self.XMLNS = NS_VERSION_MAP.get(version)
 
@@ -203,23 +203,24 @@ class CaseBlock(dict):
 
         if not ['' for val in self['update'].values() if val is not CaseBlock.undefined]:
                 self['update'] = CaseBlock.undefined
-        if index and version == V2:
+        if indices and version == V2:
             self['index'] = {}
-            for name in index.keys():
-                case_type = index[name][0]
-                case_id = index[name][1]
-                # relationship = "child" for index to a parent case (default)
-                # relationship = "extension" for index to a host case
-                relationship = index[name][2] if len(index[name]) > 2 else 'child'
-                if relationship not in ('child', 'extension'):
-                    raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
-                _attrib = {'case_type': case_type}
-                if relationship != 'child':
-                    _attrib['relationship'] = relationship
-                self['index'][name] = {
-                    '_attrib': _attrib,
-                    '_text': case_id
-                }
+            for index in indices:
+                for name in index.keys():
+                    case_type = index[name][0]
+                    case_id = index[name][1]
+                    # relationship = "child" for index to a parent case (default)
+                    # relationship = "extension" for index to a host case
+                    relationship = index[name][2] if len(index[name]) > 2 else 'child'
+                    if relationship not in ('child', 'extension'):
+                        raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
+                    _attrib = {'case_type': case_type}
+                    if relationship != 'child':
+                        _attrib['relationship'] = relationship
+                    self['index'][name] = {
+                        '_attrib': _attrib,
+                        '_text': case_id
+                    }
 
     def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
@@ -286,10 +287,9 @@ class CaseStructure(object):
 
     @property
     def index(self):
-        return {
+        return [{
             r.relationship: (r.related_type, r.related_id, r.relationship)
-            for r in self.indices
-        }
+        } for r in self.indices]
 
     def walk_ids(self):
         yield self.case_id
@@ -368,7 +368,7 @@ class CaseFactory(object):
 
     def create_or_update_cases(self, case_structures, form_extras=None):
         def _get_case_block(substructure):
-            return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
+            return self.get_case_block(substructure.case_id, indices=substructure.index, **substructure.attrs)
 
         def _get_case_blocks(substructure):
             blocks = [_get_case_block(substructure)]

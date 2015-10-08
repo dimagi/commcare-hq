@@ -110,7 +110,7 @@ class SyncPerformanceTest(SyncBaseTest):
                 owner_id=REFERRED_TO_GROUP,
                 case_type=REFERRAL_TYPE,
                 version=V2,
-                index={'parent': (PARENT_TYPE, parent_case_id)}
+                indices=[{'parent': (PARENT_TYPE, parent_case_id)}]
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
@@ -141,7 +141,7 @@ class SyncPerformanceTest(SyncBaseTest):
                 owner_id=SHARED_ID,
                 case_type='child',
                 version=V2,
-                index={'parent': (PARENT_TYPE, parent_case_id)}
+                indices=[{'parent': (PARENT_TYPE, parent_case_id)}]
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
@@ -157,7 +157,7 @@ class SyncPerformanceTest(SyncBaseTest):
                 owner_id=REFERRED_TO_GROUP,
                 case_type=REFERRAL_TYPE,
                 version=V2,
-                index={'parent': ('child', child_case_id)}
+                indices=[{'parent': ('child', child_case_id)}]
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
