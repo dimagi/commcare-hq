@@ -6,7 +6,7 @@ from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id i
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.mixin import MobileBackend
-from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.sms.util import strip_plus
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from dimagi.utils.dates import force_to_datetime
@@ -603,7 +603,7 @@ class EWSApi(APISynchronization):
             self._set_program(user, ews_webuser.program)
 
         if ews_webuser.contact:
-            user.phone_numbers = map(clean_phone_number, ews_webuser.contact.phone_numbers)
+            user.phone_numbers = map(strip_plus, ews_webuser.contact.phone_numbers)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
