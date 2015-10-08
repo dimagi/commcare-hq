@@ -25,19 +25,6 @@ class WorkflowHelper(PostProcessor):
                           for datum in self.get_module_datums(u'm{}'.format(module.id)).values()]
 
     def update_suite(self):
-        """
-        post_form_workflow = 'module':
-          * Add stack frame and a command with value = "module command"
-
-        post_form_workflow = 'previous_screen':
-          * Add stack frame and a command with value = "module command"
-          * Find longest list of common datums between form entries for the module and add datums
-            to the stack frame for each.
-          * Add a command to the frame with value = "form command"
-          * Add datums to the frame for any remaining datums for that form.
-          * Remove any autoselect items from the end of the stack frame.
-          * Finally remove the last item from the stack frame.
-        """
         for module in self.modules:
             for form in module.get_forms():
                 form_command = id_strings.form_command(form)
@@ -167,6 +154,19 @@ class WorkflowHelper(PostProcessor):
         return stack_frames
 
     def form_workflow_frames(self, if_prefix, module, form):
+        """
+        post_form_workflow = 'module':
+          * Add stack frame and a command with value = "module command"
+
+        post_form_workflow = 'previous_screen':
+          * Add stack frame and a command with value = "module command"
+          * Find longest list of common datums between form entries for the module and add datums
+            to the stack frame for each.
+          * Add a command to the frame with value = "form command"
+          * Add datums to the frame for any remaining datums for that form.
+          * Remove any autoselect items from the end of the stack frame.
+          * Finally remove the last item from the stack frame.
+        """
         from corehq.apps.app_manager.models import (
             WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
