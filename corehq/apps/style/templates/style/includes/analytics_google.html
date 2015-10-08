@@ -46,7 +46,7 @@
         function trackLinkHelper(element, trackFunction){
             var eventHandler = function (event) {
                 var $this = $(this);
-                if (event.metaKey) {
+                if (event.metaKey || event.ctrlKey) {
                     // This page isn't being redirected
                     trackFunction();
                 } else {
