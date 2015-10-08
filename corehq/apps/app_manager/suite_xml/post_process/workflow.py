@@ -298,14 +298,6 @@ class CaseListFormWorkflow(object):
         stack_frames = []
         target_command = id_strings.menu_id(target_module)
 
-        def get_if_clause(case_count_xpath):
-            return_to = session_var(RETURN_TO)
-            return XPath.and_(
-                return_to.count().eq(1),
-                return_to.eq(XPath.string(target_command)),
-                case_count_xpath
-            )
-
         if form.form_type == 'module_form':
             [reg_action] = form.get_registration_actions(target_module.case_type)
             source_session_var = form.session_var_for_action(reg_action)
@@ -315,9 +307,9 @@ class CaseListFormWorkflow(object):
             source_session_var = reg_action.case_session_var
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
-        frame_case_created = StackFrameMeta(None, get_if_clause(case_count.gt(0)))
+        frame_case_created = StackFrameMeta(None, self.get_if_clause(case_count.gt(0), target_command))
         stack_frames.append(frame_case_created)
-        frame_case_not_created = StackFrameMeta(None, get_if_clause(case_count.eq(0)))
+        frame_case_not_created = StackFrameMeta(None, self.get_if_clause(case_count.eq(0), target_command))
         stack_frames.append(frame_case_not_created)
 
         def get_case_type_created_by_form(form):
@@ -397,6 +389,15 @@ class CaseListFormWorkflow(object):
         add_datums_for_target(target_module, source_form_dm)
 
         return stack_frames
+
+    @staticmethod
+    def get_if_clause(case_count_xpath, target_command):
+        return_to = session_var(RETURN_TO)
+        return XPath.and_(
+            return_to.count().eq(1),
+            return_to.eq(XPath.string(target_command)),
+            case_count_xpath
+        )
 
 
 class StackFrameMeta(object):
