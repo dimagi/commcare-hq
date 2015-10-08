@@ -25,25 +25,29 @@ def get_pillow_class(full_class_str):
 
 
 def get_all_pillow_classes():
-    return _get_all_pillows(instantiate=False)
+    return [config.get_class() for config in _get_all_pillow_configs()]
 
 
 def get_all_pillow_instances():
-    return _get_all_pillows(instantiate=True)
+    return [config.get_instance() for config in _get_all_pillow_configs()]
 
 
-def _get_all_pillows(instantiate=True):
-    pillowtops = []
+def _get_all_pillow_configs():
     if hasattr(settings, 'PILLOWTOPS'):
-        for k, v in settings.PILLOWTOPS.items():
-            for full_str in v:
-                pillow = get_pillow_instance(full_str) if instantiate else get_pillow_class(full_str)
-                pillowtops.append(pillow)
-
-    return pillowtops
+        for section, list_of_pillows in settings.PILLOWTOPS.items():
+            for pillow_config in list_of_pillows:
+                yield get_pillow_config_from_setting(section, pillow_config)
 
 
-PillowConfig = namedtuple('PillowConfig', ['section', 'name', 'class_name', 'instance_generator'])
+class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 'instance_generator'])):
+    """
+    Helper object for getting pillow classes/instances from settings
+    """
+    def get_class(self):
+        return get_pillow_class(self.class_name)
+
+    def get_instance(self):
+        return get_pillow_instance(self.instance_generator)
 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
