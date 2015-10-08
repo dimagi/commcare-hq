@@ -28,7 +28,7 @@ def _track_on_hubspot(webuser, properties):
 
     _hubspot_post(
         url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            urllib.quote(webuser.username)
+            urllib.quote(webuser.get_email())
         ),
         data=json.dumps(
             {'properties': [
