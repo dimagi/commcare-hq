@@ -57,29 +57,49 @@ class TestLedgersByLocation(TestCase):
     def test_show_all_rows_ordered(self):
         report = LedgersByLocationDataSource(
             domain='test',
-            section_id='stock'
+            section_id='stock',
+            page_start=0,
+            page_size=10000,
         )
         self.assertEqual(
-            [row.location.name for row in report.location_ledgers],
+            [row.location.name for row in report.location_rows],
             [self.allston.name, self.boston.name, self.cambridge.name]
         )
 
     def test_one_row(self):
         report = LedgersByLocationDataSource(
             domain='test',
-            section_id='stock'
+            section_id='stock',
+            page_start=0,
+            page_size=10000,
         )
-        boston = [row for row in report.location_ledgers if row.location.name == "Boston"][0]
+        boston = [row for row in report.location_rows if row.location.name == "Boston"][0]
         self.assertEqual(boston.stock[self.aspirin.product_id], 135)
         self.assertEqual(boston.stock[self.bandaids.product_id], 43)
 
     def test_another_ledger_section(self):
         report = LedgersByLocationDataSource(
             domain='test',
-            section_id='foo'
+            section_id='foo',
+            page_start=0,
+            page_size=10000,
         )
-        for row in report.location_ledgers:
+        for row in report.location_rows:
             if row.location.name == "Boston":
                 self.assertEqual(row.stock[self.aspirin.product_id], 82)
             else:
                 self.assertNotIn(self.aspirin.product_id, row.stock)
+
+    def test_pagination(self):
+        report = LedgersByLocationDataSource(
+            domain='test',
+            section_id='stock',
+            page_start=0,
+            page_size=2,
+        )
+        self.assertEqual(report.total_locations,
+                         len([self.allston, self.boston, self.cambridge]))
+        self.assertEqual(
+            [row.location.name for row in report.location_rows],
+            [self.allston.name, self.boston.name]
+        )

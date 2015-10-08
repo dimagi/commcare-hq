@@ -26,9 +26,11 @@ class LedgersByLocationDataSource(object):
         Location 2 |       132 |        49 |
     """
 
-    def __init__(self, domain, section_id):
+    def __init__(self, domain, section_id, page_start, page_size):
         self.domain = domain
         self.section_id = section_id
+        self.page_start = page_start
+        self.page_size = page_size
 
     @property
     @memoized
@@ -37,9 +39,14 @@ class LedgersByLocationDataSource(object):
             raise Http400("This domain has too many products.")
         return list(SQLProduct.objects.filter(domain=self.domain).order_by('name'))
 
+    def get_locations_queryset(self):
+        return (SQLLocation.objects
+                .filter(domain=self.domain)
+                .order_by('name'))
+
     @property
     @memoized
-    def location_ledgers(self):
+    def location_rows(self):
         def get_location_ledger(location):
             stock = (StockState.objects
                      .filter(section_id=self.section_id,
@@ -50,12 +57,13 @@ class LedgersByLocationDataSource(object):
                 {product_id: soh for product_id, soh in stock}
             )
 
-        locations = SQLLocation.objects.filter(domain=self.domain).order_by('name')
+        start, stop = self.page_start, self.page_start + self.page_size
+        locations = self.get_locations_queryset()[start:stop]
         return map(get_location_ledger, locations)
 
     @property
     def rows(self):
-        for ledger in self.location_ledgers:
+        for ledger in self.location_rows:
             yield [ledger.location.name] + [
                 ledger.stock.get(p.product_id, 0) for p in self.products
             ]
@@ -64,11 +72,17 @@ class LedgersByLocationDataSource(object):
     def headers(self):
         return [_("Location")] + [p.name for p in self.products]
 
+    @property
+    @memoized
+    def total_locations(self):
+        return self.get_locations_queryset().count()
+
 
 class LedgersByLocationReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_lazy('Ledgers By Location')
     slug = 'ledgers_by_location'
-    ajax_pagination = False
+    ajax_pagination = True
+    # TODO actually filter by these
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
@@ -88,6 +102,8 @@ class LedgersByLocationReport(GenericTabularReport, CommtrackReportMixin):
         return LedgersByLocationDataSource(
             domain=self.domain,
             section_id=STOCK_SECTION_TYPE,
+            page_start=self.pagination.start,
+            page_size=self.pagination.count,
         )
 
     @property
@@ -99,3 +115,7 @@ class LedgersByLocationReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def rows(self):
         return self.data.rows
+
+    @property
+    def total_records(self):
+        return self.data.total_locations
