@@ -1,5 +1,4 @@
 import datetime
-import mock
 from uuid import uuid4
 
 from django.db.models.signals import post_save
@@ -7,7 +6,6 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.models import StockState, update_domain_mapping
 from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import SQLProduct
 
