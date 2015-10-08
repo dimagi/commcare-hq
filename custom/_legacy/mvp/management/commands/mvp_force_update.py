@@ -13,7 +13,8 @@ from gevent.pool import Pool
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import LabelCommand
 from corehq.apps.indicators.models import CaseIndicatorDefinition, \
-    FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError
+    FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError, \
+    FormLabelIndicatorDefinition
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, iter_docs
 from mvp.models import MVP
@@ -61,7 +62,7 @@ class Command(LabelCommand):
 
     def update_indicators_for_xmlns(self, domain, form_label_filter=None):
         key = [MVP.NAMESPACE, domain]
-        all_labels = get_db().view(
+        all_labels = FormLabelIndicatorDefinition.get_db().view(
             'indicators/form_labels',
             reduce=False,
             startkey=key,
@@ -74,7 +75,7 @@ class Command(LabelCommand):
             xmlns = label['key'][-2]
             print "\n\nGetting Forms of Type %s and XMLNS %s for domain %s" % (label_name, xmlns, domain)
 
-            relevant_forms = get_db().view(
+            relevant_forms = XFormInstance.get_db().view(
                 "reports_forms/all_forms",
                 reduce=True,
                 startkey=['submission xmlns', domain, xmlns],

@@ -18,11 +18,13 @@ diff-match-patch==20120106
 django-kombu==0.9.1
 django-rosetta==0.7.1
 django-tastypie==0.12.1
+django-bower==5.0.4
 djtables==0.1.1
 elasticsearch==0.4.4
 #egenix-mx-base==3.2.8
 eulxml==0.18.0
 feedparser==5.1.3
+ghdiff==0.4
 gunicorn==18.0
 lxml==3.3.1
 mock==0.8.0
@@ -70,7 +72,6 @@ twilio==3.6.4
 django-countries==3.3
 reportlab==3.0
 stripe==1.12.2
-mailchimp==2.0.7
 django-compressor==1.4
 django-angular==0.7.8
 Pycco==0.3.0

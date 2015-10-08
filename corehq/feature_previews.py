@@ -97,16 +97,6 @@ CALLCENTER = FeaturePreview(
 )
 
 
-LOCATIONS = FeaturePreview(
-    slug='locations',
-    label=_("Locations"),
-    description=_(
-        'Enable locations for this project. This must be enabled for '
-        'CommCare Supply to work properly'
-    ),
-    help_link='https://help.commcarehq.org/display/commtrack/Locations',
-)
-
 MODULE_FILTER = FeaturePreview(
     slug='module_filter',
     label=_('Module Filtering'),

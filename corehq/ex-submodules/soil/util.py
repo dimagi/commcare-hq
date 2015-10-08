@@ -68,4 +68,5 @@ def get_download_context(download_id, check_state=False):
     context['is_alive'] = alive
     context['progress'] = progress
     context['download_id'] = download_id
+    context['allow_dropbox_sync'] = isinstance(download_data, FileDownload) and download_data.use_transfer
     return context

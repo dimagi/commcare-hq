@@ -20,7 +20,7 @@ from soil import DownloadBase
 
 
 @json_error
-@login_or_digest_or_basic
+@login_or_digest_or_basic()
 def restore(request, domain):
     """
     We override restore because we have to supply our own 

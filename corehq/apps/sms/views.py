@@ -263,8 +263,9 @@ def send_to_recipients(request, domain):
             else:
                 unknown_usernames.append(recipient)
 
-
-        login_ids = dict([(r['key'], r['id']) for r in get_db().view("users/by_username", keys=usernames, reduce=False).all()])
+        login_ids = {
+            r['key']: r['id'] for r in CommCareUser.get_db().view(
+                "users/by_username", keys=usernames, reduce=False).all()}
         for username in usernames:
             if username not in login_ids:
                 unknown_usernames.append(username)
@@ -386,22 +387,35 @@ def api_send_sms(request, domain):
     Expected post parameters:
         phone_number - the phone number to send to
         contact_id - the _id of a contact to send to (overrides phone_number)
+        vn_id - the _id of a VerifiedNumber to send to (overrides contact_id)
         text - the text of the message
         backend_id - the name of the MobileBackend to use while sending
     """
     if request.method == "POST":
         phone_number = request.POST.get("phone_number", None)
         contact_id = request.POST.get("contact_id", None)
+        vn_id = request.POST.get("vn_id", None)
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
         chat = request.POST.get("chat", None)
         contact = None
 
-        if (phone_number is None and contact_id is None) or (text is None):
+        if (phone_number is None and contact_id is None and not vn_id) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
 
         vn = None
-        if contact_id is not None:
+        if vn_id:
+            try:
+                vn = VerifiedNumber.get(vn_id)
+            except ResourceNotFound:
+                return HttpResponseBadRequest("VerifiedNumber not found.")
+
+            if vn.domain != domain:
+                return HttpResponseBadRequest("VerifiedNumber not found.")
+
+            phone_number = vn.phone_number
+            contact = vn.owner
+        elif contact_id is not None:
             try:
                 contact = get_contact(contact_id)
                 assert contact is not None
@@ -772,6 +786,7 @@ def get_contact_info(domain):
                 'case',
                 doc['phone_number'],
                 owner_id,
+                doc['_id'],
             ])
         elif doc['owner_doc_type'] == 'CommCareUser':
             mobile_worker_ids.append(owner_id)
@@ -780,6 +795,7 @@ def get_contact_info(domain):
                 'mobile_worker',
                 doc['phone_number'],
                 owner_id,
+                doc['_id'],
             ])
     contact_data = get_case_contact_info(domain_obj, case_ids)
     contact_data.update(get_mobile_worker_contact_info(domain_obj, mobile_worker_ids))
@@ -800,15 +816,16 @@ def get_contact_info(domain):
 def format_contact_data(domain, data):
     for row in data:
         contact_id = row[3]
+        vn_id = row[4]
         if row[1] == 'case':
             row[1] = _('Case')
-            row.append(reverse('case_details', args=[domain, contact_id]))
+            row[4] = reverse('case_details', args=[domain, contact_id])
         elif row[1] == 'mobile_worker':
             row[1] = _('Mobile Worker')
-            row.append(reverse(EditCommCareUserView.urlname, args=[domain, contact_id]))
+            row[4] = reverse(EditCommCareUserView.urlname, args=[domain, contact_id])
         else:
-            row.append('#')
-        row.append(reverse('sms_chat', args=[domain, contact_id]))
+            row[4] = '#'
+        row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
 @require_permission(Permissions.edit_data)
@@ -842,7 +859,7 @@ def chat_contact_list(request, domain):
 
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def chat(request, domain, contact_id):
+def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
     timezone = get_timezone_for_user(None, domain)
 
@@ -872,6 +889,7 @@ def chat(request, domain, contact_id):
         "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
         "custom_case_username": domain_obj.custom_case_username,
         "history_choices": history_choices,
+        "vn_id": vn_id,
     }
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)

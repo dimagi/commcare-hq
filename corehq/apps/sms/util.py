@@ -3,12 +3,14 @@ import re
 import urllib
 import uuid
 import datetime
-
+from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.couch.database import get_db
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from django.template.loader import render_to_string
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.sms.mixin import MobileBackend
+from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
@@ -43,22 +45,6 @@ def validate_phone_number(phone_number):
     if (not isinstance(phone_number, basestring) or
         not phone_number_plus_re.match(phone_number)):
         raise ValidationError(_("Invalid phone number format."))
-
-def domains_for_phone(phone):
-    """
-    Get domains attached to a phone number
-    """
-    view_results = get_db().view("users_extra/phones_to_domains", key=phone)
-    return [row["value"] for row in view_results]
-
-
-def users_for_phone(phone):
-    """
-    Get users attached to a phone number
-    """
-    view_results = get_db().view("users_extra/phones_to_domains", key=phone)
-    user_ids = set([row["id"] for row in view_results])
-    return [CouchUser.get(id) for id in user_ids]
 
 
 def format_message_list(message_list):
@@ -195,14 +181,27 @@ def clean_text(text):
         text = text.replace(a, b)
     return text
 
+
 def get_contact(contact_id):
     from corehq.apps.sms.models import CommConnectCase
-    contact = CommConnectCase.get(contact_id)
-    if contact.doc_type != "CommCareCase":
-        try:
-            contact = CouchUser.get_by_user_id(contact_id)
-        except CouchUser.AccountTypeError:
-            raise Exception("Unkown contact type for contact %s" % contact_id)
+    contact = None
+    try:
+        contact = CommConnectCase.get(contact_id)
+    except ResourceNotFound:
+        pass
+
+    if contact and contact.doc_type == 'CommCareCase':
+        return contact
+
+    contact = None
+    try:
+        contact = CouchUser.get_by_user_id(contact_id)
+    except CouchUser.AccountTypeError:
+        pass
+
+    if not contact:
+        raise Exception("Contact not found")
+
     return contact
 
 
@@ -225,3 +224,20 @@ def touchforms_error_is_config_error(touchforms_error):
         'XPathUnhandledException',
         'XFormParseException',
     )])
+
+
+@quickcache(['backend_id'], timeout=5 * 60)
+def get_backend_name(backend_id):
+    """
+    Returns None if the backend is not found, otherwise
+    returns the backend's name.
+    """
+    if not backend_id:
+        return None
+
+    try:
+        doc = MobileBackend.get_db().get(backend_id)
+    except ResourceNotFound:
+        return None
+
+    return doc.get('name', None)

@@ -197,7 +197,6 @@ def report_run(domain, locations=None, strict=True):
     stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=domain)
     # TODO Change this to datetime.utcnow() when project goes live
     end_date = stock_data_checkpoint.date
-
     running = ReportRun.objects.filter(complete=False, domain=domain)
     if running.count() > 0:
         raise Exception("Warehouse already running, will do nothing...")

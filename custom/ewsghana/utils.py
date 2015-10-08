@@ -1,4 +1,5 @@
 from decimal import Decimal
+from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
@@ -14,6 +15,7 @@ from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
 from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.models import EWSGhanaConfig
+from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
 
@@ -47,6 +49,7 @@ def make_url(report_class, domain, string_params, args):
 # Calculate last full period (Friday - Thursday)
 def calculate_last_period(enddate):
     # checking if Thursday was already in this week
+    enddate = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
     i = enddate.weekday() - 3
     if i < 0:
         # today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
@@ -55,7 +58,7 @@ def calculate_last_period(enddate):
         # today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
         last_th = enddate - timedelta(days=i)
     fr_before = last_th - timedelta(days=6)
-    return fr_before, last_th
+    return fr_before, last_th + timedelta(days=1)
 
 
 def send_test_message(verified_number, text, metadata=None):
@@ -413,3 +416,23 @@ def get_supply_points(domain, location_id):
                 location_type__administrative=False,
             ).order_by('name').exclude(supply_point_id__isnull=True)
     return supply_points
+
+
+def report_status(sql_location, days_until_late=DAYS_UNTIL_LATE):
+    commodities_stocked = sql_location.products
+    latest_stocks = StockState.objects.filter(
+        case_id=sql_location.supply_point_id, sql_product__in=commodities_stocked
+    )
+
+    if not latest_stocks:
+        return [], commodities_stocked
+
+    pks = [stock_state.sql_product.pk for stock_state in latest_stocks]
+    missing_products = list(commodities_stocked.exclude(pk__in=pks))
+
+    deadline = datetime.now() + relativedelta(days=-days_until_late)
+    on_time_stocks = latest_stocks.filter(last_modified_date__gte=deadline)
+    missing_stocks = [
+        stock_state.sql_product for stock_state in latest_stocks.filter(last_modified_date__lt=deadline)
+    ]
+    return [stock_state.sql_product for stock_state in on_time_stocks], missing_products + missing_stocks

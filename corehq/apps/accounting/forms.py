@@ -335,6 +335,9 @@ class SubscriptionForm(forms.Form):
     do_not_invoice = forms.BooleanField(
         label=ugettext_lazy("Do Not Invoice"), required=False
     )
+    no_invoice_reason = forms.CharField(
+        label=ugettext_lazy("Justify why \"Do Not Invoice\""), max_length=256, required=False
+    )
     auto_generate_credits = forms.BooleanField(
         label=ugettext_lazy("Auto-generate Plan Credits"), required=False
     )
@@ -431,6 +434,7 @@ class SubscriptionForm(forms.Form):
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
+            self.fields['no_invoice_reason'].initial = subscription.no_invoice_reason
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
@@ -503,7 +507,11 @@ class SubscriptionForm(forms.Form):
                 plan_version_field,
                 domain_field,
                 'salesforce_contract_id',
-                'do_not_invoice',
+                crispy.Field('do_not_invoice', data_bind="checked: noInvoice"),
+                crispy.Div(
+                    crispy.Field(
+                        'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
+                    data_bind="visible: noInvoice"),
                 'auto_generate_credits',
                 'service_type',
                 'pro_bono_status'
@@ -571,6 +579,7 @@ class SubscriptionForm(forms.Form):
         date_delay_invoicing = self.cleaned_data['delay_invoice_until']
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
         do_not_invoice = self.cleaned_data['do_not_invoice']
+        no_invoice_reason = self.cleaned_data['no_invoice_reason']
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
         service_type = self.cleaned_data['service_type']
         pro_bono_status = self.cleaned_data['pro_bono_status']
@@ -581,6 +590,7 @@ class SubscriptionForm(forms.Form):
             date_delay_invoicing=date_delay_invoicing,
             salesforce_contract_id=salesforce_contract_id,
             do_not_invoice=do_not_invoice,
+            no_invoice_reason=no_invoice_reason,
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
             service_type=service_type,
@@ -602,6 +612,7 @@ class SubscriptionForm(forms.Form):
             date_end=self.cleaned_data['end_date'],
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
+            no_invoice_reason=self.cleaned_data['no_invoice_reason'],
             auto_generate_credits=self.cleaned_data['auto_generate_credits'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             web_user=self.web_user,
@@ -1902,8 +1913,7 @@ class ResendEmailForm(forms.Form):
         ]
 
     def resend_email(self):
-        contact_emails = self.invoice.email_recipients
-        contact_emails += self.cleaned_data['additional_recipients']
+        contact_emails = set(self.invoice.email_recipients) | set(self.cleaned_data['additional_recipients'])
         if self.invoice.is_wire:
             record = WireBillingRecord.generate_record(self.invoice)
         else:

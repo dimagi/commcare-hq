@@ -14,6 +14,7 @@ from lxml import etree
 from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed, BadValueError
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from couchdbkit import ResourceNotFound
 from lxml.etree import XMLSyntaxError
@@ -25,10 +26,15 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
+from corehq.form_processor.generic import GenericXFormInstance, GenericMetadata
+from corehq.form_processor.utils import ToFromGeneric
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
+
+
+_soft_assert = soft_assert(notify_admins=True)
 
 
 def doc_types():
@@ -106,7 +112,7 @@ class XFormOperation(DocumentSchema):
 
 
 class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
-                    CouchDocLockableMixIn):
+                    CouchDocLockableMixIn, ToFromGeneric):
     """An XForms instance."""
     domain = StringProperty()
     app_id = StringProperty()
@@ -245,6 +251,19 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 else:
                     raise
 
+    def to_generic(self):
+        generic = GenericXFormInstance(self.to_json())
+        generic._metadata = GenericMetadata.wrap(self.metadata.to_json() if self.metadata else None)
+        if '_id' in self:
+            generic.id = self['_id']
+        return generic
+
+    @classmethod
+    def from_generic(cls, generic_xform):
+        xform_json = generic_xform.to_json()
+        xform_json.pop('metadata', None)
+        return cls.wrap(xform_json)
+
     def xpath(self, path):
         """
         Evaluates an xpath expression like: path/to/node and returns the value 
@@ -303,12 +322,15 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         try:
             return _to_xml_element(xml_string)
         except XMLSyntaxError:
+            _soft_assert(False, "Form {} has invalid xml, assuming it's b64 "
+                                "encoded and retrying.".format(self._id))
             # there is a bug at least in pact code that double
             # saves a submission in a way that the attachments get saved in a base64-encoded format
             decoded_payload = base64.b64decode(xml_string)
             element = _to_xml_element(decoded_payload)
 
             # in this scenario resave the attachment properly in case future calls circumvent this method
+            self.save()
             self.put_attachment(decoded_payload, ATTACHMENT_NAME)
             return element
 

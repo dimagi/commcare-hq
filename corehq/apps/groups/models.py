@@ -122,7 +122,7 @@ class Group(UndoableDocument):
         self.save()
 
     def get_user_ids(self, is_active=True):
-        return [user.user_id for user in self.get_users(is_active)]
+        return [user.user_id for user in self.get_users(is_active=is_active)]
 
     @memoized
     def get_users(self, is_active=True, only_commcare=False):

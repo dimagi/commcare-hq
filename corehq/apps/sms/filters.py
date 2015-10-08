@@ -1,6 +1,7 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
+from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
@@ -54,3 +55,9 @@ class EventTypeFilter(BaseMultipleOptionFilter):
         MessagingEvent.SOURCE_REMINDER,
         MessagingEvent.CONTENT_SMS_SURVEY,
     ]
+
+
+class PhoneNumberFilter(SearchFilter):
+    template = 'reports/messaging/filters/phone_number.html'
+    label = ugettext_lazy("Phone Number")
+    search_help_inline = ugettext_lazy("Enter a full or partial phone number to filter results")

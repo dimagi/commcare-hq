@@ -1,7 +1,7 @@
 import cgi
 from django.db.models import Q, Count
 from django.core.urlresolvers import reverse
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from couchdbkit.resource import ResourceNotFound
@@ -13,7 +13,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
-from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter
+from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter, PhoneNumberFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -39,6 +39,7 @@ from corehq.apps.sms.models import (
     MessagingSubEvent,
     SMS,
 )
+from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import SurveyKeyword, CaseReminderHandler
 from corehq.apps.reminders.views import (
@@ -477,8 +478,26 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
         status = event.status
         error_code = event.error_code
+
+        # If we have a MessagingEvent with no error_code it means there's
+        # an error in the subevent
         if status == MessagingEvent.STATUS_ERROR and not error_code:
             error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
+
+        # If we have a MessagingEvent that's completed but it's tied to
+        # unfinished surveys, then mark it as being in progress
+        if (
+            isinstance(event, MessagingEvent) and
+            event.status == MessagingEvent.STATUS_COMPLETED and
+            MessagingSubEvent.objects.filter(
+                parent_id=event.pk,
+                content_type=MessagingEvent.CONTENT_SMS_SURVEY,
+                # without this line, django does a left join which is not what we want
+                xforms_session_id__isnull=False,
+                xforms_session__end_time__isnull=True
+            ).count() > 0
+        ):
+            status = MessagingEvent.STATUS_IN_PROGRESS
 
         status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
         error_message = (MessagingEvent.ERROR_MESSAGES.get(error_code, None)
@@ -517,13 +536,11 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
 
     def get_keyword_display(self, keyword_id, content_cache):
         if keyword_id in content_cache:
-            args = content_cache[keyword_id]
-            return self.table_cell(*args)
+            return content_cache[keyword_id]
         try:
             keyword = SurveyKeyword.get(keyword_id)
             if keyword.deleted():
                 display = '%s %s' % (keyword.description, _('(Deleted Keyword)'))
-                display_text = display
             else:
                 urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
                     else EditNormalKeywordView.urlname)
@@ -531,36 +548,30 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
                     reverse(urlname, args=[keyword.domain, keyword_id]),
                     keyword.description,
                 )
-                display_text = keyword.description
-            args = (display_text, display)
         except ResourceNotFound:
-            args = ('-', '-')
+            display = '-'
 
-        content_cache[keyword_id] = args
-        return self.table_cell(*args)
+        content_cache[keyword_id] = display
+        return display
 
     def get_reminder_display(self, handler_id, content_cache):
         if handler_id in content_cache:
-            args = content_cache[handler_id]
-            return self.table_cell(*args)
+            return content_cache[handler_id]
         try:
             reminder_definition = CaseReminderHandler.get(handler_id)
             if reminder_definition.deleted():
                 display = '%s %s' % (reminder_definition.nickname, _('(Deleted Reminder)'))
-                display_text = display
             else:
                 urlname = EditScheduledReminderView.urlname
                 display = '<a target="_blank" href="%s">%s</a>' % (
                     reverse(urlname, args=[reminder_definition.domain, handler_id]),
                     reminder_definition.nickname,
                 )
-                display_text = reminder_definition.nickname
-            args = (display_text, display)
         except ResourceNotFound:
-            args = ('-', '-')
+            display = '-'
 
-        content_cache[handler_id] = args
-        return self.table_cell(*args)
+        content_cache[handler_id] = display
+        return display
 
     def get_content_display(self, event, content_cache):
         if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
@@ -575,7 +586,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
                 event.form_name or _('Unknown')))
 
         content_choices = dict(MessagingEvent.CONTENT_CHOICES)
-        return self._fmt(_(content_choices.get(event.content_type, '-')))
+        return _(content_choices.get(event.content_type, '-'))
 
     def get_event_detail_link(self, event):
         display_text = _('View Details')
@@ -584,41 +595,54 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             event.pk,
             display_text,
         )
-        return self.table_cell(display_text, display)
+        return display
+
+    def get_survey_detail_url(self, subevent):
+        return "/a/%s/reports/survey_detail/?id=%s" % (self.domain, subevent.xforms_session_id)
 
     def get_survey_detail_link(self, subevent):
         form_name = subevent.form_name or _('Unknown')
         if not subevent.xforms_session_id:
             return self._fmt(form_name)
         else:
-            display = '<a target="_blank" href="/a/%s/reports/survey_detail/?id=%s">%s</a>' % (
-                self.domain,
-                subevent.xforms_session_id,
+            display = '<a target="_blank" href="%s">%s</a>' % (
+                self.get_survey_detail_url(subevent),
                 form_name,
             )
             return self.table_cell(form_name, display)
 
 
 class MessagingEventsReport(BaseMessagingEventReport):
-    name = ugettext_noop('Past Events')
+    name = ugettext_noop('Messaging History')
     slug = 'messaging_events'
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        PhoneNumberFilter,
     ]
+    ajax_pagination = True
 
     @property
     def headers(self):
         header = DataTablesHeader(
             DataTablesColumn(_('Date')),
-            DataTablesColumn(_('Content')),
-            DataTablesColumn(_('Type')),
-            DataTablesColumn(_('Recipient')),
-            DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Detail')),
+            DataTablesColumn(_('Content'), sortable=False),
+            DataTablesColumn(_('Type'), sortable=False),
+            DataTablesColumn(_('Recipient'), sortable=False),
+            DataTablesColumn(_('Status'), sortable=False),
+            DataTablesColumn(_('Detail'), sortable=False),
         )
         header.custom_sort = [[0, 'desc']]
         return header
+
+    @property
+    @memoized
+    def phone_number_filter(self):
+        value = PhoneNumberFilter.get_value(self.request, self.domain)
+        if isinstance(value, basestring):
+            return value.strip()
+
+        return None
 
     def get_filters(self):
         source_filter = []
@@ -663,13 +687,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
                             else None)
             )
 
-    @property
-    def rows(self):
+    def get_queryset(self):
         source_filter, content_type_filter = self.get_filters()
 
-        # We need to call distinct() on this because it's doing an
-        # outer join to sms_messagingsubevent in order to filter on
-        # subevent content types.
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
             Q(date__gte=self.datespan.startdate_utc),
@@ -677,11 +697,43 @@ class MessagingEventsReport(BaseMessagingEventReport):
             (Q(source__in=source_filter) |
                 Q(content_type__in=content_type_filter) |
                 Q(messagingsubevent__content_type__in=content_type_filter)),
-        ).distinct()
+        )
 
-        result = []
+        if self.phone_number_filter:
+            data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
+
+        # We need to call distinct() on this because it's doing an
+        # outer join to sms_messagingsubevent in order to filter on
+        # subevent content types.
+        data = data.distinct()
+        return data
+
+    @property
+    def total_records(self):
+        return self.get_queryset().count()
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
+            {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
+            {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
+        ]
+
+    @property
+    def rows(self):
         contact_cache = {}
         content_cache = {}
+
+        data = self.get_queryset()
+        if self.request_params.get('sSortDir_0') == 'asc':
+            data = data.order_by('date')
+        else:
+            data = data.order_by('-date')
+
+        if self.pagination:
+            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for event in data:
             doc_info = self.get_recipient_info(event.get_recipient_doc_type(),
@@ -689,16 +741,14 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
             status = self.get_status_display(event)
-            result.append([
-                self._fmt_timestamp(timestamp),
+            yield [
+                self._fmt_timestamp(timestamp)['html'],
                 self.get_content_display(event, content_cache),
-                self.get_source_display(event),
-                self._fmt_recipient(event, doc_info),
-                self._fmt(status),
+                self.get_source_display(event, display_only=True),
+                self._fmt_recipient(event, doc_info)['html'],
+                status,
                 self.get_event_detail_link(event),
-            ])
-
-        return result
+            ]
 
 
 class MessageEventDetailReport(BaseMessagingEventReport):
@@ -716,7 +766,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
     @property
     def template_context(self):
-        event = self.get_messaging_event()
+        event = self.messaging_event
         date = ServerTime(event.date).user_time(self.timezone).done()
         return {
             'messaging_event_date': date.strftime(SERVER_DATETIME_FORMAT),
@@ -735,8 +785,9 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             DataTablesColumn(_('Status')),
         )
 
+    @property
     @memoized
-    def get_messaging_event(self):
+    def messaging_event(self):
         messaging_event_id = self.request.GET.get('id', None)
 
         try:
@@ -751,11 +802,34 @@ class MessageEventDetailReport(BaseMessagingEventReport):
         return messaging_event
 
     @property
+    @memoized
+    def messaging_subevents(self):
+        return MessagingSubEvent.objects.filter(parent=self.messaging_event)
+
+    def _fmt_backend_name(self, sms):
+        return self._fmt(get_backend_name(sms.backend_id) or sms.backend_api)
+
+    @property
+    def view_response(self):
+        subevents = self.messaging_subevents
+        if (
+            len(subevents) == 1 and
+            subevents[0].content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
+                                          MessagingEvent.CONTENT_IVR_SURVEY) and
+            subevents[0].xforms_session_id and
+            subevents[0].status != MessagingEvent.STATUS_ERROR
+        ):
+            # There's only one survey to report on here - just redirect to the
+            # survey detail page
+            return HttpResponseRedirect(self.get_survey_detail_url(subevents[0]))
+
+        return super(MessageEventDetailReport, self).view_response
+
+    @property
     def rows(self):
         result = []
         contact_cache = {}
-        messaging_event = self.get_messaging_event()
-        for messaging_subevent in MessagingSubEvent.objects.filter(parent=messaging_event):
+        for messaging_subevent in self.messaging_subevents:
             doc_info = self.get_recipient_info(messaging_subevent.get_recipient_doc_type(),
                 messaging_subevent.recipient_id, contact_cache)
 
@@ -784,7 +858,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                             self._fmt(sms.text),
                             self._fmt(sms.phone_number),
                             self._fmt_direction(sms.direction),
-                            self._fmt(sms.backend_api),
+                            self._fmt_backend_name(sms),
                             self._fmt(status),
                         ])
             elif messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
