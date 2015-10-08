@@ -21,6 +21,7 @@ from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
+from pillowtop.const import CHECKPOINT_FREQUENCY
 from pillowtop.couchdb import CachedCouchDB
 
 from django import db
@@ -34,7 +35,6 @@ from pillowtop.utils import get_current_seq
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
 
-CHECKPOINT_FREQUENCY = 100
 CHECKPOINT_MIN_WAIT = 300
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
