@@ -2,18 +2,19 @@ from collections import namedtuple
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
 from no_exceptions.exceptions import Http400
 
 from corehq.toggles import SUPPLY_REPORTS
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 from .const import STOCK_SECTION_TYPE
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 
-_Row = namedtuple('Row', "location stock")
+LocationLedger = namedtuple('Row', "location stock")
 
 
 class LedgersByLocationDataSource(object):
@@ -25,74 +26,76 @@ class LedgersByLocationDataSource(object):
         Location 2 |       132 |        49 |
     """
 
-    def __init__(self, domain, params=None):
+    def __init__(self, domain, section_id):
         self.domain = domain
-        self.params = params
-
-    @property
-    def section_id(self):
-        return self.params.get('section_id', STOCK_SECTION_TYPE)
+        self.section_id = section_id
 
     @property
     @memoized
     def products(self):
         if SQLProduct.objects.filter(domain=self.domain).count() > 20:
             raise Http400("This domain has too many products.")
-        return list(SQLProduct.objects.filter(domain=self.domain))
+        return list(SQLProduct.objects.filter(domain=self.domain).order_by('name'))
 
-    def _get_rows(self):
-        for location in SQLLocation.objects.filter(domain=self.domain).order_by('name'):
-            # TODO pull out of loop
+    @property
+    @memoized
+    def location_ledgers(self):
+        def get_location_ledger(location):
             stock = (StockState.objects
                      .filter(section_id=self.section_id,
                              sql_location=location)
                      .values_list('sql_product__product_id', 'stock_on_hand'))
-            yield _Row(
+            return LocationLedger(
                 location,
                 {product_id: soh for product_id, soh in stock}
             )
 
+        locations = SQLLocation.objects.filter(domain=self.domain).order_by('name')
+        return map(get_location_ledger, locations)
+
     @property
-    @memoized
     def rows(self):
-        return list(self._get_rows())
+        for ledger in self.location_ledgers:
+            yield [ledger.location.name] + [
+                ledger.stock.get(p.product_id, 0) for p in self.products
+            ]
+
+    @property
+    def headers(self):
+        return [_("Location")] + [p.name for p in self.products]
 
 
-class LedgersByLocationReport(TemplateView):
+class LedgersByLocationReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_lazy('Ledgers By Location')
-    urlname = 'ledgers_by_location'
-    template_name = 'style/bootstrap3/base_section.html'
-    asynchronous = True
+    slug = 'ledgers_by_location'
+    ajax_pagination = False
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
-    #  TODO?
-    #  exportable = True
-    #  emailable = True
 
-    @method_decorator(use_bootstrap3())
     @method_decorator(SUPPLY_REPORTS.required_decorator())
-    def dispatch(self, request, domain, **kwargs):
-        self.domain = domain
-        return super(LedgersByLocationReport, self).dispatch(request, domain, **kwargs)
-
-    def get_context_data(self):
-        #  TODO accommodate `format_sidebar` context
-        return {
-            'domain': self.domain,
-            'section': {'url': '/path/to/page/', 'page_name': self.name},
-            'current_page': {
-                'url': '/path/',
-                'parents': [],
-                'page_name': self.name,  # the same...
-                'title': self.name,
-            },
-            'couch_user': self.request.couch_user,
-            'view': self,
-        }
+    def dispatch(self, *args, **kwargs):
+        return super(LedgersByLocationReport, self).dispatch(*args, **kwargs)
 
     @staticmethod
     def show_in_navigation(domain, project, user=None):
         return project.commtrack_enabled and SUPPLY_REPORTS.enabled(domain)
+
+    @property
+    @memoized
+    def data(self):
+        return LedgersByLocationDataSource(
+            domain=self.domain,
+            section_id=STOCK_SECTION_TYPE,
+        )
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            *[DataTablesColumn(header) for header in self.data.headers]
+        )
+
+    @property
+    def rows(self):
+        return self.data.rows

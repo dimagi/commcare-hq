@@ -58,29 +58,29 @@ class TestLedgersByLocation(TestCase):
 
     def test_show_all_rows_ordered(self):
         report = LedgersByLocationDataSource(
-            'test',
-            params={'ledger_section': 'stock'},
+            domain='test',
+            section_id='stock'
         )
         self.assertEqual(
-            [row.location.name for row in report.rows],
+            [row.location.name for row in report.location_ledgers],
             [self.allston.name, self.boston.name, self.cambridge.name]
         )
 
     def test_one_row(self):
         report = LedgersByLocationDataSource(
-            'test',
-            params={'ledger_section': 'stock'},
+            domain='test',
+            section_id='stock'
         )
-        boston = [row for row in report.rows if row.location.name == "Boston"][0]
+        boston = [row for row in report.location_ledgers if row.location.name == "Boston"][0]
         self.assertEqual(boston.stock[self.aspirin.product_id], 135)
         self.assertEqual(boston.stock[self.bandaids.product_id], 43)
 
     def test_another_ledger_section(self):
         report = LedgersByLocationDataSource(
-            'test',
-            params={'ledger_section': 'foo'},
+            domain='test',
+            section_id='foo'
         )
-        for row in report.rows:
+        for row in report.location_ledgers:
             if row.location.name == "Boston":
                 self.assertEqual(row.stock[self.aspirin.product_id], 82)
             else:
