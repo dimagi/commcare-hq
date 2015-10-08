@@ -278,9 +278,9 @@ class CaseStructure(object):
     Can recursively nest parents/grandparents inside here.
     """
 
-    def __init__(self, case_id=None, relationships=None, attrs=None, walk_related=True):
+    def __init__(self, case_id=None, indices=None, attrs=None, walk_related=True):
         self.case_id = case_id or uuid.uuid4().hex
-        self.relationships = relationships if relationships is not None else []
+        self.indices = indices if indices is not None else []
         self.attrs = attrs if attrs is not None else {}
         self.walk_related = walk_related  # whether to walk related cases in operations
 
@@ -288,18 +288,18 @@ class CaseStructure(object):
     def index(self):
         return {
             r.relationship: (r.related_type, r.related_id, r.relationship)
-            for r in self.relationships
+            for r in self.indices
         }
 
     def walk_ids(self):
         yield self.case_id
         if self.walk_related:
-            for relationship in self.relationships:
+            for relationship in self.indices:
                 for id in relationship.related_structure.walk_ids():
                     yield id
 
 
-class CaseRelationship(object):
+class CaseIndex(object):
     DEFAULT_RELATIONSHIP = 'parent'
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
@@ -374,7 +374,7 @@ class CaseFactory(object):
             blocks = [_get_case_block(substructure)]
             if substructure.walk_related:
                 blocks += [
-                    block for relationship in substructure.relationships
+                    block for relationship in substructure.indices
                     for block in _get_case_blocks(relationship.related_structure)
                 ]
             return blocks

@@ -1,5 +1,5 @@
 from django.test import TestCase
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.tests.util import extract_caseblocks_from_xml
 from casexml.apps.case.xml import V2
@@ -67,8 +67,8 @@ class LoadtestUserTest(TestCase):
         child, parent = self.factory.create_or_update_case(
             CaseStructure(
                 attrs={'case_name': 'parent'},
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'case_name': 'child'})),
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'case_name': 'child'})),
                 ]
             )
         )

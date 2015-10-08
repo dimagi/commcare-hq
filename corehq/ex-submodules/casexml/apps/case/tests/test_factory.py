@@ -1,6 +1,6 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
-from casexml.apps.case.mock import CaseStructure, CaseRelationship, CaseFactory
+from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from casexml.apps.case.models import CommCareCase
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from couchforms.models import XFormInstance
@@ -9,13 +9,13 @@ from couchforms.models import XFormInstance
 class CaseRelationshipTest(SimpleTestCase):
 
     def test_defaults(self):
-        relationship = CaseRelationship()
+        relationship = CaseIndex()
         self.assertIsNotNone(relationship.related_structure.case_id)
         self.assertEqual(relationship.DEFAULT_RELATIONSHIP, relationship.relationship)
         self.assertEqual(relationship.DEFAULT_RELATED_CASE_TYPE, relationship.related_type)
 
     def test_default_type_from_relationship(self):
-        relationship = CaseRelationship(CaseStructure(attrs={'case_type': 'custom_type'}))
+        relationship = CaseIndex(CaseStructure(attrs={'case_type': 'custom_type'}))
         self.assertEqual('custom_type', relationship.related_type)
 
 
@@ -24,12 +24,13 @@ class CaseStructureTest(SimpleTestCase):
     def test_index(self):
         parent_case_id = uuid.uuid4().hex
         structure = CaseStructure(
-            relationships=[
-                CaseRelationship(CaseStructure(case_id=parent_case_id))
+            indices=[
+                CaseIndex(CaseStructure(case_id=parent_case_id))
             ]
         )
         self.assertEqual(
-            {CaseRelationship.DEFAULT_RELATIONSHIP: (CaseRelationship.DEFAULT_RELATED_CASE_TYPE, parent_case_id)},
+            {CaseIndex.DEFAULT_RELATIONSHIP: (CaseIndex.DEFAULT_RELATED_CASE_TYPE, parent_case_id,
+                                                     CaseIndex.DEFAULT_RELATIONSHIP)},
             structure.index,
         )
 
@@ -39,14 +40,14 @@ class CaseStructureTest(SimpleTestCase):
             ('father_case_id', 'father', 'father_type'),
         ]
         structure = CaseStructure(
-            relationships=[
-                CaseRelationship(CaseStructure(case_id=i[0]), relationship=i[1], related_type=i[2])
+            indices=[
+                CaseIndex(CaseStructure(case_id=i[0]), relationship=i[1], related_type=i[2])
                 for i in indices
             ]
         )
         self.assertEqual(
-            {i[1]: (i[2], i[0]) for i in indices},
-            structure.index
+            {i[1]: (i[2], i[0], i[1]) for i in indices},
+            structure.index,
         )
 
     def test_walk_ids(self):
@@ -55,11 +56,11 @@ class CaseStructureTest(SimpleTestCase):
         grandparent_case_id = uuid.uuid4().hex
         structure = CaseStructure(
             case_id=case_id,
-            relationships=[
-                CaseRelationship(CaseStructure(
+            indices=[
+                CaseIndex(CaseStructure(
                     case_id=parent_case_id,
-                    relationships=[
-                        CaseRelationship(CaseStructure(case_id=grandparent_case_id))
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=grandparent_case_id))
                     ]))
             ]
         )
@@ -74,11 +75,11 @@ class CaseStructureTest(SimpleTestCase):
         grandparent_case_id = uuid.uuid4().hex
         structure = CaseStructure(
             case_id=case_id,
-            relationships=[
-                CaseRelationship(CaseStructure(
+            indices=[
+                CaseIndex(CaseStructure(
                     case_id=parent_case_id,
-                    relationships=[
-                        CaseRelationship(CaseStructure(case_id=grandparent_case_id))
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=grandparent_case_id))
                     ]))
             ]
         )
@@ -88,7 +89,7 @@ class CaseStructureTest(SimpleTestCase):
             list(structure.walk_ids())
         )
         structure.walk_related = True
-        structure.relationships[0].related_structure.walk_related = False
+        structure.indices[0].related_structure.walk_related = False
         self.assertEqual(
             [case_id, parent_case_id],
             list(structure.walk_ids())
@@ -140,8 +141,8 @@ class CaseFactoryTest(TestCase):
             CaseStructure(case_id=case_id),
             CaseStructure(
                 case_id=child_case_id,
-                relationships=[
-                    CaseRelationship(CaseStructure(case_id=parent_case_id))
+                indices=[
+                    CaseIndex(CaseStructure(case_id=parent_case_id))
                 ]
             )
         ]
@@ -161,8 +162,8 @@ class CaseFactoryTest(TestCase):
         factory = CaseFactory()
         parent = factory.create_case()
         child_updates = factory.create_or_update_case(
-            CaseStructure(attrs={'create': True}, walk_related=False, relationships=[
-                CaseRelationship(CaseStructure(case_id=parent._id))
+            CaseStructure(attrs={'create': True}, walk_related=False, indices=[
+                CaseIndex(CaseStructure(case_id=parent._id))
             ]),
         )
         self.assertEqual(1, len(child_updates))
