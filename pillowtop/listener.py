@@ -169,12 +169,6 @@ class BasicPillow(PillowBase):
         return "%s.%s.%s" % (
             self.__module__, self.__class__.__name__, get_machine_id())
 
-    def get_checkpoint(self, verify_unchanged=False):
-        return self.checkpoint_manager.get_or_create_checkpoint(verify_unchanged=verify_unchanged)
-
-    def reset_checkpoint(self):
-        self.checkpoint_manager.reset_checkpoint()
-
     def get_last_checkpoint_sequence(self):
         return self.checkpoint_manager.get_or_create_checkpoint()['seq']
 
