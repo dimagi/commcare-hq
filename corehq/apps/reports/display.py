@@ -11,6 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 
@@ -87,7 +88,14 @@ class FormType(object):
     def metadata(self):
         try:
             return FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
-        except Exception:
+        except Exception, e:
+            _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+            _assert(False, 'Failed on domain: {} | xmlns: {} | app_id: {} | error: {}'.format(
+                self.domain,
+                self.xmlns,
+                self.app_id,
+                e,
+            ))
             return None
 
     def get_label(self, html=False, lang=None):
