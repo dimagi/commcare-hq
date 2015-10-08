@@ -30,7 +30,7 @@ class PillowBase(object):
         pass
 
     def get_checkpoint(self, verify_unchanged=False):
-        return self.checkpoint_manager.get_or_create_checkpoint(verify_unchanged=verify_unchanged)
+        return self.checkpoint_manager.get_or_create(verify_unchanged=verify_unchanged)
 
     def reset_checkpoint(self):
         self.checkpoint_manager.reset_checkpoint()

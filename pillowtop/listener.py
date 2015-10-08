@@ -170,7 +170,7 @@ class BasicPillow(PillowBase):
             self.__module__, self.__class__.__name__, get_machine_id())
 
     def get_last_checkpoint_sequence(self):
-        return self.checkpoint_manager.get_or_create_checkpoint()['seq']
+        return self.checkpoint_manager.get_or_create()['seq']
 
     @property
     def since(self):

@@ -35,47 +35,47 @@ class PillowCheckpointManagerInstanceTest(SimpleTestCase):
         self.assertEqual(self._checkpoint_id, self._checkpoint.checkpoint_id)
 
     def test_create_initial_checkpoint(self):
-        checkpoint = self._checkpoint.get_or_create_checkpoint()
+        checkpoint = self._checkpoint.get_or_create()
         self.assertEqual('0', checkpoint['seq'])
 
     def test_db_changes_returned(self):
-        self._checkpoint.get_or_create_checkpoint()
+        self._checkpoint.get_or_create()
         self._dao.save_document(self._checkpoint_id, {'seq': '1'})
-        checkpoint = self._checkpoint.get_or_create_checkpoint()
+        checkpoint = self._checkpoint.get_or_create()
         self.assertEqual('1', checkpoint['seq'])
 
     def test_verify_unchanged_ok(self):
-        self._checkpoint.get_or_create_checkpoint()
-        checkpoint = self._checkpoint.get_or_create_checkpoint(verify_unchanged=True)
+        self._checkpoint.get_or_create()
+        checkpoint = self._checkpoint.get_or_create(verify_unchanged=True)
         self.assertEqual('0', checkpoint['seq'])
 
     def test_verify_unchanged_fail(self):
-        self._checkpoint.get_or_create_checkpoint()
+        self._checkpoint.get_or_create()
         self._dao.save_document(self._checkpoint_id, {'seq': '1'})
         with self.assertRaises(PillowtopCheckpointReset):
-            self._checkpoint.get_or_create_checkpoint(verify_unchanged=True)
+            self._checkpoint.get_or_create(verify_unchanged=True)
 
     def test_update(self):
-        self._checkpoint.get_or_create_checkpoint()
+        self._checkpoint.get_or_create()
         for seq in ['1', '5', '22']:
             self._checkpoint.update_checkpoint(seq)
-            self.assertEqual(seq, self._checkpoint.get_or_create_checkpoint()['seq'])
+            self.assertEqual(seq, self._checkpoint.get_or_create()['seq'])
 
     def test_update_verify_unchanged_fail(self):
-        self._checkpoint.get_or_create_checkpoint()
+        self._checkpoint.get_or_create()
         self._dao.save_document(self._checkpoint_id, {'seq': '1'})
         with self.assertRaises(PillowtopCheckpointReset):
             self._checkpoint.update_checkpoint('2')
 
     def test_touch_checkpoint_noop(self):
-        timestamp = self._checkpoint.get_or_create_checkpoint()['timestamp']
+        timestamp = self._checkpoint.get_or_create()['timestamp']
         self._checkpoint.touch(min_interval=10)
-        timestamp_back = self._checkpoint.get_or_create_checkpoint()['timestamp']
+        timestamp_back = self._checkpoint.get_or_create()['timestamp']
         self.assertEqual(timestamp_back, timestamp)
 
     def test_touch_checkpoint_update(self):
-        timestamp = self._checkpoint.get_or_create_checkpoint()['timestamp']
+        timestamp = self._checkpoint.get_or_create()['timestamp']
         time.sleep(.1)
         self._checkpoint.touch(min_interval=0)
-        timestamp_back = self._checkpoint.get_or_create_checkpoint()['timestamp']
+        timestamp_back = self._checkpoint.get_or_create()['timestamp']
         self.assertNotEqual(timestamp_back, timestamp)

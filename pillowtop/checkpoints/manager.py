@@ -37,7 +37,7 @@ class PillowCheckpoint(object):
         self.checkpoint_id = checkpoint_id
         self._last_checkpoint = None
 
-    def get_or_create_checkpoint(self, verify_unchanged=False):
+    def get_or_create(self, verify_unchanged=False):
         checkpoint = self._manager.get_or_create_checkpoint(self.checkpoint_id)
         if verify_unchanged and self._last_checkpoint and checkpoint['seq'] != self._last_checkpoint['seq']:
             raise PillowtopCheckpointReset()
@@ -46,7 +46,7 @@ class PillowCheckpoint(object):
         return checkpoint
 
     def update_checkpoint(self, seq):
-        checkpoint = self.get_or_create_checkpoint(verify_unchanged=True)
+        checkpoint = self.get_or_create(verify_unchanged=True)
         checkpoint['seq'] = seq
         checkpoint['timestamp'] = get_formatted_current_timestamp()
         self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
@@ -60,7 +60,7 @@ class PillowCheckpoint(object):
         Update the checkpoint timestamp without altering the sequence.
         :param min_interval: minimum interval between timestamp updates
         """
-        checkpoint = self.get_or_create_checkpoint(verify_unchanged=True)
+        checkpoint = self.get_or_create(verify_unchanged=True)
         now = datetime.now(tz=pytz.UTC)
         previous = self._last_checkpoint.get('timestamp')
         do_update = True
