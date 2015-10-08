@@ -17,16 +17,14 @@ import sys
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
-from dimagi.utils.logging import notify_exception
 from pillow_retry.models import PillowError
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
-from pillowtop.const import CHECKPOINT_FREQUENCY, CHECKPOINT_MIN_WAIT
+from pillowtop.const import CHECKPOINT_FREQUENCY
 from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -133,31 +131,6 @@ class BasicPillow(PillowBase):
             include_docs=self.include_docs,
             extra_couch_view_params=self.extra_args
         )
-
-    def process_changes(self, since, forever):
-        """
-        Process changes from the changes stream.
-        """
-        try:
-            for change in self.get_change_feed().iter_changes(since=since, forever=forever):
-                if change:
-                    try:
-                        self.processor(change)
-                    except Exception as e:
-                        notify_exception(None, u'processor error {}'.format(e))
-                        raise
-                else:
-                    self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
-        except PillowtopCheckpointReset:
-            self.changes_seen = 0
-            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
-
-    def run(self):
-        """
-        Couch changes stream creation
-        """
-        pillow_logging.info("Starting pillow %s" % self.__class__)
-        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     @memoized
     def get_name(self):

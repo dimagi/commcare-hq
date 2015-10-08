@@ -1,4 +1,7 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+from dimagi.utils.logging import notify_exception
+from pillowtop.const import CHECKPOINT_MIN_WAIT
+from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 
 
@@ -46,3 +49,32 @@ class PillowBase(object):
 
     def reset_checkpoint(self):
         self.checkpoint.reset_checkpoint()
+
+    def run(self):
+        """
+        Main entry point for running pillows forever.
+        """
+        pillow_logging.info("Starting pillow %s" % self.__class__)
+        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+
+    def process_changes(self, since, forever):
+        """
+        Process changes from the changes stream.
+        """
+        try:
+            for change in self.get_change_feed().iter_changes(since=since, forever=forever):
+                if change:
+                    try:
+                        self.processor(change)
+                    except Exception as e:
+                        notify_exception(None, u'processor error {}'.format(e))
+                        raise
+                else:
+                    self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+        except PillowtopCheckpointReset:
+            self.changes_seen = 0
+            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
+
+    @abstractmethod
+    def processor(self, change, do_set_checkpoint=True):
+        pass
