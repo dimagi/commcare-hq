@@ -82,7 +82,7 @@ class BasicPillow(object):
     extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
     changes_seen = 0
-    couch_db = None
+    _couch_db = None
     include_docs = True
     use_locking = False
 
@@ -92,17 +92,28 @@ class BasicPillow(object):
 
         # Explicitly check for None since a couch db class will evaluate to False
         # if there are no docs in the database.
-        self.couch_db = couch_db if couch_db is not None else (
-            self.couch_db if self.couch_db is not None else (
+        couch_to_use = couch_db if couch_db is not None else (
+            self._couch_db if self.couch_db is not None else (
                 self.document_class.get_db() if self.document_class else None
             ))
+
+        if couch_to_use is None:
+            raise ValueError('Pillows are currently required to supply couch_db')
+        else:
+            self._couch_db = couch_to_use
 
         if self.use_locking:
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
-        if self.couch_db is None:
-            raise ValueError('Pillows are currently required to supply couch_db')
+
+    @property
+    def couch_db(self):
+        return self._couch_db
+
+    @couch_db.setter
+    def couch_db(self, value):
+        self._couch_db = value
 
     @property
     @memoized
