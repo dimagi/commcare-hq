@@ -1,0 +1,11 @@
+{
+  "name": "CommcareHQ",
+  "version": "0.0.1",
+  "repository": "https://github.com/dimagi/commcare-hq",
+  "description": "CommcareHQ Javascript tests",
+  "dependencies": {
+    "grunt-mocha": "^0.4.13",
+    "grunt-contrib-watch": "*"
+    "mocha": "^2.3.3"
+  },
+}
