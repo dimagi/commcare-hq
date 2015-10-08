@@ -28,12 +28,9 @@ from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.feed.couch import CouchChangeFeed
+from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
 from pillowtop.utils import get_current_seq
-
-
-pillow_logging = logging.getLogger("pillowtop")
-pillow_logging.setLevel(logging.INFO)
 
 CHECKPOINT_MIN_WAIT = 300
 WAIT_HEARTBEAT = 10000
