@@ -90,7 +90,7 @@ class BasicPillow(PillowBase):
         # Explicitly check for None since a couch db class will evaluate to False
         # if there are no docs in the database.
         couch_to_use = couch_db if couch_db is not None else (
-            self._couch_db if self.couch_db is not None else (
+            self._couch_db if self._couch_db is not None else (
                 self.document_class.get_db() if self.document_class else None
             ))
 
@@ -114,7 +114,7 @@ class BasicPillow(PillowBase):
 
     @property
     def document_store(self):
-        return CouchDocumentStore(self.couch_db)
+        return CouchDocumentStore(self._couch_db)
 
     @property
     @memoized
@@ -126,7 +126,7 @@ class BasicPillow(PillowBase):
 
     def get_change_feed(self):
         return CouchChangeFeed(
-            couch_db=self.couch_db,
+            couch_db=self._couch_db,
             couch_filter=self.couch_filter,
             include_docs=self.include_docs,
             extra_couch_view_params=self.extra_args
@@ -143,7 +143,7 @@ class BasicPillow(PillowBase):
         return self.get_last_checkpoint_sequence()
 
     def get_db_seq(self):
-        return get_current_seq(self.couch_db)
+        return get_current_seq(self._couch_db)
 
     def processor(self, change, do_set_checkpoint=True):
         """
@@ -173,7 +173,7 @@ class BasicPillow(PillowBase):
         try:
             # This breaks the module boundary by using a show function defined in commcare-hq
             # but it was decided that it wasn't worth the effort to maintain the separation.
-            meta = self.couch_db.show('domain/domain_date', change['id'])
+            meta = self._couch_db.show('domain/domain_date', change['id'])
         except ResourceNotFound:
             # Show function does not exist
             meta = None
@@ -207,11 +207,11 @@ class BasicPillow(PillowBase):
         if self.use_locking:
             lock = self.document_class.get_obj_lock_by_id(id)
             lock.acquire()
-            return LockManager(self.couch_db.open_doc(id), lock)
+            return LockManager(self._couch_db.open_doc(id), lock)
         elif changes_dict.get('doc', None) is not None:
             return changes_dict['doc']
         else:
-            return self.couch_db.open_doc(id)
+            return self._couch_db.open_doc(id)
 
     def change_transform(self, doc_dict):
         """
@@ -261,12 +261,12 @@ class PythonPillow(BasicPillow):
         self.checkpoint_frequency = checkpoint_frequency
         self.include_docs = not self.use_chunking
         if couch_db:
-            self.couch_db = couch_db
+            self._couch_db = couch_db
         elif self.document_class:
             if self.use_chunking:
-                self.couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
+                self._couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
             else:
-                self.couch_db = self.document_class.get_db()
+                self._couch_db = self.document_class.get_db()
 
     def python_filter(self, doc):
         """
@@ -275,12 +275,12 @@ class PythonPillow(BasicPillow):
         return True
 
     def process_chunk(self):
-        self.couch_db.bulk_load([change['id'] for change in self.change_queue],
+        self._couch_db.bulk_load([change['id'] for change in self.change_queue],
                                 purge_existing=True)
 
         while len(self.change_queue) > 0:
             change = self.change_queue.pop()
-            doc = self.couch_db.open_doc(change['id'], check_main=False)
+            doc = self._couch_db.open_doc(change['id'], check_main=False)
             if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
                 try:
                     self.process_change(change)
