@@ -1,5 +1,6 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
+import sys
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
@@ -10,6 +11,7 @@ import urllib
 import KISSmetrics
 
 from django.conf import settings
+from corehq.util.soft_assert import soft_assert
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -202,20 +204,23 @@ def identify(email, properties):
         # TODO: Consider adding some error handling for bad/failed requests.
 
 
-@periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
+@periodic_task(run_every=crontab(minute="0", hour="2"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
     :return:
     """
+    start_time = datetime.now()
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
     users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email']).run().hits
     # users_to_domains is a list of dicts
-
+    time_users_to_domains_query = datetime.now()
     domains_to_forms = FormES().terms_facet('domain', 'domain').size(0).run().facets.domain.counts_by_term()
+    time_domains_to_forms_query = datetime.now()
     domains_to_mobile_users = UserES().mobile_users().terms_facet('domain', 'domain').size(0).run()\
                                       .facets.domain.counts_by_term()
+    time_domains_to_mobile_users_query = datetime.now()
 
     # For each web user, iterate through their domains and select the max number of form submissions and max number of
     # mobile workers
@@ -246,5 +251,19 @@ def track_periodic_data():
         }
         submit.append(user_json)
 
+    end_time = datetime.now()
     submit_json = json.dumps(submit)
+
+    _soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
+    #TODO: Update this soft assert to only trigger if the timing is longer than a threshold
+    _soft_assert(False, 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, '
+                        'domains_to_mobile_workers: {}, end: {}, size of string post to hubspot (bytes): {}'.format(
+        start_time,
+        time_users_to_domains_query,
+        time_domains_to_forms_query,
+        time_domains_to_mobile_users_query,
+        end_time,
+        sys.getsizeof(submit_json)
+    ))
+
     _batch_track_on_hubspot(submit_json)
