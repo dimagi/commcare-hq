@@ -181,7 +181,7 @@ class BasicPillow(PillowBase):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_manager.checkpoint_id, change['seq'])
         )
-        self.checkpoint_manager.update_checkpoint(change['seq'])
+        self.checkpoint_manager.update_to(change['seq'])
 
     def get_db_seq(self):
         return get_current_seq(self.couch_db)

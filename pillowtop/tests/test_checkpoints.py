@@ -58,14 +58,14 @@ class PillowCheckpointManagerInstanceTest(SimpleTestCase):
     def test_update(self):
         self._checkpoint.get_or_create()
         for seq in ['1', '5', '22']:
-            self._checkpoint.update_checkpoint(seq)
+            self._checkpoint.update_to(seq)
             self.assertEqual(seq, self._checkpoint.get_or_create()['seq'])
 
     def test_update_verify_unchanged_fail(self):
         self._checkpoint.get_or_create()
         self._dao.save_document(self._checkpoint_id, {'seq': '1'})
         with self.assertRaises(PillowtopCheckpointReset):
-            self._checkpoint.update_checkpoint('2')
+            self._checkpoint.update_to('2')
 
     def test_touch_checkpoint_noop(self):
         timestamp = self._checkpoint.get_or_create()['timestamp']

@@ -45,7 +45,7 @@ class PillowCheckpoint(object):
         self._last_checkpoint = checkpoint
         return checkpoint
 
-    def update_checkpoint(self, seq):
+    def update_to(self, seq):
         checkpoint = self.get_or_create(verify_unchanged=True)
         checkpoint['seq'] = seq
         checkpoint['timestamp'] = get_formatted_current_timestamp()
