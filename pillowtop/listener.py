@@ -116,10 +116,14 @@ class BasicPillow(object):
         self._couch_db = value
 
     @property
+    def document_store(self):
+        return CouchDocumentStore(self.couch_db)
+
+    @property
     @memoized
     def checkpoint_manager(self):
         return PillowCheckpointManagerInstance(
-            CouchDocumentStore(self.couch_db),
+            self.document_store,
             construct_checkpoint_doc_id_from_name(self.get_name()),
         )
 
