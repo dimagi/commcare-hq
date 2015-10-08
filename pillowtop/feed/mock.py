@@ -32,7 +32,7 @@ class RandomChangeFeed(ChangeFeed):
 
     def iter_changes(self, since, forever=False):
         if forever:
-            raise ValueError('Forever option not supported for mock feed!')
+            raise ValueError('Forever option not supported for random feed!')
         else:
             while since < self._count:
                 yield self._change_generator(since)
