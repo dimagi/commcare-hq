@@ -1,4 +1,5 @@
 from decimal import Decimal
+from couchdbkit import ResourceNotFound
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
 from corehq.apps.accounting import generator
@@ -10,7 +11,8 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
-from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping, MobileBackend
+from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
@@ -20,6 +22,7 @@ from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
+TEST_BACKEND = 'MOBILE_BACKEND_TEST'
 
 
 def get_descendants(location_id):
@@ -130,7 +133,22 @@ def assign_products_to_location(location, products):
 def prepare_domain(domain_name):
     domain = create_domain(domain_name)
     domain.convert_to_commtrack()
-    domain.default_sms_backend_id = TEST_BACKEND
+    try:
+        backend = MobileBackend.get("MOBILE_BACKEND_TEST")
+    except ResourceNotFound:
+        backend = TestSMSBackend(
+            domain=None,
+            name="MOBILE_BACKEND_TEST",
+            authorized_domains=[],
+            is_global=True,
+        )
+        backend._id = backend.name
+        backend.save()
+
+    sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend._id)
+    sms_backend_mapping.save()
+
+    domain.default_sms_backend_id = backend.get_id
     domain.save()
 
     def _make_loc_type(name, administrative=False, parent_type=None):
@@ -182,7 +200,6 @@ TEST_LOCATION_TYPE = 'outlet'
 TEST_USER = 'commtrack-user'
 TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
-TEST_BACKEND = 'test-backend'
 
 
 def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
