@@ -1,5 +1,6 @@
 from collections import defaultdict
 from corehq.apps.users.models import CouchUser
+from corehq.util.quickcache import quickcache
 from custom.openclinica.const import AUDIT_LOGS
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
@@ -79,6 +80,11 @@ class Subject(object):
         # update an item if its form has been edited on HQ, by looking it up with new_form.orig_id.
         self.question_items = defaultdict(dict)
 
+        # The mobile workers who entered this subject's data. Used for audit logs. The number of mobile workers
+        # entering data for any single subject should be small, even in large studies with thousands of users.
+        # Because we are fetching the user for every question, use a dictionary for speed.
+        self.mobile_workers = {}
+
     def get_study_event(self, item, form):
         """
         Return the current study event. Opens a new study event if necessary.
@@ -140,14 +146,26 @@ class Subject(object):
             })
         item_dict['value'] = answer
 
-    def add_item(self, item, form, question, answer, audit_log_id):
-        cc_user = CouchUser.get_by_user_id(form.auth_context['user_id'], self._domain)
-        assert cc_user, "Unable to find the form's authenticated user. Has the user been deleted?"
-        oc_user = get_oc_user(self._domain, cc_user)
-        if oc_user is None:
-            raise OpenClinicaIntegrationError(
-                'OpenClinica user not found for CommCare user "{}"'.format(cc_user.username))
+    @staticmethod
+    @quickcache(['domain', 'user_id'])
+    def _get_cc_user(domain, user_id):
+        cc_user = CouchUser.get_by_user_id(user_id, domain)
+        assert cc_user, "Unable to find user. Has the user been deleted?"
+        return cc_user
 
+    def _get_oc_user(self, user_id):
+        if user_id not in self.mobile_workers:
+            cc_user = self._get_cc_user(self._domain, user_id)
+            assert cc_user, "Unable to find user. Has the user been deleted?"
+            oc_user = get_oc_user(self._domain, cc_user)
+            if oc_user is None:
+                raise OpenClinicaIntegrationError(
+                    'OpenClinica user not found for CommCare user "{}"'.format(cc_user.username))
+            self.mobile_workers[user_id] = oc_user
+        return self.mobile_workers[user_id]
+
+    def add_item(self, item, form, question, answer, audit_log_id):
+        oc_user = self._get_oc_user(form.auth_context['user_id'])
         if getattr(form, 'deprecated_form_id', None) and question in self.question_items[form.deprecated_form_id]:
             # This form has been edited on HQ. Fetch original item
             item_dict, study_event = self.question_items[form.deprecated_form_id][question]
@@ -188,7 +206,7 @@ class Subject(object):
         """
         for question, answer in form.form['case'].get('update', {}).iteritems():
             # A form can contribute to many item groups, so we have to loop through all the questions
-            item = get_question_item(form.xmlns, question)
+            item = get_question_item(self._domain, form.xmlns, question)
             if item is None:
                 # This is a CommCare-only question or form
                 continue

@@ -6,6 +6,7 @@ from lxml import etree
 import os
 from django.conf import settings
 import yaml
+from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
 
 
@@ -14,22 +15,8 @@ class OpenClinicaIntegrationError(Exception):
 
 
 Item = namedtuple('Item', ('study_event_oid', 'form_oid', 'item_group_oid', 'item_oid'))
-AdminDataUser = namedtuple('OpenClinicaUser', ('user_id', 'first_name', 'last_name'))
+AdminDataUser = namedtuple('AdminDataUser', ('user_id', 'first_name', 'last_name'))
 OpenClinicaUser = namedtuple('OpenClinicaUser', ('user_id', 'first_name', 'last_name', 'username', 'full_name'))
-
-
-# A dictionary of form_xmlns: {question_name: openclinica_item}
-# Data is lazy-loaded from commcare_questions.yaml by get_question_item()
-# (We can do this for the first project, but in future we will need to use a database.)
-_question_items = None
-
-
-# The root node of study_metadata.xml
-_study_metadata_root = None
-
-
-# We have to look up OpenClinica users by name because usernames are excluded from study metadata (!?)
-_oc_users_by_name = None
 
 
 # CDISC OMD XML namespace map
@@ -66,17 +53,24 @@ def simplify(fancy):
         return fancy
 
 
-def get_question_item(form_xmlns, question):
+@quickcache(['domain'])
+def _get_question_items(domain):
+    """
+    Return a dictionary of form_xmlns: {question_name: openclinica_item}
+    """
+    file_path = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'commcare_questions.yaml')
+    with file(file_path) as question_items_file:
+        question_items = yaml.load(question_items_file)
+    return question_items
+
+
+def get_question_item(domain, form_xmlns, question):
     """
     Returns an Item namedtuple given a CommCare form and question name
     """
-    global _question_items
-    if _question_items is None:
-        file_path = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'commcare_questions.yaml')
-        with file(file_path) as question_items_file:
-            _question_items = yaml.load(question_items_file)
+    question_items = _get_question_items(domain)
     try:
-        se_oid, form_oid, ig_oid, item_oid = _question_items[form_xmlns]['questions'][question]
+        se_oid, form_oid, ig_oid, item_oid = question_items[form_xmlns]['questions'][question]
         return Item(se_oid, form_oid, ig_oid, item_oid)
     except KeyError:
         raise OpenClinicaIntegrationError('Unknown CommCare question "{}". Please run `./manage.py '
@@ -86,17 +80,15 @@ def get_question_item(form_xmlns, question):
         return None
 
 
+@quickcache(['domain'])
 def get_study_metadata(domain):
     """
     Return the study metadata for the given domain
     """
     # For this first OpenClinica integration project, for the sake of simplicity, we are just fetching
     # metadata from custom/openclinica/study_metadata.xml. In future, metadata must be stored for each domain.
-    global _study_metadata_root
-    if _study_metadata_root is None:
-        metadata_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
-        _study_metadata_root = etree.parse(metadata_filename)
-    return _study_metadata_root
+    metadata_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
+    return etree.parse(metadata_filename)
 
 
 def get_study_constant(domain, name):
@@ -167,28 +159,32 @@ def mk_oc_username(cc_username):
     return username
 
 
+@quickcache(['domain'])
+def get_oc_users_by_name(domain):
+    # We have to look up OpenClinica users by name because usernames are excluded from study metadata
+    oc_users_by_name = {}
+    xml = get_study_metadata(domain)
+    admin = xml.xpath('./odm:AdminData', namespaces=odm_nsmap)[0]
+    for user_e in admin:
+        try:
+            first_name = user_e.xpath('./odm:FirstName', namespaces=odm_nsmap)[0].text
+        except IndexError:
+            first_name = None
+        try:
+            last_name = user_e.xpath('./odm:LastName', namespaces=odm_nsmap)[0].text
+        except IndexError:
+            last_name = None
+        user_id = user_e.get('OID')
+        oc_users_by_name[(first_name, last_name)] = AdminDataUser(user_id, first_name, last_name)
+    return oc_users_by_name
+
+
 def get_oc_user(domain, cc_user):
     """
     Returns OpenClinica user details for corresponding CommCare user (CouchUser)
     """
-    global _oc_users_by_name
-    if _oc_users_by_name is None:
-        _oc_users_by_name = {}
-        xml = get_study_metadata(domain)
-        admin = xml.xpath('./odm:AdminData', namespaces=odm_nsmap)[0]
-        for user_e in admin:
-            try:
-                first_name = user_e.xpath('./odm:FirstName', namespaces=odm_nsmap)[0].text
-            except IndexError:
-                first_name = None
-            try:
-                last_name = user_e.xpath('./odm:LastName', namespaces=odm_nsmap)[0].text
-            except IndexError:
-                last_name = None
-            user_id = user_e.get('OID')
-            _oc_users_by_name[(first_name, last_name)] = AdminDataUser(user_id, first_name, last_name)
-
-    oc_user = _oc_users_by_name.get((cc_user.first_name, cc_user.last_name))
+    oc_users_by_name = get_oc_users_by_name(domain)
+    oc_user = oc_users_by_name.get((cc_user.first_name, cc_user.last_name))
     return OpenClinicaUser(
         user_id=oc_user.user_id,
         username=mk_oc_username(cc_user.username),
@@ -198,13 +194,13 @@ def get_oc_user(domain, cc_user):
     ) if oc_user else None
 
 
-def oc_format(answer):
+def oc_format_date(answer):
     """
-    Format CommCare answer for OpenClinica
+    Format CommCare datetime answers for OpenClinica
 
     >>> from datetime import datetime
     >>> answer = datetime(2015, 8, 19, 19, 8, 15)
-    >>> oc_format(answer)
+    >>> oc_format_date(answer)
     '2015-08-19 19:08:15'
 
     """
@@ -231,24 +227,3 @@ def originals_first(forms):
             for previous in get_previous_versions(form.deprecated_form_id):
                 yield previous
         yield form
-
-
-def get_matching_start(string1, string2):
-    """
-    Finds matching letters at the start of two strings
-
-    >>> get_matching_start('abcdef', 'abcxyz')
-    'abc'
-    >>> get_matching_start('abcdef', 'abc')
-    'abc'
-    >>> get_matching_start('abcdef', '')
-    ''
-
-    """
-    ret = []
-    for a, b in zip(string1, string2):
-        if a == b:
-            ret.append(a)
-        else:
-            break
-    return ''.join(ret)

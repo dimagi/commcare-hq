@@ -4,20 +4,17 @@ import os
 from django.conf import settings
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.util import all_apps_by_domain
-from custom.openclinica.utils import simplify, Item, get_matching_start, odm_nsmap
+from custom.openclinica.utils import simplify, Item, odm_nsmap
 import yaml
 
 
 class Command(BaseCommand):
 
-    # A dictionary of question: (study_event_oid, form_oid, item_group_oid, item_oid)
-    question_item_map = {}
-
     def handle(self, *args, **options):
         odm_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
         odm_root = etree.parse(odm_filename)
-        self.read_question_item_map(odm_root)
-        data = self.read_forms()
+        question_item_map = self.read_question_item_map(odm_root)
+        data = self.read_forms(question_item_map)
 
         yaml_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'commcare_questions.yaml')
         with file(yaml_filename, 'w') as yaml_file:
@@ -36,13 +33,14 @@ class Command(BaseCommand):
         """
         form_name = form_oid[2:]  # Drop "F_"
         ig_name = ig_oid[3:]  # Drop "IG_"
-        prefix = get_matching_start(form_name, ig_name)
+        prefix = os.path.commonprefix((form_name, ig_name))
         if prefix.endswith('_'):
             prefix = prefix[:-1]
         return prefix
 
     def read_question_item_map(self, odm):
-        # study_oid = odm.xpath('./odm:Study', namespaces=nsmap)[0].get('OID')
+        question_item_map = {}  # A dictionary of question: (study_event_oid, form_oid, item_group_oid, item_oid)
+
         meta_e = odm.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
 
         for se_ref in meta_e.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
@@ -59,9 +57,11 @@ class Command(BaseCommand):
                                                  namespaces=odm_nsmap):
                         item_oid = item_ref.get('ItemOID')
                         question = item_oid[prefix_len:].lower()
-                        self.question_item_map[question] = Item(se_oid, form_oid, ig_oid, item_oid)
+                        question_item_map[question] = Item(se_oid, form_oid, ig_oid, item_oid)
+        return question_item_map
 
-    def read_forms(self):
+    @staticmethod
+    def read_forms(question_item_map):
         data = defaultdict(dict)
         for domain, pymodule in settings.DOMAIN_MODULE_MAP.iteritems():
             if pymodule == 'custom.openclinica':
@@ -75,5 +75,5 @@ class Command(BaseCommand):
                             form['questions'] = {}
                             for question in ccform.get_questions(['en']):
                                 name = question['value'].split('/')[-1]
-                                form['questions'][name] = self.question_item_map.get(name)
+                                form['questions'][name] = question_item_map.get(name)
         return data
