@@ -159,7 +159,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Chart'),
                 slug='chart',
-                analytics_label="Chart",
+                analytics_label="chart",
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -169,7 +169,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
-                analytics_label="List",
+                analytics_label="list",
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -179,7 +179,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Worker Report'),
                 slug='worker-report',
-                analytics_label="Worker",
+                analytics_label="worker",
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -189,7 +189,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Data Table'),
                 slug='data-table',
-                analytics_label="Table",
+                analytics_label="table",
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -270,6 +270,7 @@ class ConfigureChartReport(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = _("Chart Report: {}")
+    report_type = 'chart'
     existing_report = None
 
     def get_context_data(self, **kwargs):
@@ -280,6 +281,7 @@ class ConfigureChartReport(ReportBuilderView):
                     self.request.GET.get('report_name', '')
                 )
             },
+            'report_type': self.report_type,
             'form': self.report_form,
             'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
@@ -331,6 +333,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 class ConfigureListReport(ConfigureChartReport):
     report_title = _("List Report: {}")
+    report_type = 'list'
 
     @property
     @memoized
@@ -340,6 +343,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 class ConfigureTableReport(ConfigureChartReport):
     report_title = _("Table Report: {}")
+    report_type = 'table'
 
     @property
     @memoized
@@ -349,6 +353,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 class ConfigureWorkerReport(ConfigureChartReport):
     report_title = _("Worker Report: {}")
+    report_type = 'worker'
 
     @property
     @memoized
