@@ -2,54 +2,84 @@ import json
 import logging
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.core.management.base import BaseCommand
+from restkit import RequestFailed
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.const import CASE_ACTION_REBUILD
 from casexml.apps.case.models import CommCareCase
 from couchlog.models import ExceptionRecord
-from dimagi.utils.couch.pagination import LucenePaginator
-from django.conf import settings
+
 
 SEARCH_KEY = 'CASE XFORM MISMATCH'
-SEARCH_VIEW_NAME = getattr(settings, "COUCHLOG_LUCENE_VIEW", "couchlog/search")
+FULL_SEARCH = '{} AND NOT archived'.format(SEARCH_KEY)
 
 
-def get_records_to_process(search_key, limit, skip=0):
-    def wrapper(row):
-        id = row["id"]
-        doc = ExceptionRecord.get(id)
-        domain = doc.domain if hasattr(doc, "domain") else ""
+class SearchPaginator(object):
+    def __init__(self, database, query, page_size=100):
+        self.database = database
+        self.query = query
+        self.page_size = page_size
+
+        self.bookmark = None
+
+    def next_page(self):
+        extra = {}
+        if self.bookmark:
+            extra['bookmark'] = self.bookmark
+
+        result = ExceptionRecord.get_db().search(
+            'couchlog/_search/search',
+            handler='_design',
+            q=self.query,
+            include_docs=True,
+            limit=self.page_size,
+            **extra
+        )
+
         try:
-            domain, case_id = domain.split(',')
-        except ValueError:
-            return {'exception': doc.to_json()}
-        return {
-            'domain': domain,
-            'case_id': case_id,
-            'exception': doc.to_json()
-        }
+            self.total_rows = result.total_rows
+            self.bookmark = result._result_cache.get('bookmark')
+            return result
+        except RequestFailed:
+            # ignore for now
+            return []
 
-    search_key = "%s AND NOT archived" % search_key
 
-    paginator = LucenePaginator(SEARCH_VIEW_NAME, wrapper, database=ExceptionRecord.get_db())
-    return paginator.get_results(search_key, limit, skip)
+def row_to_record(row):
+    doc = ExceptionRecord.wrap(row["doc"])
+    domain = doc.domain if hasattr(doc, "domain") else ""
+    try:
+        domain, case_id = domain.split(',')
+    except ValueError:
+        return {'exception': doc.to_json()}
+    return {
+        'domain': domain,
+        'case_id': case_id,
+        'exception': doc.to_json()
+    }
 
 
 def dump_logs_to_file(filename):
-    def _get_records(skip):
-        total, records = get_records_to_process(SEARCH_KEY, 100, skip)
-        return total, list(records)
+    paginator = SearchPaginator(ExceptionRecord.get_db(), FULL_SEARCH)
 
     records_written = 0
-    with open(filename, 'w') as file:
-        total, records = _get_records(0)
-        print "{} records found".format(total)
-        while records:
-            records_written += len(records)
-            for record in records:
-                file.write('{}\n'.format(json.dumps(record)))
-            print '{} of {} records writen to file'.format(records_written, total)
-            total, records = _get_records(records_written)
-    return total
+    with open(filename, 'w') as log_file:
+        while True:
+            for page in paginator.next_page():
+                if not page:
+                    return
+
+                for row in page:
+                    record = row_to_record(row)
+                    if 'case_id' not in record and SEARCH_KEY not in record['exception']['message']:
+                        # search results are no longer relevant
+                        return
+
+                    log_file.write('{}\n'.format(json.dumps(record)))
+                    records_written += 1
+                    if records_written % 100 == 0:
+                        print '{} of {} records writen to file'.format(records_written, paginator.total_rows)
+
+    return paginator.total_rows
 
 
 def archive_exception(exception):
