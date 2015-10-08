@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
@@ -31,9 +32,28 @@ class ToggleListView(ToggleBaseView):
 
     @property
     def page_context(self):
+        toggles = list(all_toggles())
+        domain_counts = {}
+        user_counts = {}
+        for t in toggles:
+            counter = Counter()
+            try:
+                usage = Toggle.get(t.slug)
+            except ResourceNotFound:
+                domain_counts[t.slug] = 0
+                user_counts[t.slug] = 0
+                continue
+            for u in usage.enabled_users:
+                namespace = u.split(":", 1)[0] if u.find(":") != -1 else NAMESPACE_USER
+                counter[namespace] += 1
+            domain_counts[t.slug] = counter.get(NAMESPACE_DOMAIN, 0)
+            user_counts[t.slug] = counter.get(NAMESPACE_USER, 0)
+
         return {
-            'toggles': all_toggles(),
-            'tags': ALL_TAGS
+            'toggles': toggles,
+            'tags': ALL_TAGS,
+            'domain_counts': domain_counts,
+            'user_counts': user_counts,
         }
 
 

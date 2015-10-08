@@ -56,6 +56,8 @@
         <thead>
             <th>{% trans "Tag" %}</th>
             <th>{% trans "Name" %}</th>
+            <th>{% trans "Domains" %}</th>
+            <th>{% trans "Users" %}</th>
             <th></th>
         </thead>
         <tbody>
@@ -63,6 +65,8 @@
             <tr>
                 <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
                 <td>{{ toggle.label }}{% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}</td>
+                <td>{{ domain_counts|dict_lookup:toggle.slug }}</td>
+                <td>{{ user_counts|dict_lookup:toggle.slug }}</td>
                 <td>
                     <a href="{% url "edit_toggle" toggle.slug %}" role="button" data-toggle="modal" class="btn btn-primary">{% trans "Edit" %}</a>
                 </td>
