@@ -82,7 +82,6 @@ class BasicPillow(PillowBase):
     couch_filter = None  # string for filter if needed
     extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
-    changes_seen = 0
     _couch_db = None
     include_docs = True
     use_locking = False

@@ -8,6 +8,8 @@ class PillowBase(object):
     """
     __metaclass__ = ABCMeta
 
+    changes_seen = 0  # a rolling count of how many changes have been seen by the pillow
+
     @abstractproperty
     def document_store(self):
         """
