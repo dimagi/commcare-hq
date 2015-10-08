@@ -24,7 +24,7 @@ class PillowCheckpointTest(SimpleTestCase):
         self.assertTrue(bool(checkpoint['timestamp']))
 
 
-class PillowCheckpointManagerInstanceTest(SimpleTestCase):
+class PillowCheckpointTest(SimpleTestCase):
 
     def setUp(self):
         self._checkpoint_id = 'test-checkpoint-id'
