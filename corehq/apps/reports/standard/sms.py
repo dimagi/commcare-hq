@@ -18,7 +18,6 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
@@ -116,14 +115,13 @@ def _sms_count(user, startdate, enddate):
     }
     """
     # utilizable if we want to stick it somewhere else
-    start_timestamp = json_format_datetime(startdate)
-    end_timestamp = json_format_datetime(enddate)
     direction_count = SMS.objects.filter(
         couch_recipient_doc_type=user.doc_type,
         couch_recipient=user._id,
-        date__range=(start_timestamp, end_timestamp),
+        date__range=(startdate, enddate),
     ).values('direction').annotate(Count('direction'))
-    ret = {d['direction']: d['direction__count'] for d in direction_count}
+    ret = {INCOMING: 0, OUTGOING: 0}
+    ret.update({d['direction']: d['direction__count'] for d in direction_count})
     return ret
 
 
