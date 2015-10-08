@@ -27,6 +27,7 @@ from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.feed.couch import CouchChangeFeed
+from pillowtop.pillow.interface import PillowBase
 from pillowtop.utils import get_current_seq
 
 
@@ -77,7 +78,10 @@ def lock_manager(obj):
         return LockManager(obj, None)
 
 
-class BasicPillow(object):
+class BasicPillow(PillowBase):
+    """
+    BasicPillow is actually a CouchPillow. PillowBase defines the actual interface.
+    """
     couch_filter = None  # string for filter if needed
     extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
