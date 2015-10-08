@@ -25,6 +25,10 @@ class WorkflowHelper(PostProcessor):
                           for datum in self.get_module_datums(u'm{}'.format(module.id)).values()]
 
     def update_suite(self):
+        """
+        Add stack elements to form entry elements to configure app workflow. This updates
+        the Entry objects in place.
+        """
         for module in self.modules:
             for form in module.get_forms():
                 form_command = id_strings.form_command(form)
