@@ -321,6 +321,10 @@ class CaseListFormWorkflow(object):
             target_form_dm = self.helper.get_frame_children(module.get_form(0), module_only=True)
 
             used = set()
+            mismatched_datums_error = SuiteError(
+                "Module with Case List Registration Form is not properly configured. All forms" \
+                " in the module should have the same case management: {}".format(module.default_name())
+            )
             for source_meta in source_form_dm:
                 if source_meta.case_type:
                     # This is true for registration forms where the case being created is a subcase
@@ -328,9 +332,7 @@ class CaseListFormWorkflow(object):
                         target_dm = self.get_target_dm(target_form_dm, source_meta.case_type)
                     except ValueError:
                         if source_meta.requires_selection:
-                            raise SuiteError(
-                                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
-                            )
+                            raise mismatched_datums_error
                     else:
                         used.add(source_meta)
                         meta = WorkflowDatumMeta.from_session_datum(source_meta)
@@ -342,9 +344,7 @@ class CaseListFormWorkflow(object):
                         target_dm = self.get_target_dm(target_form_dm, source_case_type)
                     except ValueError:
                         if not allow_missing:
-                            raise SuiteError(
-                                "Return module for case list form has mismatching datums: {}".format(form.unique_id)
-                            )
+                            raise mismatched_datums_error
                     else:
                         used.add(source_meta)
                         datum_meta = WorkflowDatumMeta.from_session_datum(target_dm)
@@ -362,6 +362,7 @@ class CaseListFormWorkflow(object):
             frame_case_not_created.add_child(root_module_command)
 
             source_form_dm = add_datums_for_target(root_module, source_form_dm, allow_missing=True)
+
         frame_case_created.add_child(CommandId(target_command))
         frame_case_not_created.add_child(CommandId(target_command))
         add_datums_for_target(target_module, source_form_dm)
