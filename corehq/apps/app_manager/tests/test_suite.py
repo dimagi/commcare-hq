@@ -490,6 +490,22 @@ class SuiteTest(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
 
+    def test_fixture_to_case_selection_with_form_filtering(self):
+        factory = AppFactory(build_version='2.9')
+
+        module, form = factory.new_basic_module('my_module', 'cases')
+        module.fixture_select.active = True
+        module.fixture_select.fixture_type = 'days'
+        module.fixture_select.display_column = 'my_display_column'
+        module.fixture_select.variable_column = 'my_variable_column'
+        module.fixture_select.xpath = 'date(scheduled_date) <= date(today() + $fixture_value)'
+
+        factory.form_requires_case(form)
+
+        form.form_filter = "$fixture_value <= today()"
+
+        self.assertXmlEqual(self.get_xml('fixture-to-case-selection-with-form-filtering'), factory.app.create_suite())
+
     def test_fixture_to_case_selection_localization(self):
         factory = AppFactory(build_version='2.9')
 
