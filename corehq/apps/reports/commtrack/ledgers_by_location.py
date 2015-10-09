@@ -7,11 +7,12 @@ from corehq.toggles import SUPPLY_REPORTS
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.generic import GenericTabularReport
 
 from .const import STOCK_SECTION_TYPE
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
+from .standard import CommtrackReportMixin
 
 LocationLedger = namedtuple('Row', "location stock")
 
@@ -101,7 +102,7 @@ class LedgersByLocationReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            *[DataTablesColumn(header) for header in self.data.headers]
+            *[DataTablesColumn(header, sortable=False) for header in self.data.headers]
         )
 
     @property
