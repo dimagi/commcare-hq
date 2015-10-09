@@ -77,8 +77,7 @@ class BuildErrorsTest(SimpleTestCase):
         factory.form_requires_case(m1f0, parent_case_type='house')
 
         m1f1 = factory.new_form(m1)
-        factory.form_requires_case(m1f1) # only loads a person case and not a house case
+        factory.form_requires_case(m1f1)  # only loads a person case and not a house case
 
         errors = factory.app.validate_app()
         self.assertIn(case_tile_error, errors)
-
