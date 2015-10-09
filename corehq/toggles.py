@@ -208,6 +208,13 @@ DEMO_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+SUPPLY_REPORTS = StaticToggle(
+    'supply_reports',
+    "Early stages reports for CommCare Supply",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
