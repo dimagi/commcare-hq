@@ -162,10 +162,8 @@ class RelatedDocExpressionSpec(JsonObject):
     doc_id_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
 
-    db_lookup = lambda self, doc_type: get_db_by_doc_type(doc_type)
-
     def configure(self, doc_id_expression, value_expression):
-        if self.db_lookup(self.related_doc_type) is None:
+        if get_db_by_doc_type(self.related_doc_type) is None:
             raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
 
         self._doc_id_expression = doc_id_expression
@@ -181,7 +179,7 @@ class RelatedDocExpressionSpec(JsonObject):
     @quickcache(['self._vary_on', 'doc_id'])
     def get_value(self, doc_id, context):
         try:
-            doc = self.db_lookup(self.related_doc_type).get(doc_id)
+            doc = get_db_by_doc_type(self.related_doc_type).get(doc_id)
             # ensure no cross-domain lookups of different documents
             assert context.root_doc['domain']
             if context.root_doc['domain'] != doc.get('domain'):
