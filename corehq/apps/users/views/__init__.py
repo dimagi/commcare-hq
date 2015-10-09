@@ -17,7 +17,6 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
-from corehq.toggles import EWS_WEB_USER_EXTENSION
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 import langcodes
@@ -268,7 +267,6 @@ class EditWebUserView(BaseEditUserView):
     def page_context(self):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
-            'ews_extension': EWS_WEB_USER_EXTENSION.enabled(self.domain)
         }
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):

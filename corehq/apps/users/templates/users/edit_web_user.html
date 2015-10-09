@@ -74,7 +74,7 @@
             </div>
         </form>
     {% endif %}
-    {% if ews_extension %}
+    {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" %}
         <a class="btn btn-primary" href="{% url 'ews_user_settings' domain=domain user_id=couch_user.get_id %}">
             Edit EWS settings
         </a>
