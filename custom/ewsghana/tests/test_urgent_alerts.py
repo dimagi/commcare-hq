@@ -2,15 +2,13 @@ from datetime import datetime
 from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user
-from corehq.apps.sms.backend import test
+from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, get_or_create_backend
 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
 
@@ -20,7 +18,7 @@ class TestUrgentAlerts(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.backend = get_or_create_backend()
         cls.district = make_loc(code="district", name="Test District", type="district", domain=TEST_DOMAIN)
         cls.loc1 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)
@@ -105,3 +103,4 @@ class TestUrgentAlerts(TestCase):
         cls.user1.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
+        cls.backend.delete()

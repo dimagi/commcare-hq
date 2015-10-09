@@ -2,7 +2,6 @@ from datetime import datetime
 from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
@@ -10,8 +9,8 @@ from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SD
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location
-from corehq.apps.sms.backend import test
+from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location, \
+    get_or_create_backend
 
 
 TEST_DOMAIN = 'ewsghana-alerts-test'
@@ -22,7 +21,8 @@ class TestAlerts(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.backend = get_or_create_backend()
+
         cls.national = make_loc(code='national', name='National', type='country', domain=TEST_DOMAIN)
         cls.region = make_loc(code="region", name="Test Region", type="region", domain=TEST_DOMAIN,
                               parent=cls.national)
@@ -78,6 +78,7 @@ class TestAlerts(TestCase):
         cls.user1.delete()
         cls.national_user.delete()
         cls.regional_user.delete()
+        cls.backend.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
 

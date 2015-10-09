@@ -130,25 +130,28 @@ def assign_products_to_location(location, products):
     sql_location.save()
 
 
-def prepare_domain(domain_name):
-    domain = create_domain(domain_name)
-    domain.convert_to_commtrack()
+def get_or_create_backend():
     try:
-        backend = MobileBackend.get("MOBILE_BACKEND_TEST")
+        backend = MobileBackend.get(TEST_BACKEND)
     except ResourceNotFound:
         backend = TestSMSBackend(
             domain=None,
-            name="MOBILE_BACKEND_TEST",
+            name=TEST_BACKEND,
             authorized_domains=[],
             is_global=True,
         )
         backend._id = backend.name
         backend.save()
+        sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend.get_id)
+        sms_backend_mapping.save()
+    return backend
 
-    sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend._id)
-    sms_backend_mapping.save()
 
-    domain.default_sms_backend_id = backend.get_id
+def prepare_domain(domain_name):
+    domain = create_domain(domain_name)
+    domain.convert_to_commtrack()
+
+    domain.default_sms_backend_id = TEST_BACKEND
     domain.save()
 
     def _make_loc_type(name, administrative=False, parent_type=None):
