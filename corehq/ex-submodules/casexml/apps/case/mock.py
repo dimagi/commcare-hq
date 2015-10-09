@@ -9,6 +9,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
 from casexml.apps.case.xml.generator import date_to_xml_string
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 
 
 class CaseBlock(dict):
@@ -288,7 +289,7 @@ class CaseStructure(object):
     @property
     def index(self):
         return [{
-            r.relationship: (r.related_type, r.related_id, r.relationship)
+            r.identifier: (r.related_type, r.related_id, r.relationship)
         } for r in self.indices]
 
     def walk_ids(self):
@@ -303,12 +304,17 @@ class CaseIndex(object):
     DEFAULT_RELATIONSHIP = 'child'
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
-    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None):
+    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None, identifier=None):
         self.related_structure = related_structure or CaseStructure()
         self.relationship = relationship
         if related_type is None:
             related_type = self.related_structure.attrs.get('case_type', self.DEFAULT_RELATED_CASE_TYPE)
         self.related_type = related_type
+
+        if identifier is None:
+            self.identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[relationship]
+        else:
+            self.identifier = identifier
 
     @property
     def related_id(self):
