@@ -1,7 +1,6 @@
 from collections import namedtuple
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_lazy
-from django.utils.decorators import method_decorator
 from no_exceptions.exceptions import Http400
 
 from corehq.toggles import SUPPLY_REPORTS
@@ -82,19 +81,12 @@ class LedgersByLocationReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_lazy('Ledgers By Location')
     slug = 'ledgers_by_location'
     ajax_pagination = True
+    toggles = (SUPPLY_REPORTS,)
     # TODO actually filter by these
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
     ]
-
-    @method_decorator(SUPPLY_REPORTS.required_decorator())
-    def dispatch(self, *args, **kwargs):
-        return super(LedgersByLocationReport, self).dispatch(*args, **kwargs)
-
-    @staticmethod
-    def show_in_navigation(domain, project, user=None):
-        return project.commtrack_enabled and SUPPLY_REPORTS.enabled(domain)
 
     @property
     @memoized
