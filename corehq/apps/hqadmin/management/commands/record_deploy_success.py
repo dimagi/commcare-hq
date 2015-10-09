@@ -50,7 +50,7 @@ class Command(BaseCommand):
                 "channel": "#dev",
                 "username": "Mia the Deploy Bot",
                 "text": text,
-                "icon_emoji": ":kissing_heart:"
+                "icon_emoji": ":see_no_evil:"
             }))
 
         if options['mail_admins']:
