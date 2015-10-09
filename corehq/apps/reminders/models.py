@@ -36,6 +36,7 @@ METHOD_SMS_SURVEY = "survey"
 METHOD_IVR_SURVEY = "ivr_survey"
 METHOD_EMAIL = "email"
 METHOD_STRUCTURED_SMS = "structured_sms"
+METHOD_CASE_UPDATE = "case_update"
 
 METHOD_CHOICES = [
     METHOD_SMS,
@@ -43,6 +44,7 @@ METHOD_CHOICES = [
     METHOD_SMS_SURVEY,
     METHOD_IVR_SURVEY,
     METHOD_EMAIL,
+    METHOD_CASE_UPDATE,
 ]
 
 # The Monday - Sunday constants are meant to match the result from
@@ -68,6 +70,9 @@ DAY_OF_WEEK_CHOICES = [
 ]
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
+
+ACTION_CLOSE = 'CLOSE'
+ACTION_UPDATE = 'UPDATE'
 
 EVENT_AS_SCHEDULE = "SCHEDULE"
 EVENT_AS_OFFSET = "OFFSET"
@@ -246,6 +251,13 @@ class Message(object):
             template = unicode(template, encoding='utf-8')
         return unicode(cls(template, **params))
 
+
+class AutomaticCaseUpdateAction(DocumentSchema):
+    action_type = StringProperty(choices=[ACTION_CLOSE, ACTION_UPDATE])
+    case_property_name = StringProperty()
+    case_property_value = StringProperty()
+
+
 class CaseReminderEvent(DocumentSchema):
     """
     A CaseReminderEvent is the building block for representing reminder schedules in
@@ -289,6 +301,7 @@ class CaseReminderEvent(DocumentSchema):
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
+    case_actions = SchemaListProperty(AutomaticCaseUpdateAction)
 
 
 def run_rule(case_id, handler, schedule_changed, prev_definition):

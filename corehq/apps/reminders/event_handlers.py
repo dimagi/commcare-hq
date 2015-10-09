@@ -1,6 +1,6 @@
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
-    METHOD_EMAIL, CaseReminderHandler)
+    METHOD_EMAIL, METHOD_CASE_UPDATE, CaseReminderHandler)
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
@@ -445,6 +445,10 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
         logged_subevent.completed()
 
 
+def handle_case_update_event(reminder, handler, recipients, verified_numbers, logged_event):
+    pass
+
+
 # The dictionary which maps an event type to its event handling method
 EVENT_HANDLER_MAP = {
     METHOD_SMS: fire_sms_event,
@@ -452,4 +456,5 @@ EVENT_HANDLER_MAP = {
     METHOD_SMS_SURVEY: fire_sms_survey_event,
     METHOD_IVR_SURVEY: fire_ivr_survey_event,
     METHOD_EMAIL: fire_email_event,
+    METHOD_CASE_UPDATE: handle_case_update_event,
 }
