@@ -214,7 +214,6 @@
         <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
             <div class="save-button-holder clearfix"></div>
             <fieldset>
-                {% block fields %}
                 <div class="control-group">
                     <label class="control-label">{% trans "Module Name" %}</label>
                     <div class="controls">
@@ -251,7 +250,6 @@
                 </div>
                 {% endif %}
                 {% endblock %}
-                {% endblock fields %}
             </fieldset>
         </form>
     </div>
@@ -300,11 +298,13 @@
             </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
+                {% block case_management_advanced_fields %}
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
                 {% include 'app_manager/partials/case_list_form_setting.html' %}
                 {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
+                {% endblock case_management_advanced_fields %}
             </fieldset>
         </form>
     </div>

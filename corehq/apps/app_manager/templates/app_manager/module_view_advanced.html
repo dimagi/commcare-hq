@@ -47,7 +47,7 @@
     {% endif %}
 {% endblock %}
 
-{% block fields %}{{ block.super }}
+{% block case_management_advanced_fields %}{{ block.super }}
     <div class="control-group">
         <label class="control-label">
             {% trans "Auto Select Case" %}
@@ -61,4 +61,4 @@
             <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
         </div>
     </div>
-{% endblock %}
+{% endblock case_management_advanced_fields %}
