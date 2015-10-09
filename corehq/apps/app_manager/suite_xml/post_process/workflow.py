@@ -54,11 +54,14 @@ class WorkflowHelper(PostProcessor):
                 self.create_workflow_stack(form_command, stack_frames)
 
     def case_list_forms_frames(self, form):
-        if not form.is_case_list_form or not form.is_registration_form():
+        if not form.is_case_list_form:
             return []
 
         stack_frames = []
         for target_module in form.case_list_modules:
+            target_case_type = target_module.case_type
+            if not form.is_registration_form(target_case_type):
+                continue
 
             return_to = session_var(RETURN_TO)
             target_command = id_strings.menu_id(target_module)
