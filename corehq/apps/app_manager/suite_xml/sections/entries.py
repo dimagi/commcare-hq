@@ -134,7 +134,7 @@ class EntriesHelper(object):
             xpath,
             XPath.empty_string(),
         )
-        datum = SessionDatum(id=session_id, function=protected_xpath)
+        datum = SessionDatum(id=session_id, function=protected_xpath, autoselect=True)
         assertions = [
             EntriesHelper.get_assertion(
                 XPath.and_(base_xpath.count().eq(1),
@@ -222,7 +222,8 @@ class EntriesHelper(object):
                     nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type, module, False)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long')
+                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
+                    autoselect=module.auto_select_case,
                 ))
                 if self.app.commtrack_enabled:
                     e.datums.append(SessionDatum(
@@ -277,7 +278,7 @@ class EntriesHelper(object):
         if form.form_type == 'module_form' and actions_use_usercase(actions):
             case = UserCaseXPath().case()
             datums.append(FormDatumMeta(
-                datum=SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
+                datum=SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case), autoselect=True),
                 case_type=USERCASE_TYPE,
                 requires_selection=False,
                 action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
@@ -415,7 +416,8 @@ class EntriesHelper(object):
                     detail_inline=(
                         self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
                         if detail_inline else None
-                    )
+                    ),
+                    autoselect=datum['module'].auto_select_case,
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
@@ -549,7 +551,8 @@ class EntriesHelper(object):
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
                     if not referenced_by or referenced_by['type'] != 'load' else None
-                )
+                ),
+                autoselect=target_module_.auto_select_case,
             )
 
         datums = []

@@ -1,6 +1,7 @@
 from eulxml.xmlmap import (
-    StringField, XmlObject, IntegerField, NodeListField,
-    NodeField, load_xmlobject_from_string
+    IntegerField, NodeField, NodeListField,
+    SimpleBooleanField, StringField, XmlObject,
+    load_xmlobject_from_string,
 )
 from lxml import etree
 
@@ -275,7 +276,8 @@ class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
     ORDER = (
         'id', 'nodeset', 'value', 'function',
-        'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline'
+        'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline',
+        'autoselect',
     )
 
     nodeset = XPathField('@nodeset')
@@ -285,6 +287,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
     detail_inline = StringField('@detail-inline')
+    autoselect = SimpleBooleanField('@autoselect', true="true", false="false")
 
 
 class StackDatum(IdNode):
