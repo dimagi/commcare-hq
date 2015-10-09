@@ -39,6 +39,9 @@ class Command(BaseCommand):
         return prefix
 
     def read_question_item_map(self, odm):
+        """
+        Return a dictionary of {question: (study_event_oid, form_oid, item_group_oid, item_oid)}
+        """
         question_item_map = {}  # A dictionary of question: (study_event_oid, form_oid, item_group_oid, item_oid)
 
         meta_e = odm.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
