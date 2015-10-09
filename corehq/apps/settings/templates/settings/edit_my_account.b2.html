@@ -28,7 +28,9 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% include 'users/partial/basic_info_modals.html' %}
+{% if user_type == 'web' %}
+    {% include 'users/partial/basic_info_modals.html' %}
+{% endif %}
 {% endblock %}
 
 {% block main_column %}
@@ -56,5 +58,7 @@
             </div>
         </fieldset>
     </form>
-    {% include 'users/partial/manage_phone_numbers.html' %}
+    {% if user_type == 'web' %}
+        {% include 'users/partial/manage_phone_numbers.html' %}
+    {% endif %}
 {% endblock %}
