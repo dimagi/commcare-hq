@@ -27,6 +27,10 @@
     </script>
 {% endblock %}
 
+{% block modals %}{{ block.super }}
+{% include 'users/partial/basic_info_modals.html' %}
+{% endblock %}
+
 {% block main_column %}
     <form class="form form-horizontal" name="user_information" method="post">
         <fieldset>
@@ -52,4 +56,5 @@
             </div>
         </fieldset>
     </form>
+    {% include 'users/partial/manage_phone_numbers.html' %}
 {% endblock %}

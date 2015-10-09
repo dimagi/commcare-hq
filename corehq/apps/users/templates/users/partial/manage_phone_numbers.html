@@ -8,6 +8,8 @@
         {% for phone in phonenumbers %}
             <div class="control-group">
                 <label class="control-label">+{{ phone.number }}<br />
+                    {% if user_type == "mobile" %}
+
                     {% ifequal phone.status "verified" %}
                     <span class="label label-success">{% trans 'VERIFIED' %}</span>
                     {% endifequal %}
@@ -25,9 +27,11 @@
                     {% ifequal phone.status "invalid" %}
                     <span class="label">{% trans 'INVALID FORMAT' %}</span>
                     {% endifequal %}
+
+                    {% endif %}
                 </label>
                 <div class="controls">
-                    {% if can_use_inbound_sms and user_type == "mobile" %}
+                    {% if user_type == "mobile" and can_use_inbound_sms %}
                     {% ifequal phone.status "unverified" %}
                         <form method="post"
                               action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
@@ -64,8 +68,11 @@
                     {% if not forloop.first %}
                         <form class="input-inline input-append"
                               name="make_phone_number_default"
+                              {% if user_type == "mobile" %}
                               action="{% url "make_phone_number_default" domain couch_user.couch_id %}"
+                              {% endif %}
                               method="POST">
+                            <input type="hidden" name="form_type" value="make-phone-number-default"/>
                             <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
                             <button type="submit" class="btn">
                                 {% blocktrans %}Mark as primary{% endblocktrans %}
@@ -97,7 +104,7 @@
                     </strong>
                 </span>
                 <p class="help-block">
-                    {% blocktrans %}Please enter number, including international code, in digits only.{% endblocktrans %}
+                    {% blocktrans %}Please enter number, including country code, in digits only.{% endblocktrans %}
                 </p>
             </div>
         </div>
