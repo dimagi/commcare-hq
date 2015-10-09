@@ -151,14 +151,17 @@ class MyAccountSettingsView(BaseMyAccountView):
         else:
             messages.error(self.request, _("Invalid phone number format entered. "
                 "Please enter number, including country code, in digits only."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
     def process_delete_phone_number(self):
         self.request.couch_user.delete_phone_number(self.phone_number)
         messages.success(self.request, _("Phone number deleted."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
     def process_make_phone_number_default(self):
         self.request.couch_user.set_default_phone_number(self.phone_number)
         messages.success(self.request, _("Primary phone number updated."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
     @property
     @memoized
@@ -181,8 +184,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     def post(self, request, *args, **kwargs):
         if self.form_type and self.form_type in self.form_actions:
-            self.form_actions[self.form_type]()
-            return self.get(request, *args, **kwargs)
+            return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
             old_lang = self.request.couch_user.language
             self.settings_form.update_user(existing_user=self.request.couch_user)
