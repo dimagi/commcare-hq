@@ -3,6 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
@@ -453,6 +454,10 @@ class RootDocExpressionTest(SimpleTestCase):
 class DocJoinExpressionTest(SimpleTestCase):
 
     def setUp(self):
+        # we have to set the fake database before any other calls
+        self.orig_db = CommCareCase.get_db()
+        self.database = FakeCouchDb()
+        CommCareCase.set_db(self.database)
         self.spec = {
             "type": "related_doc",
             "related_doc_type": "CommCareCase",
@@ -487,8 +492,8 @@ class DocJoinExpressionTest(SimpleTestCase):
             }
         })
 
-        self.database = FakeCouchDb()
-        RelatedDocExpressionSpec.db_lookup = lambda _, type: self.database
+    def tearDown(self):
+        CommCareCase.set_db(self.orig_db)
 
     def test_simple_lookup(self):
         related_id = 'related-id'
@@ -570,6 +575,22 @@ class DocJoinExpressionTest(SimpleTestCase):
             related_id_2: related_doc_2
         }
         self.assertEqual(None, self.nested_expression(my_doc, EvaluationContext(my_doc, 0)))
+
+    def test_fail_on_bad_doc_type(self):
+        spec = {
+            "type": "related_doc",
+            "related_doc_type": "BadDocument",
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "parent_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "related_property"
+            }
+        }
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec(spec)
 
     def test_caching(self):
         self.test_simple_lookup()
