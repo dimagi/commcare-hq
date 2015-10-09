@@ -149,14 +149,11 @@ class Subject(object):
     @staticmethod
     @quickcache(['domain', 'user_id'])
     def _get_cc_user(domain, user_id):
-        cc_user = CouchUser.get_by_user_id(user_id, domain)
-        assert cc_user, "Unable to find user. Has the user been deleted?"
-        return cc_user
+        return CouchUser.get_by_user_id(user_id, domain)
 
     def _get_oc_user(self, user_id):
         if user_id not in self.mobile_workers:
             cc_user = self._get_cc_user(self._domain, user_id)
-            assert cc_user, "Unable to find user. Has the user been deleted?"
             oc_user = get_oc_user(self._domain, cc_user)
             if oc_user is None:
                 raise OpenClinicaIntegrationError(
