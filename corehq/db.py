@@ -82,14 +82,14 @@ class ConnectionManager(object):
             self.dispose_engine(engine_id)
 
     def get_connection_string(self, engine_id):
-        temp = {
+        db_connection_map = {
             DEFAULT_ENGINE_ID: settings.SQL_REPORTING_DATABASE_URL,
             UCR_ENGINE_ID: settings.UCR_DATABASE_URL,
         }
 
         for custom_engine_id, custom_db_url in settings.CUSTOM_DATABASES:
-            temp[custom_engine_id] = custom_db_url
-        return temp.get(engine_id, settings.SQL_REPORTING_DATABASE_URL)
+            db_connection_map[custom_engine_id] = custom_db_url
+        return db_connection_map.get(engine_id, settings.SQL_REPORTING_DATABASE_URL)
 
 
 connection_manager = ConnectionManager()
