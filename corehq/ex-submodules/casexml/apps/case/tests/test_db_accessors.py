@@ -1,6 +1,6 @@
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 
 

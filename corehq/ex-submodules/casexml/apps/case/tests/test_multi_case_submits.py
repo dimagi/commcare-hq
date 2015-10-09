@@ -1,7 +1,7 @@
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from corehq.form_processor.interfaces import FormProcessorInterface
 
 

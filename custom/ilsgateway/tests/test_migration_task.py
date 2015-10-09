@@ -6,7 +6,7 @@ from corehq.apps.locations.models import Location
 from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from corehq.apps.users.models import WebUser, CommCareUser
 from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.tests import MockEndpoint
+from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
 from custom.ilsgateway.utils import ils_bootstrap_domain_test_task
 
 

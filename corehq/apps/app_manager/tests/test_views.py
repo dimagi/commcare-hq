@@ -3,7 +3,7 @@ import json
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from corehq.apps.app_manager.tests import add_build
+from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
 from corehq.apps.builds.models import BuildSpec

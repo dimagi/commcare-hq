@@ -6,7 +6,10 @@ from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.tasks import get_ilsgateway_data_migrations
+
+# HACK this no longer exists. Should the whole file be removed?
+#from custom.ilsgateway.tasks import get_ilsgateway_data_migrations
+
 from custom.logistics.tasks import stock_data_task
 
 

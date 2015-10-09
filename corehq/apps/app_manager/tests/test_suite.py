@@ -444,7 +444,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                                    './entry[1]/session')
 
     def test_report_module(self):
-        from corehq.apps.userreports.tests import get_sample_report_config
+        from corehq.apps.userreports.tests.utils import get_sample_report_config
 
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
