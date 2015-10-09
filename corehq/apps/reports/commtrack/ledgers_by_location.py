@@ -40,7 +40,7 @@ class LedgersByLocationDataSource(object):
         return list(SQLProduct.objects.filter(domain=self.domain).order_by('name'))
 
     def get_locations_queryset(self):
-        return (SQLLocation.objects
+        return (SQLLocation.active_objects
                 .filter(domain=self.domain)
                 .order_by('name'))
 
