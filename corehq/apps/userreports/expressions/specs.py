@@ -1,5 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import (
@@ -10,7 +11,6 @@ from corehq.apps.userreports.expressions.getters import (
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.database import get_db
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -161,7 +161,7 @@ class RelatedDocExpressionSpec(JsonObject):
     doc_id_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
 
-    db_lookup = lambda self, type: get_db()
+    db_lookup = lambda self, doc_type: get_db_by_doc_type(doc_type)
 
     def configure(self, related_doc_type, doc_id_expression, value_expression):
         self._related_doc_type = related_doc_type
