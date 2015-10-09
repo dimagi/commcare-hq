@@ -1,5 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
@@ -163,11 +164,12 @@ class RelatedDocExpressionSpec(JsonObject):
 
     db_lookup = lambda self, doc_type: get_db_by_doc_type(doc_type)
 
-    def configure(self, related_doc_type, doc_id_expression, value_expression):
-        self._related_doc_type = related_doc_type
+    def configure(self, doc_id_expression, value_expression):
+        if self.db_lookup(self.related_doc_type) is None:
+            raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
+
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
-
         # used in caching
         self._vary_on = json.dumps(self.value_expression, sort_keys=True)
 
