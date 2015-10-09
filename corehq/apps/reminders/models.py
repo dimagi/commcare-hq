@@ -254,8 +254,7 @@ class Message(object):
 
 class AutomaticCaseUpdateAction(DocumentSchema):
     action_type = StringProperty(choices=[ACTION_CLOSE, ACTION_UPDATE])
-    case_property_name = StringProperty()
-    case_property_value = StringProperty()
+    case_properties = DictProperty()
 
 
 class CaseReminderEvent(DocumentSchema):

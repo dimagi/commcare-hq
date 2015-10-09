@@ -1,6 +1,8 @@
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
-    METHOD_EMAIL, METHOD_CASE_UPDATE, CaseReminderHandler)
+    METHOD_EMAIL, METHOD_CASE_UPDATE, CaseReminderHandler,
+    ACTION_CLOSE, ACTION_UPDATE)
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
@@ -446,7 +448,20 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
 
 
 def handle_case_update_event(reminder, handler, recipients, verified_numbers, logged_event):
-    pass
+    if reminder.case_id:
+        case_properties = None
+        close = False
+        for action in reminder.current_event.case_actions:
+            if action.action_type == ACTION_UPDATE:
+                case_properties = action.case_properties
+            elif action.action_type == ACTION_CLOSE:
+                close = True
+        update_case(
+            reminder.domain,
+            reminder.case_id,
+            case_properties=case_properties,
+            close=close
+        )
 
 
 # The dictionary which maps an event type to its event handling method
