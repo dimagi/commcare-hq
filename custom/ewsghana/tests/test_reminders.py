@@ -17,7 +17,7 @@ from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 from custom.ewsghana.reminders.stockout_reminder import StockoutReminder
 from custom.ewsghana.reminders.third_soh_reminder import ThirdSOHReminder
 from custom.ewsghana.reminders.visit_website_reminder import VisitWebsiteReminder
-from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, get_or_create_backend
+from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, create_backend
 from corehq.apps.sms.backend import test
 
 
@@ -48,7 +48,7 @@ class TestReminders(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
         test.bootstrap(TEST_BACKEND, to_console=True)
         cls.loc1 = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=TEST_DOMAIN)
         cls.loc2 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN)
@@ -153,6 +153,7 @@ class TestReminders(TestCase):
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
 
+        cls.sms_backend_mapping.delete()
         cls.backend.delete()
 
     def test_first_soh_reminder(self):

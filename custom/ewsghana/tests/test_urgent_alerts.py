@@ -8,7 +8,7 @@ from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, get_or_create_backend
+from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, create_backend
 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
 
@@ -18,7 +18,7 @@ class TestUrgentAlerts(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.district = make_loc(code="district", name="Test District", type="district", domain=TEST_DOMAIN)
         cls.loc1 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)
@@ -103,4 +103,5 @@ class TestUrgentAlerts(TestCase):
         cls.user1.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
+        cls.sms_backend_mapping.delete()
         cls.backend.delete()

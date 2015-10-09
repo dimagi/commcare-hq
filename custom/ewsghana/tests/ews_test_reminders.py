@@ -2,7 +2,7 @@ from django.test import TestCase
 from corehq.apps.products.models import Product, SQLProduct
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, make_loc, report_status, \
-    assign_products_to_location, get_or_create_backend
+    assign_products_to_location, create_backend
 
 
 TEST_DOMAIN = 'ews-reminders-test'
@@ -14,7 +14,7 @@ class EWSTestReminders(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
 
     def setUp(self):
         self.facility = make_loc('test-faciity', 'Test Facility', TEST_DOMAIN, 'Polyclinic')
@@ -61,3 +61,4 @@ class EWSTestReminders(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.backend.delete()
+        cls.sms_backend_mapping.delete()

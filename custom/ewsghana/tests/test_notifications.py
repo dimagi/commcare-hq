@@ -12,7 +12,7 @@ from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, make_loc, assign_products_to_location, \
-    bootstrap_web_user, get_or_create_backend
+    bootstrap_web_user, create_backend
 
 
 class MissingReportNotificationTestCase(TestCase):
@@ -21,7 +21,7 @@ class MissingReportNotificationTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
 
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
@@ -51,6 +51,7 @@ class MissingReportNotificationTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.backend.delete()
 
     def test_all_facilities_reported(self):
@@ -138,7 +139,7 @@ class StockoutReportNotificationTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -167,6 +168,7 @@ class StockoutReportNotificationTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.backend.delete()
 
     def test_missing_notification(self):
@@ -257,7 +259,7 @@ class UrgentStockoutNotificationTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -296,6 +298,7 @@ class UrgentStockoutNotificationTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.backend.delete()
 
     def test_all_facility_stockout(self):
@@ -426,7 +429,7 @@ class UrgentNonReportingNotificationTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -452,6 +455,7 @@ class UrgentNonReportingNotificationTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.backend.delete()
 
     def tearDown(self):
@@ -567,10 +571,11 @@ class SMSNotificationTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.backend.delete()
 
     def setUp(self):

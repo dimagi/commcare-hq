@@ -1,5 +1,4 @@
 from decimal import Decimal
-from couchdbkit import ResourceNotFound
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
 from corehq.apps.accounting import generator
@@ -11,7 +10,7 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
-from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping, MobileBackend
+from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
@@ -130,21 +129,18 @@ def assign_products_to_location(location, products):
     sql_location.save()
 
 
-def get_or_create_backend():
-    try:
-        backend = MobileBackend.get(TEST_BACKEND)
-    except ResourceNotFound:
-        backend = TestSMSBackend(
-            domain=None,
-            name=TEST_BACKEND,
-            authorized_domains=[],
-            is_global=True,
-        )
-        backend._id = backend.name
-        backend.save()
-        sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend.get_id)
-        sms_backend_mapping.save()
-    return backend
+def create_backend():
+    backend = TestSMSBackend(
+        domain=None,
+        name=TEST_BACKEND,
+        authorized_domains=[],
+        is_global=True,
+    )
+    backend._id = backend.name
+    backend.save()
+    sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend.get_id)
+    sms_backend_mapping.save()
+    return sms_backend_mapping, backend
 
 
 def prepare_domain(domain_name):

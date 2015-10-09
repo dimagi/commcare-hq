@@ -10,7 +10,7 @@ from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location, \
-    get_or_create_backend
+    create_backend
 
 
 TEST_DOMAIN = 'ewsghana-alerts-test'
@@ -21,7 +21,7 @@ class TestAlerts(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.backend = get_or_create_backend()
+        cls.sms_backend_mapping, cls.backend = create_backend()
 
         cls.national = make_loc(code='national', name='National', type='country', domain=TEST_DOMAIN)
         cls.region = make_loc(code="region", name="Test Region", type="region", domain=TEST_DOMAIN,
@@ -79,6 +79,7 @@ class TestAlerts(TestCase):
         cls.national_user.delete()
         cls.regional_user.delete()
         cls.backend.delete()
+        cls.sms_backend_mapping.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
 
