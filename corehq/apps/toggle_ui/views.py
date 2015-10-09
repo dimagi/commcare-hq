@@ -31,28 +31,35 @@ class ToggleListView(ToggleBaseView):
         return reverse(self.urlname)
 
     @property
+    def show_usage(self):
+        return self.request.GET.get('show_usage') == 'true'
+
+    @property
     def page_context(self):
         toggles = list(all_toggles())
         domain_counts = {}
         user_counts = {}
-        for t in toggles:
-            counter = Counter()
-            try:
-                usage = Toggle.get(t.slug)
-            except ResourceNotFound:
-                domain_counts[t.slug] = 0
-                user_counts[t.slug] = 0
-                continue
-            for u in usage.enabled_users:
-                namespace = u.split(":", 1)[0] if u.find(":") != -1 else NAMESPACE_USER
-                counter[namespace] += 1
-            domain_counts[t.slug] = counter.get(NAMESPACE_DOMAIN, 0)
-            user_counts[t.slug] = counter.get(NAMESPACE_USER, 0)
+        if self.show_usage:
+            for t in toggles:
+                counter = Counter()
+                try:
+                    usage = Toggle.get(t.slug)
+                except ResourceNotFound:
+                    domain_counts[t.slug] = 0
+                    user_counts[t.slug] = 0
+                else:
+                    for u in usage.enabled_users:
+                        namespace = u.split(":", 1)[0] if u.find(":") != -1 else NAMESPACE_USER
+                        counter[namespace] += 1
+                    domain_counts[t.slug] = counter.get(NAMESPACE_DOMAIN, 0)
+                    user_counts[t.slug] = counter.get(NAMESPACE_USER, 0)
 
         return {
+            'domain_counts': domain_counts,
+            'page_url': self.page_url,
+            'show_usage': self.show_usage,
             'toggles': toggles,
             'tags': ALL_TAGS,
-            'domain_counts': domain_counts,
             'user_counts': user_counts,
         }
 
