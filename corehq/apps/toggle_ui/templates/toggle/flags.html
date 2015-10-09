@@ -72,7 +72,13 @@
             {% for toggle in toggles %}
             <tr>
                 <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
-                <td>{{ toggle.label }}{% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}</td>
+                <td>
+                    {% if toggle.randomness %}
+                        <i class="icon icon-random" title="Also applied randomly under certain conditions"></i>
+                    {% endif %}
+                    {{ toggle.label }}
+                    {% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}
+                </td>
                 {% if show_usage %}
                     <td>{{ domain_counts|dict_lookup:toggle.slug }}</td>
                     <td>{{ user_counts|dict_lookup:toggle.slug }}</td>
