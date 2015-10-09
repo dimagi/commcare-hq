@@ -322,21 +322,14 @@ class CaseListFormWorkflow(object):
 
             used = set()
 
-            # This error is raised when we can't find a datum that matches the case type we're looking for among
-            # the list of datums that are common between all the forms in the module which implies that not all
-            # the forms have the same case management configuration.
-            mismatched_datums_error = SuiteError(
-                "The '{}' module is not properly configured to have a Case List Registration Form. All forms"
-                " in the module should have the same case management configuration.".format(module.default_name())
-            )
             for source_meta in source_form_dm:
                 if source_meta.case_type:
                     # This is true for registration forms where the case being created is a subcase
                     try:
-                        target_dm = self.get_target_dm(target_form_dm, source_meta.case_type)
-                    except ValueError:
+                        target_dm = self.get_target_dm(target_form_dm, source_meta.case_type, module)
+                    except SuiteError:
                         if source_meta.requires_selection:
-                            raise mismatched_datums_error
+                            raise
                     else:
                         used.add(source_meta)
                         meta = WorkflowDatumMeta.from_session_datum(source_meta)
@@ -345,10 +338,10 @@ class CaseListFormWorkflow(object):
                 else:
                     source_case_type = self.get_case_type_created_by_form(form, target_module)
                     try:
-                        target_dm = self.get_target_dm(target_form_dm, source_case_type)
-                    except ValueError:
+                        target_dm = self.get_target_dm(target_form_dm, source_case_type, module)
+                    except SuiteError:
                         if not allow_missing:
-                            raise mismatched_datums_error
+                            raise
                     else:
                         used.add(source_meta)
                         datum_meta = WorkflowDatumMeta.from_session_datum(target_dm)
@@ -374,13 +367,22 @@ class CaseListFormWorkflow(object):
         return stack_frames
 
     @staticmethod
-    def get_target_dm(target_form_dm, case_type):
+    def get_target_dm(target_form_dm, case_type, module):
         """Find the datum from the target form with the specified case type.
         """
-        [target_dm] = [
-            target_meta for target_meta in target_form_dm
-            if getattr(target_meta, 'case_type', None) == case_type
-        ]
+        try:
+            [target_dm] = [
+                target_meta for target_meta in target_form_dm
+                if getattr(target_meta, 'case_type', None) == case_type
+            ]
+        except ValueError:
+            # This error is raised when we can't find a datum that matches the case type we're looking for among
+            # the list of datums that are common between all the forms in the module which implies that not all
+            # the forms have the same case management configuration.
+            raise SuiteError(
+                "The '{}' module is not properly configured to have a Case List Registration Form. All forms"
+                " in the module should have the same case management configuration.".format(module.default_name())
+            )
         return target_dm
 
     @staticmethod
