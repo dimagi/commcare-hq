@@ -669,3 +669,10 @@ VIEW_BUILD_SOURCE = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+EWS_WEB_USER_EXTENSION = StaticToggle(
+    'ews_web_user_extension',
+    'Enable EWSGhana web user extension',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
