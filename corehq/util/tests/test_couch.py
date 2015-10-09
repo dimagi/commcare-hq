@@ -5,9 +5,10 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.groups.models import Group
 from jsonobject.exceptions import WrappingAttributeError
 from mock import Mock
+from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
-        DocUpdate)
+        DocUpdate, get_document_class_by_name)
 
 
 class MockDb(object):
@@ -230,3 +231,29 @@ class IterDBTest(TestCase):
             self.assertEqual(e.results.error_ids, error_ids)
         else:
             assert False, "iter_update did now throw an IterUpdateError"
+
+
+class DocumentClassLookupTest(SimpleTestCase):
+
+    def test_a_few_import_ones(self):
+        from casexml.apps.case.models import CommCareCase
+        from corehq.apps.locations.models import Location
+        from corehq.apps.users.models import CommCareUser, WebUser
+        from couchforms.models import XFormInstance
+        from corehq.apps.fixtures.models import FixtureDataType
+        test_cases = [
+            ('CommCareCase', CommCareCase),
+            ('XFormInstance', XFormInstance),
+            ('CommCareUser', CommCareUser),
+            ('WebUser', WebUser),
+            ('Location', Location),
+            ('FixtureDataType', FixtureDataType),
+        ]
+        for model_name, model_class in test_cases:
+            self.assertEqual(model_class, get_document_class_by_name(model_name))
+
+    def test_missing(self):
+        test_cases = [None, '', 'FooDocument']
+        for bad_model in test_cases:
+            with self.assertRaises(DocumentClassNotFound):
+                get_document_class_by_name(bad_model)
