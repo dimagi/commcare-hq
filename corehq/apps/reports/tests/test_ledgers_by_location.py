@@ -6,7 +6,7 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.models import StockState, update_domain_mapping
 from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.locations.tests.util import delete_all_locations
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 
 from corehq.apps.reports.commtrack import LedgersByLocationDataSource
@@ -33,6 +33,9 @@ class TestLedgersByLocation(TestCase):
         def make_location(name):
             return make_loc(name, domain='test').sql_location
 
+        cls.domain_obj = Domain(name='test')
+        cls.domain_obj.save()
+
         # turn off the StockState post_save signal handler
         post_save.disconnect(update_domain_mapping, StockState)
 
@@ -52,7 +55,8 @@ class TestLedgersByLocation(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        delete_all_locations()
+        cls.domain_obj.delete()
+        post_save.connect(update_domain_mapping, StockState)
 
     def test_show_all_rows_ordered(self):
         report = LedgersByLocationDataSource(
