@@ -1,7 +1,9 @@
 import datetime
 from django.conf import settings
 from django.core.management.base import LabelCommand
-from corehq.apps.registration.models import OldRegistrationRequest, RegistrationRequest
+
+# OldRegistrationRequest no longer exists. Should this command be removed?
+#from corehq.apps.registration.models import OldRegistrationRequest, RegistrationRequest
 
 class Command(LabelCommand):
     help = "Migrates old django RegistrationRequest model to new couch model. March 2012."

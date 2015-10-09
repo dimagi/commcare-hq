@@ -4,7 +4,9 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation
-from .check_loc_types import locs_by_domain
+
+# no longer exists. Should this command be removed?
+#from .check_loc_types import locs_by_domain
 
 
 class Command(BaseCommand):

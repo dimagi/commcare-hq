@@ -1,7 +1,9 @@
 import datetime
 from django.conf import settings
 from django.core.management.base import LabelCommand
-from corehq.apps.domain.models import Domain, OldDomain
+
+# OldDomain no longer exists. Should this command be removed?
+#from corehq.apps.domain.models import Domain, OldDomain
 
 class Command(LabelCommand):
     help = "Migrates old django domain model new couch model. March 2012."

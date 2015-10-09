@@ -1,7 +1,9 @@
 from django.core.management.base import BaseCommand
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.domain.models import Domain
-from corehq.util.couch import IterativeSaver
+
+# no longer exists. Should this command be removed?
+#from corehq.util.couch import IterativeSaver
 
 
 class Command(BaseCommand):

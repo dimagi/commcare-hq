@@ -7,11 +7,14 @@ INSTALLED_APPS += (
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     '--logging-clear-handlers',
+    #'--with-doctest', # adds 5s to discovery (before tests start); TODO travis should use it
     '--with-fixture-bundling',
     '--db-test-context=corehq.util.nose.CouchdbContext',
     '--non-db-test-context=corehq.util.nose.ErrorOnDbAccessContext',
+    '--ignore-files=localsettings',
     '--exclude-dir=corehq/apps/cloudcare/tests/selenium',
     '--exclude-dir=corehq/apps/reports/tests/selenium',
+    '--exclude-dir=scripts',
 ]
 NOSE_PLUGINS = [
     #'corehq.util.nose.TwoStagePlugin',

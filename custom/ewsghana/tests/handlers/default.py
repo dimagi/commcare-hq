@@ -1,4 +1,4 @@
-from custom.ewsghana.tests import EWSScriptTest
+from custom.ewsghana.tests.handlers.utils import EWSScriptTest
 
 
 class TestDefault(EWSScriptTest):
