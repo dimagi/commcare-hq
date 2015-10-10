@@ -98,7 +98,7 @@ var getSessionContextUrl = function(sessionUrlRoot, session_id) {
 
 var isParentField = function(field) {
     return field ? field.startsWith('parent/') : false;
-}
+};
 
 var showError = function (message, location, autoHideTime) {
     if (message === undefined) {

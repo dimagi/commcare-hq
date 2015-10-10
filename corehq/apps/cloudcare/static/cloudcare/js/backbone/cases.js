@@ -188,7 +188,7 @@ cloudCare.CaseList = Backbone.Collection.extend({
         if (response.parents) {
             this.casedb = new cloudCare.CaseList(response.cases.concat(response.parents));
         }
-        return response.cases
+        return response.cases;
     },
 });
 
@@ -240,7 +240,7 @@ cloudCare.CaseListView = Backbone.View.extend({
     },
     requiresParentCases: function(details) {
         var columns = details.get('columns');
-        return _.any(_.map(columns, function(d) { return d.field; }), isParentField)
+        return _.any(_.map(columns, function(d) { return d.field; }), isParentField);
     },
     appendItem: function (item) {
         var self = this;
