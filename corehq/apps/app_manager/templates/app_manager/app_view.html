@@ -39,34 +39,7 @@
         $(function () {
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#commcare-settings').get(0));
-            var multimedia_tab = (function () {
-                var self = {};
-                self.load_state = ko.observable(null);
-                self.multimedia_page_html = ko.observable('');
-                self.load_if_necessary = function () {
-                    if (!self.load_state() || self.load_state() === 'error') {
-                        self.load_state('loading');
-                        $.ajax({
-                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}'
-                        }).success(function (content) {
-                            self.load_state('loaded');
-                            self.multimedia_page_html(content);
-                        }).error(function () {
-                            alert('Oops, there was a problem loading this section. Please try again.');
-                            self.load_state('error');
-                        });
-                    }
-                };
-                return self;
-            }());
-            ko.applyBindings(multimedia_tab, $("#multimedia").get(0));
-            $('#multimedia-shower').on('show', function () {
-                if (multimedia_tab.load_state() === null) {
-                    multimedia_tab.load_if_necessary();
-                }
-            });
         });
-
     </script>
     {% include 'hqmedia/partials/multimedia_init.html' %}
     <script type="text/javascript">
