@@ -28,6 +28,7 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
+        self.allowUsercase = params.allowUsercase;
 
         self.setPropertiesMap = function (propertiesMap) {
             self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -166,9 +167,15 @@ var CaseConfig = (function () {
                 self.forceRefreshTextchangeBinding($home);
 
                 ko.applyBindings(self, $usercaseMgmt.get(0));
-                $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
-                             .on('change', 'select, input[type="hidden"]', self.usercaseChange)
-                             .on('click', 'a', self.usercaseChange);
+                if (self.allowUsercase) {
+                    $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
+                                 .on('change', 'select, input[type="hidden"]', self.usercaseChange)
+                                 .on('click', 'a', self.usercaseChange);
+                } else {
+                    $usercaseMgmt.find('input').prop('disabled', true);
+                    $usercaseMgmt.find('select').prop('disabled', true);
+                    $usercaseMgmt.find('a').off('click');
+                }
                 self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding($usercaseMgmt);
             });
