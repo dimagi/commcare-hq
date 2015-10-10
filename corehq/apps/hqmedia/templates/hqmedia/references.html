@@ -16,11 +16,6 @@
         var reference_controller = new MultimediaReferenceController({{ references|JSON }}, {{ object_map|JSON }}, {{ totals|JSON }});
         reference_controller.render();
         ko.applyBindings(reference_controller, $("#multimedia-reference-checker").get(0));
-
-{# Commented out until search is fixed #}
-{#        var searchUrl = '{% url "hqmedia_search" domain app.get_id %}';#}
-{#        var chooseImageUrl = '{% url "hqmedia_choose_media" domain app.get_id %}';#}
-
         $('.preview-media').tooltip();
     </script>
     {% url "download_multimedia_zip" domain app.get_id as media_url%}

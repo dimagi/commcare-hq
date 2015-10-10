@@ -3,7 +3,7 @@
 {% if multimedia.references.form_media.images.maps or multimedia.references.form_media.audio.maps or multimedia.references.menu_media.icons.maps or multimedia.references.menu_media.audio.maps %}
     <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
     <p>
-        <a class="btn btn-warning" style="color: #ffffff;"
+        <a class="btn btn-warning"
             {% if include_modal %}
                 href="#multimedia-zip-modal" data-toggle="modal"
             }
@@ -16,7 +16,7 @@
             {% endif %}
         >
         {% if multimedia.form_errors or multimedia.missing_refs %}
-            <i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}
+            <i class="icon icon-white icon-warning-sign"></i> {% trans 'Download Incomplete ZIP' %}
         {% else %}
             <i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}
         {% endif %}

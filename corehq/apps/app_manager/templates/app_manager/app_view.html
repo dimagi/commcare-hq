@@ -315,15 +315,8 @@
 
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
-                <div data-bind="if: load_state() === 'loading'">
-                    <i class="icon-large icon-refresh icon-spin" style="margin: 70px 0 0 200px;"></i>
-                </div>
-                <div data-bind="html: multimedia_page_html"></div>
-                <div data-bind="if: load_state() === 'error'">
-                    <button class="btn" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-                </div>
+                {% include "app_manager/partials/multimedia.html" %}
             </div>
-
         {% endif %}
         <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
             <div>

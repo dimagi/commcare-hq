@@ -1,0 +1,10 @@
+{% load i18n %}
+
+<div data-bind="if: load_state() === 'loading'">
+    <i class="icon-large icon-refresh icon-spin" style="margin: 70px 0 0 200px;"></i>
+</div>
+<h1>{% trans 'Manage Multimedia' %}</h1>
+<div data-bind="html: multimedia_page_html"></div>
+<div data-bind="if: load_state() === 'error'">
+    <button class="btn" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+</div>
