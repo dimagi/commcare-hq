@@ -482,9 +482,7 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
         self.context = {
             'subjects': [],
             # The template accepts XML strings in params "study_xml" and "admin_data_xml" which are
-            # study-specific. We parse these from the study metadata, which, for this first OpenClinica
-            # project, is stored in custom/openclinica/study_metadata.xml. In future projects we will need to store
-            # study metadata for each domain that uses OpenClinica integration.
+            # study-specific. We parse these from the study metadata.
             'study_xml': get_study_constant(domain=None, name='study_xml'),
             'admin_data_xml': get_study_constant(domain=None, name='admin_data_xml'),
         }

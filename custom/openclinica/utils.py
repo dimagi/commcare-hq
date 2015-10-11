@@ -136,22 +136,37 @@ def get_question_item(domain, form_xmlns, question):
         return None
 
 
-# @quickcache(['domain'])  # TODO: Is fetching from the cache faster than fetching from a file?
+@quickcache(['domain'])
 def get_study_metadata_string(domain):
     """
-    Return the study metadata for the given domain as an XML string
+    Return the study metadata for the given domain as a string
+
+    Metadata is fetched from the OpenClinica web service
     """
-    # For this first OpenClinica integration project, for the sake of simplicity, we are just fetching
-    # metadata from custom/openclinica/study_metadata.xml. In future, we can fetch it from the web service
-    # (See branch openclinica_ws)
-    metadata_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
-    with open(metadata_filename) as metadata_file:
-        return metadata_file.read()
+    from custom.openclinica.models import OpenClinicaAPI
+
+    oc_settings = settings.OPENCLINICA[domain]
+    api = OpenClinicaAPI(oc_settings['URL'], oc_settings['USER'], oc_settings['PASSWORD'])
+    study_client = api.get_client('study')
+    reply = study_client.service.listAll()
+    try:
+        study = [s for s in reply.studies.study if s.name == oc_settings['STUDY']][0]
+    except IndexError:
+        raise OpenClinicaIntegrationError('Study "{}" not found on OpenClinica.'.format(oc_settings['STUDY']))
+    study_client.set_options(retxml=True)  # Don't parse the study metadata; just give us the raw XML
+    reply = study_client.service.getMetadata(study)
+    soap_env = etree.fromstring(reply)
+    nsmap = {
+        'SOAP-ENV': "http://schemas.xmlsoap.org/soap/envelope/",
+        'OC': "http://openclinica.org/ws/study/v1"
+    }
+    odm = soap_env.xpath('./SOAP-ENV:Body/OC:createResponse/OC:odm', namespaces=nsmap)[0]
+    return odm.text
 
 
 def get_study_metadata(domain):
     """
-    Return the study metadata for the given domain as an ElementTree
+    Return the study metadata for the given domain as an XML element
     """
     return etree.fromstring(get_study_metadata_string(domain))
 

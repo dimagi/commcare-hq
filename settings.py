@@ -992,6 +992,16 @@ ENVIRONMENT_HOSTS = {
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+# OpenClinica settings are keyed on domain name
+OPENCLINICA = {
+    'kemri': {
+        'URL': 'http://openclinica.example.com/',
+        'USER': 'joe_bloggs',
+        'PASSWORD': 's3cr3t',
+        'STUDY': 'Aspirin Study',  # The name of the study as spelled in OpenClinica
+    }
+}
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
