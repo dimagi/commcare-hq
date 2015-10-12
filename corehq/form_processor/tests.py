@@ -3,10 +3,10 @@ from dimagi.ext.jsonobject import StringProperty
 from casexml.apps.case.models import CommCareCase
 
 
-class DynamicPropertiesTest(SimpleTestCase):
+class GenericDynamicPropertiesTest(SimpleTestCase):
 
     def test_normal(self):
-        case = CommCareCase(foo='some property', bar='some other property')
+        case = CommCareCase(foo='some property', bar='some other property').to_generic()
         props = case.dynamic_case_properties()
         self.assertEqual(2, len(props))
         props_dict = dict(props)
@@ -21,7 +21,7 @@ class DynamicPropertiesTest(SimpleTestCase):
                 # For some reason this is necessary for travis
                 app_label = "case"
 
-        case = CaseWithNewProperty(new_property='some property', bar='some other property')
+        case = CaseWithNewProperty(new_property='some property', bar='some other property').to_generic()
         props = case.dynamic_case_properties()
         self.assertEqual(2, len(props))
         props_dict = dict(props)
