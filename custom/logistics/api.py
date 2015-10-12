@@ -305,12 +305,11 @@ class APISynchronization(object):
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
                 if "phone_numbers" in user_dict:
-                    phone_number = apply_leniency(user_dict["phone_numbers"][0])
-                    user.set_default_phone_number(phone_number)
+                    user.set_default_phone_number(user_dict["phone_numbers"][0])
                     try:
-                        user.save_verified_number(self.domain, phone_number, True)
+                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
                     except PhoneNumberInUseException as e:
-                        self._reassign_number(user, phone_number)
+                        self._reassign_number(user, user_dict["phone_numbers"][0])
                     except InvalidFormatException:
                         pass
             except Exception as e:
@@ -320,7 +319,7 @@ class APISynchronization(object):
             phone_number = verified_number.phone_number if verified_number else None
             if apply_updates(user, user_dict):
                 if user_dict.get('phone_numbers'):
-                    new_phone_number = apply_leniency(user_dict['phone_numbers'][0])
+                    new_phone_number = user_dict['phone_numbers'][0]
                     if new_phone_number != phone_number:
                         if phone_number:
                             user.delete_verified_number(phone_number)
