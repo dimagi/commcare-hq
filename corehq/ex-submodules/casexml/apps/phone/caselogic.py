@@ -27,7 +27,7 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
                           initial=initial_cases)
 
     def indices(case):
-        return case['indices'] if search_up else get_reverse_indices_json(case)
+        return case['indices'] if search_up else get_reverse_indices_json(domain, case['_id'])
 
     relevant_cases = {}
     relevant_deleted_case_ids = []
