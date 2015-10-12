@@ -968,6 +968,9 @@ STRIPE_PRIVATE_KEY = ''
 SQL_REPORTING_DATABASE_URL = None
 UCR_DATABASE_URL = None
 
+# Override this in localsettings to specify custom reporting databases
+CUSTOM_DATABASES = {}
+
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
 
