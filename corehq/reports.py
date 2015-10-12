@@ -46,7 +46,6 @@ from corehq.apps.accounting.interface import (
     PaymentRecordInterface,
 )
 from corehq.apps.reports.standard.domains import OrgDomainStatsReport
-from corehq.apps.appstore.interfaces import CommCareExchangeAdvanced
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -284,13 +283,6 @@ SMS_ADMIN_INTERFACES = (
     (_("SMS Billing Administration"), (
         SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface,
-    )),
-)
-
-
-APPSTORE_INTERFACES = (
-    (_('App Store'), (
-        CommCareExchangeAdvanced,
     )),
 )
 
