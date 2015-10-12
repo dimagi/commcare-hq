@@ -763,7 +763,7 @@ class ConfigureNewReportBase(forms.Form):
             col_id = property.column_id
 
             selected_filter_type = conf['format']
-            if not selected_filter_type:
+            if not selected_filter_type or self.source_type == 'form':
                 if property.type == 'question':
                     filter_format = get_filter_format_from_question_type(
                         property.source['type']

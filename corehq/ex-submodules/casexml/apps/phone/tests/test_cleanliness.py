@@ -207,6 +207,17 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
         self.assertFalse(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)
 
+    def test_non_existent_parent(self):
+        self.factory.create_or_update_case(
+            CaseStructure(
+                relationships=[
+                    CaseRelationship(CaseStructure()),
+                ],
+                walk_related=False,
+            )
+        )
+        self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
+
     @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=False)
     def test_autocreate_flag_off(self):
         new_owner = uuid.uuid4().hex

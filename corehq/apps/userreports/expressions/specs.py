@@ -1,5 +1,7 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import (
@@ -10,7 +12,6 @@ from corehq.apps.userreports.expressions.getters import (
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.database import get_db
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -161,13 +162,12 @@ class RelatedDocExpressionSpec(JsonObject):
     doc_id_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
 
-    db_lookup = lambda self, type: get_db()
+    def configure(self, doc_id_expression, value_expression):
+        if get_db_by_doc_type(self.related_doc_type) is None:
+            raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
 
-    def configure(self, related_doc_type, doc_id_expression, value_expression):
-        self._related_doc_type = related_doc_type
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
-
         # used in caching
         self._vary_on = json.dumps(self.value_expression, sort_keys=True)
 
@@ -179,7 +179,7 @@ class RelatedDocExpressionSpec(JsonObject):
     @quickcache(['self._vary_on', 'doc_id'])
     def get_value(self, doc_id, context):
         try:
-            doc = self.db_lookup(self.related_doc_type).get(doc_id)
+            doc = get_db_by_doc_type(self.related_doc_type).get(doc_id)
             # ensure no cross-domain lookups of different documents
             assert context.root_doc['domain']
             if context.root_doc['domain'] != doc.get('domain'):

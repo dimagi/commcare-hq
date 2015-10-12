@@ -44,6 +44,10 @@ class IndicatorPillowTests(TestCase):
         # memoization across tests can break things
         IndicatorDefinition.get_all.reset_cache()
 
+    @classmethod
+    def tearDownClass(cls):
+        get_db().delete_doc('INDICATOR_CONFIGURATION')
+
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)
         try:

@@ -923,40 +923,13 @@ class MessagingTab(UITab):
                  'url': reverse(ManageRegistrationInvitationsView.urlname, args=[self.domain])}
             )
 
-        if self.couch_user.is_previewer():
+        if self.couch_user.can_edit_data():
             contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
         return contacts_urls
-
-    @property
-    @memoized
-    def survey_urls(self):
-        survey_urls = []
-
-        if self.project.survey_management_enabled and self.can_use_inbound_sms:
-            survey_urls.extend([
-                {'title': _("Samples"),
-                 'url': reverse('sample_list', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Sample"),
-                      'urlname': 'edit_sample'},
-                     {'title': _("New Sample"),
-                      'urlname': 'add_sample'},
-                ]},
-                {'title': _("Surveys"),
-                 'url': reverse('survey_list', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Survey"),
-                      'urlname': 'edit_survey'},
-                     {'title': _("New Survey"),
-                      'urlname': 'add_survey'},
-                ]},
-            ])
-
-        return survey_urls
 
     @property
     @memoized
@@ -1003,7 +976,6 @@ class MessagingTab(UITab):
             (_("Performance Messaging"), self.performance_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
-            (_("Survey Management"), self.survey_urls),
             (_("Settings"), self.settings_urls)
         ):
             if urls:
@@ -1059,21 +1031,21 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views.mobile import \
-                EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
+            from corehq.apps.users.views.mobile import (
+                EditCommCareUserView,
+                ConfirmBillingAccountForExtraUsersView,
+                MobileWorkerListView,
+            )
+
             mobile_users_menu = [
                 {
-                    'title': _('Mobile Workers'),
-                    'url': reverse('commcare_users', args=[self.domain]),
+                    'title': MobileWorkerListView.page_title,
+                    'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                     'description': _(
                         "Create and manage users for CommCare and CloudCare."),
                     'subpages': [
                         {'title': commcare_username,
                          'urlname': EditCommCareUserView.urlname},
-                        {'title': _('New Mobile Worker'),
-                         'urlname': 'add_commcare_account',
-                         'show_in_dropdown': True,
-                         'show_in_first_level': True},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
                         {'title': ConfirmBillingAccountForExtraUsersView.page_title,
@@ -1141,8 +1113,7 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if (feature_previews.LOCATIONS.enabled(self.domain) and
-                has_privilege(self._request, privileges.LOCATIONS)):
+        if has_privilege(self._request, privileges.LOCATIONS):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,

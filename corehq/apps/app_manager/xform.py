@@ -500,6 +500,28 @@ def autoset_owner_id_for_subcase(subcase):
     return 'owner_id' not in subcase.case_properties
 
 
+def autoset_owner_id_for_advanced_action(action):
+    """
+    The owner_id should be set if any indices are not 'extension'.
+    If it was explicitly_set, never autoset it.
+    """
+
+    explicitly_set = ('owner_id' in action.case_properties)
+
+    if explicitly_set:
+        return False
+
+    if not len(action.case_indices):
+        return True
+
+    for index in action.case_indices:
+        if index.relationship == 'child':
+            # if there is a child relationship, autoset
+            return True
+    # if there are only extension indices, don't autoset
+    return False
+
+
 def validate_xform(source, version='1.0'):
     if isinstance(source, unicode):
         source = source.encode("utf-8")
@@ -1397,17 +1419,12 @@ class XForm(WrappedNode):
                     subcase_block.add_close_block(self.action_relevance(subcase.close_condition))
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
-                    if subcase.reference_id:
-                        reference_id = subcase.reference_id
-                    elif subcase.relationship == 'extension':
-                        reference_id = 'host'
-                    else:
-                        reference_id = 'parent'
+                    reference_id = subcase.reference_id or 'parent'
+
                     subcase_block.add_index_ref(
                         reference_id,
                         form.get_case_type(),
                         self.resolve_path("case/@case_id"),
-                        subcase.relationship,
                     )
 
         case = self.case_node
@@ -1654,7 +1671,7 @@ class XForm(WrappedNode):
                 case_name=action.name_path,
                 case_type=action.case_type,
                 delay_case_id=bool(action.repeat_context),
-                autoset_owner_id=('owner_id' not in action.case_properties),
+                autoset_owner_id=autoset_owner_id_for_advanced_action(action),
                 has_case_sharing=form.get_app().case_sharing,
                 case_id=case_id
             )

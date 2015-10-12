@@ -208,6 +208,13 @@ DEMO_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+SUPPLY_REPORTS = StaticToggle(
+    'supply_reports',
+    "Early stages reports for CommCare Supply",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -253,6 +260,13 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+LOCATIONS_IN_UCR = StaticToggle(
+    'locations_in_ucr',
+    'Add Locations as one of the Source Types for User Configurable Reports',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )
 
 REPORT_BUILDER = StaticToggle(
@@ -461,7 +475,7 @@ OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
     'Enable restoring with updated owner cleanliness logic.',
     TAG_PRODUCT_CORE,
     namespaces=[NAMESPACE_DOMAIN],
-    randomness=.05,
+    randomness=.10,
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
@@ -591,13 +605,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
-    'messaging_status',
-    'View the Messaging Status and Error Reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 HSPH_HACK = StaticToggle(
     'hsph_hack',
     'Optmization hack for HSPH',
@@ -668,4 +675,11 @@ VIEW_BUILD_SOURCE = StaticToggle(
     'Allow users to view and diff build source files',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+EWS_WEB_USER_EXTENSION = StaticToggle(
+    'ews_web_user_extension',
+    'Enable EWSGhana web user extension',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )

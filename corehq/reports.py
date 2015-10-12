@@ -22,8 +22,7 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 import phonelog.reports as phonelog
-from corehq.apps.reports.commtrack import standard as commtrack_reports
-from corehq.apps.reports.commtrack import maps as commtrack_maps
+from corehq.apps.reports import commtrack
 from corehq.apps.reports.commconnect import system_overview
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
@@ -89,12 +88,13 @@ def REPORTS(project):
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("CommCare Supply"), (
-            commtrack_reports.SimplifiedInventoryReport,
-            commtrack_reports.InventoryReport,
-            commtrack_reports.CurrentStockStatusReport,
-            commtrack_maps.StockStatusMapReport,
-            commtrack_reports.ReportingRatesReport,
-            commtrack_maps.ReportingStatusMapReport,
+            commtrack.SimplifiedInventoryReport,
+            commtrack.InventoryReport,
+            commtrack.CurrentStockStatusReport,
+            commtrack.StockStatusMapReport,
+            commtrack.ReportingRatesReport,
+            commtrack.ReportingStatusMapReport,
+            commtrack.LedgersByLocationReport,
         )))
 
     if project.has_careplan:
@@ -113,15 +113,11 @@ def REPORTS(project):
             sms.MessagesReport,
         ])
 
-    if toggles.MESSAGING_STATUS_AND_ERROR_REPORTS.enabled(project.name):
-        messaging_reports.extend([
-            sms.MessagingEventsReport,
-            sms.MessageEventDetailReport,
-            sms.SurveyDetailReport,
-        ])
-
     # always have these historical reports visible
     messaging_reports.extend([
+        sms.MessagingEventsReport,
+        sms.MessageEventDetailReport,
+        sms.SurveyDetailReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
