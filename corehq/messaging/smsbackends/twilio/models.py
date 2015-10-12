@@ -6,6 +6,7 @@ from dimagi.ext.couchdbkit import *
 from twilio.rest import TwilioRestClient
 from django.conf import settings
 
+
 class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
     account_sid = StringProperty()
     auth_token = StringProperty()
@@ -52,7 +53,7 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         else:
             return [self.phone_number]
 
-    def send(self, msg, *args, **kwargs):
+    def send_sms(self, msg, *args, **kwargs):
         orig_phone_number = kwargs.get("orig_phone_number")
         client = TwilioRestClient(self.account_sid, self.auth_token,
             timeout=settings.SMS_GATEWAY_TIMEOUT)
@@ -67,4 +68,3 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         msg.system_phone_number = from_
         msg.backend_message_id = message.sid
         msg.save()
-

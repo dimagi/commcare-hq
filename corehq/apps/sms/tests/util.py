@@ -10,6 +10,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
+from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import \
     get_one_case_in_domain_by_external_id
@@ -36,7 +37,41 @@ def time_parser(value):
     return parse(value).time()
 
 
-class TouchformsTestCase(LiveServerTestCase):
+class BaseSMSTest(BaseAccountingTest):
+    def setUp(self):
+        super(BaseSMSTest, self).setUp()
+        self.account = None
+        self.subscription = None
+
+    def create_account_and_subscription(self, domain_name):
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            domain_name,
+            created_by="automated-test",
+        )[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(
+            domain_name, edition=SoftwarePlanEdition.ADVANCED
+        )
+        self.subscription = Subscription.new_domain_subscription(
+            self.account,
+            domain_name,
+            plan
+        )
+        self.subscription.is_active = True
+        self.subscription.save()
+
+    def tearDown(self):
+        SubscriptionAdjustment.objects.all().delete()
+
+        if self.subscription:
+            self.subscription.delete()
+
+        if self.account:
+            self.account.delete()
+
+        super(BaseSMSTest, self).tearDown()
+
+
+class TouchformsTestCase(LiveServerTestCase, BaseSMSTest):
     """
     For now, these test cases need to be run manually. Before running, the 
     following dependencies must be met:
@@ -59,22 +94,7 @@ class TouchformsTestCase(LiveServerTestCase):
         domain_obj.default_sms_response = "Default SMS Response"
         domain_obj.save()
 
-        generator.instantiate_accounting_for_tests()
-        self.account = BillingAccount.get_or_create_account_by_domain(
-            domain_obj.name,
-            created_by="automated-test",
-        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            domain_obj, edition=SoftwarePlanEdition.ADVANCED
-        )
-        self.subscription = Subscription.new_domain_subscription(
-            self.account,
-            domain_obj.name,
-            plan
-        )
-        self.subscription.is_active = True
-        self.subscription.save()
-
+        self.create_account_and_subscription(domain)
         return domain_obj
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):
@@ -320,6 +340,4 @@ class TouchformsTestCase(LiveServerTestCase):
         self.site.delete()
         self.backend.delete()
         self.backend_mapping.delete()
-        SubscriptionAdjustment.objects.all().delete()
-        self.subscription.delete()
-        self.account.delete()
+        super(TouchformsTestCase, self).tearDown()
