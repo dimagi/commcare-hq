@@ -43,11 +43,11 @@ class MenuContributor(SuiteContributorByModule):
                 menu = Menu(**menu_kwargs)
 
             def get_commands():
-                for form in module.get_forms():
-                    command = Command(id=id_strings.form_command(form))
+                for form in module.get_suite_forms():
+                    command = Command(id=id_strings.form_command(form, module))
 
                     if form.requires_case():
-                        form_datums = self.entries_helper.get_datums_meta_for_form_generic(form)
+                        form_datums = self.entries_helper.get_datums_meta_for_form_generic(form, module)
                         var_name = next(
                             meta.datum.id for meta in reversed(form_datums)
                             if meta.action and meta.requires_selection
