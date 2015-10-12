@@ -46,8 +46,9 @@
         function trackLinkHelper(element, trackFunction){
             var eventHandler = function (event) {
                 var $this = $(this);
-                if (event.metaKey) {
-                    // This page isn't being redirected
+                if (event.metaKey || event.ctrlKey) {
+                    // The current page isn't being redirected so just track the click
+                    // and don't prevent the default click action.
                     trackFunction();
                 } else {
                     // Track how many trackLinkHelper-related handlers

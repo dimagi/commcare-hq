@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -14,7 +15,6 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
-import settings
 
 
 # copy paste from: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/standard/sms.py

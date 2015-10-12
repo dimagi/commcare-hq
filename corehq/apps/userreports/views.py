@@ -16,6 +16,7 @@ from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
+from corehq.apps.analytics.tasks import track_workflow
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, Form
@@ -28,6 +29,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
+from corehq.apps.style.decorators import upgrade_knockout_js
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -125,6 +127,7 @@ def create_report(request, domain):
 class ReportBuilderView(TemplateView):
 
     @cls_to_view_login_and_domain
+    @upgrade_knockout_js
     @method_decorator(toggles.REPORT_BUILDER.required_decorator())
     @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, domain, **kwargs):
@@ -157,7 +160,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Chart'),
                 slug='chart',
-                analytics_label="Chart",
+                analytics_label="chart",
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -167,7 +170,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
-                analytics_label="List",
+                analytics_label="list",
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -177,7 +180,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Worker Report'),
                 slug='worker-report',
-                analytics_label="Worker",
+                analytics_label="worker",
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -187,7 +190,7 @@ class ReportBuilderTypeSelect(ReportBuilderView):
             ReportTypeTileConfiguration(
                 title=_('Data Table'),
                 slug='data-table',
-                analytics_label="Table",
+                analytics_label="table",
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -237,6 +240,11 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
+            track_workflow(
+                request.user.email,
+                "Successfully submitted the first part of the Report Builder "
+                "wizard where you give your report a name and choose a data source"
+            )
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
             )
@@ -268,6 +276,7 @@ class ConfigureChartReport(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = _("Chart Report: {}")
+    report_type = 'chart'
     existing_report = None
 
     def get_context_data(self, **kwargs):
@@ -278,8 +287,9 @@ class ConfigureChartReport(ReportBuilderView):
                     self.request.GET.get('report_name', '')
                 )
             },
+            'report_type': self.report_type,
             'form': self.report_form,
-            'property_options': self.report_form.data_source_properties.values(),
+            'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
@@ -321,6 +331,10 @@ class ConfigureChartReport(ReportBuilderView):
                     return self.get(*args, **kwargs)
             else:
                 report_configuration = self.report_form.create_report()
+                track_workflow(
+                    self.request.user.email,
+                    "Successfully created a new report in the Report Builder"
+                )
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
@@ -329,6 +343,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 class ConfigureListReport(ConfigureChartReport):
     report_title = _("List Report: {}")
+    report_type = 'list'
 
     @property
     @memoized
@@ -338,6 +353,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 class ConfigureTableReport(ConfigureChartReport):
     report_title = _("Table Report: {}")
+    report_type = 'table'
 
     @property
     @memoized
@@ -347,6 +363,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 class ConfigureWorkerReport(ConfigureChartReport):
     report_title = _("Worker Report: {}")
+    report_type = 'worker'
 
     @property
     @memoized
@@ -648,7 +665,7 @@ def data_source_status(request, domain, config_id):
 
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
-    report, _ = get_report_config_or_404(report_id, domain)
+    report = get_report_config_or_404(report_id, domain)[0]
     filter = report.get_ui_filter(filter_id)
     if filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
@@ -659,9 +676,10 @@ def choice_list_api(request, domain, report_id, filter_id):
         if not isinstance(filter, DynamicChoiceListFilter):
             return []
 
-        table = get_indicator_table(data_source)
+        adapter = IndicatorSqlAdapter(data_source)
+        table = adapter.get_table()
         sql_column = table.c[filter.field]
-        query = Session.query(sql_column)
+        query = adapter.session_helper.Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
 

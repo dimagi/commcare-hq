@@ -39,15 +39,6 @@ class DomainPillow(HQPillow):
     def get_unique_id(self):
         return DOMAIN_INDEX
 
-    @memoized
-    def calc_meta(self):
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return self.calc_mapping_hash({"es_meta": self.es_meta,
-                                       "mapping": self.default_mapping})
-
     def change_transform(self, doc_dict):
         doc_ret = copy.deepcopy(doc_dict)
         sub =  Subscription.objects.filter(

@@ -28,6 +28,9 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(__file__)
+
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 try:
@@ -104,6 +107,10 @@ BOWER_INSTALLED_APPS = (
     'angular-message-format#1.4.4',
     'angular-messages#1.4.4',
     'angular-cookies#1.4.4',
+    'angular-sanitize#1.4.4',
+    'knockout-2.3.0-legacy=knockout.js#2.3',
+    'knockout#3.1.0',
+    'select2-3.4.5-legacy=select2#3.4.5',
     'less#1.7.3',
     'backbone#0.9.1',
 )
@@ -374,6 +381,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
+    'custom.openclinica',
     'custom.guinea_backup',
 
     # tests only
@@ -969,11 +977,6 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
-# Mailchimp
-MAILCHIMP_APIKEY = ''
-MAILCHIMP_COMMCARE_USERS_ID = ''
-MAILCHIMP_MASS_EMAIL_ID = ''
-
 SQL_REPORTING_DATABASE_URL = None
 UCR_DATABASE_URL = None
 
@@ -1459,6 +1462,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
     ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
+    ('location_type_name', 'corehq.apps.locations.expressions.location_type_name'),
 ]
 
 CUSTOM_MODULES = [
@@ -1516,7 +1520,9 @@ DOMAIN_MODULE_MAP = {
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'tdhtesting': 'custom.tdh',
-    'rec': 'custom.tdh'
+    'rec': 'custom.tdh',
+    'kemri': 'custom.openclinica',
+    'novartis': 'custom.openclinica',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

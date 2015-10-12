@@ -203,16 +203,6 @@
                     </p>
                     <div class="btn-toolbar pull-right">
                         <button type="button"
-                                id="uvSubmitIdea"
-                                data-user-email="{{ user.email }}"
-                                data-user-name="{{ user.name }}"
-                                data-domain="{{ domain }}"
-                                data-uv-locale="{{ LANGUAGE_CODE }}"
-                                class="btn btn-footer-highlight">
-                            <i class="fa fa-lightbulb-o"></i>&nbsp;
-                            {% trans 'Submit an Idea' %}
-                        </button>
-                        <button type="button"
                                 class="btn btn-footer-highlight"
                                 data-toggle="modal"
                                 data-target="#modalReportIssue">
@@ -252,7 +242,6 @@
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/uv.widget.js' %}"></script>
         {% endcompress %}
 
         <script type="text/javascript">
@@ -277,7 +266,7 @@
         {# Use knockout explicitly, opt to move to angular js when possible. #}
         {% if use_knockout_js %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'style/lib/knockout/knockout-3.1.0.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>

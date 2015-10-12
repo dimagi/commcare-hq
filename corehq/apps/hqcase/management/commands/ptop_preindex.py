@@ -4,7 +4,7 @@ import traceback
 from datetime import datetime
 from optparse import make_option
 from django.core.mail import mail_admins
-from pillowtop import get_all_pillows
+from pillowtop import get_all_pillow_classes
 from corehq.pillows.user import add_demo_user_to_user_index
 import gevent
 from pillowtop.listener import AliasedElasticPillow
@@ -64,7 +64,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         runs = []
-        pillow_classes = get_all_pillows(instantiate=False)
+        pillow_classes = get_all_pillow_classes()
         aliased_classes = filter(lambda x: issubclass(x, AliasedElasticPillow),
                                  pillow_classes)
         aliasable_pillows = [p(create_index=False) for p in aliased_classes]

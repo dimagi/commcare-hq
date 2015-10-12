@@ -121,7 +121,8 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
             user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
             if user:
                 if user.has_permission(self.domain, 'edit_commcare_users'):
-                    redirect = reverse("commcare_users", args=[self.domain])
+                    from corehq.apps.users.views.mobile import MobileWorkerListView
+                    redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
                     redirect = reverse(
                         ListWebUsersView.urlname,
@@ -404,8 +405,8 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_knockout_js())
+    @use_bootstrap3
+    @use_knockout_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)

@@ -174,6 +174,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         )
 
     @property
+    @memoized
     def parsed_expression(self):
         if self.base_item_expression:
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
