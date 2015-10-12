@@ -1,6 +1,5 @@
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
-from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE,\
     MS_STOCKOUT, MS_RESOLVED_STOCKOUTS
 from collections import defaultdict
@@ -10,7 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import EWS_INVALID_REPORT_RESPONSE
 from custom.ewsghana.reminders import ERROR_MESSAGE
-from custom.ewsghana.utils import ProductsReportHelper, send_sms
+from custom.ewsghana.utils import ProductsReportHelper
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ewsghana.alerts.alerts import stock_alerts
 from corehq.apps.commtrack.sms import *
@@ -263,23 +262,32 @@ class AlertsHandler(KeywordHandler):
 
         resolved_stockouts = previous_stockouts.intersection(with_stock)
 
-        locations = self.sql_location.parent.get_descendants(include_self=True)\
-            .filter(location_type__administrative=True)
+        if ms_type == 'RMS':
+            locations = self.sql_location.parent.get_descendants().filter(location_type__administrative=False)
+        elif ms_type == 'CMS':
+            locations = self.sql_location.parent.get_descendants().filter(location_type__administrative=True)
+        else:
+            return
+
         for sql_location in locations:
-            for user in get_all_users_by_location(self.domain, sql_location.location_id):
-                phone_number = get_preferred_phone_number_for_recipient(user)
-                if not phone_number:
+            for user in get_users_by_location_id(self.domain, sql_location.location_id):
+                verified_number = user.get_verified_number()
+                if not verified_number:
                     continue
 
-                stockouts_and_resolved = [
-                    (MS_RESOLVED_STOCKOUTS, resolved_stockouts),
-                    (MS_STOCKOUT, stockouts)
-                ]
+                if stockouts:
+                    send_sms_to_verified_number(
+                        verified_number,
+                        MS_STOCKOUT % {'products_names': ', '.join(stockouts), 'ms_type': ms_type}
+                    )
 
-                for message, data in stockouts_and_resolved:
-                    if data:
-                        message = message % {'products_names': ', '.join(data), 'ms_type': ms_type}
-                        send_sms(self.domain, user, phone_number, message)
+                if resolved_stockouts:
+                    send_sms_to_verified_number(
+                        verified_number,
+                        MS_RESOLVED_STOCKOUTS % {
+                            'products_names': '. '.join(resolved_stockouts), 'ms_type': ms_type
+                        }
+                    )
 
     def handle(self):
         verified_contact = self.verified_contact
