@@ -1,1 +1,0 @@
-from .consumption_calc import ConsumptionRatePillow
