@@ -83,6 +83,7 @@ class WebUsersSyncTest(TestCase):
 
         extension = EWSExtension.objects.get(user_id=ewsghana_webuser.get_id, domain=TEST_DOMAIN)
         self.assertEqual(SQLLocation.objects.get(location_id=extension.location_id).site_code, 'rsp2')
+        self.assertListEqual(ewsghana_webuser.phone_numbers, ['1233232'])
 
     def test_create_web_reporter(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
