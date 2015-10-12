@@ -81,9 +81,9 @@ def dump_logs_to_file(filename):
                     log_file.write('{}\n'.format(json.dumps(record)))
                     records_written += 1
                     if records_written % 100 == 0:
-                        print '{} records writen to file'.format(records_written)
+                        print '{} records written to file'.format(records_written)
     finally:
-        print '{} records writen to file'.format(records_written)
+        print '{} records written to file'.format(records_written)
 
 
 def archive_exception(exception):
