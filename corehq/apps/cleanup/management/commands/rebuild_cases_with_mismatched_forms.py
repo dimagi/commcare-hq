@@ -36,7 +36,7 @@ class SearchPaginator(object):
         )
 
         try:
-            self.total_rows = result.total_rows
+            result.fetch()
             self.bookmark = result._result_cache.get('bookmark')
             return result
         except RequestFailed:
@@ -59,17 +59,21 @@ def row_to_record(row):
 
 
 def dump_logs_to_file(filename):
+    print 'Writing logs to file'
     paginator = SearchPaginator(ExceptionRecord.get_db(), FULL_SEARCH)
 
     records_written = 0
-    with open(filename, 'w') as log_file:
-        while True:
-            for page in paginator.next_page():
+    try:
+        with open(filename, 'w') as log_file:
+            while True:
+                page = paginator.next_page()
                 if not page:
                     return
 
                 for row in page:
                     record = row_to_record(row)
+                    if record['exception']['archived']:
+                        continue
                     if 'case_id' not in record and SEARCH_KEY not in record['exception']['message']:
                         # search results are no longer relevant
                         return
@@ -77,9 +81,9 @@ def dump_logs_to_file(filename):
                     log_file.write('{}\n'.format(json.dumps(record)))
                     records_written += 1
                     if records_written % 100 == 0:
-                        print '{} of {} records writen to file'.format(records_written, paginator.total_rows)
-
-    return paginator.total_rows
+                        print '{} records writen to file'.format(records_written)
+    finally:
+        print '{} records writen to file'.format(records_written)
 
 
 def archive_exception(exception):
@@ -104,16 +108,17 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         count = 1
         filename = 'cases_with_mismatched_forms.log'
-        total = dump_logs_to_file(filename)
+        dump_logs_to_file(filename)
 
         seen_cases = set()
+        cases_rebuilt = set()
         with open(filename, 'r') as file:
             while True:
                 line = file.readline()
                 if not line:
                     return
 
-                print 'Processing record {} of {}'.format(count, total)
+                print 'Processing record {}'.format(count)
                 record = json.loads(line)
                 exception = ExceptionRecord.wrap(record['exception'])
                 case_id = record.get('case_id', None)
@@ -125,6 +130,7 @@ class Command(BaseCommand):
                 try:
                     seen_cases.add(case_id)
                     if should_rebuild(case_id):
+                        cases_rebuilt.add(case_id)
                         rebuild_case(case_id)
                         print 'rebuilt case {}'.format(case_id)
                     archive_exception(exception)
@@ -132,3 +138,5 @@ class Command(BaseCommand):
                     logging.exception("couldn't rebuild case {id}. {msg}".format(id=case_id, msg=str(e)))
                 finally:
                     count += 1
+
+        print "Cases rebuilt: {}".format(cases_rebuilt)
