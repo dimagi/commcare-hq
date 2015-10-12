@@ -380,8 +380,8 @@ class CaseListFormWorkflow(object):
             # the list of datums that are common between all the forms in the module which implies that not all
             # the forms have the same case management configuration.
             raise SuiteError(
-                "The '{}' module is not properly configured to have a Case List Registration Form. All forms"
-                " in the module should have the same case management configuration.".format(module.default_name())
+                u"The '{}' module is not properly configured to have a Case List Registration Form. All forms"
+                u" in the module should have the same case management configuration.".format(module.default_name())
             )
         return target_dm
 
