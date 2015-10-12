@@ -70,7 +70,7 @@ requires imports/proptable.html to be included in the main template
                     document.getElementById('archive-form').submit();
                 }
             );
-            _analytics_usage('Archive Form Submission', callback);
+            _analytics_usage('Archive Form Submission', analyticsCallback);
             analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
