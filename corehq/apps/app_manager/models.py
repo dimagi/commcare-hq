@@ -975,6 +975,9 @@ class FormBase(DocumentSchema):
          * registers a case of type 'case_type' if supplied
         """
         raise NotImplementedError()
+
+    def uses_usercase(self):
+        raise NotImplementedError()
     
     def update_app_case_meta(self, app_case_meta):
         pass
@@ -1346,6 +1349,9 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def is_registration_form(self, case_type=None):
         reg_actions = self.get_registration_actions(case_type)
         return len(reg_actions) == 1
+
+    def uses_usercase(self):
+        return actions_use_usercase(self.active_actions())
 
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
@@ -2188,7 +2194,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
         """
-        return any(form for form in self.get_forms() if actions_use_usercase(form.active_actions()))
+        return any(form.uses_usercase() for form in self.get_forms())
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
@@ -2293,6 +2299,16 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             registration_actions = [a for a in registration_actions if a.case_type == case_type]
 
         return registration_actions
+
+    def uses_case_type(self, case_type, invert_match=False):
+        def match(ct):
+            matches = ct == case_type
+            return not matches if invert_match else matches
+
+        return any(action for action in self.actions.load_update_cases if match(action.case_type))
+
+    def uses_usercase(self):
+        return self.uses_case_type(USERCASE_TYPE)
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -2833,15 +2849,7 @@ class AdvancedModule(ModuleBase):
         return errors
 
     def _uses_case_type(self, case_type, invert_match=False):
-        def match(ct):
-            matches = ct == case_type
-            return not matches if invert_match else matches
-
-        return any(
-            action for form in self.forms
-            for action in form.actions.load_update_cases
-            if match(action.case_type)
-        )
+        return any(form.uses_case_type(case_type, invert_match) for form in self.forms)
 
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.

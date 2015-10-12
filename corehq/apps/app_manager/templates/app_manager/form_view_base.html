@@ -303,7 +303,7 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
-            {%  if allow_usercase or is_usercase_in_use and form.form_type == 'module_form' %}
+            {%  if allow_usercase or form.uses_usercase and form.form_type == 'module_form' %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
                     {% trans "User Case Management" %}
