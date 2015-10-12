@@ -185,6 +185,10 @@ class GenericCommCareCase(JsonObject):
     server_modified_on = DateTimeProperty()
 
     @property
+    def case_id(self):
+        return self.id
+
+    @property
     @memoized
     def reverse_indices(self):
         from corehq.form_processor.interfaces import FormProcessorInterface
