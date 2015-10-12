@@ -353,7 +353,9 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
 
     response = {'cases': cases}
     if requires_parent_cases:
-        parent_ids = map(lambda c: c['indices']['parent']['case_id'], cases)
+        # Subtract already fetched cases from parent list
+        parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
+            set(map(lambda c: c['case_id'], cases))
         parents = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), parent_ids)]
         parents = [c.get_json(lite=True) for c in parents]
         response.update({'parents': parents})
