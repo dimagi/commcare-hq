@@ -243,15 +243,14 @@ class EndOfFormNavigationWorkflow(object):
         Attempt to match the target session variables with ones in the source session.
         Making some large assumptions about how people will actually use this feature
         """
-        source_used = set()
+        unused_source_datums = list(source_datums)
         for target_datum in target_frame_elements:
             if not isinstance(target_datum, WorkflowDatumMeta) or not target_datum.requires_selection:
                 yield target_datum
             else:
-                unused_source_datums = [datum for datum in source_datums if datum.id not in source_used]
                 match = EndOfFormNavigationWorkflow.find_best_match(target_datum, unused_source_datums)
                 if match:
-                    source_used.add(match.id)
+                    unused_source_datums = [datum for datum in unused_source_datums if datum.id != match.id]
 
                 yield match if match else target_datum.to_stack_datum()
 
