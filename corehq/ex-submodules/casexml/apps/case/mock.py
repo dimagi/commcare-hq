@@ -3,7 +3,7 @@ import copy
 from datetime import datetime, date
 import uuid
 from xml.etree import ElementTree
-from casexml.apps.case.util import post_case_blocks
+from corehq.form_processor.interfaces import FormProcessorInterface
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
 
@@ -341,7 +341,7 @@ class CaseFactory(object):
         submit_form_extras = copy.copy(self.form_extras)
         if form_extras is not None:
             submit_form_extras.update(form_extras)
-        return post_case_blocks(
+        return FormProcessorInterface.post_case_blocks(
             caseblocks,
             form_extras=submit_form_extras,
             domain=self.domain,

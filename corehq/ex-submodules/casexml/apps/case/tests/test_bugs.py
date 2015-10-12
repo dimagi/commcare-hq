@@ -7,7 +7,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.util.test_utils import TestFileMixin
@@ -147,15 +146,15 @@ class CaseBugTest(TestCase, TestFileMixin):
         # submitting to a deleted case should succeed and affect the case
         case_id = 'immagetdeleted'
         deleted_doc_type = 'CommCareCase-Deleted'
-        [xform, [case]] = post_case_blocks([
+        [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
                       version=V2, update={'foo': 'bar'}).as_xml()
         ])
         self.assertEqual('bar', case.foo)
-        case = FormProcessorInterface.update_case_properties(case.to_generic(), doc_type=deleted_doc_type)
+        case = FormProcessorInterface.update_case_properties(case, doc_type=deleted_doc_type)
 
         self.assertEqual(deleted_doc_type, case.doc_type)
-        [xform, [case]] = post_case_blocks([
+        [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
                       version=V2, update={'foo': 'not_bar'}).as_xml()
         ])

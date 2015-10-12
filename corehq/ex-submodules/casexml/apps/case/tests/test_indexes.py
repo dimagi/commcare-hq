@@ -2,16 +2,15 @@ from collections import namedtuple
 import re
 from xml.etree import ElementTree
 import datetime
-from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.tests.util import check_user_has_case
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import User
 from django.test import TestCase, SimpleTestCase
+from corehq.form_processor.interfaces import FormProcessorInterface
 from couchforms.models import XFormError
 
 USER_ID = 'test-index-user'
@@ -64,18 +63,14 @@ class IndexTest(TestCase):
     FATHER_CASE_ID = 'text-index-father-case'
 
     def tearDown(self):
-        for _id in [self.CASE_ID, self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
-            try:
-                CommCareCase.get_db().delete_doc(_id)
-            except ResourceNotFound:
-                pass
+        FormProcessorInterface.delete_all_cases()
 
     def testIndexes(self):
         user = User(user_id=USER_ID, username="", password="", date_joined="")
 
         # Step 0. Create mother and father cases
         for prereq in [self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
-            post_case_blocks([
+            FormProcessorInterface.post_case_blocks([
                 CaseBlock(create=True, case_id=prereq, user_id=USER_ID,
                           version=V2).as_xml()
             ])
@@ -90,7 +85,7 @@ class IndexTest(TestCase):
             version=V2
         ).as_xml()
 
-        post_case_blocks([create_index])
+        FormProcessorInterface.post_case_blocks([create_index])
         check_user_has_case(self, user, create_index, version=V2)
 
         # Step 2. Update the case to delete <mom> and create <dad>
@@ -114,7 +109,7 @@ class IndexTest(TestCase):
             date_modified=now,
         ).as_xml()
 
-        post_case_blocks([update_index])
+        FormProcessorInterface.post_case_blocks([update_index])
 
         check_user_has_case(self, user, update_index_expected, version=V2)
 
@@ -140,7 +135,7 @@ class IndexTest(TestCase):
             date_modified=now,
         ).as_xml()
 
-        post_case_blocks([update_index])
+        FormProcessorInterface.post_case_blocks([update_index])
 
         check_user_has_case(self, user, update_index_expected, version=V2)
 
@@ -149,7 +144,7 @@ class IndexTest(TestCase):
         parent_domain = 'parent'
         child_domain = 'child'
 
-        post_case_blocks([
+        FormProcessorInterface.post_case_blocks([
             CaseBlock(create=True, case_id=case_in_other_domain, user_id=USER_ID,
                       version=V2).as_xml()
         ], form_extras={'domain': parent_domain})
@@ -157,7 +152,7 @@ class IndexTest(TestCase):
         block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
                           index={'bad': ('bad-case', case_in_other_domain)})
 
-        xform, _ = post_case_blocks([block.as_xml()],
+        xform, _ = FormProcessorInterface.post_case_blocks([block.as_xml()],
                                     form_extras={'domain': child_domain})
 
         self.assertIsInstance(xform, XFormError)
@@ -176,7 +171,7 @@ class IndexTest(TestCase):
             version=V2
         ).as_xml()
 
-        post_case_blocks([create_index])
+        FormProcessorInterface.post_case_blocks([create_index])
         check_user_has_case(self, user, create_index, version=V2)
 
 

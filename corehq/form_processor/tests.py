@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+from corehq.form_processor.utils import to_generic
 from dimagi.ext.jsonobject import StringProperty
 from casexml.apps.case.models import CommCareCase
 
@@ -27,3 +28,4 @@ class GenericDynamicPropertiesTest(SimpleTestCase):
         props_dict = dict(props)
         self.assertEqual('some property', props_dict['new_property'])
         self.assertEqual('some other property', props_dict['bar'])
+

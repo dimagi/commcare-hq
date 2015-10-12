@@ -1,6 +1,6 @@
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.dbaccessors import get_reverse_indices_for_case_id
-from casexml.apps.case.util import get_case_xform_ids
+from casexml.apps.case.util import get_case_xform_ids, post_case_blocks
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.test_utils import unit_testing_only
@@ -170,6 +170,10 @@ class FormProcessorInterface(object):
         if override_sync_token:
             xform.last_sync_token = override_sync_token
         return process_cases(xform, config)
+
+    @staticmethod
+    def post_case_blocks(case_blocks, form_extras=None, domain=None):
+        return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
     @classmethod
     def hard_delete_case(cls, case_generic):

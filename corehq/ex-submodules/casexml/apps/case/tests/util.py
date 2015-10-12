@@ -13,7 +13,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from casexml.apps.case.util import post_case_blocks
 
 
 TEST_DOMAIN_NAME = 'test-domain'
@@ -211,7 +210,7 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       update=kwargs,
                       close=close).as_xml()
     form_extras = form_extras or {}
-    post_case_blocks([block], form_extras)
+    FormProcessorInterface.post_case_blocks([block], form_extras)
     return case_id
 
 

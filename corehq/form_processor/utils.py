@@ -20,21 +20,16 @@ def to_generic(fn):
     def _wrap(obj):
         if hasattr(obj, 'to_generic'):
             return obj.to_generic()
+        elif isinstance(obj, (list, tuple)):
+            return [_wrap(ob) for ob in obj]
+        elif isinstance(obj, (types.GeneratorType, collections.Iterable)):
+            return (_wrap(ob) for ob in obj)
         else:
             return obj
 
     @functools.wraps(fn)
     def _inner(*args, **kwargs):
         obj = fn(*args, **kwargs)
-        try:
-            return obj.to_generic()
-        except AttributeError:
-            pass
-        if isinstance(obj, (list, tuple)):
-            return [_wrap(ob) for ob in obj]
-        elif isinstance(obj, (types.GeneratorType, collections.Iterable)):
-            return (_wrap(ob) for ob in obj)
-        else:
-            return _wrap(obj)
+        return _wrap(obj)
 
     return _inner
