@@ -104,6 +104,8 @@
             this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
             this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
+            this.analyticsAction = options.analyticsAction !== undefined ? options.analyticsAction : null;
+            this.analyticsLabel = options.analyticsLabel !== undefined ? options.analyticsLabel : '{{ report_type }}';
 
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
@@ -142,6 +144,13 @@
                 that.showWarnings(true);
                 return !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
             };
+            this.buttonHandler = function(){
+                this.columns.push(new PropertyListItem());
+                if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
+                    window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
+                    window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
+                }
+            }
         };
 
         var configForm = function(){
@@ -157,6 +166,7 @@
                 hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
+                analyticsAction: 'Add Filter',
                 propertyHelpText: '{{ filter_property_help_text|escapejs}}',
                 displayHelpText: '{{ filter_display_help_text|escapejs }}',
                 formatHelpText: '{{ filter_format_help_text|escapejs }}'
@@ -164,7 +174,8 @@
             this.columnsList = new propertyList({
                 hasFormatCol: false,
                 initialCols: initialColumns,
-                buttonText: 'Add Column'
+                buttonText: 'Add Column',
+                analyticsAction: 'Add Column'
             });
             this.submitHandler = function(formElement){
                 var isValid = true;

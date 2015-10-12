@@ -61,7 +61,11 @@ class MenuContributor(SuiteContributorByModule):
                         not module.put_in_root and
                         (module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain))
                     ):
-                        command.relevant = interpolate_xpath(form.form_filter, case)
+                        fixture_xpath = (
+                            session_var(id_strings.fixture_session_var(module)) if module.fixture_select.active
+                            else None
+                        )
+                        command.relevant = interpolate_xpath(form.form_filter, case, fixture_xpath)
 
                     if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
                         # If there is a schedule and another filter condition, disregard it...

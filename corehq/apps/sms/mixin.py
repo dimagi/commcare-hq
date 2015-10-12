@@ -555,7 +555,7 @@ def apply_leniency(contact_phone_number):
     if isinstance(contact_phone_number, (int, long, Decimal)):
         contact_phone_number = str(contact_phone_number)
     if isinstance(contact_phone_number, basestring):
-        chars = re.compile(r"(\s|-|\.)+")
+        chars = re.compile(r"[()\s\-.]+")
         contact_phone_number = chars.sub("", contact_phone_number)
         contact_phone_number = strip_plus(contact_phone_number)
     else:

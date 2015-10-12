@@ -43,8 +43,8 @@ def delete_docs(target_db, doc_id_rev_pairs):
 
 class ContinuousReplicator(object):
     def __init__(self, source_db, target_db, doc_types,
-                 max_changes_before_commit=10000,
-                 max_time_before_commit=datetime.timedelta(hours=1)):
+                 max_changes_before_commit=100,
+                 max_time_before_commit=datetime.timedelta(seconds=5)):
         self.source_db = source_db
         self.target_db = target_db
         self.doc_types = doc_types
@@ -78,5 +78,5 @@ class ContinuousReplicator(object):
         return datetime.datetime.utcnow() - self._last_commit_time
 
     def should_commit(self):
-        return (self._uncommitted_changes_count < self.max_changes_before_commit or
-                self._get_time_since_last_commit < self.max_time_before_commit)
+        return (self._uncommitted_changes_count > self.max_changes_before_commit or
+                self._get_time_since_last_commit > self.max_time_before_commit)

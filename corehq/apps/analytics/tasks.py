@@ -1,12 +1,17 @@
-from celery.task import task
+from celery.schedules import crontab
+from celery.task import task, periodic_task
+import sys
+from corehq.apps.es.forms import FormES
+from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import json
 import requests
 import urllib
 import KISSmetrics
 
 from django.conf import settings
+from corehq.util.soft_assert import soft_assert
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -22,22 +27,55 @@ def _track_on_hubspot(webuser, properties):
     Note that property names must exist on hubspot prior to use.
     """
     # Note: Hubspot recommends OAuth instead of api key
-    # TODO: Use batch requests / be mindful of rate limit
 
+    _hubspot_post(
+        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            urllib.quote(webuser.get_email())
+        ),
+        data=json.dumps(
+            {'properties': [
+                {'property': k, 'value': v} for k, v in properties.items()
+            ]}
+        ),
+    )
+
+
+def _batch_track_on_hubspot(users_json):
+    """
+    Update or create contacts on hubspot in a batch request to prevent exceeding api rate limit
+
+    :param users_json: Json that matches the hubspot api format
+    [
+        {
+            "email": "testingapis@hubspot.com", #This can also be vid
+            "properties": [
+                {
+                    "property": "firstname",
+                    "value": "Codey"
+                },
+            ]
+        },
+    ]
+    :return:
+    """
+    _hubspot_post(url=u'https://api.hubapi.com/contacts/v1/contact/batch/', data=users_json)
+
+
+def _hubspot_post(url, data):
+    """
+    Lightweight wrapper to add hubspot api key and post data if the HUBSPOT_API_KEY is defined
+    :param url: url to post to
+    :param data: json data payload
+    :return:
+    """
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
         req = requests.post(
-            u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-                urllib.quote(webuser.username)
-            ),
+            url,
             params={'hapikey': api_key},
-            data=json.dumps(
-                {'properties': [
-                    {'property': k, 'value': v} for k, v in properties.items()
-                ]}
-            ),
+            data=data
         )
-        req.raise_for_status()
+        req.raise_for_status
 
 
 def _get_user_hubspot_id(webuser):
@@ -163,3 +201,72 @@ def identify(email, properties):
         km = KISSmetrics.Client(key=api_key)
         km.set(email, properties)
         # TODO: Consider adding some error handling for bad/failed requests.
+
+
+@periodic_task(run_every=crontab(minute="0", hour="2"), queue='background_queue')
+def track_periodic_data():
+    """
+    Sync data that is neither event or page based with hubspot/Kissmetrics
+    :return:
+    """
+    start_time = datetime.now()
+    # Start by getting a list of web users mapped to their domains
+    six_months_ago = date.today() - timedelta(days=180)
+    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
+                               .run().hits
+    # users_to_domains is a list of dicts
+    time_users_to_domains_query = datetime.now()
+    domains_to_forms = FormES().terms_facet('domain', 'domain').size(0).run().facets.domain.counts_by_term()
+    time_domains_to_forms_query = datetime.now()
+    domains_to_mobile_users = UserES().mobile_users().terms_facet('domain', 'domain').size(0).run()\
+                                      .facets.domain.counts_by_term()
+    time_domains_to_mobile_users_query = datetime.now()
+
+    # For each web user, iterate through their domains and select the max number of form submissions and
+    # max number of mobile workers
+    submit = []
+    for user in users_to_domains:
+        email = user['email']
+        max_forms = 0
+        max_workers = 0
+
+        for domain in user['domains']:
+            if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
+                max_forms = domains_to_forms[domain]
+            if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
+                max_workers = domains_to_mobile_users[domain]
+
+        user_json = {
+            'email': email,
+            'properties': [
+                {
+                    'property': 'max_form_submissions_in_a_domain',
+                    'value': max_forms
+                },
+                {
+                    'property': 'max_mobile_workers_in_a_domain',
+                    'value': max_workers
+                }
+            ]
+        }
+        submit.append(user_json)
+
+    end_time = datetime.now()
+    submit_json = json.dumps(submit)
+
+    processing_time = end_time - start_time
+    _soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
+    #TODO: Update this soft assert to only trigger if the timing is longer than a threshold
+    msg = 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, ' \
+          'domains_to_mobile_workers: {}, end: {}, size of string post to hubspot (bytes): {}'\
+        .format(
+            start_time,
+            time_users_to_domains_query,
+            time_domains_to_forms_query,
+            time_domains_to_mobile_users_query,
+            end_time,
+            sys.getsizeof(submit_json)
+        )
+    _soft_assert(processing_time.seconds > 10, msg)
+
+    _batch_track_on_hubspot(submit_json)

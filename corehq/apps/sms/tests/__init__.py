@@ -7,7 +7,8 @@ from .test_all_backends import *
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name
-from corehq.apps.sms.mixin import SMSBackend, BadSMSConfigException, MobileBackend
+from corehq.apps.sms.mixin import (SMSBackend, BadSMSConfigException,
+    MobileBackend, apply_leniency)
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.sms.util import get_contact
 from corehq.apps.sms.tests.util import BaseSMSTest
@@ -465,7 +466,7 @@ class BackendTestCase(BaseSMSTest):
         self.assertEqual(prev_num_users, current_num_users)
 
 
-class TestContactLookup(TestCase):
+class TestUtilFunctions(TestCase):
     def setUp(self):
         self.case = CommCareCase(domain='test-domain', name='test-case')
         self.case.save()
@@ -487,6 +488,11 @@ class TestContactLookup(TestCase):
             pass
         else:
             self.assertTrue(False)
+
+    def test_apply_leniency(self):
+        self.assertEqual('16175551234', apply_leniency(' 1 (617) 555-1234 '))
+        self.assertEqual('16175551234', apply_leniency(' 1.617.555.1234 '))
+        self.assertEqual('16175551234', apply_leniency(' +1 617 555 1234 '))
 
     def tearDown(self):
         self.case.delete()

@@ -10,14 +10,17 @@ from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import StockState, StockTransactionHelper
 from corehq.apps.commtrack.sms import process
+from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
-from custom.ewsghana.forms import InputStockForm
-from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
+from custom.ewsghana.forms import InputStockForm, EWSUserSettings
+from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
@@ -27,9 +30,9 @@ from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
 from custom.logistics.tasks import stock_data_task
-from custom.logistics.views import BaseConfigView, BaseRemindersTester
+from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
-from dimagi.utils.web import json_handler
+from dimagi.utils.web import json_handler, json_response
 
 
 class EWSGlobalStats(GlobalStats):
@@ -153,6 +156,41 @@ class InputStockView(BaseDomainView):
         return context
 
 
+class EWSUserExtensionView(BaseCommTrackManageView):
+
+    template_name = 'ewsghana/user_extension.html'
+
+    @property
+    def page_context(self):
+        page_context = super(EWSUserExtensionView, self).page_context
+        user_id = self.kwargs['user_id']
+
+        try:
+            extension = EWSExtension.objects.get(domain=self.domain, user_id=user_id)
+            sms_notifications = extension.sms_notifications
+            facility = extension.location_id
+        except EWSExtension.DoesNotExist:
+            sms_notifications = None
+            facility = None
+
+        page_context['form'] = EWSUserSettings(user_id=user_id, domain=self.domain, initial={
+            'sms_notifications': sms_notifications, 'facility': facility
+        })
+        page_context['couch_user'] = self.web_user
+        return page_context
+
+    @property
+    def web_user(self):
+        return WebUser.get(docid=self.kwargs['user_id'])
+
+    def post(self, request, *args, **kwargs):
+        form = EWSUserSettings(request.POST, user_id=kwargs['user_id'], domain=self.domain)
+        if form.is_valid():
+            form.save(self.web_user, self.domain)
+            messages.add_message(request, messages.SUCCESS, 'Settings updated successfully!')
+        return self.get(request, *args, **kwargs)
+
+
 @domain_admin_required
 @require_POST
 def sync_ewsghana(request, domain):
@@ -267,3 +305,40 @@ def configure_in_charge(request, domain):
         FacilityInCharge.objects.get_or_create(user_id=user_id, location=location)
     FacilityInCharge.objects.filter(location=location).exclude(user_id__in=in_charge_ids).delete()
     return HttpResponse('OK')
+
+
+def loc_to_payload(loc):
+    return {'id': loc.location_id, 'name': loc.display_name}
+
+
+@locations_access_required
+def non_administrative_locations_for_select2(request, domain):
+    id = request.GET.get('id')
+    query = request.GET.get('name', '').lower()
+    if id:
+        try:
+            loc = SQLLocation.objects.get(location_id=id)
+            if loc.domain != domain:
+                raise SQLLocation.DoesNotExist()
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'no location with id %s found' % id},
+                status_code=404,
+            )
+        else:
+            return json_response(loc_to_payload(loc))
+
+    locs = []
+    user = request.couch_user
+
+    user_loc = user.get_sql_location(domain)
+
+    if user_can_edit_any_location(user, request.project):
+        locs = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
+    elif user_loc:
+        locs = user_loc.get_descendants(include_self=True, location_type__administrative=False)
+
+    if locs != [] and query:
+        locs = locs.filter(name__icontains=query)
+
+    return json_response(map(loc_to_payload, locs[:10]))
