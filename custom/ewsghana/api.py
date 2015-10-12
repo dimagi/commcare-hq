@@ -3,7 +3,9 @@ from django.core.validators import validate_email
 import requests
 from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
     get_supply_point_case_by_domain_external_id
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.sms.mixin import MobileBackend, apply_leniency
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from dimagi.utils.dates import force_to_datetime
@@ -194,6 +196,12 @@ class EWSApi(APISynchronization):
             ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
             ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
         ]
+
+    def set_default_backend(self):
+        domain_object = Domain.get_by_name(self.domain)
+        domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
+        domain_object.send_to_duplicated_case_numbers = True
+        domain_object.save()
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:
@@ -594,10 +602,7 @@ class EWSApi(APISynchronization):
             self._set_program(user, ews_webuser.program)
 
         if ews_webuser.contact:
-            contact = self.sms_user_sync(ews_webuser.contact)
-            if sql_location:
-                contact.set_location(sql_location.couch_location)
-                contact.save()
+            user.phone_numbers = map(apply_leniency, ews_webuser.contact.phone_numbers)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
