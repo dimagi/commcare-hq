@@ -171,12 +171,14 @@ var CaseConfig = (function () {
                     $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
                                  .on('change', 'select, input[type="hidden"]', self.usercaseChange)
                                  .on('click', 'a', self.usercaseChange);
+                    self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
                 } else {
                     $usercaseMgmt.find('input').prop('disabled', true);
                     $usercaseMgmt.find('select').prop('disabled', true);
                     $usercaseMgmt.find('a').off('click');
+                    // Remove "Load properties" / "Save properties" link
+                    _.each($usercaseMgmt.find('.firstProperty'), function (elem) { elem.remove(); });
                 }
-                self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding($usercaseMgmt);
             });
 
