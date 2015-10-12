@@ -116,6 +116,7 @@ def get_writer(format):
             Format.XLS: writers.Excel2003ExportWriter,
             Format.XLS_2007: writers.Excel2007ExportWriter,
             Format.UNZIPPED_CSV: writers.UnzippedCsvExportWriter,
+            Format.PYTHON_DICT: writers.PythonDictWriter,
             Format.CDISC_ODM: writers.CdiscOdmExportWriter,
         }[format]()
     except KeyError:
