@@ -22,8 +22,7 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 import phonelog.reports as phonelog
-from corehq.apps.reports.commtrack import standard as commtrack_reports
-from corehq.apps.reports.commtrack import maps as commtrack_maps
+from corehq.apps.reports import commtrack
 from corehq.apps.reports.commconnect import system_overview
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
@@ -47,7 +46,6 @@ from corehq.apps.accounting.interface import (
     PaymentRecordInterface,
 )
 from corehq.apps.reports.standard.domains import OrgDomainStatsReport
-from corehq.apps.appstore.interfaces import CommCareExchangeAdvanced
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -89,12 +87,13 @@ def REPORTS(project):
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("CommCare Supply"), (
-            commtrack_reports.SimplifiedInventoryReport,
-            commtrack_reports.InventoryReport,
-            commtrack_reports.CurrentStockStatusReport,
-            commtrack_maps.StockStatusMapReport,
-            commtrack_reports.ReportingRatesReport,
-            commtrack_maps.ReportingStatusMapReport,
+            commtrack.SimplifiedInventoryReport,
+            commtrack.InventoryReport,
+            commtrack.CurrentStockStatusReport,
+            commtrack.StockStatusMapReport,
+            commtrack.ReportingRatesReport,
+            commtrack.ReportingStatusMapReport,
+            commtrack.LedgersByLocationReport,
         )))
 
     if project.has_careplan:
@@ -284,13 +283,6 @@ SMS_ADMIN_INTERFACES = (
     (_("SMS Billing Administration"), (
         SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface,
-    )),
-)
-
-
-APPSTORE_INTERFACES = (
-    (_('App Store'), (
-        CommCareExchangeAdvanced,
     )),
 )
 
