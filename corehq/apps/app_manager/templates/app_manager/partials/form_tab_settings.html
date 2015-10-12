@@ -10,6 +10,18 @@
                 {% input_trans form.name langs %}
             </div>
         </div>
+        <div class="control-group">
+            <label class="control-label" for="comment-id">
+                {% trans "Comment" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Comment" %}"
+                      data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
+                ></span>
+            </label>
+            <div id="form-comment" class="controls">
+                <textarea id="comment-id" name="comment" rows="9">{{ form.comment }}</textarea>
+            </div>
+        </div>
 
         <legend>
         <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
@@ -82,5 +94,6 @@
             </div>
             {% endif %}
         </div>
+
     </form>
 </div>
