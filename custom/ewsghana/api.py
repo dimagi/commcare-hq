@@ -4,7 +4,7 @@ import requests
 from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
     get_supply_point_case_by_domain_external_id
 from corehq.apps.products.models import SQLProduct
-from custom.ewsghana.models import FacilityInCharge
+from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
@@ -546,6 +546,25 @@ class EWSApi(APISynchronization):
             dm = web_user.get_domain_membership(self.domain)
             dm.program_id = program.get_id
 
+    def _set_extension(self, web_user, supply_point_id, sms_notifications):
+        extension, _ = EWSExtension.objects.get_or_create(
+            domain=self.domain,
+            user_id=web_user.get_id,
+        )
+        supply_point = None
+        location_id = None
+
+        if supply_point_id:
+            supply_point = get_supply_point_case_by_domain_external_id(self.domain, supply_point_id)
+
+        if supply_point:
+            location_id = supply_point.location_id
+
+        if location_id != extension.location_id or sms_notifications != extension.sms_notifications:
+            extension.location_id = location_id
+            extension.sms_notifications = sms_notifications
+            extension.save()
+
     def web_user_sync(self, ews_webuser):
         username = ews_webuser.email.lower()
         if not username:
@@ -563,7 +582,6 @@ class EWSApi(APISynchronization):
             'date_joined': force_to_datetime(ews_webuser.date_joined),
             'password_hashed': True,
         }
-        sql_location = None
         location_id = None
         if ews_webuser.location:
             try:
@@ -593,11 +611,7 @@ class EWSApi(APISynchronization):
         if ews_webuser.program:
             self._set_program(user, ews_webuser.program)
 
-        if ews_webuser.contact:
-            contact = self.sms_user_sync(ews_webuser.contact)
-            if sql_location:
-                contact.set_location(sql_location.couch_location)
-                contact.save()
+        self._set_extension(user, ews_webuser.supply_point, ews_webuser.sms_notifications)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
@@ -607,7 +621,6 @@ class EWSApi(APISynchronization):
             if ews_webuser.supply_point:
                 supply_point = get_supply_point_case_by_domain_external_id(self.domain, ews_webuser.supply_point)
                 if supply_point:
-                    dm.location_id = supply_point.location_id
                     dm.role_id = UserRole.by_domain_and_name(self.domain, 'Web Reporter')[0].get_id
                 else:
                     dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id

@@ -29,7 +29,7 @@ def dot_interpolate(string, replacement):
     return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
 
 
-def interpolate_xpath(string, case_xpath=None):
+def interpolate_xpath(string, case_xpath=None, fixture_xpath=None):
     """
     Replace xpath shortcuts with full value.
     """
@@ -45,6 +45,9 @@ def interpolate_xpath(string, case_xpath=None):
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),
     }
+    if fixture_xpath:
+        replacements['$fixture_value'] = fixture_xpath
+
     if case_xpath:
         replacements['#case'] = case_xpath
         replacements['#parent'] = CaseIDXPath(case_xpath + '/index/parent').case()

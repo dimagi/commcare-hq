@@ -16,7 +16,7 @@ from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
     SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
-    InvoiceBaseManager, SMALL_INVOICE_THRESHOLD,
+    InvoiceBaseManager, SMALL_INVOICE_THRESHOLD, Subscription
 )
 
 
@@ -134,6 +134,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
+        Subscription.objects.all().delete()
         subscription_length = 5  # months
         plan = DefaultProductPlan.objects.get(
             edition=SoftwarePlanEdition.STANDARD,
@@ -157,6 +158,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_date_due_set_large_invoice(self):
         """Date Due only gets set for a large invoice (> $100)"""
+        Subscription.objects.all().delete()
         subscription_length = 5  # months
         plan = DefaultProductPlan.objects.get(
             edition=SoftwarePlanEdition.ADVANCED,
@@ -180,6 +182,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
     def test_date_due_gets_set_autopay(self):
         """Date due always gets set for autopay """
+        Subscription.objects.all().delete()
         subscription_length = 4
         plan = DefaultProductPlan.objects.get(
             edition=SoftwarePlanEdition.STANDARD,

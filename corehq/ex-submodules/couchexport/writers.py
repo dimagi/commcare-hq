@@ -136,6 +136,7 @@ class HtmlFileWriter(PartialHtmlFileWriter):
 
 class ExportWriter(object):
     max_table_name_size = 500
+    target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
     def open(self, header_table, file, max_column_size=2000, table_titles=None):
         """
@@ -491,3 +492,47 @@ class ZippedHtmlExportWriter(ZippedExportWriter):
     writer_class = HtmlFileWriter
     table_file_extension = ".html"
 
+
+class CdiscOdmExportWriter(InMemoryExportWriter):
+    """
+    Write tables to a single CDISC ODM-formatted XML file.
+    """
+    target_app = 'OpenClinica'  # Export button to say "Export to OpenClinica"
+
+    def _init(self):
+        from custom.openclinica.utils import get_study_constant
+
+        # We don't need to keep track of tables because we only have two: "study" contains context, and
+        # "subjects" of which each row is a study subject. Initialise template context instead of tables.
+        self.context = {
+            'subjects': [],
+            # The template accepts XML strings in params "study_xml" and "admin_data_xml" which are
+            # study-specific. We parse these from the study metadata, which, for this first OpenClinica
+            # project, is stored in custom/openclinica/study_metadata.xml. In future projects we will need to store
+            # study metadata for each domain that uses OpenClinica integration.
+            'study_xml': get_study_constant(domain=None, name='study_xml'),
+            'admin_data_xml': get_study_constant(domain=None, name='admin_data_xml'),
+        }
+        # We'll keep the keys from the header rows of both tables, so that we can zip them up with the rest of the
+        # rows to create dictionaries for the ODM XML template
+        self.study_keys = []
+        self.subject_keys = []
+
+    def _init_table(self, table_index, table_title):
+        pass
+
+    def _write_row(self, sheet_index, row):
+        if sheet_index == 'study':
+            if not self.study_keys:
+                self.study_keys = row
+            else:
+                # This will give us the study constants. The template needs "study_oid" and file metadata
+                self.context.update(dict(zip(self.study_keys, row)))
+        else:
+            if not self.subject_keys:
+                self.subject_keys = row
+            else:
+                self.context['subjects'].append(dict(zip(self.subject_keys, row)))
+
+    def _close(self):
+        self.file.write(render_to_string('couchexport/odm_export.xml', self.context))

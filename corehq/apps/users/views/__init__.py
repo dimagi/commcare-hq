@@ -119,7 +119,8 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
             user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
             if user:
                 if user.has_permission(self.domain, 'edit_commcare_users'):
-                    redirect = reverse("commcare_users", args=[self.domain])
+                    from corehq.apps.users.views.mobile import MobileWorkerListView
+                    redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
                     redirect = reverse(
                         ListWebUsersView.urlname,

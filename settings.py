@@ -28,6 +28,9 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(__file__)
+
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 try:
@@ -370,6 +373,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
+    'custom.openclinica',
     'custom.guinea_backup',
 
     # tests only
@@ -1504,7 +1508,9 @@ DOMAIN_MODULE_MAP = {
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'tdhtesting': 'custom.tdh',
-    'rec': 'custom.tdh'
+    'rec': 'custom.tdh',
+    'kemri': 'custom.openclinica',
+    'novartis': 'custom.openclinica',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
