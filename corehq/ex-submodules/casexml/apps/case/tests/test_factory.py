@@ -1,5 +1,6 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from casexml.apps.case.models import CommCareCase
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
@@ -29,24 +30,26 @@ class CaseStructureTest(SimpleTestCase):
             ]
         )
         self.assertEqual(
-            {CaseIndex.DEFAULT_RELATIONSHIP: (CaseIndex.DEFAULT_RELATED_CASE_TYPE, parent_case_id,
-                                              CaseIndex.DEFAULT_RELATIONSHIP)},
+            {DEFAULT_CASE_INDEX_IDENTIFIERS[CaseIndex.DEFAULT_RELATIONSHIP]:
+             (CaseIndex.DEFAULT_RELATED_CASE_TYPE, parent_case_id,
+              CaseIndex.DEFAULT_RELATIONSHIP)},
             structure.index,
         )
 
     def test_multiple_indices(self):
         indices = [
-            ('mother_case_id', 'mother', 'mother_type'),
-            ('father_case_id', 'father', 'father_type'),
+            ('mother_case_id', 'parent', 'mother_type', 'mother'),
+            ('father_case_id', 'parent', 'father_type', 'father'),
         ]
         structure = CaseStructure(
             indices=[
-                CaseIndex(CaseStructure(case_id=i[0]), relationship=i[1], related_type=i[2])
+                CaseIndex(CaseStructure(case_id=i[0]), relationship=i[1], related_type=i[2],
+                          identifier=i[3])
                 for i in indices
             ]
         )
         self.assertEqual(
-            {i[1]: (i[2], i[0], i[1]) for i in indices},
+            {i[3]: (i[2], i[0], i[1]) for i in indices},
             structure.index,
         )
 
