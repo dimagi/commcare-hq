@@ -1,10 +1,8 @@
 import os
 from django.test.utils import override_settings
 from django.test import TestCase
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
 from corehq.form_processor.interfaces import FormProcessorInterface
-from couchforms.tests.testutils import post_xform_to_couch
 
 
 def post_util(**kwargs):
@@ -26,7 +24,7 @@ class OutOfOrderCaseTest(TestCase):
         for fname in ('create_oo.xml', 'update_oo.xml'):
             with open(os.path.join(dir, fname), "rb") as f:
                 xml_data = f.read()
-            forms.append(post_xform_to_couch(xml_data))
+            forms.append(FormProcessorInterface.post_xform(xml_data))
 
         [create, update] = forms
 

@@ -1,4 +1,5 @@
 import datetime
+import re
 from dimagi.ext.jsonobject import (
     JsonObject,
     StringProperty,
@@ -193,3 +194,18 @@ class GenericCommCareCase(JsonObject):
     def reverse_indices(self):
         from corehq.form_processor.interfaces import FormProcessorInterface
         return FormProcessorInterface.get_reverse_indices(self.domain, self.id)
+
+    def dynamic_case_properties(self):
+        """(key, value) tuples sorted by key"""
+        from jsonobject.base import get_dynamic_properties
+        json = self.to_json()
+        wrapped_case = self
+        if type(self) != GenericCommCareCase:
+            wrapped_case = GenericCommCareCase.wrap(self._doc)
+
+        # should these be removed before converting to generic?
+        exclude = ['computed_modified_on_', 'computed_', 'doc_type', 'initial_processing_complete']
+        return sorted([
+            (key, json[key]) for key in get_dynamic_properties(wrapped_case)
+            if re.search(r'^[a-zA-Z]', key) and key not in exclude
+        ])

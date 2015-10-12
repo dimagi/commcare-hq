@@ -5,7 +5,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.form_processor.interfaces import FormProcessorInterface
-from couchforms.tests.testutils import post_xform_to_couch
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -24,7 +23,7 @@ class CaseExclusionTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "exclusion", "device_report.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         self.assertEqual(0, get_total_case_count())
         
@@ -35,7 +34,7 @@ class CaseExclusionTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "exclusion", "nested_device_report.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         self.assertEqual(1, get_total_case_count())
         case = CommCareCase.get("case_in_form")

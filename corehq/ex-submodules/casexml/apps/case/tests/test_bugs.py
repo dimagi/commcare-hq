@@ -13,7 +13,6 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces import FormProcessorInterface
 from corehq.form_processor.generic import GenericCommCareCase, GenericCommCareCaseIndex
-from couchforms.tests.testutils import post_xform_to_couch
 
 
 class SimpleCaseBugTests(SimpleTestCase):
@@ -49,7 +48,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         Ensure that logging string formats correctly
         """
         xml_data = self.get_xml('string_formatting')
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         # before the bug was fixed this call failed
         FormProcessorInterface.process_cases(form)
 

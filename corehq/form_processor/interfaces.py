@@ -165,8 +165,10 @@ class FormProcessorInterface(object):
 
     @classmethod
     @to_generic
-    def process_cases(cls, xform_generic, config=None):
+    def process_cases(cls, xform_generic, config=None, override_sync_token=None):
         xform = cls._get_xform(xform_generic.id)
+        if override_sync_token:
+            xform.last_sync_token = override_sync_token
         return process_cases(xform, config)
 
     @classmethod

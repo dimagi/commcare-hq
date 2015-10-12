@@ -2,20 +2,16 @@ import os
 import uuid
 from datetime import datetime
 from xml.etree import ElementTree
-from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces import FormProcessorInterface
 from corehq.util.test_utils import unit_testing_only
 
-from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.dates import utcnow_sans_milliseconds
 from lxml import etree
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
-from couchforms.tests.testutils import post_xform_to_couch
-from couchforms.models import XFormInstance
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.case.util import post_case_blocks
 
@@ -76,7 +72,7 @@ def _replace_ids_and_post(xml_data, case_id_override=None):
 
     xml_data = xml_data.replace("REPLACE_UID", uid)
     xml_data = xml_data.replace("REPLACE_CASEID", case_id)
-    doc = post_xform_to_couch(xml_data)
+    doc = FormProcessorInterface.post_xform(xml_data)
     return (doc, uid, case_id)
 
 

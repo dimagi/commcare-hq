@@ -9,16 +9,14 @@ from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, gen
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces import FormProcessorInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
-from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
-from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
@@ -75,11 +73,9 @@ class SyncBaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         
-        # set last sync token on the form before saving
-        form.last_sync_token = token_id
-        process_cases(form)
+        FormProcessorInterface.process_cases(form, override_sync_token=token_id)
         return form
 
     def _postFakeWithSyncToken(self, caseblocks, token_id):
@@ -1313,7 +1309,7 @@ class MultiUserSyncTest(SyncBaseTest):
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
-            form = XFormInstance.get(form.get_id)
+            form = FormProcessorInterface.get_xform(form.id)
             self.assertFalse(hasattr(form, "problem"))
             synclog_from_restore_payload(
                 generate_restore_payload(self.project, self.user, version="2.0")

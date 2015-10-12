@@ -3,7 +3,6 @@ import os
 from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces import FormProcessorInterface
-from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from datetime import datetime
 from casexml.apps.case.util import post_case_blocks
@@ -30,7 +29,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertFalse(case.closed)
@@ -52,7 +51,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertFalse(case.closed)
@@ -71,7 +70,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertFalse(case.closed)
@@ -89,7 +88,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertTrue(case.closed)
@@ -100,7 +99,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         case = CommCareCase.get("14cc2770-2d1c-49c2-b252-22d6ecce385a")
         self.assertFalse(case.closed)
@@ -126,7 +125,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         FormProcessorInterface.process_cases(form)
         case = CommCareCase.get("foo-case-id")
         self.assertEqual(2, len(case.indices))
