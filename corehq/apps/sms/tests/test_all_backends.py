@@ -27,8 +27,32 @@ class AllBackendTest(BaseSMSTest):
         self.create_account_and_subscription(self.domain_obj.name)
         self.domain_obj = Domain.get(self.domain_obj._id)
 
+        self.unicel_backend = UnicelBackend(name='UNICEL', is_global=True)
+        self.unicel_backend.save()
+
+        self.mach_backend = MachBackend(name='MACH', is_global=True)
+        self.mach_backend.save()
+
+        self.tropo_backend = TropoBackend(name='TROPO', is_global=True)
+        self.tropo_backend.save()
+
+        self.http_backend = HttpBackend(name='HTTP', is_global=True)
+        self.http_backend.save()
+
+        self.telerivet_backend = TelerivetBackend(name='TELERIVET', is_global=True)
+        self.telerivet_backend.save()
+
+        self.test_backend = TestSMSBackend(name='TEST', is_global=True)
+        self.test_backend.save()
+
+        self.grapevine_backend = GrapevineBackend(name='GRAPEVINE', is_global=True)
+        self.grapevine_backend.save()
+
         self.twilio_backend = TwilioBackend(name='TWILIO', is_global=True)
         self.twilio_backend.save()
+
+        self.megamobile_backend = MegamobileBackend(name='MEGAMOBILE', is_global=True)
+        self.megamobile_backend.save()
 
     def _test_outbound_backend(self, backend, msg_text):
         from corehq.apps.sms.tests import BackendInvocationDoc
@@ -47,10 +71,26 @@ class AllBackendTest(BaseSMSTest):
         self.assertIsNotNone(invoke_doc)
 
     def test_outbound_sms(self):
+        self._test_outbound_backend(self.unicel_backend, 'unicel test')
+        self._test_outbound_backend(self.mach_backend, 'mach test')
+        self._test_outbound_backend(self.tropo_backend, 'tropo test')
+        self._test_outbound_backend(self.http_backend, 'http test')
+        self._test_outbound_backend(self.telerivet_backend, 'telerivet test')
+        self._test_outbound_backend(self.test_backend, 'test test')
+        self._test_outbound_backend(self.grapevine_backend, 'grapevine test')
         self._test_outbound_backend(self.twilio_backend, 'twilio test')
+        self._test_outbound_backend(self.megamobile_backend, 'megamobile test')
 
     def tearDown(self):
         backend_api.TEST = False
         self.domain_obj.delete()
+        self.unicel_backend.delete()
+        self.mach_backend.delete()
+        self.tropo_backend.delete()
+        self.http_backend.delete()
+        self.telerivet_backend.delete()
+        self.test_backend.delete()
+        self.grapevine_backend.delete()
         self.twilio_backend.delete()
+        self.megamobile_backend.delete()
         super(AllBackendTest, self).tearDown()
