@@ -717,6 +717,26 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 }
 ```
 
+### AggregateDateColumn
+
+AggregateDate columns aggregate data by month over a given date field. The have a type of `"aggregate_date"`. They also have a `"display"` property that specifies the header for the column of aggregated dates. Here's an example of a aggregate date column that shows number of women who have danger signs per month.
+
+```
+{
+  "type": "aggregate_date",
+  "column_id": "received_on",
+  "display": "Danger Signs by month",
+  "format": "default",
+  "field": "received_on"
+},
+{
+  "type": "expanded",
+  "column_id", "has_danger_signs",
+  "field": "has_danger_signs",
+  "format": "default"
+}
+```
+
 #### Formats
 
 The following percentage formats are supported.
