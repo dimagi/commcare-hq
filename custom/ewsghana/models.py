@@ -1,6 +1,9 @@
 from django.dispatch import receiver
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.users.models import WebUser
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from custom.utils.utils import add_to_module_map
 from casexml.apps.stock.models import DocDomainMapping
@@ -77,6 +80,26 @@ class FacilityInCharge(models.Model):
 
     class Meta:
         app_label = 'ewsghana'
+
+
+class EWSExtension(models.Model):
+    user_id = models.CharField(max_length=128, db_index=True)
+    domain = models.CharField(max_length=128)
+    location_id = models.CharField(max_length=128, null=True, db_index=True)
+    sms_notifications = models.BooleanField(default=False)
+
+    @property
+    def web_user(self):
+        return WebUser.get(self.user_id)
+
+    @property
+    def verified_number(self):
+        return VerifiedNumber.by_phone(self.phone_number)
+
+    @property
+    def domain_object(self):
+        return Domain.get_by_name(self.domain)
+
 
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):

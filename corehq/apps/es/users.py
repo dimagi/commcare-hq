@@ -43,6 +43,7 @@ class UserES(HQESQuery):
             web_users,
             user_ids,
             location,
+            last_logged_in,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -97,6 +98,10 @@ def demo_users():
 
 def created(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('created_on', gt, gte, lt, lte)
+
+
+def last_logged_in(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('last_login', gt, gte, lt, lte)
 
 
 def user_ids(user_ids):

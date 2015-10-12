@@ -17,7 +17,7 @@
         <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
             <p>
                 <input type="text" data-bind="value: keyValuePair[0]">
-                -->
+                <i class="icon-arrow-right"></i>
                 <input type="text" data-bind="value: keyValuePair[1]">
             </p>
         </div>
@@ -33,7 +33,7 @@
             <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
                 <p>
                     <input type="text" data-bind="value: keyValuePair[0]">
-                    -->
+                    <i class="icon-arrow-right"></i>
                     <input type="text" data-bind="value: keyValuePair[1]">
                 </p>
             </div>
