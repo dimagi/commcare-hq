@@ -193,7 +193,7 @@ class TestNewSyncSpecifics(TestCase):
                 attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship='parent',
+                    relationship='child',
                     related_type='parent',
                 )],
             )
