@@ -76,7 +76,11 @@ def register_user(request, domain_type=None):
                     'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
                     'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
                 }  # request.META can't be pickled for use by the task, so we copy the pertinent properties
-                track_created_hq_account_on_hubspot.delay(CouchUser.get_by_username(new_user.username), request.COOKIES, meta)
+                track_created_hq_account_on_hubspot.delay(
+                    CouchUser.get_by_username(new_user.username),
+                    request.COOKIES,
+                    meta
+                )
                 track_workflow(new_user.email, "Requested new account")
 
                 login(request, new_user)
