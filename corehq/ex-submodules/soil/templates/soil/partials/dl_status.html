@@ -21,6 +21,7 @@
             </p>
         {% endif %}
         <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">
+            <input type="hidden" name="dropbox-next" value="" />
             <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
                 <i class="icon icon-white icon-download-alt"></i>
                 {% trans "Download File Now" %}
@@ -48,6 +49,7 @@
             $(".download-form").submit(function() {
                 $("#dropbox-sync-submit").prop('disabled', true);
             });
+            $('input[name="dropbox-next"]').attr('value', window.location.href);
         {% endif %}
     </script>
     </div>

@@ -5,6 +5,8 @@ from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.es import cases as case_es
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -38,6 +40,14 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     slug = "reassign_cases"
 
     report_template_path = 'data_interfaces/interfaces/case_management.html'
+
+    @property
+    @memoized
+    def es_results(self):
+        query = self._build_query()
+        # FB 183468: Don't allow user cases to be reassigned
+        query = query.NOT(case_es.case_type(USERCASE_TYPE))
+        return query.run().raw
 
     @property
     @memoized

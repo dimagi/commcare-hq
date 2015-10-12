@@ -58,7 +58,7 @@ def _batch_track_on_hubspot(users_json):
     ]
     :return:
     """
-    _hubspot_post(url=u'/contacts/v1/contact/batch/', data=users_json)
+    _hubspot_post(url=u'https://api.hubapi.com/contacts/v1/contact/batch/', data=users_json)
 
 
 def _hubspot_post(url, data):
@@ -76,7 +76,6 @@ def _hubspot_post(url, data):
             data=data
         )
         req.raise_for_status
-
 
 
 def _get_user_hubspot_id(webuser):
@@ -255,6 +254,7 @@ def track_periodic_data():
     end_time = datetime.now()
     submit_json = json.dumps(submit)
 
+    processing_time = end_time - start_time
     _soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
     #TODO: Update this soft assert to only trigger if the timing is longer than a threshold
     msg = 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, ' \
@@ -267,6 +267,6 @@ def track_periodic_data():
             end_time,
             sys.getsizeof(submit_json)
         )
-    _soft_assert(False, msg)
+    _soft_assert(processing_time.seconds > 10, msg)
 
     _batch_track_on_hubspot(submit_json)

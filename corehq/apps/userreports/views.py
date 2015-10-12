@@ -16,6 +16,7 @@ from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
+from corehq.apps.analytics.tasks import track_workflow
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, Form
@@ -239,6 +240,11 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
+            track_workflow(
+                request.user.email,
+                "Successfully submitted the first part of the Report Builder "
+                "wizard where you give your report a name and choose a data source"
+            )
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
             )
@@ -325,6 +331,10 @@ class ConfigureChartReport(ReportBuilderView):
                     return self.get(*args, **kwargs)
             else:
                 report_configuration = self.report_form.create_report()
+                track_workflow(
+                    self.request.user.email,
+                    "Successfully created a new report in the Report Builder"
+                )
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
