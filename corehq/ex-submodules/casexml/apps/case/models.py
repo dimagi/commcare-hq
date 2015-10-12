@@ -230,9 +230,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def from_generic(cls, generic_case):
+        case = cls.wrap(generic_case.to_json())
         if generic_case.id:
-            self['_id'] = generic_case.id
-        return cls.wrap(generic_case.to_json())
+            case['_id'] = generic_case.id
+        return case
 
     def to_full_dict(self):
         """
