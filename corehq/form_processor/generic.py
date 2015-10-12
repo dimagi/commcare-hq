@@ -160,6 +160,7 @@ class GenericCommCareCase(JsonObject):
     representation of the case - the result of playing all
     the actions in sequence.
     """
+    id = StringProperty()
     domain = StringProperty()
     export_tag = ListProperty(unicode)
     xform_ids = ListProperty(unicode)

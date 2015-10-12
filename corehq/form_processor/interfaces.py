@@ -1,11 +1,15 @@
 from couchdbkit import ResourceNotFound
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-from casexml.apps.case.models import CommCareCase
 
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch.database import iter_docs
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xform import process_cases
+from casexml.apps.case.cleanup import safe_hard_delete
 from couchforms.util import process_xform
 from couchforms.models import doc_types, XFormInstance, XFormError
 from couchforms.exceptions import UnexpectedDeletedXForm
 
+from .exceptions import CaseNotFound, XFormNotFound
 from .utils import to_generic
 
 
@@ -46,7 +50,10 @@ class FormProcessorInterface(object):
     @classmethod
     @to_generic
     def get_xform(cls, xform_id):
-        return cls._get_xform(xform_id)
+        try:
+            return cls._get_xform(xform_id)
+        except ResourceNotFound:
+            raise XFormNotFound
 
     @staticmethod
     def _get_xform(xform_id):
@@ -58,10 +65,27 @@ class FormProcessorInterface(object):
             raise UnexpectedDeletedXForm(xform_id)
         raise ResourceNotFound(xform_id)
 
+    @classmethod
+    @to_generic
+    def get_case(cls, case_id):
+        try:
+            return cls._get_case(case_id)
+        except ResourceNotFound:
+            raise CaseNotFound
+
+    @staticmethod
+    def _get_case(case_id):
+        return CommCareCase.get(case_id)
+
     @staticmethod
     @to_generic
-    def get_case(case_id):
-        return CommCareCase.get(case_id)
+    def get_cases(case_ids):
+        return [
+            CommCareCase.wrap(doc) for doc in iter_docs(
+                CommCareCase.get_db(),
+                case_ids
+            )
+        ]
 
     @staticmethod
     @to_generic
@@ -100,3 +124,14 @@ class FormProcessorInterface(object):
             for xform in xforms:
                 xform.save()
             return xforms[0]
+
+    @classmethod
+    @to_generic
+    def process_cases(cls, xform_generic, config=None):
+        xform = cls._get_xform(xform_generic.id)
+        return process_cases(xform, config)
+
+    @classmethod
+    def hard_delete_case(cls, case_generic):
+        case = cls._get_case(case_generic.id)
+        safe_hard_delete(case)

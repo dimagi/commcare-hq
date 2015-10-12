@@ -223,7 +223,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     def to_generic(self):
         from corehq.form_processor.generic import GenericCommCareCase
-        return GenericCommCareCase(self.to_json())
+        generic = GenericCommCareCase(self.to_json())
+        if '_id' in self:
+            generic.id = self['_id']
+        return generic
 
     @classmethod
     def from_generic(cls, generic_case):
