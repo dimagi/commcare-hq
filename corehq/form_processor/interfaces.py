@@ -171,6 +171,7 @@ class FormProcessorInterface(object):
         return process_cases(xform, config)
 
     @staticmethod
+    @to_generic
     def post_case_blocks(case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 

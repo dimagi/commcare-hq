@@ -155,7 +155,6 @@ class IndexTest(TestCase):
         xform, _ = FormProcessorInterface.post_case_blocks([block.as_xml()],
                                     form_extras={'domain': child_domain})
 
-        self.assertIsInstance(xform, XFormError)
         self.assertEqual(xform.doc_type, 'XFormError')
         self.assertIn('IllegalCaseId', xform.problem)
         self.assertIn('Bad case id', xform.problem)
