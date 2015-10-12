@@ -10,9 +10,12 @@
         </div>
         <form class="form form-horizontal hq-form disable-on-submit"
               name="delete_phone_number"
+              {% if user_type == "mobile" %}
               action="{% url "delete_phone_number" domain couch_user.couch_id %}"
+              {% endif %}
               method="POST">
 
+            <input type="hidden" name="form_type" value="delete-phone-number"/>
             <input type="hidden" name="phone_number" value="{{ phone_number.number }}"/>
 
             <div class="modal-body">
@@ -26,7 +29,7 @@
             </div>
         </form>
     </div>
-    {% ifequal phone_number.status "pending" %}
+    {% if user_type == "mobile" and phone_number.status == "pending" %}
         <div id="reverify_{{phone_number.number|urlencode}}" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
@@ -50,5 +53,5 @@
                 </div>
             </form>
         </div>
-    {% endifequal %}
+    {% endif %}
 {% endfor %}
