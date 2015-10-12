@@ -1,6 +1,9 @@
 language: python
 sudo: false
-cache: pip
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/virtualenv
 python:
   - "2.7"
 env:
@@ -26,8 +29,6 @@ addons:
     - libblas-dev
     - liblapack-dev
 install:
-  - "git clone https://github.com/dimagi/commcarehq-venv.git"
-  - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
   - "bash -e scripts/uninstall-requirements.sh"
   # set env variables for couch username/password, used by install.sh, to blank
