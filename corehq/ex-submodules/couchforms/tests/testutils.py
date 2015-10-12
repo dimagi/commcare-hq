@@ -28,4 +28,4 @@ def post_xform_to_couch(instance, attachments=None, process=None,
     with xform_lock as xforms:
         for xform in xforms:
             xform.save()
-        return xforms[0]
+        return xforms[0].to_generic()

@@ -4,8 +4,8 @@ from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
+from corehq.form_processor.interfaces import FormProcessorInterface
 from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case.xform import process_cases
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -25,7 +25,7 @@ class CaseExclusionTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(form)
+        FormProcessorInterface.process_cases(form)
         self.assertEqual(0, get_total_case_count())
         
     def testNestedExclusion(self):
@@ -36,7 +36,7 @@ class CaseExclusionTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
-        process_cases(form)
+        FormProcessorInterface.process_cases(form)
         self.assertEqual(1, get_total_case_count())
         case = CommCareCase.get("case_in_form")
         self.assertEqual("form case", case.name)

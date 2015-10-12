@@ -153,7 +153,7 @@ class CaseBugTest(TestCase, TestFileMixin):
                       version=V2, update={'foo': 'bar'}).as_xml()
         ])
         self.assertEqual('bar', case.foo)
-        case = FormProcessorInterface.update_case_properties(case, doc_type=deleted_doc_type)
+        case = FormProcessorInterface.update_case_properties(case.to_generic(), doc_type=deleted_doc_type)
 
         self.assertEqual(deleted_doc_type, case.doc_type)
         [xform, [case]] = post_case_blocks([

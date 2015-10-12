@@ -12,6 +12,7 @@ from jsonobject.base import DefaultProperty
 
 from casexml.apps.case import const
 from couchforms.jsonobject_extensions import GeoPointProperty
+from dimagi.utils.decorators.memoized import memoized
 
 
 class GenericXFormOperation(JsonObject):
@@ -182,3 +183,9 @@ class GenericCommCareCase(JsonObject):
     indices = ListProperty(GenericCommCareCaseIndex)
     case_attachments = DictProperty(GenericCommCareCaseAttachment)
     server_modified_on = DateTimeProperty()
+
+    @property
+    @memoized
+    def reverse_indices(self):
+        from corehq.form_processor.interfaces import FormProcessorInterface
+        return FormProcessorInterface.get_reverse_indices(self.domain, self.id)

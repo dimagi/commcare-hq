@@ -4,6 +4,7 @@ from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces import FormProcessorInterface
 from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.couch.database import safe_delete
@@ -15,11 +16,8 @@ from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
 from couchforms.tests.testutils import post_xform_to_couch
 from couchforms.models import XFormInstance
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.case.util import post_case_blocks
-from django.conf import settings
 
 
 TEST_DOMAIN_NAME = 'test-domain'
@@ -61,11 +59,11 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     )
     if domain:
         doc.domain = domain
-    process_cases(doc)
-    case = CommCareCase.get(case_id)
+    FormProcessorInterface.process_cases(doc)
+    case = FormProcessorInterface.get_case(case_id)
     test_class.assertLessEqual(starttime, case.server_modified_on)
     test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
-    test_class.assertEqual(case_id, case.case_id)
+    test_class.assertEqual(case_id, case.id)
     return case
 
 
@@ -221,28 +219,16 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
     return case_id
 
 
-def _delete_all(db, viewname):
-    deleted = set()
-    for row in db.view(viewname, reduce=False):
-        doc_id = row['id']
-        if id not in deleted:
-            try:
-                safe_delete(db, doc_id)
-                deleted.add(doc_id)
-            except ResourceNotFound:
-                pass
-
-
 @unit_testing_only
 def delete_all_cases():
-    _delete_all(CommCareCase.get_db(), 'case/get_lite')
+    FormProcessorInterface.delete_all_cases()
 
 
 @unit_testing_only
 def delete_all_xforms():
-    _delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
+    FormProcessorInterface.delete_all_xforms()
 
 
 @unit_testing_only
 def delete_all_sync_logs():
-    _delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
+    FormProcessorInterface.delete_all_sync_logs()

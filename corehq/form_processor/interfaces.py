@@ -1,7 +1,12 @@
 from couchdbkit import ResourceNotFound
+from casexml.apps.case.dbaccessors import get_reverse_indices_for_case_id
+from casexml.apps.case.util import get_case_xform_ids
+from casexml.apps.phone.models import SyncLog
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, safe_delete
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import process_cases
 from casexml.apps.case.cleanup import safe_hard_delete
@@ -95,6 +100,19 @@ class FormProcessorInterface(object):
         ]
 
     @staticmethod
+    def get_cases_in_domain(domain):
+        case_ids = FormProcessorInterface.get_case_ids_in_domain(domain)
+        return FormProcessorInterface.get_cases(case_ids)
+
+    @staticmethod
+    def get_case_ids_in_domain(domain):
+        return get_case_ids_in_domain(domain)
+
+    @staticmethod
+    def get_reverse_indices(domain, case_id):
+        return get_reverse_indices_for_case_id(domain, case_id)
+
+    @staticmethod
     @to_generic
     def get_by_doc_type(domain, doc_type):
         return XFormError.view(
@@ -124,6 +142,10 @@ class FormProcessorInterface(object):
         return case
 
     @staticmethod
+    def get_case_xform_ids_from_couch(case_id):
+        return get_case_xform_ids(case_id)
+
+    @staticmethod
     @to_generic
     def post_xform(instance_xml, attachments=None, process=None, domain='test-domain'):
         """
@@ -151,3 +173,30 @@ class FormProcessorInterface(object):
     def hard_delete_case(cls, case_generic):
         case = cls._get_case(case_generic.id)
         safe_hard_delete(case)
+
+    @classmethod
+    @unit_testing_only
+    def delete_all_cases(cls):
+        cls._delete_all(CommCareCase.get_db(), 'case/get_lite')
+
+    @classmethod
+    @unit_testing_only
+    def delete_all_xforms(cls):
+        cls._delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
+
+    @classmethod
+    @unit_testing_only
+    def delete_all_sync_logs(cls):
+        cls._delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
+
+    @staticmethod
+    def _delete_all(db, viewname):
+        deleted = set()
+        for row in db.view(viewname, reduce=False):
+            doc_id = row['id']
+            if id not in deleted:
+                try:
+                    safe_delete(db, doc_id)
+                    deleted.add(doc_id)
+                except ResourceNotFound:
+                    pass
