@@ -30,7 +30,7 @@ OTHER_USER_ID = "someone_else"
 OTHER_USERNAME = "ferrel"
 SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
-
+CHILD_RELATIONSHIP = "child"
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class SyncBaseTest(TestCase):
@@ -259,8 +259,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
             case_id=child_id,
             indices=[CaseIndex(
                 CaseStructure(case_id=updated_id, attrs={'create': True}),
-                relationship=index_id,
+                relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
+                identifier=index_id,
             )],
         ))
         parent_ref.referenced_id = updated_id
@@ -275,17 +276,18 @@ class SyncTokenUpdateTest(SyncBaseTest):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # add new index
         new_case_id = 'new_case_id'
-        new_index_id = 'new_index_id'
+        new_index_identifier = 'new_index_id'
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
             indices=[CaseIndex(
                 CaseStructure(case_id=new_case_id, attrs={'create': True}),
-                relationship=new_index_id,
+                relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
+                identifier=new_index_identifier,
             )],
         ))
-        new_index_ref = CommCareCaseIndex(identifier=new_index_id, referenced_type=PARENT_TYPE,
+        new_index_ref = CommCareCaseIndex(identifier=new_index_identifier, referenced_type=PARENT_TYPE,
                                           referenced_id=new_case_id)
 
         self._testUpdate(self.sync_log.get_id, {parent_id: [], new_case_id: [],
@@ -317,13 +319,15 @@ class SyncTokenUpdateTest(SyncBaseTest):
             indices=[
                 CaseIndex(
                     CaseStructure(case_id=parent_id_1, attrs={'create': True}),
-                    relationship=index_id_1,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id_1,
                 ),
                 CaseIndex(
                     CaseStructure(case_id=parent_id_2, attrs={'create': True}),
-                    relationship=index_id_2,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id_2,
                 ),
             ],
         ))
@@ -351,8 +355,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
             attrs={'create': True},
             indices=[CaseIndex(
                 CaseStructure(case_id=parent_id, attrs={'create': True}),
-                relationship=index_id,
+                relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
+                identifier=index_id,
             )],
         ))
         parent_ref = CommCareCaseIndex(identifier=index_id, referenced_type=PARENT_TYPE, referenced_id=parent_id)
@@ -374,26 +379,27 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship=index_id,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id,
                 )],
             )
         ])
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
-    
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], 
+
+        self._testUpdate(self.sync_log.get_id, {parent_id: [],
                                                 child_id: [index_ref]})
-        
+
         # close the mother case
-        close = CaseBlock(create=False, case_id=parent_id, user_id=USER_ID, 
+        close = CaseBlock(create=False, case_id=parent_id, user_id=USER_ID,
                           version=V2, close=True
         ).as_xml()
         self._postFakeWithSyncToken(close, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {child_id: [index_ref]},
                          {parent_id: []})
-        
+
         # try a clean restore again
         assert_user_has_cases(self, self.user, [parent_id, child_id])
 
@@ -409,8 +415,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship=index_id,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id,
                 )],
             )
         ])
@@ -494,11 +501,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
                         attrs={'create': True},
                         indices=[CaseIndex(
                             CaseStructure(case_id=grandparent_id, attrs={'create': True}),
-                            relationship=PARENT_TYPE,
+                            relationship=CHILD_RELATIONSHIP,
                             related_type=PARENT_TYPE,
                         )],
                     ),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
@@ -533,8 +540,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': uuid.uuid4().hex}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=PARENT_TYPE,
                 )],
             )
         ])
@@ -622,7 +630,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 },
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'close': True}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
@@ -1188,7 +1196,7 @@ class MultiUserSyncTest(SyncBaseTest):
                 attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
@@ -1334,8 +1342,9 @@ class MultiUserSyncTest(SyncBaseTest):
                 attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': uuid.uuid4().hex}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=PARENT_TYPE,
                 )],
             )
         ])
@@ -1376,13 +1385,15 @@ class MultiUserSyncTest(SyncBaseTest):
                 indices=[
                     CaseIndex(
                         CaseStructure(case_id=mom_id, attrs={'create': True}),
-                        relationship='mom',
+                        relationship=CHILD_RELATIONSHIP,
                         related_type='mom',
+                        identifier='mom',
                     ),
                     CaseIndex(
                         CaseStructure(case_id=dad_id, attrs={'create': True}),
-                        relationship='dad',
+                        relationship=CHILD_RELATIONSHIP,
                         related_type='dad',
+                        identifier='dad',
                     ),
 
                 ],
@@ -1402,8 +1413,9 @@ class MultiUserSyncTest(SyncBaseTest):
                     indices=[
                         CaseIndex(
                             CaseStructure(case_id=new_mom_id, attrs={'create': True}),
-                            relationship='mom',
+                            relationship=CHILD_RELATIONSHIP,
                             related_type='mom',
+                            identifier='mom',
                         ),
                     ]
                 )
