@@ -1,7 +1,7 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
     get_cleanliness_flag_from_scratch
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
@@ -33,8 +33,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.sample_case = self.factory.create_case()
         self.child, self.parent = self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(),
+                indices=[
+                    CaseIndex(),
                 ]
             )
         )
@@ -98,7 +98,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
     def test_add_clean_parent_stays_clean(self):
         # add a parent with the same owner, should remain clean
-        self.factory.create_or_update_case(CaseStructure(relationships=[CaseRelationship()]))
+        self.factory.create_or_update_case(CaseStructure(indices=[CaseIndex()]))
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
@@ -108,8 +108,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         new_owner = uuid.uuid4().hex
         [child, parent] = self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': new_owner}))
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': new_owner}))
                 ]
             )
         )
@@ -123,8 +123,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         [child, parent] = self.factory.create_or_update_case(
             CaseStructure(
                 case_id=self.sample_case._id,
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': new_owner}))
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': new_owner}))
                 ]
             )
         )
@@ -167,8 +167,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.factory.domain = new_domain
         self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': uuid.uuid4().hex}))
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': uuid.uuid4().hex}))
                 ]
             )
         )
@@ -183,8 +183,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.factory.domain = new_domain
         self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(),
+                indices=[
+                    CaseIndex(),
                 ]
             )
         )
@@ -198,8 +198,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.factory.domain = new_domain
         self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': new_owner})),
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': new_owner})),
                 ]
             )
         )
@@ -210,8 +210,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
     def test_non_existent_parent(self):
         self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(CaseStructure()),
+                indices=[
+                    CaseIndex(CaseStructure()),
                 ],
                 walk_related=False,
             )

@@ -9,6 +9,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
 from casexml.apps.case.xml.generator import date_to_xml_string
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 
 
 class CaseBlock(dict):
@@ -64,7 +65,7 @@ class CaseBlock(dict):
             update=None,
             close=False,
             # V2 only
-            index=None,
+            indices=None,
             version=V1,
             compatibility_mode=False,
             strict=True,
@@ -121,7 +122,7 @@ class CaseBlock(dict):
         self._id = case_id
         date_modified = date_modified or datetime.utcnow()
         update = copy.copy(update) if update else {}
-        index = copy.copy(index) if index else {}
+        indices = copy.copy(indices) if indices else {}
 
         self.XMLNS = NS_VERSION_MAP.get(version)
 
@@ -203,23 +204,24 @@ class CaseBlock(dict):
 
         if not ['' for val in self['update'].values() if val is not CaseBlock.undefined]:
                 self['update'] = CaseBlock.undefined
-        if index and version == V2:
+        if indices and version == V2:
             self['index'] = {}
-            for name in index.keys():
-                case_type = index[name][0]
-                case_id = index[name][1]
-                # relationship = "child" for index to a parent case (default)
-                # relationship = "extension" for index to a host case
-                relationship = index[name][2] if len(index[name]) > 2 else 'child'
-                if relationship not in ('child', 'extension'):
-                    raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
-                _attrib = {'case_type': case_type}
-                if relationship != 'child':
-                    _attrib['relationship'] = relationship
-                self['index'][name] = {
-                    '_attrib': _attrib,
-                    '_text': case_id
-                }
+            for index in indices:
+                for name in index.keys():
+                    case_type = index[name][0]
+                    case_id = index[name][1]
+                    # relationship = "child" for index to a parent case (default)
+                    # relationship = "extension" for index to a host case
+                    relationship = index[name][2] if len(index[name]) > 2 else 'child'
+                    if relationship not in ('child', 'extension'):
+                        raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
+                    _attrib = {'case_type': case_type}
+                    if relationship != 'child':
+                        _attrib['relationship'] = relationship
+                    self['index'][name] = {
+                        '_attrib': _attrib,
+                        '_text': case_id
+                    }
 
     def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
@@ -278,37 +280,41 @@ class CaseStructure(object):
     Can recursively nest parents/grandparents inside here.
     """
 
-    def __init__(self, case_id=None, relationships=None, attrs=None, walk_related=True):
+    def __init__(self, case_id=None, indices=None, attrs=None, walk_related=True):
         self.case_id = case_id or uuid.uuid4().hex
-        self.relationships = relationships if relationships is not None else []
+        self.indices = indices if indices is not None else []
         self.attrs = attrs if attrs is not None else {}
         self.walk_related = walk_related  # whether to walk related cases in operations
 
     @property
     def index(self):
-        return {
-            r.relationship: (r.related_type, r.related_id)
-            for r in self.relationships
-        }
+        return [{
+            r.identifier: (r.related_type, r.related_id, r.relationship)
+        } for r in self.indices]
 
     def walk_ids(self):
         yield self.case_id
         if self.walk_related:
-            for relationship in self.relationships:
+            for relationship in self.indices:
                 for id in relationship.related_structure.walk_ids():
                     yield id
 
 
-class CaseRelationship(object):
-    DEFAULT_RELATIONSHIP = 'parent'
+class CaseIndex(object):
+    DEFAULT_RELATIONSHIP = 'child'
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
-    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None):
+    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None, identifier=None):
         self.related_structure = related_structure or CaseStructure()
         self.relationship = relationship
         if related_type is None:
             related_type = self.related_structure.attrs.get('case_type', self.DEFAULT_RELATED_CASE_TYPE)
         self.related_type = related_type
+
+        if identifier is None:
+            self.identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[relationship]
+        else:
+            self.identifier = identifier
 
     @property
     def related_id(self):
@@ -368,13 +374,13 @@ class CaseFactory(object):
 
     def create_or_update_cases(self, case_structures, form_extras=None):
         def _get_case_block(substructure):
-            return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
+            return self.get_case_block(substructure.case_id, indices=substructure.index, **substructure.attrs)
 
         def _get_case_blocks(substructure):
             blocks = [_get_case_block(substructure)]
             if substructure.walk_related:
                 blocks += [
-                    block for relationship in substructure.relationships
+                    block for relationship in substructure.indices
                     for block in _get_case_blocks(relationship.related_structure)
                 ]
             return blocks
