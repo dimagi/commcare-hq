@@ -1188,7 +1188,7 @@ COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
-                                             [NEW_USERS_GROUPS_DB])
+                                             [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB])
 
 INSTALLED_APPS += LOCAL_APPS
 
