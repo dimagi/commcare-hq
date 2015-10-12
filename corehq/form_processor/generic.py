@@ -84,6 +84,11 @@ class GenericXFormInstance(JsonObject):
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
 
+    is_error = BooleanProperty(default=False)
+    is_duplicate = BooleanProperty(default=False)
+    is_deprecated = BooleanProperty(default=False)
+    is_archived = BooleanProperty(default=False)
+
     _metadata = None
 
     @property

@@ -407,6 +407,11 @@ class XFormError(XFormInstance):
         self["doc_type"] = "XFormError" 
         super(XFormError, self).save(*args, **kwargs)
 
+    def to_generic(self):
+        generic = super(XFormError, self).to_generic()
+        generic.is_error = True
+        return generic
+
         
 class XFormDuplicate(XFormError):
     """
@@ -419,6 +424,11 @@ class XFormDuplicate(XFormError):
         self["doc_type"] = "XFormDuplicate" 
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
+
+    def to_generic(self):
+        generic = super(XFormDuplicate, self).to_generic()
+        generic.is_duplicate = True
+        return generic
 
 
 class XFormDeprecated(XFormError):
@@ -436,6 +446,11 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
+    def to_generic(self):
+        generic = super(XFormDeprecated, self).to_generic()
+        generic.is_deprecated = True
+        return generic
+
 
 class XFormArchived(XFormError):
     """
@@ -446,6 +461,11 @@ class XFormArchived(XFormError):
         # force set the doc type and call the right superclass
         self["doc_type"] = "XFormArchived"
         XFormInstance.save(self, *args, **kwargs)
+
+    def to_generic(self):
+        generic = super(XFormArchived, self).to_generic()
+        generic.is_archived = True
+        return generic
 
 
 class SubmissionErrorLog(XFormError):
