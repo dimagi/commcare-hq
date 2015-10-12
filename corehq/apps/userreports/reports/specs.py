@@ -196,7 +196,7 @@ class AggregateDateColumn(ReportColumn):
         # todo: support more aggregation/more formats
         def _format(data):
             if not data.get('year', None) or not data.get('month', None):
-                return 'Unknown Date'
+                return _('Unknown Date')
             return '{}-{:02d}'.format(int(data['year']), int(data['month']))
         return _format
 
