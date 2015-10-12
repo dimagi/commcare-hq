@@ -9,7 +9,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch.database import iter_docs, safe_delete
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import process_cases
-from casexml.apps.case.cleanup import safe_hard_delete
 from couchforms.util import process_xform
 from couchforms.models import doc_types, XFormInstance, XFormError
 from couchforms.exceptions import UnexpectedDeletedXForm
@@ -177,6 +176,7 @@ class FormProcessorInterface(object):
 
     @classmethod
     def hard_delete_case(cls, case_generic):
+        from casexml.apps.case.cleanup import safe_hard_delete
         case = cls._get_case(case_generic.id)
         safe_hard_delete(case)
 
