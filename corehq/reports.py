@@ -126,7 +126,6 @@ def REPORTS(project):
     if project_can_use_inbound_sms:
         messaging_reports.extend([
             system_overview.SystemOverviewReport,
-            system_overview.SystemUsersReport,
         ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
