@@ -10,7 +10,7 @@ from corehq.messaging.smsbackends.mach.api import MachBackend
 from corehq.messaging.smsbackends.tropo.api import TropoBackend
 from corehq.messaging.smsbackends.http.api import HttpBackend
 from corehq.messaging.smsbackends.telerivet.models import TelerivetBackend
-from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from corehq.messaging.smsbackends.grapevine.api import GrapevineBackend
 from corehq.messaging.smsbackends.twilio.models import TwilioBackend
 from corehq.messaging.smsbackends.megamobile.api import MegamobileBackend
