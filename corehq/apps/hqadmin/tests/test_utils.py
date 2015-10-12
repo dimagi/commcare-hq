@@ -62,3 +62,14 @@ class TestPillowCheckpointSeqStore(TestCase):
 
         store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint.checkpoint_id)
         self.assertEquals(store.seq, seq)
+
+    def test_get_by_pillow_name(self):
+        seq = '10-blahblah'
+        self.pillow.set_checkpoint({'seq': seq})
+        pillow_seq_store()
+
+        store = PillowCheckpointSeqStore.get_by_pillow_name('corehq.apps.hqadmin.tests.test_utils.DummyPillow')
+        self.assertIsNotNone(store)
+
+        store = PillowCheckpointSeqStore.get_by_pillow_name('DummyPillowThatDoesNotExist')
+        self.assertIsNone(store)
