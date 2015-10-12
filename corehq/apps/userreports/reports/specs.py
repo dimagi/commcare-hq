@@ -194,7 +194,11 @@ class AggregateDateColumn(ReportColumn):
 
     def get_format_fn(self):
         # todo: support more aggregation/more formats
-        return lambda data: '{}-{:02d}'.format(int(data['year']), int(data['month']))
+        def _format(data):
+            if not data.get('year', None) or not data.get('month', None):
+                return 'Unknown Date'
+            return '{}-{:02d}'.format(int(data['year']), int(data['month']))
+        return _format
 
     def get_group_by_columns(self):
         return [self._year_column_alias(), self._month_column_alias()]
