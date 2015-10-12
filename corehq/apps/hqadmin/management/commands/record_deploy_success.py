@@ -1,3 +1,5 @@
+import json
+import requests
 import socket
 from django.core.management import call_command
 from django.template.loader import render_to_string
@@ -39,6 +41,17 @@ class Command(BaseCommand):
         if rows_updated:
             print "\n---------------- Pillow Errors Reset ----------------\n" \
                   "{} pillow errors queued for retry\n".format(rows_updated)
+
+        if hasattr(settings, 'MIA_THE_DEPLOY_BOT'):
+            text = "CommCareHQ has been successfully deployed. Find the diff <{}|here>".format(
+                git_snapshot['diff_url']
+            )
+            requests.post(settings.MIA_THE_DEPLOY_BOT, data=json.dumps({
+                "channel": "#dev",
+                "username": "Mia the Deploy Bot",
+                "text": text,
+                "icon_emoji": ":see_no_evil:"
+            }))
 
         if options['mail_admins']:
             snapshot_table = render_to_string('hqadmin/partials/project_snapshot.html', dictionary={'snapshot': git_snapshot})

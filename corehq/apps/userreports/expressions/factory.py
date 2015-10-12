@@ -64,7 +64,6 @@ def _root_doc_expression(spec, context):
 def _related_doc_expression(spec, context):
     wrapped = RelatedDocExpressionSpec.wrap(spec)
     wrapped.configure(
-        related_doc_type=wrapped.related_doc_type,
         doc_id_expression=ExpressionFactory.from_spec(wrapped.doc_id_expression, context),
         value_expression=ExpressionFactory.from_spec(wrapped.value_expression, context),
     )

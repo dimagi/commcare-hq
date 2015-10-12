@@ -89,7 +89,7 @@ class FormType(object):
         try:
             return FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
         except Exception, e:
-            _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
+            _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'), notify_admins=True)
             _assert(False, 'Failed on domain: {} | xmlns: {} | app_id: {} | error: {}'.format(
                 self.domain,
                 self.xmlns,

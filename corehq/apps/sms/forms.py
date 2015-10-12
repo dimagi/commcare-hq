@@ -450,13 +450,9 @@ class SettingsForm(Form):
                     css_id="custom-chat-template-group",
                 )
             )
-        attrs = {}
-        if not self._cchq_is_previewer:
-            attrs["style"] = "display: none;"
         return crispy.Fieldset(
             _("Chat Settings"),
-            *fields,
-            **attrs
+            *fields
         )
 
     def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False,
