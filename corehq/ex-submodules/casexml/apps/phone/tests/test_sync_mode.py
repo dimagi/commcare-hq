@@ -638,7 +638,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # they should both be gone
         self._testUpdate(self.sync_log._id, {}, {})
 
-    @run_with_all_restore_configs
     def test_create_closed_child_case_and_close_parent_in_same_form(self):
         # create the parent
         parent_id = self.factory.create_case()._id
