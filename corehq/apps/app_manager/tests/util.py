@@ -5,7 +5,11 @@ import mock
 from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig, \
     BuildSpec
 import difflib
+from lxml import etree
+
+import commcare_translations
 from corehq.util.test_utils import TestFileMixin
+from corehq.apps.app_manager.models import Application
 
 
 class TestXmlMixin(TestFileMixin):
@@ -38,6 +42,40 @@ class TestXmlMixin(TestFileMixin):
             expected = parse_normalize(expected, is_html=True)
             actual = parse_normalize(actual, is_html=True)
         _check_shared(expected, actual, LHTMLOutputChecker(), "html")
+
+
+class SuiteMixin(TestFileMixin):
+    def _assertHasAllStrings(self, app, strings):
+        et = etree.XML(app)
+        locale_elems = et.findall(".//locale/[@id]")
+        locale_strings = [elem.attrib['id'] for elem in locale_elems]
+
+        app_strings = commcare_translations.loads(strings)
+
+        for string in locale_strings:
+            if string not in app_strings:
+                raise AssertionError("App strings did not contain %s" % string)
+            if not app_strings.get(string, '').strip():
+                raise AssertionError("App strings has blank entry for %s" % string)
+
+    def _test_generic_suite(self, app_tag, suite_tag=None):
+        suite_tag = suite_tag or app_tag
+        app = Application.wrap(self.get_json(app_tag))
+        self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
+
+    def _test_generic_suite_partial(self, app_tag, xpath, suite_tag=None):
+        suite_tag = suite_tag or app_tag
+        app = Application.wrap(self.get_json(app_tag))
+        self.assertXmlPartialEqual(self.get_xml(suite_tag), app.create_suite(), xpath)
+
+    def _test_app_strings(self, app_tag):
+        app = Application.wrap(self.get_json(app_tag))
+        app_xml = app.create_suite()
+        app_strings = app.create_app_strings('default')
+
+        self._assertHasAllStrings(app_xml, app_strings)
+
+
 
 
 def normalize_attributes(xml):

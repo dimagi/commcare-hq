@@ -287,8 +287,10 @@ def menu_root(module):
         return None
 
 
-def form_command(form):
-    return u"m{module.id}-f{form.id}".format(module=form.get_module(), form=form)
+def form_command(form, module=None):
+    if not module:
+        module = form.get_module()
+    return u"m{module.id}-f{form.id}".format(module=module, form=form)
 
 
 def case_list_command(module):
