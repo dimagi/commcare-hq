@@ -34,7 +34,7 @@ class LocationTypeSpec(JsonObject):
 
 
 class LocationParentIdSpec(JsonObject):
-    type = TypeError('location_parent_id')
+    type = TypeProperty('location_parent_id')
     location_id_expression = DictProperty(required=True)
 
 
