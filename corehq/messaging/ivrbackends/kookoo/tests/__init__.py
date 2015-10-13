@@ -1,1 +1,1 @@
-#from corehq.messaging.ivrbackends.kookoo.tests.outbound import *
+from corehq.messaging.ivrbackends.kookoo.tests.outbound import *
