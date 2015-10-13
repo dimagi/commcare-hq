@@ -639,6 +639,32 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log._id, {}, {})
 
     @run_with_all_restore_configs
+    def test_create_closed_child_case_and_close_parent_in_same_form(self):
+        # create the parent
+        parent_id = self.factory.create_case()._id
+        # create an irrelevent child and close the parent
+        child_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases([
+            CaseStructure(case_id=parent_id, attrs={'close': True, 'owner_id': CaseBlock.undefined}),
+            CaseStructure(
+                case_id=child_id,
+                attrs={
+                    'create': True,
+                    'close': True,
+                    'update': {'foo': 'bar'},
+                },
+                indices=[CaseIndex(
+                    CaseStructure(case_id=parent_id),
+                    relationship=CHILD_RELATIONSHIP,
+                    related_type=PARENT_TYPE,
+                )],
+                walk_related=False,
+            )
+        ])
+        # they should both be gone
+        self._testUpdate(self.sync_log._id, {}, {})
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', close=True)
