@@ -9,7 +9,6 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
-    RelatedDocExpressionSpec,
 )
 from corehq.apps.userreports.specs import EvaluationContext
 
