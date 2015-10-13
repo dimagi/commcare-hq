@@ -13,9 +13,9 @@ setup(
     test_suite='tests',
     test_loader='unittest2:TestLoader',
     install_requires=[
-        'jsonobject-couchdbkit>=0.6.5.2',
+        'jsonobject-couchdbkit>=0.7.0.1',
         'pillowtop>=0.1.7',
-        'dimagi-utils==1.2.2',
+        'dimagi-utils>=1.2.3',
         'pytz',
         'SQLAlchemy==0.8.2',
         'alembic==0.6.0'
