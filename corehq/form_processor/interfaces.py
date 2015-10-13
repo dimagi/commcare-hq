@@ -176,6 +176,12 @@ class FormProcessorInterface(object):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
     @classmethod
+    def soft_delete_case(cls, case_id):
+        case = cls._get_case(case_id)
+        case.doc_type += DELETED_SUFFIX
+        case.save()
+
+    @classmethod
     def hard_delete_case(cls, case_generic):
         from casexml.apps.case.cleanup import safe_hard_delete
         case = cls._get_case(case_generic.id)
