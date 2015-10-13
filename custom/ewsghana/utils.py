@@ -226,7 +226,7 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
     return CommCareUser.wrap(user.to_json())
 
 
-def bootstrap_web_user(domain, username, password, email, location, user_data, phone_number, first_name="",
+def bootstrap_web_user(domain, username, password, email, location, user_data=None, phone_number="", first_name="",
                        last_name="", program_id=None):
     web_user = WebUser.create(
         domain=domain,
@@ -238,7 +238,7 @@ def bootstrap_web_user(domain, username, password, email, location, user_data, p
     web_user.first_name = first_name
     web_user.last_name = last_name
 
-    web_user.user_data = user_data
+    web_user.user_data = user_data or {}
     web_user.set_location(domain, location)
     dm = web_user.get_domain_membership(domain)
     dm.program_id = program_id
@@ -481,3 +481,19 @@ def send_sms(domain, recipient, phone_number, message):
         send_sms_to_verified_number(phone_number, message)
     else:
         core_send_sms(domain, recipient, phone_number, message)
+
+
+def has_notifications_enabled(domain, web_user):
+    try:
+        return EWSExtension.objects.get(domain=domain, user_id=web_user.get_id).sms_notifications
+    except EWSExtension.DoesNotExist:
+        return False
+
+
+def set_sms_notifications(domain, web_user, sms_notifications):
+    try:
+        extension = EWSExtension.objects.get(domain=domain, user_id=web_user.get_id)
+        extension.sms_notifications = sms_notifications
+        extension.save()
+    except EWSExtension.DoesNotExist:
+        EWSExtension.objects.create(domain=domain, user_id=web_user.get_id, sms_notifications=sms_notifications)
