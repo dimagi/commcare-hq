@@ -134,8 +134,11 @@ class CallCenterProperties(DocumentSchema):
     case_owner_id = StringProperty()
     case_type = StringProperty()
 
-    def is_active_and_valid(self):
-        return self.enabled and self.case_owner_id and self.case_type
+    def fixtures_are_active(self):
+        return self.enabled and self.use_fixtures
+
+    def config_is_valid(self):
+        return self.case_owner_id and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
