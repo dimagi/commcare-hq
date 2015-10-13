@@ -19,6 +19,17 @@ users_migration = Migrator(
     )
 )
 
+fixtures_migration = Migrator(
+    slug='fixtures',
+    source_db_name=None,
+    target_db_name=settings.NEW_FIXTURES_DB,
+    doc_types=(
+        'FixtureDataType',
+        'FixtureDataItem',
+        'FixtureOwnership',
+    )
+)
+
 
 def get_migrator_by_slug(slug):
     return Migrator.instances[slug]
