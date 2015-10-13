@@ -24,7 +24,7 @@
     "to": ""
   },
   {
-    "backend": "smsgh",
+    "backend": "message_tester",
     "email": null,
     "family_name": "",
     "id": 338,

@@ -640,6 +640,12 @@ class EWSApi(APISynchronization):
         user.save()
         return user
 
+    def save_verified_number(self, user, phone_number):
+        backend_id = None
+        if user.user_data.get('backend') == 'message_tester':
+            backend_id = 'MOBILE_BACKEND_TEST'
+        user.save_verified_number(self.domain, phone_number, True, backend_id=backend_id)
+
     def sms_user_sync(self, ews_smsuser, **kwargs):
         sms_user = super(EWSApi, self).sms_user_sync(ews_smsuser, **kwargs)
         if not sms_user:
