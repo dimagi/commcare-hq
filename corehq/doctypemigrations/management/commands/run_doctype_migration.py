@@ -1,4 +1,5 @@
 from optparse import make_option
+import re
 from django.core.management import BaseCommand, CommandError
 from corehq.doctypemigrations.migrator_instances import get_migrator_by_slug, \
     get_migrator_slugs
@@ -120,11 +121,15 @@ class Command(BaseCommand):
     def handle_stats(self, migrator):
         [(source_db, source_counts),
          (target_db, target_counts)] = migrator.get_doc_counts()
-        self.stdout.write('Source DB: {}'.format(source_db.uri))
-        self.stdout.write('Target DB: {}'.format(target_db.uri))
+        self.stdout.write('Source DB: {}'.format(_scrub_uri(source_db.uri)))
+        self.stdout.write('Target DB: {}'.format(_scrub_uri(target_db.uri)))
         self.stdout.write('')
         self.stdout.write('{:^30}\tSource\tTarget'.format('doc_type'))
         for doc_type in sorted(migrator.doc_types):
             self.stdout.write(
                 '{:<30}\t{}\t{}'
                 .format(doc_type, source_counts[doc_type], target_counts[doc_type]))
+
+
+def _scrub_uri(uri):
+    return re.sub(r'//(.*):(.*)@', r'//\1:******@', uri)
