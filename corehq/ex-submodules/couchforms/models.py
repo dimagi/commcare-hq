@@ -262,7 +262,11 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     def from_generic(cls, generic_xform):
         xform_json = generic_xform.to_json()
         xform_json.pop('metadata', None)
-        return doc_types()[xform_json['doc_type']].wrap(xform_json)
+        xform_json.pop('is_error', None)
+        xform_json.pop('is_duplicate', None)
+        xform_json.pop('is_deprecated', None)
+        xform_json.pop('is_archived', None)
+        return doc_types()[xform_json.get('doc_type', 'XFormInstance')].wrap(xform_json)
 
     def xpath(self, path):
         """

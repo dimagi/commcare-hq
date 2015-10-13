@@ -8,7 +8,7 @@ class ToFromGeneric(object):
         raise NotImplementedError()
 
     @classmethod
-    def from_generic(cls, obj_dict, **kwargs):
+    def from_generic(cls, obj_dict):
         raise NotImplementedError()
 
 
