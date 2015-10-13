@@ -719,23 +719,20 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 
 ### AggregateDateColumn
 
-AggregateDate columns aggregate data by month over a given date field. The have a type of `"aggregate_date"`. They also have a `"display"` property that specifies the header for the column of aggregated dates. Here's an example of a aggregate date column that shows number of women who have danger signs per month.
+AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`.
+Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
 
+Here's an example of an aggregate date column that aggregates the `received_on`  property for each month (allowing you to count/sum things that happened in that month).
+
+```json
+ {
+    "column_id": "received_on",
+    "field": "received_on",
+    "type": "aggregate_date",
+    "display": "Month"
+  }
 ```
-{
-  "type": "aggregate_date",
-  "column_id": "received_on",
-  "display": "Danger Signs by month",
-  "format": "default",
-  "field": "received_on"
-},
-{
-  "type": "expanded",
-  "column_id", "has_danger_signs",
-  "field": "has_danger_signs",
-  "format": "default"
-}
-```
+
 
 #### Formats
 
