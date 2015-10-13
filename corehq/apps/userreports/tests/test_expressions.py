@@ -41,7 +41,7 @@ class IdentityExpressionTest(SimpleTestCase):
 class ConstantExpressionTest(SimpleTestCase):
 
     def test_constant_expression(self):
-        for constant in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
+        for constant in (None, 7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
             getter = ExpressionFactory.from_spec({
                 'type': 'constant',
                 'constant': constant,

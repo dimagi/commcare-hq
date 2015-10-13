@@ -23,7 +23,13 @@ class IdentityExpressionSpec(JsonObject):
 
 class ConstantGetterSpec(JsonObject):
     type = TypeProperty('constant')
-    constant = DefaultProperty(required=True)
+    constant = DefaultProperty()
+
+    @classmethod
+    def wrap(self, obj):
+        if 'constant' not in obj:
+            raise BadSpecError('"constant" property is required!')
+        return super(ConstantGetterSpec ,self).wrap(obj)
 
     def __call__(self, item, context=None):
         return self.constant
