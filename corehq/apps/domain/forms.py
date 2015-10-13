@@ -524,9 +524,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
         return cleaned_data
 
-    def save(self, request, domain):
-        domain.hr_name = self.cleaned_data['hr_name']
-
+    def _save_logo_configuration(self, domain):
         if self.can_use_custom_logo:
             logo = self.cleaned_data['logo']
             if logo:
@@ -543,10 +541,13 @@ class DomainGlobalSettingsForm(forms.Form):
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
+    def _save_call_center_configuration(self, domain):
         domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
         if domain.call_center_config.enabled:
+
             domain.internal.using_call_center = True
             domain.call_center_config.use_fixtures = self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
+
             owner = self.cleaned_data.get('call_center_case_owner', None)
             if owner == self.USE_LOCATIONS_CHOICE:
                 domain.call_center_config.call_center_case_owner = None
@@ -557,6 +558,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
             domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
+    def _save_timezone_configuration(self, domain):
         global_tz = self.cleaned_data['default_timezone']
         if domain.default_timezone != global_tz:
             domain.default_timezone = global_tz
@@ -569,6 +571,12 @@ class DomainGlobalSettingsForm(forms.Form):
                     users_to_save.append(user)
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
+
+    def save(self, request, domain):
+        domain.hr_name = self.cleaned_data['hr_name']
+        self._save_logo_configuration(domain)
+        self._save_call_center_configuration(domain)
+        self._save_timezone_configuration(domain)
         domain.save()
         return True
 
