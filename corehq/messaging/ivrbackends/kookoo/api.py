@@ -77,8 +77,8 @@ def invoke_kookoo_outbound_api(phone_number, api_key, is_test=False):
         'phone_no': phone_number,
         'api_key': api_key,
         'outbound_version': '2',
-        'url': url_base + reverse('corehq.messaging.smsbackends.kookoo.views.ivr'),
-        'callback_url': url_base + reverse('corehq.messaging.smsbackends.kookoo.views.ivr_finished'),
+        'url': url_base + reverse('corehq.messaging.ivrbackends.kookoo.views.ivr'),
+        'callback_url': url_base + reverse('corehq.messaging.ivrbackends.kookoo.views.ivr_finished'),
     })
     url = 'http://www.kookoo.in/outbound/outbound.php?%s' % params
 

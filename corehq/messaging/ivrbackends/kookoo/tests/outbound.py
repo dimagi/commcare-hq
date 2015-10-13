@@ -23,7 +23,7 @@ class KooKooTestCase(TouchformsTestCase):
         super(KooKooTestCase, self).setUp()
         self.ivr_backend = MobileBackend(
             _id="MOBILE_BACKEND_KOOKOO",
-            outbound_module="corehq.messaging.smsbackends.kookoo.api",
+            outbound_module="corehq.messaging.ivrbackends.kookoo.api",
             outbound_params={"is_test": True, "api_key": "xyz"},
         )
         self.ivr_backend.save()

@@ -294,7 +294,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
-    'corehq.messaging.smsbackends.kookoo',
+    'corehq.messaging.ivrbackends.kookoo',
     'corehq.messaging.smsbackends.sislog',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.telerivet',

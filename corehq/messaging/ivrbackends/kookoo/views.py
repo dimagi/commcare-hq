@@ -2,7 +2,7 @@ import sys
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.api import incoming, IVR_EVENT_NEW_CALL, IVR_EVENT_INPUT, IVR_EVENT_DISCONNECT
-from corehq.messaging.smsbackends.kookoo import api as backend_module
+from corehq.messaging.ivrbackends.kookoo import api as backend_module
 from corehq.apps.sms.models import CallLog
 from dimagi.utils.couch import CriticalSection
 
