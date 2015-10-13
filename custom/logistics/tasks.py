@@ -19,7 +19,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_datetime
 
 
-@celery.task(queue='background_queue', ignore_result=True)
+@celery.task(queue='logistics_background_queue', ignore_result=True)
 def stock_data_task(api_object):
     # checkpoint logic
     start_date = datetime.today()
@@ -79,7 +79,7 @@ def stock_data_task(api_object):
     checkpoint.save()
 
 
-@celery.task(queue='background_queue')
+@celery.task(queue='logistics_background_queue')
 def process_facility_task(api_object, facility, start_from=None):
     checkpoint = StockDataCheckpoint.objects.get(domain=api_object.domain)
     limit = checkpoint.limit
@@ -104,7 +104,7 @@ def process_facility_task(api_object, facility, start_from=None):
     save_stock_data_checkpoint(checkpoint, '', 1000, 0, checkpoint.date, api_object.get_location_id(facility))
 
 
-@celery.task(queue='background_queue', ignore_result=True)
+@celery.task(queue='logistics_background_queue', ignore_result=True)
 def resync_web_users(api_object):
     web_users_sync = api_object.apis[5]
     synchronization(web_users_sync, None, None, 100, 0)
