@@ -22,9 +22,6 @@ class ScheduleVisit(IndexedSchema):
     repeats = BooleanProperty(default=False)
     increment = IntegerProperty()
 
-    class Meta:
-        app_label = 'app_manager'
-
     @property
     def id(self):
         """Visits are 1-based indexed"""
@@ -52,18 +49,12 @@ class FormSchedule(DocumentSchema):
     transition_condition = SchemaProperty(FormActionCondition)
     termination_condition = SchemaProperty(FormActionCondition)
 
-    class Meta:
-        app_label = 'app_manager'
-
 
 class SchedulePhaseForm(IndexedSchema):
     """
     A reference to a form in a schedule phase.
     """
     form_id = FormIdProperty("modules[*].schedule_phases[*].forms[*].form_id")
-
-    class Meta:
-        app_label = 'app_manager'
 
 
 class SchedulePhase(IndexedSchema):
@@ -77,9 +68,6 @@ class SchedulePhase(IndexedSchema):
     """
     anchor = StringProperty()
     forms = SchemaListProperty(SchedulePhaseForm)
-
-    class Meta:
-        app_label = 'app_manager'
 
     @property
     def id(self):
