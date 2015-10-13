@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - fix-continous-migrate  # danny 10/13
   - doctypemigrations-hide-passwords  # danny 10/13
   - fixtures-db-prep  # danny 10/13
   - pare-down-related_to_domain  # danny 10/8
