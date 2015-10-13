@@ -86,7 +86,7 @@ class ConditionalExpressionSpec(JsonObject):
 class ArrayIndexExpressionSpec(JsonObject):
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
-    index_expression = DictProperty(required=True)
+    index_expression = DefaultProperty(required=True)
 
     def configure(self, array_expression, index_expression):
         self._array_expression = array_expression
