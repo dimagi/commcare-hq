@@ -147,7 +147,7 @@ class ExpressionFactory(object):
 
 
 def _is_constant(value):
-    return value is None or isinstance(value, (basestring, int, bool, float))
+    return isinstance(value, (basestring, int, bool, float))
 
 
 def _convert_constant_to_expression_spec(value):
