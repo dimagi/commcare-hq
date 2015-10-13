@@ -122,7 +122,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     owner_ids_on_phone = StringListProperty()
 
     # for debugging / logging
+    previous_log_rev = StringProperty()  # rev of the previous log at the time of creation
     last_submitted = DateTimeProperty()  # last time a submission caused this to be modified
+    rev_before_last_submitted = StringProperty()  # rev when the last submission was saved
     last_cached = DateTimeProperty()  # last time this generated a cached response
     hash_at_last_cached = StringProperty()  # the state hash of this when it was last cached
 
@@ -753,6 +755,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if made_changes:
                     logger.debug('made changes, saving.')
                     self.last_submitted = datetime.utcnow()
+                    self.rev_before_last_submitted = self._rev
                     self.save()
                     if case_list:
                         try:
