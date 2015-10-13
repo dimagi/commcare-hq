@@ -411,6 +411,8 @@ class SubAreaMixin():
 
 
 class DomainGlobalSettingsForm(forms.Form):
+    CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
+
     hr_name = forms.CharField(
         label=ugettext_lazy("Project Name"),
         help_text=ugettext_lazy("This name will appear in the upper right corner "
@@ -441,8 +443,8 @@ class DomainGlobalSettingsForm(forms.Form):
     )
     call_center_type = ChoiceField(
         label=ugettext_lazy("Call Center Type"),
-        initial='cases_and_fixtures',
-        choices=[('cases_and_fixtures', "Create cases and indicators"), ('cases_only', "Create just cases")],
+        initial=CASES_AND_FIXTURES_CHOICE,
+        choices=[(CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"), ('cases_only', "Create just cases")],
         help_text=ugettext_lazy(
             """
             If "Create cases and indicators" is selected, each user will have a case associated with it,
@@ -536,8 +538,8 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
         if domain.call_center_config.enabled:
             domain.internal.using_call_center = True
-            domain.call_center_config.use_fixtures = self.cleaned_data['call_center_type'] == "cases_and_fixtures"
             domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+            domain.call_center_config.use_fixtures = self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
             domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
         global_tz = self.cleaned_data['default_timezone']
