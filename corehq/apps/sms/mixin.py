@@ -314,6 +314,8 @@ class MobileBackend(Document):
 
     @property
     def backend_module(self):
+        if self.outbound_module == 'corehq.apps.kookoo.api':
+            self.outbound_module = 'corehq.messaging.ivrbackends.kookoo.api'
         module = try_import(self.outbound_module)
         if not module:
             raise RuntimeError('could not find outbound module %s' % self.outbound_module)
