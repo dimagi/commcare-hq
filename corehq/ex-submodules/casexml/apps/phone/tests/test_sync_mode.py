@@ -549,7 +549,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_closed_case_not_in_next_sync(self):
         # create a case
-        case_id = self.factory.create_case()._id
+        case_id = self.factory.create_case().case_id
         # sync
         restore_config = RestoreConfig(
             project=Domain(name=self.project.name),
@@ -571,7 +571,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_sync_by_user_id(self):
         # create a case with an empty owner but valid user id
-        case_id = self.factory.create_case(owner_id='', user_id=USER_ID)._id
+        case_id = self.factory.create_case(owner_id='', user_id=USER_ID).case_id
         restore_config = RestoreConfig(self.project, user=self.user)
         payload = restore_config.get_payload().as_string()
         self.assertTrue(case_id in payload)
@@ -610,7 +610,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_create_irrelevant_child_case_and_close_parent_in_same_form(self):
         # create the parent
-        parent_id = self.factory.create_case()._id
+        parent_id = self.factory.create_case().case_id
         # create an irrelevent child and close the parent
         child_id = uuid.uuid4().hex
         child_id = 'child'
@@ -641,7 +641,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_reassign_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
-        case_id = self.factory.create_case()._id
+        case_id = self.factory.create_case().case_id
         self.factory.create_or_update_case(
             CaseStructure(
                 case_id=case_id,
@@ -667,7 +667,7 @@ class ChangingOwnershipTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_change_owner_list(self):
         # create a case with the extra owner
-        case_id = self.factory.create_case(owner_id=self.extra_owner_id)._id
+        case_id = self.factory.create_case(owner_id=self.extra_owner_id).case_id
 
         # make sure it's there
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
