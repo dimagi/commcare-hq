@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.domain.models import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import Form, RemoteApp
+from corehq.apps.app_manager.models.common import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware

@@ -5,7 +5,7 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty, SetProperty, SchemaDictProperty
 )
 from corehq.apps.app_manager.exceptions import AppManagerException
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from dimagi.utils.couch.database import iter_docs
 
 

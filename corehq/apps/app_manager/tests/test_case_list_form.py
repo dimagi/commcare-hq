@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, PreloadAction, \
+from corehq.apps.app_manager.models.common import Application, Module, OpenCaseAction, PreloadAction, \
     WORKFLOW_MODULE, AdvancedModule, AdvancedOpenCaseAction, LoadUpdateAction, AutoSelectCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -360,7 +360,7 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'case_list_form'
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_patch.start()
 
         self.app = Application.new_app('domain', 'New App', APP_V2)

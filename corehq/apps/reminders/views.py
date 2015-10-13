@@ -17,7 +17,7 @@ from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models.common import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
 from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,

@@ -31,7 +31,7 @@ from corehq.apps.app_manager.util import (
 )
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     ModuleNotFoundException,
 )

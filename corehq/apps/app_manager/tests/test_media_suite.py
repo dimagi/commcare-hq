@@ -5,7 +5,7 @@ from lxml import etree
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
+from corehq.apps.app_manager.models.common import Application, Module, ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec

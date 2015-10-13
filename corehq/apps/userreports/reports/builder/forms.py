@@ -17,7 +17,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     Application,
     Form,
 )

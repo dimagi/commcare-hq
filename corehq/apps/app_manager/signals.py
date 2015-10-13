@@ -2,7 +2,7 @@ from django.dispatch.dispatcher import Signal
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.models import CareplanModule, CareplanConfig, CareplanAppProperties
+from corehq.apps.app_manager.models.common import CareplanModule, CareplanConfig, CareplanAppProperties
 
 
 def create_app_structure_repeat_records(sender, application, **kwargs):

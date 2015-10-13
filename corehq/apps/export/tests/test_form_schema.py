@@ -5,7 +5,7 @@ from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 from jsonobject.exceptions import BadValueError
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.reports.models import FormQuestionSchema
 

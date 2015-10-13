@@ -1,21 +1,21 @@
 # coding=utf-8
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     AdvancedForm,
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
     FormAction,
     FormActionCondition,
-    FormSchedule,
     LoadUpdateAction,
     Module,
     OpenCaseAction,
     PreloadAction,
     UpdateCaseAction,
     OpenSubCaseAction,
-    CaseIndex)
+    CaseIndex,
+)
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -163,7 +163,7 @@ class SubcaseParentRefTeset(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_preparation_v2')
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
@@ -251,7 +251,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
         self.module.case_type = 'test_case_type'
         self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
 
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):
@@ -440,7 +440,7 @@ class BaseIndexTest(SimpleTestCase, TestXmlMixin):
         child_module_1.case_type ='child1'
         child_module_2 = self.app.add_module(Module.new_module('New Module', lang='en'))
         child_module_2.case_type ='child2'
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):

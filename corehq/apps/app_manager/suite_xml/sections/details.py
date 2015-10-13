@@ -207,7 +207,7 @@ class DetailContributor(SectionContributor):
 
     def build_case_tile_detail(self, module, detail, detail_type):
         """
-        Return a Detail node from an apps.app_manager.models.Detail that is
+        Return a Detail node from an apps.app_manager.models.common.Detail that is
         configured to use case tiles.
 
         This method does so by injecting the appropriate strings into a template
@@ -297,7 +297,7 @@ class DetailsHelper(object):
 
 
 def get_default_sort_elements(detail):
-    from corehq.apps.app_manager.models import SortElement
+    from corehq.apps.app_manager.models.common import SortElement
 
     if not detail.columns:
         return []

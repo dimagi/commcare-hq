@@ -3,14 +3,16 @@ from mock import patch
 import copy
 import base64
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     DetailColumn,
     Application,
+    FormActionCondition,
+)
+from corehq.apps.app_manager.models.schedules import (
     FormSchedule,
     ScheduleVisit,
     SchedulePhase,
     SchedulePhaseForm,
-    FormActionCondition,
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -20,7 +22,7 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
         self.is_usercase_in_use_mock.return_value = True
         self.app = Application.wrap(self.get_json('suite-advanced'))

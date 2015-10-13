@@ -2,7 +2,7 @@ from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
 import os
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.app_manager.util import save_xform
 from datetime import datetime
 from corehq.apps.users.models import CouchUser

@@ -43,7 +43,7 @@ from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorExcept
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop import get_all_pillows_json, get_pillow_by_name
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin

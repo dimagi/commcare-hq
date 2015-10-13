@@ -359,7 +359,7 @@ def create_temp_sort_column(field, index):
     add the field to the list of properties and app strings but
     not persist anything to the detail data.
     """
-    from corehq.apps.app_manager.models import SortOnlyDetailColumn
+    from corehq.apps.app_manager.models.common import SortOnlyDetailColumn
     return SortOnlyDetailColumn(
         model='case',
         field=field,
@@ -369,12 +369,12 @@ def create_temp_sort_column(field, index):
 
 
 def is_sort_only_column(column):
-    from corehq.apps.app_manager.models import SortOnlyDetailColumn
+    from corehq.apps.app_manager.models.common import SortOnlyDetailColumn
     return isinstance(column, SortOnlyDetailColumn)
 
 
 def get_correct_app_class(doc):
-    from corehq.apps.app_manager.models import Application, RemoteApp
+    from corehq.apps.app_manager.models.common import Application, RemoteApp
     try:
         return {
             'Application': Application,
@@ -387,7 +387,7 @@ def get_correct_app_class(doc):
 
 
 def all_apps_by_domain(domain):
-    from corehq.apps.app_manager.models import ApplicationBase
+    from corehq.apps.app_manager.models.common import ApplicationBase
     rows = ApplicationBase.get_db().view(
         'app_manager/applications',
         startkey=[domain, None],
@@ -400,7 +400,7 @@ def all_apps_by_domain(domain):
 
 
 def new_careplan_module(app, name, lang, target_module):
-    from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
+    from corehq.apps.app_manager.models.common import CareplanModule, CareplanGoalForm, CareplanTaskForm
     module = app.add_module(CareplanModule.new_module(
         name,
         lang,
@@ -527,7 +527,7 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
 
 
 def update_unique_ids(app_source):
-    from corehq.apps.app_manager.models import FormBase, form_id_references, jsonpath_update
+    from corehq.apps.app_manager.models.common import FormBase, form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
 

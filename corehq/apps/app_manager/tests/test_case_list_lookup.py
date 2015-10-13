@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models.common import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 

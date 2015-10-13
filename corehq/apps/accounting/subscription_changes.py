@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 from corehq import privileges
 from corehq.apps.accounting.utils import get_active_reminders_by_domain_name
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization

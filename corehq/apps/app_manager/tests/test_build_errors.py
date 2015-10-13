@@ -1,7 +1,7 @@
 import json
 from django.test import SimpleTestCase
 import os
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 

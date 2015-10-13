@@ -82,7 +82,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import (
+from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     BlankXFormError,
     ConflictingCaseTypeError,
@@ -91,7 +91,6 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
-    NoMatchingFilterException,
     RearrangeError,
     SuiteValidationError,
     VersioningError,
@@ -170,20 +169,22 @@ def _rename_key(dct, old, new):
 
 @memoized
 def load_app_template(slug):
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
+    path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                        'static', 'app_manager', 'json', 'template_apps')
     with open(os.path.join(path, slug + '.json')) as f:
         return json.load(f)
 
 
 @memoized
 def load_case_reserved_words():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
+    with open(os.path.join(os.path.dirname(os.path.dirname(__file__)),
+              'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
 
 
 @memoized
 def load_form_template(filename):
-    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
+    with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', filename)) as f:
         return f.read()
 
 
@@ -286,12 +287,10 @@ class FormAction(DocumentSchema):
 
 
 class UpdateCaseAction(FormAction):
-
     update = DictProperty()
 
 
 class PreloadAction(FormAction):
-
     preload = DictProperty()
 
     def is_active(self):
@@ -299,7 +298,6 @@ class PreloadAction(FormAction):
 
 
 class UpdateReferralAction(FormAction):
-
     followup_date = StringProperty()
 
     def get_followup_date(self):
@@ -311,18 +309,15 @@ class UpdateReferralAction(FormAction):
 
 
 class OpenReferralAction(UpdateReferralAction):
-
     name_path = StringProperty()
 
 
 class OpenCaseAction(FormAction):
-
     name_path = StringProperty()
     external_id = StringProperty()
 
 
 class OpenSubCaseAction(FormAction):
-
     case_type = StringProperty()
     case_name = StringProperty()
     reference_id = StringProperty()
@@ -336,7 +331,6 @@ class OpenSubCaseAction(FormAction):
 
 
 class FormActions(DocumentSchema):
-
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
     close_case = SchemaProperty(FormAction)
@@ -648,28 +642,6 @@ class CachedStringProperty(object):
         cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
-class ScheduleVisit(IndexedSchema):
-    """
-    due:         Days after the anchor date that this visit is due
-    starts:      Days before the due date that this visit is valid from
-    expires:     Days after the due date that this visit is valid until (optional)
-
-    repeats:     Whether this is a repeat visit (one per form allowed)
-    increment:   Days after the last visit that the repeat visit occurs
-    """
-    due = IntegerProperty()
-    starts = IntegerProperty()
-    expires = IntegerProperty()
-    repeats = BooleanProperty(default=False)
-    increment = IntegerProperty()
-
-    @property
-    def id(self):
-        """Visits are 1-based indexed"""
-        _id = super(ScheduleVisit, self).id
-        return _id + 1
-
-
 class FormDatum(DocumentSchema):
     name = StringProperty()
     xpath = StringProperty()
@@ -683,27 +655,6 @@ class FormLink(DocumentSchema):
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
     datums = SchemaListProperty(FormDatum)
-
-
-class FormSchedule(DocumentSchema):
-    """
-    starts:                     Days after the anchor date that this schedule starts
-    expires:                    Days after the anchor date that this schedule expires (optional)
-    visits:		        List of visits in this schedule
-    allow_unscheduled:          Allow unscheduled visits in this schedule
-    transition_condition:       Condition under which we transition to the next phase
-    termination_condition:      Condition under which we terminate the whole schedule
-    """
-    enabled = BooleanProperty(default=True)
-
-    starts = IntegerProperty()
-    expires = IntegerProperty()
-    allow_unscheduled = BooleanProperty(default=False)
-    visits = SchemaListProperty(ScheduleVisit)
-    get_visits = IndexedSchema.Getter('visits')
-
-    transition_condition = SchemaProperty(FormActionCondition)
-    termination_condition = SchemaProperty(FormActionCondition)
 
 
 class FormBase(DocumentSchema):
@@ -1086,7 +1037,6 @@ class IndexedFormBase(FormBase, IndexedSchema):
 
 
 class JRResourceProperty(StringProperty):
-
     def validate(self, value, required=True):
         super(JRResourceProperty, self).validate(value, required)
         if value is not None and not value.startswith('jr://'):
@@ -1704,7 +1654,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
-
     label = DictProperty()
     show = BooleanProperty(default=False)
 
@@ -1713,7 +1662,6 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
 
 class ParentSelect(DocumentSchema):
-
     active = BooleanProperty(default=False)
     relationship = StringProperty(default='parent')
     module_id = StringProperty()
@@ -2187,6 +2135,8 @@ class Module(ModuleBase):
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
+    from corehq.apps.app_manager.models.schedules import FormSchedule
+
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
@@ -2478,89 +2428,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 meta.add_closer(self.unique_id, action.close_condition)
 
 
-class SchedulePhaseForm(IndexedSchema):
-    """
-    A reference to a form in a schedule phase.
-    """
-    form_id = FormIdProperty("modules[*].schedule_phases[*].forms[*].form_id")
-
-
-class SchedulePhase(IndexedSchema):
-    """
-    SchedulePhases are attached to a module.
-    A Schedule Phase is a grouping of forms that occur within a period and share an anchor
-    A module should not have more than one SchedulePhase with the same anchor
-
-    anchor:                     Case property containing a date after which this phase becomes active
-    forms: 			The forms that are to be filled out within this phase
-    """
-    anchor = StringProperty()
-    forms = SchemaListProperty(SchedulePhaseForm)
-
-    @property
-    def id(self):
-        """ A Schedule Phase is 1-indexed """
-        _id = super(SchedulePhase, self).id
-        return _id + 1
-
-    @property
-    def phase_id(self):
-        return "{}_{}".format(self.anchor, self.id)
-
-    def get_module(self):
-        return self._parent
-
-    _get_forms = IndexedSchema.Getter('forms')
-
-    def get_forms(self):
-        """Returns the actual form objects related to this phase"""
-        module = self.get_module()
-        return (module.get_form_by_unique_id(form.form_id) for form in self._get_forms())
-
-    def get_form(self, desired_form):
-        return next((form for form in self.get_forms() if form.unique_id == desired_form.unique_id), None)
-
-    def get_phase_form_index(self, form):
-        """
-        Returns the index of the form with respect to the phase
-
-        schedule_phase.forms = [a,b,c]
-        schedule_phase.get_phase_form_index(b)
-        => 1
-        schedule_phase.get_phase_form_index(c)
-        => 2
-        """
-        return next((phase_form.id for phase_form in self._get_forms() if phase_form.form_id == form.unique_id),
-                    None)
-
-    def remove_form(self, form):
-        """Remove a form from the phase"""
-        idx = self.get_phase_form_index(form)
-        if idx is None:
-            raise ScheduleError("That form doesn't exist in the phase")
-
-        self.forms.remove(self.forms[idx])
-
-    def add_form(self, form):
-        """Adds a form to this phase, removing it from other phases"""
-        old_phase = form.get_phase()
-        if old_phase is not None and old_phase.anchor != self.anchor:
-            old_phase.remove_form(form)
-
-        if self.get_form(form) is None:
-            self.forms.append(SchedulePhaseForm(form_id=form.unique_id))
-
-    def change_anchor(self, new_anchor):
-        if new_anchor is None or new_anchor.strip() == '':
-            raise ScheduleError(_("You can't create a phase without an anchor property"))
-
-        self.anchor = new_anchor
-
-        if self.get_module().phase_anchors.count(new_anchor) > 1:
-            raise ScheduleError(_("You can't have more than one phase with the anchor {}").format(new_anchor))
-
-
 class AdvancedModule(ModuleBase):
+    from corehq.apps.app_manager.models.schedules import SchedulePhase
+
     module_type = 'advanced'
     case_label = DictProperty()
     forms = SchemaListProperty(AdvancedForm)
@@ -2609,6 +2479,7 @@ class AdvancedModule(ModuleBase):
         return module
 
     def new_form(self, name, lang, attachment=''):
+        from corehq.apps.app_manager.models.schedules import FormSchedule
         form = AdvancedForm(
             name={lang if lang else "en": name if name else _("Untitled Form")},
         )
@@ -2856,6 +2727,7 @@ class AdvancedModule(ModuleBase):
         is_new_phase = False
 
         if phase is None:
+            from corehq.apps.app_manager.models.schedules import SchedulePhase
             self.schedule_phases.append(SchedulePhase(anchor=anchor))
             # TODO: is there a better way of doing this?
             phase = list(self.get_schedule_phases())[-1]  # get the phase from the module so we know the _parent
@@ -3318,6 +3190,12 @@ class ReportAppConfig(DocumentSchema):
     uuid = StringProperty(required=True)
 
     _report = None
+
+    @classmethod
+    def wrap(cls, obj):
+        # todo: can remove once existing ReportAppConfig have been migrated
+        _soft_assert_uuid(obj.get('uuid'), 'Check uuids for apps containing UCR %s' % obj.get('report_id'))
+        return super(ReportAppConfig, cls).wrap(obj)
 
     def __init__(self, *args, **kwargs):
         super(ReportAppConfig, self).__init__(*args, **kwargs)
@@ -4296,7 +4174,6 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
         for key in ('modules', 'user_registration',
@@ -5254,7 +5131,6 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
 
 
 class DeleteApplicationRecord(DeleteRecord):
-
     app_id = StringProperty()
 
     def undo(self):
@@ -5264,7 +5140,6 @@ class DeleteApplicationRecord(DeleteRecord):
 
 
 class DeleteModuleRecord(DeleteRecord):
-
     app_id = StringProperty()
     module_id = IntegerProperty()
     module = SchemaProperty(ModuleBase)
@@ -5278,7 +5153,6 @@ class DeleteModuleRecord(DeleteRecord):
 
 
 class DeleteFormRecord(DeleteRecord):
-
     app_id = StringProperty()
     module_id = IntegerProperty()
     module_unique_id = StringProperty()

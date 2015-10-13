@@ -10,7 +10,7 @@ def get_application_media(app):
     """
         DEPRECATED.
     """
-    from corehq.apps.app_manager.models import Application
+    from corehq.apps.app_manager.models.common import Application
     if not isinstance(app, Application):
         raise ValueError("You must pass in an Application object.")
 

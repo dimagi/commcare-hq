@@ -5,7 +5,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
 )
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query

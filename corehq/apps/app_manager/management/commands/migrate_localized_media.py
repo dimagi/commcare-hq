@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from optparse import make_option
 
 

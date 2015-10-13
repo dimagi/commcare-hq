@@ -11,7 +11,7 @@ from corehq.apps.builds.models import BuildSpec
 from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.models import AdvancedModule, Application, APP_V1, APP_V2, Module, \
+from corehq.apps.app_manager.models.common import AdvancedModule, Application, APP_V1, APP_V2, Module, \
     ReportModule
 from .test_form_versioning import BLANK_TEMPLATE
 

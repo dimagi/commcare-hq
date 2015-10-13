@@ -18,7 +18,7 @@ var _caseListLoadError = function (model, response) {
 cloudCare.CASE_PROPERTY_MAP = {
     // IMPORTANT: if you edit this you probably want to also edit
     // the corresponding map in the app_manager
-    // (corehq/apps/app_manager/models.py)
+    // (corehq/apps/app_manager/models)
     'external-id': 'external_id',
     'date-opened': 'date_opened',
     'status': '@status', // must map to corresponding function on the Case model

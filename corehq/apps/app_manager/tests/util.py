@@ -121,6 +121,6 @@ def commtrack_enabled(is_enabled):
     Decorate test methods to explicitly specify a commtrack_enabled status.
     """
     return mock.patch(
-        'corehq.apps.app_manager.models.Application.commtrack_enabled',
+        'corehq.apps.app_manager.models.common.Application.commtrack_enabled',
         new=is_enabled,
     )

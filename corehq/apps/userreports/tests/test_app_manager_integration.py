@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from mock import patch
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.userreports.app_manager import get_case_data_sources, get_form_data_sources
 from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
 from dimagi.utils.parsing import json_format_datetime
@@ -12,7 +12,7 @@ from dimagi.utils.parsing import json_format_datetime
 class AppManagerDataSourceConfigTest(SimpleTestCase):
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.common.is_usercase_in_use')
         is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
         is_usercase_in_use_mock.return_value = False
 

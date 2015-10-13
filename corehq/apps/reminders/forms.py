@@ -81,7 +81,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
 from openpyxl.utils.exceptions import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.app_manager.models import Form as CCHQForm
+from corehq.apps.app_manager.models.common import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
 from langcodes import get_name as get_language_name

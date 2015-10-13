@@ -463,13 +463,13 @@ class Domain(Document, SnapshotMixin):
         couch_user.save()
 
     def applications(self):
-        from corehq.apps.app_manager.models import ApplicationBase
+        from corehq.apps.app_manager.models.common import ApplicationBase
         return ApplicationBase.view('app_manager/applications_brief',
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
     def full_applications(self, include_builds=True):
-        from corehq.apps.app_manager.models import Application, RemoteApp
+        from corehq.apps.app_manager.models.common import Application, RemoteApp
         WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
         def wrap_application(a):
             return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
@@ -771,7 +771,7 @@ class Domain(Document, SnapshotMixin):
             """
             Change the form_unique_id to the proper form for each event in a newly copied CaseReminderHandler
             """
-            from corehq.apps.app_manager.models import FormBase
+            from corehq.apps.app_manager.models.common import FormBase
             for event in handler.events:
                 if not event.form_unique_id:
                     continue
@@ -797,7 +797,7 @@ class Domain(Document, SnapshotMixin):
                 handler.user_group_id is None)
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
-        from corehq.apps.app_manager.models import import_app
+        from corehq.apps.app_manager.models.common import import_app
         from corehq.apps.users.models import UserRole
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
@@ -1113,7 +1113,7 @@ class Domain(Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        from corehq.apps.app_manager.models import Application
+        from corehq.apps.app_manager.models.common import Application
         return Application.get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],

@@ -1,5 +1,5 @@
 from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
-from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
+from corehq.apps.app_manager.models.common import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
     AutoSelectCase, CaseIndex, PreloadAction
 
@@ -155,7 +155,7 @@ class AppFactory(object):
 
     @staticmethod
     def advanced_form_autoloads(form, mode, value_key, value_source=None):
-        """See corehq.apps.app_manager.models.AutoSelectCase
+        """See corehq.apps.app_manager.models.common.AutoSelectCase
         """
         assert isinstance(form, AdvancedForm)
         form.actions.load_update_cases.append(LoadUpdateAction(

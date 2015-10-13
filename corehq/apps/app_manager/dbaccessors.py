@@ -6,7 +6,7 @@ from django.http import Http404
 
 
 def domain_has_apps(domain):
-    from .models import Application
+    from corehq.apps.app_manager.models.common import Application
     results = Application.get_db().view('app_manager/applications_brief',
         startkey=[domain],
         endkey=[domain, {}],
@@ -22,7 +22,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     (Application or RemoteApp).
 
     """
-    from .models import Application
+    from corehq.apps.app_manager.models.common import Application
 
     if latest:
         try:
@@ -97,7 +97,7 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
         startkey = [domain]
         endkey = [domain, {}]
 
-    from .models import Application
+    from corehq.apps.app_manager.models.common import Application
     view_results = Application.get_db().view(view_name,
         startkey=startkey,
         endkey=endkey,
@@ -112,7 +112,7 @@ def get_built_app_ids(domain):
     """
     Returns the app ids of all apps in the domain that have at least one build.
     """
-    from .models import Application
+    from corehq.apps.app_manager.models.common import Application
     result = Application.get_db().view(
         'app_manager/saved_app',
         startkey=[domain],

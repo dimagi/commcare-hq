@@ -6,7 +6,7 @@ from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext.jsonobject import *
 from jsonobject.base import DefaultProperty
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import Application, FormActionCondition
+from corehq.apps.app_manager.models.common import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _

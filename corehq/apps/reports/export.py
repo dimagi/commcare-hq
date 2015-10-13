@@ -2,7 +2,7 @@ from datetime import date
 import os
 import tempfile
 import uuid
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
 from corehq.elastic import stream_es_query

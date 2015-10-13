@@ -3,7 +3,7 @@ from django.conf import settings
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models.common import Application, Module
 from corehq.util.view_utils import reverse
 
 from couchdbkit import ResourceNotFound

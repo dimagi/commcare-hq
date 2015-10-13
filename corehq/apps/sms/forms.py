@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, ErrorsOnlyField,
     FieldWithHelpBubble, HiddenFieldWithErrors, FieldsetAccordionGroup)
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend

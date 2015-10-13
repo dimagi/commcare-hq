@@ -1,6 +1,6 @@
 from django.core.cache import cache
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_version_from_build_id
 from couchforms.models import XFormInstance

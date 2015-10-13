@@ -2,7 +2,7 @@ import json
 import re
 from couchdbkit import ResourceNotFound
 from django.core.cache import cache
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from couchforms.models import DefaultAuthContext

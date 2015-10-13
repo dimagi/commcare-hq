@@ -1,17 +1,10 @@
 from corehq.apps.app_manager.tests import AppFactory
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     AdvancedModule,
-    Application,
-    CaseIndex,
-    FormActionCondition,
-    LoadUpdateAction,
     Module,
-    OpenSubCaseAction,
-    ParentSelect,
     PreloadAction,
-    UpdateCaseAction,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.feature_previews import MODULE_FILTER

@@ -771,7 +771,7 @@ class HQMediaMixin(Document):
             Use this to check all Application media against the stored multimedia_map.
         """
         #todo this should get updated to use self.all_media
-        from corehq.apps.app_manager.models import Application
+        from corehq.apps.app_manager.models.common import Application
         if not isinstance(self, Application):
             raise NotImplementedError("Sorry, this method is only supported for CommCare HQ Applications.")
 

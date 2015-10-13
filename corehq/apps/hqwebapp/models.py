@@ -664,7 +664,7 @@ class ApplicationsTab(UITab):
     def dropdown_items(self):
         # todo async refresh submenu when on the applications page and
         # you change the application name
-        from corehq.apps.app_manager.models import Application
+        from corehq.apps.app_manager.models.common import Application
         key = [self.domain]
         apps = Application.get_db().view('app_manager/applications_brief',
                              reduce=False,

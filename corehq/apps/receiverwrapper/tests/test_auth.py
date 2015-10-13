@@ -6,7 +6,7 @@ from couchforms.models import XFormInstance
 import django_digest.test
 from django.test import TestCase
 import os
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models.common import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.views import secure_post
 

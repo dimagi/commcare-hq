@@ -3,7 +3,7 @@ from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 import re
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
@@ -14,7 +14,6 @@ from corehq.apps.app_manager.models import (
     AutoSelectCase,
     DetailColumn,
     FormActionCondition,
-    FormSchedule,
     LoadUpdateAction,
     MappingItem,
     Module,
@@ -23,7 +22,6 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     ReportAppConfig,
     ReportModule,
-    ScheduleVisit,
     SortElement,
     UpdateCaseAction,
 )

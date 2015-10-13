@@ -19,7 +19,7 @@ from django.views.generic import TemplateView, View
 from corehq.apps.analytics.tasks import track_workflow
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models.common import Application, Form
 
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError

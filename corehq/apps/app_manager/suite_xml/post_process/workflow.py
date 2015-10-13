@@ -163,7 +163,7 @@ class EndOfFormNavigationWorkflow(object):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.models import (
+        from corehq.apps.app_manager.models.common import (
             WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT, WORKFLOW_FORM, WORKFLOW_PARENT_MODULE
         )
 

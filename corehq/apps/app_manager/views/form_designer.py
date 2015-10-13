@@ -26,7 +26,7 @@ from corehq.apps.app_manager.util import (
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     Form,
     ModuleNotFoundException,
 )

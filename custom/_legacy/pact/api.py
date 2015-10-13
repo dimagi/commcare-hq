@@ -29,7 +29,7 @@ from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.tasks import set_schedule_case_properties
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models.common import ApplicationBase
 
 PACT_CLOUD_APPNAME = "PACT Cloud"
 PACT_CLOUDCARE_MODULE = "PACT Cloudcare"

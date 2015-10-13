@@ -57,7 +57,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.models.common import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
