@@ -11,6 +11,7 @@ import uuid
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -411,6 +412,7 @@ class SubAreaMixin():
 
 
 class DomainGlobalSettingsForm(forms.Form):
+    USE_LOCATIONS_CHOICE = "user_location"
     CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
 
     hr_name = forms.CharField(
@@ -491,9 +493,15 @@ class DomainGlobalSettingsForm(forms.Form):
                 call_center_group_choices = [
                     (group._id, group.name + ' [group]') for group in groups
                 ]
+                call_center_location_choices = []
+                if CALL_CENTER_LOCATION_OWNERS.enabled(domain):
+                    call_center_location_choices = [
+                        (self.USE_LOCATIONS_CHOICE, "user's location [location]")
+                    ]
 
                 self.fields["call_center_case_owner"].choices = \
                     [('', '')] + \
+                    call_center_location_choices + \
                     call_center_user_choices + \
                     call_center_group_choices
 
@@ -538,8 +546,15 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
         if domain.call_center_config.enabled:
             domain.internal.using_call_center = True
-            domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
             domain.call_center_config.use_fixtures = self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
+            owner = self.cleaned_data.get('call_center_case_owner', None)
+            if owner == self.USE_LOCATIONS_CHOICE:
+                domain.call_center_config.call_center_case_owner = None
+                domain.call_center_config.use_user_location_as_owner = True
+            else:
+                domain.call_center_config.case_owner_id = owner
+                domain.call_center_config.use_user_location_as_owner = False
+
             domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
         global_tz = self.cleaned_data['default_timezone']
