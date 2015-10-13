@@ -443,8 +443,13 @@ class DomainGlobalSettingsForm(forms.Form):
         label=ugettext_lazy("Call Center Type"),
         initial='cases_and_fixtures',
         choices=[('cases_and_fixtures', "Create cases and indicators"), ('cases_only', "Create just cases")],
-        # TODO: Add help text
-        #help_text=ugettext_lazy(""),
+        help_text=ugettext_lazy(
+            """
+            If "Create cases and indicators" is selected, each user will have a case associated with it,
+            and fixtures will be synced containing indicators about each user. If "Create just cases"
+            is selected, the fixtures will not be created.
+            """
+        ),
         required=False,
     )
     call_center_case_owner = ChoiceField(
