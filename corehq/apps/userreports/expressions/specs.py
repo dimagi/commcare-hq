@@ -202,3 +202,19 @@ class NestedExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         argument = self._argument_expression(item, context)
         return self._value_expression(argument, context)
+
+
+class NamedExpressionSpec(JsonObject):
+    type = TypeProperty('named')
+    name_expression = DictProperty(required=True)
+    value_expression = DictProperty(required=True)
+
+    def configure(self, name_expression, value_expression):
+        self._name_expression = name_expression
+        self._value_expression = value_expression
+
+    def __call__(self, item, context=None):
+        return {
+            'name': self._name_expression(item, context),
+            'value': self._value_expression(item, context),
+        }

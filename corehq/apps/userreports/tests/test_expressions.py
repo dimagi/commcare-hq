@@ -298,6 +298,29 @@ class ArrayIndexExpressionTest(SimpleTestCase):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
 
 
+class NamedExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        self.expression_spec = {
+            "type": "named",
+            "name_expression": {
+                "type": "constant",
+                "constant": "the_name"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "prop"
+            }
+        }
+        self.expression = ExpressionFactory.from_spec(self.expression_spec)
+
+    def test_basic(self):
+        value = self.expression({"prop": "p_value"})
+        self.assertTrue(isinstance(value, dict))
+        self.assertEqual('the_name', value['name'])
+        self.assertEqual('p_value', value['value'])
+
+
 class NestedExpressionTest(SimpleTestCase):
 
     def test_basic(self):
