@@ -45,18 +45,18 @@
 trunk: master
 name: autostaging
 branches:
-  - changes-refactor  # cz 10/2
+  - flip-fixtures-db  # danny 10/13
+  - fix-continous-migrate  # danny 10/13
+  - doctypemigrations-hide-passwords  # danny 10/13
+  - pare-down-related_to_domain  # danny 10/8
   - user-db-fixes  # danny 10/1
   - vellum-staging # J$ 11/13
   - update-submodules # TS 5/6
-  - b3-tf+new-mobile-workers+django-bower+exports-ui-changes  # 10/1 BB
-  - new-mobile-workers # Biyeun 8/25
   - exports-ui-changes  # biyeun 9/28
   - b3-tf # ben 10/1
-  - billing/post-pay # Farid 9/3
   - sync-history-email # Cal 9/22
   - two-factor-otp-only # j$ 10/2
-#  - django-conf # NP 10/5
+  - shadow-modules # Jenny 10/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -73,15 +73,11 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches:
-      - changes-refactor  # cz 10/2
+    branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
   submodules/fluff-src:
-    branches:
-      - changes-refactor  # cz 10/2
-  submodules/auditcare-src:
-    branches:
-      - django-conf # NP 10/5
+    branches: []
+

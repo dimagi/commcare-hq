@@ -7,6 +7,7 @@ try:
     from .test_db_accessors import *
     from .test_dbcache import *
     from .test_dynamic_properties import *
+    from .test_delete import *
     from .test_exclusion import *
     from .test_extract_caseblocks import *
     from .test_factory import *

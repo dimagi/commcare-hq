@@ -1,10 +1,8 @@
 import os
 from django.test.utils import override_settings
 from django.test import TestCase
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import process_cases
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
-from couchforms.tests.testutils import post_xform_to_couch
+from corehq.form_processor.interfaces import FormProcessorInterface
 
 
 def post_util(**kwargs):
@@ -26,15 +24,15 @@ class OutOfOrderCaseTest(TestCase):
         for fname in ('create_oo.xml', 'update_oo.xml'):
             with open(os.path.join(dir, fname), "rb") as f:
                 xml_data = f.read()
-            forms.append(post_xform_to_couch(xml_data))
+            forms.append(FormProcessorInterface.post_xform(xml_data))
 
         [create, update] = forms
 
         # process out of order
-        process_cases(update)
-        process_cases(create)
+        FormProcessorInterface.process_cases(update)
+        FormProcessorInterface.process_cases(create)
 
-        case = CommCareCase.get('30bc51f6-3247-4966-b4ae-994f572e85fe')
+        case = FormProcessorInterface.get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
         self.assertEqual('from the update form', case.pupdate)
         self.assertEqual('from the create form', case.pcreate)
         self.assertEqual('overridden by the update form', case.pboth)

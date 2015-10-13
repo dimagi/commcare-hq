@@ -182,6 +182,7 @@ class DeviceLogDetailsReport(GetParamsMixin, DeploymentsReport, DatespanMixin, P
         by, direction = self.get_sorting_block()[0].items()[0]
         return '-' + by if direction == 'desc' else by
 
+    @property
     def get_all_rows(self):
         logs = self._filter_logs()
         return self._create_rows(logs)

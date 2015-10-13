@@ -1,4 +1,5 @@
 import uuid
+from xml.etree import ElementTree
 from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -6,21 +7,18 @@ import os
 from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from casexml.apps.phone.tests.restore_test_utils import run_with_all_restore_configs
 from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, generate_restore_payload
-from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces import FormProcessorInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
-from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
-from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2, V1
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from datetime import datetime
 
@@ -30,7 +28,7 @@ OTHER_USER_ID = "someone_else"
 OTHER_USERNAME = "ferrel"
 SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
-
+CHILD_RELATIONSHIP = "child"
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class SyncBaseTest(TestCase):
@@ -75,11 +73,9 @@ class SyncBaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
+        form = FormProcessorInterface.post_xform(xml_data)
         
-        # set last sync token on the form before saving
-        form.last_sync_token = token_id
-        process_cases(form)
+        FormProcessorInterface.process_cases(form, override_sync_token=token_id)
         return form
 
     def _postFakeWithSyncToken(self, caseblocks, token_id):
@@ -87,7 +83,7 @@ class SyncBaseTest(TestCase):
             # can't use list(caseblocks) since that returns children of the node
             # http://lxml.de/tutorial.html#elements-are-lists
             caseblocks = [caseblocks]
-        return post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
+        return FormProcessorInterface.post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
 
     def _checkLists(self, l1, l2, msg=None):
         self.assertEqual(set(l1), set(l2), msg)
@@ -257,10 +253,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
         updated_id = 'changed_index_id'
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
-            relationships=[CaseRelationship(
+            indices=[CaseIndex(
                 CaseStructure(case_id=updated_id, attrs={'create': True}),
-                relationship=index_id,
+                relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
+                identifier=index_id,
             )],
         ))
         parent_ref.referenced_id = updated_id
@@ -275,17 +272,18 @@ class SyncTokenUpdateTest(SyncBaseTest):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # add new index
         new_case_id = 'new_case_id'
-        new_index_id = 'new_index_id'
+        new_index_identifier = 'new_index_id'
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
-            relationships=[CaseRelationship(
+            indices=[CaseIndex(
                 CaseStructure(case_id=new_case_id, attrs={'create': True}),
-                relationship=new_index_id,
+                relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
+                identifier=new_index_identifier,
             )],
         ))
-        new_index_ref = CommCareCaseIndex(identifier=new_index_id, referenced_type=PARENT_TYPE,
+        new_index_ref = CommCareCaseIndex(identifier=new_index_identifier, referenced_type=PARENT_TYPE,
                                           referenced_id=new_case_id)
 
         self._testUpdate(self.sync_log.get_id, {parent_id: [], new_case_id: [],
@@ -314,16 +312,18 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
             attrs={'create': True},
-            relationships=[
-                CaseRelationship(
+            indices=[
+                CaseIndex(
                     CaseStructure(case_id=parent_id_1, attrs={'create': True}),
-                    relationship=index_id_1,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id_1,
                 ),
-                CaseRelationship(
+                CaseIndex(
                     CaseStructure(case_id=parent_id_2, attrs={'create': True}),
-                    relationship=index_id_2,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id_2,
                 ),
             ],
         ))
@@ -349,10 +349,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self.factory.create_or_update_case(CaseStructure(
             case_id=child_id,
             attrs={'create': True},
-            relationships=[CaseRelationship(
+            indices=[CaseIndex(
                 CaseStructure(case_id=parent_id, attrs={'create': True}),
-                relationship=index_id,
+                relationship=CHILD_RELATIONSHIP,
                 related_type=PARENT_TYPE,
+                identifier=index_id,
             )],
         ))
         parent_ref = CommCareCaseIndex(identifier=index_id, referenced_type=PARENT_TYPE, referenced_id=parent_id)
@@ -372,28 +373,29 @@ class SyncTokenUpdateTest(SyncBaseTest):
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship=index_id,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id,
                 )],
             )
         ])
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
-    
-        self._testUpdate(self.sync_log.get_id, {parent_id: [], 
+
+        self._testUpdate(self.sync_log.get_id, {parent_id: [],
                                                 child_id: [index_ref]})
-        
+
         # close the mother case
-        close = CaseBlock(create=False, case_id=parent_id, user_id=USER_ID, 
+        close = CaseBlock(create=False, case_id=parent_id, user_id=USER_ID,
                           version=V2, close=True
         ).as_xml()
         self._postFakeWithSyncToken(close, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {child_id: [index_ref]},
                          {parent_id: []})
-        
+
         # try a clean restore again
         assert_user_has_cases(self, self.user, [parent_id, child_id])
 
@@ -407,10 +409,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship=index_id,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=index_id,
                 )],
             )
         ])
@@ -451,7 +454,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         form, _ = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
-        form.archive()
+        FormProcessorInterface.archive_xform(form)
         assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id, purge_restore_cache=True)
 
     @run_with_all_restore_configs
@@ -488,17 +491,17 @@ class SyncTokenUpdateTest(SyncBaseTest):
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(
                         case_id=parent_id,
                         attrs={'create': True},
-                        relationships=[CaseRelationship(
+                        indices=[CaseIndex(
                             CaseStructure(case_id=grandparent_id, attrs={'create': True}),
-                            relationship=PARENT_TYPE,
+                            relationship=CHILD_RELATIONSHIP,
                             related_type=PARENT_TYPE,
                         )],
                     ),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
@@ -531,10 +534,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': uuid.uuid4().hex}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=PARENT_TYPE,
                 )],
             )
         ])
@@ -546,7 +550,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_closed_case_not_in_next_sync(self):
         # create a case
-        case_id = self.factory.create_case()._id
+        case_id = self.factory.create_case().case_id
         # sync
         restore_config = RestoreConfig(
             project=Domain(name=self.project.name),
@@ -568,7 +572,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_sync_by_user_id(self):
         # create a case with an empty owner but valid user id
-        case_id = self.factory.create_case(owner_id='', user_id=USER_ID)._id
+        case_id = self.factory.create_case(owner_id='', user_id=USER_ID).case_id
         restore_config = RestoreConfig(self.project, user=self.user)
         payload = restore_config.get_payload().as_string()
         self.assertTrue(case_id in payload)
@@ -607,10 +611,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_create_irrelevant_child_case_and_close_parent_in_same_form(self):
         # create the parent
-        parent_id = self.factory.create_case()._id
+        parent_id = self.factory.create_case().case_id
         # create an irrelevent child and close the parent
         child_id = uuid.uuid4().hex
-        child_id = 'child'
         self.factory.create_or_update_cases([
             CaseStructure(
                 case_id=child_id,
@@ -620,11 +623,36 @@ class SyncTokenUpdateTest(SyncBaseTest):
                     'update': {'owner_id': 'irrelevant_2'},
                     'strict': False
                 },
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'close': True}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
+            )
+        ])
+        # they should both be gone
+        self._testUpdate(self.sync_log._id, {}, {})
+
+    def test_create_closed_child_case_and_close_parent_in_same_form(self):
+        # create the parent
+        parent_id = self.factory.create_case()._id
+        # create an irrelevent child and close the parent
+        child_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases([
+            CaseStructure(case_id=parent_id, attrs={'close': True, 'owner_id': CaseBlock.undefined}),
+            CaseStructure(
+                case_id=child_id,
+                attrs={
+                    'create': True,
+                    'close': True,
+                    'update': {'foo': 'bar'},
+                },
+                indices=[CaseIndex(
+                    CaseStructure(case_id=parent_id),
+                    relationship=CHILD_RELATIONSHIP,
+                    related_type=PARENT_TYPE,
+                )],
+                walk_related=False,
             )
         ])
         # they should both be gone
@@ -638,13 +666,31 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_reassign_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
-        case_id = self.factory.create_case()._id
+        case_id = self.factory.create_case().case_id
         self.factory.create_or_update_case(
             CaseStructure(
                 case_id=case_id,
                 attrs={'owner_id': 'irrelevant', 'close': True},
             )
         )
+
+    @run_with_all_restore_configs
+    def test_index_after_close(self):
+        parent_id = self.factory.create_case()._id
+        case_id = uuid.uuid4().hex
+        case_xml = self.factory.get_case_block(case_id, create=True, close=True)
+        # hackily insert an <index> block after the close
+        index_wrapper = ElementTree.Element('index')
+        index_elem = ElementTree.Element('parent')
+        index_elem.set('case_type', 'test')
+        index_elem.set('relationship', 'child')
+        index_elem.text = parent_id
+        index_wrapper.append(index_elem)
+        case_xml.append(index_wrapper)
+        self.factory.post_case_blocks([case_xml])
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        # before this test was written, the case stayed on the sync log even though it was closed
+        self.assertFalse(sync_log.phone_is_holding_case(case_id))
 
 
 class ChangingOwnershipTest(SyncBaseTest):
@@ -664,7 +710,7 @@ class ChangingOwnershipTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_change_owner_list(self):
         # create a case with the extra owner
-        case_id = self.factory.create_case(owner_id=self.extra_owner_id)._id
+        case_id = self.factory.create_case(owner_id=self.extra_owner_id).case_id
 
         # make sure it's there
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
@@ -800,7 +846,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token
         case_id = "cache_noninvalidation"
-        post_case_blocks([CaseBlock(
+        FormProcessorInterface.post_case_blocks([CaseBlock(
             create=True,
             case_id=case_id,
             user_id=self.user.user_id,
@@ -1186,9 +1232,9 @@ class MultiUserSyncTest(SyncBaseTest):
             CaseStructure(
                 case_id=case_id,
                 attrs={'create': True},
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
@@ -1313,7 +1359,7 @@ class MultiUserSyncTest(SyncBaseTest):
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
-            form = XFormInstance.get(form.get_id)
+            form = FormProcessorInterface.get_xform(form.id)
             self.assertFalse(hasattr(form, "problem"))
             synclog_from_restore_payload(
                 generate_restore_payload(self.project, self.user, version="2.0")
@@ -1332,10 +1378,11 @@ class MultiUserSyncTest(SyncBaseTest):
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': uuid.uuid4().hex}),
-                    relationship=PARENT_TYPE,
+                    relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
+                    identifier=PARENT_TYPE,
                 )],
             )
         ])
@@ -1373,16 +1420,18 @@ class MultiUserSyncTest(SyncBaseTest):
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
-                relationships=[
-                    CaseRelationship(
+                indices=[
+                    CaseIndex(
                         CaseStructure(case_id=mom_id, attrs={'create': True}),
-                        relationship='mom',
+                        relationship=CHILD_RELATIONSHIP,
                         related_type='mom',
+                        identifier='mom',
                     ),
-                    CaseRelationship(
+                    CaseIndex(
                         CaseStructure(case_id=dad_id, attrs={'create': True}),
-                        relationship='dad',
+                        relationship=CHILD_RELATIONSHIP,
                         related_type='dad',
+                        identifier='dad',
                     ),
 
                 ],
@@ -1399,11 +1448,12 @@ class MultiUserSyncTest(SyncBaseTest):
             [
                 CaseStructure(
                     case_id=child_id,
-                    relationships=[
-                        CaseRelationship(
+                    indices=[
+                        CaseIndex(
                             CaseStructure(case_id=new_mom_id, attrs={'create': True}),
-                            relationship='mom',
+                            relationship=CHILD_RELATIONSHIP,
                             related_type='mom',
+                            identifier='mom',
                         ),
                     ]
                 )
@@ -1481,7 +1531,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             version=V2
         ).as_xml() for case_id in [case_id1, case_id2]]
 
-        post_case_blocks(
+        FormProcessorInterface.post_case_blocks(
             initial_caseblocks,
         )
 
@@ -1496,7 +1546,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             ).as_xml() for id in ids]
 
         try:
-            post_case_blocks(
+            FormProcessorInterface.post_case_blocks(
                 _get_bad_caseblocks([case_id1, case_id2]),
                 form_extras={ "last_sync_token": self.sync_log._id }
             )
@@ -1506,7 +1556,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             pass
 
         try:
-            post_case_blocks(
+            FormProcessorInterface.post_case_blocks(
                 _get_bad_caseblocks([case_id2, case_id1]),
                 form_extras={ "last_sync_token": self.sync_log._id }
             )
@@ -1520,7 +1570,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
 
     def test_submission_with_bad_log_default(self):
         with self.assertRaises(ResourceNotFound):
-            post_case_blocks(
+            FormProcessorInterface.post_case_blocks(
                 [CaseBlock(create=True, case_id='bad-log-default', version=V2).as_xml()],
                 form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
                 domain='some-domain-without-toggle',
@@ -1530,7 +1580,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
         domain = 'submission-domain-with-toggle'
 
         def _test():
-            post_case_blocks(
+            FormProcessorInterface.post_case_blocks(
                 [CaseBlock(create=True, case_id='bad-log-toggle-enabled', version=V2).as_xml()],
                 form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
                 domain=domain,

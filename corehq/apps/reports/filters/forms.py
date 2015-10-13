@@ -1,5 +1,6 @@
 import copy
 from couchdbkit.exceptions import ResourceNotFound
+from django.conf import settings
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.models.common import RemoteApp, Application
@@ -12,7 +13,6 @@ from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-import settings
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 MISSING_APP_ID = "_MISSING_APP_ID"

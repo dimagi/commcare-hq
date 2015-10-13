@@ -99,7 +99,7 @@ def get_recipient_name(recipient, include_desc=True):
         desc = "Group"
     elif isinstance(recipient, CommCareCaseGroup):
         name = recipient.name
-        desc = "Survey Sample"
+        desc = "Case Group"
     elif isinstance(recipient, SQLLocation):
         name = recipient.name
         desc = "Location"

@@ -539,6 +539,14 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
 
     logged_event = MessagingEvent.create_from_keyword(survey_keyword, sender)
 
+    # Log a messaging subevent for the incoming message
+    subevent = logged_event.create_subevent_for_single_sms(
+        msg.couch_recipient_doc_type,
+        msg.couch_recipient
+    )
+    subevent.completed()
+    add_msg_tags(msg, MessageMetadata(messaging_subevent_id=subevent.pk))
+
     # Close any open sessions even if it's just an sms that we're
     # responding with.
     SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain,
@@ -580,14 +588,9 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         else:
             return 0
 
-    # Log a messaging subevent for the incoming message
-    subevent = logged_event.create_subevent_for_single_sms(
-        msg.couch_recipient_doc_type,
-        msg.couch_recipient,
-        case
-    )
-    subevent.completed()
-    add_msg_tags(msg, MessageMetadata(messaging_subevent_id=subevent.pk))
+    if case:
+        subevent.case_id = case.get_id
+        subevent.save()
 
     # Process structured sms actions first
     actions = sorted(survey_keyword.actions, cmp=cmp_fcn)

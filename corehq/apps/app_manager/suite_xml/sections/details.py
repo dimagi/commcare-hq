@@ -139,7 +139,9 @@ class DetailContributor(SectionContributor):
             # Add actions
             if module.case_list_form.form_id and detail_type.endswith('short')\
                     and not module.put_in_root:
-                self._add_action_to_detail(d, module)
+                target_form = self.app.get_form(module.case_list_form.form_id)
+                if target_form.is_registration_form(module.case_type):
+                    self._add_action_to_detail(d, module)
 
             try:
                 if not self.app.enable_multi_sort:

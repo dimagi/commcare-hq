@@ -1633,26 +1633,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         return CaseData.objects.filter(user_id=self._id).count()
 
-    def location_group_ids(self):
-        """
-        Return generated ID's that represent the virtual
-        groups used to send location data in the restore
-        payload.
-        """
-        def get_sharing_id(loc):
-            return loc.case_sharing_group_object(self._id)._id
-
-        if self.sql_location.location_type.view_descendants:
-            locs = (self.sql_location.get_descendants(include_self=True)
-                                     .filter(location_type__shares_cases=True))
-            return map(get_sharing_id, locs)
-        elif self.sql_location.location_type.shares_cases:
-            return [get_sharing_id(self.sql_location)]
-        else:
-            return []
-
     def get_owner_ids(self):
-        from corehq.apps.groups.models import Group
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
@@ -1703,19 +1684,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
-        # get faked location group object
+        # get faked location group objects
         groups = []
-        if self.location and self.location.location_type_object.shares_cases:
-            if self.location.location_type_object.view_descendants:
-                for loc in self.sql_location.get_descendants():
-                    groups.append(loc.case_sharing_group_object(
-                        self._id,
-                    ))
-
-            groups.append(self.sql_location.case_sharing_group_object(self._id))
+        if self.sql_location:
+            groups.extend(self.sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
-
         return groups
 
     @classmethod

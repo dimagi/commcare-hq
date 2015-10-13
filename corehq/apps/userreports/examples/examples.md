@@ -314,6 +314,25 @@ In the example below, the indicator is inside a form group question called "impa
 }
 ```
 
+## Getting the location type from a location doc id
+
+`location_id_expression` can be any expression that evaluates to a valid location id.
+
+```json
+{
+    "datatype":"string",
+    "type":"expression",
+    "expression": {
+        "type": "location_type_name",
+        "location_id_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+        }
+    },
+    "column_id": "district",
+}
+```
+
 # Base Item Expressions
 
 ## Emit multiple rows (one per non-empty case property)
@@ -351,7 +370,55 @@ In this example we take 3 case properties and save one row per property if it ex
 }
 ```
 
+## Emit multiple rows of named data
 
+In this example we take 3 case properties and emit the property name along with the value (only if non-empty).
+Note that the test must also change in this scenario.
+
+
+```json
+{
+    "type": "iterator",
+    "expressions": [
+        {
+            "type": "named",
+            "name_expression": "p1",
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "p1"
+            },
+        },
+        {
+            "type": "named",
+            "name_expression": "p2",
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "p2"
+            },
+        },
+        {
+            "type": "named",
+            "name_expression": "p3",
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "p3"
+            }
+        }
+    ],
+    "test": {
+        "type": "not",
+        "filter": {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "value"
+            },
+            "operator": "in",
+            "property_value": ["", null],
+        }
+    }
+}
+```
 
 # Report examples
 

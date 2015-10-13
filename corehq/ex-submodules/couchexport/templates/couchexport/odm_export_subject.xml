@@ -1,0 +1,24 @@
+    <SubjectData SubjectKey="{{ subject.subject_key }}"
+                 OpenClinica:StudySubjectID="{{ subject.study_subject_id }}">
+      {% for event in subject.events %}
+      <StudyEventData StudyEventOID="{{ event.study_event_oid }}"
+                      OpenClinica:StartDate="{{ event.start_long }}"
+                      OpenClinica:EndDate="{{ event.end_long }}"
+                      OpenClinica:Status="scheduled" {# It must be by the time this gets imported #}
+                      StudyEventRepeatKey="{{ event.repeat_key }}">
+        {% for form in event.forms %}
+        <FormData FormOID="{{ form.form_oid }}">
+          {% for item_group in form.item_groups %}
+          <ItemGroupData ItemGroupOID="{{ item_group.item_group_oid }}"
+                         ItemGroupRepeatKey="{{ item_group.repeat_key }}"
+                         TransactionType="Insert">
+            {% for item in item_group.items %}
+                {% include "couchexport/odm_export_item.xml" %}
+            {% endfor %}
+          </ItemGroupData>
+          {% endfor %}
+        </FormData>
+        {% endfor %}
+      </StudyEventData>
+      {% endfor %}
+    </SubjectData>

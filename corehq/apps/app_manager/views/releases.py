@@ -312,7 +312,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
-    @method_decorator(use_bootstrap3())
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         try:
             self.first_app_id = self.kwargs["first_app_id"]
