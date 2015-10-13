@@ -1,10 +1,10 @@
 import datetime
 from corehq.apps.users.models import WebUser
 from custom.ewsghana.reminders import WEB_REMINDER
-from custom.ewsghana.reminders.reminder import Reminder
+from custom.ewsghana.reminders.web_user_reminder import WebUserReminder
 
 
-class VisitWebsiteReminder(Reminder):
+class VisitWebsiteReminder(WebUserReminder):
 
     def get_users(self):
         return WebUser.by_domain(self.domain)
@@ -17,4 +17,4 @@ class VisitWebsiteReminder(Reminder):
         return user.last_login < date and user.user_data.get('sms_notifications', False)
 
     def get_message(self, recipient):
-        return WEB_REMINDER % {'name': recipient.owner.full_name}
+        return WEB_REMINDER % {'name': recipient.full_name}

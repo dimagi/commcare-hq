@@ -74,6 +74,7 @@ class GenericReportView(object):
     slug = None  # Name to be used in the URL (with lowercase and underscores)
     section_name = None  # string. ex: "Reports"
     dispatcher = None  # ReportDispatcher subclass
+    toggles = ()  # Optionally provide toggles to turn on/off the report
 
     is_cacheable = False  # whether to use caching on @request_cache methods
 

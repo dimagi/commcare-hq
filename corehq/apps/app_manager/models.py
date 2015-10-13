@@ -2772,10 +2772,21 @@ class AdvancedModule(ModuleBase):
             forms = self.forms
 
             case_tag = None
+            loaded_case_types = None
             for form in forms:
                 info = self.get_module_info()
                 form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
                 non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
+                this_forms_loaded_case_types = {action.case_type for action in non_auto_select_actions}
+                if loaded_case_types is None:
+                    loaded_case_types = this_forms_loaded_case_types
+                elif loaded_case_types != this_forms_loaded_case_types:
+                    errors.append({
+                        'type': 'all forms in case list module must load the same cases',
+                        'module': info,
+                        'form': form_info,
+                    })
+
                 if not non_auto_select_actions:
                     errors.append({
                         'type': 'case list module form must require case',

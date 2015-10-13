@@ -968,6 +968,9 @@ STRIPE_PRIVATE_KEY = ''
 SQL_REPORTING_DATABASE_URL = None
 UCR_DATABASE_URL = None
 
+# Override this in localsettings to specify custom reporting databases
+CUSTOM_DATABASES = {}
+
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
 
@@ -1086,6 +1089,8 @@ COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
+NEW_FIXTURES_DB = 'fixtures'
+FIXTURES_DB = None
 
 COUCHDB_APPS = [
     'api',
@@ -1112,7 +1117,6 @@ COUCHDB_APPS = [
     'ext',
     'facilities',
     'fluff_filter',
-    'fixtures',
     'hqcase',
     'hqmedia',
     'hope',
@@ -1178,13 +1182,16 @@ COUCHDB_APPS = [
     # users and groups
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
+
+    # fixtures
+    ('fixtures', FIXTURES_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
 EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
-                                             [NEW_USERS_GROUPS_DB])
+                                             [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB])
 
 INSTALLED_APPS += LOCAL_APPS
 

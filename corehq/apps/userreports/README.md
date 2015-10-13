@@ -84,6 +84,7 @@ iterator        | Combine multiple expressions into a list | `[doc.name, doc.age
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
+named           | A way to emit an expresison with a name | `{"name": "test", "value": f(doc)}`
 
 
 ### JSON snippets for expressions
@@ -268,6 +269,28 @@ More examples can be found in the [practical examples](https://github.com/dimagi
     "value_expression": {
         "type": "property_name",
         "property_name": "inner"
+    }
+}
+```
+
+#### Named expressions
+
+These can be used to attach a name to an expression. This is only useful as an intermediate structure in another expression since the result of a named expession is a dictionary that cannot be saved to the database.
+
+See the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for a way this can be used in a `base_item_expression` to emit multiple rows for a single form/case based on different properties.
+
+Here is a simple example that demonstrates the structure:
+
+```json
+{
+    "type": "named",
+    "name_expression": {
+        "type": "constant",
+        "constant": "the_name"
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "prop"
     }
 }
 ```
@@ -716,6 +739,23 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
   }
 }
 ```
+
+### AggregateDateColumn
+
+AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`.
+Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
+
+Here's an example of an aggregate date column that aggregates the `received_on`  property for each month (allowing you to count/sum things that happened in that month).
+
+```json
+ {
+    "column_id": "received_on",
+    "field": "received_on",
+    "type": "aggregate_date",
+    "display": "Month"
+  }
+```
+
 
 #### Formats
 

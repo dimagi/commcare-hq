@@ -178,6 +178,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 CASE_LIST_TILE = StaticToggle(
@@ -206,6 +207,13 @@ DEMO_REPORTS = StaticToggle(
     'Access to map-based demo reports',
     TAG_PREVIEW,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+SUPPLY_REPORTS = StaticToggle(
+    'supply_reports',
+    "Early stages reports for CommCare Supply",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TABS = StaticToggle(
@@ -468,7 +476,7 @@ OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
     'Enable restoring with updated owner cleanliness logic.',
     TAG_PRODUCT_CORE,
     namespaces=[NAMESPACE_DOMAIN],
-    randomness=.10,
+    randomness=.25,
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 

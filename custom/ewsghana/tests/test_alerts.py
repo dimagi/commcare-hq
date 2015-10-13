@@ -2,7 +2,6 @@ from datetime import datetime
 from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
@@ -10,8 +9,8 @@ from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SD
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, bootstrap_user, make_loc, assign_products_to_location
-from corehq.apps.sms.backend import test
+from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location, \
+    create_backend
 
 
 TEST_DOMAIN = 'ewsghana-alerts-test'
@@ -22,7 +21,8 @@ class TestAlerts(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.sms_backend_mapping, cls.backend = create_backend()
+
         cls.national = make_loc(code='national', name='National', type='country', domain=TEST_DOMAIN)
         cls.region = make_loc(code="region", name="Test Region", type="region", domain=TEST_DOMAIN,
                               parent=cls.national)
@@ -36,31 +36,31 @@ class TestAlerts(TestCase):
         cls.loc2 = make_loc(code="tf2", name="Test Facility 2", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)
 
-        cls.user1 = bootstrap_user(
-            username='test1', phone_number='1111', home_loc=cls.district, domain=TEST_DOMAIN,
+        cls.user1 = bootstrap_web_user(
+            username='test1', phone_number='1111', location=cls.district, domain=TEST_DOMAIN,
             first_name='test', last_name='test1',
             user_data={
                 'role': [],
                 'sms_notifications': True
-            }
+            }, email='test1@example.com', password='dummy'
         )
 
-        cls.national_user = bootstrap_user(
-            username='test2', phone_number='2222', home_loc=cls.national, domain=TEST_DOMAIN,
+        cls.national_user = bootstrap_web_user(
+            username='test2', phone_number='2222', location=cls.national, domain=TEST_DOMAIN,
             first_name='test', last_name='test2',
             user_data={
                 'role': [],
                 'sms_notifications': True
-            }
+            }, email='test2@example.com', password='dummy'
         )
 
-        cls.regional_user = bootstrap_user(
-            username='test4', phone_number='4444', home_loc=cls.region, domain=TEST_DOMAIN,
+        cls.regional_user = bootstrap_web_user(
+            username='test4', phone_number='4444', location=cls.region, domain=TEST_DOMAIN,
             first_name='test', last_name='test4',
             user_data={
                 'role': [],
                 'sms_notifications': True
-            }
+            }, email='test4@example.com', password='dummy'
         )
 
         cls.product = Product(domain=TEST_DOMAIN, name='Test Product', code_='tp', unit='each')
@@ -78,6 +78,8 @@ class TestAlerts(TestCase):
         cls.user1.delete()
         cls.national_user.delete()
         cls.regional_user.delete()
+        cls.backend.delete()
+        cls.sms_backend_mapping.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
 

@@ -62,7 +62,7 @@ requires imports/proptable.html to be included in the main template
 
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
-            document.getElementById('archive-spinner').style.display='inline-block';
+            $('#archive-spinner').show();
 
             // _.after(2,...) means the callback will only be called after *both* analytics
             // functions have finished.
@@ -70,14 +70,14 @@ requires imports/proptable.html to be included in the main template
                     document.getElementById('archive-form').submit();
                 }
             );
-            _analytics_usage('Archive Form Submission', callback);
+            _analytics_usage('Archive Form Submission', analyticsCallback);
             analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
         });
         $("#unarchive-form").submit(function() {
             document.getElementById('unarchive-form-btn').disabled=true;
-            document.getElementById('unarchive-spinner').style.display='inline-block';
+            $('#unarchive-spinner').show();
             ga_track_event('Reports', 'Case History', 'Restore this form', {
                 'hitCallback': function () {
                     document.getElementById('unarchive-form').submit();
@@ -87,7 +87,7 @@ requires imports/proptable.html to be included in the main template
         });
         $("#resave-form").submit(function() {
             document.getElementById('resave-form-btn').disabled=true;
-            document.getElementById('resave-spinner').style.display='inline-block';
+            $('#resave-spinner').show();
         });
 
     });

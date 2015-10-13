@@ -18,16 +18,19 @@
 
 {% block js-inline %}{{ block.super }}
 
-    {% if report.spec.report_meta.created_by_builder %}
     <script type="text/javascript">
         $(function(){
             var $editReportButton = $("#edit-report-link");
+            {% if report.spec.report_meta.created_by_builder %}
             gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', '{{ report.spec.report_meta.builder_report_type }}');
             window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
             window.analytics.usage("Report Viewer", "View Report", '{{ report.spec.report_meta.builder_report_type }}');
+            {% else %}
+            gaTrackLink($editReportButton, 'Edit UCR', 'Edit UCR');
+            {% endif %}
         });
     </script>
-    {% endif %}
+
 
     <script type="text/javascript">
         $(function(){

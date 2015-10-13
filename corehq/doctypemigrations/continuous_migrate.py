@@ -79,4 +79,4 @@ class ContinuousReplicator(object):
 
     def should_commit(self):
         return (self._uncommitted_changes_count > self.max_changes_before_commit or
-                self._get_time_since_last_commit > self.max_time_before_commit)
+                self._get_time_since_last_commit() > self.max_time_before_commit)

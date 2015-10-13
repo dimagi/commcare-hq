@@ -14,7 +14,7 @@ from corehq.apps.sms.backend import test
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ewsghana.utils import prepare_domain, bootstrap_user
+from custom.ewsghana.utils import prepare_domain, bootstrap_user, create_backend
 from custom.logistics.tests.test_script import TestScript
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.models import DocDomainMapping
@@ -59,6 +59,8 @@ class EWSScriptTest(TestScript):
     @classmethod
     def setUpClass(cls):
         domain = prepare_domain(TEST_DOMAIN)
+        cls.sms_backend_mapping, cls.backend = create_backend()
+
         p = Product(domain=domain.name, name='Jadelle', code='jd', unit='each')
         p.save()
         p2 = Product(domain=domain.name, name='Male Condom', code='mc', unit='each')
@@ -178,6 +180,8 @@ class EWSScriptTest(TestScript):
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
         generator.delete_all_subscriptions()
+        cls.sms_backend_mapping.delete()
+        cls.backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
 
 
