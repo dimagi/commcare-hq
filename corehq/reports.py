@@ -23,7 +23,6 @@ from corehq.apps.userreports.reports.view import (
 )
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.commconnect import system_overview
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
@@ -121,13 +120,6 @@ def REPORTS(project):
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
     ])
-
-    project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
-    if project_can_use_inbound_sms:
-        messaging_reports.extend([
-            system_overview.SystemOverviewReport,
-            system_overview.SystemUsersReport,
-        ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
