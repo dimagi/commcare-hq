@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pillowtop',
-    version='0.1.7',
+    version='0.1.8',
     description='A couchdbkit changes listener for doing backend processing',
     author='Dimagi',
     author_email='dev@dimagi.com',
@@ -22,7 +22,7 @@ setup(
         "rawes==0.4.0",
         "elasticsearch==0.4.4",
         'django==1.7.10',
-        'dimagi-utils>=1.3usec',
+        'dimagi-utils>=1.2.3',
         'psycopg2==2.5.2',
         'fakecouch',
     ],
@@ -30,6 +30,5 @@ setup(
         'unittest2',
     ],
     dependency_links=[
-        'git+git://github.com/dimagi/dimagi-utils.git@24e1eaad37ac735ab9309253011f09835c9ee67e#egg=dimagi-utils-1.3usec',
     ]
 )
