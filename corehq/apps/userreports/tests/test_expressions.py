@@ -9,7 +9,6 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
-    RelatedDocExpressionSpec,
 )
 from corehq.apps.userreports.specs import EvaluationContext
 
@@ -42,13 +41,24 @@ class IdentityExpressionTest(SimpleTestCase):
 class ConstantExpressionTest(SimpleTestCase):
 
     def test_constant_expression(self):
-        for constant in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
+        for constant in (None, 7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
             getter = ExpressionFactory.from_spec({
                 'type': 'constant',
                 'constant': constant,
             })
             self.assertEqual(constant, getter({}))
             self.assertEqual(constant, getter({'some': 'random stuff'}))
+
+    def test_constant_auto_detection(self):
+        for valid_constant in (7.2, 'hello world', 3, True):
+            getter = ExpressionFactory.from_spec(valid_constant)
+            self.assertEqual(valid_constant, getter({}))
+            self.assertEqual(valid_constant, getter({'some': 'random stuff'}))
+
+    def test_constant_auto_detection_invalid_types(self):
+        for invalid_constant in ([], {}):
+            with self.assertRaises(BadSpecError):
+                ExpressionFactory.from_spec(invalid_constant)
 
     def test_invalid_constant(self):
         with self.assertRaises(BadSpecError):
@@ -297,6 +307,43 @@ class ArrayIndexExpressionTest(SimpleTestCase):
 
     def test_empty_index(self):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
+
+
+class NamedExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        self.expression_spec = {
+            "type": "named",
+            "name_expression": {
+                "type": "constant",
+                "constant": "the_name"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "prop"
+            }
+        }
+        self.expression = ExpressionFactory.from_spec(self.expression_spec)
+
+    def test_missing_name(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "named",
+                "value_expression": "test",
+            })
+
+    def test_missing_value(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "named",
+                "name_expression": "test",
+            })
+
+    def test_basic(self):
+        value = self.expression({"prop": "p_value"})
+        self.assertTrue(isinstance(value, dict))
+        self.assertEqual('the_name', value['name'])
+        self.assertEqual('p_value', value['value'])
 
 
 class NestedExpressionTest(SimpleTestCase):

@@ -6,7 +6,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec
+    NestedExpressionSpec, NamedExpressionSpec
 
 
 def _make_filter(spec, context):
@@ -88,6 +88,15 @@ def _nested_expression(spec, context):
     return wrapped
 
 
+def _named_expression(spec, context):
+    wrapped = NamedExpressionSpec.wrap(spec)
+    wrapped.configure(
+        name_expression=ExpressionFactory.from_spec(wrapped.name_expression),
+        value_expression=ExpressionFactory.from_spec(wrapped.value_expression),
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -101,6 +110,7 @@ class ExpressionFactory(object):
         'iterator': _iterator_expression,
         'switch': _switch_expression,
         'nested': _nested_expression,
+        'named': _named_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
@@ -120,6 +130,8 @@ class ExpressionFactory(object):
 
     @classmethod
     def from_spec(cls, spec, context=None):
+        if _is_constant(spec):
+            return cls.from_spec(_convert_constant_to_expression_spec(spec), context)
         try:
             return cls.spec_map[spec['type']](spec, context)
         except KeyError:
@@ -127,8 +139,16 @@ class ExpressionFactory(object):
                 spec.get('type', '[missing]'),
                 ', '.join(cls.spec_map.keys()),
             ))
-        except BadValueError as e:
+        except (TypeError, BadValueError) as e:
             raise BadSpecError(_('Problem creating getter: {}. Message is: {}').format(
                 json.dumps(spec, indent=2),
                 str(e),
             ))
+
+
+def _is_constant(value):
+    return isinstance(value, (basestring, int, bool, float))
+
+
+def _convert_constant_to_expression_spec(value):
+    return {'type': 'constant', 'constant': value}
