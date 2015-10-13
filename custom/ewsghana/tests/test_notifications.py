@@ -12,7 +12,7 @@ from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, make_loc, assign_products_to_location, \
-    bootstrap_web_user, create_backend
+    bootstrap_web_user, create_backend, set_sms_notifications
 
 
 class MissingReportNotificationTestCase(TestCase):
@@ -582,8 +582,9 @@ class SMSNotificationTestCase(TestCase):
         self.district = make_loc('test-district', 'Test District', self.TEST_DOMAIN, 'district')
         self.user = bootstrap_web_user(
             username='test', domain=self.TEST_DOMAIN, phone_number='+4444', location=self.district,
-            email='test@example.com', password='dummy', user_data={'sms_notifications': True}
+            email='test@example.com', password='dummy'
         )
+        set_sms_notifications(self.domain, self.user, True)
         self.notification = Notification(self.TEST_DOMAIN, self.user, 'test')
 
     def tearDown(self):
@@ -617,7 +618,7 @@ class SMSNotificationTestCase(TestCase):
 
     def test_opt_out(self):
         """No message will be sent if the user has opted out of the notifications."""
-        self.user.user_data['sms_notifications'] = False
+        set_sms_notifications(self.domain, self.user, False)
         with mock.patch('custom.ewsghana.alerts.alert.send_sms') as send:
             self.notification.send()
             self.assertFalse(send.called)
