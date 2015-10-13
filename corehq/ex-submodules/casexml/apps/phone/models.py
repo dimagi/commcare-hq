@@ -624,7 +624,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
             for this_case_index in this_case_indices.values():
                 if (this_case_index in self.dependent_case_ids_on_phone and
-                            this_case_index not in candidates_to_remove):
+                        this_case_index not in candidates_to_remove):
                     self.prune_case(this_case_index)
         else:
             # we have some possible candidates for removal. we should check each of them.
