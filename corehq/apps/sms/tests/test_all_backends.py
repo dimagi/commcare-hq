@@ -73,7 +73,7 @@ class AllBackendTest(BaseSMSTest):
         self.megamobile_backend = MegamobileBackend(name='MEGAMOBILE', is_global=True)
         self.megamobile_backend.save()
 
-        if not getattr(settings, 'SIMPLE_API_KEYS'):
+        if not hasattr(settings, 'SIMPLE_API_KEYS'):
             settings.SIMPLE_API_KEYS = {}
 
         settings.SIMPLE_API_KEYS['grapevine-test'] = 'grapevine-api-key'
