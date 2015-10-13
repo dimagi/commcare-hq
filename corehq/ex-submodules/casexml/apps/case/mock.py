@@ -3,10 +3,10 @@ import copy
 from datetime import datetime, date
 import uuid
 from xml.etree import ElementTree
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq.form_processor.interfaces import FormProcessorInterface
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 
 
 class CaseBlock(dict):
