@@ -360,6 +360,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
+            'call_center_type':
+                'cases_and_fixtures' if self.domain_object.call_center_config.use_fixtures else 'cases_only',
             'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
