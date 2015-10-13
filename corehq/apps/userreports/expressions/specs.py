@@ -29,7 +29,7 @@ class ConstantGetterSpec(JsonObject):
     def wrap(self, obj):
         if 'constant' not in obj:
             raise BadSpecError('"constant" property is required!')
-        return super(ConstantGetterSpec ,self).wrap(obj)
+        return super(ConstantGetterSpec, self).wrap(obj)
 
     def __call__(self, item, context=None):
         return self.constant
