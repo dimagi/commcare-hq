@@ -642,8 +642,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree before update: {}'.format(self.index_tree))
-        skipped = set()
-        to_prune = set()
 
         class CaseUpdate(object):
             def __init__(self, case_id):
