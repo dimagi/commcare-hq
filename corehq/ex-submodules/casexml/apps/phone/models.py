@@ -49,6 +49,7 @@ class User(object):
         # todo: this is redundant with the implementation in CouchUser.
         # this will go away when the two are reconciled
         from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+
         session_data = copy(self.user_data)
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
@@ -98,7 +99,6 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
 
 
 class SyncLogAssertionError(AssertionError):
-
     def __init__(self, case_id, *args, **kwargs):
         self.case_id = case_id
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
@@ -113,7 +113,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     # domain = StringProperty()
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
-    duration = IntegerProperty()        # in seconds
+    duration = IntegerProperty()  # in seconds
     log_format = StringProperty()
 
     # owner_ids_on_phone stores the ids the phone thinks it's the owner of.
@@ -220,7 +220,7 @@ class SyncLog(AbstractSyncLog):
     A log of a single sync operation.
     """
     log_format = StringProperty(default=LOG_FORMAT_LEGACY)
-    last_seq = StringProperty()         # the last_seq of couch during this sync
+    last_seq = StringProperty()  # the last_seq of couch during this sync
 
     # we need to store a mapping of cases to indices for generating the footprint
     # cases_on_phone represents the state of all cases the server
@@ -244,6 +244,7 @@ class SyncLog(AbstractSyncLog):
     @classmethod
     def last_for_user(cls, user_id):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
+
         return get_last_synclog_for_user(user_id)
 
     def case_count(self):
@@ -481,6 +482,7 @@ class IndexTree(DocumentSchema):
         Allows passing in a cached map of reverse index references if you know you are going
         to call it more than once in a row to avoid rebuilding that.
         """
+
         def _recursive_call(case_id, all_cases, cached_map):
             all_cases.add(case_id)
             for dependent_case in self.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_map):
@@ -599,6 +601,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                             )
                             return True
                         return False
+
                     return _domain_has_legacy_toggle_set() or _sync_log_was_old()
 
                 if _should_fail_softly():
@@ -619,7 +622,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
             for this_case_index in this_case_indices.values():
                 if (this_case_index in self.dependent_case_ids_on_phone and
-                        this_case_index not in candidates_to_remove):
+                            this_case_index not in candidates_to_remove):
                     self.prune_case(this_case_index)
         else:
             # we have some possible candidates for removal. we should check each of them.
@@ -646,7 +649,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         class CaseUpdate(object):
             def __init__(self, case_id):
                 self.case_id = case_id
-                self.is_live = True
+                self.final_owner_id = None
+                self.is_closed = None
                 self.indices_to_add = []
                 self.indices_to_delete = []
 
@@ -654,6 +658,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         # this is a variable used via closures in the function below
         owner_id_map = {}
+
         def get_latest_owner_id(case_id, action=None):
             # "latest" just means as this forms actions are played through
             if action is not None:
@@ -673,7 +678,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
                 owner_id = get_latest_owner_id(case._id, action)
-                case_update.is_live = owner_id is None or owner_id in self.owner_ids_on_phone
+                if owner_id is not None:
+                    case_update.final_owner_id = owner_id
                 if action.action_type == const.CASE_ACTION_INDEX:
                     for index in action.indices:
                         if index.referenced_id:
@@ -685,7 +691,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                                 ShortIndex(case._id, index.identifier, None)
                             )
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    case_update.is_live = False
+                    case_update.is_closed = True
 
         def _add_index(index):
             logger.debug('adding index {} -> {} ({}).'.format(
@@ -695,10 +701,19 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.case_ids_on_phone.add(index.referenced_id)
                 self.dependent_case_ids_on_phone.add(index.referenced_id)
 
+        def _is_live(case_update, owner_ids):
+            if case_update.is_closed:
+                return False
+            elif case_update.final_owner_id is None:
+                # we likely didn't touch owner_id so assume it was previously live and still is
+                return True
+            else:
+                return case_update.final_owner_id in owner_ids
+
         non_live_updates = []
         for case in case_list:
             case_update = all_updates[case._id]
-            if case_update.is_live:
+            if _is_live(case_update, self.owner_ids_on_phone):
                 logger.debug('case {} is live.'.format(case_update.case_id))
                 if case._id not in self.case_ids_on_phone:
                     self._add_primary_case(case._id)
@@ -777,7 +792,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if case_state.case_id in previous_log_footprint:
                     new_sync_log.case_ids_on_phone.add(case_state.case_id)
                     for index in case_state.indices:
-                        new_sync_log.index_tree.set_index(case_state.case_id, index.identifier, index.referenced_id)
+                        new_sync_log.index_tree.set_index(case_state.case_id, index.identifier,
+                                                          index.referenced_id)
                     if is_dependent:
                         new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
 
@@ -812,7 +828,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         return [CaseState(case_id=id) for id in self.case_ids_on_phone]
 
     def test_only_clear_cases_on_phone(self):
-        self. case_ids_on_phone = set()
+        self.case_ids_on_phone = set()
 
     def test_only_get_dependent_cases_on_phone(self):
         # hack - just for tests
