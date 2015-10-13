@@ -7,6 +7,7 @@ from couchdbkit import push, RequestFailed
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.loading import couchdbkit_handler
 from django.conf import settings
+from django.db.models import get_app_path
 
 log = logging.getLogger(__name__)
 
@@ -96,7 +97,8 @@ def get_app_sync_info(app):
     for schema_dict in schema_list:
         for schema in schema_dict.values():
             app_module = schema.__module__.rsplit(".", 1)[0]
-            if app_module == app_name and not schema._meta.app_label in app_labels:
+            same_app = "{}.".format(app_name).startswith("{}.".format(app_module))
+            if same_app and not schema._meta.app_label in app_labels:
                 app_labels.add(schema._meta.app_label)
 
     designs = []
@@ -104,7 +106,7 @@ def get_app_sync_info(app):
         if not app_label in couchdbkit_handler._databases:
             continue
         db = couchdbkit_handler.get_db(app_label)
-        app_path = os.path.abspath(os.path.join(sys.modules[app.__name__].__file__, ".."))
+        app_path = get_app_path(app_label)
         design_path = "%s/%s" % (app_path, "_design")
         if not os.path.isdir(design_path):
             design_path = None
