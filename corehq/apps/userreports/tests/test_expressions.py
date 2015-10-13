@@ -49,6 +49,17 @@ class ConstantExpressionTest(SimpleTestCase):
             self.assertEqual(constant, getter({}))
             self.assertEqual(constant, getter({'some': 'random stuff'}))
 
+    def test_constant_auto_detection(self):
+        for valid_constant in (7.2, 'hello world', 3, None, True):
+            getter = ExpressionFactory.from_spec(valid_constant)
+            self.assertEqual(valid_constant, getter({}))
+            self.assertEqual(valid_constant, getter({'some': 'random stuff'}))
+
+    def test_constant_auto_detection_invalid_types(self):
+        for invalid_constant in ([], {}):
+            with self.assertRaises(BadSpecError):
+                ExpressionFactory.from_spec(invalid_constant)
+
     def test_invalid_constant(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
