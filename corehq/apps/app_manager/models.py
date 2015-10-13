@@ -1766,6 +1766,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     module_filter = StringProperty()
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    auto_select_case = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -2061,6 +2062,10 @@ class Module(ModuleBase):
             return self.case_details.short.filter
         except AttributeError:
             return None
+
+    @property
+    def auto_select_case(self):
+        return self.case_type == USERCASE_TYPE
 
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
@@ -2571,7 +2576,6 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
-    auto_select_case = BooleanProperty(default=False)
 
     @classmethod
     def new_module(cls, name, lang):
