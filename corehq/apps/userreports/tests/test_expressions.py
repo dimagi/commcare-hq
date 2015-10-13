@@ -325,6 +325,20 @@ class NamedExpressionTest(SimpleTestCase):
         }
         self.expression = ExpressionFactory.from_spec(self.expression_spec)
 
+    def test_missing_name(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "named",
+                "value_expression": "test",
+            })
+
+    def test_missing_value(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "named",
+                "name_expression": "test",
+            })
+
     def test_basic(self):
         value = self.expression({"prop": "p_value"})
         self.assertTrue(isinstance(value, dict))
