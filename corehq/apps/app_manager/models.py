@@ -3328,10 +3328,6 @@ class ReportAppConfig(DocumentSchema):
     def summary_detail_id(self):
         return 'reports.{}.summary'.format(self.uuid)
 
-    @property
-    def data_detail_id(self):
-        return 'reports.{}.data'.format(self.uuid)
-
     def get_details(self):
         yield (self.select_detail_id, self.select_details(), True)
         yield (self.summary_detail_id, self.summary_details(), True)
