@@ -333,6 +333,24 @@ In the example below, the indicator is inside a form group question called "impa
 }
 ```
 
+## Getting a location's parent ID
+
+`location_id_expression` can be any expression that evaluates to a valid location id.
+
+```json
+{
+    "type":"expression",
+    "expression": {
+        "type": "location_parent_id",
+        "location_id_expression": {
+            "type": "property_name",
+            "property_name": "location_id"
+        }
+    },
+    "column_id": "parent_location",
+}
+```
+
 # Base Item Expressions
 
 ## Emit multiple rows (one per non-empty case property)
