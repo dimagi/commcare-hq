@@ -2398,7 +2398,7 @@ class DomainRequest(models.Model):
 
     @classmethod
     def by_domain(cls, domain, is_approved=False):
-        return DomainRequest.objects.filter(domain=domain)
+        return DomainRequest.objects.filter(domain=domain, is_approved=is_approved)
 
     @classmethod
     def by_email(cls, domain, email, is_approved=False):
