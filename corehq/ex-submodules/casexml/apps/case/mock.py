@@ -8,7 +8,6 @@ from casexml.apps.case.util import post_case_blocks
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
-from casexml.apps.case.xml.generator import date_to_xml_string
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 
 
