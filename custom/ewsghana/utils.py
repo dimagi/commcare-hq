@@ -242,7 +242,8 @@ def bootstrap_web_user(domain, username, password, email, location, user_data=No
     web_user.set_location(domain, location)
     dm = web_user.get_domain_membership(domain)
     dm.program_id = program_id
-    web_user.phone_numbers = [phone_number]
+    if phone_number:
+        web_user.phone_numbers = [phone_number]
     web_user.save()
     return web_user
 
