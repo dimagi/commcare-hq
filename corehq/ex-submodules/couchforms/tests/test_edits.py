@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms.models import XFormDeprecated, XFormInstance, \
+from couchforms.models import XFormInstance, \
     UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces import FormProcessorInterface
@@ -19,7 +19,7 @@ class EditFormTest(TestCase):
     domain = 'test-form-edits'
 
     def tearDown(self):
-        XFormInstance.get_db().flush()
+        FormProcessorInterface.delete_all_xforms()
 
     def _get_files(self):
         first_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "original.xml")

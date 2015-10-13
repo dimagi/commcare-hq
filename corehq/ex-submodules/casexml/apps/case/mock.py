@@ -3,9 +3,7 @@ import copy
 from datetime import datetime, date
 import uuid
 from xml.etree import ElementTree
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import post_case_blocks
-from dimagi.utils.couch.database import iter_docs
+from corehq.form_processor.interfaces import FormProcessorInterface
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -350,7 +348,7 @@ class CaseFactory(object):
         submit_form_extras = copy.copy(self.form_extras)
         if form_extras is not None:
             submit_form_extras.update(form_extras)
-        return post_case_blocks(
+        return FormProcessorInterface.post_case_blocks(
             caseblocks,
             form_extras=submit_form_extras,
             domain=self.domain,
@@ -373,6 +371,8 @@ class CaseFactory(object):
         return self.create_or_update_cases([case_structure], form_extras)
 
     def create_or_update_cases(self, case_structures, form_extras=None):
+        from corehq.form_processor.interfaces import FormProcessorInterface
+
         def _get_case_block(substructure):
             return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
 
@@ -390,9 +390,6 @@ class CaseFactory(object):
             form_extras,
         )
 
-        return [
-            CommCareCase.wrap(doc) for doc in iter_docs(
-                CommCareCase.get_db(),
-                [id for structure in case_structures for id in structure.walk_ids()]
-            )
-        ]
+        return FormProcessorInterface.get_cases(
+            [id for structure in case_structures for id in structure.walk_ids()]
+        )

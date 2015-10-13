@@ -141,13 +141,13 @@ class TestChangingSyncMode(TestCase):
         restore_config = RestoreConfig(self.project, user=self.user)
         case = CaseFactory(domain=self.project.name, case_defaults={'owner_id': self.user_id}).create_case()
         restore_payload = restore_config.get_payload().as_string()
-        self.assertTrue(case._id in restore_payload)
+        self.assertTrue(case.case_id in restore_payload)
         sync_log = synclog_from_restore_payload(restore_payload)
         self.assertEqual(SyncLog, type(sync_log))
         restore_config = RestoreConfig(self.project, user=self.user,
                                        params=RestoreParams(sync_log_id=sync_log._id))
         original_payload_back = restore_config.get_payload().as_string()
-        self.assertFalse(case._id in original_payload_back)
+        self.assertFalse(case.case_id in original_payload_back)
         self.assertEqual(SyncLog, type(synclog_from_restore_payload(original_payload_back)))
 
         OWNERSHIP_CLEANLINESS_RESTORE.set(self.domain, enabled=True, namespace='domain')
@@ -155,7 +155,7 @@ class TestChangingSyncMode(TestCase):
                                        params=RestoreParams(sync_log_id=sync_log._id),
                                        cache_settings=RestoreCacheSettings(overwrite_cache=True))
         migrated_payload_back = restore_config.get_payload().as_string()
-        self.assertFalse(case._id in migrated_payload_back)
+        self.assertFalse(case.case_id in migrated_payload_back)
         self.assertEqual(SimplifiedSyncLog, type(synclog_from_restore_payload(migrated_payload_back)))
         OWNERSHIP_CLEANLINESS_RESTORE.set(self.domain, enabled=False, namespace='domain')
 

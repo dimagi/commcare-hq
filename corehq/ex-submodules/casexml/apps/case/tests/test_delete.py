@@ -1,9 +1,8 @@
 from django.test import TestCase
-from casexml.apps.case.cleanup import safe_hard_delete
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
+from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 
 
 class TestHardDelete(TestCase):
@@ -12,14 +11,18 @@ class TestHardDelete(TestCase):
         factory = CaseFactory()
         case = factory.create_case()
         [case] = factory.create_or_update_case(CaseStructure(case_id=case._id, attrs={'update': {'foo': 'bar'}}))
-        self.assertTrue(CommCareCase.get_db().doc_exist(case._id))
+        self.assertIsNotNone(FormProcessorInterface.get_case(case.id))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
-            self.assertTrue(XFormInstance.get_db().doc_exist(form_id))
-        safe_hard_delete(case)
-        self.assertFalse(CommCareCase.get_db().doc_exist(case._id))
+            self.assertIsNotNone(FormProcessorInterface.get_xform(form_id))
+        FormProcessorInterface.hard_delete_case(case)
+
+        with self.assertRaises(CaseNotFound):
+            FormProcessorInterface.get_case(case.id)
+
         for form_id in case.xform_ids:
-            self.assertFalse(XFormInstance.get_db().doc_exist(form_id))
+            with self.assertRaises(XFormNotFound):
+                FormProcessorInterface.get_xform(form_id)
 
     def test_delete_with_related(self):
         factory = CaseFactory()
@@ -31,12 +34,13 @@ class TestHardDelete(TestCase):
         )
         # deleting the parent should not be allowed because the child still references it
         with self.assertRaises(CommCareCaseError):
-            safe_hard_delete(parent)
+            FormProcessorInterface.hard_delete_case(parent)
 
         # deleting the child is ok
-        safe_hard_delete(child)
-        self.assertTrue(CommCareCase.get_db().doc_exist(parent._id))
-        self.assertFalse(CommCareCase.get_db().doc_exist(child._id))
+        FormProcessorInterface.hard_delete_case(child)
+        self.assertIsNotNone(FormProcessorInterface.get_case(parent.id))
+        with self.assertRaises(CaseNotFound):
+            FormProcessorInterface.get_case(child.id)
 
     def test_delete_sharing_form(self):
         factory = CaseFactory()
@@ -45,10 +49,10 @@ class TestHardDelete(TestCase):
             CaseStructure(attrs={'create': True}),
         ])
         with self.assertRaises(CommCareCaseError):
-            safe_hard_delete(c1)
+            FormProcessorInterface.hard_delete_case(c1)
 
         with self.assertRaises(CommCareCaseError):
-            safe_hard_delete(c2)
+            FormProcessorInterface.hard_delete_case(c2)
 
-        self.assertTrue(CommCareCase.get_db().doc_exist(c1._id))
-        self.assertTrue(CommCareCase.get_db().doc_exist(c2._id))
+        self.assertIsNotNone(FormProcessorInterface.get_case(c1.id))
+        self.assertIsNotNone(FormProcessorInterface.get_case(c2.id))

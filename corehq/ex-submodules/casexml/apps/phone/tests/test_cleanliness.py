@@ -85,14 +85,14 @@ class OwnerCleanlinessTest(SyncBaseTest):
     def test_change_owner_stays_clean(self):
         # change the owner ID of a normal case, should remain clean
         new_owner = uuid.uuid4().hex
-        self._set_owner(self.sample_case._id, new_owner)
+        self._set_owner(self.sample_case.case_id, new_owner)
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
     def test_change_owner_child_case_stays_clean(self):
         # change the owner ID of a child case, should remain clean
         new_owner = uuid.uuid4().hex
-        self._set_owner(self.child._id, new_owner)
+        self._set_owner(self.child.case_id, new_owner)
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
@@ -122,22 +122,22 @@ class OwnerCleanlinessTest(SyncBaseTest):
         new_owner = uuid.uuid4().hex
         [child, parent] = self.factory.create_or_update_case(
             CaseStructure(
-                case_id=self.sample_case._id,
+                case_id=self.sample_case.case_id,
                 indices=[
                     CaseIndex(CaseStructure(attrs={'owner_id': new_owner}))
                 ]
             )
         )
         self.assert_owner_dirty()
-        self.assertEqual(child._id, self.owner_cleanliness.hint)
+        self.assertEqual(child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
     def test_change_parent_owner_makes_dirty(self):
         # change the owner id of a parent case and make sure the owner becomes dirty
         new_owner = uuid.uuid4().hex
-        self._set_owner(self.parent._id, new_owner)
+        self._set_owner(self.parent.case_id, new_owner)
         self.assert_owner_dirty()
-        self.assertEqual(self.child._id, self.owner_cleanliness.hint)
+        self.assertEqual(self.child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
     def test_set_flag_clean_no_data(self):
@@ -147,7 +147,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
     def test_hint_invalidation(self):
         self.test_change_parent_owner_makes_dirty()
-        self._set_owner(self.parent._id, self.owner_id)
+        self._set_owner(self.parent.case_id, self.owner_id)
         # after the submission the dirtiness flag should still be set
         # since it isn't invalidated right away
         self.assert_owner_dirty()
