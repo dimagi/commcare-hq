@@ -777,7 +777,7 @@ def callcenter_test(request):
             'case': CommCareCase.get(case_id),
         }
 
-    if (user or user_case) and domain.call_center_config.use_fixtures:
+    if user or user_case:
         custom_cache = None if enable_caching else cache.caches['dummy']
         cci = CallCenterIndicators(
             domain.name,
