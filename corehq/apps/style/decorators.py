@@ -31,7 +31,7 @@ def use_select2(view_func):
     Example:
 
     @use_select2
-    def dispatch(request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
@@ -49,7 +49,7 @@ def use_select2_v4(view_func):
     Example:
 
     @use_select2_v4
-    def dispatch(request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
@@ -67,7 +67,7 @@ def use_knockout_js(view_func):
     Example:
 
     @use_knockout_js
-    def dispatch(request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
@@ -85,7 +85,7 @@ def upgrade_knockout_js(view_func):
     Example:
 
     @upgrade_knockout_js
-    def dispatch(request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)

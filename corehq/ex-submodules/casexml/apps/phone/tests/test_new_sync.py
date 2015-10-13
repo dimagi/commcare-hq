@@ -3,7 +3,7 @@ import uuid
 from django.test import TestCase, SimpleTestCase
 from django.test.utils import override_settings
 from jsonobject import JsonObject
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
@@ -191,9 +191,9 @@ class TestNewSyncSpecifics(TestCase):
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
-                relationships=[CaseRelationship(
+                indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
-                    relationship='parent',
+                    relationship='child',
                     related_type='parent',
                 )],
             )

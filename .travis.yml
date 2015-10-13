@@ -1,6 +1,8 @@
 language: python
 sudo: false
-cache: pip
+cache:
+  directories:
+    - $HOME/.cache/pip
 python:
   - "2.7"
 env:
@@ -40,7 +42,7 @@ install:
   - "npm install -g bower"
   - "ln -nfs `which bower` /home/travis/bower"
   - "python manage.py bower install"
-script: "coverage run manage.py test --noinput --failfast --traceback --testrunner=$TEST_RUNNER"
+script: "coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER"
 after_success:
   - coverage report
   - coveralls

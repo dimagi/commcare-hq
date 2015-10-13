@@ -717,6 +717,23 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 }
 ```
 
+### AggregateDateColumn
+
+AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`.
+Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
+
+Here's an example of an aggregate date column that aggregates the `received_on`  property for each month (allowing you to count/sum things that happened in that month).
+
+```json
+ {
+    "column_id": "received_on",
+    "field": "received_on",
+    "type": "aggregate_date",
+    "display": "Month"
+  }
+```
+
+
 #### Formats
 
 The following percentage formats are supported.
