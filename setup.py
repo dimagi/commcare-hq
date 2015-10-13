@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dimagi-utils',
-    version='1.2.3',
+    version='1.2.3.2',
     description='Dimagi Shared Utilities',
     author='Dimagi',
     author_email='dev@dimagi.com',
@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'jsonobject-couchdbkit>=0.7.0.1',
         'django==1.7.10',
-        'django-redis<=3.8',
+        'django-redis==4.2',
         'mock>=0.8.0',
         'openpyxl',
         'Pillow',
