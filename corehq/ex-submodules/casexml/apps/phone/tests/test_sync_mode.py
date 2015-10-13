@@ -1,4 +1,5 @@
 import uuid
+from xml.etree import ElementTree
 from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -618,7 +619,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
         parent_id = self.factory.create_case()._id
         # create an irrelevent child and close the parent
         child_id = uuid.uuid4().hex
-        child_id = 'child'
         self.factory.create_or_update_cases([
             CaseStructure(
                 case_id=child_id,
@@ -633,6 +633,31 @@ class SyncTokenUpdateTest(SyncBaseTest):
                     relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
+            )
+        ])
+        # they should both be gone
+        self._testUpdate(self.sync_log._id, {}, {})
+
+    def test_create_closed_child_case_and_close_parent_in_same_form(self):
+        # create the parent
+        parent_id = self.factory.create_case()._id
+        # create an irrelevent child and close the parent
+        child_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases([
+            CaseStructure(case_id=parent_id, attrs={'close': True, 'owner_id': CaseBlock.undefined}),
+            CaseStructure(
+                case_id=child_id,
+                attrs={
+                    'create': True,
+                    'close': True,
+                    'update': {'foo': 'bar'},
+                },
+                indices=[CaseIndex(
+                    CaseStructure(case_id=parent_id),
+                    relationship=CHILD_RELATIONSHIP,
+                    related_type=PARENT_TYPE,
+                )],
+                walk_related=False,
             )
         ])
         # they should both be gone
@@ -653,6 +678,24 @@ class SyncTokenUpdateTest(SyncBaseTest):
                 attrs={'owner_id': 'irrelevant', 'close': True},
             )
         )
+
+    @run_with_all_restore_configs
+    def test_index_after_close(self):
+        parent_id = self.factory.create_case()._id
+        case_id = uuid.uuid4().hex
+        case_xml = self.factory.get_case_block(case_id, create=True, close=True)
+        # hackily insert an <index> block after the close
+        index_wrapper = ElementTree.Element('index')
+        index_elem = ElementTree.Element('parent')
+        index_elem.set('case_type', 'test')
+        index_elem.set('relationship', 'child')
+        index_elem.text = parent_id
+        index_wrapper.append(index_elem)
+        case_xml.append(index_wrapper)
+        self.factory.post_case_blocks([case_xml])
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        # before this test was written, the case stayed on the sync log even though it was closed
+        self.assertFalse(sync_log.phone_is_holding_case(case_id))
 
 
 class ChangingOwnershipTest(SyncBaseTest):
