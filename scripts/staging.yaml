@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - fixtures-db-prep  # danny 10/13
   - pare-down-related_to_domain  # danny 10/8
   - user-db-fixes  # danny 10/1
   - vellum-staging # J$ 11/13
