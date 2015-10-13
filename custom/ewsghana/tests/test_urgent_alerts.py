@@ -2,15 +2,13 @@ from datetime import datetime
 from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_user
-from corehq.apps.sms.backend import test
+from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, create_backend
 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
 
@@ -20,7 +18,7 @@ class TestUrgentAlerts(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.district = make_loc(code="district", name="Test District", type="district", domain=TEST_DOMAIN)
         cls.loc1 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)
@@ -37,13 +35,13 @@ class TestUrgentAlerts(TestCase):
         cls.product2 = Product(domain=TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each')
         cls.product2.save()
 
-        cls.user1 = bootstrap_user(
-            username='test1', phone_number='1111', home_loc=cls.district, domain=TEST_DOMAIN,
+        cls.user1 = bootstrap_web_user(
+            username='test1', phone_number='1111', location=cls.district, domain=TEST_DOMAIN,
             first_name='test', last_name='test1',
             user_data={
                 'role': [],
                 'sms_notifications': True
-            }
+            }, email='test1@example.com', password='dummy'
         )
 
     def tearDown(self):
@@ -105,3 +103,5 @@ class TestUrgentAlerts(TestCase):
         cls.user1.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
+        cls.sms_backend_mapping.delete()
+        cls.backend.delete()

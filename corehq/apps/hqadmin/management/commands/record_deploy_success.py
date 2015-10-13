@@ -43,8 +43,9 @@ class Command(BaseCommand):
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT'):
-            text = "CommCareHQ has been successfully deployed. Find the diff <{}|here>".format(
-                git_snapshot['diff_url']
+            text = "CommCareHQ has been successfully deployed to *{}*. Find the diff <{}|here>".format(
+                options['environment'],
+                git_snapshot['diff_url'],
             )
             requests.post(settings.MIA_THE_DEPLOY_BOT, data=json.dumps({
                 "channel": "#dev",

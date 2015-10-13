@@ -3,6 +3,7 @@ import copy
 from datetime import datetime, date
 import uuid
 from xml.etree import ElementTree
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq.form_processor.interfaces import FormProcessorInterface
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
@@ -275,37 +276,43 @@ class CaseStructure(object):
     Can recursively nest parents/grandparents inside here.
     """
 
-    def __init__(self, case_id=None, relationships=None, attrs=None, walk_related=True):
+    def __init__(self, case_id=None, indices=None, attrs=None, walk_related=True):
         self.case_id = case_id or uuid.uuid4().hex
-        self.relationships = relationships if relationships is not None else []
+        self.indices = indices if indices is not None else []
         self.attrs = attrs if attrs is not None else {}
         self.walk_related = walk_related  # whether to walk related cases in operations
 
     @property
     def index(self):
         return {
-            r.relationship: (r.related_type, r.related_id)
-            for r in self.relationships
+            r.identifier: (r.related_type, r.related_id, r.relationship)
+            for r in self.indices
         }
 
     def walk_ids(self):
         yield self.case_id
         if self.walk_related:
-            for relationship in self.relationships:
+            for relationship in self.indices:
                 for id in relationship.related_structure.walk_ids():
                     yield id
 
 
-class CaseRelationship(object):
-    DEFAULT_RELATIONSHIP = 'parent'
+class CaseIndex(object):
+    DEFAULT_RELATIONSHIP = 'child'
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
-    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None):
+    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None,
+                 identifier=None):
         self.related_structure = related_structure or CaseStructure()
         self.relationship = relationship
         if related_type is None:
             related_type = self.related_structure.attrs.get('case_type', self.DEFAULT_RELATED_CASE_TYPE)
         self.related_type = related_type
+
+        if identifier is None:
+            self.identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[relationship]
+        else:
+            self.identifier = identifier
 
     @property
     def related_id(self):
@@ -373,7 +380,7 @@ class CaseFactory(object):
             blocks = [_get_case_block(substructure)]
             if substructure.walk_related:
                 blocks += [
-                    block for relationship in substructure.relationships
+                    block for relationship in substructure.indices
                     for block in _get_case_blocks(relationship.related_structure)
                 ]
             return blocks

@@ -1,6 +1,6 @@
 from django.test import TestCase
 from casexml.apps.case.exceptions import CommCareCaseError
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.form_processor.interfaces import FormProcessorInterface
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 
@@ -28,8 +28,8 @@ class TestHardDelete(TestCase):
         factory = CaseFactory()
         parent = factory.create_case()
         [child] = factory.create_or_update_case(
-            CaseStructure(attrs={'create': True}, walk_related=False, relationships=[
-                CaseRelationship(CaseStructure(case_id=parent._id))
+            CaseStructure(attrs={'create': True}, walk_related=False, indices=[
+                CaseIndex(CaseStructure(case_id=parent._id))
             ]),
         )
         # deleting the parent should not be allowed because the child still references it
