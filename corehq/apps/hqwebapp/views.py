@@ -260,7 +260,7 @@ def server_up(req):
             "check_func": hb_check
         },
         "celery": {
-            "always_check": False,
+            "always_check": True,
             "message": "* celery is down",
             "check_func": celery_check
         },
