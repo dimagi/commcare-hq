@@ -37,7 +37,6 @@ class SMSGHBackend(SMSBackend):
             return response.json()
         except:
             return {}
-        return data
 
     def handle_error(self, response):
         data = self.get_additional_data(response)
