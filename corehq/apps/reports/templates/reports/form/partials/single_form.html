@@ -202,8 +202,8 @@ requires imports/proptable.html to be included in the main template
     </li>
 </ul>
 <div class="tab-content form-details" style="overflow:visible">
-    <div class="tab-pane active" id="form-data" style="position:relative">
-        <div class="btn-toolbar" id='form-actions-toolbar' style="position: absolute; right: 0; top: 0">
+    <div class="tab-pane active" id="form-data">
+        <div class="btn-toolbar row" id='form-actions-toolbar'>
             {% if context_case_id %}
                 <a class="btn"
                     href="{% url "render_form_data" instance.domain instance.get_id %}">
