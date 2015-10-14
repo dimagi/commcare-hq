@@ -2,7 +2,7 @@ import uuid
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case import const
-from casexml.apps.case.cleanup import rebuild_case
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.exceptions import MissingServerDate
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction, _action_sort_key_function
@@ -151,7 +151,7 @@ class CaseRebuildTest(TestCase):
         _confirm_action_order(case, [a1, a2, a3])
 
     def testRebuildEmpty(self):
-        self.assertEqual(None, rebuild_case('notarealid'))
+        self.assertEqual(None, rebuild_case_from_forms('notarealid'))
         try:
             CommCareCase.get_with_rebuild('notarealid')
             self.fail('get with rebuild should still fail for unknown cases')
@@ -166,7 +166,7 @@ class CaseRebuildTest(TestCase):
         case = CommCareCase.get(case_id)
         case.delete()
 
-        case = rebuild_case(case_id)
+        case = rebuild_case_from_forms(case_id)
         self.assertEqual(case.p1, 'p1')
         self.assertEqual(case.p2, 'p2')
         self.assertEqual(2, len(primary_actions(case)))  # create + update
@@ -226,7 +226,7 @@ class CaseRebuildTest(TestCase):
         self._assertListNotEqual(original_actions, case.actions)
 
         # test clean slate rebuild
-        case = rebuild_case(case_id)
+        case = rebuild_case_from_forms(case_id)
         self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
 

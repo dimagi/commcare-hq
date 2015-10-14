@@ -313,8 +313,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         try:
             return cls.get(id)
         except ResourceNotFound:
-            from casexml.apps.case.cleanup import rebuild_case
-            case = rebuild_case(id)
+            from casexml.apps.case.cleanup import rebuild_case_from_forms
+            case = rebuild_case_from_forms(id)
             if case is None:
                 raise
             return case

@@ -73,7 +73,7 @@ def rebuild_case_from_actions(case, actions):
     case.rebuild(strict=False)
 
 
-def rebuild_case(case_id):
+def rebuild_case_from_forms(case_id):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
     referencing it. Useful when things go wrong or when you need to manually
