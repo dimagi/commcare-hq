@@ -24,3 +24,6 @@ class XMLSerializeTest(SimpleTestCase):
 
     def test_none_serialization(self):
         self.assertEqual(serialize(None), '')
+
+    def test_long_serialization(self):
+        self.assertEqual(serialize(123L), '123')
