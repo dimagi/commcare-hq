@@ -82,7 +82,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import (
+from ..exceptions import (
     AppEditingError,
     BlankXFormError,
     ConflictingCaseTypeError,
