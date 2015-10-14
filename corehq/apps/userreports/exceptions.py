@@ -30,6 +30,10 @@ class TableRebuildError(UserReportsError):
     pass
 
 
+class StaleRebuildError(TableRebuildError):
+    pass
+
+
 class UserReportsFilterError(UserReportsError):
     pass
 
