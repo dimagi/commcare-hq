@@ -135,7 +135,10 @@ class BasicPillow(PillowBase):
     @memoized
     def get_name(self):
         return "%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, get_machine_id())
+            self._get_base_name(), self.__class__.__name__, get_machine_id())
+
+    def _get_base_name(self):
+        return self.__module__
 
     @property
     def since(self):
