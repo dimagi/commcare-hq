@@ -322,10 +322,7 @@ class DictExpressionTest(SimpleTestCase):
         self.expression_spec = {
             "type": "dict",
             "properties": {
-                "name": {
-                    "type": "constant",
-                    "constant": "the_name"
-                },
+                "name": "the_name",
                 "value": {
                     "type": "property_name",
                     "property_name": "prop"
