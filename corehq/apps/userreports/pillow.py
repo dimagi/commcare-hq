@@ -66,14 +66,14 @@ class ConfigurableIndicatorPillow(PythonPillow):
 
             tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
             for table_name in tables_to_rebuild:
-                table = table_map[table_name]
+                sql_adapter = table_map[table_name]
                 try:
-                    self.rebuild_table(table)
+                    self.rebuild_table(sql_adapter)
                 except TableRebuildError, e:
                     notify_error(unicode(e))
 
-    def rebuild_table(self, table):
-        table.rebuild_table()
+    def rebuild_table(self, sql_adapter):
+        sql_adapter.rebuild_table()
 
     def python_filter(self, doc):
         # filtering is done manually per indicator see change_transport
@@ -105,6 +105,6 @@ class StaticDataSourcePillow(ConfigurableIndicatorPillow):
     def get_all_configs(self):
         return StaticDataSourceConfiguration.all()
 
-    def rebuild_table(self, table):
-        super(StaticDataSourcePillow, self).rebuild_table(table)
-        rebuild_indicators.delay(table.config.get_id)
+    def rebuild_table(self, sql_adapter):
+        super(StaticDataSourcePillow, self).rebuild_table(sql_adapter)
+        rebuild_indicators.delay(sql_adapter.config.get_id)
