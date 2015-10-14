@@ -131,6 +131,7 @@ class Deployment(DocumentSchema, UpdatableSchema):
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
     use_fixtures = BooleanProperty(default=True)
+    use_user_location_as_owner = BooleanProperty(default=False)
     case_owner_id = StringProperty()
     case_type = StringProperty()
 
