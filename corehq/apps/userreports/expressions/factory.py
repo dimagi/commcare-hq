@@ -6,7 +6,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec, NamedExpressionSpec
+    NestedExpressionSpec, DictExpressionSpec
 
 
 def _make_filter(spec, context):
@@ -88,11 +88,11 @@ def _nested_expression(spec, context):
     return wrapped
 
 
-def _named_expression(spec, context):
-    wrapped = NamedExpressionSpec.wrap(spec)
+def _dict_expression(spec, context):
+    wrapped = DictExpressionSpec.wrap(spec)
+    compiled_properties = {key: ExpressionFactory.from_spec(value) for key, value in wrapped.properties.items()}
     wrapped.configure(
-        name_expression=ExpressionFactory.from_spec(wrapped.name_expression),
-        value_expression=ExpressionFactory.from_spec(wrapped.value_expression),
+        compiled_properties=compiled_properties,
     )
     return wrapped
 
@@ -110,7 +110,7 @@ class ExpressionFactory(object):
         'iterator': _iterator_expression,
         'switch': _switch_expression,
         'nested': _nested_expression,
-        'named': _named_expression,
+        'dict': _dict_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
