@@ -82,6 +82,7 @@ def sync_user_case(commcare_user, case_type, owner_id):
             changed = close != case.closed
             changed = changed or case.type != case_type
             changed = changed or case.name != fields['name']
+            changed = changed or case.owner_id != owner_id
 
             if not changed:
                 for field, value in fields.items():
@@ -93,6 +94,7 @@ def sync_user_case(commcare_user, case_type, owner_id):
                 caseblock = CaseBlock(
                     create=False,
                     case_id=case._id,
+                    owner_id=owner_id,
                     version=V2,
                     case_type=case_type,
                     close=close,
@@ -118,10 +120,14 @@ def sync_user_case(commcare_user, case_type, owner_id):
 def sync_call_center_user_case(user):
     domain = user.project
     if domain and domain.call_center_config.enabled:
+        owner_id = domain.call_center_config.case_owner_id
+        if domain.call_center_config.use_user_location_as_owner:
+            owner_id = user.location_id
+
         sync_user_case(
             user,
             domain.call_center_config.case_type,
-            domain.call_center_config.case_owner_id
+            owner_id
         )
 
 
