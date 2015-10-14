@@ -211,6 +211,16 @@ class MobileBackend(Document):
     # If this this backend represents an international gateway,
     # set this to: ['*']
     supported_countries = ListProperty(StringProperty)
+
+    # This option only matters when this is a project-level backend
+    # (is_global=False). By default, the billing framework won't charge
+    # per-SMS gateway fees to a project for a project-level backend,
+    # and only charges the per-SMS surcharge.
+    # However, If this option is set to True, then the project will be charged
+    # for all per-SMS gateway fees for this backend (in addition to the per-SMS
+    # surcharge).
+    charge_gateway_fee_override = BooleanProperty(default=False)
+
     # TODO: Once the ivr backends get refactored, can remove these two properties:
     outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method

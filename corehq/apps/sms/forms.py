@@ -688,6 +688,7 @@ class SettingsForm(Form):
 class BackendForm(Form):
     _cchq_domain = None
     _cchq_backend_id = None
+    _cchq_is_superuser = False
     name = CharField(
         label=ugettext_noop("Name")
     )
@@ -708,14 +709,22 @@ class BackendForm(Form):
         required=False,
         label=ugettext_noop("Reply-To Phone Number"),
     )
+    charge_gateway_fee_override = BooleanField(
+        required=False,
+        label=ugettext_lazy("Charge this project the gateway fees when using this backend.")
+    )
 
     def __init__(self, *args, **kwargs):
         button_text = kwargs.pop('button_text', _("Create SMS Connection"))
+        self._cchq_domain = kwargs.pop('domain', None)
+        self._cchq_backend_id = kwargs.pop('backend_id', False)
+        self._cchq_is_superuser = kwargs.pop('is_superuser', False)
+
         super(BackendForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.form_method = 'POST'
-        self.helper.layout = crispy.Layout(
+        fields = [
             crispy.Fieldset(
                _('General Settings'),
                 crispy.Field('name', css_class='input-xxlarge'),
@@ -741,14 +750,26 @@ class BackendForm(Form):
                 ),
                 data_bind="visible: use_load_balancing",
             ),
+        ]
+
+        if self._cchq_domain and self._cchq_is_superuser:
+            fields.append(
+                crispy.Fieldset(
+                    _("Internal Settings"),
+                    crispy.Field('charge_gateway_fee_override'),
+                ),
+            )
+
+        fields.append(
             FormActions(
                 StrictButton(
                     button_text,
                     type="submit",
                     css_class='btn-primary'
                 ),
-            ),
+            )
         )
+        self.helper.layout = crispy.Layout(*fields)
 
     @property
     def gateway_specific_fields(self):

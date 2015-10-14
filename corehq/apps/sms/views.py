@@ -1186,6 +1186,7 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     page_title = ugettext_noop("Add SMS Connection")
 
     @property
+    @memoized
     def is_superuser(self):
         return self.request.couch_user.is_superuser
 
@@ -1238,11 +1239,14 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     @memoized
     def backend_form(self):
         form_class = self.backend_class.get_form_class()
+        kwargs = {
+            'button_text': self.button_text,
+            'domain': self.domain,
+            'is_superuser': self.is_superuser,
+        }
         if self.request.method == 'POST':
-            form = form_class(self.request.POST, button_text=self.button_text)
-            form._cchq_domain = self.domain
-            return form
-        return form_class(button_text=self.button_text)
+            return form_class(self.request.POST, **kwargs)
+        return form_class(**kwargs)
 
     @property
     def page_context(self):
@@ -1262,6 +1266,8 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     def post(self, request, *args, **kwargs):
         if self.backend_form.is_valid():
             for key, value in self.backend_form.cleaned_data.items():
+                if key == 'charge_gateway_fee_override' and not self.is_superuser:
+                    continue
                 if key not in self.ignored_fields:
                     setattr(self.backend, key, value)
             if self.use_load_balancing:
@@ -1312,13 +1318,16 @@ class EditDomainGatewayView(AddDomainGatewayView):
             if self.use_load_balancing:
                 initial["phone_numbers"] = json.dumps(
                     [{"phone_number": p} for p in self.backend.phone_numbers])
+        kwargs = {
+            'initial': initial,
+            'button_text': self.button_text,
+            'domain': self.domain,
+            'is_superuser': self.is_superuser,
+            'backend_id': self.backend._id,
+        }
         if self.request.method == 'POST':
-            form = form_class(self.request.POST, initial=initial,
-                              button_text=self.button_text)
-            form._cchq_domain = self.domain
-            form._cchq_backend_id = self.backend._id
-            return form
-        return form_class(initial=initial, button_text=self.button_text)
+            return form_class(self.request.POST, **kwargs)
+        return form_class(**kwargs)
 
     @property
     def page_name(self):
