@@ -414,6 +414,7 @@ class SubAreaMixin():
 class DomainGlobalSettingsForm(forms.Form):
     USE_LOCATIONS_CHOICE = "user_location"
     CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
+    CASES_ONLY_CHOICE = "cases_only"
 
     hr_name = forms.CharField(
         label=ugettext_lazy("Project Name"),
@@ -446,7 +447,7 @@ class DomainGlobalSettingsForm(forms.Form):
     call_center_type = ChoiceField(
         label=ugettext_lazy("Call Center Type"),
         initial=CASES_AND_FIXTURES_CHOICE,
-        choices=[(CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"), ('cases_only', "Create just cases")],
+        choices=[(CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"), (CASES_ONLY_CHOICE, "Create just cases")],
         help_text=ugettext_lazy(
             """
             If "Create cases and indicators" is selected, each user will have a case associated with it,
