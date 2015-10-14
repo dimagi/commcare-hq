@@ -69,7 +69,8 @@ def stock_data_task(api_object):
                 1000,
                 offset,
                 params={'domain': api_object.domain},
-                domain=api_object.domain
+                domain=api_object.domain,
+                atomic=True
             )
             offset = 0
 
