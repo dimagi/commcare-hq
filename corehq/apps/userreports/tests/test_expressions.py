@@ -308,6 +308,13 @@ class ArrayIndexExpressionTest(SimpleTestCase):
     def test_empty_index(self):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
 
+    def test_empty_constant_index(self):
+        spec = copy.copy(self.expression_spec)
+        spec['index_expression'] = 1
+        expression = ExpressionFactory.from_spec(spec)
+        array = ['first', 'second', 'third']
+        self.assertEqual('second', expression({'my_array': array}))
+
 
 class NamedExpressionTest(SimpleTestCase):
 
