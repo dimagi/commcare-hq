@@ -5,7 +5,7 @@ from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
-from custom.ewsghana.api import EWSApi
+from custom.ewsghana.api import EWSApi, EmailSettingsSync
 
 from corehq.apps.commtrack.models import StockState, Product
 
@@ -176,3 +176,19 @@ def convert_user_data_fields_task(domain):
         if isinstance(user.user_data.get('role'), basestring):
             user.user_data['role'] = [user.user_data['role']]
             user.save()
+
+
+@task(queue='background_queue', ignore_result=True)
+def migrate_email_settings(domain):
+    config = EWSGhanaConfig.for_domain(domain)
+    endpoint = GhanaEndpoint.from_config(config)
+    migrate_email = EmailSettingsSync(domain)
+
+    for report in endpoint.get_daily_reports()[1]:
+        migrate_email.daily_report_sync(report)
+
+    for report in endpoint.get_weekly_reports()[1]:
+        migrate_email.weekly_report_sync(report)
+
+    for report in endpoint.get_monthly_reports()[1]:
+        migrate_email.monthly_report_sync(report)

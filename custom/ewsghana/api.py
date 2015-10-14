@@ -227,10 +227,7 @@ class EWSApi(APISynchronization):
                 }
             ),
             ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
-            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated'),
-            ApiSyncObject('dailyreports', self.endpoint.get_daily_reports, self.daily_report_sync),
-            ApiSyncObject('weeklyreports', self.endpoint.get_weekly_reports, self.weekly_report_sync),
-            ApiSyncObject('monthlyreports', self.endpoint.get_monthly_reports, self.monthly_report_sync)
+            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
         ]
 
     def _create_location_from_supply_point(self, supply_point, location):
@@ -684,11 +681,16 @@ class EWSApi(APISynchronization):
                 sms_user.set_location(couch_location)
         return sms_user
 
+
+class EmailSettingsSync(object):
     REPORT_MAP = {
         'SMS Reporting Rates': 'reporting_page',
         'Stock Summary': 'stock_summary_report',
         'RMS and CMS Summary': 'cms_rms_summary_report'
     }
+
+    def __init__(self, domain):
+        self.domain = domain
 
     def _report_notfication_sync(self, report, interval, day):
         if not report.users:
