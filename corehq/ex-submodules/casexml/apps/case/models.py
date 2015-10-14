@@ -833,24 +833,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
 
-    def force_save(self, **params):
-        try:
-            self.save()
-        except ResourceConflict:
-            conflict = CommCareCase.get(self._id)
-            # if there's a conflict, make sure we know about every
-            # form in the conflicting doc
-            missing_forms = set(conflict.xform_ids) - set(self.xform_ids)
-            if missing_forms:
-                logging.exception('doc update conflict saving case {id}. missing forms: {forms}'.format(
-                    id=self._id,
-                    forms=",".join(missing_forms)
-                ))
-                raise
-            # couchdbkit doesn't like to let you set _rev very easily
-            self._doc["_rev"] = conflict._rev
-            self.force_save()
-
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         if self.closed:
