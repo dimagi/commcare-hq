@@ -1,5 +1,6 @@
 import json
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms
 from corehq.apps.sms.models import SMS, CommConnectCase
@@ -14,6 +15,7 @@ from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from corehq.messaging.smsbackends.grapevine.api import GrapevineBackend
 from corehq.messaging.smsbackends.twilio.models import TwilioBackend
 from corehq.messaging.smsbackends.megamobile.api import MegamobileBackend
+from corehq.messaging.smsbackends.smsgh.models import SMSGHBackend
 from dimagi.utils.parsing import json_format_datetime
 from django.conf import settings
 from django.test import TestCase
@@ -72,6 +74,9 @@ class AllBackendTest(BaseSMSTest):
 
         self.megamobile_backend = MegamobileBackend(name='MEGAMOBILE', is_global=True)
         self.megamobile_backend.save()
+
+        self.smsgh_backend = SMSGHBackend(name='SMSGH', is_global=True)
+        self.smsgh_backend.save()
 
         if not hasattr(settings, 'SIMPLE_API_KEYS'):
             settings.SIMPLE_API_KEYS = {}
@@ -132,6 +137,7 @@ class AllBackendTest(BaseSMSTest):
         self._test_outbound_backend(self.grapevine_backend, 'grapevine test')
         self._test_outbound_backend(self.twilio_backend, 'twilio test')
         self._test_outbound_backend(self.megamobile_backend, 'megamobile test')
+        self._test_outbound_backend(self.smsgh_backend, 'smsgh test')
 
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
@@ -197,6 +203,17 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request('YO', 'yo test')
 
+    def test_smsgh_inbound_sms(self):
+        user = ApiUser.create('smsgh-api-key', 'smsgh-api-key', permissions=[PERMISSION_POST_SMS])
+        user.save()
+
+        self._simulate_inbound_request('/smsgh/sms/smsgh-api-key/', phone_param='snr',
+            msg_param='msg', msg_text='smsgh test')
+
+        self._verify_inbound_request('SMSGH', 'smsgh test')
+
+        user.delete()
+
     def tearDown(self):
         backend_api.TEST = False
         self.contact1.get_verified_number().delete()
@@ -213,5 +230,6 @@ class AllBackendTest(BaseSMSTest):
         self.grapevine_backend.delete()
         self.twilio_backend.delete()
         self.megamobile_backend.delete()
+        self.smsgh_backend.delete()
         settings.SIMPLE_API_KEYS.pop('grapevine-test')
         super(AllBackendTest, self).tearDown()

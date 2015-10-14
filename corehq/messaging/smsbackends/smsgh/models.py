@@ -32,7 +32,7 @@ class SMSGHBackend(SMSBackend):
     def response_is_error(self, response):
         return (int(response.status_code) / 100) in (4, 5)
 
-    def get_additional_data(response):
+    def get_additional_data(self, response):
         try:
             return response.json()
         except:
@@ -46,8 +46,8 @@ class SMSGHBackend(SMSBackend):
             "http://developers.smsgh.com/documentations/sendmessage#handlingerrors "
             "for details. " % (response.status_code, data.get('Status')))
 
-    def handle_success(self, msg):
-        data = self.get_additional_data()
+    def handle_success(self, response, msg):
+        data = self.get_additional_data(response)
         msg.backend_message_id = data.get('MessageId')
 
     def send_sms(self, msg, *args, **kwargs):
@@ -62,7 +62,7 @@ class SMSGHBackend(SMSBackend):
         }
         response = requests.get(self.get_url(), params=params)
 
-        if response_is_error(response):
+        if self.response_is_error(response):
             self.handle_error(response)
         else:
-            self.handle_success(msg)
+            self.handle_success(response, msg)
