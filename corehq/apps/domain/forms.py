@@ -447,7 +447,10 @@ class DomainGlobalSettingsForm(forms.Form):
     call_center_type = ChoiceField(
         label=ugettext_lazy("Call Center Type"),
         initial=CASES_AND_FIXTURES_CHOICE,
-        choices=[(CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"), (CASES_ONLY_CHOICE, "Create just cases")],
+        choices=[
+            (CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"),
+            (CASES_ONLY_CHOICE, "Create just cases"),
+        ],
         help_text=ugettext_lazy(
             """
             If "Create cases and indicators" is selected, each user will have a case associated with it,
@@ -547,7 +550,8 @@ class DomainGlobalSettingsForm(forms.Form):
         if domain.call_center_config.enabled:
 
             domain.internal.using_call_center = True
-            domain.call_center_config.use_fixtures = self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
+            domain.call_center_config.use_fixtures = \
+                self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
 
             owner = self.cleaned_data.get('call_center_case_owner', None)
             if owner == self.USE_LOCATIONS_CHOICE:
