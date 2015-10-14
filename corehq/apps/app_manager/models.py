@@ -3307,6 +3307,7 @@ class ReportAppConfig(DocumentSchema):
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    description = DictProperty()
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
