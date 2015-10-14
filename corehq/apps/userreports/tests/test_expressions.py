@@ -331,18 +331,33 @@ class DictExpressionTest(SimpleTestCase):
         }
         self.expression = ExpressionFactory.from_spec(self.expression_spec)
 
-    def test_missing_name(self):
+    def test_missing_properties(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
-                "type": "named",
-                "value_expression": "test",
+                "type": "dict",
             })
 
-    def test_missing_value(self):
+    def test_bad_properties_type(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
-                "type": "named",
-                "name_expression": "test",
+                "type": "dict",
+                "properties": "bad!"
+            })
+
+    def test_empty_properties(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "dict",
+                "properties": {},
+            })
+
+    def test_non_string_keys(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "dict",
+                "properties": {
+                    (1, 2): 2
+                },
             })
 
     def test_basic(self):

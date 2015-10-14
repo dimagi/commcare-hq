@@ -215,6 +215,9 @@ class DictExpressionSpec(JsonObject):
     properties = DictProperty(required=True)
 
     def configure(self, compiled_properties):
+        for key in compiled_properties:
+            if not isinstance(key, basestring):
+                raise BadSpecError("Properties in a dict expression must be strings!")
         self._compiled_properties = compiled_properties
 
     def __call__(self, item, context=None):
