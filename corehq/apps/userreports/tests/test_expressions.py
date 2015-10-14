@@ -93,7 +93,7 @@ class PropertyExpressionTest(SimpleTestCase):
             (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30T19:04:27Z"),
             (datetime(2015, 9, 30, 19, 4, 27, 113609), "datetime", "2015-09-30T19:04:27.113609Z"),
             (None, "datetime", "2015-09-30 19:04:27Z"),
-            (None, "date", "2015-09-30T19:04:27Z"),
+            (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (None, "datetime", "2015-09-30"),
         ]:
             getter = ExpressionFactory.from_spec({
@@ -308,35 +308,56 @@ class ArrayIndexExpressionTest(SimpleTestCase):
     def test_empty_index(self):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
 
+    def test_empty_constant_index(self):
+        spec = copy.copy(self.expression_spec)
+        spec['index_expression'] = 1
+        expression = ExpressionFactory.from_spec(spec)
+        array = ['first', 'second', 'third']
+        self.assertEqual('second', expression({'my_array': array}))
 
-class NamedExpressionTest(SimpleTestCase):
+
+class DictExpressionTest(SimpleTestCase):
 
     def setUp(self):
         self.expression_spec = {
-            "type": "named",
-            "name_expression": {
-                "type": "constant",
-                "constant": "the_name"
-            },
-            "value_expression": {
-                "type": "property_name",
-                "property_name": "prop"
+            "type": "dict",
+            "properties": {
+                "name": "the_name",
+                "value": {
+                    "type": "property_name",
+                    "property_name": "prop"
+                }
             }
         }
         self.expression = ExpressionFactory.from_spec(self.expression_spec)
 
-    def test_missing_name(self):
+    def test_missing_properties(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
-                "type": "named",
-                "value_expression": "test",
+                "type": "dict",
             })
 
-    def test_missing_value(self):
+    def test_bad_properties_type(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
-                "type": "named",
-                "name_expression": "test",
+                "type": "dict",
+                "properties": "bad!"
+            })
+
+    def test_empty_properties(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "dict",
+                "properties": {},
+            })
+
+    def test_non_string_keys(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "dict",
+                "properties": {
+                    (1, 2): 2
+                },
             })
 
     def test_basic(self):

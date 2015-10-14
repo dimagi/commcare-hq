@@ -290,18 +290,20 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
-    'corehq.apps.tropo',
-    'corehq.apps.twilio',
+    'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
-    'corehq.apps.megamobile',
-    'corehq.apps.kookoo',
-    'corehq.apps.sislog',
-    'corehq.apps.yo',
-    'corehq.apps.telerivet',
-    'corehq.apps.mach',
+    'corehq.messaging.smsbackends.megamobile',
+    'corehq.messaging.ivrbackends.kookoo',
+    'corehq.messaging.smsbackends.sislog',
+    'corehq.messaging.smsbackends.yo',
+    'corehq.messaging.smsbackends.telerivet',
+    'corehq.messaging.smsbackends.mach',
+    'corehq.messaging.smsbackends.http',
+    'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
-    'corehq.apps.unicel',
+    'corehq.messaging.smsbackends.unicel',
     'corehq.apps.reports',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -329,7 +331,7 @@ HQ_APPS = (
     'pillow_retry',
     'corehq.apps.style',
     'corehq.apps.styleguide',
-    'corehq.apps.grapevine',
+    'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.util',
     'dimagi.ext',
@@ -389,13 +391,14 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
-    'corehq.apps.mach',
+    'corehq.messaging.smsbackends.mach',
+    'corehq.messaging.smsbackends.http',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.apps.telerivet',
-    'corehq.apps.tropo',
-    'corehq.apps.megamobile',
-    'corehq.apps.yo',
+    'corehq.messaging.smsbackends.telerivet',
+    'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.megamobile',
+    'corehq.messaging.smsbackends.yo',
     'crispy_forms',
     'django_extensions',
     'djangobower',
@@ -991,6 +994,9 @@ ENVIRONMENT_HOSTS = {
     'pillowtop': ['localhost']
 }
 
+DATADOG_API_KEY = None
+DATADOG_APP_KEY = None
+
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
@@ -1258,16 +1264,16 @@ SMS_HANDLERS = [
 ]
 
 SMS_LOADED_BACKENDS = [
-    "corehq.apps.unicel.api.UnicelBackend",
-    "corehq.apps.mach.api.MachBackend",
-    "corehq.apps.tropo.api.TropoBackend",
-    "corehq.apps.sms.backend.http_api.HttpBackend",
-    "corehq.apps.telerivet.models.TelerivetBackend",
-    "corehq.apps.sms.test_backend.TestSMSBackend",
+    "corehq.messaging.smsbackends.unicel.api.UnicelBackend",
+    "corehq.messaging.smsbackends.mach.api.MachBackend",
+    "corehq.messaging.smsbackends.tropo.api.TropoBackend",
+    "corehq.messaging.smsbackends.http.api.HttpBackend",
+    "corehq.messaging.smsbackends.telerivet.models.TelerivetBackend",
+    "corehq.messaging.smsbackends.test.api.TestSMSBackend",
     "corehq.apps.sms.backend.test.TestBackend",
-    "corehq.apps.grapevine.api.GrapevineBackend",
-    "corehq.apps.twilio.models.TwilioBackend",
-    "corehq.apps.megamobile.api.MegamobileBackend",
+    "corehq.messaging.smsbackends.grapevine.api.GrapevineBackend",
+    "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
+    "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
 ]
 
 IVR_BACKEND_MAP = {
@@ -1457,7 +1463,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
     ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
-    ('location_type_name', 'corehq.apps.locations.expressions.location_type_name'),
+    ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
+    ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
 ]
 
 CUSTOM_MODULES = [
@@ -1562,3 +1569,10 @@ if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+
+try:
+    from datadog import initialize
+except ImportError:
+    pass
+else:
+    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)

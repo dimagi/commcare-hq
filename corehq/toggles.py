@@ -691,3 +691,10 @@ EWS_WEB_USER_EXTENSION = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+CALL_CENTER_LOCATION_OWNERS = StaticToggle(
+    'call_center_location_owners',
+    'Enable the use of locations as owners of call center cases',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)

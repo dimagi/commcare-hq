@@ -3325,177 +3325,6 @@ class ReportAppConfig(DocumentSchema):
             self._report = ReportConfiguration.get(self.report_id)
         return self._report
 
-    @property
-    def select_detail_id(self):
-        return 'reports.{}.select'.format(self.uuid)
-
-    @property
-    def summary_detail_id(self):
-        return 'reports.{}.summary'.format(self.uuid)
-
-    @property
-    def data_detail_id(self):
-        return 'reports.{}.data'.format(self.uuid)
-
-    def get_details(self):
-        yield (self.select_detail_id, self.select_details(), True)
-        yield (self.summary_detail_id, self.summary_details(), True)
-
-    def select_details(self):
-        return Detail(custom_xml=suite_models.Detail(
-            id='reports.{}.select'.format(self.uuid),
-            title=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.report_menu()),
-            ),
-            fields=[
-                suite_models.Field(
-                    header=suite_models.Header(
-                        text=suite_models.Text(
-                            locale=suite_models.Locale(id=id_strings.report_name_header()),
-                        )
-                    ),
-                    template=suite_models.Template(
-                        text=suite_models.Text(
-                            locale=suite_models.Locale(id=id_strings.report_name(self.uuid))
-                        )
-                    ),
-                )
-            ]
-        ).serialize())
-
-    def summary_details(self):
-        def _get_graph_fields():
-            from corehq.apps.userreports.reports.specs import MultibarChartSpec
-            # todo: make this less hard-coded
-            for chart_config in self.report.charts:
-                if isinstance(chart_config, MultibarChartSpec):
-                    graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
-
-                    def _column_to_series(column):
-                        return suite_models.Series(
-                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.uuid),
-                            x_function="column[@id='{}']".format(chart_config.x_axis_column),
-                            y_function="column[@id='{}']".format(column),
-                            configuration=suite_models.ConfigurationGroup(configs=[
-                                suite_models.ConfigurationItem(id=key, xpath_function=value)
-                                for key, value in graph_config.series_configs.get(column, {}).items()
-                            ])
-                        )
-                    yield suite_models.Field(
-                        header=suite_models.Header(text=suite_models.Text()),
-                        template=suite_models.GraphTemplate(
-                            form='graph',
-                            graph=suite_models.Graph(
-                                type=graph_config.graph_type,
-                                series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                                configuration=suite_models.ConfigurationGroup(configs=[
-                                    suite_models.ConfigurationItem(id=key, xpath_function=value)
-                                    for key, value in graph_config.config.items()
-                                ]),
-                            ),
-                        )
-                    )
-
-        return Detail(custom_xml=suite_models.Detail(
-            id='reports.{}.summary'.format(self.uuid),
-            title=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.report_menu()),
-            ),
-            details=[
-                suite_models.Detail(
-                    title=suite_models.Text(
-                        locale=suite_models.Locale(id=id_strings.report_menu()),
-                    ),
-                    fields=[
-                        suite_models.Field(
-                            header=suite_models.Header(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_name_header())
-                                )
-                            ),
-                            template=suite_models.Template(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_name(self.uuid))
-                                )
-                            ),
-                        ),
-                        suite_models.Field(
-                            header=suite_models.Header(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_description_header()),
-                                )
-                            ),
-                            template=suite_models.Template(
-                                text=suite_models.Text(
-                                    xpath=suite_models.Xpath(function='description')
-                                )
-                            ),
-                        ),
-                    ] + [
-                        suite_models.Field(
-                            header=suite_models.Header(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_last_sync())
-                                )
-                            ),
-                            template=suite_models.Template(
-                                text=suite_models.Text(
-                                    xpath=suite_models.Xpath(
-                                        function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
-                                    )
-                                )
-                            )
-                        ),
-                    ] + list(_get_graph_fields()),
-                ),
-                self.data_detail(),
-            ],
-        ).serialize())
-
-    def data_detail(self):
-        def _column_to_field(column):
-            return suite_models.Field(
-                header=suite_models.Header(
-                    text=suite_models.Text(
-                        locale=suite_models.Locale(
-                            id=id_strings.report_column_header(self.uuid, column.column_id)
-                        ),
-                    )
-                ),
-                template=suite_models.Template(
-                    text=suite_models.Text(
-                        xpath=suite_models.Xpath(function="column[@id='{}']".format(column.column_id)))
-                ),
-            )
-
-        return suite_models.Detail(
-            id='reports.{}.data'.format(self.uuid),
-            nodeset='rows/row',
-            title=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.report_data_table()),
-            ),
-            fields=[_column_to_field(c) for c in self.report.report_columns]
-        )
-
-    def get_entry(self):
-        return suite_models.Entry(
-            command=suite_models.Command(
-                id='reports.{}'.format(self.uuid),
-                text=suite_models.Text(
-                    locale=suite_models.Locale(id=id_strings.report_name(self.uuid)),
-                ),
-            ),
-            datums=[
-                suite_models.SessionDatum(
-                    detail_confirm=self.summary_detail_id,
-                    detail_select=self.select_detail_id,
-                    id='report_id_{}'.format(self.uuid),
-                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.uuid),
-                    value='./@id',
-                ),
-            ]
-        )
-
 
 class ReportModule(ModuleBase):
     """
@@ -3526,23 +3355,13 @@ class ReportModule(ModuleBase):
         module.get_or_create_unique_id()
         return module
 
-    def _load_reports(self):
-        if not self._loaded:
-            # load reports in bulk to avoid hitting the database for each one
-            for i, report in enumerate(self.reports):
-                self.report_configs[i]._report = report
-        self._loaded = True
-
     def get_details(self):
-        self._load_reports()
-        for config in self.report_configs:
-            for details in config.get_details():
-                yield details
+        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        return ReportModuleSuiteHelper(self).get_details()
 
     def get_custom_entries(self):
-        self._load_reports()
-        for config in self.report_configs:
-            yield config.get_entry()
+        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self):
         yield suite_models.Menu(
