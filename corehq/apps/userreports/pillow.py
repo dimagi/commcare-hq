@@ -2,7 +2,7 @@ from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.userreports.exceptions import TableRebuildError
+from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -73,6 +73,10 @@ class ConfigurableIndicatorPillow(PythonPillow):
                     notify_error(unicode(e))
 
     def rebuild_table(self, sql_adapter):
+        config = sql_adapter.config
+        latest_rev = config.get_db().get_rev(config._id)
+        if config._rev != latest_rev:
+            raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         sql_adapter.rebuild_table()
 
     def python_filter(self, doc):
