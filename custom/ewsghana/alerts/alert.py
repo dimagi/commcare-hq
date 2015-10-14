@@ -1,6 +1,6 @@
 from corehq.apps.locations.dbaccessors import get_web_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
-from custom.ewsghana.utils import send_sms
+from custom.ewsghana.utils import send_sms, has_notifications_enabled
 
 
 class Notification(object):
@@ -12,7 +12,7 @@ class Notification(object):
 
     def send(self):
         phone_number = get_preferred_phone_number_for_recipient(self.user)
-        if phone_number and self.user.user_data.get('sms_notifications', False):
+        if phone_number and has_notifications_enabled(self.domain, self.user):
             send_sms(self.domain, self.user, phone_number, self.message)
 
 
