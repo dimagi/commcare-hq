@@ -298,9 +298,10 @@ class CaseStructure(object):
 
 
 class CaseIndex(object):
+    DEFAULT_RELATIONSHIP = CASE_INDEX_CHILD
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
-    def __init__(self, related_structure=None, relationship=CASE_INDEX_CHILD, related_type=None,
+    def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None,
                  identifier=None):
         self.related_structure = related_structure or CaseStructure()
         self.relationship = relationship
