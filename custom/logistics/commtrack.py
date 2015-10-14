@@ -34,7 +34,7 @@ def retry(retry_max):
     return wrap
 
 
-def synchronization(api_sync_object, checkpoint, date, limit, offset, params=None, **kwargs):
+def synchronization(api_sync_object, checkpoint, date, limit, offset, params=None, atomic=False, **kwargs):
     has_next = True
     next_url = ""
     params = params or {}
@@ -50,7 +50,11 @@ def synchronization(api_sync_object, checkpoint, date, limit, offset, params=Non
             save_checkpoint(checkpoint, api_sync_object.name,
                             meta.get('limit') or limit, meta.get('offset') or offset,
                             date)
-        with transaction.atomic():
+        if atomic:
+            with transaction.atomic():
+                for obj in objects:
+                    api_sync_object.sync_function(obj, **params)
+        else:
             for obj in objects:
                 api_sync_object.sync_function(obj, **params)
 
