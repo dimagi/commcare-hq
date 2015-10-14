@@ -2398,7 +2398,7 @@ class DomainRequest(models.Model):
 
     @classmethod
     def by_domain(cls, domain, is_approved=False):
-        return DomainRequest.objects.filter(domain=domain)
+        return DomainRequest.objects.filter(domain=domain, is_approved=is_approved)
 
     @classmethod
     def by_email(cls, domain, email, is_approved=False):
@@ -2425,7 +2425,7 @@ class DomainRequest(models.Model):
             'url': absolute_reverse("web_users", args=[self.domain]),
         }
         recipients = {u.get_email() for u in
-            WebUser.get_users_by_permission(self.domain, 'edit_web_users')}
+            WebUser.get_admins_by_domain(self.domain)}
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
         subject = _('Request from %s to join %s') % (self.full_name, domain_name)

@@ -333,6 +333,24 @@ In the example below, the indicator is inside a form group question called "impa
 }
 ```
 
+## Getting a location's parent ID
+
+`location_id_expression` can be any expression that evaluates to a valid location id.
+
+```json
+{
+    "type":"expression",
+    "expression": {
+        "type": "location_parent_id",
+        "location_id_expression": {
+            "type": "property_name",
+            "property_name": "location_id"
+        }
+    },
+    "column_id": "parent_location",
+}
+```
+
 # Base Item Expressions
 
 ## Emit multiple rows (one per non-empty case property)
@@ -370,7 +388,7 @@ In this example we take 3 case properties and save one row per property if it ex
 }
 ```
 
-## Emit multiple rows of named data
+## Emit multiple rows of complex data
 
 In this example we take 3 case properties and emit the property name along with the value (only if non-empty).
 Note that the test must also change in this scenario.
@@ -381,27 +399,33 @@ Note that the test must also change in this scenario.
     "type": "iterator",
     "expressions": [
         {
-            "type": "named",
-            "name_expression": "p1",
-            "value_expression": {
-                "type": "property_name",
-                "property_name": "p1"
-            },
+            "type": "dict",
+            "properties": {
+                "name": "p1",
+                "value": {
+                    "type": "property_name",
+                    "property_name": "p1"
+                }
+            }
         },
         {
-            "type": "named",
-            "name_expression": "p2",
-            "value_expression": {
-                "type": "property_name",
-                "property_name": "p2"
-            },
+            "type": "dict",
+            "properties": {
+                "name": "p2",
+                "value": {
+                    "type": "property_name",
+                    "property_name": "p2"
+                }
+            }
         },
         {
-            "type": "named",
-            "name_expression": "p3",
-            "value_expression": {
-                "type": "property_name",
-                "property_name": "p3"
+            "type": "dict",
+            "properties": {
+                "name": "p3",
+                "value": {
+                    "type": "property_name",
+                    "property_name": "p3"
+                }
             }
         }
     ],

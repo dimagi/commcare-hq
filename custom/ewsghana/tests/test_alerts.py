@@ -10,7 +10,7 @@ from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location, \
-    create_backend
+    create_backend, set_sms_notifications
 
 
 TEST_DOMAIN = 'ewsghana-alerts-test'
@@ -40,28 +40,31 @@ class TestAlerts(TestCase):
             username='test1', phone_number='1111', location=cls.district, domain=TEST_DOMAIN,
             first_name='test', last_name='test1',
             user_data={
-                'role': [],
-                'sms_notifications': True
+                'role': []
             }, email='test1@example.com', password='dummy'
         )
+
+        set_sms_notifications(TEST_DOMAIN, cls.user1, True)
 
         cls.national_user = bootstrap_web_user(
             username='test2', phone_number='2222', location=cls.national, domain=TEST_DOMAIN,
             first_name='test', last_name='test2',
             user_data={
-                'role': [],
-                'sms_notifications': True
+                'role': []
             }, email='test2@example.com', password='dummy'
         )
+
+        set_sms_notifications(TEST_DOMAIN, cls.national_user, True)
 
         cls.regional_user = bootstrap_web_user(
             username='test4', phone_number='4444', location=cls.region, domain=TEST_DOMAIN,
             first_name='test', last_name='test4',
             user_data={
-                'role': [],
-                'sms_notifications': True
+                'role': []
             }, email='test4@example.com', password='dummy'
         )
+
+        set_sms_notifications(TEST_DOMAIN, cls.regional_user, True)
 
         cls.product = Product(domain=TEST_DOMAIN, name='Test Product', code_='tp', unit='each')
         cls.product.save()

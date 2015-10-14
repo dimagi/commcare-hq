@@ -10,10 +10,11 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
+from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import \
     get_one_case_in_domain_by_external_id
-from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMSLog, CallLog
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -34,6 +35,40 @@ from casexml.apps.case.xml import V2
 
 def time_parser(value):
     return parse(value).time()
+
+
+class BaseSMSTest(BaseAccountingTest):
+    def setUp(self):
+        super(BaseSMSTest, self).setUp()
+        self.account = None
+        self.subscription = None
+
+    def create_account_and_subscription(self, domain_name):
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            domain_name,
+            created_by="automated-test",
+        )[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(
+            domain_name, edition=SoftwarePlanEdition.ADVANCED
+        )
+        self.subscription = Subscription.new_domain_subscription(
+            self.account,
+            domain_name,
+            plan
+        )
+        self.subscription.is_active = True
+        self.subscription.save()
+
+    def tearDown(self):
+        SubscriptionAdjustment.objects.all().delete()
+
+        if self.subscription:
+            self.subscription.delete()
+
+        if self.account:
+            self.account.delete()
+
+        super(BaseSMSTest, self).tearDown()
 
 
 class TouchformsTestCase(LiveServerTestCase):
@@ -59,6 +94,10 @@ class TouchformsTestCase(LiveServerTestCase):
         domain_obj.default_sms_response = "Default SMS Response"
         domain_obj.save()
 
+        # I tried making this class inherit from BaseSMSTest, but somehow
+        # the multiple inheritance was causing the postgres connection to
+        # get in a weird state where it wasn't commiting any changes. So
+        # for now, keeping this subscription setup code as is.
         generator.instantiate_accounting_for_tests()
         self.account = BillingAccount.get_or_create_account_by_domain(
             domain_obj.name,
@@ -74,7 +113,6 @@ class TouchformsTestCase(LiveServerTestCase):
         )
         self.subscription.is_active = True
         self.subscription.save()
-
         return domain_obj
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):

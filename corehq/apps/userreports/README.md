@@ -84,7 +84,7 @@ iterator        | Combine multiple expressions into a list | `[doc.name, doc.age
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
-named           | A way to emit an expresison with a name | `{"name": "test", "value": f(doc)}`
+dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
 
 
 ### JSON snippets for expressions
@@ -93,13 +93,18 @@ Here are JSON snippets for the various expression types. Hopefully they are self
 
 ##### Constant Expression
 
-This expression returns the constant "hello":
+There are two formats for constant expressions. The simplified format is simply the constant itself. For example `"hello"`, or `5`.
+
+The complete format is as follows. This expression returns the constant `"hello"`:
+
 ```
 {
     "type": "constant",
     "constant": "hello"
 }
 ```
+
+
 ##### Property Name Expression
 
 This expression returns `doc["age"]`:
@@ -273,24 +278,27 @@ More examples can be found in the [practical examples](https://github.com/dimagi
 }
 ```
 
-#### Named expressions
+#### Dict expressions
 
-These can be used to attach a name to an expression. This is only useful as an intermediate structure in another expression since the result of a named expession is a dictionary that cannot be saved to the database.
+These can be used to create dictionaries of key/value pairs. This is only useful as an intermediate structure in another expression since the result of the expression is a dictionary that cannot be saved to the database.
 
 See the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for a way this can be used in a `base_item_expression` to emit multiple rows for a single form/case based on different properties.
 
-Here is a simple example that demonstrates the structure:
+Here is a simple example that demonstrates the structure. The keys of `properties` must be text, and the values must be valid expressions (or constants):
 
 ```json
 {
     "type": "named",
-    "name_expression": {
-        "type": "constant",
-        "constant": "the_name"
-    },
-    "value_expression": {
-        "type": "property_name",
-        "property_name": "prop"
+    "properties": {
+        "name": "a constant name",
+        "value": {
+            "type": "property_name",
+            "property_name": "prop"
+        },
+        "value2": {
+            "type": "property_name",
+            "property_name": "prop2"
+        }
     }
 }
 ```
@@ -1179,7 +1187,10 @@ CUSTOM_UCR_EXPRESSIONS = [
 
 Following are some custom expressions that are currently available.
 
-- `location_type_name`:  A way to get location type from a location document id. You can find an example in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+- `location_type_name`:  A way to get location type from a location document id.
+- `location_parent_id`:  A shortcut to get a location's parent ID a location id.
+
+You can find examples of these in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
 
 ## Inspecting database tables
 

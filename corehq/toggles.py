@@ -161,6 +161,13 @@ APP_BUILDER_ADVANCED = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
+APP_BUILDER_SHADOW_MODULES = StaticToggle(
+    'shadow-app-builder',
+    'Shadow Modules',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
     'include-multimedia-odk',
     'Include multimedia in ODK deploy',
@@ -682,5 +689,12 @@ EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+CALL_CENTER_LOCATION_OWNERS = StaticToggle(
+    'call_center_location_owners',
+    'Enable the use of locations as owners of call center cases',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

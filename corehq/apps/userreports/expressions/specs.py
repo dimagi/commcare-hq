@@ -86,7 +86,7 @@ class ConditionalExpressionSpec(JsonObject):
 class ArrayIndexExpressionSpec(JsonObject):
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
-    index_expression = DictProperty(required=True)
+    index_expression = DefaultProperty(required=True)
 
     def configure(self, array_expression, index_expression):
         self._array_expression = array_expression
@@ -210,17 +210,18 @@ class NestedExpressionSpec(JsonObject):
         return self._value_expression(argument, context)
 
 
-class NamedExpressionSpec(JsonObject):
-    type = TypeProperty('named')
-    name_expression = DictProperty(required=True)
-    value_expression = DictProperty(required=True)
+class DictExpressionSpec(JsonObject):
+    type = TypeProperty('dict')
+    properties = DictProperty(required=True)
 
-    def configure(self, name_expression, value_expression):
-        self._name_expression = name_expression
-        self._value_expression = value_expression
+    def configure(self, compiled_properties):
+        for key in compiled_properties:
+            if not isinstance(key, basestring):
+                raise BadSpecError("Properties in a dict expression must be strings!")
+        self._compiled_properties = compiled_properties
 
     def __call__(self, item, context=None):
-        return {
-            'name': self._name_expression(item, context),
-            'value': self._value_expression(item, context),
-        }
+        ret = {}
+        for property_name, expression in self._compiled_properties.items():
+            ret[property_name] = expression(item, context)
+        return ret

@@ -152,6 +152,10 @@
                             The case list in module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has an invalid case tile configuration. Reason: {{ error.reason }}
+                        {% case "no source module id" %}
+                            Shadow module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            doesn't have a source module specified.
                         {% case "no parent select id" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
