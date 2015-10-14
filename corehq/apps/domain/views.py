@@ -362,7 +362,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'call_center_type':
                 'cases_and_fixtures' if self.domain_object.call_center_config.use_fixtures else 'cases_only',
-            'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
+            'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
@@ -399,6 +399,14 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             domain=self.domain_object.name,
             can_use_custom_logo=self.can_use_custom_logo
         )
+
+    @property
+    @memoized
+    def initial_call_center_case_owner(self):
+        config = self.domain_object.call_center_config
+        if config.use_user_location_as_owner:
+            return DomainGlobalSettingsForm.USE_LOCATIONS_CHOICE
+        return self.domain_object.call_center_config.case_owner_id
 
     @property
     def page_context(self):
