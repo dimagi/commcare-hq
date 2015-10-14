@@ -210,17 +210,15 @@ class NestedExpressionSpec(JsonObject):
         return self._value_expression(argument, context)
 
 
-class NamedExpressionSpec(JsonObject):
-    type = TypeProperty('named')
-    name_expression = DictProperty(required=True)
-    value_expression = DictProperty(required=True)
+class DictExpressionSpec(JsonObject):
+    type = TypeProperty('dict')
+    properties = DictProperty(required=True)
 
-    def configure(self, name_expression, value_expression):
-        self._name_expression = name_expression
-        self._value_expression = value_expression
+    def configure(self, compiled_properties):
+        self._compiled_properties = compiled_properties
 
     def __call__(self, item, context=None):
-        return {
-            'name': self._name_expression(item, context),
-            'value': self._value_expression(item, context),
-        }
+        ret = {}
+        for property_name, expression in self._compiled_properties.items():
+            ret[property_name] = expression(item, context)
+        return ret

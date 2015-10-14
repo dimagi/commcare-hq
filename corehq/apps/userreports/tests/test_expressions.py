@@ -316,18 +316,20 @@ class ArrayIndexExpressionTest(SimpleTestCase):
         self.assertEqual('second', expression({'my_array': array}))
 
 
-class NamedExpressionTest(SimpleTestCase):
+class DictExpressionTest(SimpleTestCase):
 
     def setUp(self):
         self.expression_spec = {
-            "type": "named",
-            "name_expression": {
-                "type": "constant",
-                "constant": "the_name"
-            },
-            "value_expression": {
-                "type": "property_name",
-                "property_name": "prop"
+            "type": "dict",
+            "properties": {
+                "name": {
+                    "type": "constant",
+                    "constant": "the_name"
+                },
+                "value": {
+                    "type": "property_name",
+                    "property_name": "prop"
+                }
             }
         }
         self.expression = ExpressionFactory.from_spec(self.expression_spec)
