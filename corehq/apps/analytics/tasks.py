@@ -70,12 +70,16 @@ def _hubspot_post(url, data):
     """
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
+        headers = {
+            'content-type': 'application/json'
+        }
         req = requests.post(
             url,
             params={'hapikey': api_key},
-            data=data
+            data=data,
+            headers=headers
         )
-        req.raise_for_status
+        req.raise_for_status()
 
 
 def _get_user_hubspot_id(webuser):
@@ -267,6 +271,6 @@ def track_periodic_data():
             end_time,
             sys.getsizeof(submit_json)
         )
-    _soft_assert(processing_time.seconds > 10, msg)
+    _soft_assert(processing_time.seconds < 10, msg)
 
     _batch_track_on_hubspot(submit_json)
