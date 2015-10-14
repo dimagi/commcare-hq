@@ -6,20 +6,23 @@ INSTALLED_APPS += (
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
-    '--logging-clear-handlers',
     #'--with-doctest', # adds 5s to discovery (before tests start); TODO travis should use it
     '--with-fixture-bundling',
-    '--db-test-context=corehq.util.nose.CouchdbContext',
-    '--non-db-test-context=corehq.util.nose.ErrorOnDbAccessContext',
-    '--ignore-files=localsettings',
+    '--logging-clear-handlers',
+    '--ignore-files=^localsettings',
     '--exclude-dir=corehq/apps/cloudcare/tests/selenium',
     '--exclude-dir=corehq/apps/reports/tests/selenium',
     '--exclude-dir=scripts',
 ]
 NOSE_PLUGINS = [
-    #'corehq.util.nose.TwoStagePlugin',
+    # Disable migrations by default. Use --with-migrations to enable them.
+    'corehq.util.nose.DjangoMigrationsPlugin',
 ]
 
+# shorten nose args displayed in console by putting these in os.environ
+os.environ.setdefault('NOSE_DB_TEST_CONTEXT', 'corehq.util.nose.HqdbContext')
+os.environ.setdefault(
+    'NOSE_NON_DB_TEST_CONTEXT', 'corehq.util.nose.ErrorOnDbAccessContext')
 
 # HqTestSuiteRunner settings
 INSTALLED_APPS = INSTALLED_APPS + list(TEST_APPS)

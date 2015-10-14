@@ -10,7 +10,6 @@ Based on http://www.caktusgroup.com/blog/2013/10/02/skipping-test-db-creation/
 from __future__ import absolute_import
 import logging
 import os
-#from testrunner import TwoStageTestRunner
 
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
@@ -18,6 +17,32 @@ from nose.plugins import Plugin
 from django_nose.plugin import DatabaseContext
 
 log = logging.getLogger(__name__)
+
+
+class DjangoMigrationsPlugin(Plugin):
+    """Run tests with Django migrations.
+
+    Migrations are disabled by default.
+    """
+    # Inspired by https://gist.github.com/NotSqrt/5f3c76cd15e40ef62d09
+    # See also https://github.com/henriquebastos/django-test-without-migrations
+
+    name = 'migrations'
+
+    def configure(self, options, conf):
+        super(DjangoMigrationsPlugin, self).configure(options, conf)
+        if not self.enabled:
+            from django.conf import settings
+            settings.MIGRATION_MODULES = DisableMigrations()
+
+
+class DisableMigrations(object):
+
+    def __contains__(self, item):
+        return True
+
+    def __getitem__(self, item):
+        return "notmigrations"
 
 
 class ErrorOnDbAccessContext(object):
@@ -57,7 +82,7 @@ class ErrorOnDbAccessContext(object):
         self.db_patch.stop()
 
 
-class CouchdbContext(DatabaseContext):
+class HqdbContext(DatabaseContext):
     """Database context with couchdb setup/teardown
 
     In addition to the normal django database setup/teardown, also
@@ -108,10 +133,10 @@ class CouchdbContext(DatabaseContext):
             for name, cls in value.items():
                 cls.set_db(loading.get_db(app))
 
-        super(CouchdbContext, self).setup()
+        super(HqdbContext, self).setup()
 
     def teardown(self):
-        super(CouchdbContext, self).teardown()
+        super(HqdbContext, self).teardown()
 
         deleted_databases = []
         skipcount = 0
