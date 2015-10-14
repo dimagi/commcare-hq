@@ -1,4 +1,5 @@
 from .test_dbaccessors import *
+from .test_location_expressions import *
 from .test_location_fixtures import *
 from .test_location_groups import *
 from .test_location_import import *

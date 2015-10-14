@@ -12,6 +12,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
 from dimagi.utils.decorators.memoized import memoized
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from corehq import privileges
@@ -19,7 +20,6 @@ from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
-import settings
 
 from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
@@ -439,6 +439,19 @@ class DomainGlobalSettingsForm(forms.Form):
                     "active development. Do not enable for your domain unless "
                     "you're actively piloting it.")
     )
+    call_center_type = ChoiceField(
+        label=ugettext_lazy("Call Center Type"),
+        initial='cases_and_fixtures',
+        choices=[('cases_and_fixtures', "Create cases and indicators"), ('cases_only', "Create just cases")],
+        help_text=ugettext_lazy(
+            """
+            If "Create cases and indicators" is selected, each user will have a case associated with it,
+            and fixtures will be synced containing indicators about each user. If "Create just cases"
+            is selected, the fixtures will not be created.
+            """
+        ),
+        required=False,
+    )
     call_center_case_owner = ChoiceField(
         label=ugettext_lazy("Call Center Case Owner"),
         initial=None,
@@ -463,6 +476,7 @@ class DomainGlobalSettingsForm(forms.Form):
         if domain:
             if not CALLCENTER.enabled(domain):
                 self.fields['call_center_enabled'].widget = forms.HiddenInput()
+                self.fields['call_center_type'].widget = forms.HiddenInput()
                 self.fields['call_center_case_owner'].widget = forms.HiddenInput()
                 self.fields['call_center_case_type'].widget = forms.HiddenInput()
             else:
@@ -491,9 +505,10 @@ class DomainGlobalSettingsForm(forms.Form):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
         if (cleaned_data.get('call_center_enabled') and
                 (not cleaned_data.get('call_center_case_type') or
-                 not cleaned_data.get('call_center_case_owner'))):
+                 not cleaned_data.get('call_center_case_owner') or
+                 not cleaned_data.get('call_center_type'))):
             raise forms.ValidationError(_(
-                'You must choose an Owner and Case Type to use the call center application. '
+                'You must choose a Call Center Type, Owner, and Case Type to use the call center application. '
                 'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
             ))
 
@@ -521,6 +536,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
         if domain.call_center_config.enabled:
             domain.internal.using_call_center = True
+            domain.call_center_config.use_fixtures = self.cleaned_data['call_center_type'] == "cases_and_fixtures"
             domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
             domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 

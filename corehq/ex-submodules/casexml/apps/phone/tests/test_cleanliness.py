@@ -1,7 +1,7 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
     get_cleanliness_flag_from_scratch
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
@@ -33,8 +33,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.sample_case = self.factory.create_case()
         self.child, self.parent = self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(),
+                indices=[
+                    CaseIndex(),
                 ]
             )
         )
@@ -85,20 +85,20 @@ class OwnerCleanlinessTest(SyncBaseTest):
     def test_change_owner_stays_clean(self):
         # change the owner ID of a normal case, should remain clean
         new_owner = uuid.uuid4().hex
-        self._set_owner(self.sample_case._id, new_owner)
+        self._set_owner(self.sample_case.case_id, new_owner)
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
     def test_change_owner_child_case_stays_clean(self):
         # change the owner ID of a child case, should remain clean
         new_owner = uuid.uuid4().hex
-        self._set_owner(self.child._id, new_owner)
+        self._set_owner(self.child.case_id, new_owner)
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
     def test_add_clean_parent_stays_clean(self):
         # add a parent with the same owner, should remain clean
-        self.factory.create_or_update_case(CaseStructure(relationships=[CaseRelationship()]))
+        self.factory.create_or_update_case(CaseStructure(indices=[CaseIndex()]))
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
@@ -108,8 +108,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         new_owner = uuid.uuid4().hex
         [child, parent] = self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': new_owner}))
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': new_owner}))
                 ]
             )
         )
@@ -122,22 +122,22 @@ class OwnerCleanlinessTest(SyncBaseTest):
         new_owner = uuid.uuid4().hex
         [child, parent] = self.factory.create_or_update_case(
             CaseStructure(
-                case_id=self.sample_case._id,
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': new_owner}))
+                case_id=self.sample_case.case_id,
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': new_owner}))
                 ]
             )
         )
         self.assert_owner_dirty()
-        self.assertEqual(child._id, self.owner_cleanliness.hint)
+        self.assertEqual(child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
     def test_change_parent_owner_makes_dirty(self):
         # change the owner id of a parent case and make sure the owner becomes dirty
         new_owner = uuid.uuid4().hex
-        self._set_owner(self.parent._id, new_owner)
+        self._set_owner(self.parent.case_id, new_owner)
         self.assert_owner_dirty()
-        self.assertEqual(self.child._id, self.owner_cleanliness.hint)
+        self.assertEqual(self.child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
     def test_set_flag_clean_no_data(self):
@@ -147,7 +147,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
     def test_hint_invalidation(self):
         self.test_change_parent_owner_makes_dirty()
-        self._set_owner(self.parent._id, self.owner_id)
+        self._set_owner(self.parent.case_id, self.owner_id)
         # after the submission the dirtiness flag should still be set
         # since it isn't invalidated right away
         self.assert_owner_dirty()
@@ -167,8 +167,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.factory.domain = new_domain
         self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': uuid.uuid4().hex}))
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': uuid.uuid4().hex}))
                 ]
             )
         )
@@ -183,8 +183,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.factory.domain = new_domain
         self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(),
+                indices=[
+                    CaseIndex(),
                 ]
             )
         )
@@ -198,14 +198,25 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.factory.domain = new_domain
         self.factory.create_or_update_case(
             CaseStructure(
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'owner_id': new_owner})),
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'owner_id': new_owner})),
                 ]
             )
         )
         # original domain should stay clean but the new one should be dirty
         self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
         self.assertFalse(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)
+
+    def test_non_existent_parent(self):
+        self.factory.create_or_update_case(
+            CaseStructure(
+                indices=[
+                    CaseIndex(CaseStructure()),
+                ],
+                walk_related=False,
+            )
+        )
+        self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
 
     @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=False)
     def test_autocreate_flag_off(self):

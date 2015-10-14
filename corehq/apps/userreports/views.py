@@ -17,6 +17,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from corehq.apps.analytics.tasks import track_workflow
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, Form
@@ -32,7 +33,7 @@ from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, \
-    use_select2, use_daterangepicker
+    use_select2, use_daterangepicker, upgrade_knockout_js
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -280,6 +281,11 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
+            track_workflow(
+                request.user.email,
+                "Successfully submitted the first part of the Report Builder "
+                "wizard where you give your report a name and choose a data source"
+            )
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
             )
@@ -311,6 +317,7 @@ class ConfigureChartReport(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = _("Chart Report: {}")
+    report_type = 'chart'
     existing_report = None
 
     def get_context_data(self, **kwargs):
@@ -321,6 +328,7 @@ class ConfigureChartReport(ReportBuilderView):
                     self.request.GET.get('report_name', '')
                 )
             },
+            'report_type': self.report_type,
             'form': self.report_form,
             'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
@@ -364,6 +372,10 @@ class ConfigureChartReport(ReportBuilderView):
                     return self.get(*args, **kwargs)
             else:
                 report_configuration = self.report_form.create_report()
+                track_workflow(
+                    self.request.user.email,
+                    "Successfully created a new report in the Report Builder"
+                )
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
@@ -372,6 +384,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 class ConfigureListReport(ConfigureChartReport):
     report_title = _("List Report: {}")
+    report_type = 'list'
 
     @property
     @memoized
@@ -381,6 +394,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 class ConfigureTableReport(ConfigureChartReport):
     report_title = _("Table Report: {}")
+    report_type = 'table'
 
     @property
     @memoized
@@ -390,6 +404,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 class ConfigureWorkerReport(ConfigureChartReport):
     report_title = _("Worker Report: {}")
+    report_type = 'worker'
 
     @property
     @memoized

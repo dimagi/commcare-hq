@@ -13,8 +13,6 @@
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
 
-    var settings = {{ settings|JSON }};
-
     var _post = function (elem, url, options) {
         var options = options || {};
         var success = options.success || "{% trans "Sync Successful" %}";
@@ -31,6 +29,26 @@
             }
         });
     };
+
+    $(function() {
+        var loc_types = {{ location_types|JSON }};
+        var commtrack_enabled = {{ commtrack_enabled|JSON }};
+
+        var model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
+        $('#settings').submit(function() {
+            return model.presubmit();
+        });
+
+        ko.applyBindings(model, $('#settings').get(0));
+
+        $("form#settings").on("change input", function() {
+            $(this).find(":submit").enable();
+        });
+
+        $("form#settings button").on("click", function() {
+            $("form#settings").find(":submit").enable();
+        });
+    });
 
 </script>
 {% endblock %}

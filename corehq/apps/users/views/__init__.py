@@ -119,7 +119,8 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
             user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
             if user:
                 if user.has_permission(self.domain, 'edit_commcare_users'):
-                    redirect = reverse("commcare_users", args=[self.domain])
+                    from corehq.apps.users.views.mobile import MobileWorkerListView
+                    redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
                     redirect = reverse(
                         ListWebUsersView.urlname,
@@ -519,7 +520,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
-            'requests': DomainRequest.by_domain(self.domain),
+            'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,

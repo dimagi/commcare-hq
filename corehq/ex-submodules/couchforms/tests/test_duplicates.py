@@ -1,16 +1,16 @@
 import os
 from django.test import TestCase
-from couchforms.models import XFormInstance
 
 from corehq.form_processor.interfaces import FormProcessorInterface
 from corehq.form_processor.generic import GenericXFormInstance
+from couchforms.models import XFormInstance
 
 
 class DuplicateFormTest(TestCase):
     ID = '7H46J37FGH3'
 
     def tearDown(self):
-        XFormInstance.get_db().flush()
+        FormProcessorInterface.delete_all_xforms()
 
     def _get_file(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "duplicate.xml")
@@ -31,14 +31,14 @@ class DuplicateFormTest(TestCase):
 
     def test_wrong_doc_type(self):
         domain = 'test-domain'
-        generic_xform = GenericXFormInstance(
-            doc_type='Foo',
-            domain=domain,
-        )
-        xform = FormProcessorInterface.create_from_generic(generic_xform)
+        XFormInstance.get_db().save_doc({
+            '_id': self.ID,
+            'doc_type': 'Foo',
+            'domain': domain,
+        })
+        self.addCleanup(lambda: XFormInstance.get_db().delete_doc(self.ID))
 
         instance = self._get_file()
-        instance = instance.replace(self.ID, xform.id)
         xform = FormProcessorInterface.post_xform(instance, domain=domain)
         self.assertNotEqual(xform.id, self.ID)
 

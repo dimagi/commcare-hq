@@ -1,11 +1,11 @@
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.sofabed.models import CaseData, CASE_NAME_LEN
 from datetime import date, datetime, timedelta
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from corehq.form_processor.interfaces import FormProcessorInterface
 
 TEST_DOMAIN = 'test'
 TEST_NAME_LEN = CASE_NAME_LEN-8
@@ -17,7 +17,7 @@ class CaseDataTests(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
-        post_case_blocks([
+        FormProcessorInterface.post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id='mother_case_id',
@@ -29,7 +29,7 @@ class CaseDataTests(TestCase):
         self.case_id = 'test_case_1'
         self.date_modified = datetime.utcnow() - timedelta(hours=1)
         self.date_modified = self.date_modified.replace(microsecond=0)
-        post_case_blocks([
+        FormProcessorInterface.post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=self.case_id,
@@ -82,7 +82,7 @@ class CaseDataTests(TestCase):
         self.assertEqual('mother_case_id', indices[0].referenced_id)
 
     def test_update(self):
-        post_case_blocks([
+        FormProcessorInterface.post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id='grand_mother_case_id',
@@ -93,7 +93,7 @@ class CaseDataTests(TestCase):
         ], {'domain': TEST_DOMAIN})
 
         date_modified = datetime.utcnow()
-        post_case_blocks([
+        FormProcessorInterface.post_case_blocks([
             CaseBlock(
                 close=True,
                 case_id=self.case_id,
@@ -133,7 +133,7 @@ class CaseDataTests(TestCase):
 
     def test_empty_name(self):
         case_id = 'case_with_no_name'
-        post_case_blocks([
+        FormProcessorInterface.post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=case_id,
@@ -149,7 +149,7 @@ class CaseDataTests(TestCase):
 
     def test_empty_owner_id(self):
         case_id = 'case_with_no_owner'
-        post_case_blocks([
+        FormProcessorInterface.post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=case_id,

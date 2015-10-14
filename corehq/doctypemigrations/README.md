@@ -2,6 +2,10 @@
 
 ## Do prepwork to decouple your doc types
 
+**Note**: These instructions are for people *writing* a migration.
+If you're interested in running a migration someone else already wrote,
+see [Running the doctype migration](#run-the-doctype-migration) below.
+
 To `settings.py` add variables representing
 (1) the database you're currently using for the apps you're migrating, probably set to `None` (== main db),
 and (2) the database you _will_ be using.

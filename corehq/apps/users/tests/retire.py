@@ -5,10 +5,11 @@ import uuid
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
+from corehq.form_processor.interfaces import FormProcessorInterface
 
 
 class RetireUserTestCase(TestCase):
@@ -45,8 +46,8 @@ class RetireUserTestCase(TestCase):
         parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
         child, parent = factory.create_or_update_case(CaseStructure(
             case_id=child_id,
-            relationships=[
-                CaseRelationship(CaseStructure(case_id=parent_id))
+            indices=[
+                CaseIndex(CaseStructure(case_id=parent_id))
             ]
         ))
         # confirm the child has an index, and 1 form
@@ -55,8 +56,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(1, len(child.xform_ids))
 
         # simulate parent deletion
-        parent.doc_type = 'CommCareCase-Deleted'
-        parent.save()
+        FormProcessorInterface.soft_delete_case(parent_id)
 
         # call the remove index task
         remove_indices_from_deleted_cases(self.domain, [parent_id])

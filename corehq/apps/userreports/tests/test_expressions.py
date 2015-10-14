@@ -1,13 +1,14 @@
 import copy
+from datetime import date, datetime
 from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
-    RelatedDocExpressionSpec,
 )
 from corehq.apps.userreports.specs import EvaluationContext
 
@@ -40,13 +41,24 @@ class IdentityExpressionTest(SimpleTestCase):
 class ConstantExpressionTest(SimpleTestCase):
 
     def test_constant_expression(self):
-        for constant in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
+        for constant in (None, 7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
             getter = ExpressionFactory.from_spec({
                 'type': 'constant',
                 'constant': constant,
             })
             self.assertEqual(constant, getter({}))
             self.assertEqual(constant, getter({'some': 'random stuff'}))
+
+    def test_constant_auto_detection(self):
+        for valid_constant in (7.2, 'hello world', 3, True):
+            getter = ExpressionFactory.from_spec(valid_constant)
+            self.assertEqual(valid_constant, getter({}))
+            self.assertEqual(valid_constant, getter({'some': 'random stuff'}))
+
+    def test_constant_auto_detection_invalid_types(self):
+        for invalid_constant in ([], {}):
+            with self.assertRaises(BadSpecError):
+                ExpressionFactory.from_spec(invalid_constant)
 
     def test_invalid_constant(self):
         with self.assertRaises(BadSpecError):
@@ -75,7 +87,14 @@ class PropertyExpressionTest(SimpleTestCase):
             (Decimal("5.3"), "decimal", "5.3"),
             ("5", "string", "5"),
             ("5", "string", 5),
-            (u"fo\u00E9", "string", u"fo\u00E9")
+            (u"fo\u00E9", "string", u"fo\u00E9"),
+            (date(2015, 9, 30), "date", "2015-09-30"),
+            (None, "date", "09/30/2015"),
+            (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30T19:04:27Z"),
+            (datetime(2015, 9, 30, 19, 4, 27, 113609), "datetime", "2015-09-30T19:04:27.113609Z"),
+            (None, "datetime", "2015-09-30 19:04:27Z"),
+            (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
+            (None, "datetime", "2015-09-30"),
         ]:
             getter = ExpressionFactory.from_spec({
                 'type': 'property_name',
@@ -289,6 +308,50 @@ class ArrayIndexExpressionTest(SimpleTestCase):
     def test_empty_index(self):
         self.assertEqual(None, self.expression({'my_array': [], 'my_index': None}))
 
+    def test_empty_constant_index(self):
+        spec = copy.copy(self.expression_spec)
+        spec['index_expression'] = 1
+        expression = ExpressionFactory.from_spec(spec)
+        array = ['first', 'second', 'third']
+        self.assertEqual('second', expression({'my_array': array}))
+
+
+class NamedExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        self.expression_spec = {
+            "type": "named",
+            "name_expression": {
+                "type": "constant",
+                "constant": "the_name"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "prop"
+            }
+        }
+        self.expression = ExpressionFactory.from_spec(self.expression_spec)
+
+    def test_missing_name(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "named",
+                "value_expression": "test",
+            })
+
+    def test_missing_value(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                "type": "named",
+                "name_expression": "test",
+            })
+
+    def test_basic(self):
+        value = self.expression({"prop": "p_value"})
+        self.assertTrue(isinstance(value, dict))
+        self.assertEqual('the_name', value['name'])
+        self.assertEqual('p_value', value['value'])
+
 
 class NestedExpressionTest(SimpleTestCase):
 
@@ -445,6 +508,10 @@ class RootDocExpressionTest(SimpleTestCase):
 class DocJoinExpressionTest(SimpleTestCase):
 
     def setUp(self):
+        # we have to set the fake database before any other calls
+        self.orig_db = CommCareCase.get_db()
+        self.database = FakeCouchDb()
+        CommCareCase.set_db(self.database)
         self.spec = {
             "type": "related_doc",
             "related_doc_type": "CommCareCase",
@@ -479,8 +546,8 @@ class DocJoinExpressionTest(SimpleTestCase):
             }
         })
 
-        self.database = FakeCouchDb()
-        RelatedDocExpressionSpec.db_lookup = lambda _, type: self.database
+    def tearDown(self):
+        CommCareCase.set_db(self.orig_db)
 
     def test_simple_lookup(self):
         related_id = 'related-id'
@@ -562,6 +629,22 @@ class DocJoinExpressionTest(SimpleTestCase):
             related_id_2: related_doc_2
         }
         self.assertEqual(None, self.nested_expression(my_doc, EvaluationContext(my_doc, 0)))
+
+    def test_fail_on_bad_doc_type(self):
+        spec = {
+            "type": "related_doc",
+            "related_doc_type": "BadDocument",
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "parent_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "related_property"
+            }
+        }
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec(spec)
 
     def test_caching(self):
         self.test_simple_lookup()

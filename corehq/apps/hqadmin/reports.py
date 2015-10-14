@@ -527,7 +527,7 @@ FACET_MAPPING = [
     ]),
     ("Eula", False, [
         {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True},
-        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False},
+        {"facet": "internal.custom_eula", "name": "Custom Eula", "expanded": True},
     ]),
 ]
 
@@ -711,6 +711,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 prop_name="cp_n_sms_in_30_d"),
             DataTablesColumn(_("# Outgoing SMS in last 30 days"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_sms_out_30_d"),
+            DataTablesColumn(_("Custom EULA?"), prop_name="internal.custom_eula"),
         )
         return headers
 
@@ -800,6 +801,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_ever', _("Not yet calculated")),
                     dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
+                    format_bool(dom.get('internal', {}).get('custom_eula')),
                 ]
 
 

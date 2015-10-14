@@ -199,7 +199,7 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-    {% include 'users/partial/basic_info_modals.html' %}
+    {% include 'users/partial/basic_info_modals.html' with user_type='mobile' %}
     {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
         <div class="modal-header">
