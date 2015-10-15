@@ -21,10 +21,18 @@
     <script type="text/javascript">
         $(function(){
             var $editReportButton = $("#edit-report-link");
+
             {% if report.spec.report_meta.created_by_builder %}
+
+            var $applyFiltersButton = $("#apply-filters");
+            $applyFiltersButton.click(function(){
+                window.analytics.usage("Report Viewer", "Apply Filters", '{{ report.spec.report_meta.builder_report_type }}');
+            });
+
             gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', '{{ report.spec.report_meta.builder_report_type }}');
             window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
             window.analytics.usage("Report Viewer", "View Report", '{{ report.spec.report_meta.builder_report_type }}');
+
             {% else %}
             gaTrackLink($editReportButton, 'Edit UCR', 'Edit UCR');
             {% endif %}
