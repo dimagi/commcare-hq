@@ -538,7 +538,7 @@ class SubmissionPost(object):
                         )
                         unfinished_submission_stub.save()
                         cases = case_db.get_changed()
-                        # todo: this property is useless now
+                        # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
                         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
                         docs = xforms + cases
