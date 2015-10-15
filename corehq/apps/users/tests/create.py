@@ -210,6 +210,9 @@ class TestDomainMemberships(TestCase):
     def testNewRole(self):
         self.webuser.set_role(self.domain, "field-implementer")
         self.ccuser.set_role(self.domain, "field-implementer")
+        self.webuser.save()
+        self.ccuser.save()
+        self.setUp()  # reload users to clear CouchUser.role
 
         self.assertEquals(self.webuser.get_domain_membership(self.domain).role_id,
                           self.ccuser.get_domain_membership(self.domain).role_id)
