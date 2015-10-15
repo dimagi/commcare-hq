@@ -5,8 +5,10 @@ from django.core.exceptions import PermissionDenied
 from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
+from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
+from django.views.generic.base import RedirectView
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import StockState, StockTransactionHelper
 from corehq.apps.commtrack.sms import process
@@ -21,7 +23,8 @@ from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension
-from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
+from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
+from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
@@ -189,6 +192,27 @@ class EWSUserExtensionView(BaseCommTrackManageView):
             form.save(self.web_user, self.domain)
             messages.add_message(request, messages.SUCCESS, 'Settings updated successfully!')
         return self.get(request, *args, **kwargs)
+
+
+class DashboardRedirectReportView(RedirectView):
+
+    def get_redirect_url(self, *args, **kwargs):
+        site_code = kwargs['site_code']
+        domain = kwargs['domain']
+
+        sql_location = get_object_or_404(SQLLocation, site_code=site_code, domain=domain)
+        cls = DashboardReport
+        if not sql_location.location_type.administrative:
+            cls = StockStatus
+
+        url = make_url(
+            cls,
+            domain,
+            '?location_id=%s&filter_by_program=%s&startdate='
+            '&enddate=&report_type=&filter_by_product=%s',
+            (sql_location.location_id, ALL_OPTION, ALL_OPTION)
+        )
+        return url
 
 
 @domain_admin_required
