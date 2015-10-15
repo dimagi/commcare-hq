@@ -204,7 +204,7 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
     lock = acquire_lock_for_xform(_id)
     with ReleaseOnError(lock):
         if _id in XFormInstance.get_db():
-            raise DuplicateError()
+            raise DuplicateError(xform)
 
     return LockManager(xform, lock)
 

@@ -10,7 +10,8 @@ class XMLSyntaxError(CouchFormException):
 
 
 class DuplicateError(CouchFormException):
-    pass
+    def __init__(self, xform):
+        self.xform = xform
 
 
 class UnexpectedDeletedXForm(Exception):
