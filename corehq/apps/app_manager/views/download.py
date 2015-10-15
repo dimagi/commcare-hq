@@ -374,7 +374,6 @@ def download_index_files(app):
                  for path in app._attachments
                  if path.startswith('files/')]
     else:
-        app.set_media_versions(None)
         files = app.create_all_files().items()
 
     return sorted(files)
@@ -386,6 +385,8 @@ def source_files(app):
     Return format is a list of tuples where the first item in the tuple is a
     file name and the second is the file contents.
     """
+    if not app.copy_of:
+        app.set_media_versions(None)
     files = download_index_files(app)
     files.append(
         ("app.json", json.dumps(
