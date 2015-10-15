@@ -118,9 +118,9 @@ def _rebuild_case_with_retries(self, case_id):
     - retry in 5 min if failure occurs after (default_retry_delay)
     - retry a total of 3 times
     """
-    from casexml.apps.case.cleanup import rebuild_case
+    from casexml.apps.case.cleanup import rebuild_case_from_forms
     try:
-        rebuild_case(case_id)
+        rebuild_case_from_forms(case_id)
     except (UnexpectedDeletedXForm, ResourceConflict) as exc:
         try:
             self.retry(exc=exc)

@@ -2,9 +2,8 @@ import uuid
 from django.test import TestCase, SimpleTestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2, V1
@@ -205,33 +204,27 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def test_complex_index(self):
-        cp = CommCareCase(
-            _id='parent',
-            name='parent',
-            type='parent',
-        )
-        cp.save()
+        factory = CaseFactory()
+        cp = factory.create_or_update_case(CaseStructure(case_id='parent', attrs={'case_type': 'parent'}))[0]
 
         # cases processed according to ID order so ensure that this case is
         # processed after the task case by making its ID sort after task ID
-        cc = CommCareCase(
-            _id='z_goal',
-            name='goal',
-            type='goal',
-            indices=[CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')],
-        )
-        cc.save()
+        factory.create_or_update_case(CaseStructure(
+            case_id='z_goal',
+            attrs={'case_type': 'goal'},
+            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            walk_related=False
+        ))
 
-        cc = CommCareCase(
-            _id='task1',
-            name='task1',
-            type='task',
+        factory.create_or_update_case(CaseStructure(
+            case_id='task1',
+            attrs={'case_type': 'task'},
             indices=[
-                CommCareCaseIndex(identifier='goal', referenced_type='goal', referenced_id='z_goal'),
-                CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')
+                CaseIndex(CaseStructure(case_id='z_goal'), related_type='goal', identifier='goal'),
+                CaseIndex(CaseStructure(case_id='parent'), related_type='parent')
             ],
-        )
-        cc.save()
+            walk_related=False,
+        ))
 
         # with 'ignore_relationship_types' if a case got processed along the ignored relationship first
         # then it got marked as 'seen' and would be not be processed again when it came to the correct relationship

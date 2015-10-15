@@ -311,8 +311,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         try:
             return cls.get(id)
         except ResourceNotFound:
-            from casexml.apps.case.cleanup import rebuild_case
-            case = rebuild_case(id)
+            from casexml.apps.case.cleanup import rebuild_case_from_forms
+            case = rebuild_case_from_forms(id)
             if case is None:
                 raise
             return case
@@ -819,24 +819,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
 
-    def force_save(self, **params):
-        try:
-            self.save()
-        except ResourceConflict:
-            conflict = CommCareCase.get(self._id)
-            # if there's a conflict, make sure we know about every
-            # form in the conflicting doc
-            missing_forms = set(conflict.xform_ids) - set(self.xform_ids)
-            if missing_forms:
-                logging.exception('doc update conflict saving case {id}. missing forms: {forms}'.format(
-                    id=self._id,
-                    forms=",".join(missing_forms)
-                ))
-                raise
-            # couchdbkit doesn't like to let you set _rev very easily
-            self._doc["_rev"] = conflict._rev
-            self.force_save()
-
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import ElementTree
         if self.closed:
@@ -848,14 +830,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
     
-    def get_xform_ids_from_couch(self):
-        """
-        Like xform_ids, but will grab the raw output from couch (including
-        potential duplicates or other forms, so that they can be reprocessed
-        if desired).
-        """
-        return get_case_xform_ids(self._id)
-
     # The following methods involving display configuration should probably go
     # in their own layer, but for now it seems fine.
     @classmethod

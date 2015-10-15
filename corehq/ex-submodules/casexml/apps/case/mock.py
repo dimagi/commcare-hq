@@ -6,7 +6,7 @@ from xml.etree import ElementTree
 from corehq.form_processor.interfaces import FormProcessorInterface
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_CHILD
 
 
 class CaseBlock(dict):
@@ -298,7 +298,7 @@ class CaseStructure(object):
 
 
 class CaseIndex(object):
-    DEFAULT_RELATIONSHIP = 'child'
+    DEFAULT_RELATIONSHIP = CASE_INDEX_CHILD
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
     def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None,
