@@ -229,8 +229,7 @@ def process_xform(instance, attachments=None, process=None, domain=None,
         xform = _log_hard_failure(instance, attachments, e)
         raise SubmissionError(xform)
     except DuplicateError as e:
-        return _handle_id_conflict(instance, e.xform, attachments, process=process,
-                                   domain=domain)
+        return _handle_id_conflict(instance, e.xform, domain)
     return MultiLockManager([xform_lock])
 
 
@@ -245,7 +244,7 @@ def _assign_new_id_and_lock(xform):
     return MultiLockManager([LockManager(xform, lock)])
 
 
-def _handle_id_conflict(instance, xform, attachments, process, domain):
+def _handle_id_conflict(instance, xform, domain):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the
@@ -264,10 +263,10 @@ def _handle_id_conflict(instance, xform, attachments, process, domain):
     else:
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
         existing_doc = XFormInstance.wrap(existing_doc)
-        return _handle_duplicate(existing_doc, xform, instance, attachments, process)
+        return _handle_duplicate(existing_doc, xform, instance)
 
 
-def _handle_duplicate(existing_doc, new_doc, instance, attachments, process):
+def _handle_duplicate(existing_doc, new_doc, instance):
     """
     Handle duplicate xforms and xform editing ('deprecation')
 
