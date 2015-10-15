@@ -231,6 +231,8 @@ def track_periodic_data():
     submit = []
     for user in users_to_domains:
         email = user['email']
+        if not email:
+            continue
         max_forms = 0
         max_workers = 0
 
