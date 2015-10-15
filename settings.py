@@ -1390,6 +1390,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
+    os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
 ]
 
 
