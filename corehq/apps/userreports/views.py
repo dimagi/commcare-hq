@@ -13,7 +13,7 @@ from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 from corehq.apps.analytics.tasks import track_workflow
@@ -36,7 +36,9 @@ from corehq.apps.style.decorators import (
     use_knockout_js,
     use_select2,
     use_daterangepicker,
-    use_datatables)
+    use_datatables,
+    use_jquery_ui,
+)
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -322,15 +324,20 @@ class EditReportInBuilder(View):
 
 
 class ConfigureChartReport(ReportBuilderView):
+    page_title = _("Chart Report: Test Pie Chart, Case")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = _("Chart Report: {}")
     report_type = 'chart'
     existing_report = None
 
-    def get_context_data(self, **kwargs):
-        context = {
-            "domain": self.domain,
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
             'report': {
                 "title": self.report_title.format(
                     self.request.GET.get('report_name', '')
@@ -347,7 +354,6 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
         }
-        return context
 
     @property
     @memoized
