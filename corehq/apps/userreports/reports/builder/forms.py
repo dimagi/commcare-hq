@@ -481,15 +481,17 @@ class ConfigureNewReportBase(forms.Form):
         # NOTE: The corresponding knockout view model is defined in:
         #       templates/userreports/partials/report_builder_configure_report.html
         self.helper = FormHelper()
-        self.helper.form_class = "form-horizontal"
+        self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.attrs['data_bind'] = "submit: submitHandler"
         self.helper.form_id = "report-config-form"
 
         buttons = [
-            crispy.HTML(
-                "<button type='submit' "
-                    "class='btn btn-primary disable-on-submit'"
-                ">{}</a>".format(self.button_text)
+            StrictButton(
+                self.button_text,
+                css_class="btn btn-primary disable-on-submit",
+                type="submit",
             )
         ]
         # Add a back button if we aren't editing an existing report
@@ -497,7 +499,7 @@ class ConfigureNewReportBase(forms.Form):
             buttons.insert(
                 0,
                 crispy.HTML(
-                    '<a class="btn" href="{}" style="margin-right: 4px">{}</a>'.format(
+                    '<a class="btn btn-default" href="{}" style="margin-right: 4px">{}</a>'.format(
                         reverse(
                             'report_builder_select_source',
                             args=(self.domain, self.report_type),
@@ -524,7 +526,7 @@ class ConfigureNewReportBase(forms.Form):
             )
         self.helper.layout = crispy.Layout(
             self.container_fieldset,
-            FormActions(crispy.ButtonHolder(*buttons)),
+            hqcrispy.FormActions(crispy.ButtonHolder(*buttons)),
         )
 
     def _bootstrap(self, existing_report):
@@ -836,7 +838,14 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
     def container_fieldset(self):
         return crispy.Fieldset(
             _('Chart'),
-            FieldWithHelpBubble('group_by', help_bubble_text=_("The values of the selected property will be aggregated and shown as bars in the chart.")),
+            FieldWithHelpBubble(
+                'group_by',
+                help_bubble_text=_(
+                    "The values of the selected property will be aggregated "
+                    "and shown as bars in the chart."
+                ),
+                placeholder=_("Select Property..."),
+            ),
             self.filter_fieldset
         )
 
@@ -890,8 +899,17 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
     @property
     def container_fieldset(self):
         return crispy.Fieldset(
-            _('Chart'),
-            FieldWithHelpBubble('group_by', help_bubble_text=_("The values of the selected property will be aggregated and shows as the sections of the pie chart.")),
+            _('Chart Properties'),
+            FieldWithHelpBubble(
+                'group_by',
+                help_bubble_text=_(
+                    "The values of the selected property will be aggregated "
+                    "and shows as the sections of the pie chart."
+                ),
+                placeholder=_(
+                    "Select Property..."
+                ),
+            ),
             self.filter_fieldset
         )
 
