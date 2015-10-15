@@ -996,26 +996,26 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.locations.models import SQLLocation, LocationType
         from corehq.apps.products.models import SQLProduct
 
-        cursor = connection.cursor()
+        with connection.cursor() as cursor:
 
-        """
-            We use raw queries instead of ORM because Django queryset delete needs to
-            fetch objects into memory to send signals and handle cascades. It makes deletion very slow
-            if we have a millions of rows in stock data tables.
-        """
-        cursor.execute(
-            "DELETE FROM stock_stocktransaction "
-            "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
-        )
+            """
+                We use raw queries instead of ORM because Django queryset delete needs to
+                fetch objects into memory to send signals and handle cascades. It makes deletion very slow
+                if we have a millions of rows in stock data tables.
+            """
+            cursor.execute(
+                "DELETE FROM stock_stocktransaction "
+                "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
+            )
 
-        cursor.execute(
-            "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
-        )
+            cursor.execute(
+                "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
+            )
 
-        cursor.execute(
-            "DELETE FROM commtrack_stockstate"
-            " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
-        )
+            cursor.execute(
+                "DELETE FROM commtrack_stockstate"
+                " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
+            )
 
         SQLProduct.objects.filter(domain=self.name).delete()
         SQLLocation.objects.filter(domain=self.name).delete()
