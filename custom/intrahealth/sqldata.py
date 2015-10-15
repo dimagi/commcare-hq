@@ -431,10 +431,15 @@ class RecapPassageData(BaseSqlData):
     @property
     def columns(self):
         diff = lambda x, y: (x or 0) - (y or 0)
+        def get_prd_name(code):
+            try:
+                return SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                                              is_archived=False).name
+            except SQLProduct.DoesNotExist:
+                pass
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_code'),
-                           format_fn=lambda code: SQLProduct.objects.get(code=code, domain=self.config['domain'],
-                                                                         is_archived=False).name),
+                           format_fn=lambda code: get_prd_name(code)),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
