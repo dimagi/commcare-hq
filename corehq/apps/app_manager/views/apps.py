@@ -67,6 +67,7 @@ from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
+from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
 
 
 @no_conflict_require_POST
@@ -108,6 +109,11 @@ def default_new_app(request, domain):
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
     """
+    meta = {
+            'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+            'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
+    }
+    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     lang = 'en'
     app = Application.new_app(
         domain, _("Untitled Application"), lang=lang,
@@ -286,6 +292,11 @@ def copy_app(request, domain):
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
+    meta = {
+            'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+            'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
+    }
+    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
