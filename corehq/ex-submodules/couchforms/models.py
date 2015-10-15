@@ -6,6 +6,7 @@ import hashlib
 import logging
 import time
 from copy import copy
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from dimagi.utils.parsing import json_format_datetime
 from jsonobject.api import re_date
 from jsonobject.base import DefaultProperty
@@ -512,13 +513,18 @@ class SubmissionErrorLog(XFormError):
         """
         Create an instance of this record from a submission body
         """
-        error = SubmissionErrorLog(received_on=datetime.datetime.utcnow(),
-                                   md5=hashlib.md5(instance).hexdigest(),
-                                   problem=message)
-        error.save()
-        error.put_attachment(instance, ATTACHMENT_NAME)
-        error.save()
-        return error
+        attachments_builder = CouchAttachmentsBuilder()
+        attachments_builder.add(
+            content=instance,
+            name=ATTACHMENT_NAME,
+            content_type='text/xml',
+        )
+        return SubmissionErrorLog(
+            received_on=datetime.datetime.utcnow(),
+            md5=hashlib.md5(instance).hexdigest(),
+            problem=message,
+            _attachments=attachments_builder.to_json(),
+        )
 
 
 class DefaultAuthContext(DocumentSchema):

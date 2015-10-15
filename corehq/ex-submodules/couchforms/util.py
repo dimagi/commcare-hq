@@ -228,7 +228,7 @@ def process_xform(instance, attachments=None, process=None, domain=None,
         xform_lock = create_xform(instance, process=process,
                                   attachments=attachments, _id=_id)
     except couchforms.XMLSyntaxError as e:
-        xform = _log_hard_failure(instance, e)
+        xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)
     except DuplicateError:
         return _handle_id_conflict(instance, attachments, process=process,
@@ -340,7 +340,7 @@ def is_override(xform):
     return bool(getattr(xform, 'deprecated_form_id', None))
 
 
-def _log_hard_failure(instance, error):
+def _log_hard_failure(instance, process, error):
     """
     Handle's a hard failure from posting a form to couch.
 
@@ -352,7 +352,12 @@ def _log_hard_failure(instance, error):
     except UnicodeDecodeError:
         message = unicode(str(error), encoding='utf-8')
 
-    return SubmissionErrorLog.from_instance(instance, message)
+    error_log = SubmissionErrorLog.from_instance(instance, message)
+    if process:
+        process(error_log)
+
+    error_log.save()
+    return error_log
 
 
 def scrub_meta(xform):
@@ -466,8 +471,9 @@ class SubmissionPost(object):
 
         def process(xform):
             self._attach_shared_props(xform)
-            found_old = scrub_meta(xform)
-            legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform._id)
+            if xform.doc_type != 'SubmissionErrorLog':
+                found_old = scrub_meta(xform)
+                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform._id)
 
         try:
             lock_manager = process_xform(self.instance,
@@ -658,10 +664,8 @@ class SubmissionPost(object):
             status=201,
         ).response()
 
-    def get_exception_response(self, error_log):
-        error_doc = SubmissionErrorLog.get(error_log.get_id)
-        self._attach_shared_props(error_doc)
-        error_doc.save()
+    @staticmethod
+    def get_exception_response(error_log):
         return OpenRosaResponse(
             message=("The sever got itself into big trouble! "
                      "Details: %s" % error_log.problem),
