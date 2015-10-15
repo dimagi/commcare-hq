@@ -5,10 +5,12 @@ from __future__ import absolute_import
 import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import logging
 import re
 
 from restkit.errors import NoMoreData
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -40,7 +42,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin, QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
-from corehq.apps.domain.models import LicenseAgreement
+from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     normalize_username,
     user_data_from_registration_form,
@@ -956,6 +958,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete() # Call the "real" delete() method.
+        from .signals import couch_user_post_save
         couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
 
     def delete_phone_number(self, phone_number):
@@ -1288,6 +1291,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
             super(CouchUser, self).save(**params)
 
+        from .signals import couch_user_post_save
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error
@@ -1297,8 +1301,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     message="Error occured while syncing user %s: %s" %
                             (self.username, str(result[1]))
                 )
-
-
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1414,7 +1416,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def save(self, **params):
         super(CommCareUser, self).save(**params)
 
-        from corehq.apps.users.signals import commcare_user_post_save
+        from .signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error
@@ -2546,7 +2548,3 @@ class UserCache(object):
             user = CouchUser.get_by_user_id(user_id)
             self.cache[user_id] = user
             return user
-
-
-from .signals import *
-from corehq.apps.domain.models import Domain
