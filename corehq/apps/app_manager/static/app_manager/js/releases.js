@@ -5,7 +5,7 @@ function SavedApp(o, r) {
         self[attr] = self[attr] || ko.observable();
     });
     if (!self.include_media) {
-        self.include_media = ko.observable(false);
+        self.include_media = ko.observable(true);
     }
     if(!self.generating_url){
         self.generating_url = ko.observable(false);
