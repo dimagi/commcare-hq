@@ -431,7 +431,7 @@ class RecapPassageData(BaseSqlData):
     @property
     def columns(self):
         diff = lambda x, y: (x or 0) - (y or 0)
-        
+
         def get_prd_name(code):
             try:
                 return SQLProduct.objects.get(code=code, domain=self.config['domain'],
