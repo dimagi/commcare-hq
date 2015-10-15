@@ -15,8 +15,6 @@ from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from corehq.util.dates import iso_string_to_datetime
-from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from couchforms.util import is_deprecation, is_override
 from dimagi.utils import parsing
@@ -178,7 +176,10 @@ class ActionsUpdateStrategy(UpdateStrategy):
         """
         Clear known case properties, and all dynamic properties
         """
-        dynamic_properties = set([k for action in self.case.actions for k in action.updated_unknown_properties.keys()])
+        dynamic_properties = set([
+            k for action in self.case.actions
+            for k in action.updated_unknown_properties.keys()
+        ])
         for k in dynamic_properties:
             try:
                 delattr(self.case, k)
