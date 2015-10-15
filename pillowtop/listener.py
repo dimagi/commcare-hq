@@ -168,7 +168,7 @@ class BasicPillow(PillowBase):
                         self.change_transport(tr)
         except Exception, ex:
             if not is_retry_attempt:
-                self._handle_pillow_error(ex)
+                self._handle_pillow_error(change, ex)
             else:
                 raise
 
