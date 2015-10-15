@@ -1,7 +1,7 @@
 from collections import defaultdict
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
-from custom.openclinica.const import AUDIT_LOGS
+from custom.openclinica.const import AUDIT_LOGS, SINGLE_EVENT_FORM_EVENT_INDEX
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
     is_item_group_repeating,
@@ -74,7 +74,7 @@ class Subject(object):
 
         # This subject's data. Stored as subject[study_event_oid][i][form_oid][item_group_oid][j][item_oid]
         # (Study events and item groups are lists because they can repeat.)
-        self.data = {}
+        self.data = defaultdict(list)
 
         # Tracks items in self.data by reference using form ID and question. We need this so that we can
         # update an item if its form has been edited on HQ, by looking it up with new_form.orig_id.
@@ -90,12 +90,24 @@ class Subject(object):
         Return the current study event. Opens a new study event if necessary.
         """
         date = form.form['meta']['timeStart'].date()
-        if item.study_event_oid not in self.data:
+        count = len(self.data[item.study_event_oid])
+        if form.xmlns in SINGLE_EVENT_FORM_EVENT_INDEX:
+            # This is a bad way to determine whether to create a new event because it needs "special cases"
+            # TODO: Use an "event" subcase of subject
+            index = SINGLE_EVENT_FORM_EVENT_INDEX[form.xmlns]
+            if count < index + 1:
+                self.data[item.study_event_oid].extend([None for i in range(index + 1 - count)])
+            if self.data[item.study_event_oid][index] is None:
+                self.data[item.study_event_oid][index] = StudyEvent(self._domain, item.study_event_oid, date)
+            return self.data[item.study_event_oid][index]
+        if not count:
             study_event = StudyEvent(self._domain, item.study_event_oid, date)
             self.data[item.study_event_oid] = [study_event]  # A list because study events can repeat
             return study_event
         current_study_event = self.data[item.study_event_oid][-1]
         if current_study_event.is_repeating and current_study_event.date != date:
+            # This is a very bad way to determine whether to create a new event, because event durations vary
+            # TODO: Use an "event" subcase of subject
             new_study_event = StudyEvent(self._domain, item.study_event_oid, date)
             self.data[item.study_event_oid].append(new_study_event)
             return new_study_event
