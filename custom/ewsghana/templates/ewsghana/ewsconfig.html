@@ -136,6 +136,15 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="fix_sms_users">
+                        {% trans "Fix sms users" %}
+                    </button>
+                </div>
+            </div>
+        </div>
 
     {% endif %}
 {% endblock %}
@@ -205,6 +214,12 @@
 
         $("#convert_custom_user_data").click(function() {
             var url = '{% url 'convert_user_data_fields' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#fix_sms_users").click(function() {
+            var url = '{% url 'fix_sms_users' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
