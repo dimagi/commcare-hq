@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.test import TestCase
 from corehq.apps.users.util import format_username
 from corehq.util.dates import iso_string_to_date
@@ -26,9 +25,9 @@ class CreateTestCase(TestCase):
         self.xform.form['user_data'] = {'data': [{'@key': 'user_type', '#text': 'normal'}]}
         self.xform.domain = self.domain = 'mock'
         self.xform.xmlns = USER_REGISTRATION_XMLNS
-        
+
     def testCreateBasicWebUser(self):
-        """ 
+        """
         test that a basic couch user gets created when calling CouchUser.from_web_user
         """
         username = "joe"
@@ -45,9 +44,8 @@ class CreateTestCase(TestCase):
         self.assertEqual(django_user.email, email)
         self.assertEqual(django_user.username, username)
 
-
     def testCreateCompleteWebUser(self):
-        """ 
+        """
         testing couch user internal functions
         """
         username = "joe"
@@ -90,8 +88,8 @@ class CreateTestCase(TestCase):
         self.assertEquals(ccuser.has_permission(domain, permission_to), False)
         webuser.set_role(domain, "field-implementer")
         ccuser.set_role(domain, "field-implementer")
-        self.assertEquals(  webuser.get_domain_membership(domain).role_id,
-                            ccuser.get_domain_membership(domain).role_id)
+        self.assertEquals(webuser.get_domain_membership(domain).role_id,
+                          ccuser.get_domain_membership(domain).role_id)
         self.assertEquals(webuser.role_label(), ccuser.role_label())
         self.assertEquals(webuser.has_permission(domain, permission_to), True)
         self.assertEquals(ccuser.has_permission(domain, permission_to), True)
@@ -116,17 +114,15 @@ class CreateTestCase(TestCase):
         self.assertEquals(webuser.is_member_of(domain), False)
         self.assertEquals(webuser2.is_member_of(domain), True)
 
-
     def _runCreateUserFromRegistrationTest(self):
-        """ 
+        """
         test creating of couch user from a registration xmlns.
         this is more of an integration test than a unit test.
         """
-
         couch_user, created = CommCareUser.create_or_update_from_xform(self.xform)
         self.assertEqual(couch_user.user_id, self.uuid)
         # czue: removed lxml reference
-        #uuid = ET.fromstring(xml).findtext(".//{http://openrosa.org/user/registration}uuid")
+        # uuid = ET.fromstring(xml).findtext(".//{http://openrosa.org/user/registration}uuid")
         couch_user = CommCareUser.get_by_user_id(self.xform.form['uuid'])
 
         self.assertNotEqual(couch_user, None)
@@ -140,55 +136,53 @@ class CreateTestCase(TestCase):
         django_user = couch_user.get_django_user()
         self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
 
-        
     def testCreateUserFromRegistration(self):
         self._runCreateUserFromRegistrationTest()
-    
+
     def testCreateUserFromOldRegistration(self):
         self.xform.xmlns = USER_REGISTRATION_XMLNS_DEPRECATED
         self._runCreateUserFromRegistrationTest()
-        
+
     def testCreateDuplicateUsersFromRegistration(self):
-        """ 
-        use case: chw on phone registers a username/password/domain triple somewhere 
-        another chw somewhere else somehow registers the same username/password/domain triple 
-        outcome: 2 distinct users on hq with the same info, but the usernames should be 
+        """
+        use case: chw on phone registers a username/password/domain triple somewhere
+        another chw somewhere else somehow registers the same username/password/domain triple
+        outcome: 2 distinct users on hq with the same info, but the usernames should be
         updated appropriately to not be duplicates.
         """
         first_user, created = CommCareUser.create_or_update_from_xform(self.xform)
         # switch uuid so that we don't violate unique key constraints on django use creation
         xform = self.xform
         xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
-        second_user, created = CommCareUser.create_or_update_from_xform(xform) 
+        second_user, created = CommCareUser.create_or_update_from_xform(xform)
         # make sure they got different usernames
         self.assertEqual("test_reg", first_user.username.split("@")[0])
         self.assertEqual("test_reg2", second_user.username.split("@")[0])
-        
-        
+
     def testEditUserFromRegistration(self):
         """
-        Edit a user via registration XML 
+        Edit a user via registration XML
         """
         # really this should be in the "update" test but all the infrastructure
-        # for dealing with the xml payload is here. 
+        # for dealing with the xml payload is here.
         original_user, created = CommCareUser.create_or_update_from_xform(self.xform)
         self.assertTrue(created)
         self.assertEqual("test_reg", original_user.username.split("@")[0])
         original_django_user = original_user.get_django_user()
         original_count = User.objects.count()
-        
+
         xform = self.xform
         xform.form['username'] = 'a_new_username'
         xform.form['password'] = "foobar"
         self.xform.form['registering_phone_id'] = 'phone_edit'
         xform.form['user_data'] = {'data': [{'@key': 'user_type', '#text': 'boss'}]}
-        updated_user, created = CommCareUser.create_or_update_from_xform(xform) 
+        updated_user, created = CommCareUser.create_or_update_from_xform(xform)
         self.assertFalse(created)
         # make sure they got different usernames
         self.assertEqual("a_new_username", updated_user.username.split("@")[0])
         self.assertEqual("phone_edit", updated_user.device_id)
         self.assertEqual("boss", updated_user.user_data["user_type"])
-        
+
         # make sure we didn't create a new django user and updated
         # the old one correctly
         updated_django_user = updated_user.get_django_user()
@@ -196,28 +190,27 @@ class CreateTestCase(TestCase):
         self.assertEqual(original_django_user.pk, updated_django_user.pk)
         self.assertNotEqual(original_django_user.username, updated_django_user.username)
         self.assertNotEqual(original_django_user.password, updated_django_user.password)
-    
+
     def testEditUserFromRegistrationWithConflicts(self):
         original_user, created = CommCareUser.create_or_update_from_xform(self.xform)
         self.assertEqual("test_reg", original_user.username.split("@")[0])
         xform = self.xform
-        
+
         xform.form['uuid'] = 'AVNSDNVLDSFDESFSNSIDNFLDKN'
         xform.form['username'] = 'new_user'
-        second_user, created = CommCareUser.create_or_update_from_xform(xform) 
-        
+        second_user, created = CommCareUser.create_or_update_from_xform(xform)
+
         # try to set it to a conflict
         xform.form['username'] = 'test_reg'
-        updated_user, created = CommCareUser.create_or_update_from_xform(xform) 
-        
+        updated_user, created = CommCareUser.create_or_update_from_xform(xform)
+
         # make sure they got different usernames
         self.assertEqual(second_user.get_id, updated_user.get_id)
         self.assertEqual("test_reg", original_user.username.split("@")[0])
         self.assertEqual("test_reg2", updated_user.username.split("@")[0])
-        
+
         # since we changed it we should be able to back to the original id
         xform.form['username'] = 'new_user'
-        updated_user, created = CommCareUser.create_or_update_from_xform(xform) 
+        updated_user, created = CommCareUser.create_or_update_from_xform(xform)
         self.assertEqual(second_user.get_id, updated_user.get_id)
         self.assertEqual("new_user", updated_user.username.split("@")[0])
-                
