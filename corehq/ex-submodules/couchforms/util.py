@@ -18,6 +18,7 @@ from django.http import (
 import iso8601
 from redis import RedisError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed, timezone_migration_in_progress
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
@@ -46,6 +47,7 @@ from .signals import (
 )
 from .xml import ResponseNature, OpenRosaResponse
 
+legacy_soft_assert = soft_assert('{}@{}'.format('skelly', 'dimagi.com'))
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
@@ -226,7 +228,7 @@ def process_xform(instance, attachments=None, process=None, domain=None,
         xform_lock = create_xform(instance, process=process,
                                   attachments=attachments, _id=_id)
     except couchforms.XMLSyntaxError as e:
-        xform = _log_hard_failure(instance, attachments, e)
+        xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)
     except DuplicateError:
         return _handle_id_conflict(instance, attachments, process=process,
@@ -338,7 +340,7 @@ def is_override(xform):
     return bool(getattr(xform, 'deprecated_form_id', None))
 
 
-def _log_hard_failure(instance, attachments, error):
+def _log_hard_failure(instance, process, error):
     """
     Handle's a hard failure from posting a form to couch.
 
@@ -350,7 +352,12 @@ def _log_hard_failure(instance, attachments, error):
     except UnicodeDecodeError:
         message = unicode(str(error), encoding='utf-8')
 
-    return SubmissionErrorLog.from_instance(instance, message)
+    error_log = SubmissionErrorLog.from_instance(instance, message)
+    if process:
+        process(error_log)
+
+    error_log.save()
+    return error_log
 
 
 def scrub_meta(xform):
@@ -464,7 +471,9 @@ class SubmissionPost(object):
 
         def process(xform):
             self._attach_shared_props(xform)
-            scrub_meta(xform)
+            if xform.doc_type != 'SubmissionErrorLog':
+                found_old = scrub_meta(xform)
+                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform._id)
 
         try:
             lock_manager = process_xform(self.instance,
@@ -535,10 +544,8 @@ class SubmissionPost(object):
                         )
                         unfinished_submission_stub.save()
                         cases = case_db.get_changed()
-                        # todo: this property is useless now
+                        # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
-                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-                        docs = xforms + cases
 
                         # in saving the cases, we have to do all the things
                         # done in CommCareCase.save()
@@ -556,8 +563,11 @@ class SubmissionPost(object):
                                         case.get_id, case.get_rev, rev
                                     )
                                 )
+
+                        # verify that these DB's are the same so that we can save them with one call to bulk_save
+                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
+                        docs = xforms + cases
                         try:
-                            # save both the forms and cases
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
@@ -654,10 +664,8 @@ class SubmissionPost(object):
             status=201,
         ).response()
 
-    def get_exception_response(self, error_log):
-        error_doc = SubmissionErrorLog.get(error_log.get_id)
-        self._attach_shared_props(error_doc)
-        error_doc.save()
+    @staticmethod
+    def get_exception_response(error_log):
         return OpenRosaResponse(
             message=("The sever got itself into big trouble! "
                      "Details: %s" % error_log.problem),
@@ -673,11 +681,7 @@ def _handle_known_error(e, instance):
         u"Warning in case or stock processing "
         u"for form {}: {}."
     ).format(instance._id, error_message))
-    instance.__class__ = XFormError
-    instance.doc_type = 'XFormError'
-    instance.problem = error_message
-    return instance
-
+    return XFormError.from_xform_instance(instance, error_message)
 
 def _handle_unexpected_error(instance, error_message):
     # The following code saves the xform instance
@@ -686,20 +690,12 @@ def _handle_unexpected_error(instance, error_message):
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    new_id = XFormError.get_db().server.next_uuid()
+    instance = XFormError.from_xform_instance(instance, error_message, with_new_id=True)
     notify_exception(None, (
         u"Error in case or stock processing "
         u"for form {}: {}. "
         u"Error saved as {}"
-    ).format(instance._id, error_message, new_id))
-    instance.__class__ = XFormError
-    instance.orig_id = instance._id
-    instance._id = new_id
-    if '_rev' in instance:
-        # clear the rev since we want to make a new doc
-        # this is necessary for errors that come from editing submissions
-        del instance['_rev']
-    instance.problem = error_message
+    ).format(instance.orig_id, error_message, instance._id))
     return instance
 
 
