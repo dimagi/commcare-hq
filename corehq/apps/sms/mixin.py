@@ -493,6 +493,7 @@ class SMSBackend(MobileBackend):
         doc = BackendInvocationDoc()
         doc._id = '%s-%s' % (self.__class__.__name__, json_format_datetime(msg.date))
         doc.save()
+    test_send_sms.__test__ = False
 
     def send_sms(self, msg, *args, **kwargs):
         raise NotImplementedError("send_sms() method not implemented")
