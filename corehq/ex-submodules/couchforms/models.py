@@ -405,6 +405,22 @@ class XFormError(XFormInstance):
     problem = StringProperty()
     orig_id = StringProperty()
 
+    @classmethod
+    def from_xform_instance(cls, instance, error_message, with_new_id=False):
+        instance.__class__ = XFormError
+        instance.doc_type = 'XFormError'
+        instance.problem = error_message
+
+        if with_new_id:
+            new_id = XFormError.get_db().server.next_uuid()
+            instance.orig_id = instance._id
+            instance._id = new_id
+            if '_rev' in instance:
+                # clear the rev since we want to make a new doc
+                del instance['_rev']
+
+        return instance
+
     def save(self, *args, **kwargs):
         # we put this here, in case the doc hasn't been modified from an original 
         # XFormInstance we'll force the doc_type to change. 

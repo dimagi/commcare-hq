@@ -677,11 +677,7 @@ def _handle_known_error(e, instance):
         u"Warning in case or stock processing "
         u"for form {}: {}."
     ).format(instance._id, error_message))
-    instance.__class__ = XFormError
-    instance.doc_type = 'XFormError'
-    instance.problem = error_message
-    return instance
-
+    return XFormError.from_xform_instance(instance, error_message)
 
 def _handle_unexpected_error(instance, error_message):
     # The following code saves the xform instance
@@ -690,20 +686,12 @@ def _handle_unexpected_error(instance, error_message):
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    new_id = XFormError.get_db().server.next_uuid()
+    instance = XFormError.from_xform_instance(instance, error_message, with_new_id=True)
     notify_exception(None, (
         u"Error in case or stock processing "
         u"for form {}: {}. "
         u"Error saved as {}"
-    ).format(instance._id, error_message, new_id))
-    instance.__class__ = XFormError
-    instance.orig_id = instance._id
-    instance._id = new_id
-    if '_rev' in instance:
-        # clear the rev since we want to make a new doc
-        # this is necessary for errors that come from editing submissions
-        del instance['_rev']
-    instance.problem = error_message
+    ).format(instance.orig_id, error_message, instance._id))
     return instance
 
 
