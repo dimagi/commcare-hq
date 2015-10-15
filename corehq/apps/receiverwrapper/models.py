@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.util.quickcache import quickcache
 
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
@@ -170,7 +172,7 @@ class RegisterGenerator(object):
         return generator_collection.get_default_format()
 
 
-class Repeater(Document, UnicodeMixIn):
+class Repeater(Document, QuickCachedDocumentMixin, UnicodeMixIn):
     base_doc = 'Repeater'
 
     domain = StringProperty()
@@ -210,7 +212,11 @@ class Repeater(Document, UnicodeMixIn):
         repeat_record.save()
         return repeat_record
 
+    def clear_caches(self):
+        Repeater.by_domain.clear(self.__class__, self.domain)
+
     @classmethod
+    @quickcache(['cls.__name__', 'domain'], timeout=5 * 60, memoize_timeout=10)
     def by_domain(cls, domain):
         key = [domain]
         if repeater_types.has_key(cls.__name__):
