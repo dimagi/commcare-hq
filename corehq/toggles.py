@@ -168,12 +168,6 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
-    'include-multimedia-odk',
-    'Include multimedia in ODK deploy',
-    TAG_ONE_OFF
-)
-
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
