@@ -7,6 +7,7 @@ from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS,\
     USER_REGISTRATION_XMLNS_DEPRECATED
+from corehq.apps.domain.models import Domain
 
 
 class CreateTestCase(TestCase):
@@ -61,58 +62,6 @@ class CreateTestCase(TestCase):
         self.assertEqual(couch_user.domain_memberships[1].domain, 'domain2')
         django_user = couch_user.get_django_user()
         self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
-
-    def testDomainMemberships(self):
-        w_username = "joe"
-        w_email = "joe@domain.com"
-        w2_username = "ben"
-        w2_email = "ben@domain.com"
-        cc_username = "mobby"
-        password = "password"
-        domain = "test-domain"
-
-        # check that memberships are added on creation
-        webuser = WebUser.create(domain, w_username, password, w_email)
-        webuser2 = WebUser.create('nodomain', w2_username, password, w2_email)
-        ccuser = CommCareUser.create(domain, cc_username, password)
-
-        self.assertEquals(webuser.is_member_of('test-domain'), True)
-        self.assertEquals(ccuser.is_member_of('test-domain'), True)
-
-        # getting memberships
-        self.assertEquals(webuser.get_domain_membership(domain).domain, domain)
-        self.assertEquals(ccuser.get_domain_membership(domain).domain, domain)
-
-        permission_to = 'view_reports'
-        self.assertEquals(webuser.has_permission(domain, permission_to), False)
-        self.assertEquals(ccuser.has_permission(domain, permission_to), False)
-        webuser.set_role(domain, "field-implementer")
-        ccuser.set_role(domain, "field-implementer")
-        self.assertEquals(webuser.get_domain_membership(domain).role_id,
-                          ccuser.get_domain_membership(domain).role_id)
-        self.assertEquals(webuser.role_label(), ccuser.role_label())
-        self.assertEquals(webuser.has_permission(domain, permission_to), True)
-        self.assertEquals(ccuser.has_permission(domain, permission_to), True)
-
-        self.assertEquals(webuser.is_domain_admin(domain), False)
-        self.assertEquals(ccuser.is_domain_admin(domain), False)
-
-        # deleting memberships
-        webuser.delete_domain_membership(domain)
-
-        with self.assertRaises(NotImplementedError):
-            ccuser.delete_domain_membership(domain)
-
-        self.assertEquals(webuser.is_member_of(domain), False)
-        self.assertEquals(webuser2.is_member_of(domain), False)
-        self.assertEquals(ccuser.is_member_of(domain), True)
-        self.assertEquals(ccuser.get_domain_membership(domain).domain, domain)
-
-        webuser.add_domain_membership(domain)
-        webuser.transfer_domain_membership(domain, webuser2)
-
-        self.assertEquals(webuser.is_member_of(domain), False)
-        self.assertEquals(webuser2.is_member_of(domain), True)
 
     def _runCreateUserFromRegistrationTest(self):
         """
@@ -214,3 +163,76 @@ class CreateTestCase(TestCase):
         updated_user, created = CommCareUser.create_or_update_from_xform(xform)
         self.assertEqual(second_user.get_id, updated_user.get_id)
         self.assertEqual("new_user", updated_user.username.split("@")[0])
+
+
+class TestDomainMemberships(TestCase):
+    domain = "test-domain"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.webuser.delete()
+        cls.webuser2.delete()
+        cls.project.delete()
+
+    @classmethod
+    def setUpClass(cls):
+        w_username = "joe"
+        w_email = "joe@domain.com"
+        w2_username = "ben"
+        w2_email = "ben@domain.com"
+        cc_username = "mobby"
+        password = "password"
+        cls.project = Domain(name=cls.domain)
+        cls.project.save()
+
+        cls.webuser = WebUser.create(cls.domain, w_username, password, w_email)
+        cls.webuser2 = WebUser.create('nodomain', w2_username, password, w2_email)
+        cls.ccuser = CommCareUser.create(cls.domain, cc_username, password)
+
+    def setUp(self):
+        # Reload users before each test
+        self.webuser = WebUser.get(self.webuser._id)
+        self.webuser2 = WebUser.get(self.webuser2._id)
+        self.ccuser = CommCareUser.get(self.ccuser._id)
+
+    def testMembershipsOnCreation(self):
+        self.assertTrue(self.webuser.is_member_of('test-domain'))
+        self.assertTrue(self.ccuser.is_member_of('test-domain'))
+
+    def testGetMemberships(self):
+        self.assertEquals(self.webuser.get_domain_membership(self.domain).domain, self.domain)
+        self.assertEquals(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
+
+    def testDefaultPermissions(self):
+        self.assertFalse(self.webuser.has_permission(self.domain, 'view_reports'))
+        self.assertFalse(self.ccuser.has_permission(self.domain, 'view_reports'))
+
+    def testNewRole(self):
+        self.webuser.set_role(self.domain, "field-implementer")
+        self.ccuser.set_role(self.domain, "field-implementer")
+
+        self.assertEquals(self.webuser.get_domain_membership(self.domain).role_id,
+                          self.ccuser.get_domain_membership(self.domain).role_id)
+        self.assertEquals(self.webuser.role_label(), self.ccuser.role_label())
+
+        self.assertTrue(self.webuser.has_permission(self.domain, 'view_reports'))
+        self.assertTrue(self.ccuser.has_permission(self.domain, 'view_reports'))
+
+        self.assertFalse(self.webuser.is_domain_admin(self.domain))
+        self.assertFalse(self.ccuser.is_domain_admin(self.domain))
+
+    def testDeleteDomainMembership(self):
+        self.webuser.delete_domain_membership(self.domain)
+
+        with self.assertRaises(NotImplementedError):
+            self.ccuser.delete_domain_membership(self.domain)
+
+        self.assertFalse(self.webuser.is_member_of(self.domain))
+        self.assertFalse(self.webuser2.is_member_of(self.domain))
+        self.assertTrue(self.ccuser.is_member_of(self.domain))
+        self.assertEquals(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
+
+    def testTransferMembership(self):
+        self.webuser.transfer_domain_membership(self.domain, self.webuser2)
+        self.assertFalse(self.webuser.is_member_of(self.domain))
+        self.assertTrue(self.webuser2.is_member_of(self.domain))
