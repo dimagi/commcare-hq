@@ -665,7 +665,7 @@ class EWSApi(APISynchronization):
 
         self._set_extension(user, ews_webuser.supply_point, ews_webuser.sms_notifications)
         if ews_webuser.contact:
-            user.phone_numbers = map(apply_leniency, ews_webuser.contact.phone_numbers)
+            user.phone_numbers = map(lambda p: apply_leniency(p.phone_number), ews_webuser.contact.phone_numbers)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id

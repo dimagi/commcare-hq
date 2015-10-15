@@ -61,7 +61,7 @@ class ApisTest(TestCase):
         self.assertEqual(smsuser.supply_point.active, True)
         self.assertEqual(smsuser.email, None)
         self.assertEqual(smsuser.is_active, "True")
-        self.assertEqual(smsuser.phone_numbers, ["+2222222222"])
+        self.assertEqual(smsuser.phone_numbers[0].phone_number, "+2222222222")
 
     def test_parse_dailyreports_json(self):
         with open(os.path.join(self.datapath, 'sample_dailyreports.json')) as f:
