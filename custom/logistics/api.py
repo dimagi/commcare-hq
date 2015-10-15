@@ -323,6 +323,7 @@ class APISynchronization(object):
                 user.user_data = user_dict["user_data"]
                 user.save()
                 self.add_phone_numbers(ilsgateway_smsuser, user)
+                user.save()
             except Exception as e:
                 logging.error(e)
         else:
