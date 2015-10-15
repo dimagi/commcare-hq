@@ -150,7 +150,7 @@ def adjust_datetimes(data, parent=None, key=None):
     return data
 
 
-def create_xform(xml_string, attachments=None, _id=None, process=None):
+def create_xform(xml_string, attachments=None, process=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -169,8 +169,7 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
     json_form = convert_xform_to_json(xml_string)
     adjust_datetimes(json_form)
 
-    _id = (_id or _extract_meta_instance_id(json_form)
-           or XFormInstance.get_db().server.next_uuid())
+    _id = _extract_meta_instance_id(json_form) or XFormInstance.get_db().server.next_uuid()
     assert _id
     attachments_builder = CouchAttachmentsBuilder()
     attachments_builder.add(
@@ -209,8 +208,7 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
     return LockManager(xform, lock)
 
 
-def process_xform(instance, attachments=None, process=None, domain=None,
-                  _id=None):
+def process_xform(instance, attachments=None, process=None, domain=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -223,8 +221,7 @@ def process_xform(instance, attachments=None, process=None, domain=None,
     attachments = attachments or {}
 
     try:
-        xform_lock = create_xform(instance, process=process,
-                                  attachments=attachments, _id=_id)
+        xform_lock = create_xform(instance, process=process, attachments=attachments)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, attachments, e)
         raise SubmissionError(xform)
