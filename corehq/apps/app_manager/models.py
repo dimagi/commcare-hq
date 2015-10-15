@@ -5153,6 +5153,12 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         del source['build_spec']
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+
+    for module in app.get_modules():
+        if isinstance(module, ReportModule):
+            for report_config in module.report_configs:
+                report_config.uuid = random_hex()
+
     app.save()
 
     if not app.is_remote_app():
