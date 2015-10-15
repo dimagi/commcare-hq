@@ -361,6 +361,13 @@
                                         </ul>
                                         <div class="tab-content">
                                             <div class="tab-pane">
+                                                <p>
+                                                    {% trans "Download" %}
+                                                    <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
+                                                        {% trans "CommCare from Google Play Store" %}
+                                                    </a>
+                                                    {% trans "to your Android device." %}
+                                                </p>
                                                 <label class="checkbox" data-bind="visible: allow_media_install">
                                                     <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                                     {% trans "Include Multimedia" %}
@@ -372,7 +379,7 @@
                                                     <span data-bind="visible: get_short_odk_url()">
                                                         {% blocktrans %}
                                                             Install by typing the following URL
-                                                            into the application install screen:
+                                                            into the CommCare application install screen:
                                                         {% endblocktrans %}
                                                         <code class="bitly"><a data-bind="
                                                             attr: {
@@ -396,6 +403,7 @@
                                                     ">
                                                     {% trans "scan the bar code" %}
                                                     </a>
+                                                    {% trans "using the Barcode Scanner option within CommCare" %}
                                                 </p>
                                             </div>
                                             <div class="tab-pane">
