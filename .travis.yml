@@ -3,6 +3,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
+    - $HOME/bower_components
 python:
   - "2.7"
 env:
