@@ -464,8 +464,7 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
 
     try:
         kwargs = backend.get_cleaned_outbound_params()
-        module = __import__(backend.outbound_module,
-            fromlist=['initiate_outbound_call'])
+        module = backend.backend_module
 
         call_log_entry.backend_api = module.API_ID
         call_log_entry.save()

@@ -1,4 +1,5 @@
 from optparse import make_option
+import re
 from django.core.management import BaseCommand, CommandError
 from corehq.doctypemigrations.migrator_instances import get_migrator_by_slug, \
     get_migrator_slugs
@@ -68,16 +69,22 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
         ),
+        make_option(
+            '--erase-continuous-progress',
+            action='store_true',
+            default=False
+        )
     )
 
     def handle(self, migrator_slug=None, initial=None, continuous=None, cleanup=None,
-               stats=None, **options):
+               stats=None, erase_continuous_progress=None, **options):
         try:
             migrator = get_migrator_by_slug(migrator_slug)
         except KeyError:
             raise CommandError(USAGE)
-        if not any((initial, continuous, cleanup, stats)):
-            raise CommandError('initial, continuous, cleanup, or stats must be set')
+        if not any((initial, continuous, cleanup, stats, erase_continuous_progress)):
+            raise CommandError('initial, continuous, cleanup, stats, or '
+                               'erase_continuous_progress must be set')
         if cleanup and (initial or continuous):
             raise CommandError('cleanup must be run alone')
 
@@ -87,6 +94,12 @@ class Command(BaseCommand):
             if migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_CONTINUOUS.format(migrator_slug))
             self.handle_initial(migrator)
+        if erase_continuous_progress:
+            if not migrator.original_seq:
+                CommandError(MAYBE_YOU_WANT_TO_RUN_INITIAL.format(migrator_slug))
+            if migrator.cleanup_complete:
+                raise CommandError(CANNOT_RUN_CONTINUOUS_AFTER_CLEANUP)
+            self.handle_erase_continuous_progress(migrator)
         if continuous:
             if not migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_INITIAL.format(migrator_slug))
@@ -114,17 +127,24 @@ class Command(BaseCommand):
             if status_update.caught_up:
                 self.stdout.write('All caught up!')
 
+    def handle_erase_continuous_progress(self, migrator):
+        migrator.erase_continuous_progress()
+
     def handle_cleanup(self, migrator):
         migrator.phase_3_clean_up()
 
     def handle_stats(self, migrator):
         [(source_db, source_counts),
          (target_db, target_counts)] = migrator.get_doc_counts()
-        self.stdout.write('Source DB: {}'.format(source_db.uri))
-        self.stdout.write('Target DB: {}'.format(target_db.uri))
+        self.stdout.write('Source DB: {}'.format(_scrub_uri(source_db.uri)))
+        self.stdout.write('Target DB: {}'.format(_scrub_uri(target_db.uri)))
         self.stdout.write('')
         self.stdout.write('{:^30}\tSource\tTarget'.format('doc_type'))
         for doc_type in sorted(migrator.doc_types):
             self.stdout.write(
                 '{:<30}\t{}\t{}'
                 .format(doc_type, source_counts[doc_type], target_counts[doc_type]))
+
+
+def _scrub_uri(uri):
+    return re.sub(r'//(.*):(.*)@', r'//\1:******@', uri)

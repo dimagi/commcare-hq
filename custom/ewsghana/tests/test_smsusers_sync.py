@@ -139,3 +139,13 @@ class SMSUsersSyncTest(TestCase):
         verified_number = ewsghana_smsuser.get_verified_number()
         self.assertIsNotNone(verified_number)
         self.assertEqual(verified_number.phone_number, '2222222222')
+
+    def test_message_tester_backend(self):
+        with open(os.path.join(self.datapath, 'sample_smsusers.json')) as f:
+            smsuser = SMSUser(json.loads(f.read())[1])
+        ewsghana_smsuser = self.api_object.sms_user_sync(smsuser)
+        self.assertEqual(len(CommCareUser.by_domain(TEST_DOMAIN)), 1)
+        verified_number = ewsghana_smsuser.get_verified_number()
+        self.assertIsNotNone(verified_number)
+        self.assertEqual(verified_number.phone_number, '22223333')
+        self.assertEqual(verified_number.backend_id, 'MOBILE_BACKEND_TEST')

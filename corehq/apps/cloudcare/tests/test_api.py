@@ -6,9 +6,9 @@ from django.core.urlresolvers import reverse
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
+from corehq.form_processor.interfaces import FormProcessorInterface
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
@@ -310,7 +310,7 @@ def _create_case(user, type, close=False, **extras):
             close=True,
             version=V2,
         ).as_xml(format_datetime=date_to_xml_string))
-    post_case_blocks(blocks, {'domain': TEST_DOMAIN})
+    FormProcessorInterface.post_case_blocks(blocks, {'domain': TEST_DOMAIN})
     case = CommCareCase.get(case_id)
     assert case.closed == close
     return case

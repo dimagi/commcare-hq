@@ -6,7 +6,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec
+    NestedExpressionSpec, DictExpressionSpec
 
 
 def _make_filter(spec, context):
@@ -64,7 +64,6 @@ def _root_doc_expression(spec, context):
 def _related_doc_expression(spec, context):
     wrapped = RelatedDocExpressionSpec.wrap(spec)
     wrapped.configure(
-        related_doc_type=wrapped.related_doc_type,
         doc_id_expression=ExpressionFactory.from_spec(wrapped.doc_id_expression, context),
         value_expression=ExpressionFactory.from_spec(wrapped.value_expression, context),
     )
@@ -89,6 +88,15 @@ def _nested_expression(spec, context):
     return wrapped
 
 
+def _dict_expression(spec, context):
+    wrapped = DictExpressionSpec.wrap(spec)
+    compiled_properties = {key: ExpressionFactory.from_spec(value) for key, value in wrapped.properties.items()}
+    wrapped.configure(
+        compiled_properties=compiled_properties,
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -102,6 +110,7 @@ class ExpressionFactory(object):
         'iterator': _iterator_expression,
         'switch': _switch_expression,
         'nested': _nested_expression,
+        'dict': _dict_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
@@ -121,6 +130,8 @@ class ExpressionFactory(object):
 
     @classmethod
     def from_spec(cls, spec, context=None):
+        if _is_constant(spec):
+            return cls.from_spec(_convert_constant_to_expression_spec(spec), context)
         try:
             return cls.spec_map[spec['type']](spec, context)
         except KeyError:
@@ -128,8 +139,16 @@ class ExpressionFactory(object):
                 spec.get('type', '[missing]'),
                 ', '.join(cls.spec_map.keys()),
             ))
-        except BadValueError as e:
+        except (TypeError, BadValueError) as e:
             raise BadSpecError(_('Problem creating getter: {}. Message is: {}').format(
                 json.dumps(spec, indent=2),
                 str(e),
             ))
+
+
+def _is_constant(value):
+    return isinstance(value, (basestring, int, bool, float))
+
+
+def _convert_constant_to_expression_spec(value):
+    return {'type': 'constant', 'constant': value}

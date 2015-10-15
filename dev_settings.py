@@ -42,3 +42,8 @@ DATABASES = {
 }
 
 BOWER_PATH = os.popen('which bower').read().strip()
+
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
+
+
+PILLOWTOP_MACHINE_ID = 'testhq'  # for tests

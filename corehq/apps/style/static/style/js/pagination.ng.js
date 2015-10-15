@@ -47,6 +47,7 @@
             storedLimit = 10;
         }
         $scope.limit = storedLimit;
+        $scope.maxSize = 8;
 
         $scope.total = 1;
         $scope.currentPage = 1;

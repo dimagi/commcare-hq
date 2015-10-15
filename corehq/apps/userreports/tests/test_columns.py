@@ -22,8 +22,8 @@ from corehq.apps.userreports.sql.columns import (
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
+from corehq.form_processor.interfaces import FormProcessorInterface
 
 
 class TestFieldColumn(SimpleTestCase):
@@ -127,7 +127,7 @@ class TestExpandedColumn(TestCase):
             version=V2,
             update=properties,
         ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):
@@ -275,6 +275,10 @@ class TestAggregateDateColumn(SimpleTestCase):
     def test_format(self):
         wrapped = ReportColumnFactory.from_spec(self._spec)
         self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
+
+    def test_format_missing(self):
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertEqual('Unknown Date', wrapped.get_format_fn()({'year': None, 'month': None}))
 
 
 class TestPercentageColumn(SimpleTestCase):

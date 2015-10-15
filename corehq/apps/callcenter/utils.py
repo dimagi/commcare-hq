@@ -18,13 +18,13 @@ from corehq.util.timezones.conversions import UserTime, ServerTime
 from dimagi.utils.couch import CriticalSection
 
 
-class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type')):
+class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type use_fixtures')):
     def midnights(self, utcnow=None):
         """Returns a list containing two datetimes in UTC that corresponds to midnight
         in the domains timezone on either side of the current UTC datetime.
         i.e. [<previous midnight in TZ>, <next midnight in TZ>]
 
-        >>> d = DomainLite('', 'Asia/Kolkata', '')
+        >>> d = DomainLite('', 'Asia/Kolkata', '', True)
         >>> d.midnights(datetime(2015, 8, 27, 18, 30, 0  ))
         [datetime.datetime(2015, 8, 26, 18, 30), datetime.datetime(2015, 8, 27, 18, 30)]
         >>> d.midnights(datetime(2015, 8, 27, 18, 31, 0  ))
@@ -82,6 +82,7 @@ def sync_user_case(commcare_user, case_type, owner_id):
             changed = close != case.closed
             changed = changed or case.type != case_type
             changed = changed or case.name != fields['name']
+            changed = changed or case.owner_id != owner_id
 
             if not changed:
                 for field, value in fields.items():
@@ -93,6 +94,7 @@ def sync_user_case(commcare_user, case_type, owner_id):
                 caseblock = CaseBlock(
                     create=False,
                     case_id=case._id,
+                    owner_id=owner_id,
                     version=V2,
                     case_type=case_type,
                     close=close,
@@ -118,10 +120,14 @@ def sync_user_case(commcare_user, case_type, owner_id):
 def sync_call_center_user_case(user):
     domain = user.project
     if domain and domain.call_center_config.enabled:
+        owner_id = domain.call_center_config.case_owner_id
+        if domain.call_center_config.use_user_location_as_owner:
+            owner_id = user.location_id
+
         sync_user_case(
             user,
             domain.call_center_config.case_type,
-            domain.call_center_config.case_owner_id
+            owner_id
         )
 
 
@@ -147,7 +153,7 @@ def get_call_center_domains():
             .is_active()
             .is_snapshot(False)
             .filter(filters.term('call_center_config.enabled', True))
-            .fields(['name', 'default_timezone', 'call_center_config.case_type'])
+            .fields(['name', 'default_timezone', 'call_center_config.case_type', 'call_center_config.use_fixtures'])
             .run()
     )
 
@@ -155,7 +161,8 @@ def get_call_center_domains():
         return DomainLite(
             name=hit['name'],
             default_timezone=hit['default_timezone'],
-            cc_case_type=hit.get('call_center_config.case_type', '')
+            cc_case_type=hit.get('call_center_config.case_type', ''),
+            use_fixtures=hit.get('call_center_config.use_fixtures', True)
         )
     return [to_domain_lite(hit) for hit in result.hits]
 

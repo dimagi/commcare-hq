@@ -157,7 +157,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
           ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", ""),
-          ('add_markdown-label', 'add_markdown: ~~new markdown~~', 'add_markdown: ~~new markdown~~', '', '', '', '', '', ''),
+          ('add_markdown-label', 'add_markdown: ~~new \u0939\u093f markdown~~', 'add_markdown: ~~new \u0939\u093f markdown~~', '', '', '', '', '', ''),
           ('remove_markdown-label', 'remove_markdown', 'remove_markdown', '', '', '', '', '', ''),
           ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*', '', '', '', '', '', ''),
@@ -235,7 +235,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         self.assert_question_label("question1: ____ < 5", 0, 0, "en", "/data/question7")
 
         # Test markdown
-        self.assert_question_label("add_markdown: ~~new markdown~~", 0, 0, "en", "/data/add_markdown")
+        self.assert_question_label("add_markdown: ~~new \u0939\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
         self.assert_question_label("remove_markdown", 0, 0, "en", "/data/remove_markdown")
         self.assert_question_label("## smaller_markdown", 0, 0, "en", "/data/update_markdown")
         self.assert_question_label("*i just happen to like stars a lot*", 0, 0, "en", "/data/vetoed_markdown")

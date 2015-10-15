@@ -305,13 +305,9 @@ class APISynchronization(object):
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
                 if "phone_numbers" in user_dict:
-                    user.set_default_phone_number(user_dict["phone_numbers"][0])
-                    try:
-                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
-                    except PhoneNumberInUseException as e:
-                        self._reassign_number(user, user_dict["phone_numbers"][0])
-                    except InvalidFormatException:
-                        pass
+                    phone_number = apply_leniency(user_dict["phone_numbers"][0])
+                    user.set_default_phone_number(phone_number)
+                    self._save_verified_number(user, phone_number)
             except Exception as e:
                 logging.error(e)
         else:
@@ -319,7 +315,7 @@ class APISynchronization(object):
             phone_number = verified_number.phone_number if verified_number else None
             if apply_updates(user, user_dict):
                 if user_dict.get('phone_numbers'):
-                    new_phone_number = user_dict['phone_numbers'][0]
+                    new_phone_number = apply_leniency(user_dict['phone_numbers'][0])
                     if new_phone_number != phone_number:
                         if phone_number:
                             user.delete_verified_number(phone_number)
@@ -330,9 +326,12 @@ class APISynchronization(object):
                 user.save()
         return user
 
+    def save_verified_number(self, user, phone_number):
+        user.save_verified_number(self.domain, phone_number, True)
+
     def _save_verified_number(self, user, phone_number):
         try:
-            user.save_verified_number(self.domain, phone_number, True)
+            self.save_verified_number(user, phone_number)
         except PhoneNumberInUseException:
             self._reassign_number(user, phone_number)
         except InvalidFormatException:
@@ -342,7 +341,7 @@ class APISynchronization(object):
         v = VerifiedNumber.by_phone(phone_number, include_pending=True)
         if v.domain in self._get_logistics_domains():
             v.delete()
-            user.save_verified_number(self.domain, phone_number, True)
+            self.save_verified_number(user, phone_number)
 
     def add_language_to_user(self, logistics_sms_user):
         domain_part = "%s.commcarehq.org" % self.domain

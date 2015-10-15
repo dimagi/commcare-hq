@@ -9,7 +9,8 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction, _action_s
 from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
-from casexml.apps.case.util import primary_actions, post_case_blocks
+from casexml.apps.case.util import primary_actions
+from corehq.form_processor.interfaces import FormProcessorInterface
 from couchforms.models import XFormInstance
 
 
@@ -362,9 +363,9 @@ class CaseRebuildTest(TestCase):
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
         create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
-        post_case_blocks([create_block.as_xml()], form_extras={'received_on': way_earlier})
+        FormProcessorInterface.post_case_blocks([create_block.as_xml()], form_extras={'received_on': way_earlier})
         update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
-        post_case_blocks([update_block.as_xml()], form_extras={'received_on': earlier})
+        FormProcessorInterface.post_case_blocks([update_block.as_xml()], form_extras={'received_on': earlier})
 
         case = CommCareCase.get(case_id)
         self.assertEqual(earlier, case.modified_on)
@@ -508,30 +509,6 @@ class TestActionSortKey(SimpleTestCase):
         sorted_actions = sorted(case.actions, key=_action_sort_key_function(case))
         for index, action in action_tuples:
             self.assertEqual(action, sorted_actions[index])
-
-
-class CaseRebuildSimpleTest(SimpleTestCase):
-
-    def test_rebuild_with_opened_on_in_update(self):
-        case = CommCareCase(
-            actions=[
-                CommCareCaseAction.wrap({
-                    "xform_id": "8166142bceefae35375abfdf285f9dfc",
-                    "user_id": "66925160e15a21bc6f332e967dc05647",
-                    "server_date": "2013-02-07T04:40:40Z",
-                    "action_type": "update",
-                    "updated_known_properties": {
-                        "opened_on": "2012-10-18T12:16:22Z",
-                        "external_id": "521",
-                        "owner_id": "ee042f33c890421794f69ed81e030882"
-                    },
-                })
-            ]
-        )
-        # this call failed hard before it was fixed
-        case.rebuild(strict=False)
-        self.assertEqual(case.opened_on, datetime(2012, 10, 18, 12, 16, 22))
-
 
 EMPTY_DATE = object()
 

@@ -1,13 +1,12 @@
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_user_has_case
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V1, V2
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
+from corehq.form_processor.interfaces import FormProcessorInterface
 
 
 class CaseSharingTest(TestCase):
@@ -49,7 +48,7 @@ class CaseSharingTest(TestCase):
                 owner_id=owner.get_id,
                 version=version
             )
-            post_case_blocks([case_block], {'domain': self.domain})
+            FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
             check_has_block(case_block, should_have, should_not_have, version=version)
 
         def update_and_test(case_id, owner=None, should_have=None, should_not_have=None, version=V1):
@@ -59,7 +58,7 @@ class CaseSharingTest(TestCase):
                 owner_id=owner.get_id if owner else None,
                 version=version
             )
-            post_case_blocks([case_block], {'domain': self.domain})
+            FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
             check_has_block(case_block, should_have, should_not_have, line_by_line=False, version=version)
 
         def check_has_block(case_block, should_have, should_not_have, line_by_line=True, version=V1):

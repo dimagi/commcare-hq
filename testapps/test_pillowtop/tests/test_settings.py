@@ -49,6 +49,7 @@ def _pillow_meta_from_class(pillow_class):
         'couch_filter': pillow_instance.couch_filter,
         'include_docs': pillow_instance.include_docs,
         'extra_args': pillow_instance.extra_args,
+        'checkpoint_id': pillow_instance.checkpoint.checkpoint_id
     }
     if is_elastic:
         props.update({

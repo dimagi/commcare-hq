@@ -260,7 +260,7 @@ def server_up(req):
             "check_func": hb_check
         },
         "celery": {
-            "always_check": False,
+            "always_check": True,
             "message": "* celery is down",
             "check_func": celery_check
         },
@@ -405,7 +405,7 @@ def retrieve_download(req, domain, download_id, template="style/includes/file_do
 
 
 def dropbox_next_url(request, download_id):
-    return request.META.get('HTTP_REFERER', '/')
+    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
 
 
 @login_required
