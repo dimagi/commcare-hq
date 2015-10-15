@@ -6,7 +6,8 @@ from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id i
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.models import EWSExtension
-from corehq.apps.sms.mixin import MobileBackend, apply_leniency
+from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
+    VerifiedNumber
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from corehq.apps.reports.models import ReportNotification, ReportConfig
@@ -46,6 +47,12 @@ class SupplyPoint(JsonObject):
     incharges = ListProperty()
 
 
+class Connection(JsonObject):
+    phone_number = StringProperty()
+    backend = StringProperty()
+    default = BooleanProperty()
+
+
 class SMSUser(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
@@ -53,7 +60,7 @@ class SMSUser(JsonObject):
     is_active = StringProperty()
     supply_point = ObjectProperty(item_type=SupplyPoint)
     email = StringProperty()
-    phone_numbers = ListProperty()
+    phone_numbers = ListProperty(item_type=Connection)
     backend = StringProperty()
     family_name = StringProperty()
     to = StringProperty()
@@ -139,6 +146,7 @@ class GhanaEndpoint(LogisticsEndpoint):
 
     def __init__(self, base_uri, username, password):
         super(GhanaEndpoint, self).__init__(base_uri, username, password)
+        self.smsusers_url = self._urlcombine(self.base_uri, '/newsmsusers/')
         self.supply_point_url = self._urlcombine(self.base_uri, '/supplypoints/')
         self.dailyreports_url = self._urlcombine(self.base_uri, '/dailyscheduledreports/')
         self.weeklyreports_url = self._urlcombine(self.base_uri, '/weeklyscheduledreports/')
@@ -656,8 +664,6 @@ class EWSApi(APISynchronization):
             self._set_program(user, ews_webuser.program)
 
         self._set_extension(user, ews_webuser.supply_point, ews_webuser.sms_notifications)
-        if ews_webuser.contact:
-            user.phone_numbers = map(apply_leniency, ews_webuser.contact.phone_numbers)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
@@ -672,14 +678,78 @@ class EWSApi(APISynchronization):
                     dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
             else:
                 dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
+
+        if ews_webuser.contact:
+            user.phone_numbers = []
+            default_phone_number = None
+            for connection in ews_webuser.contact.phone_numbers:
+                phone_number = apply_leniency(connection.phone_number)
+                user.phone_numbers.append(phone_number)
+                if connection.default:
+                    default_phone_number = phone_number
+            if default_phone_number:
+                user.set_default_phone_number(default_phone_number)
         user.save()
         return user
 
-    def save_verified_number(self, user, phone_number):
+    def _reassign_number(self, user, connection):
+        v = VerifiedNumber.by_phone(connection.phone_number, include_pending=True)
+        if v.domain in self._get_logistics_domains():
+            v.delete()
+            self.save_verified_number(user, connection)
+
+    def _save_verified_number(self, user, connection):
+        try:
+            self.save_verified_number(user, connection)
+        except PhoneNumberInUseException:
+            self._reassign_number(user, connection)
+        except InvalidFormatException:
+            pass
+
+    def save_verified_number(self, user, connection):
         backend_id = None
-        if user.user_data.get('backend') == 'message_tester':
+        if connection.backend == 'message_tester':
             backend_id = 'MOBILE_BACKEND_TEST'
-        user.save_verified_number(self.domain, phone_number, True, backend_id=backend_id)
+        user.save_verified_number(self.domain, connection.phone_number, True, backend_id=backend_id)
+
+    def add_phone_numbers(self, ewsghana_smsuser, user):
+        phone_numbers = ewsghana_smsuser.phone_numbers
+        if not phone_numbers:
+            return
+
+        default_phone_number = None
+        saved_numbers = []
+        for connection in phone_numbers:
+            connection.phone_number = apply_leniency(connection.phone_number)
+            self._save_verified_number(user, connection)
+            saved_numbers.append(connection.phone_number)
+            if connection.default:
+                default_phone_number = connection.phone_number
+        user.phone_numbers = saved_numbers
+
+        if default_phone_number:
+            user.set_default_phone_number(default_phone_number)
+
+    def edit_phone_numbers(self, ewsghana_smsuser, user):
+        phone_numbers = {phone_number for phone_number in user.phone_numbers}
+        saved_numbers = []
+        default_phone_number = None
+
+        for connection in ewsghana_smsuser.phone_numbers:
+            phone_number = apply_leniency(connection.phone_number)
+            if phone_number not in phone_numbers:
+                self._save_verified_number(user, connection)
+                if connection.default:
+                    default_phone_number = connection.phone_number
+            saved_numbers.append(phone_number)
+
+        for phone_number in phone_numbers - set(saved_numbers):
+            user.delete_verified_number(phone_number)
+
+        user.phone_numbers = saved_numbers
+
+        if default_phone_number:
+            user.set_default_phone_number(default_phone_number)
 
     def sms_user_sync(self, ews_smsuser, **kwargs):
         sms_user = super(EWSApi, self).sms_user_sync(ews_smsuser, **kwargs)
@@ -688,6 +758,15 @@ class EWSApi(APISynchronization):
 
         if ews_smsuser.role:
             sms_user.user_data['role'] = [ews_smsuser.role]
+
+        if ews_smsuser.phone_numbers:
+            sms_user.user_data['connections'] = []
+            for connection in ews_smsuser.phone_numbers:
+                sms_user.user_data['connections'].append({
+                    'phone_number': connection.phone_number,
+                    'backend': connection.backend,
+                    'default': connection.default
+                })
 
         sms_user.save()
         if ews_smsuser.supply_point:

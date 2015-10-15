@@ -192,3 +192,18 @@ def migrate_email_settings(domain):
 
     for report in endpoint.get_monthly_reports()[1]:
         migrate_email.monthly_report_sync(report)
+
+
+@task(queue='logistics_background_queue', ignore_result=True)
+def fix_users_with_more_than_one_phone_number(domain):
+    config = EWSGhanaConfig.for_domain(domain)
+    endpoint = GhanaEndpoint.from_config(config)
+    ews_api = EWSApi(domain, endpoint)
+
+    offset = 0
+    _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True})
+    while smsusers:
+        for sms_user in smsusers:
+            ews_api.sms_user_sync(sms_user)
+        offset += 100
+        _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True}, offset=offset)
