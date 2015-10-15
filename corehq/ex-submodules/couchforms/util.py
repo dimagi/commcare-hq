@@ -540,8 +540,6 @@ class SubmissionPost(object):
                         cases = case_db.get_changed()
                         # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
-                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-                        docs = xforms + cases
 
                         # in saving the cases, we have to do all the things
                         # done in CommCareCase.save()
@@ -559,8 +557,11 @@ class SubmissionPost(object):
                                         case.get_id, case.get_rev, rev
                                     )
                                 )
+
+                        # verify that these DB's are the same so that we can save them with one call to bulk_save
+                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
+                        docs = xforms + cases
                         try:
-                            # save both the forms and cases
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
