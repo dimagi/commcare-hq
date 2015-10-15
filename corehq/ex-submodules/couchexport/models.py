@@ -10,7 +10,6 @@ from dimagi.ext.couchdbkit import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
 import json
 import couchexport
-from corehq.util.soft_assert import soft_assert
 from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
@@ -19,7 +18,7 @@ from couchexport.util import SerializableFunctionProperty,\
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
-from soil import DownloadBase, FileDownload
+from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from dimagi.utils.logging import notify_exception
@@ -469,13 +468,7 @@ class BaseSavedExportSchema(Document):
 
     def export_data_async(self, format=None, **kwargs):
         format = format or self.default_format
-        try:
-            download = FileDownload(kwargs.get('filename', self.name))
-        except Exception, e:
-            _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
-            _assert(False, 'Failed to use FileDownload: {}'.format(e))
-            download = DownloadBase()
-
+        download = DownloadBase()
         download.set_task(couchexport.tasks.export_async.delay(
             self,
             download.download_id,

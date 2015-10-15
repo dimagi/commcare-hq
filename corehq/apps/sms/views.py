@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
-from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
+from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS, ApiUser
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
@@ -1839,3 +1839,16 @@ class InvitationAppInfoView(View, DomainViewMixin):
 
     def post(self, *args, **kwargs):
         return self.get(*args, **kwargs)
+
+
+class IncomingBackendView(View):
+    def dispatch(self, request, api_key, *args, **kwargs):
+        try:
+            api_user = ApiUser.get('ApiUser-%s' % api_key)
+        except ResourceNotFound:
+            return HttpResponse(status=401)
+
+        if api_user.doc_type != 'ApiUser' or not api_user.has_permission(PERMISSION_POST_SMS):
+            return HttpResponse(status=401)
+
+        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)

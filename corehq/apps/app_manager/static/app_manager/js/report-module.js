@@ -206,15 +206,17 @@ var ReportModule = (function () {
         this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
     }
 
-    function ReportConfig(report_id, display, uuid, availableReportIds,
+    function ReportConfig(report_id, display, description, uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
                           language, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
+        this.fullDescription = description || {};
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.description = ko.observable(this.fullDescription[this.lang]);
         this.uuid = uuid;
         this.reportId = ko.observable(report_id);
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
@@ -222,11 +224,13 @@ var ReportModule = (function () {
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
+            self.fullDescription[self.lang] = self.description();
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
+                description: self.fullDescription,
                 uuid: self.uuid
             };
         };
@@ -241,6 +245,7 @@ var ReportModule = (function () {
         self.moduleName = options.moduleName;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
         self.reportTitles = {};
+        self.reportDescriptions = {};
         self.reportCharts = {};
         self.reportFilters = {};
         self.reports = ko.observableArray([]);
@@ -248,6 +253,7 @@ var ReportModule = (function () {
             var report = availableReports[i];
             var report_id = report.report_id;
             self.reportTitles[report_id] = report.title;
+            self.reportDescriptions[report_id] = report.description;
             self.reportCharts[report_id] = report.charts;
             self.reportFilters[report_id] = report.filter_structure;
         }
@@ -256,6 +262,9 @@ var ReportModule = (function () {
 
         self.defaultReportTitle = function (reportId) {
             return self.reportTitles[reportId];
+        };
+        self.defaultReportDescription = function (reportId) {
+            return self.reportDescriptions[reportId];
         };
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
@@ -292,6 +301,7 @@ var ReportModule = (function () {
             var report = new ReportConfig(
                 options.report_id,
                 options.header,
+                options.description,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
@@ -305,6 +315,9 @@ var ReportModule = (function () {
             report.reportId.subscribe(changeSaveButton);
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));
+            });
+            report.reportId.subscribe(function (reportId) {
+                report.description(self.defaultReportDescription(reportId));
             });
 
             return report;

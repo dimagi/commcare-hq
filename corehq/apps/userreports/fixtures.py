@@ -14,6 +14,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.util import localize
 from corehq.util.xml import serialize
 from .models import ReportConfiguration
 
@@ -70,8 +71,8 @@ class ReportFixturesProvider(object):
     def _report_config_to_fixture(self, report_config, user):
         report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
         report = ReportConfiguration.get(report_config.report_id)
-        report_elem.append(self._element('name', report.title))
-        report_elem.append(self._element('description', report.description))
+        report_elem.append(self._element('name', localize(report_config.header, user.language)))
+        report_elem.append(self._element('description', localize(report_config.description, user.language)))
         data_source = ReportFactory.from_spec(report)
 
         data_source.set_filter_values({
