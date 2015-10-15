@@ -129,8 +129,6 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_login': 'brand-banner-login',
 }
 
-_soft_assert_uuid = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
-
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
