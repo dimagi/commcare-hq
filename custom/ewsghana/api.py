@@ -664,8 +664,6 @@ class EWSApi(APISynchronization):
             self._set_program(user, ews_webuser.program)
 
         self._set_extension(user, ews_webuser.supply_point, ews_webuser.sms_notifications)
-        if ews_webuser.contact:
-            user.phone_numbers = map(lambda p: apply_leniency(p.phone_number), ews_webuser.contact.phone_numbers)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
@@ -680,6 +678,17 @@ class EWSApi(APISynchronization):
                     dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
             else:
                 dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
+
+        if ews_webuser.contact:
+            user.phone_numbers = []
+            default_phone_number = None
+            for connection in ews_webuser.contact.phone_numbers:
+                phone_number = apply_leniency(connection.phone_number)
+                user.phone_numbers.append(phone_number)
+                if connection.default:
+                    default_phone_number = phone_number
+            if default_phone_number:
+                user.set_default_phone_number(default_phone_number)
         user.save()
         return user
 
