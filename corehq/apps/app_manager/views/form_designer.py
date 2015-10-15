@@ -41,8 +41,8 @@ logger = logging.getLogger(__name__)
 def form_designer(request, domain, app_id, module_id=None, form_id=None,
                   is_user_registration=False):
     meta = {
-            'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
+        'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+        'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
     }
     track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
 

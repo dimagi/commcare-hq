@@ -170,17 +170,21 @@ def track_confirmed_account_on_hubspot(webuser):
             'domain': domain
         })
 
+
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
     _link_account_with_cookie(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
+
 
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_app_from_template_on_hubspot(webuser, cookies, meta):
     _link_account_with_cookie(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
 
+
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _link_account_with_cookie(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+
 
 def track_workflow(email, event, properties=None):
     """

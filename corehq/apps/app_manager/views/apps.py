@@ -110,8 +110,8 @@ def default_new_app(request, domain):
     annoying for the Dashboard.
     """
     meta = {
-            'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
+        'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+        'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
     }
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     lang = 'en'
@@ -293,8 +293,8 @@ def copy_app(request, domain):
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     meta = {
-            'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
+        'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
+        'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
     }
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     clear_app_cache(request, domain)
