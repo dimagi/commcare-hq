@@ -18,6 +18,7 @@ from django.http import (
 import iso8601
 from redis import RedisError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed, timezone_migration_in_progress
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
@@ -46,6 +47,7 @@ from .signals import (
 )
 from .xml import ResponseNature, OpenRosaResponse
 
+legacy_soft_assert = soft_assert('{}@{}'.format('skelly', 'dimagi.com'))
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
@@ -464,7 +466,8 @@ class SubmissionPost(object):
 
         def process(xform):
             self._attach_shared_props(xform)
-            scrub_meta(xform)
+            found_old = scrub_meta(xform)
+            legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform._id)
 
         try:
             lock_manager = process_xform(self.instance,
