@@ -48,7 +48,7 @@ $(function () {
                     }
                 })
                 .error(function () {
-                    user.action_error = '{% trans "Issue communicating with server. Try again." %}';
+                    user.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
                 });
         },
         deactivateUser: function (user, djangoRMI) {
@@ -66,7 +66,7 @@ $(function () {
                     }
                 })
                 .error(function () {
-                    user.action_error = '{% trans "Issue communicating with server. Try again." %}';
+                    user.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
                 });
         }
     });
@@ -75,18 +75,18 @@ $(function () {
         return {
             restrict: 'A',
             template: '<tr>'
-                        + '<th class="col-xs-3">{% trans "Username" %}</th>'
-                        + '<th class="col-xs-3">{% trans "First Name" %}</th>'
-                        + '<th class="col-xs-3">{% trans "Last Name" %}</th>'
-                        + '<th class="col-xs-3">{% trans "Status" %}</th>'
+                        + '<th class="col-xs-3">{% trans "Username"|escapejs %}</th>'
+                        + '<th class="col-xs-3">{% trans "First Name"|escapejs %}</th>'
+                        + '<th class="col-xs-3">{% trans "Last Name"|escapejs %}</th>'
+                        + '<th class="col-xs-3">{% trans "Status"|escapejs %}</th>'
                     + '</tr>'
         }
     });
     mobileWorkerApp.constant('paginationLimits', [
-        [10, '{% trans "Show 10 Mobile Workers" %}'],
-        [25, '{% trans "Show 25 Mobile Workers" %}'],
-        [50, '{% trans "Show 50 Mobile Workers" %}'],
-        [100, '{% trans "Show 100 Mobile Workers" %}']
+        [10, '{% trans "Show 10 Mobile Workers"|escapejs %}'],
+        [25, '{% trans "Show 25 Mobile Workers"|escapejs %}'],
+        [50, '{% trans "Show 50 Mobile Workers"|escapejs %}'],
+        [100, '{% trans "Show 100 Mobile Workers"|escapejs %}']
     ]);
     {% endangularjs %}
 }(window.angular));
