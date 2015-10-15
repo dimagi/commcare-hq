@@ -8,7 +8,8 @@ from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, create_backend
+from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, create_backend, \
+    set_sms_notifications
 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
 
@@ -39,10 +40,11 @@ class TestUrgentAlerts(TestCase):
             username='test1', phone_number='1111', location=cls.district, domain=TEST_DOMAIN,
             first_name='test', last_name='test1',
             user_data={
-                'role': [],
-                'sms_notifications': True
+                'role': []
             }, email='test1@example.com', password='dummy'
         )
+
+        set_sms_notifications(TEST_DOMAIN, cls.user1, True)
 
     def tearDown(self):
         SMS.objects.all().delete()
