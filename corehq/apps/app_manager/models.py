@@ -5156,7 +5156,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     for module in app.get_modules():
         if isinstance(module, ReportModule):
             for report_config in module.report_configs:
-                report_config.uuid = 'copy-' + report_config.uuid
+                report_config.uuid = random_hex()
 
     app.save()
 
