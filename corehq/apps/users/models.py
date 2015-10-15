@@ -37,7 +37,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin, QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
@@ -229,7 +229,7 @@ class UserRolePresets(object):
         return preset_map[preset]()
 
 
-class UserRole(Document):
+class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
@@ -336,11 +336,15 @@ class UserRole(Document):
 
     @classmethod
     def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
+        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
+                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
     @classmethod
     def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
+        return [('none','(none)')] + [
+            (role.get_qualified_id(), role.name or '(No Name)')
+            for role in list(cls.by_domain(domain))
+        ]
 
     @property
     def ids_of_assigned_users(self):
@@ -436,6 +440,7 @@ class DomainMembership(Membership):
         return super(DomainMembership, cls).wrap(data)
 
     @property
+    @memoized
     def role(self):
         if self.is_admin:
             return AdminUserRole(self.domain)
