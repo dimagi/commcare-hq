@@ -10,13 +10,55 @@ Based on http://www.caktusgroup.com/blog/2013/10/02/skipping-test-db-creation/
 from __future__ import absolute_import
 import logging
 import os
+import sys
+from unittest.case import TestCase
 
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
 from nose.plugins import Plugin
+from nose.selector import Selector
 from django_nose.plugin import DatabaseContext
 
 log = logging.getLogger(__name__)
+
+
+class OmitDjangoInitModuleTestsPlugin(Plugin):
+    """Omit tests imported from other modules into tests/__init__.py
+
+    This is a temporary plugin to allow coexistence of the (old, pre-1.7)
+    Django test runner and nose.
+    """
+    enabled = True
+    module = None
+    path = None
+
+    def options(self, parser, env):
+        """Avoid adding a ``--with`` option for this plugin."""
+
+    def configure(self, options, conf):
+        pass # always on
+        self.seen = set()
+
+    def prepareTestLoader(self, loader):
+        # patch the loader so we can get the module in wantClass
+        realLoadTestsFromModule = loader.loadTestsFromModule
+        def loadTestsFromModule(module, path=None, *args, **kw):
+            self.module = module
+            self.path = path
+            return realLoadTestsFromModule(module, path, *args, **kw)
+        loader.loadTestsFromModule = loadTestsFromModule
+
+    def wantClass(self, cls):
+        key = (self.module, cls)
+        if issubclass(cls, TestCase):
+            if key in self.seen:
+                log.error("ignoring duplicate test: %s in %s "
+                          "(INVESTIGATE THIS)", cls, self.module)
+                return False
+            self.seen.add(key)
+            if self.path and os.path.basename(self.path) == "tests":
+                return cls.__module__ == self.module.__name__
+        return None # defer to default selector
 
 
 class DjangoMigrationsPlugin(Plugin):
@@ -103,8 +145,15 @@ class HqdbContext(DatabaseContext):
         test_db['URL'] = cls.get_test_db_name(test_db['URL'])
         return test_db
 
+    def should_skip_test_setup(self):
+        # FRAGILE look in sys.argv; can't get nose config from here
+        return "--collect-only" in sys.argv
+
     def setup(self):
         from django.conf import settings
+        if self.should_skip_test_setup():
+            return
+
         log.info("overridding the couchdbkit database settings to use a test database!")
 
         # first pass: just implement this as a monkey-patch to the loading module
@@ -136,6 +185,8 @@ class HqdbContext(DatabaseContext):
         super(HqdbContext, self).setup()
 
     def teardown(self):
+        if self.should_skip_test_setup():
+            return
         super(HqdbContext, self).teardown()
 
         deleted_databases = []

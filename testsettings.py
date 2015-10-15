@@ -17,6 +17,7 @@ NOSE_ARGS = [
 NOSE_PLUGINS = [
     # Disable migrations by default. Use --with-migrations to enable them.
     'corehq.util.nose.DjangoMigrationsPlugin',
+    'corehq.util.nose.OmitDjangoInitModuleTestsPlugin',
 ]
 
 # shorten nose args displayed in console by putting these in os.environ
