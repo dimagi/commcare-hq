@@ -182,6 +182,7 @@ class HqdbContext(DatabaseContext):
             for name, cls in value.items():
                 cls.set_db(loading.get_db(app))
 
+        sys.__stdout__.write("\n") # newline for creating database message
         super(HqdbContext, self).setup()
 
     def teardown(self):
@@ -205,5 +206,9 @@ class HqdbContext(DatabaseContext):
                 log.info("database %s not found for %s! it was probably already deleted.", db.dbname, app_label)
         if skipcount:
             log.info("skipped deleting %s app databases that were already deleted", skipcount)
+
+        # HACK clean up leaked database connections
+        from corehq.db import connection_manager
+        connection_manager.dispose_all()
 
         super(HqdbContext, self).teardown()
