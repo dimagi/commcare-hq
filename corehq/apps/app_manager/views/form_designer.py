@@ -31,6 +31,8 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
+from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
+from corehq.apps.analytics.utils import get_meta
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +41,9 @@ logger = logging.getLogger(__name__)
 @require_can_edit_apps
 def form_designer(request, domain, app_id, module_id=None, form_id=None,
                   is_user_registration=False):
+    meta = get_meta(request)
+    track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
+
     app = get_app(domain, app_id)
     module = None
 
