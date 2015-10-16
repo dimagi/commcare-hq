@@ -34,6 +34,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -2487,6 +2488,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Feature Flags")
     template_name = 'domain/admin/feature_flags.html'
 
+    @use_bootstrap3
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
