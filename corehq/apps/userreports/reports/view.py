@@ -50,13 +50,32 @@ from corehq.apps.reports.datatables import DataTablesHeader
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
+    section_name = _("Reports")
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
     emailable = True
 
+    _domain = None
+    @property
+    def domain(self):
+        if self._domain is not None:
+            return self._domain
+        return super(ConfigurableReport, self).domain
+
+    @use_bootstrap3
+    @use_knockout_js
+    @use_select2
+    @use_daterangepicker
+    @use_jquery_ui
+    @use_nvd3
+    def dispatch(self, request, *args, **kwargs):
+        original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
+        return original
+
     @property
     def section_url(self):
+        # todo what should the parent section url be?
         return "#"
 
     @property
@@ -97,6 +116,10 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         return self.spec.title
 
     @property
+    def page_name(self):
+        return self.spec.title
+
+    @property
     @memoized
     def data_source(self):
         report = ReportFactory.from_spec(self.spec)
@@ -134,23 +157,16 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def filters(self):
         return self.spec.ui_filters
 
+    _report_config_id = None
     @property
     def report_config_id(self):
+        if self._report_config_id is not None:
+            return self._report_config_id
         return self.kwargs['subreport_slug']
 
     @property
     def lang(self):
         return self.request.couch_user.language or default_language()
-
-    @use_bootstrap3
-    @use_knockout_js
-    @use_select2
-    @use_daterangepicker
-    @use_jquery_ui
-    @use_nvd3
-    def dispatch(self, request, *args, **kwargs):
-        original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
-        return original
 
     def get(self, request, *args, **kwargs):
         if self.has_permissions(self.domain, request.couch_user):
@@ -316,8 +332,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @classmethod
     def get_report(cls, domain, slug, report_config_id):
         report = cls()
-        report.domain = domain
-        report.report_config_id = report_config_id
+        report._domain = domain
+        report._report_config_id = report_config_id
         if not report.has_viable_configuration():
             return None
         report.name = report.title
