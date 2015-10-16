@@ -2,7 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-
 {% block js %}{{ block.super }}
     <script src="{% new_static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
@@ -10,7 +9,6 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-
     <script type="text/javascript">
         $(function(){
             var $editReportButton = $("#edit-report-link");
@@ -31,8 +29,6 @@
             {% endif %}
         });
     </script>
-
-
     <script type="text/javascript">
         $(function(){
             // Poll the status of the data source
@@ -59,7 +55,6 @@
             })();
         });
     </script>
-
     <script type="text/javascript">
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
