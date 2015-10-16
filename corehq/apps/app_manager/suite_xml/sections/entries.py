@@ -373,17 +373,9 @@ class EntriesHelper(object):
                 parent_filter = ''
 
             detail_module = module if module.module_type == 'shadow' else datum['module']
-            detail_persistent = None
-            detail_inline = False
-            for detail_type, detail, enabled in datum['module'].get_details():
-                if (
-                    detail.persist_tile_on_forms
-                    and (detail.use_case_tiles or detail.custom_xml)
-                    and enabled
-                ):
-                    detail_persistent = id_strings.detail(detail_module, detail_type)
-                    detail_inline = bool(detail.pull_down_tile)
-                    break
+            detail_persistent, detail_inline = self.get_case_tile_datum_attrs(
+                datum['module'], detail_module
+            )
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
@@ -819,3 +811,14 @@ class EntriesHelper(object):
             elif form.mode == 'update':
                 e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
+
+    @staticmethod
+    def get_case_tile_datum_attrs(module, detail_module):
+        detail_persistent = None
+        detail_inline = False
+        for detail_type, detail, enabled in module.get_details():
+            if (detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml) and enabled):
+                detail_persistent = id_strings.detail(detail_module, detail_type)
+                detail_inline = bool(detail.pull_down_tile)
+                break
+        return detail_persistent, detail_inline
