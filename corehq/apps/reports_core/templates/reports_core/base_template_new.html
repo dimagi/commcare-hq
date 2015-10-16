@@ -30,6 +30,7 @@
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
             paginationType: 'bs_normal',
+            useBootstrap3: true,
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
             showAllRowsOption: {{ report_table.show_all_rows|JSON }},
@@ -123,23 +124,25 @@
     {% endblock report_alerts %}
     {% block main_column_content %}
     <div class="report-controls">
-        <form id="report-filters" class="form-horizontal" method="GET" action="">
+        <form id="report-filters" class="form form-horizontal" method="GET" action="">
             <fieldset>
-                <legend><span>{% trans "Report Filters" %}</span></legend>
+                <legend>{% trans "Report Filters" %}</legend>
                 <input type="hidden" name="format" value="json"/>
                 {% for filter in report.filters %}
                     {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
                 {% endfor %}
             </fieldset>
 
-            <div class="report-filter-actions">
-                {% block report_filter_actions %}
-                <button type="submit" class="btn btn-primary"
-                        data-loading-text="{% trans "Generating Report..." %}"
-                        data-standard-text="{% trans "Apply" %}">
-                    {% trans "Apply" %}
-                </button>
-                {% endblock %}
+            <div class="form-actions report-filter-actions">
+                <div class="col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2">
+                    {% block report_filter_actions %}
+                    <button type="submit" class="btn btn-primary"
+                            data-loading-text="{% trans "Generating Report..." %}"
+                            data-standard-text="{% trans "Apply" %}">
+                        {% trans "Apply" %}
+                    </button>
+                    {% endblock %}
+                </div>
             </div>
         </form>
 
