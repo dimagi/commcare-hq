@@ -13,7 +13,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop as _
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.style import crispy as hqcrispy
 
