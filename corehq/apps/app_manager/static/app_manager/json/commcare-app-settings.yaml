@@ -166,3 +166,10 @@
    - 'Not Set'
   default: 'not_set'
   preview: true
+
+- id: use_grid_menus
+  name: Use Menu Grids
+  description: Display forms and modules in grids instead of lists.
+  widget: bool
+  default: false
+  since: "2.24"
