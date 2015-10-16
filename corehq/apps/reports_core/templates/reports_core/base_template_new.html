@@ -178,14 +178,19 @@
         </section>
         {% endblock %}
         {% block reporttable %}
-        <div>
-            <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
-                <thead>
-                {{ headers.render_html|safe }}
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4>{{ report.title }}</h4>
+            </div>
+            <div class="panel-body hq-datatable-container">
+                <table id="report_table_{{ report.slug }}" class="table table-striped">
+                    <thead>
+                    {{ headers.render_html|safe }}
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
         </div>
         {% endblock reporttable %}
     </div>
