@@ -10,8 +10,10 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         """
         factory = AppFactory(build_version='2.24')
         factory.app.use_grid_menus = True
-        factory.new_basic_module('registration', 'patient')
+        factory.new_basic_module('registration', 'patient registration')
         factory.app.get_module(0).put_in_root = True
+        factory.new_basic_module('visit', 'patient visit')
+        factory.app.get_module(1).put_in_root = True
 
         suite = factory.app.create_suite()
         root_xpath = './menu[@id="root"]'
@@ -22,6 +24,10 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
                 <menu id="root" style="grid">
                     <text><locale id="modules.m0"/></text>
                     <command id="m0-f0"/>
+                </menu>
+                <menu id="root" style="grid">
+                    <text><locale id="modules.m1"/></text>
+                    <command id="m1-f0"/>
                 </menu>
             </partial>
             """,
