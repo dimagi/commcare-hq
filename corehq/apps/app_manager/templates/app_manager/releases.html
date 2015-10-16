@@ -198,7 +198,6 @@
                     <td class="nowrap" data-bind="text: built_on_time"></td>
                     <td class="nowrap">
                         <span data-bind="if: build_label(), text: build_label()"></span>
-                        <p data-bind="text: jar_path"></p>
                         <h6 data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</h6>
                     </td>
                     <td class="nowrap">
