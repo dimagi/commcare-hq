@@ -5,7 +5,7 @@ from corehq.apps.analytics.utils import get_meta
 
 
 class HubspotClickDeployView(View):
-    urlname='hubspot_click_deploy'
+    urlname = 'hubspot_click_deploy'
 
     def post(self, request, *args, **kwargs):
         meta = get_meta(request)

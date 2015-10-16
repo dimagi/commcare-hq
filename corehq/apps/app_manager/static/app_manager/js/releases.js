@@ -118,6 +118,13 @@ function SavedApp(o, r) {
         modal.modal({show: true});
     };
 
+    self.clickDeploy = function () {
+        self.generate_short_url('short_odk_url');
+        ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
+        analytics.workflow('Clicked Deploy');
+        $.post(r.options.urls.hubspot_click_deploy);
+    };
+
     return self;
 }
 

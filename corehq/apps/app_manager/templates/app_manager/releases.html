@@ -38,6 +38,7 @@
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
             update_build_comment: '{% url "update_build_comment" domain app.id %}',
+            hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
         };
         var o = {
             urls: urls,
@@ -206,12 +207,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() {
-                                    generate_short_url('short_odk_url');
-                                    ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
-                                    analytics.workflow('Clicked Deploy');
-                                    $.post('{% url 'hubspot_click_deploy' %}')
-                                }
+                                click: clickDeploy
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
