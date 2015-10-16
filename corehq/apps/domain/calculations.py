@@ -163,12 +163,18 @@ def display_time(submission_time, display=True):
 
 
 def first_form_submission(domain, display=True):
-    submission_time = get_first_form_submission_received(domain)
+    try:
+        submission_time = get_first_form_submission_received(domain)
+    except ValueError:
+        return "Unable to parse time of first form"
     return display_time(submission_time, display) if submission_time else "No forms"
 
 
 def last_form_submission(domain, display=True):
-    submission_time = get_last_form_submission_received(domain)
+    try:
+        submission_time = get_last_form_submission_received(domain)
+    except ValueError:
+        return "Unable to parse time of last form"
     return display_time(submission_time, display) if submission_time else "No forms"
 
 
