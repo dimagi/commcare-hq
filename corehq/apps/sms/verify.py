@@ -71,7 +71,7 @@ def send_verification(domain, user, phone_number, logged_event):
 
 
 def process_verification(v, msg):
-    if v.verified:
+    if not v or v.verified:
         return
 
     logged_event = MessagingEvent.get_current_verification_event(
