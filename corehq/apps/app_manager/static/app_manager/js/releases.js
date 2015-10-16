@@ -120,7 +120,7 @@ function SavedApp(o, r) {
 
     self.clickDeploy = function () {
         self.generate_short_url('short_odk_url');
-        ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
+        ga_track_event('App Manager', 'Deploy Button', self.id());
         analytics.workflow('Clicked Deploy');
         $.post(r.options.urls.hubspot_click_deploy);
     };
