@@ -117,19 +117,18 @@ class CaseBlock(dict):
 
         self.update({
             '_attrib': {
-                'case_id':              case_id, # V2
-                'date_modified':        date_modified, # V2
-                'user_id':              user_id, # V2
+                'case_id':              case_id,  # V2
+                'date_modified':        date_modified,  # V2
+                'user_id':              user_id,  # V2
                 'xmlns':                self.XMLNS,
             }
         })
         create_or_update.update({
-            'owner_id':                 owner_id, # V2
+            'owner_id':                 owner_id,  # V2
         })
         self['update'].update({
-            'external_id':              external_id, # V2
+            'external_id':              external_id,  # V2
         })
-
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
         if strict:
