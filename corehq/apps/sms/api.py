@@ -518,7 +518,7 @@ def process_incoming(msg, delay=True):
 
         if not handled:
             import verify
-            verify.process_verification(msg.phone_number, msg)
+            verify.process_verification(v, msg)
 
     if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(msg)
