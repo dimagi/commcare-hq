@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
-from corehq.apps.sms.mixin import apply_leniency, PhoneNumberInUseException, VerifiedNumber
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.sms.mixin import apply_leniency, PhoneNumberInUseException, VerifiedNumber, InvalidFormatException
+from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ilsgateway.models import ILSGatewayConfig
 from dimagi.utils.decorators.memoized import memoized
 
@@ -31,6 +31,8 @@ class Command(BaseCommand):
             if v.domain in self._get_logistics_domains():
                 v.delete()
                 return user.save_verified_number(domain, number, True, backend_id=backend_id)
+        except InvalidFormatException:
+            print '{} is invalid'.format(number)
 
     def check_backend(self, connection, vn):
         if connection['backend'] == 'message_tester' and vn.backend_id != TEST_BACKEND:
@@ -59,7 +61,7 @@ class Command(BaseCommand):
                     else:
                         # otherwise check if number is properly verified
                         vn = VerifiedNumber.by_phone(apply_leniency(phone_number))
-                        if not vn or vn.domain != domain:
+                        if not vn or vn.domain != domain or vn.owner_id != sms_user.get_id:
                             self._save_verified_number(domain, sms_user, connection)
                         else:
                             self.check_backend(connection, vn)
@@ -77,6 +79,9 @@ class Command(BaseCommand):
             if set(saved_numbers) != set(sms_user.phone_numbers):
                 sms_user.phone_numbers = saved_numbers
                 sms_user.save()
+
+            if default_phone_number != sms_user.default_phone_number and default_phone_number:
+                sms_user.set_default_phone_number(default_phone_number)
 
             # Sanity check
 
