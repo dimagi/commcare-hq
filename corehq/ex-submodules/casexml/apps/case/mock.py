@@ -61,7 +61,6 @@ class CaseBlock(dict):
             date_opened=undefined,
             update=None,
             close=False,
-            # V2 only
             index=None,
             strict=True,
         ):
