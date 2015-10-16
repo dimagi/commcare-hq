@@ -135,7 +135,7 @@ def extract_caseblocks_from_xml(payload_string, version=V2):
 
 
 def check_user_has_case(testcase, user, case_blocks, should_have=True,
-                        line_by_line=True, restore_id="", version=V1,
+                        line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
 
     if not isinstance(case_blocks, list):
@@ -205,7 +205,6 @@ def post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       user_id=user_id or uid(),
                       owner_id=owner_id or uid(),
                       case_type=case_type or 'test',
-                      version=version,
                       date_modified=date_modified,
                       update=kwargs,
                       close=close).as_xml()
