@@ -141,15 +141,17 @@
 <div id="savedReports">
     <div class="btn-toolbar">
         <div class="btn-group">
-            <button id="apply-filters" type="submit" class="filters btn btn-primary"
+            <button id="apply-filters"
+                    type="submit"
+                    class="filters btn btn-primary"
                 data-loading-text="{% trans 'Generating Report...' %}"
                 data-standard-text="{% trans 'Apply' %}">
                 {% trans 'Apply' %}
             </button>
         </div>
         <div class="btn-group">
-            <a class="btn dropdown-toggle" data-toggle="dropdown">
-                {% trans 'Favorites' %}<span class="caret"></span>
+            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                {% trans 'Favorites' %} <span class="caret"></span>
             </a>
 
             <ul class="dropdown-menu">
