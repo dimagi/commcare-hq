@@ -412,10 +412,7 @@ class EntriesHelper(object):
                         if datum['index'] == 0 and not detail_inline else None
                     ),
                     detail_persistent=detail_persistent,
-                    detail_inline=(
-                        self.details_helper.get_detail_id_safe(detail_module, 'case_long')
-                        if detail_inline else None
-                    )
+                    detail_inline=detail_inline,
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
@@ -819,13 +816,12 @@ class EntriesHelper(object):
                 e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
-    @staticmethod
-    def get_case_tile_datum_attrs(module, detail_module):
+    def get_case_tile_datum_attrs(self, module, detail_module):
         detail_persistent = None
-        detail_inline = False
+        detail_inline = None
         for detail_type, detail, enabled in module.get_details():
             if (detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml) and enabled):
                 detail_persistent = id_strings.detail(detail_module, detail_type)
-                detail_inline = bool(detail.pull_down_tile)
+                detail_inline = self.details_helper.get_detail_id_safe(detail_module, 'case_long')
                 break
         return detail_persistent, detail_inline
