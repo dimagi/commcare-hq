@@ -102,12 +102,9 @@
     </script>
 {% endblock %}
 
-
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
-{% block page_title %}
-    {{ report.title }}
-{% endblock %}
+{% block page_title %}{% endblock %}
 
 {% block page_content %}
     {% block report_alerts %}
