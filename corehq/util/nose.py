@@ -187,8 +187,8 @@ class HqdbContext(DatabaseContext):
     def teardown(self):
         if self.should_skip_test_setup():
             return
-        super(HqdbContext, self).teardown()
 
+        # delete couch databases
         deleted_databases = []
         skipcount = 0
         for app in self.dbs:
@@ -205,3 +205,5 @@ class HqdbContext(DatabaseContext):
                 log.info("database %s not found for %s! it was probably already deleted.", db.dbname, app_label)
         if skipcount:
             log.info("skipped deleting %s app databases that were already deleted", skipcount)
+
+        super(HqdbContext, self).teardown()
