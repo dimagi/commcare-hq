@@ -8,18 +8,32 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
 from copy import deepcopy
-from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.update_strategy import _action_sort_key_function, ActionsUpdateStrategy
 from casexml.apps.case.util import primary_actions
 from corehq.form_processor.interfaces import FormProcessorInterface
 from couchforms.models import XFormInstance
 
 
-def post_util(**kwargs):
-    form_extras = kwargs.get('form_extras', {})
+def post_util(create=False, case_id=None, user_id=None, owner_id=None,
+              case_type=None, form_extras=None, close=False, date_modified=None,
+              **kwargs):
+
+    form_extras = form_extras or {}
     form_extras['domain'] = 'rebuild-test'
-    kwargs['form_extras'] = form_extras
-    return real_post_util(**kwargs)
+
+    uid = lambda: uuid.uuid4().hex
+    case_id = case_id or uid()
+    block = CaseBlock(create=create,
+                      case_id=case_id,
+                      user_id=user_id or uid(),
+                      owner_id=owner_id or uid(),
+                      case_type=case_type or 'test',
+                      date_modified=date_modified,
+                      update=kwargs,
+                      close=close).as_xml()
+    FormProcessorInterface.post_case_blocks([block], form_extras)
+    return case_id
 
 
 class CaseRebuildTest(TestCase):

@@ -194,25 +194,6 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
     return restore_config, matches[0] if return_single else matches
 
 
-def post_util(create=False, case_id=None, user_id=None, owner_id=None,
-              case_type=None, version=V2, form_extras=None, close=False, date_modified=None,
-              **kwargs):
-
-    uid = lambda: uuid.uuid4().hex
-    case_id = case_id or uid()
-    block = CaseBlock(create=create,
-                      case_id=case_id,
-                      user_id=user_id or uid(),
-                      owner_id=owner_id or uid(),
-                      case_type=case_type or 'test',
-                      date_modified=date_modified,
-                      update=kwargs,
-                      close=close).as_xml()
-    form_extras = form_extras or {}
-    FormProcessorInterface.post_case_blocks([block], form_extras)
-    return case_id
-
-
 @unit_testing_only
 def delete_all_cases():
     FormProcessorInterface.delete_all_cases()
