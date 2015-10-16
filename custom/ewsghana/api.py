@@ -733,42 +733,47 @@ class EWSApi(APISynchronization):
     def edit_phone_numbers(self, ewsghana_smsuser, user):
         phone_numbers = {phone_number for phone_number in user.phone_numbers}
         saved_numbers = []
-        default_phone_number = None
 
         for connection in ewsghana_smsuser.phone_numbers:
             phone_number = apply_leniency(connection.phone_number)
             if phone_number not in phone_numbers:
                 self._save_verified_number(user, connection)
-                if connection.default:
-                    default_phone_number = connection.phone_number
-            saved_numbers.append(phone_number)
+
+            if connection.default:
+                saved_numbers = [phone_number] + saved_numbers
+            else:
+                saved_numbers.append(phone_number)
 
         for phone_number in phone_numbers - set(saved_numbers):
             user.delete_verified_number(phone_number)
 
         user.phone_numbers = saved_numbers
 
-        if default_phone_number:
-            user.set_default_phone_number(default_phone_number)
-
     def sms_user_sync(self, ews_smsuser, **kwargs):
         sms_user = super(EWSApi, self).sms_user_sync(ews_smsuser, **kwargs)
         if not sms_user:
             return None
 
-        if ews_smsuser.role:
+        changed = False
+        if [ews_smsuser.role] != sms_user.user_data.get('role'):
             sms_user.user_data['role'] = [ews_smsuser.role]
+            changed = True
 
         if ews_smsuser.phone_numbers:
             sms_user.user_data['connections'] = []
             for connection in ews_smsuser.phone_numbers:
-                sms_user.user_data['connections'].append({
+                connections = {
                     'phone_number': connection.phone_number,
                     'backend': connection.backend,
                     'default': connection.default
-                })
+                }
+                if connections != sms_user.user_data.get('connections'):
+                    sms_user.user_data['connections'].append(connections)
+                    changed = True
 
-        sms_user.save()
+        if changed:
+            sms_user.save()
+
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:
                 sp = get_supply_point_case_by_domain_external_id(self.domain, ews_smsuser.supply_point.id)
@@ -786,7 +791,7 @@ class EWSApi(APISynchronization):
                     couch_location = None
             else:
                 couch_location = None
-            if couch_location:
+            if couch_location and sms_user.location_id != couch_location.get_id:
                 sms_user.set_location(couch_location)
         return sms_user
 
