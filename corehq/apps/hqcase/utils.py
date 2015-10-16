@@ -26,8 +26,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
-                       xmlns='http://commcarehq.org/case', attachments=None,
-                       form_id=None):
+                       attachments=None, form_id=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -39,7 +38,6 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
-        'xmlns': xmlns,
         'case_block': case_blocks,
         'time': now,
         'uid': form_id,
