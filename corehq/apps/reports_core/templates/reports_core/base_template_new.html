@@ -171,8 +171,9 @@
             {% endif %}
         </div>
     </div>
-    <div id="reportHint" class="well">
-        <h4>{% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+    <hr />
+    <div id="reportHint" class="alert alert-info">
+        <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
         <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
     </div>
     <div id="reportContent" class="hide">
