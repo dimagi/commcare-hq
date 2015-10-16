@@ -34,7 +34,6 @@ def close_case(case_id, domain, user):
         create=False,
         case_id=case_id,
         close=True,
-        version=V2,
     ).as_xml())
 
     return submit_case_blocks([case_block], domain, username, user_id)
