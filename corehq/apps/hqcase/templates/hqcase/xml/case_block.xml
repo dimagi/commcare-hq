@@ -1,5 +1,5 @@
 <?xml version='1.0' ?>
-<system version="1" uiVersion="1" xmlns="http://commcarehq.org/case" xmlns:orx="http://openrosa.org/jr/xforms">
+<system version="1" uiVersion="1" xmlns="{{ xmlns }}" xmlns:orx="http://openrosa.org/jr/xforms">
     <orx:meta xmlns:cc="http://commcarehq.org/xforms">
         <orx:deviceID />
         <orx:timeStart>{{ time }}</orx:timeStart>
