@@ -110,11 +110,12 @@
         });
     </script>
 {% endblock %}
+
 {% block report_alerts %}
     {{ block.super }}
-    <div id="built-warning" class="alert alert-info hide">
+    <div id="built-warning" class="alert alert-warning hide">
+        <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
         {% blocktrans %}
-        Warning! Your report is still being populated.
         What you are seeing now is just a preview, and contains some or none of your data.
         The report will refresh automatically when the data is finished being populated.
         {% endblocktrans %}
