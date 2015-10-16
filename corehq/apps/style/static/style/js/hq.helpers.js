@@ -94,7 +94,7 @@ $.showMessage = function (message, level) {
 
 
 $.fn.addSpinnerToButton = function () {
-    $(this).prepend('<i class="icon-refresh icon-spin"></i> ');
+    $(this).prepend('<i class="fa fa-refresh fa-spin icon-refresh icon-spin"></i> ');
 };
 
 
