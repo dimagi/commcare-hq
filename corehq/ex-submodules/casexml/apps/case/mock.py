@@ -276,9 +276,6 @@ class CaseFactory(object):
         self.domain = domain
         self.case_defaults = case_defaults if case_defaults is not None else {}
         self.form_extras = form_extras if form_extras is not None else {}
-        # almost everything is V2 so override the default for this unless explicitly set
-        if 'version' not in self.case_defaults:
-            self.case_defaults['version'] = V2
 
     def get_case_block(self, case_id, **kwargs):
         for k, v in self.case_defaults.items():
