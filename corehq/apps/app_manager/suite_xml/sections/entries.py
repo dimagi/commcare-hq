@@ -538,6 +538,8 @@ class EntriesHelper(object):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
+            detail_persistent, detail_inline = self.get_case_tile_datum_attrs(target_module_, target_module_)
+
             return SessionDatum(
                 id=action_.case_session_var,
                 nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, filter_xpath=filter_xpath)
@@ -547,7 +549,9 @@ class EntriesHelper(object):
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
                     if not referenced_by or referenced_by['type'] != 'load' else None
-                )
+                ),
+                detail_persistent=detail_persistent,
+                detail_inline=detail_inline,
             )
 
         datums = []
