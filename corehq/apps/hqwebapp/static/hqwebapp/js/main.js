@@ -185,10 +185,10 @@ var COMMCAREHQ = (function () {
     return {
         icons: {
             GRIP:   'fa fa-sort icon-resize-vertical icon-blue',
-            ADD:    'icon-plus icon-blue',
-            COPY:   'icon-copy icon-blue',
+            ADD:    'fa fa-plus icon-plus icon-blue',
+            COPY:   'fa fa-copy icon-copy icon-blue',
             DELETE: 'fa fa-remove icon-remove icon-blue',
-            PAPERCLIP: 'icon-paper-clip'
+            PAPERCLIP: 'fa fa-paperclip icon-paper-clip'
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
@@ -220,7 +220,7 @@ var COMMCAREHQ = (function () {
                 e.preventDefault();
                 if (!$(this).data('clicked')) {
                     $(this).prev('form').submit();
-                    $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+                    $(this).data('clicked', 'true').children('i').removeClass().addClass("fa fa-refresh fa-spin icon-refresh icon-spin");
                 }
             });
 
@@ -327,11 +327,11 @@ var COMMCAREHQ = (function () {
 
 $(function () {
     'use strict';
-    $('.delete_link').iconify('icon-remove');
+    $('.delete_link').iconify('fa fa-remove icon-remove');
     $(".delete_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
-    $('.new_link').iconify('icon-plus');
-    $('.edit_link').iconify('icon-pencil');
+    $('.new_link').iconify('fa fa-plus icon-plus');
+    $('.edit_link').iconify('fa fa-pencil icon-pencil');
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
