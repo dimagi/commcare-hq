@@ -1132,7 +1132,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # create a parent and child case (with index) from one user
         parent_id = "indexes_sync_parent"
         case_id = "indexes_sync"
-        self._createCaseStubs([parent_id])
+        self._createCaseStubs([parent_id], owner_id=USER_ID)
         child = CaseBlock(
             create=True,
             case_id=case_id,
