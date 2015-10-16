@@ -682,29 +682,35 @@ def loadtest(request):
     template = "hqadmin/loadtest.html"
     return render(request, template, context)
 
+
+def _lookup_id_in_couch(doc_id):
+    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
+    for url in db_urls:
+        try:
+            doc = Database(url).get(doc_id)
+        except ResourceNotFound:
+            pass
+        else:
+            return {
+                "doc": json.dumps(doc, indent=4, sort_keys=True),
+                "doc_id": doc_id,
+                "doc_type": doc.get('doc_type', 'Unknown'),
+                "db_url": url.split('@')[-1],
+            }
+    return {}
+
+
 @require_superuser
 def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
         return render(request, "hqadmin/doc_in_es.html", {})
 
-    couch_doc = {}
-    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
-    for url in db_urls:
-        try:
-            couch_doc = Database(url).get(doc_id)
-            break
-        except ResourceNotFound:
-            pass
-    query = {"filter":
-                {"ids": {
-                    "values": [doc_id]}}}
-
     def to_json(doc):
         return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
 
+    query = {"filter": {"ids": {"values": [doc_id]}}}
     found_indices = {}
-    doc_type = couch_doc.get('doc_type')
     es_doc_type = None
     for index, url in ES_URLS.items():
         res = run_query(url, query)
@@ -713,16 +719,23 @@ def doc_in_es(request):
             found_indices[index] = to_json(es_doc)
             es_doc_type = es_doc_type or es_doc.get('doc_type')
 
-    doc_type = doc_type or es_doc_type or 'Unknown'
-
     context = {
         "doc_id": doc_id,
-        "status": "found" if found_indices else "NOT FOUND!",
-        "doc_type": doc_type,
-        "couch_doc": to_json(couch_doc),
-        "found_indices": found_indices,
+        "es_info": {
+            "status": "found" if found_indices else "NOT FOUND IN ELASTICSEARCH!",
+            "doc_type": es_doc_type,
+            "found_indices": found_indices,
+        },
+        "couch_info": _lookup_id_in_couch(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
+
+
+@require_superuser
+def raw_couch(request):
+    doc_id = request.GET.get("id")
+    context = _lookup_id_in_couch(doc_id) if doc_id else {}
+    return render(request, "hqadmin/raw_couch.html", context)
 
 
 @require_superuser
