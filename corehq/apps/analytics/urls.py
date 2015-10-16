@@ -1,5 +1,6 @@
-from django.conf.urls import *
+from django.conf.urls import patterns,url
+from corehq.apps.analytics.views import HubspotClickDeployView
 
 urlpatterns = patterns('corehq.apps.analytics.views',
-    (r'^hubspot/click-deploy/$', 'hubspot_click_deploy'),
+    url(r'^hubspot/click-deploy/$', HubspotClickDeployView.as_view(), name=HubspotClickDeployView.urlname),
 )
