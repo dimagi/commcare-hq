@@ -537,6 +537,7 @@ class SubmissionPost(object):
                         # in saving the cases, we have to do all the things
                         # done in CommCareCase.save()
                         for case in cases:
+                            legacy_soft_assert(case.version == "2.0", "v1.0 case updated", case.case_id)
                             case.initial_processing_complete = True
                             case.server_modified_on = now
                             try:
