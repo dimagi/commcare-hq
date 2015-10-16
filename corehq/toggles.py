@@ -698,3 +698,10 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+GRID_MENUS = StaticToggle(
+    'grid_menus',
+    'Allow using grid menus on Android',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)

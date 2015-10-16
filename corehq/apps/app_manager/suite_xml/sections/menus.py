@@ -84,6 +84,9 @@ class MenuContributor(SuiteContributorByModule):
 
             menus.append(menu)
 
+        if self.app.use_grid_menus:
+            self._give_root_menus_grid_style(menus)
+
         return menus
 
     @staticmethod
@@ -95,3 +98,9 @@ class MenuContributor(SuiteContributorByModule):
         except ScheduleError:
             relevant = None
         return relevant
+
+    @staticmethod
+    def _give_root_menus_grid_style(menus):
+        for menu in menus:
+            if menu.id == id_strings.ROOT:
+                menu.style = "grid"
