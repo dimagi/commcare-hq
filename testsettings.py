@@ -6,13 +6,10 @@ INSTALLED_APPS += (
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
+    #'--with-migrations' # adds ~30s to test run; TODO travis should use it
     #'--with-doctest', # adds 5s to discovery (before tests start); TODO travis should use it
     '--with-fixture-bundling',
     '--logging-clear-handlers',
-    '--ignore-files=^localsettings',
-    '--exclude-dir=corehq/apps/cloudcare/tests/selenium',
-    '--exclude-dir=corehq/apps/reports/tests/selenium',
-    '--exclude-dir=scripts',
 ]
 NOSE_PLUGINS = [
     # Disable migrations by default. Use --with-migrations to enable them.
@@ -20,10 +17,29 @@ NOSE_PLUGINS = [
     'corehq.util.nose.OmitDjangoInitModuleTestsPlugin',
 ]
 
-# shorten nose args displayed in console by putting these in os.environ
-os.environ.setdefault('NOSE_DB_TEST_CONTEXT', 'corehq.util.nose.HqdbContext')
-os.environ.setdefault(
-    'NOSE_NON_DB_TEST_CONTEXT', 'corehq.util.nose.ErrorOnDbAccessContext')
+# these settings can be overridden with environment variables
+for key, value in {
+    'NOSE_DB_TEST_CONTEXT': 'corehq.util.nose.HqdbContext',
+    'NOSE_NON_DB_TEST_CONTEXT': 'corehq.util.nose.ErrorOnDbAccessContext',
+
+    # ignore record_deploy_success.py because datadog may not be installed
+    # (only matters when running --with-doctests)
+    'NOSE_IGNORE_FILES': '^(localsettings|record_deploy_success\.py)',
+
+    'NOSE_EXCLUDE_DIRS': ';'.join([
+        'corehq/apps/cloudcare/tests/selenium',
+        'corehq/apps/reports/tests/selenium',
+        'scripts',
+        'testapps',
+
+        # ignored for --with-doctest : causes gevent.threading to be imported
+        'corehq/apps/hqcase/management/commands',
+        'corehq/preindex/management/commands', #
+        'deployment/gunicorn',
+    ]),
+}.items():
+    os.environ.setdefault(key, value)
+del key, value
 
 # HqTestSuiteRunner settings
 INSTALLED_APPS = INSTALLED_APPS + list(TEST_APPS)
@@ -32,6 +48,12 @@ PILLOWTOPS = {}
 
 # required by auditcare tests
 AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
+AUDIT_ADMIN_VIEWS=False
+
+PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
+PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
+
+ENABLE_PRELOGIN_SITE = True
 
 
 def _set_couchdb_test_settings():
