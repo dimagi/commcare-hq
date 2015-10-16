@@ -173,3 +173,4 @@
   widget: bool
   default: false
   since: "2.24"
+  toggle: GRID_MENUS
