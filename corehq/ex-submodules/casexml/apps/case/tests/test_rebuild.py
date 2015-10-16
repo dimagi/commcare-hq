@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces import FormProcessorInterface
 from couchforms.models import XFormInstance
 
 
-def post_util(create=False, case_id=None, user_id=None, owner_id=None,
+def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
               case_type=None, form_extras=None, close=False, date_modified=None,
               **kwargs):
 
@@ -60,8 +60,8 @@ class CaseRebuildTest(TestCase):
             self.fail(msg)
 
     def testActionEquality(self):
-        case_id = post_util(create=True)
-        post_util(case_id=case_id, p1='p1', p2='p2')
+        case_id = _post_util(create=True)
+        _post_util(case_id=case_id, p1='p1', p2='p2')
 
         case = CommCareCase.get(case_id)
         self.assertEqual(2, len(case.actions)) # create + update
@@ -88,9 +88,9 @@ class CaseRebuildTest(TestCase):
     def testBasicRebuild(self):
         user_id = 'test-basic-rebuild-user'
         now = datetime.utcnow()
-        case_id = post_util(create=True, user_id=user_id, date_modified=now)
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id, date_modified=now)
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id, date_modified=now)
+        case_id = _post_util(create=True, user_id=user_id, date_modified=now)
+        _post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id, date_modified=now)
+        _post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id, date_modified=now)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -115,9 +115,9 @@ class CaseRebuildTest(TestCase):
 
     def testActionComparison(self):
         user_id = 'test-action-comparison-user'
-        case_id = post_util(create=True, property='a1 wins', user_id=user_id)
-        post_util(case_id=case_id, property='a2 wins', user_id=user_id)
-        post_util(case_id=case_id, property='a3 wins', user_id=user_id)
+        case_id = _post_util(create=True, property='a1 wins', user_id=user_id)
+        _post_util(case_id=case_id, property='a2 wins', user_id=user_id)
+        _post_util(case_id=case_id, property='a3 wins', user_id=user_id)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -175,8 +175,8 @@ class CaseRebuildTest(TestCase):
             pass
 
     def testRebuildCreateCase(self):
-        case_id = post_util(create=True)
-        post_util(case_id=case_id, p1='p1', p2='p2')
+        case_id = _post_util(create=True)
+        _post_util(case_id=case_id, p1='p1', p2='p2')
 
         # delete initial case
         case = CommCareCase.get(case_id)
@@ -201,9 +201,9 @@ class CaseRebuildTest(TestCase):
     def testReconcileActions(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
-        case_id = post_util(create=True, form_extras={'received_on': now})
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1', form_extras={'received_on': now + timedelta(seconds=1)})
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', form_extras={'received_on': now + timedelta(seconds=2)})
+        case_id = _post_util(create=True, form_extras={'received_on': now})
+        _post_util(case_id=case_id, p1='p1-1', p2='p2-1', form_extras={'received_on': now + timedelta(seconds=1)})
+        _post_util(case_id=case_id, p2='p2-2', p3='p3-2', form_extras={'received_on': now + timedelta(seconds=2)})
         case = CommCareCase.get(case_id)
         update_strategy = ActionsUpdateStrategy(case)
 
@@ -252,7 +252,7 @@ class CaseRebuildTest(TestCase):
         Checks that archiving the only form associated with the case archives
         the case and unarchiving unarchives it.
         """
-        case_id = post_util(create=True, p1='p1-1', p2='p2-1')
+        case_id = _post_util(create=True, p1='p1-1', p2='p2-1')
         case = CommCareCase.get(case_id)
 
         self.assertEqual('CommCareCase', case._doc['doc_type'])
@@ -277,11 +277,11 @@ class CaseRebuildTest(TestCase):
     def testFormArchiving(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
-        case_id = post_util(create=True, p1='p1-1', p2='p2-1',
+        case_id = _post_util(create=True, p1='p1-1', p2='p2-1',
                             form_extras={'received_on': now})
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', p4='p4-2',
+        _post_util(case_id=case_id, p2='p2-2', p3='p3-2', p4='p4-2',
                   form_extras={'received_on': now + timedelta(seconds=1)})
-        post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
+        _post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
         case = CommCareCase.get(case_id)
@@ -395,10 +395,10 @@ class CaseRebuildTest(TestCase):
     def testArchiveAgainstDeletedCases(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
-        case_id = post_util(create=True, p1='p1', form_extras={'received_on': now})
-        post_util(case_id=case_id, p2='p2',
+        case_id = _post_util(create=True, p1='p1', form_extras={'received_on': now})
+        _post_util(case_id=case_id, p2='p2',
                   form_extras={'received_on': now + timedelta(seconds=1)})
-        post_util(case_id=case_id, p3='p3',
+        _post_util(case_id=case_id, p3='p3',
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
         case = CommCareCase.get(case_id)
