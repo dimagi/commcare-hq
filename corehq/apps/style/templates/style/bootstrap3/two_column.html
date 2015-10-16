@@ -10,9 +10,14 @@
                 {% block page_navigation %}{% format_sidebar %}{% endblock page_navigation %}
             </div>
             <div id="hq-content" class="col-xs-8 col-sm-9 col-lg-10">
+                {% captureas page_title_block %}{% block page_title %}{% endblock page_title %}{% endcaptureas %}
+                {% if page_title_block %}
                 <div class="page-header" style="margin-top: 0;">
-                    <h1 style="font-size: 1.8em;">{% block page_title %}{% endblock %}</h1>
+                    <h1 style="font-size: 1.8em;">{{ page_title_block }}</h1>
                 </div>
+                {% else %}
+                <div class="spacer"></div>
+                {% endif %}
                 {% block page_content %}{% endblock page_content %}
         </div>
     </div>
