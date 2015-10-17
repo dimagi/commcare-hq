@@ -3850,12 +3850,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         """This is mostly just for views"""
         return '%d.%d' % self.build_spec.minor_release()
 
-    def get_build_label(self):
-        for item in CommCareBuildConfig.fetch().menu:
-            if item['build'].to_string() == self.build_spec.to_string():
-                return item['label']
-        return self.build_spec.get_label()
-
     @property
     def short_name(self):
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
