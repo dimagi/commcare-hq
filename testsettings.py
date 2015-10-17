@@ -32,9 +32,12 @@ for key, value in {
         'scripts',
         'testapps',
 
-        # ignored for --with-doctest : causes gevent.threading to be imported
+        # excludes for --with-doctest
+        # these cause gevent.threading to be imported, which causes this error:
+        # DatabaseError: DatabaseWrapper objects created in a thread can only
+        # be used in that same thread. ...
         'corehq/apps/hqcase/management/commands',
-        'corehq/preindex/management/commands', #
+        'corehq/preindex/management/commands',
         'deployment/gunicorn',
     ]),
 }.items():

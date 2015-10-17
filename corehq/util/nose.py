@@ -13,10 +13,10 @@ import os
 import sys
 from unittest.case import TestCase
 
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
 from nose.plugins import Plugin
-from nose.selector import Selector
 from django_nose.plugin import DatabaseContext
 
 log = logging.getLogger(__name__)
@@ -36,12 +36,12 @@ class OmitDjangoInitModuleTestsPlugin(Plugin):
         """Avoid adding a ``--with`` option for this plugin."""
 
     def configure(self, options, conf):
-        pass # always on
         self.seen = set()
 
     def prepareTestLoader(self, loader):
         # patch the loader so we can get the module in wantClass
         realLoadTestsFromModule = loader.loadTestsFromModule
+
         def loadTestsFromModule(module, path=None, *args, **kw):
             self.module = module
             self.path = path
@@ -58,7 +58,7 @@ class OmitDjangoInitModuleTestsPlugin(Plugin):
             self.seen.add(key)
             if self.path and os.path.basename(self.path) == "tests":
                 return cls.__module__ == self.module.__name__
-        return None # defer to default selector
+        return None  # defer to default selector
 
 
 class DjangoMigrationsPlugin(Plugin):
@@ -182,7 +182,7 @@ class HqdbContext(DatabaseContext):
             for name, cls in value.items():
                 cls.set_db(loading.get_db(app))
 
-        sys.__stdout__.write("\n") # newline for creating database message
+        sys.__stdout__.write("\n")  # newline for creating database message
         super(HqdbContext, self).setup()
 
     def teardown(self):
