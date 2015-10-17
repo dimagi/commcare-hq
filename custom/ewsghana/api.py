@@ -738,7 +738,10 @@ class EWSApi(APISynchronization):
             user.set_default_phone_number(default_phone_number)
 
     def edit_phone_numbers(self, ewsghana_smsuser, user):
-        phone_numbers = {phone_number for phone_number in user.phone_numbers}
+        phone_numbers = {
+            phone_number for phone_number in user.phone_numbers
+            if '+' not in phone_number  # Exclude badly migrated data
+        }
         saved_numbers = []
 
         for connection in ewsghana_smsuser.phone_numbers:
