@@ -5,6 +5,7 @@ from corehq.apps.userreports.expressions.getters import TransformedGetter, gette
 from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
+from corehq.apps.userreports.util import validate_sql_column_name
 
 
 DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal']
@@ -26,7 +27,7 @@ class IndicatorSpecBase(JsonObject):
 
     type = StringProperty(required=True)
 
-    column_id = StringProperty(required=True)
+    column_id = StringProperty(required=True, validators=validate_sql_column_name)
     display_name = StringProperty()
 
     @classmethod

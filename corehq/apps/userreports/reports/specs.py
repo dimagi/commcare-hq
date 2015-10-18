@@ -25,7 +25,7 @@ from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListF
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
-from corehq.apps.userreports.util import localize
+from corehq.apps.userreports.util import localize, validate_sql_column_name
 
 
 SQLAGG_COLUMN_MAP = {
@@ -318,7 +318,7 @@ class FilterSpec(JsonObject):
     """
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
     slug = StringProperty(required=True, validators=_validate_filter_slug)  # this shows up as the ID in the filter HTML.
-    field = StringProperty(required=True)  # this is the actual column that is queried
+    field = StringProperty(required=True, validators=validate_sql_column_name)  # this is the actual column that is queried
     display = DefaultProperty()
     datatype = DataTypeProperty(default='string')
 

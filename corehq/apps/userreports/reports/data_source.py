@@ -16,6 +16,7 @@ from corehq.apps.userreports.reports.sorting import get_default_sort_value
 from corehq.apps.userreports.reports.specs import DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
+from corehq.apps.userreports.util import validate_sql_column_name
 from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
 
@@ -88,6 +89,9 @@ class ConfigurableReportDataSource(SqlData):
                 return self._column_configs[col_id].get_group_by_columns()
             else:
                 return [column_id]
+
+        for agg_column in self.aggregation_columns:
+            validate_sql_column_name(agg_column)
 
         return [
             group_by for col_id in self.aggregation_columns
