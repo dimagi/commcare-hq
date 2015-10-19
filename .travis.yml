@@ -44,6 +44,7 @@ install:
   - "npm install -g grunt-cli"
   - "ln -nfs `which bower` /home/travis/bower"
   - "python manage.py bower install"
+  - "python manage.py migrate --noinput"
   - "python manage.py runserver 8000 &" # Used to run mocha browser tests
   - "sleep 10" # allow django server to start
   - "npm install"
