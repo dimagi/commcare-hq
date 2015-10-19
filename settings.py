@@ -306,7 +306,6 @@ HQ_APPS = (
     'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
-    'corehq.apps.mocha',
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
@@ -1028,6 +1027,8 @@ if DEBUG:
         INSTALLED_APPS = INSTALLED_APPS + (
             'luna',
         )
+
+    INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha')
 
     import warnings
     warnings.simplefilter('default')
