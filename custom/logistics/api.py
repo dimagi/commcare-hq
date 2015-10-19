@@ -280,8 +280,9 @@ class APISynchronization(object):
         if ilsgateway_smsuser.phone_numbers:
             cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
             if cleaned_number:
-                user.set_default_phone_number(cleaned_number)
+                user.phone_numbers = [cleaned_number]
                 user.user_data['backend'] = ilsgateway_smsuser.backend
+                user.save()
                 self._save_verified_number(user, cleaned_number)
 
     def sms_user_sync(self, ilsgateway_smsuser, username_part=None, password=None,
@@ -321,9 +322,7 @@ class APISynchronization(object):
                 user.language = language
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
-                user.save()
                 self.add_phone_numbers(ilsgateway_smsuser, user)
-                user.save()
             except Exception as e:
                 logging.error(e)
         else:
