@@ -8,8 +8,9 @@ from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.xml import V2
+from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
+from corehq.apps.reminders.tasks import delete_reminders_for_cases
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
@@ -43,20 +44,16 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
     }
 
 
-def run_case_post_save_signals(docs):
-    for doc in docs:
-        case = CommCareCase.wrap(doc)
-        case_post_save.send(CommCareCase, case=case)
-
-
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
 def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
     for doc in docs:
         doc['doc_type'] += DELETED_SUFFIX
         doc['-deletion_id'] = deletion_id
     CommCareCase.get_db().bulk_save(docs)
-    _remove_indices_from_deleted_cases_task.delay(domain, [doc['_id'] for doc in docs])
-    run_case_post_save_signals(docs)
+    case_ids = [doc['_id'] for doc in docs]
+    _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
+    delete_phone_numbers_for_owners.delay(case_ids)
+    delete_reminders_for_cases.delay(domain, case_ids)
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
