@@ -80,9 +80,8 @@ class CreateCaseExportTagForm(forms.Form):
     Case Export. This form interacts with CreateExportController in
     list_exports.ng.js
     """
-    application = forms.CharField(required=False)
+    application = forms.CharField()
     case_type = forms.CharField(
-        required=False,
         help_text=mark_safe(
             '<span ng-show="!!hasNoCaseTypes '
             '&& !!createForm.application">{}</span>'.format(
