@@ -184,7 +184,6 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     @allow_remote_invocation
     def update_tile(self, in_data):
         tile = self.make_tile(in_data['slug'], in_data)
-        print tile.context
         return {
             'response': tile.context,
             'success': True,
