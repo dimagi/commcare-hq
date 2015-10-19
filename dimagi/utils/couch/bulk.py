@@ -103,7 +103,7 @@ def wrapped_docs(cls, keys):
         yield cls.wrap(doc)
 
 
-def soft_delete_docs(docs, cls, doc_type=None)
+def soft_delete_docs(docs, cls, doc_type=None):
     """
     Adds the '-Deleted' suffix to all the docs passed in.
     docs - the docs to soft delete, should be dictionary (json) and not objects
