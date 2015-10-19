@@ -23,6 +23,82 @@ class TestExtendedFootprint(SimpleTestCase):
         cases = tree.get_all_cases_that_depend_on_case(grandparent_id)
         self.assertEqual(cases, set(all_cases))
 
+    def test_simple_extension(self):
+        [host_id, extension_id] = all_ids = ['host', 'extension']
+        extension_tree = IndexTree(indices={
+            extension_id: convert_list_to_dict([host_id]),
+        })
+        child_tree = IndexTree()
+        extension_dependencies = IndexTree.get_all_dependencies(extension_id, child_tree, extension_tree)
+        self.assertEqual(extension_dependencies, set(all_ids))
+
+    def test_extension_long_chain(self):
+        [host_id, extension_id, extension_id_2, extension_id_3] = all_ids = [
+            'host', 'extension', 'extension_2', 'extension_3']
+
+        extension_tree = IndexTree(indices={
+            extension_id: convert_list_to_dict([host_id]),
+            extension_id_2: convert_list_to_dict([extension_id]),
+            extension_id_3: convert_list_to_dict([extension_id_2]),
+        })
+        child_tree = IndexTree()
+        extension_dependencies = IndexTree.get_all_dependencies(extension_id, child_tree, extension_tree)
+        self.assertEqual(set(all_ids), extension_dependencies)
+        host_dependencies = IndexTree.get_all_dependencies(host_id, child_tree, extension_tree)
+        self.assertEqual(set(all_ids), host_dependencies)
+
+    def test_child_and_extension(self):
+        """
+         +---+       +---+
+         | C +--c--->| H |
+         +-+-+       +-+-+
+           ^           ^
+           |e          |e
+         +-+-+       +-+-+
+         |E2 |       |E1 |
+         +---+       +---+
+        """
+        [host_id, extension_id, child_id, extension_id_2] = all_ids = ['host', 'extension', 'child', 'extension_2']
+        child_tree = IndexTree(indices={
+            child_id: convert_list_to_dict([host_id]),
+        })
+        extension_tree = IndexTree(indices={
+            extension_id: convert_list_to_dict([host_id]),
+            extension_id_2: convert_list_to_dict([child_id]),
+        })
+
+        extension_dependencies = IndexTree.get_all_dependencies(extension_id, child_tree, extension_tree)
+        self.assertEqual(set(all_ids), extension_dependencies)
+        host_dependencies = IndexTree.get_all_dependencies(host_id, child_tree, extension_tree)
+        self.assertEqual(set(all_ids), host_dependencies)
+        child_dependencies = IndexTree.get_all_dependencies(child_id, child_tree, extension_tree)
+        self.assertEqual(set([child_id, extension_id_2]), child_dependencies)
+
+    def test_multiple_indices(self):
+        """
+        +---+       +---+
+        | C +--c--->| H |
+        +---+--e--->+-+-+
+                      ^
+        +---+         |
+        | E +----e----+
+        +---+
+        """
+        [host_id, extension_id, child_id] = all_ids = ['host', 'extension', 'child']
+        child_tree = IndexTree(indices={
+            child_id: convert_list_to_dict([host_id]),
+        })
+        extension_tree = IndexTree(indices={
+            extension_id: convert_list_to_dict([host_id]),
+            child_id: convert_list_to_dict([host_id]),
+        })
+
+        child_dependencies = IndexTree.get_all_dependencies(child_id, child_tree, extension_tree)
+        self.assertEqual(set(all_ids), child_dependencies)
+
+        extension_dependencies = IndexTree.get_all_dependencies(extension_id, child_tree, extension_tree)
+        self.assertEqual(set(all_ids), extension_dependencies)
+
 
 class PruningTest(SimpleTestCase):
 
