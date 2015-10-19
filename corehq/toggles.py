@@ -179,7 +179,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 CASE_LIST_TILE = StaticToggle(
