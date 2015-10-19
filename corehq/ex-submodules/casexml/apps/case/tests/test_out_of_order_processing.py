@@ -13,17 +13,11 @@ class OutOfOrderCaseTest(TestCase):
 
     def testOutOfOrderSubmissions(self):
         dir = os.path.join(os.path.dirname(__file__), "data", "ordering")
-        forms = []
-        for fname in ('create_oo.xml', 'update_oo.xml'):
+        for fname in ('update_oo.xml', 'create_oo.xml'):
             with open(os.path.join(dir, fname), "rb") as f:
                 xml_data = f.read()
-            forms.append(FormProcessorInterface.post_xform(xml_data))
 
-        [create, update] = forms
-
-        # process out of order
-        FormProcessorInterface.process_cases(update)
-        FormProcessorInterface.process_cases(create)
+            FormProcessorInterface.submit_form_locally(xml_data)
 
         case = FormProcessorInterface.get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
         self.assertEqual('from the update form', case.pupdate)

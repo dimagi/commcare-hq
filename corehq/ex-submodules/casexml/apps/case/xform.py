@@ -95,38 +95,6 @@ class CaseProcessingResult(object):
                     flag.save()
 
 
-def process_cases(xform, config=None):
-    """
-    Creates or updates case objects which live outside of the form.
-
-    If reconcile is true it will perform an additional step of
-    reconciling the case update history after the case is processed.
-    """
-    warnings.warn(
-        'This function is deprecated. You should be using SubmissionPost.',
-        DeprecationWarning,
-    )
-
-    assert getattr(settings, 'UNIT_TESTING', False)
-    domain = get_and_check_xform_domain(xform)
-
-    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        case_result = process_cases_with_casedb([xform], case_db, config=config)
-
-    cases = case_result.cases
-    docs = [xform] + cases
-    now = datetime.datetime.utcnow()
-    for case in cases:
-        case.server_modified_on = now
-    XFormInstance.get_db().bulk_save(docs)
-
-    for case in cases:
-        case_post_save.send(CommCareCase, case=case)
-
-    case_result.commit_dirtiness_flags()
-    return cases
-
-
 def process_cases_with_casedb(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
     case_processing_result = _get_or_update_cases(xforms, case_db)

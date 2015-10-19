@@ -14,6 +14,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
+from corehq.apps.receiverwrapper.util import submit_form_locally
 import couchforms
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
@@ -81,14 +82,13 @@ class BaseCaseMultimediaTest(TestCase):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        sp = couchforms.SubmissionPost(
-            instance=xml_data,
-            domain=TEST_DOMAIN_NAME,
+        response, xform, cases = submit_form_locally(
+            xml_data,
+            TEST_DOMAIN_NAME,
             attachments=dict_attachments,
             last_sync_token=sync_token,
-            received_on=date,
+            received_on=date
         )
-        response, xform, cases = sp.run()
         self.assertEqual(set(dict_attachments.keys()),
                          set(xform.attachments.keys()))
         [case] = cases

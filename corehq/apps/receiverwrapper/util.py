@@ -18,17 +18,17 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
-    response = couchforms.SubmissionPost(
+    response, xform, cases = couchforms.SubmissionPost(
         domain=domain,
         instance=instance,
         **kwargs
-    ).get_response()
+    ).run()
     if not 200 <= response.status_code < 300:
         raise LocalSubmissionError('Error submitting (status code %s): %s' % (
             response.status_code,
             response.content,
         ))
-    return response
+    return response, xform, cases
 
 
 def get_meta_appversion_text(xform):
