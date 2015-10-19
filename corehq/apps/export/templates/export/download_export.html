@@ -6,10 +6,6 @@
 {% load djangular_tags %}
 
 {% block stylesheets %}
-<link type="text/css"
-      rel="stylesheet"
-      media="all"
-      href="{% new_static 'style/lib/daterangepicker-b3/daterangepicker.css' %}" />
 <style type="text/css">
     .form-notice-container {
         position: relative;
@@ -42,13 +38,7 @@
 </style>
 {% endblock stylesheets %}
 
-{% block head %}
-<script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
-{% endblock %}
-
 {% block js %}
-<script type="text/javascript" src="{% new_static 'style/lib/daterangepicker-b3/moment.min.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/lib/daterangepicker-b3/daterangepicker.js' %}"></script>
 <script type="text/javascript" src="{% new_static 'export/js/download_export.ng.js' %}"></script>
 {% endblock %}
 
