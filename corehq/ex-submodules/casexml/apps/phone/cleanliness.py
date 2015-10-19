@@ -1,7 +1,8 @@
 from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.dbaccessors import get_indexed_case_ids, get_all_reverse_indices_info
+from casexml.apps.case.dbaccessors import get_indexed_case_ids, \
+    get_all_reverse_indices_info, get_extension_case_ids
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_indexed_cases
@@ -187,7 +188,8 @@ def get_case_footprint_info(domain, owner_id):
     new_case_ids = set(open_case_ids)
     while new_case_ids:
         all_case_ids = all_case_ids | new_case_ids
-        referenced_case_ids = get_indexed_case_ids(domain, list(new_case_ids))
-        new_case_ids = set(referenced_case_ids) - all_case_ids
+        referenced_case_ids = set(get_indexed_case_ids(domain, list(new_case_ids)))
+        extension_case_ids = set(get_extension_case_ids(domain, list(new_case_ids | referenced_case_ids)))
+        new_case_ids = (referenced_case_ids | extension_case_ids) - all_case_ids
 
     return FootprintInfo(base_ids=set(open_case_ids), all_ids=all_case_ids)

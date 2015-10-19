@@ -2,8 +2,10 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
-    get_cleanliness_flag_from_scratch
+    get_cleanliness_flag_from_scratch, get_case_footprint_info
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
@@ -267,3 +269,108 @@ class CleanlinessUtilitiesTest(SimpleTestCase):
         self.assertEqual(5, len(back))
         self.assertEqual(0, len(five))
         self.assertEqual(set(back), set(range(5)))
+
+
+class GetCaseFootprintInfoTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_cases()
+
+    def setUp(self):
+        self.domain = 'domain'
+        self.owner_id = uuid.uuid4().hex
+        self.other_owner_id = uuid.uuid4().hex
+        self.factory = CaseFactory(self.domain)
+
+    def test_simple_footprint(self):
+        """ should only return open cases from user """
+        case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id})
+        closed_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id, 'close': True})
+        other_case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.other_owner_id})
+        self.factory.create_or_update_cases([case, other_case, closed_case])
+
+        footprint_info = get_case_footprint_info(self.domain, self.owner_id)
+        self.assertEqual(footprint_info.all_ids, set([case.case_id]))
+
+    def test_footprint_with_parent(self):
+        """ should return open cases with parents """
+        parent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id, 'close': True}
+        )
+        child = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id},
+            indices=[CaseIndex(parent)]
+        )
+
+        self.factory.create_or_update_cases([parent, child])
+
+        footprint_info = get_case_footprint_info(self.domain, self.owner_id)
+        self.assertEqual(footprint_info.all_ids, set([child.case_id, parent.case_id]))
+        self.assertEqual(footprint_info.base_ids, set([child.case_id]))
+
+    def test_footprint_with_extension(self):
+        """
+        Extensions are brought in if the host case is owned;
+        Host case is brought in if the extension is owned
+        """
+        host = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id}
+        )
+        extension = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(host, relationship=CASE_INDEX_EXTENSION)]
+        )
+
+        self.factory.create_or_update_cases([host, extension])
+        footprint_info = get_case_footprint_info(self.domain, self.owner_id)
+        self.assertEqual(footprint_info.all_ids, set([extension.case_id, host.case_id]))
+        self.assertEqual(footprint_info.base_ids, set([host.case_id]))
+
+        footprint_info = get_case_footprint_info(self.domain, self.other_owner_id)
+        self.assertEqual(footprint_info.all_ids, set([extension.case_id, host.case_id]))
+        self.assertEqual(footprint_info.base_ids, set([extension.case_id]))
+
+    def test_footprint_with_extension_of_parent(self):
+        """ Extensions of parents should be included """
+        parent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id, 'close': True}
+        )
+        child = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id},
+            indices=[CaseIndex(parent)]
+        )
+        extension = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(parent, relationship=CASE_INDEX_EXTENSION)]
+        )
+        self.factory.create_or_update_cases([parent, child, extension])
+        footprint_info = get_case_footprint_info(self.domain, self.owner_id)
+        self.assertEqual(footprint_info.all_ids, set([extension.case_id, parent.case_id, child.case_id]))
+
+    def test_footprint_with_extension_of_child(self):
+        """ Extensions of children should be included """
+        parent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id, 'close': True}
+        )
+        child = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id},
+            indices=[CaseIndex(parent)]
+        )
+        extension = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(child, relationship=CASE_INDEX_EXTENSION)]
+        )
+        self.factory.create_or_update_cases([parent, child, extension])
+        footprint_info = get_case_footprint_info(self.domain, self.owner_id)
+        self.assertEqual(footprint_info.all_ids, set([extension.case_id, parent.case_id, child.case_id]))
