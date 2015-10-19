@@ -619,7 +619,6 @@ class ProjectDataTab(UITab):
                 DownloadFormExportView,
                 DownloadCaseExportView,
                 BulkDownloadFormExportView,
-                BulkDownloadCaseExportView,
                 EditCustomFormExportView,
                 EditCustomCaseExportView,
             )
@@ -657,10 +656,6 @@ class ProjectDataTab(UITab):
                             {
                                 'title': CreateCustomCaseExportView.page_title,
                                 'urlname': CreateCustomCaseExportView.urlname,
-                            },
-                            {
-                                'title': BulkDownloadCaseExportView.page_title,
-                                'urlname': BulkDownloadCaseExportView.urlname,
                             },
                             {
                                 'title': DownloadCaseExportView.page_title,
