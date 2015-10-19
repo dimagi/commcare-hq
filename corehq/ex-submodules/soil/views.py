@@ -39,7 +39,7 @@ def heartbeat_status(request):
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
     app_download = False
     if 'apps' in request.META['HTTP_REFERER']:
-         app_download = True
+        app_download = True
     try:
         context = get_download_context(download_id, check_state=True, app_download=app_download)
     except TaskFailedError as e:
