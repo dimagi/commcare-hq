@@ -41,6 +41,7 @@ install:
   - "pip install coverage unittest2 mock --use-mirrors"
   - "npm install -g bower"
   - "npm install -g grunt"
+  - "npm install -g grunt-cli"
   - "ln -nfs `which bower` /home/travis/bower"
   - "python manage.py bower install"
   - "python manage.py runserver 8000 &"
