@@ -166,7 +166,7 @@ class FormProcessorInterface(object):
     def submit_form_locally(instance, domain='test-domain', **kwargs):
         from corehq.apps.receiverwrapper.util import submit_form_locally
         response, xform, cases = submit_form_locally(instance, domain, **kwargs)
-        # response is an iterable to @to_generic doesn't work
+        # response is an iterable so @to_generic doesn't work
         return response, xform.to_generic(), [case.to_generic() for case in cases]
 
     @staticmethod
