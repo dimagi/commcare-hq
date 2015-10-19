@@ -15,6 +15,9 @@ from .signals import indicator_document_updated
 import fluff.util
 
 
+default_app_config = 'fluff.app_config.FluffAppConfig'
+
+
 REDUCE_TYPES = set(['sum', 'count', 'min', 'max', 'sumsqr'])
 TYPE_INTEGER = 'integer'
 TYPE_DECIMAL = 'decimal'
