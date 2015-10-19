@@ -5,6 +5,17 @@
 {% load compress %}
 {% load djangular_tags %}
 
+{% block stylesheets %}{{ block.super }}
+    <script type="text/css">
+        .bulk-checkbox {
+            margin-top: 8px;
+            vertical-align: top;
+            line-height: 20px;
+            display: inline-block;
+        }
+    </script>
+{% endblock %}
+
 {% block js %}
 <script type="text/javascript" src="{% new_static 'export/js/list_exports.ng.js' %}"></script>
 {% endblock %}
@@ -30,7 +41,7 @@
              ng-cloak>
             <p class="lead">
                 {% blocktrans %}
-                    Exports are are a way to download data from CommCare HQ
+                    Exports are a way to download data from CommCare HQ
                     in a variety of formats (CSV, Excel, etc.) for use in
                     third-party Data Analysis tools.
                 {% endblocktrans %}
@@ -139,10 +150,10 @@
                                            style="cursor: pointer;"
                                            for="add-to-bulk-{{ export.id }}">
                                         <input type="checkbox"
+                                               class="bulk-checkbox"
                                                ng-model="export.addedToBulk"
                                                ng-change="updateBulkStatus()"
-                                               id="add-to-bulk-{{ export.id }}"
-                                               style="margin-top: 10px;" />
+                                               id="add-to-bulk-{{ export.id }}" />
                                         &nbsp;{% trans "Add to Bulk Export" %}
                                     </label>
                                 </td>
