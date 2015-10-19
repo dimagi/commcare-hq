@@ -822,6 +822,7 @@ class EntriesHelper(object):
         for detail_type, detail, enabled in module.get_details():
             if (detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml) and enabled):
                 detail_persistent = id_strings.detail(detail_module, detail_type)
-                detail_inline = self.details_helper.get_detail_id_safe(detail_module, 'case_long')
+                if detail.pull_down_tile:
+                    detail_inline = self.details_helper.get_detail_id_safe(detail_module, 'case_long')
                 break
         return detail_persistent, detail_inline
