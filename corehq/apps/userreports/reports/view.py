@@ -57,6 +57,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     emailable = True
 
     _domain = None
+
     @property
     def domain(self):
         if self._domain is not None:
@@ -158,6 +159,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         return self.spec.ui_filters
 
     _report_config_id = None
+
     @property
     def report_config_id(self):
         if self._report_config_id is not None:
@@ -165,6 +167,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         return self.kwargs['subreport_slug']
 
     _lang = None
+
     @property
     def lang(self):
         if self._lang is not None:
@@ -192,7 +195,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def add_warnings(self, request):
         for warning in self.data_source.column_warnings:
             messages.warning(request, warning)
-
 
     @property
     def page_context(self):
