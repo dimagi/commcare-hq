@@ -119,7 +119,7 @@ def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
 
 
 def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
-    case_blocks = [CaseBlock(case_id=case_id, version=V2).as_xml() for case_id in case_ids]
+    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
     return check_user_has_case(testcase, user, case_blocks,
                                should_have=False, **kwargs)
 
