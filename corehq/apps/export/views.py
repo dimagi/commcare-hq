@@ -226,13 +226,13 @@ class BaseCreateCustomExportView(BaseExportView):
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):
     urlname = 'custom_export_form'
-    page_title = ugettext_lazy("Create Custom Form Export")
+    page_title = ugettext_lazy("Create Form Export")
     export_type = 'form'
 
 
 class CreateCustomCaseExportView(BaseCreateCustomExportView):
     urlname = 'custom_export_case'
-    page_title = ugettext_lazy("Create Custom Case Export")
+    page_title = ugettext_lazy("Create Case Export")
     export_type = 'case'
 
 
