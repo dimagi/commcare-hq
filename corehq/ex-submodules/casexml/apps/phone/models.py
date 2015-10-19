@@ -2,6 +2,7 @@ from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 import json
+import itertools
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
@@ -472,6 +473,41 @@ class IndexTree(DocumentSchema):
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
 
+    @staticmethod
+    def get_all_dependencies(case_id, child_index_tree, extension_index_tree,
+                             cached_child_map=None, cached_extension_map=None):
+        """ Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
+
+        Traverse each incoming index, return each touched case
+        Traverse each outgoing index in the extension tree, return each touched case
+        """
+
+        def _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map):
+            all_cases.add(case_id)
+
+            all_incoming_indices = itertools.chain(
+                child_index_tree.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_child_map),
+                extension_index_tree.get_cases_that_directly_depend_on_case(case_id,
+                                                                            cached_map=cached_extension_map)
+            )
+
+            for dependent_case in all_incoming_indices:
+                # incoming indices
+                if dependent_case not in all_cases:
+                    all_cases.add(dependent_case)
+                    _recursive_call(dependent_case, all_cases, cached_child_map, cached_extension_map)
+            for indexed_case in extension_index_tree.indices.get(case_id, {}).values():
+                # outgoing extension indices
+                if indexed_case not in all_cases:
+                    all_cases.add(indexed_case)
+                    _recursive_call(indexed_case, all_cases, cached_child_map, cached_extension_map)
+
+        all_cases = set()
+        cached_child_map = cached_child_map or _reverse_index_map(child_index_tree.indices)
+        cached_extension_map = cached_extension_map or _reverse_index_map(extension_index_tree.indices)
+        _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map)
+        return all_cases
+
     def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
         cached_map = cached_map or _reverse_index_map(self.indices)
         return cached_map.get(case_id, [])
@@ -575,7 +611,16 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('pruning: {}'.format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
         reverse_index_map = _reverse_index_map(self.index_tree.indices)
-        dependencies = self.index_tree.get_all_cases_that_depend_on_case(case_id, cached_map=reverse_index_map)
+        reverse_extension_index_map = _reverse_index_map(self.extension_index_tree.indices)
+
+        dependencies = IndexTree.get_all_dependencies(
+            case_id,
+            child_index_tree=self.index_tree,
+            extension_index_tree=self.extension_index_tree,
+            cached_child_map=reverse_index_map,
+            cached_extension_map=reverse_extension_index_map,
+        )
+
         # we can only potentially remove a case if it's already in dependent case ids
         # and therefore not directly owned
         candidates_to_remove = dependencies & self.dependent_case_ids_on_phone
@@ -639,9 +684,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
             # we have some possible candidates for removal. we should check each of them.
             candidates_to_remove.remove(case_id)  # except ourself
             for candidate in candidates_to_remove:
-                candidate_dependencies = self.index_tree.get_all_cases_that_depend_on_case(
-                    candidate, cached_map=reverse_index_map
-                )
+                candidate_dependencies = IndexTree.get_all_dependencies(
+                    candidate,
+                    child_index_tree=self.index_tree,
+                    extension_index_tree=self.extension_index_tree,
+                    cached_child_map=reverse_index_map,
+                    cached_extension_map=reverse_extension_index_map,)
+
                 if not candidate_dependencies - self.dependent_case_ids_on_phone:
                     _remove_case(candidate)
 
