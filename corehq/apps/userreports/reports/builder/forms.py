@@ -10,7 +10,7 @@ from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext as _, ugettext_noop
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -449,7 +449,7 @@ ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties)
 
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
-    button_text = _('Done')
+    button_text = ugettext_noop('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         """
@@ -489,7 +489,7 @@ class ConfigureNewReportBase(forms.Form):
 
         buttons = [
             StrictButton(
-                self.button_text,
+                _(self.button_text),
                 css_class="btn btn-primary disable-on-submit",
                 type="submit",
             )
@@ -926,7 +926,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
     columns = JsonField(required=True)
-    column_legend_fine_print = _("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
+    column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
     def container_fieldset(self):
@@ -939,7 +939,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @property
     def column_fieldset(self):
         return crispy.Fieldset(
-            _legend(_("Columns"), self.column_legend_fine_print),
+            _legend(_("Columns"), _(self.column_legend_fine_print)),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
@@ -984,7 +984,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
-    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
+    column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
 
     @property
     def container_fieldset(self):
@@ -1057,7 +1057,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
-    column_legend_fine_print = _('Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
+    column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
