@@ -180,10 +180,6 @@ class FilterExportDownloadForm(forms.Form):
             default_datespan=default_datespan
         )
 
-        initial = kwargs.get('initial', {})
-        if initial.get('export_id'):
-            self.fields['export_id'].widget = forms.HiddenInput()
-
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3'
