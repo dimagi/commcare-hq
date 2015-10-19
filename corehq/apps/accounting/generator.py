@@ -101,9 +101,9 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def arbitrary_subscribable_plan():
+def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
     return DefaultProductPlan.objects.get(
-        edition=random.choice(SUBSCRIBABLE_EDITIONS),
+        edition=edition,
         product_type=SoftwareProductType.COMMCARE,
         is_trial=False
     ).plan.get_version()
@@ -128,7 +128,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain, organization=None)
     subscription = Subscription(
         account=billing_account,
-        plan_version=plan_version or arbitrary_subscribable_plan(),
+        plan_version=plan_version or subscribable_plan(),
         subscriber=subscriber,
         salesforce_contract_id=data_gen.arbitrary_unique_name("SFC")[:80],
         date_start=date_start,
