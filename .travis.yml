@@ -44,10 +44,10 @@ install:
   - "npm install -g grunt-cli"
   - "ln -nfs `which bower` /home/travis/bower"
   - "python manage.py bower install"
-  - "python manage.py runserver 8000 &"
-  - "sleep 5" # allow django server to start
+  - "python manage.py runserver 8000 &" # Used to run mocha browser tests
+  - "sleep 10" # allow django server to start
   - "npm install"
-script: "grunt mocha && coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER"
+script: "grunt mocha --debug && coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER"
 after_success:
   - coverage report
   - coveralls
