@@ -13,14 +13,14 @@ NOSE_ARGS = [
 ]
 NOSE_PLUGINS = [
     # Disable migrations by default. Use --with-migrations to enable them.
-    'corehq.util.nose.DjangoMigrationsPlugin',
-    'corehq.util.nose.OmitDjangoInitModuleTestsPlugin',
+    'corehq.tests.nose.DjangoMigrationsPlugin',
+    'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
 ]
 
 # these settings can be overridden with environment variables
 for key, value in {
-    'NOSE_DB_TEST_CONTEXT': 'corehq.util.nose.HqdbContext',
-    'NOSE_NON_DB_TEST_CONTEXT': 'corehq.util.nose.ErrorOnDbAccessContext',
+    'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
+    'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
 
     # ignore record_deploy_success.py because datadog may not be installed
     # (only matters when running --with-doctests)
