@@ -166,6 +166,8 @@ class FilterExportDownloadForm(forms.Form):
         super(FilterExportDownloadForm, self).__init__(*args, **kwargs)
 
         if not self.domain_object.uses_locations:
+            # don't use CommCare Supply as a user_types choice if the domain
+            # is not a CommCare Supply domain.
             self.fields['user_types'].choices = self._USER_TYPES_CHOICES[:-1]
 
         self.fields['date_range'].help_text = _(
