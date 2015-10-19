@@ -48,31 +48,29 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
     with open(file_path, "rb") as f:
         xml_data = f.read()
-    doc, uid, case_id = _replace_ids_and_post(
+    updated_xml, uid, case_id = _replace_ids_in_xform_xml(
         xml_data,
         case_id_override=case_id_override,
     )
-    if domain:
-        doc.domain = domain
-    FormProcessorInterface.process_cases(doc)
-    case = FormProcessorInterface.get_case(case_id)
+
+    domain = domain or 'test-domain'
+    _, _, [case] = FormProcessorInterface.submit_form_locally(updated_xml, domain=domain)
     test_class.assertLessEqual(starttime, case.server_modified_on)
     test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
     test_class.assertEqual(case_id, case.id)
     return case
 
 
-def _replace_ids_and_post(xml_data, case_id_override=None):
+def _replace_ids_in_xform_xml(xml_data, case_id_override=None):
     # from our test forms, replace the UIDs so we don't get id conflicts
     uid, case_id = (uuid.uuid4().hex for i in range(2))
-    
+
     if case_id_override:
         case_id = case_id_override
 
     xml_data = xml_data.replace("REPLACE_UID", uid)
     xml_data = xml_data.replace("REPLACE_CASEID", case_id)
-    doc = FormProcessorInterface.post_xform(xml_data)
-    return (doc, uid, case_id)
+    return xml_data, uid, case_id
 
 
 def check_xml_line_by_line(test_case, expected, actual):
