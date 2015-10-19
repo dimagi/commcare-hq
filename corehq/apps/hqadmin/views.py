@@ -698,7 +698,10 @@ def _lookup_id_in_couch(doc_id):
                 "doc_type": doc.get('doc_type', 'Unknown'),
                 "dbname": db.dbname,
             }
-    return {}
+    return {
+        "doc": "NOT FOUND",
+        "doc_id": doc_id,
+    }
 
 
 @require_superuser
