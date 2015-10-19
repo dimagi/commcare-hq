@@ -256,7 +256,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def report_type(self):
         return self.kwargs['report_type']
 
-
     @property
     def page_context(self):
         context = {
