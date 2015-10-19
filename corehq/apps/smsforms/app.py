@@ -178,15 +178,13 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
         cleaned_xml = tostring(root)
         
         # Submit the xml and end the session
-        resp = submit_form_locally(cleaned_xml, session.domain,
+        resp, xform, cases = submit_form_locally(cleaned_xml, session.domain,
             app_id=session.app_id)
-        xform_id = resp['X-CommCareHQ-FormID']
         session.end(completed=False)
-        session.submission_id = xform_id
+        session.submission_id = xform.get_id
         session.save()
         
         # Tag the submission as a partial submission
-        xform = XFormInstance.get(xform_id)
         xform.partial_submission = True
         xform.survey_incentive = session.survey_incentive
         xform.save()

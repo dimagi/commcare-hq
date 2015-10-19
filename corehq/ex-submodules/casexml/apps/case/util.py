@@ -33,8 +33,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
     Extras is used to add runtime attributes to the form before
     sending it off to the case (current use case is sync-token pairing)
     """
-    import couchforms
-    from corehq.apps.receiverwrapper.util import DefaultAuthContext
+    from corehq.apps.receiverwrapper.util import submit_form_locally
 
     if form_extras is None:
         form_extras = {}
@@ -46,14 +45,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
 
     form = make_form_from_case_blocks(case_blocks)
 
-    form_extras['auth_context'] = (
-        form_extras.get('auth_context') or DefaultAuthContext())
-    sp = couchforms.SubmissionPost(
-        instance=form,
-        domain=domain,
-        **form_extras
-    )
-    response, xform, cases = sp.run()
+    response, xform, cases = submit_form_locally(form, domain, **form_extras)
     return xform, cases
 
 
