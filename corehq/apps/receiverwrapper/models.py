@@ -172,7 +172,7 @@ class RegisterGenerator(object):
         return generator_collection.get_default_format()
 
 
-class Repeater(Document, QuickCachedDocumentMixin, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     base_doc = 'Repeater'
 
     domain = StringProperty()
