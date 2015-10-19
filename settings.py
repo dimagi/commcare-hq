@@ -1042,7 +1042,7 @@ if DEBUG:
             'luna',
         )
 
-    INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha')
+    INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
 
     import warnings
     warnings.simplefilter('default')
