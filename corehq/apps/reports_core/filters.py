@@ -1,8 +1,6 @@
 from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.reports_core.exceptions import MissingParamException, FilterValueException
-from corehq.apps.style.utils import BOOTSTRAP_2, BOOTSTRAP_3, \
-    get_bootstrap_version
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, CHOICE_DELIMITER
 from corehq.apps.userreports.util import localize
