@@ -48,6 +48,10 @@ class UtilitiesTestCase(SimpleTestCase):
         _test_is_valid_column_name("abcç")
         _test_is_valid_column_name(u"çabc")
 
+        _test_is_invalid_column_name('"')
+        _test_is_invalid_column_name('a"')
+        _test_is_invalid_column_name("'")
+        _test_is_invalid_column_name("a'")
         _test_is_invalid_column_name("$")
         _test_is_invalid_column_name("$a")
         _test_is_invalid_column_name("1")
