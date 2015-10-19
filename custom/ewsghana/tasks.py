@@ -22,7 +22,7 @@ from custom.ewsghana.reminders.visit_website_reminder import VisitWebsiteReminde
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
-from custom.logistics.models import StockDataCheckpoint
+from custom.logistics.models import StockDataCheckpoint, MigrationCheckpoint
 from custom.logistics.tasks import stock_data_task
 
 
@@ -195,15 +195,13 @@ def migrate_email_settings(domain):
 
 
 @task(queue='logistics_background_queue', ignore_result=True)
-def fix_users_with_more_than_one_phone_number(domain):
+def resync_users(domain):
+    checkpoint = MigrationCheckpoint.objects.get(domain=domain)
+    checkpoint.date = None
+    checkpoint.start_date = None
+    checkpoint.offset = 0
+    checkpoint.api = 'webuser'
+    checkpoint.save()
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
-    ews_api = EWSApi(domain, endpoint)
-
-    offset = 0
-    _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True})
-    while smsusers:
-        for sms_user in smsusers:
-            ews_api.sms_user_sync(sms_user)
-        offset += 100
-        _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True}, offset=offset)
+    ews_bootstrap_domain(EWSApi(config.domain, endpoint))
