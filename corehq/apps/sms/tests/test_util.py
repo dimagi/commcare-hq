@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
-from ..util import clean_phone_number, clean_outgoing_sms_text
-from django.test import TestCase
+from corehq.apps.sms.util import clean_phone_number, clean_outgoing_sms_text
+from django.test import SimpleTestCase
 
 
-class UtilTestCase(TestCase):
+class UtilTestCase(SimpleTestCase):
     
     def setUp(self):
         pass
