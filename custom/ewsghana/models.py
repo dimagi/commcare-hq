@@ -101,6 +101,23 @@ class EWSExtension(models.Model):
         return Domain.get_by_name(self.domain)
 
 
+class EWSMigrationStats(models.Model):
+    products_count = models.IntegerField(default=0)
+    locations_count = models.IntegerField(default=0)
+    supply_points_count = models.IntegerField(default=0)
+    sms_users_count = models.IntegerField(default=0)
+    web_users_count = models.IntegerField(default=0)
+    domain = models.CharField(max_length=128, db_index=True)
+
+
+class EWSMigrationProblem(models.Model):
+    domain = models.CharField(max_length=128, db_index=True)
+    object_id = models.CharField(max_length=128, null=True)
+    object_type = models.CharField(max_length=30)
+    description = models.CharField(max_length=128)
+    external_id = models.CharField(max_length=128)
+
+
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):
     FacilityInCharge.objects.filter(location__in=SQLLocation.objects.filter(domain=domain)).delete()

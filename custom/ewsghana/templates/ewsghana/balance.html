@@ -1,0 +1,31 @@
+{% extends 'style/bootstrap2/two_column.html' %}
+{% block main_column %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>
+                    Products
+                </th>
+                <th>
+                    Locations
+                </th>
+                <th>
+                    Supply Points
+                </th>
+                <th>
+                    Web Users
+                </th>
+                <th>
+                    SMS Users
+                </th>
+            </tr>
+        </thead>
+        <tr>
+            <td>{{ products_count }} / {{ stats.products_count }}</td>
+            <td>{{ locations_count }} / {{ stats.locations_count }}</td>
+            <td>{{ supply_points_count }} / {{ stats.supply_points_count }}</td>
+            <td>{{ web_users_count }} / {{ stats.web_users_count }}</td>
+            <td>{{ sms_users_count }} / {{ stats.sms_users_count }}</td>
+        </tr>
+    </table>
+{% endblock %}
