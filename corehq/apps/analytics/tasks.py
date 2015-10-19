@@ -15,6 +15,9 @@ from corehq.util.soft_assert import soft_assert
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
+HUBSPOT_FORM_BUILDER_FORM_ID = "4f118cda-3c73-41d9-a5d1-e371b23b1fb5"
+HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
+HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -107,7 +110,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _link_account_with_cookie(form_id, webuser, cookies, meta):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -139,12 +142,12 @@ def track_created_hq_account_on_hubspot(webuser, cookies, meta):
         'created_account_in_hq': True,
         'is_a_commcare_user': True,
     })
-    _link_account_with_cookie(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
+    _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_user_sign_in_on_hubspot(webuser, cookies, meta):
-    _link_account_with_cookie(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
+    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -169,6 +172,21 @@ def track_confirmed_account_on_hubspot(webuser):
             'confirmed_account': True,
             'domain': domain
         })
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_app_from_template_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
 
 
 def track_workflow(email, event, properties=None):

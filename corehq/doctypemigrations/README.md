@@ -142,6 +142,8 @@ for a continuous topoff based on the couchdb changes feed.
 As that's running, you can check `--stats` to monitor whether you're fully caught up.
 `--continuous` will also output "All caught up" each time it reaches the end of the changes feed.
 
+If you're running this after the blocking migration has already been added to the code then you can go ahead and re-doploy which will flip the DB. Don't forget to clean up afterward (see below).
+
 
 ## Flipping the db
 

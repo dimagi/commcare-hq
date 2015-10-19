@@ -4261,6 +4261,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
+    use_grid_menus = BooleanProperty(default=False)
 
     @property
     @memoized

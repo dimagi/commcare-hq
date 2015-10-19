@@ -168,12 +168,6 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
-    'include-multimedia-odk',
-    'Include multimedia in ODK deploy',
-    TAG_ONE_OFF
-)
-
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
@@ -696,5 +690,12 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'call_center_location_owners',
     'Enable the use of locations as owners of call center cases',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+GRID_MENUS = StaticToggle(
+    'grid_menus',
+    'Allow using grid menus on Android',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
