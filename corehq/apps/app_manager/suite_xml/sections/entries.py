@@ -83,7 +83,7 @@ class EntriesHelper(object):
             xpath,
             XPath.empty_string(),
         )
-        datum = SessionDatum(id=session_id, function=protected_xpath, autoselect=True)
+        datum = SessionDatum(id=session_id, function=protected_xpath)
         assertions = [
             EntriesHelper.get_assertion(
                 XPath.and_(base_xpath.count().eq(1),
