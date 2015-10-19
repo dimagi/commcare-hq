@@ -1918,7 +1918,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock = CaseBlock(
                     create=False,
                     case_id=mapping._id,
-                    version=V2,
                     index=self.supply_point_index_mapping(sp, True)
                 )
 
@@ -1966,7 +1965,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),
-            version=V2,
             owner_id=self._id,
             index=index
         )

@@ -50,7 +50,6 @@ class Command(BaseCommand):
             caseblock = CaseBlock(
                 create=False,
                 case_id=to_update.case.case_id,
-                version=V2,
                 user_id=MOTECH_ID,
                 owner_id=to_update.new_owner_id or CaseBlock.undefined,
                 case_type=to_update.new_type or CaseBlock.undefined,

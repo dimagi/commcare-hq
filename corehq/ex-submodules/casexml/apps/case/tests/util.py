@@ -109,9 +109,9 @@ def assert_user_has_case(testcase, user, case_id, **kwargs):
 
 
 def assert_user_has_cases(testcase, user, case_ids, **kwargs):
-    case_blocks = [CaseBlock(case_id=case_id, version=V2).as_xml() for case_id in case_ids]
+    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
     return check_user_has_case(testcase, user, case_blocks,
-                               should_have=True, line_by_line=False, version=V2, **kwargs)
+                               should_have=True, line_by_line=False, **kwargs)
 
 
 def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
@@ -119,9 +119,9 @@ def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
 
 
 def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
-    case_blocks = [CaseBlock(case_id=case_id, version=V2).as_xml() for case_id in case_ids]
+    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
     return check_user_has_case(testcase, user, case_blocks,
-                               should_have=False, version=V2, **kwargs)
+                               should_have=False, **kwargs)
 
 
 def get_case_xmlns(version):
@@ -135,7 +135,7 @@ def extract_caseblocks_from_xml(payload_string, version=V2):
 
 
 def check_user_has_case(testcase, user, case_blocks, should_have=True,
-                        line_by_line=True, restore_id="", version=V1,
+                        line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
 
     if not isinstance(case_blocks, list):
@@ -192,26 +192,6 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
 
     matches = [check_block(case_block) for case_block in case_blocks]
     return restore_config, matches[0] if return_single else matches
-
-
-def post_util(create=False, case_id=None, user_id=None, owner_id=None,
-              case_type=None, version=V2, form_extras=None, close=False, date_modified=None,
-              **kwargs):
-
-    uid = lambda: uuid.uuid4().hex
-    case_id = case_id or uid()
-    block = CaseBlock(create=create,
-                      case_id=case_id,
-                      user_id=user_id or uid(),
-                      owner_id=owner_id or uid(),
-                      case_type=case_type or 'test',
-                      version=version,
-                      date_modified=date_modified,
-                      update=kwargs,
-                      close=close).as_xml()
-    form_extras = form_extras or {}
-    FormProcessorInterface.post_case_blocks([block], form_extras)
-    return case_id
 
 
 @unit_testing_only
