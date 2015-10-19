@@ -1071,6 +1071,8 @@ def rebuild_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def resave_case(request, domain, case_id):
+    """Re-save the case to have it re-processed by pillows
+    """
     case = get_document_or_404(CommCareCase, domain, case_id)
     CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
     messages.success(
@@ -1523,6 +1525,8 @@ def unarchive_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def resave_form(request, domain, instance_id):
+    """Re-save the form to have it re-processed by pillows
+    """
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     XFormInstance.get_db().save_doc(instance.to_json())
