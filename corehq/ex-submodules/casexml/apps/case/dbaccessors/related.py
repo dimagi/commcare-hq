@@ -1,5 +1,6 @@
 from collections import namedtuple
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
+from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 
 
 def get_indexed_case_ids(domain, case_ids):
@@ -15,20 +16,27 @@ def get_indexed_case_ids(domain, case_ids):
     )]
 
 
+def get_extension_case_ids(domain, case_ids):
+    """
+    Given a base list of case ids, for those that are open, get all ids of all extension cases that reference them
+    """
+    return [r.case_id for r in get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_EXTENSION)]
+
+
 def get_reverse_indexed_case_ids(domain, case_ids):
     """
     Given a base list of case ids, gets all ids of cases that reference them (child cases)
     """
-    return [r.case_id for r in get_all_reverse_indices_info(domain, case_ids)]
+    return [r.case_id for r in get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_CHILD)]
 
 
-def get_reverse_indexed_cases(domain, case_ids):
+def get_reverse_indexed_cases(domain, case_ids, relationship=CASE_INDEX_CHILD):
     """
     Given a base list of cases, gets all wrapped cases that directly
-    reference them (child cases).
+    reference them (with relationship <relationship>).
     """
     from casexml.apps.case.models import CommCareCase
-    keys = [[domain, case_id, 'reverse_index'] for case_id in case_ids]
+    keys = [[domain, case_id, 'reverse_index', relationship] for case_id in case_ids]
     return CommCareCase.view(
         'case/related',
         keys=keys,
@@ -40,9 +48,9 @@ def get_reverse_indexed_cases(domain, case_ids):
 IndexInfo = namedtuple('IndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type'])
 
 
-def get_all_reverse_indices_info(domain, case_ids):
+def get_all_reverse_indices_info(domain, case_ids, relationship=CASE_INDEX_CHILD):
     from casexml.apps.case.models import CommCareCase
-    keys = [[domain, case_id, 'reverse_index'] for case_id in case_ids]
+    keys = [[domain, case_id, 'reverse_index', relationship] for case_id in case_ids]
 
     def _row_to_index_info(row):
         return IndexInfo(
@@ -58,11 +66,11 @@ def get_all_reverse_indices_info(domain, case_ids):
     ))
 
 
-def get_reverse_indices_json(domain, case_id):
+def get_reverse_indices_json(domain, case_id, relationship=CASE_INDEX_CHILD):
     from casexml.apps.case.models import CommCareCase
     return CommCareCase.get_db().view(
         "case/related",
-        key=[domain, case_id, "reverse_index"],
+        key=[domain, case_id, "reverse_index", relationship],
         reduce=False,
         wrapper=lambda r: r['value']
     ).all()
