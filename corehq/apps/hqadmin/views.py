@@ -686,8 +686,9 @@ def loadtest(request):
 def _lookup_id_in_couch(doc_id):
     db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
     for url in db_urls:
+        db = Database(url)
         try:
-            doc = Database(url).get(doc_id)
+            doc = db.get(doc_id)
         except ResourceNotFound:
             pass
         else:
@@ -695,7 +696,7 @@ def _lookup_id_in_couch(doc_id):
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
                 "doc_id": doc_id,
                 "doc_type": doc.get('doc_type', 'Unknown'),
-                "db_url": url.split('@')[-1],
+                "dbname": db.dbname,
             }
     return {}
 
