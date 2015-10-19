@@ -174,7 +174,7 @@ class TestExpandedColumn(TestCase):
         )
         data_source_config.validate()
         data_source_config.save()
-        self.delete_objs.append(data_source_config)
+        self.addCleanup(data_source_config.delete)
         if build_data_source:
             tasks.rebuild_indicators(data_source_config._id)
 
@@ -193,19 +193,16 @@ class TestExpandedColumn(TestCase):
             configured_charts=[]
         )
         report_config.save()
-        self.delete_objs.append(report_config)
+        self.addCleanup(report_config.delete)
         data_source = ReportFactory.from_spec(report_config)
 
         return data_source, data_source.column_configs[0]
 
     def setUp(self):
         delete_all_cases()
-        self.delete_objs = []
 
     def tearDown(self):
         delete_all_cases()
-        for obj in self.delete_objs:
-            obj.delete()
         connection_manager.dispose_engine(UCR_ENGINE_ID)
 
     def test_getting_distinct_values(self):
