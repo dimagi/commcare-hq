@@ -19,7 +19,7 @@ module.exports = function(grunt) {
     apps.forEach(function(app) {
         mochaConfig[app] = {
             options: {
-                urls: [BASE_URL + app],
+                urls: [BASE_URL + app + '/'],
                 run: true
             }
         };
