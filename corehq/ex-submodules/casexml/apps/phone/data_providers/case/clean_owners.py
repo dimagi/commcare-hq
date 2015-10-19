@@ -4,6 +4,8 @@ from functools import partial
 from datetime import datetime
 from dimagi.utils.couch.undo import is_deleted
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.dbaccessors import get_extension_case_ids
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
@@ -65,7 +67,8 @@ class CleanOwnerCaseSyncOperation(object):
 
         all_maybe_syncing = copy(case_ids_to_sync)
         all_synced = set()
-        all_indices = defaultdict(set)
+        child_indices = defaultdict(set)
+        extension_indices = defaultdict(set)
         all_dependencies_syncing = set()
         while case_ids_to_sync:
             ids = pop_ids(case_ids_to_sync, chunk_size)
@@ -85,9 +88,12 @@ class CleanOwnerCaseSyncOperation(object):
 
                 # update the indices in the new sync log
                 if case.indices:
-                    all_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices}
                     # and double check footprint for non-live cases
                     for index in case.indices:
+                        if index.relationship == CASE_INDEX_EXTENSION:
+                            extension_indices[case._id] = {index.identifier: index.referenced_id}
+                        else:
+                            child_indices[case._id] = {index.identifier: index.referenced_id}
                         if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
@@ -109,7 +115,8 @@ class CleanOwnerCaseSyncOperation(object):
             self.restore_state.current_sync_log.to_json()
         )
         self.restore_state.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
-        index_tree = IndexTree(indices=all_indices)
+        index_tree = IndexTree(indices=child_indices)
+        extension_index_tree = IndexTree(indices=extension_indices)
         case_ids_on_phone = all_synced
         primary_cases_syncing = all_synced - all_dependencies_syncing
         if not self.restore_state.is_initial:
@@ -124,6 +131,7 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
         self.restore_state.current_sync_log.index_tree = index_tree
+        self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
 
         _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state)
         # this is a shortcut to prune closed cases we just sent down before saving the sync log
