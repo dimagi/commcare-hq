@@ -99,7 +99,6 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     case_updates = [
         CaseBlock(
             case_id=index_info.case_id,
-            version=V2,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
             }

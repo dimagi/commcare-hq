@@ -23,8 +23,8 @@ class CaseExclusionTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "exclusion", "device_report.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
+
+        FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual(0, get_total_case_count())
         
     def testNestedExclusion(self):
@@ -34,8 +34,6 @@ class CaseExclusionTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "exclusion", "nested_device_report.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
+        _, _, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual(1, get_total_case_count())
-        case = CommCareCase.get("case_in_form")
         self.assertEqual("form case", case.name)

@@ -192,7 +192,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 caseblock = CaseBlock(
                     create=True,
                     case_id=id,
-                    version=V2,
                     owner_id=owner_id,
                     user_id=user_id,
                     case_type=config.case_type,
@@ -217,7 +216,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 caseblock = CaseBlock(
                     create=False,
                     case_id=case._id,
-                    version=V2,
                     update=fields_to_update,
                     **extras
                 )

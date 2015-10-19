@@ -125,7 +125,6 @@ class TestExpandedColumn(TestCase):
             create=True,
             case_id=id,
             case_type=self.case_type,
-            version=V2,
             update=properties,
         ).as_xml()
         FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})

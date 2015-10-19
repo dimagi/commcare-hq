@@ -200,6 +200,16 @@ class GenericCommCareCase(JsonObject):
         from corehq.form_processor.interfaces import FormProcessorInterface
         return FormProcessorInterface.get_reverse_indices(self.domain, self.id)
 
+    def has_index(self, id):
+        return id in (i.identifier for i in self.indices)
+
+    def get_index(self, id):
+        found = filter(lambda i: i.identifier == id, self.indices)
+        if found:
+            assert(len(found) == 1)
+            return found[0]
+        return None
+
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
         from jsonobject.base import get_dynamic_properties

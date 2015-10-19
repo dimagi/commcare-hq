@@ -130,7 +130,6 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type='exploder-type',
-            version=V2
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(get_case_ids_in_domain(self.domain.name)))
@@ -149,7 +148,6 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type=parent_type,
-            version=V2
         ).as_string()
 
         child_id = uuid.uuid4().hex
@@ -160,7 +158,6 @@ class ExplodeCasesDbTest(TestCase):
             owner_id=self.user_id,
             case_type='exploder-child-type',
             index={'parent': (parent_type, parent_id)},
-            version=V2
         ).as_string()
 
         submit_case_blocks([parent_block, child_block], self.domain.name)

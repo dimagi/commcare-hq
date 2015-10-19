@@ -27,6 +27,7 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
         all_pillow_classes = get_all_pillow_classes()
         expected_meta = self.get_json('all-pillow-meta')
 
+        self.assertEqual(len(all_pillow_classes), len(expected_meta))
         for pillow_class in all_pillow_classes:
             self.assertEqual(expected_meta[pillow_class.__name__], _pillow_meta_from_class(pillow_class))
 

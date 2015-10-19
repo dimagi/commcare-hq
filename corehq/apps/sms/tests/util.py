@@ -130,7 +130,6 @@ class TouchformsTestCase(LiveServerTestCase):
             case_type='participant',
             owner_id=owner._id,
             user_id=owner._id,
-            version=V2
         ).as_xml()
         FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
 
@@ -140,7 +139,6 @@ class TouchformsTestCase(LiveServerTestCase):
             case_id=uuid.uuid4().hex,
             case_type='magic_map',
             owner_id=user._id,
-            version=V2,
             index={'parent': ('participant', case._id)}
         ).as_xml()
         FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})

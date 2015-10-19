@@ -441,7 +441,6 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         self.casexml_user = self.user.to_casexml_user()
         self.sp_block = CaseBlock(
             case_id=self.sp._id,
-            version=V2,
         ).as_xml()
 
         # bootstrap ota stuff

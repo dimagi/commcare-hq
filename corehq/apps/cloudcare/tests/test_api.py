@@ -300,7 +300,6 @@ def _create_case(user, type, close=False, **extras):
         case_type=type,
         user_id=user.user_id,
         owner_id=user.user_id,
-        version=V2,
         **extras
     ).as_xml(format_datetime=date_to_xml_string)]
     if close:
@@ -308,7 +307,6 @@ def _create_case(user, type, close=False, **extras):
             create=False,
             case_id=case_id,
             close=True,
-            version=V2,
         ).as_xml(format_datetime=date_to_xml_string))
     FormProcessorInterface.post_case_blocks(blocks, {'domain': TEST_DOMAIN})
     case = CommCareCase.get(case_id)

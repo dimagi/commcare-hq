@@ -40,77 +40,69 @@ class CaseSharingTest(TestCase):
 
     def test_sharing(self):
 
-        def create_and_test(case_id, user, owner, should_have, should_not_have, version):
+        def create_and_test(case_id, user, owner, should_have, should_not_have):
             case_block = self.get_create_block(
                 case_id=case_id,
                 type="case",
                 user_id=user.user_id,
                 owner_id=owner.get_id,
-                version=version
             )
             FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
-            check_has_block(case_block, should_have, should_not_have, version=version)
+            check_has_block(case_block, should_have, should_not_have)
 
-        def update_and_test(case_id, owner=None, should_have=None, should_not_have=None, version=V1):
+        def update_and_test(case_id, owner=None, should_have=None, should_not_have=None):
             case_block = self.get_update_block(
-                case_id='case-a-1',
+                case_id=case_id,
                 update={'greeting': "Hello!"},
                 owner_id=owner.get_id if owner else None,
-                version=version
             )
             FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
-            check_has_block(case_block, should_have, should_not_have, line_by_line=False, version=version)
+            check_has_block(case_block, should_have, should_not_have, line_by_line=False)
 
-        def check_has_block(case_block, should_have, should_not_have, line_by_line=True, version=V1):
+        def check_has_block(case_block, should_have, should_not_have, line_by_line=True):
             for user in should_have:
-                check_user_has_case(self, user.to_casexml_user(), case_block, line_by_line=line_by_line, version=version)
+                check_user_has_case(self, user.to_casexml_user(), case_block, line_by_line=line_by_line)
             for user in should_not_have:
-                check_user_has_case(self, user.to_casexml_user(), case_block, should_have=False, line_by_line=line_by_line, version=version)
+                check_user_has_case(self, user.to_casexml_user(), case_block, should_have=False, line_by_line=line_by_line)
 
-        for version in [V2]:
-            create_and_test(
-                case_id='case-a-1',
-                user=self.userA1,
-                owner=self.groupA,
-                should_have=[self.userA1, self.userA2, self.userX],
-                should_not_have=[self.userB1, self.userB2],
-                version=version
-            )
+        create_and_test(
+            case_id='case-a-1',
+            user=self.userA1,
+            owner=self.groupA,
+            should_have=[self.userA1, self.userA2, self.userX],
+            should_not_have=[self.userB1, self.userB2],
+        )
 
-            create_and_test(
-                case_id='case-b-1',
-                user=self.userB1,
-                owner=self.groupB,
-                should_have=[self.userB1, self.userB2, self.userX],
-                should_not_have=[self.userA1, self.userA2],
-                version=version
-            )
+        create_and_test(
+            case_id='case-b-1',
+            user=self.userB1,
+            owner=self.groupB,
+            should_have=[self.userB1, self.userB2, self.userX],
+            should_not_have=[self.userA1, self.userA2],
+        )
 
-            create_and_test(
-                case_id='case-a-2',
-                user=self.userX,
-                owner=self.groupA,
-                should_have=[self.userA1, self.userA2, self.userX],
-                should_not_have=[self.userB1, self.userB2],
-                version=version
-            )
+        create_and_test(
+            case_id='case-a-2',
+            user=self.userX,
+            owner=self.groupA,
+            should_have=[self.userA1, self.userA2, self.userX],
+            should_not_have=[self.userB1, self.userB2],
+        )
 
-            update_and_test(
-                case_id='case-a-1',
-                should_have=[self.userA1, self.userA2, self.userX],
-                should_not_have=[self.userB1, self.userB2],
-                version=version,
-            )
+        update_and_test(
+            case_id='case-a-1',
+            should_have=[self.userA1, self.userA2, self.userX],
+            should_not_have=[self.userB1, self.userB2],
+        )
 
-            update_and_test(
-                case_id='case-a-1',
-                owner=self.groupB,
-                should_have=[self.userB1, self.userB2, self.userX],
-                should_not_have=[self.userA1, self.userA2],
-                version=version
-            )
+        update_and_test(
+            case_id='case-a-1',
+            owner=self.groupB,
+            should_have=[self.userB1, self.userB2, self.userX],
+            should_not_have=[self.userA1, self.userA2],
+        )
 
-    def get_create_block(self, case_id, type, user_id, owner_id, name=None, version=V1, **kwargs):
+    def get_create_block(self, case_id, type, user_id, owner_id, name=None, **kwargs):
         name = name or case_id
         case_block = CaseBlock(
             create=True,
@@ -120,17 +112,15 @@ class CaseSharingTest(TestCase):
             user_id=user_id,
             external_id=case_id,
             owner_id=owner_id,
-            version=version,
             **kwargs
         ).as_xml()
         return case_block
 
-    def get_update_block(self, case_id, owner_id=None, update=None, version=V1):
+    def get_update_block(self, case_id, owner_id=None, update=None):
         update = update or {}
         case_block = CaseBlock(
             case_id=case_id,
             update=update,
             owner_id=owner_id or CaseBlock.undefined,
-            version=version,
         ).as_xml()
         return case_block
