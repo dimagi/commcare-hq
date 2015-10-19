@@ -1,15 +1,8 @@
 import os
 from django.test.utils import override_settings
 from django.test import TestCase
-from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 from corehq.form_processor.interfaces import FormProcessorInterface
-
-
-def post_util(**kwargs):
-    form_extras = kwargs.get('form_extras', {})
-    form_extras['domain'] = 'out-of-order-test'
-    kwargs['form_extras'] = form_extras
-    return real_post_util(**kwargs)
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

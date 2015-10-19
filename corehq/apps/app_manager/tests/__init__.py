@@ -36,6 +36,7 @@ try:
     from corehq.apps.app_manager.tests.test_case_list_lookup import *
     from corehq.apps.app_manager.tests.test_child_module import *
     from corehq.apps.app_manager.tests.test_report_config import *
+    from corehq.apps.app_manager.tests.test_grid_menus import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

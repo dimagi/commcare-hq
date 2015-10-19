@@ -500,7 +500,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 call_center_location_choices = []
                 if CALL_CENTER_LOCATION_OWNERS.enabled(domain):
                     call_center_location_choices = [
-                        (self.USE_LOCATIONS_CHOICE, "user's location [location]")
+                        (self.USE_LOCATIONS_CHOICE, ugettext_lazy("user's location [location]"))
                     ]
 
                 self.fields["call_center_case_owner"].choices = \

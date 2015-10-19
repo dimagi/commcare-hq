@@ -116,7 +116,7 @@ class Version2CaseParsingTest(TestCase):
             FormProcessorInterface.post_case_blocks([
                 CaseBlock(
                     create=True, case_id=prereq,
-                    user_id=user_id, version=V2
+                    user_id=user_id
                 ).as_xml()
             ])
 

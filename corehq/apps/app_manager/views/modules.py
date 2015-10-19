@@ -178,6 +178,7 @@ def _get_report_module_context(app, module):
         return {
             'report_id': report._id,
             'title': report.title,
+            'description': report.description,
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
             'filter_structure': report.filters,
@@ -488,7 +489,11 @@ def _new_report_module(request, domain, app, name, lang):
     module = app.add_module(ReportModule.new_module(name, lang))
     # by default add all reports
     module.report_configs = [
-        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        ReportAppConfig(
+            report_id=report._id,
+            header={lang: report.title},
+            description={lang: report.description},
+        )
         for report in ReportConfiguration.by_domain(domain)
     ]
     app.save()

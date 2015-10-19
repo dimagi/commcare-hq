@@ -33,8 +33,15 @@ class TestXmlMixin(TestFileMixin):
 
     def assertXmlHasXpath(self, element, xpath):
         message = "Could not find xpath expression '{}' in below XML\n".format(xpath)
+        self._assertXpathHelper(element, xpath, message, should_not_exist=False)
+
+    def assertXmlDoesNotHaveXpath(self, element, xpath):
+        message = "Found xpath expression '{}' in below XML\n".format(xpath)
+        self._assertXpathHelper(element, xpath, message, should_not_exist=True)
+
+    def _assertXpathHelper(self, element, xpath, message, should_not_exist):
         element = parse_normalize(element, to_string=False)
-        if not bool(element.xpath(xpath)):
+        if bool(element.xpath(xpath)) == should_not_exist:
             raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True))
 
     def assertHtmlEqual(self, expected, actual, normalize=True):

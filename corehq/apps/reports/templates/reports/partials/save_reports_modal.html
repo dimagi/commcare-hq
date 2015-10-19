@@ -91,7 +91,13 @@
                     <div class="btn-group">
                         <a href="#" class="btn" data-bind="click: $root.unsetConfigBeingEdited">Cancel</a>
                     </div>
-                    <div class="btn-group" onclick="ga_track_event('Scheduled Reports', 'Create a saved report', '-');">
+                    <div class="btn-group"
+                         onclick="
+                            ga_track_event('Scheduled Reports', 'Create a saved report', '-');
+                            {% if report.spec.report_meta.created_by_builder %}
+                            ga_track_event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
+                            {% endif %}
+                    ">
                         <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
                     </div>
                 </div>
