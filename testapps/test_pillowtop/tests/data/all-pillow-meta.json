@@ -1,15 +1,4 @@
 {
-    "TDHChildClassificationFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.TDHChildClassificationFluffPillow.testhq", 
-        "class_name": "TDHChildClassificationFluffPillow", 
-        "extra_args": {
-            "domains": "tdhtesting rec", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
     "OpmCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.OpmCaseFluffPillow.testhq", 
         "class_name": "OpmCaseFluffPillow", 
@@ -18,28 +7,6 @@
             "doc_type": "CommCareCase"
         }, 
         "document_class": "CommCareCase", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
-    "TDHNewbornTreatmentFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.TDHNewbornTreatmentFluffPillow.testhq", 
-        "class_name": "TDHNewbornTreatmentFluffPillow", 
-        "extra_args": {
-            "domains": "tdhtesting rec", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
-    "TDHEnrollChildFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.TDHEnrollChildFluffPillow.testhq", 
-        "class_name": "TDHEnrollChildFluffPillow", 
-        "extra_args": {
-            "domains": "tdhtesting rec", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
         "couch_filter": null, 
         "include_docs": false
     }, 
@@ -160,17 +127,6 @@
         "couch_filter": null, 
         "include_docs": false
     }, 
-    "TDHInfantClassificationFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.TDHInfantClassificationFluffPillow.testhq", 
-        "class_name": "TDHInfantClassificationFluffPillow", 
-        "extra_args": {
-            "domains": "tdhtesting rec", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
     "GroupPillow": {
         "es_type": "group", 
         "checkpoint_id": "pillowtop_corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
@@ -204,17 +160,6 @@
         "document_class": "CommCareCase", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "include_docs": true
-    }, 
-    "TDHChildTreatmentFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.TDHChildTreatmentFluffPillow.testhq", 
-        "class_name": "TDHChildTreatmentFluffPillow", 
-        "extra_args": {
-            "domains": "tdhtesting rec", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
-        "couch_filter": null, 
-        "include_docs": false
     }, 
     "OpmUserFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.OpmUserFluffPillow.testhq", 
@@ -481,17 +426,6 @@
         "couch_filter": null, 
         "include_docs": false
     }, 
-    "TDHInfantTreatmentFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.TDHInfantTreatmentFluffPillow.testhq", 
-        "class_name": "TDHInfantTreatmentFluffPillow", 
-        "extra_args": {
-            "domains": "tdhtesting rec", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
     "FormDataPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.sofabed.FormDataPillow.testhq", 
         "class_name": "FormDataPillow", 
@@ -520,17 +454,6 @@
             "doc_type": "CommCareCase"
         }, 
         "document_class": "CommCareCase", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
-    "TDHNewbornClassificationFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.TDHNewbornClassificationFluffPillow.testhq", 
-        "class_name": "TDHNewbornClassificationFluffPillow", 
-        "extra_args": {
-            "domains": "tdhtesting rec", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
         "couch_filter": null, 
         "include_docs": false
     }, 
