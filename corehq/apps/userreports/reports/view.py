@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import (
     cls_to_view_login_and_domain,
@@ -50,7 +50,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
-    section_name = _("Reports")
+    section_name = ugettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
     prefix = slug
