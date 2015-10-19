@@ -169,28 +169,19 @@ class DateRangePickerWidget(Input):
     """SUPPORTS BOOTSTRAP 3 ONLY
     Extends the standard input widget to render a Date Range Picker Widget.
     Documentation and Demo here: http://www.daterangepicker.com/
+
+    usage:
+    apply the following decorator to your view's dispatch method
+
+    @use_daterangepicker
+    def dispatch(self, request, *args, **kwargs):
+        super(self, MyView).dispatch(request, *args, **kwargs)
     """
 
     class Range(object):
         LAST_7 = 'last_7_days'
         LAST_MONTH = 'last_month'
         LAST_30_DAYS = 'last_30_days'
-
-    class Media:
-        """INCLUDE THIS MANUALLY IN YOUR TEMPLATE. ONLY HERE FOR REMINDER.
-        You can't put the generator variable in the template directly
-        in one of the js content blocks because offline compression \
-        will fall apart.
-        """
-        css = {
-            'all': ('style/lib/daterangepicker-b3/daterangepicker.css',)
-        }
-        js = (
-            'style/lib/daterangepicker-b3/moment.min.js',
-            'style/lib/daterangepicker-b3/daterangepicker.js',
-            # maybe this should live somewhere else eventually:
-            'style/js/daterangepicker.config.js',
-        )
 
     range_labels = {
         Range.LAST_7: ugettext_noop('Last 7 Days'),
