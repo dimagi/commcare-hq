@@ -1,8 +1,5 @@
 from django.test import TestCase
 from django.test.utils import override_settings
-from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces import FormProcessorInterface
 
 ALICE_XML = """<?xml version='1.0' ?>
