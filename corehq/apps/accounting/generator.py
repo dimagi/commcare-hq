@@ -201,10 +201,9 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
 
 def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, num_sms):
     from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
-    from corehq.apps.smsbillables import generator as sms_gen
 
-    gateway_fee = SmsGatewayFee.create_new('MACH', direction, sms_gen.arbitrary_fee())
-    usage_fee = SmsUsageFee.create_new(direction, sms_gen.arbitrary_fee())
+    gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
+    usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
 
     _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
 
