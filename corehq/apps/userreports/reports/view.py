@@ -164,8 +164,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return self._report_config_id
         return self.kwargs['subreport_slug']
 
+    _lang = None
     @property
     def lang(self):
+        if self._lang is not None:
+            return self._lang
         return self.request.couch_user.language or default_language()
 
     def get(self, request, *args, **kwargs):
