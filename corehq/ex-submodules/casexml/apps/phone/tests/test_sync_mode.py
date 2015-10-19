@@ -1132,7 +1132,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # create a parent and child case (with index) from one user
         parent_id = "indexes_sync_parent"
         case_id = "indexes_sync"
-        self._createCaseStubs([parent_id])
+        self._createCaseStubs([parent_id], owner_id=USER_ID)
         child = CaseBlock(
             create=True,
             case_id=case_id,
@@ -1199,12 +1199,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue(main_sync_log.phone_is_holding_case(case_id))
         self.assertTrue(main_sync_log.phone_is_holding_case(parent_id))
         
-        # original user syncs again
-        # make sure there are no new changes
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id,
-                                     purge_restore_cache=True)
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
-
+        # make sure the other user gets the reassigned case
         assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id,
                              purge_restore_cache=True)
         # update the parent case from another user
