@@ -50,4 +50,14 @@ $(function () {
             this.getDateRangeSeparator()
         );
     };
+    $.fn.createBootstrap3DefaultDateRangePicker = function () {
+        this.createBootstrap3DateRangePicker(
+            {
+                'last_7_days': 'Last 7 Days',
+                'last_month': 'Last Month',
+                'last_30_days': 'Last 30 Days'
+            },
+            this.getDateRangeSeparator()
+        )
+    };
 });
