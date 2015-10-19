@@ -13,6 +13,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     def _prep_case_list_form_app(self):
         return AppFactory.case_list_form_app_factory()
 
+    '''
     def test_case_list_registration_form(self):
         factory = self._prep_case_list_form_app()
         app = factory.app
@@ -20,7 +21,9 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         case_module.case_list_form.set_icon('en', 'jr://file/commcare/image/new_case.png')
         case_module.case_list_form.set_audio('en', 'jr://file/commcare/audio/new_case.mp3')
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
+    '''
 
+    '''
     def test_case_list_registration_form_usercase(self):
         factory = self._prep_case_list_form_app()
         app = factory.app
@@ -29,7 +32,9 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         register_form.actions.usercase_preload = PreloadAction(preload={'/data/question1': 'question1'})
         register_form.actions.usercase_preload.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('case-list-form-suite-usercase'), app.create_suite())
+    '''
 
+    '''
     def test_case_list_registration_form_end_for_form_nav(self):
         factory = self._prep_case_list_form_app()
         app = factory.app
@@ -81,6 +86,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             'en': 'Register another Dugong'
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced'), factory.app.create_suite())
+    '''
 
     def test_case_list_registration_form_advanced_autoload(self):
         factory = AppFactory(build_version='2.9')
@@ -103,6 +109,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), factory.app.create_suite())
 
+    '''
     def test_case_list_form_parent_child_advanced(self):
         """
         * Register house (case type = house, basic)
@@ -395,3 +402,4 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
         self.module.case_list_form.form_id = self.form.get_unique_id()
 
         self.assertXmlEqual(self.get_xml('case_list_form_advanced_form'), self.form.render_xform())
+    '''

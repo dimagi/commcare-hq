@@ -90,7 +90,7 @@
         <push>
           <command value="'m0-f0'"/>
           <datum id="case_id_usercase"
-          value="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id" autoselect="true"/>
+          value="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
           <datum id="case_id_new_dugong_0" value="uuid()"/>
           <datum id="return_to" value="'m1'"/>
         </push>
@@ -126,8 +126,7 @@
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_usercase"
-      function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"
-      autoselect="true"/>
+      function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
       <datum id="case_id_new_dugong_0" function="uuid()"/>
     </session>
     <assertions>
