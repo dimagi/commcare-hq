@@ -27,13 +27,11 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.style.decorators import (
-    upgrade_knockout_js,
     use_bootstrap3,
     use_knockout_js,
     use_select2,
@@ -251,7 +249,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     @property
     def report_type(self):
         return self.kwargs['report_type']
-
 
     @property
     def page_context(self):
