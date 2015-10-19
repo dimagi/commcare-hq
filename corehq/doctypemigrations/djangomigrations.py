@@ -1,6 +1,7 @@
 from django.conf import settings
 
 
+
 MIGRATION_MESSAGE = """
 Before you can merge you must run the {slug} doc_type migration.
 
@@ -37,6 +38,6 @@ class MigrationNotComplete(Exception):
 
 def assert_initial_complete(migrator):
     def forwards(apps, schema_editor):
-        if not migrator.last_seq and not settings.UNIT_TESTING:
+        if not migrator.last_seq and not settings.UNIT_TESTING and not hasattr(settings, 'IS_TRAVIS', False):
             raise MigrationNotComplete(MIGRATION_MESSAGE.format(slug=migrator.slug))
     return forwards
