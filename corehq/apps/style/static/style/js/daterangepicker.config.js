@@ -20,16 +20,19 @@ $(function () {
         ranges[range_labels.last_30_days] = [
             moment().subtract('30', 'days').startOf('days')
         ];
-        $(this).daterangepicker({
+        var config = {
             showDropdowns: true,
             ranges: ranges,
-            startDate: (!_.isNull(startdate)) ? new Date(startdate) : '',
-            endDate: (!_.isNull(enddate)) ? new Date(enddate) : '',
             locale: {
                 format: 'YYYY-MM-DD',
                 separator: separator
             }
-        });
+        };
+        if (!_.isEmpty(startdate) && !_.isEmpty(enddate)) {
+            config.startDate = new Date(startdate);
+            config.endDate = new Date(enddate);
+        }
+        $(this).daterangepicker(config);
     };
     $.fn.createBootstrap3DefaultDateRangePicker = function () {
         this.createBootstrap3DateRangePicker(
