@@ -1,6 +1,9 @@
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    InvalidSQLColumnName,
+)
 from corehq.apps.userreports.filters import SinglePropertyValueFilter, CustomFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
@@ -127,7 +130,7 @@ class IndicatorFactory(object):
         cls.validate_spec(spec)
         try:
             return cls.constructor_map[spec['type']](spec, context)
-        except BadValueError, e:
+        except (BadValueError, InvalidSQLColumnName) as e:
             # for now reraise jsonobject exceptions as BadSpecErrors
             raise BadSpecError(str(e))
 
