@@ -68,7 +68,8 @@ All of the following commands should be run in a screen as the cchq user on a pr
 sudo -iu cchq bash
 script /dev/null  # to "own the shell" for screen to work
 screen
-# hit enter to pass screen's opening page
+# hit enter to pass screen's opening page.
+# If the current release is too old, set up a new release and use that instead
 cd /home/cchq/www/production/current
 source python_env/bin/activate
 ```
