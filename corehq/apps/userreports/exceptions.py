@@ -50,5 +50,5 @@ class ReportConfigurationNotFoundError(UserReportsError):
     pass
 
 
-class InvalidSQLColumnName(UserReportsError):
+class InvalidSQLColumnNameError(UserReportsError):
     pass

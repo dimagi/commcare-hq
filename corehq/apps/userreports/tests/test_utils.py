@@ -2,7 +2,7 @@
 
 from django.test import SimpleTestCase
 
-from corehq.apps.userreports.exceptions import InvalidSQLColumnName
+from corehq.apps.userreports.exceptions import InvalidSQLColumnNameError
 from corehq.apps.userreports.sql import get_table_name, get_column_name
 from corehq.apps.userreports.util import validate_sql_column_name
 
@@ -35,7 +35,7 @@ class UtilitiesTestCase(SimpleTestCase):
             self.assertIsNone(validate_sql_column_name(test_str))
 
         def _test_is_invalid_column_name(test_str):
-            self.assertRaises(InvalidSQLColumnName, validate_sql_column_name, test_str)
+            self.assertRaises(InvalidSQLColumnNameError, validate_sql_column_name, test_str)
 
         _test_is_valid_column_name("a")
         _test_is_valid_column_name("abc")
