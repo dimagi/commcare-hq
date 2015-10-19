@@ -130,11 +130,16 @@ class Deployment(DocumentSchema, UpdatableSchema):
 
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
+    use_fixtures = BooleanProperty(default=True)
+    use_user_location_as_owner = BooleanProperty(default=False)
     case_owner_id = StringProperty()
     case_type = StringProperty()
 
-    def is_active_and_valid(self):
-        return self.enabled and self.case_owner_id and self.case_type
+    def fixtures_are_active(self):
+        return self.enabled and self.use_fixtures
+
+    def config_is_valid(self):
+        return self.case_owner_id and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
@@ -1174,45 +1179,6 @@ class Domain(Document, SnapshotMixin):
         """
         from corehq.apps.commtrack.util import make_domain_commtrack
         make_domain_commtrack(self)
-
-
-class DomainCounter(Document):
-    domain = StringProperty()
-    name = StringProperty()
-    count = IntegerProperty()
-
-    @classmethod
-    def get_or_create(cls, domain, name):
-        #TODO: Need to make this atomic
-        counter = cls.view("domain/counter",
-            key = [domain, name],
-            include_docs=True
-        ).one()
-        if counter is None:
-            counter = DomainCounter (
-                domain = domain,
-                name = name,
-                count = 0
-            )
-            counter.save()
-        return counter
-
-    @classmethod
-    def increment(cls, domain, name, amount=1):
-        num_tries = 0
-        while True:
-            try:
-                counter = cls.get_or_create(domain, name)
-                range_start = counter.count + 1
-                counter.count += amount
-                counter.save()
-                range_end = counter.count
-                break
-            except ResourceConflict:
-                num_tries += 1
-                if num_tries >= 500:
-                    raise
-        return (range_start, range_end)
 
 
 class TransferDomainRequest(models.Model):

@@ -191,7 +191,9 @@
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+    {% if module.module_type != 'shadow' %}
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    {% endif %}
     {% for detail in details %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -221,6 +223,25 @@
                     </div>
                 </div>
                 {% block settings_fields %}
+                {% if module.module_type == 'shadow' %}
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Source Module" %}
+                    </label>
+                    <div class="controls">
+                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}">
+                        <option value="">{% trans "None" %}</option>
+                        {% for mod in app.modules %}
+                            {% if mod.module_type == 'basic' %}
+                                {% if mod.id != module.id %}
+                                    <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
                  <div class="control-group">
                     <label class="control-label">
                         {% trans "Menu Mode" %}

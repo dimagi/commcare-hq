@@ -625,7 +625,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
             'Software Product Subscription Agreement</a>.'
         ) % {'pa_url': reverse('product_agreement')}
 
-        from corehq.apps.users.views.mobile import ListCommCareUsersView
+        from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -649,7 +649,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
             FormActions(
                 crispy.HTML(
                     '<a href="%(user_list_url)s" class="btn">%(text)s</a>' % {
-                        'user_list_url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+                        'user_list_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                         'text': _("Back to Mobile Workers List")
                     }
                 ),

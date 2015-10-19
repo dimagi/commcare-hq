@@ -30,7 +30,8 @@ class AllDocsTest(TestCase):
             {key.uri: list(value) for key, value in
              get_all_doc_ids_for_domain_grouped_by_db(self.domain)},
             {get_db(None).uri: ['main_db_doc'],
-             get_db('users').uri: ['users_db_doc']}
+             get_db('users').uri: ['users_db_doc'],
+             get_db('fixtures').uri: []}
         )
 
     def test_get_doc_count_by_type(self):

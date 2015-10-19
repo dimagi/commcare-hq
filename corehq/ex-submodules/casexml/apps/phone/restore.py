@@ -423,13 +423,15 @@ class RestoreState(object):
 
     def create_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
+        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
             user_id=self.user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
             date=datetime.utcnow(),
-            previous_log_id=previous_log_id
+            previous_log_id=previous_log_id,
+            previous_log_rev=previous_log_rev,
         )
         new_synclog.save(**get_safe_write_kwargs())
         return new_synclog

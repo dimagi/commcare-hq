@@ -149,19 +149,28 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def daily_reports():
     for rep in get_scheduled_reports('daily'):
         send_delayed_report(rep)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def weekly_reports():
     for rep in get_scheduled_reports('weekly'):
         send_delayed_report(rep)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def monthly_reports():
     for rep in get_scheduled_reports('monthly'):
         send_delayed_report(rep)
@@ -200,35 +209,39 @@ def update_calculated_properties():
     all_stats = _all_domain_stats()
     for r in results:
         dom = r["name"]
-        calced_props = {
-            "_id": r["_id"],
-            "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
-            "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
-            "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
-            "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
-            "cp_n_users_submitted_form": total_distinct_users([dom]),
-            "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
-            "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
-            "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
-            "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
-            "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-            "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
-            "cp_is_active": CALC_FNS["active"](dom),
-            "cp_has_app": CALC_FNS["has_app"](dom),
-            "cp_last_updated": json_format_datetime(datetime.utcnow()),
-            "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
-            "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
-            "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
-            "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
-            "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
-            "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
-            "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
-            "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
-        }
-        if calced_props['cp_first_form'] == 'No forms':
-            del calced_props['cp_first_form']
-            del calced_props['cp_last_form']
-        send_to_elasticsearch("domains", calced_props)
+        try:
+            calced_props = {
+                "_id": r["_id"],
+                "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
+                "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+                "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
+                "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+                "cp_n_users_submitted_form": total_distinct_users([dom]),
+                "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
+                "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
+                "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
+                "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
+                "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
+                "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
+                "cp_is_active": CALC_FNS["active"](dom),
+                "cp_has_app": CALC_FNS["has_app"](dom),
+                "cp_last_updated": json_format_datetime(datetime.utcnow()),
+                "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
+                "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
+                "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
+                "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
+                "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
+                "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+                "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+                "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
+            }
+            if calced_props['cp_first_form'] == 'No forms':
+                del calced_props['cp_first_form']
+                del calced_props['cp_last_form']
+            send_to_elasticsearch("domains", calced_props)
+        except Exception, e:
+            notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+
 
 
 def is_app_active(app_id, domain):

@@ -43,6 +43,10 @@ development:
         concurrency: 1
       email_queue:
         concurrency: 1
+      logistics_reminder_queue:
+        concurrency: 1
+      logistics_background_queue:
+        concurrency: 1
       flower: {}
 
 india:
@@ -117,6 +121,10 @@ production:
         concurrency: 8
       ucr_queue:
         concurrency: 4
+      logistics_reminder_queue:
+        concurrency: 2
+      logistics_background_queue:
+        concurrency: 2
       flower: {}
 
 staging:

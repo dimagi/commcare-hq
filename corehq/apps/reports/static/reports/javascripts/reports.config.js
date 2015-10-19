@@ -44,7 +44,7 @@ var HQReport = function (options) {
                         if (self.isExportAll) {
                             $.ajax({
                                 url: getReportBaseUrl("export"),
-                                data: getReportParams(undefined, true),
+                                data: getReportParams(undefined),
                                 type: "POST",
                                 success: function() {
                                     alert_user("Your requested excel report will be sent to the email address " +
@@ -157,7 +157,7 @@ var HQReport = function (options) {
         });
     };
 
-    function getReportParams(additionalParams, asObject) {
+    function getReportParams(additionalParams) {
         var params = window.location.search.substr(1);
         if (params.length <= 1) {
             if (self.loadDatespanFromCookie()) {
@@ -166,16 +166,6 @@ var HQReport = function (options) {
             }
         }
         params += (additionalParams ? "&" + additionalParams : "");
-        if (asObject) {
-            // http://stackoverflow.com/a/8649003/835696
-            return JSON.parse('{"' +
-                decodeURI(params)
-                    .replace(/"/g, '\\"')
-                    .replace(/&/g, '","')
-                    .replace(/=/g,'":"') +
-                '"}');
-
-        }
         return params;
 
     }

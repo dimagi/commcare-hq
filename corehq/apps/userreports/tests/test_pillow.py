@@ -1,9 +1,11 @@
+from copy import copy
 import decimal
 import uuid
 from django.test import TestCase
 from mock import patch
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow, REBUILD_CHECK_INTERVAL
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -40,12 +42,14 @@ class IndicatorPillowTest(TestCase):
 
     def setUp(self):
         self.config = get_sample_data_source()
+        self.config.save()
         self.pillow = ConfigurableIndicatorPillow()
         self.pillow.bootstrap(configs=[self.config])
         self.adapter = IndicatorSqlAdapter(self.config)
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
 
     def tearDown(self):
+        self.config.delete()
         self.adapter.drop_table()
 
     def test_filter(self):
@@ -61,6 +65,13 @@ class IndicatorPillowTest(TestCase):
         self.assertTrue(self.pillow.python_filter(
             dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
         ))
+
+    def test_stale_rebuild(self):
+        later_config = copy(self.config)
+        later_config.save()
+        self.assertNotEqual(self.config._rev, later_config._rev)
+        with self.assertRaises(StaleRebuildError):
+            self.pillow.rebuild_table(IndicatorSqlAdapter(self.config))
 
     @patch('corehq.apps.userreports.specs.datetime')
     def test_change_transport(self, datetime_mock):

@@ -5,7 +5,7 @@ from couchdbkit import ResourceNotFound
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.apps.sms.backend.http_api import HttpBackend
+from corehq.messaging.smsbackends.http.api import HttpBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 

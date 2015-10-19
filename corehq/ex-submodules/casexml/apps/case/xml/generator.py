@@ -94,7 +94,7 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     def get_root_element(self):
         root = safe_element("case")
         # moved to attrs in v2
-        root.append(safe_element("case_id", self.case.get_id))
+        root.append(safe_element("case_id", self.case.case_id))
         if self.case.modified_on:
             root.append(safe_element("date_modified",
                                      json_format_datetime(self.case.modified_on)))
@@ -130,7 +130,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         root = safe_element("case")
         root.attrib = {
             "xmlns": V2_NAMESPACE,
-            "case_id": self.case.get_id,
+            "case_id": self.case.case_id,
             "user_id": self.case.user_id or '',
         }
         if self.case.modified_on:

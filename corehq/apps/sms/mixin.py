@@ -16,7 +16,9 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 
+TEST = False
 phone_number_re = re.compile("^\d+$")
+
 
 class PhoneNumberException(Exception):
     pass
@@ -312,6 +314,8 @@ class MobileBackend(Document):
 
     @property
     def backend_module(self):
+        if self.outbound_module == 'corehq.apps.kookoo.api':
+            self.outbound_module = 'corehq.messaging.ivrbackends.kookoo.api'
         module = try_import(self.outbound_module)
         if not module:
             raise RuntimeError('could not find outbound module %s' % self.outbound_module)
@@ -484,8 +488,20 @@ class SMSBackend(MobileBackend):
         """
         return None
 
-    def send(msg, *args, **kwargs):
-        raise NotImplementedError("send() method not implemented")
+    def test_send_sms(self, msg, *args, **kwargs):
+        from corehq.apps.sms.tests import BackendInvocationDoc
+        doc = BackendInvocationDoc()
+        doc._id = '%s-%s' % (self.__class__.__name__, json_format_datetime(msg.date))
+        doc.save()
+
+    def send_sms(self, msg, *args, **kwargs):
+        raise NotImplementedError("send_sms() method not implemented")
+
+    def send(self, msg, *args, **kwargs):
+        if TEST:
+            return self.test_send_sms(msg, *args, **kwargs)
+        else:
+            return self.send_sms(msg, *args, **kwargs)
 
     @classmethod
     def get_opt_in_keywords(cls):
@@ -541,7 +557,7 @@ def apply_leniency(contact_phone_number):
     if isinstance(contact_phone_number, (int, long, Decimal)):
         contact_phone_number = str(contact_phone_number)
     if isinstance(contact_phone_number, basestring):
-        chars = re.compile(r"(\s|-|\.)+")
+        chars = re.compile(r"[()\s\-.]+")
         contact_phone_number = chars.sub("", contact_phone_number)
         contact_phone_number = strip_plus(contact_phone_number)
     else:

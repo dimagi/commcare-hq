@@ -241,18 +241,18 @@
 
         <script type="text/javascript">
             COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
-                SAVE: '{% trans "Save" %}',
-                SAVING: '{% trans "Saving..." %}',
-                SAVED: '{% trans "Saved" %}',
-                RETRY: '{% trans "Try Again" %}',
-                ERROR_SAVING: '{% trans "There was an error saving" %}'
+                SAVE: '{% trans "Save"|escapejs %}',
+                SAVING: '{% trans "Saving..."|escapejs %}',
+                SAVED: '{% trans "Saved"|escapejs %}',
+                RETRY: '{% trans "Try Again"|escapejs %}',
+                ERROR_SAVING: '{% trans "There was an error saving"|escapejs %}'
             }, 'btn btn-success');
             COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
-                SAVE: '{% trans "Delete" %}',
-                SAVING: '{% trans "Deleting..." %}',
-                SAVED: '{% trans "Deleted" %}',
-                RETRY: '{% trans "Try Again" %}',
-                ERROR_SAVING: '{% trans "There was an error deleting" %}'
+                SAVE: '{% trans "Delete"|escapejs %}',
+                SAVING: '{% trans "Deleting..."|escapejs %}',
+                SAVED: '{% trans "Deleted"|escapejs %}',
+                RETRY: '{% trans "Try Again"|escapejs %}',
+                ERROR_SAVING: '{% trans "There was an error deleting"|escapejs %}'
             }, 'btn btn-danger');
         </script>
 

@@ -3,9 +3,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain, get_case_group_meta_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.util.test_utils import DocTestMixin
 
 
-class DBAccessorsTest(TestCase):
+class DBAccessorsTest(TestCase, DocTestMixin):
     @classmethod
     def setUpClass(cls):
         cls.domain = 'skbanskdjoasdkng'
@@ -33,12 +34,6 @@ class DBAccessorsTest(TestCase):
     def tearDownClass(cls):
         CommCareCase.get_db().bulk_delete(cls.cases)
         CommCareCaseGroup.get_db().bulk_delete(cls.case_groups)
-
-    def assert_doc_lists_equal(self, docs1, docs2):
-        self.assertEqual(
-            sorted([(doc._id, doc.to_json()) for doc in docs1]),
-            sorted([(doc._id, doc.to_json()) for doc in docs2]),
-        )
 
     def test_get_case_groups_in_domain(self):
         self.assert_doc_lists_equal(

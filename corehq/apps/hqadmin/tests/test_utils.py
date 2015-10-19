@@ -23,14 +23,14 @@ class TestPillowCheckpointSeqStore(TestCase):
         seq = '1-blahblah'
         self.pillow.set_checkpoint({'seq': seq})
         pillow_seq_store()
-        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint_manager.checkpoint_id)
+        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint.checkpoint_id)
         self.assertEquals(store.seq, seq)
 
     def test_basic_couchdb_seq(self):
         seq = 100
         self.pillow.set_checkpoint({'seq': seq})
         pillow_seq_store()
-        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint_manager.checkpoint_id)
+        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint.checkpoint_id)
         self.assertEquals(store.seq, str(seq))
 
     def test_small_rewind(self):
@@ -45,7 +45,7 @@ class TestPillowCheckpointSeqStore(TestCase):
         self.pillow.set_checkpoint({'seq': seq_rewind})
         pillow_seq_store()
 
-        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint_manager.checkpoint_id)
+        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint.checkpoint_id)
         self.assertEquals(store.seq, seq_rewind)
 
     def test_large_rewind(self):
@@ -60,5 +60,16 @@ class TestPillowCheckpointSeqStore(TestCase):
         self.pillow.set_checkpoint({'seq': seq_rewind})
         pillow_seq_store()
 
-        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint_manager.checkpoint_id)
+        store = PillowCheckpointSeqStore.objects.get(checkpoint_id=self.pillow.checkpoint.checkpoint_id)
         self.assertEquals(store.seq, seq)
+
+    def test_get_by_pillow_name(self):
+        seq = '10-blahblah'
+        self.pillow.set_checkpoint({'seq': seq})
+        pillow_seq_store()
+
+        store = PillowCheckpointSeqStore.get_by_pillow_name('corehq.apps.hqadmin.tests.test_utils.DummyPillow')
+        self.assertIsNotNone(store)
+
+        store = PillowCheckpointSeqStore.get_by_pillow_name('DummyPillowThatDoesNotExist')
+        self.assertIsNone(store)

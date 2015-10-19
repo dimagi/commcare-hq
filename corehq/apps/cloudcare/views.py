@@ -301,6 +301,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     auth_cookie = request.COOKIES.get('sessionid')
+    requires_parent_cases = string_to_boolean(request.GET.get('requires_parent_cases', 'false'))
 
     xpath = EntriesHelper.get_filter_xpath(module)
     instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
@@ -350,7 +351,16 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     cases = filter(lambda c: c.type == case_type, cases)
     cases = [c.get_json(lite=True) for c in cases if c]
 
-    return json_response(cases)
+    response = {'cases': cases}
+    if requires_parent_cases:
+        # Subtract already fetched cases from parent list
+        parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
+            set(map(lambda c: c['case_id'], cases))
+        parents = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), parent_ids)]
+        parents = [c.get_json(lite=True) for c in parents]
+        response.update({'parents': parents})
+
+    return json_response(response)
 
 @cloudcare_api
 def get_apps_api(request, domain):

@@ -37,7 +37,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin, QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
@@ -229,7 +229,7 @@ class UserRolePresets(object):
         return preset_map[preset]()
 
 
-class UserRole(Document):
+class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
@@ -336,11 +336,15 @@ class UserRole(Document):
 
     @classmethod
     def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
+        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
+                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
     @classmethod
     def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
+        return [('none','(none)')] + [
+            (role.get_qualified_id(), role.name or '(No Name)')
+            for role in list(cls.by_domain(domain))
+        ]
 
     @property
     def ids_of_assigned_users(self):
@@ -436,6 +440,7 @@ class DomainMembership(Membership):
         return super(DomainMembership, cls).wrap(data)
 
     @property
+    @memoized
     def role(self):
         if self.is_admin:
             return AdminUserRole(self.domain)
@@ -1913,7 +1918,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock = CaseBlock(
                     create=False,
                     case_id=mapping._id,
-                    version=V2,
                     index=self.supply_point_index_mapping(sp, True)
                 )
 
@@ -1961,7 +1965,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),
-            version=V2,
             owner_id=self._id,
             index=index
         )
@@ -2398,7 +2401,7 @@ class DomainRequest(models.Model):
 
     @classmethod
     def by_domain(cls, domain, is_approved=False):
-        return DomainRequest.objects.filter(domain=domain)
+        return DomainRequest.objects.filter(domain=domain, is_approved=is_approved)
 
     @classmethod
     def by_email(cls, domain, email, is_approved=False):
@@ -2425,7 +2428,7 @@ class DomainRequest(models.Model):
             'url': absolute_reverse("web_users", args=[self.domain]),
         }
         recipients = {u.get_email() for u in
-            WebUser.get_users_by_permission(self.domain, 'edit_web_users')}
+            WebUser.get_admins_by_domain(self.domain)}
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
         subject = _('Request from %s to join %s') % (self.full_name, domain_name)

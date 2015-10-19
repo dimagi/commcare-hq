@@ -39,6 +39,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
     ParentSelect,
     ReportModule,
+    ShadowModule,
     SortElement,
     ReportAppConfig,
     FixtureSelect,
@@ -177,6 +178,7 @@ def _get_report_module_context(app, module):
         return {
             'report_id': report._id,
             'title': report.title,
+            'description': report.description,
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
             'filter_structure': report.filters,
@@ -251,10 +253,10 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
         'detail_label': gettext_lazy('Case Detail'),
         'type': 'case',
         'model': 'case',
+        'subcase_types': subcase_types,
         'sort_elements': module.case_details.short.sort_elements,
         'short': module.case_details.short,
         'long': module.case_details.long,
-        'subcase_types': subcase_types,
     }
     case_properties = case_property_builder.get_properties(case_type_)
     if is_usercase_in_use(app.domain) and case_type_ != USERCASE_TYPE:
@@ -318,20 +320,27 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     """
     attributes = {
         "all": None,
-        "case_type": None, "put_in_root": None, "display_separately": None,
-        "name": None, "case_label": None, "referral_label": None,
-        'media_image': None, 'media_audio': None, 'has_schedule': None,
+        "case_label": None,
         "case_list": ('case_list-show', 'case_list-label'),
-        "task_list": ('task_list-show', 'task_list-label'),
+        "case_list-menu_item_media_audio": None,
+        "case_list-menu_item_media_image": None,
         "case_list_form_id": None,
         "case_list_form_label": None,
-        "case_list_form_media_image": None,
         "case_list_form_media_audio": None,
-        'case_list-menu_item_media_image': None,
-        'case_list-menu_item_media_audio': None,
-        "parent_module": None,
-        "root_module_id": None,
+        "case_list_form_media_image": None,
+        "case_type": None,
+        "display_separately": None,
+        "has_schedule": None,
+        "media_audio": None,
+        "media_image": None,
         "module_filter": None,
+        "name": None,
+        "parent_module": None,
+        "put_in_root": None,
+        "referral_label": None,
+        "root_module_id": None,
+        "source_module_id": None,
+        "task_list": ('task_list-show', 'task_list-label'),
     }
 
     if attr not in attributes:
@@ -380,6 +389,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("source_module_id"):
+        module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):
         module["display_separately"] = json.loads(request.POST.get("display_separately"))
     if should_edit("parent_module"):
@@ -475,9 +486,19 @@ def _new_report_module(request, domain, app, name, lang):
     module = app.add_module(ReportModule.new_module(name, lang))
     # by default add all reports
     module.report_configs = [
-        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        ReportAppConfig(
+            report_id=report._id,
+            header={lang: report.title},
+            description={lang: report.description},
+        )
         for report in ReportConfiguration.by_domain(domain)
     ]
+    app.save()
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id)
+
+
+def _new_shadow_module(request, domain, app, name, lang):
+    module = app.add_module(ShadowModule.new_module(name, lang))
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
@@ -693,7 +714,7 @@ def view_module(request, domain, app_id, module_id):
 
 common_module_validations = [
     (lambda app: app.application_version == APP_V1,
-     _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
+     _('Please upgrade you app to > 2.0 in order to add this module'))
 ]
 
 FN = 'fn'
@@ -713,5 +734,9 @@ MODULE_TYPE_MAP = {
     'report': {
         FN: _new_report_module,
         VALIDATIONS: common_module_validations
-    }
+    },
+    'shadow': {
+        FN: _new_shadow_module,
+        VALIDATIONS: common_module_validations
+    },
 }
