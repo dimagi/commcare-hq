@@ -275,6 +275,7 @@ class APISynchronization(object):
         elif phone_number:
             user.phone_numbers = []
             user.delete_verified_number(phone_number)
+        user.save()
 
     def add_phone_numbers(self, ilsgateway_smsuser, user):
         if ilsgateway_smsuser.phone_numbers:
@@ -327,7 +328,6 @@ class APISynchronization(object):
                 logging.error(e)
         else:
             self.edit_phone_numbers(ilsgateway_smsuser, user)
-            user.save()
         return user
 
     def save_verified_number(self, user, phone_number):
