@@ -39,6 +39,6 @@ $(function () {
                 last_30_days: 'Last 30 Days'
             },
             this.getDateRangeSeparator()
-        )
+        );
     };
 });
