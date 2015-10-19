@@ -59,7 +59,7 @@ class ReportFilter(JsonObject):
 
 class ReportColumn(JsonObject):
     type = StringProperty(required=True)
-    column_id = StringProperty(required=True)
+    column_id = StringProperty(required=True, validators=validate_sql_column_name)
     display = DefaultProperty()
     description = StringProperty()
     transform = DictProperty()
