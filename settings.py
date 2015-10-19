@@ -113,6 +113,7 @@ BOWER_INSTALLED_APPS = (
     'select2-3.4.5-legacy=select2#3.4.5',
     'less#1.7.3',
     'backbone#0.9.1',
+    'bootstrap-daterangepicker#2.1.13',
 )
 
 BOWER_PATH = '/usr/local/bin/bower'

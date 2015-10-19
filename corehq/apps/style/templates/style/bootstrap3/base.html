@@ -68,6 +68,15 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_daterangepicker %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+        {% endcompress %}
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
@@ -299,6 +308,14 @@
         {% if request.use_select2_v4 %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_daterangepicker %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
