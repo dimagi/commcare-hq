@@ -141,8 +141,14 @@ class CleanOwnerCaseSyncOperation(object):
     def get_case_ids_for_owner(self, owner_id):
         if self.is_clean(owner_id):
             if self.restore_state.is_initial:
-                # for a clean owner's initial sync the base set is just the open ids
-                return set(get_open_case_ids(self.restore_state.domain, owner_id))
+                # for a clean owner's initial sync the base set is just the open ids and their extensions
+                all_case_ids = set(get_open_case_ids(self.restore_state.domain, owner_id))
+                new_case_ids = set(all_case_ids)
+                while new_case_ids:
+                    all_case_ids = all_case_ids | new_case_ids
+                    extension_case_ids = set(get_extension_case_ids(self.restore_state.domain, new_case_ids))
+                    new_case_ids = extension_case_ids - all_case_ids
+                return all_case_ids
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
                 return set(get_case_ids_modified_with_owner_since(
