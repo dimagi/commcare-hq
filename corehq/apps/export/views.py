@@ -397,24 +397,33 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
 
     @property
     def page_context(self):
-        return {
+        context = {
             'download_export_form': self.download_export_form,
             'export_list': self.export_list,
             'export_list_url': self.export_list_url,
             'max_column_size': self.max_column_size,
-            'default_date_range': '%(startdate)s%(separator)s%(enddate)s' % {
-                'startdate': (
-                    self.default_datespan.startdate.strftime('%Y-%m-%d')
-                    if self.default_datespan.startdate is not None else ""
-                ),
-                'enddate': (
-                    self.default_datespan.enddate.strftime('%Y-%m-%d')
-                    if self.default_datespan.enddate is not None else ""
-                ),
-                'separator': DateRangePickerWidget.separator,
-            },
             'allow_preview': bool(self.export_id),
         }
+        if (
+            self.default_datespan.startdate is not None
+            and self.default_datespan.enddate is not None
+        ):
+            context.update({
+                'default_date_range': '%(startdate)s%(separator)s%(enddate)s' % {
+                    'startdate': self.default_datespan.startdate.strftime('%Y-%m-%d'),
+                    'enddate': self.default_datespan.enddate.strftime('%Y-%m-%d'),
+                    'separator': DateRangePickerWidget.separator,
+                },
+            })
+        else:
+            context.update({
+                'default_date_range': _(
+                    "You have no submissions in this project."
+                ),
+                'show_no_submissions_warning': True,
+            })
+
+        return context
 
     @property
     def export_list_url(self):
