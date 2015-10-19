@@ -23,11 +23,11 @@ class RebuildTableException(Exception):
     pass
 
 
-def catch_signal(app, **kwargs):
+def catch_signal(sender, **kwargs):
     if settings.UNIT_TESTING:
         return
 
-    app_name = app.__name__.rsplit('.', 1)[0]
+    app_name = sender.name
     if app_name == 'fluff':
         from fluff import FluffPillow
         table_pillow_map = {}
@@ -105,4 +105,4 @@ def include_symbol(names_to_include, table_name, schema):
     return table_name in names_to_include
 
 
-signals.post_syncdb.connect(catch_signal)
+signals.post_migrate.connect(catch_signal)
