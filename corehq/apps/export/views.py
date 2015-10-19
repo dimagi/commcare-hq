@@ -767,15 +767,9 @@ class DownloadCaseExportView(BaseDownloadExportView):
         return CaseExportSchema.get(export_id)
 
 
-class BulkDownloadCaseExportView(DownloadCaseExportView):
-    """View to download a Bulk Case Export with filters.
-    """
-    urlname = 'bulk_download_cases'
-    page_title = ugettext_noop("Download Case Exports")
-
-
 class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
+    allow_bulk_export = True
 
     @use_bootstrap3
     @use_select2
@@ -788,6 +782,7 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
             'create_export_form': self.create_export_form,
             'create_export_form_title': self.create_export_form_title,
             'bulk_download_url': self.bulk_download_url,
+            'allow_bulk_export': self.allow_bulk_export,
         }
 
     @property
@@ -798,6 +793,8 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
     def bulk_download_url(self):
         """Returns url for bulk download
         """
+        if not self.allow_bulk_export:
+            return None
         raise NotImplementedError('must implement bulk_download_url')
 
     @memoized
@@ -1031,10 +1028,7 @@ class FormExportListView(BaseExportListView):
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
     page_title = ugettext_noop("Export Cases")
-
-    @property
-    def bulk_download_url(self):
-        return reverse(BulkDownloadCaseExportView.urlname, args=(self.domain,))
+    allow_bulk_export = False
 
     @memoized
     def get_saved_exports(self):

@@ -93,6 +93,7 @@
                                 <th class="col-sm-6">{% trans 'Name' %}</th>
                                 <th class="col-sm-1">{% trans 'Edit' %}</th>
                                 <th class="col-sm-2">{% trans 'Export' %}</th>
+                                {%  if allow_bulk_export %}
                                 <th class="col-sm-3">
                                     {% trans 'Bulk Export:' %}
                                     <button type="button"
@@ -106,6 +107,7 @@
                                         {% trans 'None' %}
                                     </button>
                                 </th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -131,6 +133,7 @@
                                        class="btn btn-primary">
                                         {% trans 'Export' %}</a>
                                 </td>
+                                {% if allow_bulk_export %}
                                 <td>
                                     <label class="label label-primary label-md noselect"
                                            style="cursor: pointer;"
@@ -143,6 +146,7 @@
                                         &nbsp;{% trans "Add to Bulk Export" %}
                                     </label>
                                 </td>
+                                {% endif %}
                             </tr>
                             {% endangularjs %}
                         </tbody>
