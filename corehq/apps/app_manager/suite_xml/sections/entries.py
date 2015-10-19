@@ -166,12 +166,15 @@ class EntriesHelper(object):
                 for datum_meta in self.get_datum_meta_module(module, use_filter=False):
                     e.datums.append(datum_meta.datum)
             elif isinstance(module, AdvancedModule):
+                detail_persistent, detail_inline = self.get_case_tile_datum_attrs(module, module)
                 e.datums.append(SessionDatum(
                     id='case_id_case_%s' % module.case_type,
                     nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long')
+                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
+                    detail_persistent=detail_persistent,
+                    detail_inline=detail_inline,
                 ))
                 if self.app.commtrack_enabled:
                     e.datums.append(SessionDatum(
@@ -320,17 +323,9 @@ class EntriesHelper(object):
                 parent_filter = ''
 
             detail_module = module if module.module_type == 'shadow' else datum['module']
-            detail_persistent = None
-            detail_inline = False
-            for detail_type, detail, enabled in datum['module'].get_details():
-                if (
-                    detail.persist_tile_on_forms
-                    and (detail.use_case_tiles or detail.custom_xml)
-                    and enabled
-                ):
-                    detail_persistent = id_strings.detail(detail_module, detail_type)
-                    detail_inline = bool(detail.pull_down_tile)
-                    break
+            detail_persistent, detail_inline = self.get_case_tile_datum_attrs(
+                datum['module'], detail_module
+            )
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
@@ -364,10 +359,7 @@ class EntriesHelper(object):
                         if datum['index'] == 0 and not detail_inline else None
                     ),
                     detail_persistent=detail_persistent,
-                    detail_inline=(
-                        self.details_helper.get_detail_id_safe(detail_module, 'case_long')
-                        if detail_inline else None
-                    )
+                    detail_inline=detail_inline,
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
@@ -493,6 +485,8 @@ class EntriesHelper(object):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
+            detail_persistent, detail_inline = self.get_case_tile_datum_attrs(target_module_, target_module_)
+
             return SessionDatum(
                 id=action_.case_session_var,
                 nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, filter_xpath=filter_xpath)
@@ -502,7 +496,9 @@ class EntriesHelper(object):
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
                     if not referenced_by or referenced_by['type'] != 'load' else None
-                )
+                ),
+                detail_persistent=detail_persistent,
+                detail_inline=detail_inline,
             )
 
         datums = []
@@ -766,3 +762,14 @@ class EntriesHelper(object):
             elif form.mode == 'update':
                 e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
+
+    def get_case_tile_datum_attrs(self, module, detail_module):
+        detail_persistent = None
+        detail_inline = None
+        for detail_type, detail, enabled in module.get_details():
+            if (detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml) and enabled):
+                detail_persistent = id_strings.detail(detail_module, detail_type)
+                if detail.pull_down_tile:
+                    detail_inline = self.details_helper.get_detail_id_safe(detail_module, 'case_long')
+                break
+        return detail_persistent, detail_inline
