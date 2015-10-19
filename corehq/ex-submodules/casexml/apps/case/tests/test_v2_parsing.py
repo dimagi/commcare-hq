@@ -27,10 +27,8 @@ class Version2CaseParsingTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_create.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+
+        _, _, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual("bar-user-id", case.opened_by)
@@ -49,10 +47,8 @@ class Version2CaseParsingTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_update.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+
+        _, _, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 42, 50), case.modified_on)
@@ -69,9 +65,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+        _, _, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 44, 50), case.modified_on)
@@ -87,9 +81,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+        _, _, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertTrue(case.closed)
         self.assertEqual("bar-user-id", case.closed_by)
         
@@ -98,9 +90,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
-        case = CommCareCase.get("14cc2770-2d1c-49c2-b252-22d6ecce385a")
+        _, _, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("d5ce3a980b5b69e793445ec0e3b2138e", case.user_id)
         self.assertEqual(datetime(2011, 12, 27), case.modified_on)
@@ -124,9 +114,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        form = FormProcessorInterface.post_xform(xml_data)
-        FormProcessorInterface.process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+        _, _, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual(2, len(case.indices))
         self.assertTrue(case.has_index("foo_ref"))
         self.assertTrue(case.has_index("baz_ref"))
