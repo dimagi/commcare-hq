@@ -680,12 +680,24 @@ class EWSApi(APISynchronization):
 
         if ews_webuser.contact:
             user.phone_numbers = []
+            connections = []
+
             for connection in ews_webuser.contact.phone_numbers:
                 phone_number = apply_leniency(connection.phone_number)
                 if connection.default:
                     user.phone_numbers = [phone_number] + user.phone_numbers
                 else:
                     user.phone_numbers.append(phone_number)
+
+                connections.append({
+                    'phone_number': connection.phone_number,
+                    'backend': connection.backend,
+                    'default': connection.default
+                })
+
+                if connections != user.user_data.get('connections'):
+                    user.user_data['connections'] = connections
+
         user.save()
         return user
 
