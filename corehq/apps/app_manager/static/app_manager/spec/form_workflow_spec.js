@@ -21,7 +21,7 @@ describe('Form Workflow', function() {
                 default_;
 
             assert.equal(options.length, 2);
-            default_ = _.find(options, function(d) { return d.value === FormWorkflow.Values.DEFAULT; })
+            default_ = _.find(options, function(d) { return d.value === FormWorkflow.Values.DEFAULT; });
 
             assert.equal(default_.label, '* Home Screen');
             assert.equal(default_.value, FormWorkflow.Values.DEFAULT);
@@ -33,7 +33,7 @@ describe('Form Workflow', function() {
                 root;
 
             assert.equal(options.length, 2);
-            root = _.find(options, function(d) { return d.value === FormWorkflow.Values.ROOT; })
+            root = _.find(options, function(d) { return d.value === FormWorkflow.Values.ROOT; });
             assert.equal(root.label, 'Module Menu');
             assert.equal(root.value, FormWorkflow.Values.ROOT);
         });
@@ -63,7 +63,7 @@ describe('Form Workflow', function() {
             options.forms = [
                 { name: 'My First Form', unique_id: 'abc123', auto_link: true },
                 { name: 'My Second Form', unique_id: 'def456', auto_link: false },
-            ]
+            ];
             workflow = new FormWorkflow(options);
             assert.lengthOf(workflow.forms, 2);
             assert.lengthOf(workflow.formLinks(), 0);

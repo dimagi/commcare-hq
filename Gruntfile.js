@@ -22,14 +22,14 @@ module.exports = function(grunt) {
                 urls: [BASE_URL + app],
                 run: true
             }
-        }
+        };
         watchConfig[app] = {
             files: [
                 'corehq/apps/' + app + '/static/' + app + '/js/**/*.js',
                 'corehq/apps/' + app + '/static/' + app + '/spec/**/*.js',
             ],
             tasks: ['mocha:' + app]
-        }
+        };
     });
 
     grunt.initConfig({
