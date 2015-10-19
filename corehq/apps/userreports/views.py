@@ -324,7 +324,7 @@ class EditReportInBuilder(View):
 
 
 class ConfigureChartReport(ReportBuilderView):
-    page_title = ugettext_noop("Chart Report: Test Pie Chart, Case")
+    page_title = ugettext_noop("Configure Report")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = _("Chart Report: {}")
@@ -336,12 +336,17 @@ class ConfigureChartReport(ReportBuilderView):
         return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
 
     @property
+    def page_name(self):
+        title = self.request.GET.get('report_name', '')
+        if self.existing_report:
+            title = self.existing_report.title
+        return self.report_title.format(title)
+
+    @property
     def page_context(self):
         return {
             'report': {
-                "title": self.report_title.format(
-                    self.request.GET.get('report_name', '')
-                )
+                "title": self.page_name
             },
             'report_type': self.report_type,
             'form': self.report_form,
