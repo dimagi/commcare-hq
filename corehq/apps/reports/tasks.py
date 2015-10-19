@@ -149,19 +149,28 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def daily_reports():
     for rep in get_scheduled_reports('daily'):
         send_delayed_report(rep)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def weekly_reports():
     for rep in get_scheduled_reports('weekly'):
         send_delayed_report(rep)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def monthly_reports():
     for rep in get_scheduled_reports('monthly'):
         send_delayed_report(rep)
