@@ -40,7 +40,11 @@ from corehq.apps.reports.standard.export import (
 )
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_select2,
+    use_daterangepicker,
+)
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
 from corehq.apps.users.decorators import require_permission
@@ -362,6 +366,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
 
+    @use_daterangepicker
     @use_bootstrap3
     @use_select2
     def dispatch(self, *args, **kwargs):
