@@ -14,6 +14,8 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.util import localize
+from corehq.util.xml import serialize
 from .models import ReportConfiguration
 
 
@@ -69,8 +71,8 @@ class ReportFixturesProvider(object):
     def _report_config_to_fixture(self, report_config, user):
         report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
         report = ReportConfiguration.get(report_config.report_id)
-        report_elem.append(self._element('name', report.title))
-        report_elem.append(self._element('description', report.description))
+        report_elem.append(self._element('name', localize(report_config.header, user.language)))
+        report_elem.append(self._element('description', localize(report_config.description, user.language)))
         data_source = ReportFactory.from_spec(report)
 
         data_source.set_filter_values({
@@ -83,7 +85,7 @@ class ReportFixturesProvider(object):
         for i, row in enumerate(data_source.get_data()):
             row_elem = ElementTree.Element('row', attrib={'index': str(i)})
             for k in sorted(row.keys()):
-                row_elem.append(self._element('column', self._serialize(row[k]), attrib={'id': k}))
+                row_elem.append(self._element('column', serialize(row[k]), attrib={'id': k}))
             rows_elem.append(row_elem)
 
         report_elem.append(rows_elem)
@@ -95,10 +97,5 @@ class ReportFixturesProvider(object):
         element = ElementTree.Element(name, attrib=attrib)
         element.text = text
         return element
-
-    @staticmethod
-    def _serialize(value):
-        # todo: be smarter than this
-        return '' if value is None else unicode(value)
 
 report_fixture_generator = ReportFixturesProvider()

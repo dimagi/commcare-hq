@@ -140,6 +140,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 for name, filter in self.named_filters.items()}
 
     @property
+    @memoized
     def indicators(self):
         default_indicators = [IndicatorFactory.from_spec({
             "column_id": "doc_id",
@@ -174,6 +175,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         )
 
     @property
+    @memoized
     def parsed_expression(self):
         if self.base_item_expression:
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)

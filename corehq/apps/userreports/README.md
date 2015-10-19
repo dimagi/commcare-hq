@@ -83,20 +83,28 @@ array_index     | An index into an array | `doc[1]`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
+nested          | A way to chain any two expressions together | `f1(f2(doc))`
+dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
+
 
 ### JSON snippets for expressions
 
-Here are JSON snippets for the four expression types. Hopefully they are self-explanatory.
+Here are JSON snippets for the various expression types. Hopefully they are self-explanatory.
 
 ##### Constant Expression
 
-This expression returns the constant "hello":
+There are two formats for constant expressions. The simplified format is simply the constant itself. For example `"hello"`, or `5`.
+
+The complete format is as follows. This expression returns the constant `"hello"`:
+
 ```
 {
     "type": "constant",
     "constant": "hello"
 }
 ```
+
+
 ##### Property Name Expression
 
 This expression returns `doc["age"]`:
@@ -245,6 +253,52 @@ This can be used to lookup a property in another document. Here's an example tha
     "value_expression": {
         "type": "property_name",
         "property_name": "owner_id"
+    }
+}
+```
+
+#### Nested expressions
+
+These can be used to nest expressions. This can be used, e.g. to pull a specific property out of an item in a list of objects.
+
+The following nested expression is the equivalent of a `property_path` expression to `["outer", "inner"]` and demonstrates the functionality.
+More examples can be found in the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "property_name",
+        "property_name": "outer"
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "inner"
+    }
+}
+```
+
+#### Dict expressions
+
+These can be used to create dictionaries of key/value pairs. This is only useful as an intermediate structure in another expression since the result of the expression is a dictionary that cannot be saved to the database.
+
+See the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for a way this can be used in a `base_item_expression` to emit multiple rows for a single form/case based on different properties.
+
+Here is a simple example that demonstrates the structure. The keys of `properties` must be text, and the values must be valid expressions (or constants):
+
+```json
+{
+    "type": "named",
+    "properties": {
+        "name": "a constant name",
+        "value": {
+            "type": "property_name",
+            "property_name": "prop"
+        },
+        "value2": {
+            "type": "property_name",
+            "property_name": "prop2"
+        }
     }
 }
 ```
@@ -694,6 +748,23 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 }
 ```
 
+### AggregateDateColumn
+
+AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`.
+Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
+
+Here's an example of an aggregate date column that aggregates the `received_on`  property for each month (allowing you to count/sum things that happened in that month).
+
+```json
+ {
+    "column_id": "received_on",
+    "field": "received_on",
+    "type": "aggregate_date",
+    "display": "Month"
+  }
+```
+
+
 #### Formats
 
 The following percentage formats are supported.
@@ -1113,6 +1184,13 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
 ]
 ```
+
+Following are some custom expressions that are currently available.
+
+- `location_type_name`:  A way to get location type from a location document id.
+- `location_parent_id`:  A shortcut to get a location's parent ID a location id.
+
+You can find examples of these in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
 
 ## Inspecting database tables
 

@@ -8,6 +8,8 @@ from test_soft_assert import *
 from test_cache_util import *
 from test_override_db import *
 from test_spreadsheets import *
+from test_jsonobject import *
+from test_xml import *
 
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
 

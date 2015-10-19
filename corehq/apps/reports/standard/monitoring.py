@@ -24,6 +24,7 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from couchforms.analytics import get_number_of_submissions
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
@@ -245,7 +246,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
             )
             num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases created or modified in the last 120 days.")
+                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
             )
             num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
@@ -917,7 +918,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     app_id=info['app_id'],
                     by_submission_time=self.by_submission_time,
                 )
-                data = get_db().view("reports_forms/all_forms",
+                data = XFormInstance.get_db().view("reports_forms/all_forms",
                     reduce=False,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],

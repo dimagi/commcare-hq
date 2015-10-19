@@ -19,8 +19,20 @@ class GuessReportingMinuteTest(SimpleTestCase):
     def testAfterTheHalfHour(self):
         self.assertEqual(30, guess_reporting_minute(datetime(2014, 10, 31, 12, 35)))
 
+    def testOnQuarterAfter(self):
+        self.assertEqual(15, guess_reporting_minute(datetime(2014, 10, 31, 12, 15)))
+
+    def testAfterQuarterAfter(self):
+        self.assertEqual(15, guess_reporting_minute(datetime(2014, 10, 31, 12, 20)))
+
+    def testOnQuarterOf(self):
+        self.assertEqual(45, guess_reporting_minute(datetime(2014, 10, 31, 12, 45)))
+
+    def testAfterQuarterOf(self):
+        self.assertEqual(45, guess_reporting_minute(datetime(2014, 10, 31, 12, 50)))
+
     def testOutOfBounds(self):
-        for minute in (6, 15, 29, 36, 45, 59):
+        for minute in (6, 14, 21, 29, 36, 44, 51, 59):
             self.assertRaises(ValueError, guess_reporting_minute, datetime(2014, 10, 31, 12, minute))
 
 

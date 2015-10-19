@@ -56,18 +56,15 @@ def paginate_releases(request, domain, app_id):
     else:
         start_build = {}
     timezone = get_timezone_for_user(request.couch_user, domain)
-    saved_apps = get_db().view('app_manager/saved_app',
+    saved_apps = Application.get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
         endkey=[domain, app_id],
         descending=True,
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
-    include_media = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(
-        request.user.username
-    )
     for app in saved_apps:
-        app['include_media'] = include_media and app['doc_type'] != 'RemoteApp'
+        app['include_media'] = app['doc_type'] != 'RemoteApp'
     return json_response(saved_apps)
 
 
@@ -103,7 +100,7 @@ def current_app_version(request, domain, app_id):
     Return current app version and the latest release
     """
     app = get_app(domain, app_id)
-    latest = get_db().view('app_manager/saved_app',
+    latest = Application.get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, {}],
         endkey=[domain, app_id],
         descending=True,
@@ -312,7 +309,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
-    @method_decorator(use_bootstrap3())
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         try:
             self.first_app_id = self.kwargs["first_app_id"]

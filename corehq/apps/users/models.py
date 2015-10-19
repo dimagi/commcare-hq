@@ -18,6 +18,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
+from corehq.elastic import es_wrapper
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
@@ -36,7 +37,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin, QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import LicenseAgreement
@@ -228,7 +229,7 @@ class UserRolePresets(object):
         return preset_map[preset]()
 
 
-class UserRole(Document):
+class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
@@ -335,11 +336,15 @@ class UserRole(Document):
 
     @classmethod
     def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
+        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
+                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
     @classmethod
     def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
+        return [('none','(none)')] + [
+            (role.get_qualified_id(), role.name or '(No Name)')
+            for role in list(cls.by_domain(domain))
+        ]
 
     @property
     def ids_of_assigned_users(self):
@@ -435,6 +440,7 @@ class DomainMembership(Membership):
         return super(DomainMembership, cls).wrap(data)
 
     @property
+    @memoized
     def role(self):
         if self.is_admin:
             return AdminUserRole(self.domain)
@@ -1632,32 +1638,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         return CaseData.objects.filter(user_id=self._id).count()
 
-    def location_group_ids(self):
-        """
-        Return generated ID's that represent the virtual
-        groups used to send location data in the restore
-        payload.
-        """
-        def get_sharing_id(loc):
-            return loc.case_sharing_group_object(self._id)._id
-
-        if self.sql_location.location_type.view_descendants:
-            locs = (self.sql_location.get_descendants(include_self=True)
-                                     .filter(location_type__shares_cases=True))
-            return map(get_sharing_id, locs)
-        elif self.sql_location.location_type.shares_cases:
-            return [get_sharing_id(self.sql_location)]
-        else:
-            return []
-
     def get_owner_ids(self):
-        from corehq.apps.groups.models import Group
-
         owner_ids = [self.user_id]
-        owner_ids.extend(Group.by_user(self, wrap=False))
-
-        if self.project.uses_locations and self.location:
-            owner_ids.extend(self.location_group_ids())
+        owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
     def retire(self):
@@ -1706,19 +1689,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
-        # get faked location group object
+        # get faked location group objects
         groups = []
-        if self.location and self.location.location_type_object.shares_cases:
-            if self.location.location_type_object.view_descendants:
-                for loc in self.sql_location.get_descendants():
-                    groups.append(loc.case_sharing_group_object(
-                        self._id,
-                    ))
-
-            groups.append(self.sql_location.case_sharing_group_object(self._id))
+        if self.sql_location:
+            groups.extend(self.sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
-
         return groups
 
     @classmethod
@@ -1849,14 +1825,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
 
     @property
-    def _locations(self):
+    def locations(self):
         """
-        Hidden access to a users delgate location list.
+        This method is only used for domains with the multiple
+        locations per user flag set. It will error if you try
+        to call it on a normal domain.
+        """
+        if not self.project.supports_multiple_locations_per_user:
+            raise InvalidLocationConfig(
+                "Attempting to access multiple locations for a user in a domain that does not support this."
+            )
 
-        Should be removed (and this code moved back under
-        self.location) sometime after migration and things
-        are settled.
-        """
         from corehq.apps.locations.models import Location
         from corehq.apps.commtrack.models import SupplyPointCase
 
@@ -1879,20 +1858,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 yield Location.wrap(doc)
 
         return list(_gen())
-
-    @property
-    def locations(self):
-        """
-        This method is only used for domains with the multiple
-        locations per user flag set. It will error if you try
-        to call it on a normal domain.
-        """
-        if not self.project.supports_multiple_locations_per_user:
-            raise InvalidLocationConfig(
-                "Attempting to access multiple locations for a user in a domain that does not support this."
-            )
-
-        return self._locations
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
@@ -1953,7 +1918,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock = CaseBlock(
                     create=False,
                     case_id=mapping._id,
-                    version=V2,
                     index=self.supply_point_index_mapping(sp, True)
                 )
 
@@ -2001,7 +1965,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),
-            version=V2,
             owner_id=self._id,
             index=index
         )
@@ -2438,7 +2401,7 @@ class DomainRequest(models.Model):
 
     @classmethod
     def by_domain(cls, domain, is_approved=False):
-        return DomainRequest.objects.filter(domain=domain)
+        return DomainRequest.objects.filter(domain=domain, is_approved=is_approved)
 
     @classmethod
     def by_email(cls, domain, email, is_approved=False):
@@ -2465,7 +2428,7 @@ class DomainRequest(models.Model):
             'url': absolute_reverse("web_users", args=[self.domain]),
         }
         recipients = {u.get_email() for u in
-            WebUser.get_users_by_permission(self.domain, 'edit_web_users')}
+            WebUser.get_admins_by_domain(self.domain)}
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
         subject = _('Request from %s to join %s') % (self.full_name, domain_name)

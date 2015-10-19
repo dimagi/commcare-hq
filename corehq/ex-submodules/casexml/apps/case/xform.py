@@ -1,5 +1,4 @@
 from collections import namedtuple
-import copy
 import logging
 import warnings
 
@@ -9,6 +8,7 @@ from django.db.models import Q
 import redis
 from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
 from casexml.apps.case.signals import cases_received, case_post_save
+from casexml.apps.case.update_strategy import ActionsUpdateStrategy
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
@@ -17,7 +17,6 @@ from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     IllegalCaseId,
     NoDomainProvided,
-    ReconciliationError,
 )
 from django.conf import settings
 from couchforms.util import is_deprecation
@@ -96,38 +95,6 @@ class CaseProcessingResult(object):
                     flag.save()
 
 
-def process_cases(xform, config=None):
-    """
-    Creates or updates case objects which live outside of the form.
-
-    If reconcile is true it will perform an additional step of
-    reconciling the case update history after the case is processed.
-    """
-    warnings.warn(
-        'This function is deprecated. You should be using SubmissionPost.',
-        DeprecationWarning,
-    )
-
-    assert getattr(settings, 'UNIT_TESTING', False)
-    domain = get_and_check_xform_domain(xform)
-
-    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        case_result = process_cases_with_casedb([xform], case_db, config=config)
-
-    cases = case_result.cases
-    docs = [xform] + cases
-    now = datetime.datetime.utcnow()
-    for case in cases:
-        case.server_modified_on = now
-    XFormInstance.get_db().bulk_save(docs)
-
-    for case in cases:
-        case_post_save.send(CommCareCase, case=case)
-
-    case_result.commit_dirtiness_flags()
-    return cases
-
-
 def process_cases_with_casedb(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
     case_processing_result = _get_or_update_cases(xforms, case_db)
@@ -173,11 +140,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
         )
 
     for case in cases:
-        if not case.check_action_order():
-            try:
-                case.reconcile_actions(rebuild=True, xforms={xform._id: xform})
-            except ReconciliationError:
-                pass
+        ActionsUpdateStrategy(case).reconcile_actions_if_necessary(xform)
         case_db.mark_changed(case)
 
         action_xforms = {action.xform_id for action in case.actions if action.xform_id}
@@ -402,11 +365,11 @@ def _get_or_update_model(case_update, xform, case_db):
     """
     case = case_db.get(case_update.id)
     if case is None:
-        case = CommCareCase.from_case_update(case_update, xform)
+        case = ActionsUpdateStrategy.case_from_case_update(case_update, xform)
         case_db.set(case['_id'], case)
         return case
     else:
-        case.update_from_case_update(case_update, xform, case_db.get_cached_forms())
+        ActionsUpdateStrategy(case).update_from_case_update(case_update, xform, case_db.get_cached_forms())
         return case
 
 

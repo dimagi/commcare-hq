@@ -45,24 +45,22 @@
 trunk: master
 name: autostaging
 branches:
-  - remove-custom-success-message  # Danny 9/24
-  - migrate-users-db  # Danny 9/23
+  - flip-fixtures-db  # danny 10/13
+  - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
-  - update-submodules # TS 5/6
-#  - djangobower+new-mobile-workers # Ben 9/25
-  - new-mobile-workers # Biyeun 8/25
-  - billing/post-pay # Farid 9/3
-  - sync-history-email # Cal 9/22
-  - changes-refactor  # cz 9/23
-  - exports-ui-changes+autostaging  # biyeun 9/28
   - exports-ui-changes  # biyeun 9/28
-#  - djangobower # ben 9/25
+  - b3-tf # ben 10/1
+  - sync-history-email # Cal 9/22
+  - two-factor-otp-only # j$ 10/2
+  - shadow-modules # Jenny 10/6
+  - include-media-default # Ben 10/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
       - new-libs # Ben 9/3
+      - b3-tf # ben 10/1
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -72,10 +70,11 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches:
-      - changes-refactor  # cz 9/23
+    branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
+    branches: []
+  submodules/fluff-src:
     branches: []
 

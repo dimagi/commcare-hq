@@ -1,17 +1,18 @@
 import datetime
 import uuid
 from django.test import TestCase
+from corehq.util.test_utils import DocTestMixin
 from couchforms.analytics import domain_has_submission_in_last_30_days, \
     get_number_of_forms_per_domain, get_number_of_forms_in_domain, \
     get_first_form_submission_received, get_last_form_submission_received, \
     app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
     get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
-    get_last_form_submission_for_user_for_app, get_number_of_submissions
+    get_last_form_submission_for_user_for_app, get_number_of_submissions, get_form_analytics_metadata
 from couchforms.models import XFormInstance
 
 
-class CouchformsAnalyticsTest(TestCase):
+class CouchformsAnalyticsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -92,6 +93,7 @@ class CouchformsAnalyticsTest(TestCase):
                 self.domain, self.user_id, self.xmlns, self.app_id,
                 end=self.now, start=self.now - datetime.timedelta(days=100)), 2)
 
-    def assert_docs_equal(self, doc1, doc2):
-        self.assertEqual(type(doc1), type(doc2))
-        self.assertEqual(doc1.to_json(), doc2.to_json())
+    def test_get_form_analytics_metadata(self):
+        info = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
+        self.assertEqual(self.xmlns, info['xmlns'])
+        self.assertEqual(2, info['submissions'])

@@ -22,10 +22,11 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     (Application or RemoteApp).
 
     """
+    from .models import Application
 
     if latest:
         try:
-            original_app = get_db().get(app_id)
+            original_app = Application.get_db().get(app_id)
         except ResourceNotFound:
             raise Http404()
         if not domain:
@@ -52,7 +53,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
             endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
 
-        latest_app = get_db().view(
+        latest_app = Application.get_db().view(
             couch_view,
             startkey=startkey,
             endkey=endkey,

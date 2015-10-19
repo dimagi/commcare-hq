@@ -1,6 +1,8 @@
 language: python
 sudo: false
-cache: pip
+cache:
+  directories:
+    - $HOME/.cache/pip
 python:
   - "2.7"
 env:
@@ -37,7 +39,10 @@ install:
   - "bash -e .travis/misc-setup.sh"
   - "cp .travis/localsettings.py localsettings.py"
   - "pip install coverage unittest2 mock --use-mirrors"
-script: "coverage run manage.py test --noinput --failfast --traceback --testrunner=$TEST_RUNNER"
+  - "npm install -g bower"
+  - "ln -nfs `which bower` /home/travis/bower"
+  - "python manage.py bower install"
+script: "coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER"
 after_success:
   - coverage report
   - coveralls
@@ -45,6 +50,3 @@ services:
   - postgresql
   - couchdb
   - redis-server
-notifications:
-  slack:
-    secure: QROh5w8THwXzuj2fDB3GujwwGyHd1O5wPkZ2qUzNofbpQhOLK+Ayul/UPSmJuUtlTgtip6sBwrtI0E7ujRLyWIa9EJMMfiGdM8wr+Y1w08P6LbDqlmj8dGhUZznWb7rptJ2GeTx6jp4a6MUpc9LfKJMbDZ2Ro5Qe1jdp9wx1zdw=

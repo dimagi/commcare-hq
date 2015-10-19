@@ -9,6 +9,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
+from corehq.dbaccessors.couchapps.all_docs import \
+    get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
@@ -128,11 +130,16 @@ class Deployment(DocumentSchema, UpdatableSchema):
 
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
+    use_fixtures = BooleanProperty(default=True)
+    use_user_location_as_owner = BooleanProperty(default=False)
     case_owner_id = StringProperty()
     case_type = StringProperty()
 
-    def is_active_and_valid(self):
-        return self.enabled and self.case_owner_id and self.case_type
+    def fixtures_are_active(self):
+        return self.enabled and self.use_fixtures
+
+    def config_is_valid(self):
+        return self.case_owner_id and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
@@ -475,7 +482,7 @@ class Domain(Document, SnapshotMixin):
             startkey = [self.name, None]
             endkey = [self.name, None, {}]
 
-        return get_db().view('app_manager/applications',
+        return Application.get_db().view('app_manager/applications',
             startkey=startkey,
             endkey=endkey,
             include_docs=True,
@@ -802,7 +809,6 @@ class Domain(Document, SnapshotMixin):
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
-        db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
             new_doc.copy_history.append(id)
@@ -812,7 +818,7 @@ class Domain(Document, SnapshotMixin):
             new_doc.ensure_module_unique_ids(should_save=False)
         else:
             cls = str_to_cls[doc_type]
-
+            db = cls.get_db()
             if doc_type == 'CaseReminderHandler':
                 cur_doc = cls.get(id)
                 if not self.reminder_should_be_copied(cur_doc):
@@ -971,13 +977,8 @@ class Domain(Document, SnapshotMixin):
                     u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
                 )
         # delete all associated objects
-        db = self.get_db()
-        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
-            startkey=[self.name],
-            endkey=[self.name, {}],
-            include_docs=False,
-        )]
-        iter_bulk_delete(db, related_doc_ids, chunksize=500)
+        for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
+            iter_bulk_delete(db, related_doc_ids, chunksize=500)
         self._delete_web_users_from_domain()
         self._delete_sql_objects()
         super(Domain, self).delete()
@@ -988,6 +989,7 @@ class Domain(Document, SnapshotMixin):
         web_users = WebUser.by_domain(self.name)
         for web_user in web_users:
             web_user.delete_domain_membership(self.name)
+            web_user.save()
 
     def _delete_sql_objects(self):
         from casexml.apps.stock.models import DocDomainMapping
@@ -1112,7 +1114,8 @@ class Domain(Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        return get_db().view("domain/snapshots",
+        from corehq.apps.app_manager.models import Application
+        return Application.get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],
             reduce=True,
@@ -1176,45 +1179,6 @@ class Domain(Document, SnapshotMixin):
         """
         from corehq.apps.commtrack.util import make_domain_commtrack
         make_domain_commtrack(self)
-
-
-class DomainCounter(Document):
-    domain = StringProperty()
-    name = StringProperty()
-    count = IntegerProperty()
-
-    @classmethod
-    def get_or_create(cls, domain, name):
-        #TODO: Need to make this atomic
-        counter = cls.view("domain/counter",
-            key = [domain, name],
-            include_docs=True
-        ).one()
-        if counter is None:
-            counter = DomainCounter (
-                domain = domain,
-                name = name,
-                count = 0
-            )
-            counter.save()
-        return counter
-
-    @classmethod
-    def increment(cls, domain, name, amount=1):
-        num_tries = 0
-        while True:
-            try:
-                counter = cls.get_or_create(domain, name)
-                range_start = counter.count + 1
-                counter.count += amount
-                counter.save()
-                range_end = counter.count
-                break
-            except ResourceConflict:
-                num_tries += 1
-                if num_tries >= 500:
-                    raise
-        return (range_start, range_end)
 
 
 class TransferDomainRequest(models.Model):

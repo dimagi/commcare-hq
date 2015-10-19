@@ -31,6 +31,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
+from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
@@ -663,8 +664,9 @@ class ApplicationsTab(UITab):
     def dropdown_items(self):
         # todo async refresh submenu when on the applications page and
         # you change the application name
+        from corehq.apps.app_manager.models import Application
         key = [self.domain]
-        apps = get_db().view('app_manager/applications_brief',
+        apps = Application.get_db().view('app_manager/applications_brief',
                              reduce=False,
                              startkey=key,
                              endkey=key + [{}],).all()
@@ -921,40 +923,13 @@ class MessagingTab(UITab):
                  'url': reverse(ManageRegistrationInvitationsView.urlname, args=[self.domain])}
             )
 
-        if self.couch_user.is_previewer():
+        if self.couch_user.can_edit_data():
             contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
         return contacts_urls
-
-    @property
-    @memoized
-    def survey_urls(self):
-        survey_urls = []
-
-        if self.project.survey_management_enabled and self.can_use_inbound_sms:
-            survey_urls.extend([
-                {'title': _("Samples"),
-                 'url': reverse('sample_list', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Sample"),
-                      'urlname': 'edit_sample'},
-                     {'title': _("New Sample"),
-                      'urlname': 'add_sample'},
-                ]},
-                {'title': _("Surveys"),
-                 'url': reverse('survey_list', args=[self.domain]),
-                 'subpages': [
-                     {'title': _("Edit Survey"),
-                      'urlname': 'edit_survey'},
-                     {'title': _("New Survey"),
-                      'urlname': 'add_survey'},
-                ]},
-            ])
-
-        return survey_urls
 
     @property
     @memoized
@@ -1001,7 +976,6 @@ class MessagingTab(UITab):
             (_("Performance Messaging"), self.performance_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
-            (_("Survey Management"), self.survey_urls),
             (_("Settings"), self.settings_urls)
         ):
             if urls:
@@ -1057,21 +1031,21 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views.mobile import \
-                EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
+            from corehq.apps.users.views.mobile import (
+                EditCommCareUserView,
+                ConfirmBillingAccountForExtraUsersView,
+                MobileWorkerListView,
+            )
+
             mobile_users_menu = [
                 {
-                    'title': _('Mobile Workers'),
-                    'url': reverse('commcare_users', args=[self.domain]),
+                    'title': MobileWorkerListView.page_title,
+                    'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                     'description': _(
                         "Create and manage users for CommCare and CloudCare."),
                     'subpages': [
                         {'title': commcare_username,
                          'urlname': EditCommCareUserView.urlname},
-                        {'title': _('New Mobile Worker'),
-                         'urlname': 'add_commcare_account',
-                         'show_in_dropdown': True,
-                         'show_in_first_level': True},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
                         {'title': ConfirmBillingAccountForExtraUsersView.page_title,
@@ -1139,8 +1113,7 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if (feature_previews.LOCATIONS.enabled(self.domain) and
-                has_privilege(self._request, privileges.LOCATIONS)):
+        if has_privilege(self._request, privileges.LOCATIONS):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,
@@ -1189,6 +1162,13 @@ class ProjectUsersTab(UITab):
                     'show_in_dropdown': True,
                 })
             items.append((_('Organization'), locations_config))
+
+        elif users_have_locations(self.domain):  # This domain was downgraded
+            items.append((_('Organization'), [{
+                'title': _("No longer available"),
+                'url': reverse('downgrade_locations', args=[self.domain]),
+                'show_in_dropdown': True,
+            }]))
 
         return items
 
@@ -1455,10 +1435,6 @@ class AdminReportsTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('Message Logs Across All Domains'),
-                 'url': reverse('message_log_report')},
-                {'title': _('CommCare Versions'),
-                 'url': reverse('commcare_version_report')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
                 {'title': _('Loadtest Report'),

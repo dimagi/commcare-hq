@@ -46,7 +46,9 @@ def _get_db(doc_type):
 
 
 # This is intentionally not using magic to introspect the class from the name, though it could
+from corehq.apps.locations.models import Location
 _DOC_TYPE_MAPPING = {
     'XFormInstance': XFormInstance,
     'CommCareCase': CommCareCase,
+    'Location': Location
 }

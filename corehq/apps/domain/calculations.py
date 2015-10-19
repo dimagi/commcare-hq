@@ -157,18 +157,24 @@ def active(domain, *args):
 
 def display_time(submission_time, display=True):
     if display:
-        return iso_string_to_datetime(submission_time).strftime(DISPLAY_DATE_FORMAT)
+        return submission_time.strftime(DISPLAY_DATE_FORMAT)
     else:
-        return submission_time
+        return json_format_datetime(submission_time)
 
 
 def first_form_submission(domain, display=True):
-    submission_time = get_first_form_submission_received(domain)
+    try:
+        submission_time = get_first_form_submission_received(domain)
+    except ValueError:
+        return "Unable to parse time of first form"
     return display_time(submission_time, display) if submission_time else "No forms"
 
 
 def last_form_submission(domain, display=True):
-    submission_time = get_last_form_submission_received(domain)
+    try:
+        submission_time = get_last_form_submission_received(domain)
+    except ValueError:
+        return "Unable to parse time of last form"
     return display_time(submission_time, display) if submission_time else "No forms"
 
 

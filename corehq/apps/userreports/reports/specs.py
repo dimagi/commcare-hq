@@ -194,7 +194,11 @@ class AggregateDateColumn(ReportColumn):
 
     def get_format_fn(self):
         # todo: support more aggregation/more formats
-        return lambda data: '{}-{:02d}'.format(int(data['year']), int(data['month']))
+        def _format(data):
+            if not data.get('year', None) or not data.get('month', None):
+                return _('Unknown Date')
+            return '{}-{:02d}'.format(int(data['year']), int(data['month']))
+        return _format
 
     def get_group_by_columns(self):
         return [self._year_column_alias(), self._month_column_alias()]
@@ -297,13 +301,23 @@ class FilterChoice(JsonObject):
         return self.display or self.value
 
 
+def _validate_filter_slug(s):
+    if "-" in s:
+        raise Exception(_(
+            """
+            Filter slugs must be legal sqlalchemy bind parameter names.
+            '-' and other special character are prohibited
+            """
+        ))
+
+
 class FilterSpec(JsonObject):
     """
     This is the spec for a report filter - a thing that should show up as a UI filter element
     in a report (like a date picker or a select list).
     """
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
-    slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
+    slug = StringProperty(required=True, validators=_validate_filter_slug)  # this shows up as the ID in the filter HTML.
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     datatype = DataTypeProperty(default='string')

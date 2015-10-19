@@ -3,6 +3,7 @@ from django.core.cache import cache
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
+from couchforms.analytics import get_form_analytics_metadata
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -10,6 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 
@@ -86,7 +88,14 @@ class FormType(object):
     def metadata(self):
         try:
             return FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
-        except Exception:
+        except Exception, e:
+            _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'), notify_admins=True)
+            _assert(False, 'Failed on domain: {} | xmlns: {} | app_id: {} | error: {}'.format(
+                self.domain,
+                self.xmlns,
+                self.app_id,
+                e,
+            ))
             return None
 
     def get_label(self, html=False, lang=None):
@@ -138,10 +147,7 @@ class FormType(object):
         if form_json:
             form = json.loads(form_json)
         else:
-            form = get_db().view('exports_forms/by_xmlns', key=[domain, app_id, xmlns], group=True).one()
-            if form:
-                form = form['value']
-            # cache doc a short interval for the life of someone viewing the page
+            form = get_form_analytics_metadata(domain, app_id, xmlns)
             cache.set(cache_key, json.dumps(form), 30)
         return form
 

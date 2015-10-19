@@ -102,6 +102,11 @@ cloudCare.Details = Backbone.Model.extend({
 
 cloudCare.caseViewMixin = {
     lookupField: function (field) {
+        var parentCase;
+        if (isParentField(field) && this.options.casedb) {
+            parentCase = this.options.casedb.get(this.model.get('indices').parent.case_id);
+            return parentCase.getProperty(field.slice('parent/'.length));
+        }
         return this.model.getProperty(field);
     },
     delegationFormName: function () {
@@ -170,6 +175,7 @@ cloudCare.CaseList = Backbone.Collection.extend({
     initialize: function () {
         var self = this;
         _.bindAll(self, 'url', 'setUrl');
+        self.casedb = null;
     },
     model: cloudCare.Case,
     url: function () {
@@ -177,6 +183,12 @@ cloudCare.CaseList = Backbone.Collection.extend({
     },
     setUrl: function (url) {
         this.caseUrl = url;
+    },
+    parse: function(response) {
+        if (response.parents) {
+            this.casedb = new cloudCare.CaseList(response.cases.concat(response.parents));
+        }
+        return response.cases;
     },
 });
 
@@ -199,6 +211,9 @@ cloudCare.CaseListView = Backbone.View.extend({
             this.caseList.setUrl(this.options.caseUrl);
             showLoading();
             this.caseList.fetch({
+                data: {
+                    requires_parent_cases: this.requiresParentCases(this.detailsShort)
+                },
                 success: hideLoadingCallback,
                 error: _caseListLoadError
             });
@@ -223,12 +238,17 @@ cloudCare.CaseListView = Backbone.View.extend({
 
         return self;
     },
+    requiresParentCases: function(details) {
+        var columns = details.get('columns');
+        return _.any(_.map(columns, function(d) { return d.field; }), isParentField);
+    },
     appendItem: function (item) {
         var self = this;
         var caseView = new cloudCare.CaseView({
             model: item,
             columns: self.detailsShort.get("columns"),
             delegation: self.options.delegation,
+            casedb: self.caseList.casedb,
             appConfig: self.options.appConfig,
             language: self.options.language
         });
@@ -260,7 +280,8 @@ cloudCare.CaseListView = Backbone.View.extend({
             bPaginate: false,
             bSort: true,
             oLanguage: {
-                "sSearch": "Filter cases:"
+                "sSearch": "Filter cases:",
+                "sEmptyTable": "No cases available. You must register a case to access this form."
             },
             sScrollX: $('#case-list').css('width'),
             bScrollCollapse: true

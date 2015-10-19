@@ -1,4 +1,5 @@
 from optparse import make_option
+import re
 from django.core.management import BaseCommand, CommandError
 from corehq.doctypemigrations.migrator_instances import get_migrator_by_slug, \
     get_migrator_slugs
@@ -30,6 +31,16 @@ Run
 to do a bulk migrate before continuous replication.
 """
 
+CANNOT_RUN_CONTINUOUS_AFTER_CLEANUP = """You have already run cleanup for this migration.
+You cannot run --continuous after --cleanup.
+
+This is actually very important: if you were to run --continuous again, that would
+replicate changes from the source db to the target db
+resulting in the docs deleted in cleanup also being deleted from the target db!
+
+You're welcome.
+"""
+
 
 class Command(BaseCommand):
     """
@@ -48,24 +59,60 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
         ),
+        make_option(
+            '--cleanup',
+            action='store_true',
+            default=False,
+        ),
+        make_option(
+            '--stats',
+            action='store_true',
+            default=False,
+        ),
+        make_option(
+            '--erase-continuous-progress',
+            action='store_true',
+            default=False
+        )
     )
 
-    def handle(self, migrator_slug=None, initial=None, continuous=None, **options):
+    def handle(self, migrator_slug=None, initial=None, continuous=None, cleanup=None,
+               stats=None, erase_continuous_progress=None, **options):
         try:
             migrator = get_migrator_by_slug(migrator_slug)
         except KeyError:
-            return
-        if not initial and not continuous:
-            raise CommandError('initial or continuous must be set')
+            raise CommandError(USAGE)
+        if not any((initial, continuous, cleanup, stats, erase_continuous_progress)):
+            raise CommandError('initial, continuous, cleanup, stats, or '
+                               'erase_continuous_progress must be set')
+        if cleanup and (initial or continuous):
+            raise CommandError('cleanup must be run alone')
 
+        if stats:
+            self.handle_stats(migrator)
         if initial:
             if migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_CONTINUOUS.format(migrator_slug))
             self.handle_initial(migrator)
+        if erase_continuous_progress:
+            if not migrator.original_seq:
+                CommandError(MAYBE_YOU_WANT_TO_RUN_INITIAL.format(migrator_slug))
+            if migrator.cleanup_complete:
+                raise CommandError(CANNOT_RUN_CONTINUOUS_AFTER_CLEANUP)
+            self.handle_erase_continuous_progress(migrator)
         if continuous:
             if not migrator.last_seq:
                 raise CommandError(MAYBE_YOU_WANT_TO_RUN_INITIAL.format(migrator_slug))
+            if migrator.cleanup_complete:
+                raise CommandError(CANNOT_RUN_CONTINUOUS_AFTER_CLEANUP)
             self.handle_continuous(migrator)
+        if cleanup:
+            confirmation = raw_input(
+                "Cleanup will remove doc_types ({}) from db {}\n"
+                "Are you sure you want to proceed? [y/n]"
+                .format(', '.join(migrator.doc_types), migrator.source_db))
+            if confirmation == 'y':
+                self.handle_cleanup(migrator)
 
     @staticmethod
     def handle_initial(migrator):
@@ -75,7 +122,29 @@ class Command(BaseCommand):
         self.stderr.write("Starting continuous replication...")
         migration = migrator.phase_2_continuous_migrate_interactive()
         for status_update in migration:
-            self.stdout.write('Read {} changes, saved seq {}\n'.format(
+            self.stdout.write('Read {} changes, saved seq {}'.format(
                 status_update.changes_read, status_update.last_seq))
             if status_update.caught_up:
-                self.stdout.write('All caught up!\n')
+                self.stdout.write('All caught up!')
+
+    def handle_erase_continuous_progress(self, migrator):
+        migrator.erase_continuous_progress()
+
+    def handle_cleanup(self, migrator):
+        migrator.phase_3_clean_up()
+
+    def handle_stats(self, migrator):
+        [(source_db, source_counts),
+         (target_db, target_counts)] = migrator.get_doc_counts()
+        self.stdout.write('Source DB: {}'.format(_scrub_uri(source_db.uri)))
+        self.stdout.write('Target DB: {}'.format(_scrub_uri(target_db.uri)))
+        self.stdout.write('')
+        self.stdout.write('{:^30}\tSource\tTarget'.format('doc_type'))
+        for doc_type in sorted(migrator.doc_types):
+            self.stdout.write(
+                '{:<30}\t{}\t{}'
+                .format(doc_type, source_counts[doc_type], target_counts[doc_type]))
+
+
+def _scrub_uri(uri):
+    return re.sub(r'//(.*):(.*)@', r'//\1:******@', uri)

@@ -1,6 +1,10 @@
 from collections import namedtuple
+import logging
+import os
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.changes import stream_changes_forever
 from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
+from corehq.doctypemigrations.stats import get_doc_counts_per_doc_type
 from dimagi.utils.decorators.memoized import memoized
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.models import DocTypeMigration, DocTypeMigrationCheckpoint
@@ -53,6 +57,25 @@ class Migrator(object):
                     self._record_seq(last_seq)
                     yield StatusUpdate(changes_read=count, last_seq=last_seq, caught_up=False)
 
+    def erase_continuous_progress(self):
+        DocTypeMigrationCheckpoint.objects.filter(migration=self._migration_model)
+        self._record_seq(self.original_seq)
+
+    def phase_3_clean_up(self):
+        try:
+            os.remove(self.data_dump_filename)
+        except OSError:
+            logging.warning('tried to remove file {}, but it was not there'
+                            .format(self.data_dump_filename))
+        delete_all_docs_by_doc_type(self.source_db, self.doc_types)
+        self._migration_model.cleanup_complete = True
+        self._migration_model.save()
+
+    def get_doc_counts(self):
+        source_counts = get_doc_counts_per_doc_type(self.source_db, self.doc_types)
+        target_counts = get_doc_counts_per_doc_type(self.target_db, self.doc_types)
+        return [(self.source_db, source_counts), (self.target_db, target_counts)]
+
     def _record_original_seq(self, seq):
         self._migration_model.original_seq = seq
         self._migration_model.save()
@@ -85,3 +108,7 @@ class Migrator(object):
         except ValueError:
             return None
         return checkpoint.seq
+
+    @property
+    def cleanup_complete(self):
+        return self._migration_model.cleanup_complete

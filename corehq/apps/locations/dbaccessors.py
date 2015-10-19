@@ -1,10 +1,15 @@
-def _cc_users_by_location(domain, location_id, include_docs=True, wrap=True):
+from itertools import imap
+from dimagi.utils.couch.database import iter_docs
+
+
+def _cc_users_by_location(domain, location_id, include_docs=True, wrap=True, user_class=None):
     from corehq.apps.users.models import CommCareUser
-    view = CommCareUser.view if wrap else CommCareUser.get_db().view
+    user_class = user_class or CommCareUser
+    view = user_class.view if wrap else user_class.get_db().view
     return view(
         'users_extra/users_by_location_id',
-        startkey=[domain, location_id, CommCareUser.__name__],
-        endkey=[domain, location_id, CommCareUser.__name__, {}],
+        startkey=[domain, location_id, user_class.__name__],
+        endkey=[domain, location_id, user_class.__name__, {}],
         include_docs=include_docs,
         reduce=False,
     )
@@ -40,3 +45,20 @@ def get_all_users_by_location(domain, location_id):
         reduce=False,
     )
     return (CouchUser.wrap_correctly(res['doc']) for res in results)
+
+
+def get_users_assigned_to_locations(domain):
+    from corehq.apps.users.models import CouchUser
+    ids = [res['id'] for res in CouchUser.get_db().view(
+        'users_extra/users_by_location_id',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+        reduce=False,
+    )]
+    return imap(CouchUser.wrap_correctly, iter_docs(CouchUser.get_db(), ids))
+
+
+def get_web_users_by_location(domain, location_id):
+    from corehq.apps.users.models import WebUser
+    return _cc_users_by_location(domain, location_id, user_class=WebUser)

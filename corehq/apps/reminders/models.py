@@ -3,7 +3,6 @@ from datetime import timedelta, datetime, date, time
 import re
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.reminders.dbaccessors import get_surveys_in_domain
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
@@ -896,6 +895,10 @@ class CaseReminderHandler(Document):
 
         return filter(filter_fcn, recipients)
 
+    def recipient_is_list_of_locations(self, recipient):
+        return (isinstance(recipient, list) and
+                all([isinstance(obj, SQLLocation) for obj in recipient]))
+
     def fire(self, reminder):
         """
         Sends the content associated with the given CaseReminder's current event.
@@ -910,7 +913,7 @@ class CaseReminderHandler(Document):
             return False
 
         recipient = reminder.recipient
-        if self.recipient == RECIPIENT_LOCATION:
+        if self.recipient_is_list_of_locations(recipient):
             # Use a better name here since recipient is a list of locations
             locations = recipient
 
@@ -1488,7 +1491,13 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
-            return get_wrapped_owner(get_owner_id(self.case))
+            owner_id = get_owner_id(self.case)
+
+            location = SQLLocation.by_location_id(owner_id)
+            if location:
+                return [location]
+
+            return get_wrapped_owner(owner_id)
         elif handler.recipient == RECIPIENT_PARENT_CASE:
             parent_case = None
             case = self.case
@@ -1604,135 +1613,6 @@ class SurveyKeyword(Document):
             reduce=False,
             **extra_kwargs
         ).all()
-
-
-class SurveySample(Document):
-    domain = StringProperty()
-    name = StringProperty()
-    contacts = ListProperty(StringProperty)
-    time_zone = StringProperty()
-    
-    def get_time_zone(self):
-        return self.time_zone
-    
-    @classmethod
-    def get_all(cls, domain):
-        return cls.view('reminders/sample_by_domain',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True
-        ).all()
-
-class SurveyWave(DocumentSchema):
-    date = DateProperty()
-    time = TimeProperty()
-    end_date = DateProperty()
-    form_id = StringProperty()
-    reminder_definitions = DictProperty() # Dictionary of CommCareCaseGroup._id : CaseReminderHandler._id
-    delegation_tasks = DictProperty() # Dictionary of {sample id : {contact id : delegation task id, ...}, ...}
-    
-    def has_started(self, parent_survey_ref):
-        samples = [CommCareCaseGroup.get(sample["sample_id"]) for sample in parent_survey_ref.samples]
-        for sample in samples:
-            if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(self.date, self.time)) <= datetime.utcnow():
-                return True
-        return False
-
-
-class Survey(Document):
-    domain = StringProperty()
-    name = StringProperty()
-    waves = SchemaListProperty(SurveyWave)
-    followups = ListProperty(DictProperty)
-    samples = ListProperty(DictProperty)
-    send_automatically = BooleanProperty()
-    send_followup = BooleanProperty()
-
-    @classmethod
-    def get_all(cls, domain):
-        return get_surveys_in_domain(domain)
-
-    def has_started(self):
-        for wave in self.waves:
-            if wave.has_started(self):
-                return True
-        return False
-
-    def update_delegation_tasks(self, submitting_user_id):
-        utcnow = datetime.utcnow()
-
-        # Get info about each CATI sample and the instance of that sample used for this survey
-        cati_sample_data = {}
-        for sample_json in self.samples:
-            if sample_json["method"] == "CATI":
-                sample_id = sample_json["sample_id"]
-                cati_sample_data[sample_id] = {
-                    "sample_object": CommCareCaseGroup.get(sample_id),
-                    "incentive" : sample_json["incentive"],
-                    "cati_operator" : sample_json["cati_operator"],
-                }
-        
-        for wave in self.waves:
-            if wave.has_started(self):
-                continue
-            
-            # Close any tasks for samples that are no longer used, and for contacts that are no longer in the samples
-            for sample_id, tasks in wave.delegation_tasks.items():
-                if sample_id not in cati_sample_data:
-                    for case_id, delegation_case_id in tasks.items():
-                        close_task(self.domain, delegation_case_id, submitting_user_id)
-                    del wave.delegation_tasks[sample_id]
-                else:
-                    for case_id in list(set(tasks.keys()).difference(
-                            cati_sample_data[sample_id]["sample_object"].cases)):
-                        close_task(self.domain, tasks[case_id], submitting_user_id)
-                        del wave.delegation_tasks[sample_id][case_id]
-            
-            # Update / Create tasks for existing / new contacts
-            for sample_id, sample_data in cati_sample_data.items():
-                task_activation_datetime = CaseReminderHandler.timestamp_to_utc(sample_data["sample_object"], datetime.combine(wave.date, wave.time))
-                task_deactivation_datetime = CaseReminderHandler.timestamp_to_utc(sample_data["sample_object"], datetime.combine(wave.end_date, wave.time))
-                if sample_id not in wave.delegation_tasks:
-                    wave.delegation_tasks[sample_id] = {}
-                    for case_id in sample_data["sample_object"].cases:
-                        wave.delegation_tasks[sample_id][case_id] = create_task(
-                            CommCareCase.get(case_id), 
-                            submitting_user_id, 
-                            sample_data["cati_operator"], 
-                            wave.form_id, 
-                            task_activation_datetime,
-                            task_deactivation_datetime,
-                            sample_data["incentive"]
-                        )
-                else:
-                    for case_id in sample_data["sample_object"].cases:
-                        delegation_case_id = wave.delegation_tasks[sample_id].get(case_id, None)
-                        if delegation_case_id is None:
-                            wave.delegation_tasks[sample_id][case_id] = create_task(
-                                CommCareCase.get(case_id), 
-                                submitting_user_id, 
-                                sample_data["cati_operator"], 
-                                wave.form_id, 
-                                task_activation_datetime, 
-                                task_deactivation_datetime,
-                                sample_data["incentive"]
-                            )
-                        else:
-                            delegation_case = CommCareCase.get(delegation_case_id)
-                            if (delegation_case.owner_id != sample_data["cati_operator"] or
-                            delegation_case.get_case_property("start_date") != task_activation_datetime or
-                            delegation_case.get_case_property("end_date") != task_deactivation_datetime or
-                            delegation_case.get_case_property("form_id") != wave.form_id):
-                                update_task(
-                                    self.domain, 
-                                    delegation_case_id, 
-                                    submitting_user_id, 
-                                    sample_data["cati_operator"], 
-                                    wave.form_id, 
-                                    task_activation_datetime, 
-                                    task_deactivation_datetime,
-                                    sample_data["incentive"]
-                                )
 
 
 from .signals import *

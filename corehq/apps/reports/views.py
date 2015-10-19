@@ -46,7 +46,7 @@ from django.views.generic import View
 import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles
-from casexml.apps.case.cleanup import rebuild_case, close_case
+from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
@@ -90,7 +90,7 @@ from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types, XFormDeprecated
 from corehq.apps.reports.templatetags.xform_tags import render_form
 from corehq.apps.reports.filters.users import UserTypeFilter
-from corehq.apps.domain.decorators import (login_or_digest)
+from corehq.apps.domain.decorators import (login_or_digest, login_or_digest_or_basic)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases
@@ -431,7 +431,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseRedirect(next)
 
 
-@login_or_digest
+@login_or_digest_or_basic(default='digest')
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
@@ -1062,7 +1062,7 @@ def case_xml(request, domain, case_id):
 @require_POST
 def rebuild_case_view(request, domain, case_id):
     case = get_document_or_404(CommCareCase, domain, case_id)
-    rebuild_case(case_id)
+    rebuild_case_from_forms(case_id)
     messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
@@ -1071,6 +1071,8 @@ def rebuild_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def resave_case(request, domain, case_id):
+    """Re-save the case to have it re-processed by pillows
+    """
     case = get_document_or_404(CommCareCase, domain, case_id)
     CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
     messages.success(
@@ -1523,6 +1525,8 @@ def unarchive_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def resave_form(request, domain, instance_id):
+    """Re-save the form to have it re-processed by pillows
+    """
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     XFormInstance.get_db().save_doc(instance.to_json())

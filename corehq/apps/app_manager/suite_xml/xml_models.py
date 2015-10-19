@@ -400,6 +400,7 @@ class MenuMixin(XmlObject):
 
     root = StringField('@root')
     relevant = XPathField('@relevant')
+    style = StringField('@style')
     commands = NodeListField('command', Command)
 
 

@@ -260,7 +260,7 @@ def server_up(req):
             "check_func": hb_check
         },
         "celery": {
-            "always_check": False,
+            "always_check": True,
             "message": "* celery is down",
             "check_func": celery_check
         },
@@ -405,7 +405,7 @@ def retrieve_download(req, domain, download_id, template="style/includes/file_do
 
 
 def dropbox_next_url(request, download_id):
-    return request.META.get('HTTP_REFERER', '/')
+    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
 
 
 @login_required
@@ -636,7 +636,7 @@ class BasePageView(TemplateView):
         This is what is visible to the user.
         page_title is what shows up in <title> tags.
         """
-        return self.page_title
+        return _(self.page_title)
 
     @property
     def page_url(self):
@@ -660,8 +660,8 @@ class BasePageView(TemplateView):
         """
         return {
             'current_page': {
-                'page_name': self.page_name,
-                'title': self.page_title,
+                'page_name': _(self.page_name),
+                'title': _(self.page_title),
                 'url': self.page_url,
                 'parents': self.parent_pages,
             },
@@ -700,7 +700,7 @@ class BaseSectionPageView(BasePageView):
         context = super(BaseSectionPageView, self).main_context
         context.update({
             'section': {
-                'page_name': self.section_name,
+                'page_name': _(self.section_name),
                 'url': self.section_url,
             }
         })
@@ -788,11 +788,11 @@ class CRUDPaginatedViewMixin(object):
                 'column_names': self.column_names,
                 'num_columns': len(self.column_names),
                 'text': {
-                    'limit': self.limit_text,
-                    'empty': self.empty_notification,
-                    'loading': self.loading_message,
-                    'deleted_items': self.deleted_items_header,
-                    'new_items': self.new_items_header,
+                    'limit': _(self.limit_text),
+                    'empty': _(self.empty_notification),
+                    'loading': _(self.loading_message),
+                    'deleted_items': _(self.deleted_items_header),
+                    'new_items': _(self.new_items_header),
                 },
                 'create_item_form': self.get_create_form_response(create_form) if create_form else None,
             }
@@ -988,21 +988,15 @@ def quick_find(request):
         else:
             return json_response(doc_info)
 
-    try:
-        doc = get_db().get(query)
-    except ResourceNotFound:
-        pass
+    for db_name in (None, 'users', 'receiverwrapper', 'meta'):
+        try:
+            doc = get_db(db_name).get(query)
+        except ResourceNotFound:
+            pass
+        else:
+            return deal_with_couch_doc(doc)
     else:
-        return deal_with_couch_doc(doc)
-
-    try:
-        doc = Repeater.get_db().get(query)
-    except ResourceNotFound:
-        pass
-    else:
-        return deal_with_couch_doc(doc)
-
-    raise Http404()
+        raise Http404()
 
 
 def osdd(request, template='osdd.xml'):

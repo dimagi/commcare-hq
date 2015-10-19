@@ -34,70 +34,19 @@ class EntriesHelper(object):
         self.modules = modules or list(app.get_modules())
         self.details_helper = DetailsHelper(self.app, self.modules)
 
-    def get_datums_meta_for_form_generic(self, form):
+    def get_datums_meta_for_form_generic(self, form, module=None):
+        if not module:
+            module = form.get_module()
         if form.form_type == 'module_form':
-            datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+            datums_meta = self.get_case_datums_basic_module(module, form)
         elif form.form_type == 'advanced_form':
-            datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+            datums_meta, _ = self.get_datum_meta_assertions_advanced(module, form)
             datums_meta.extend(EntriesHelper.get_new_case_id_datums_meta(form))
         else:
             raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
                 form.form_type, form.unique_id
             ))
         return datums_meta
-
-    def _add_action_to_detail(self, detail, module):
-        # add form action to detail
-        form = self.app.get_form(module.case_list_form.form_id)
-
-        if self.app.enable_localized_menu_media:
-            case_list_form = module.case_list_form
-            detail.action = LocalizedAction(
-                menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=bool(len(case_list_form.all_image_paths())),
-                media_audio=bool(len(case_list_form.all_audio_paths())),
-                image_locale_id=id_strings.case_list_form_icon_locale(module),
-                audio_locale_id=id_strings.case_list_form_audio_locale(module),
-                stack=Stack(),
-                for_action_menu=True,
-            )
-        else:
-            detail.action = Action(
-                display=Display(
-                    text=Text(locale_id=id_strings.case_list_form_locale(module)),
-                    media_image=module.case_list_form.default_media_image,
-                    media_audio=module.case_list_form.default_media_audio,
-                ),
-                stack=Stack()
-            )
-
-        frame = PushFrame()
-        frame.add_command(XPath.string(id_strings.form_command(form)))
-
-        target_form_dm = self.get_datums_meta_for_form_generic(form)
-        source_form_dm = self.get_datums_meta_for_form_generic(module.get_form(0))
-        for target_meta in target_form_dm:
-            if target_meta.requires_selection:
-                # This is true for registration forms where the case being created is a subcase
-                try:
-                    [source_dm] = [
-                        source_meta for source_meta in source_form_dm
-                        if source_meta.case_type == target_meta.case_type
-                    ]
-                except ValueError:
-                    raise SuiteError("Form selected as case list form requires a case "
-                                     "but no matching case could be found: {}".format(form.unique_id))
-                else:
-                    frame.add_datum(StackDatum(
-                        id=target_meta.datum.id,
-                        value=session_var(source_dm.datum.id))
-                    )
-            else:
-                s_datum = target_meta.datum
-                frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
-
-        frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
-        detail.action.stack.add_frame(frame)
 
     @staticmethod
     def get_filter_xpath(module, delegation=False):
@@ -112,10 +61,10 @@ class EntriesHelper(object):
         return xpath
 
     @staticmethod
-    def get_nodeset_xpath(case_type, module, use_filter):
+    def get_nodeset_xpath(case_type, filter_xpath=''):
         return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
             case_type=case_type,
-            filter_xpath=EntriesHelper.get_filter_xpath(module) if use_filter else '',
+            filter_xpath=filter_xpath,
         )
 
     @staticmethod
@@ -153,13 +102,13 @@ class EntriesHelper(object):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        for form in module.get_forms():
+        for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
                 e.command = LocalizedCommand(
-                    id=id_strings.form_command(form),
+                    id=id_strings.form_command(form, module),
                     menu_locale_id=id_strings.form_locale(form),
                     media_image=bool(len(form.all_image_paths())),
                     media_audio=bool(len(form.all_audio_paths())),
@@ -168,7 +117,7 @@ class EntriesHelper(object):
                 )
             else:
                 e.command = Command(
-                    id=id_strings.form_command(form),
+                    id=id_strings.form_command(form, module),
                     locale_id=id_strings.form_locale(form),
                     media_image=form.default_media_image,
                     media_audio=form.default_media_audio,
@@ -217,12 +166,15 @@ class EntriesHelper(object):
                 for datum_meta in self.get_datum_meta_module(module, use_filter=False):
                     e.datums.append(datum_meta.datum)
             elif isinstance(module, AdvancedModule):
+                detail_persistent, detail_inline = self.get_case_tile_datum_attrs(module, module)
                 e.datums.append(SessionDatum(
                     id='case_id_case_%s' % module.case_type,
-                    nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type, module, False)),
+                    nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long')
+                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
+                    detail_persistent=detail_persistent,
+                    detail_inline=detail_inline,
                 ))
                 if self.app.commtrack_enabled:
                     e.datums.append(SessionDatum(
@@ -358,7 +310,8 @@ class EntriesHelper(object):
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
-        datums_meta = get_select_chain_meta(self.app, module)
+        datum_module = module.source_module if module.module_type == 'shadow' else module
+        datums_meta = get_select_chain_meta(self.app, datum_module)
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
@@ -369,17 +322,10 @@ class EntriesHelper(object):
             else:
                 parent_filter = ''
 
-            detail_persistent = None
-            detail_inline = False
-            for detail_type, detail, enabled in datum['module'].get_details():
-                if (
-                    detail.persist_tile_on_forms
-                    and (detail.use_case_tiles or detail.custom_xml)
-                    and enabled
-                ):
-                    detail_persistent = id_strings.detail(datum['module'], detail_type)
-                    detail_inline = bool(detail.pull_down_tile)
-                    break
+            detail_module = module if module.module_type == 'shadow' else datum['module']
+            detail_persistent, detail_inline = self.get_case_tile_datum_attrs(
+                datum['module'], detail_module
+            )
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
@@ -388,7 +334,7 @@ class EntriesHelper(object):
                         id=id_strings.fixture_session_var(datum['module']),
                         nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
                         value=datum['module'].fixture_select.variable_column,
-                        detail_select=id_strings.fixture_detail(datum['module'])
+                        detail_select=id_strings.fixture_detail(detail_module)
                     ),
                     case_type=None,
                     requires_selection=True,
@@ -400,22 +346,20 @@ class EntriesHelper(object):
                     filter_xpath_template.replace('$fixture_value', fixture_value)
                 )
 
+            filter_xpath = EntriesHelper.get_filter_xpath(module) if use_filter else ''
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
+                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], filter_xpath=filter_xpath)
                              + parent_filter + fixture_select_filter),
                     value="./@case_id",
-                    detail_select=self.details_helper.get_detail_id_safe(datum['module'], 'case_short'),
+                    detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
                     detail_confirm=(
-                        self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
+                        self.details_helper.get_detail_id_safe(detail_module, 'case_long')
                         if datum['index'] == 0 and not detail_inline else None
                     ),
                     detail_persistent=detail_persistent,
-                    detail_inline=(
-                        self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
-                        if detail_inline else None
-                    )
+                    detail_inline=detail_inline,
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
@@ -540,16 +484,21 @@ class EntriesHelper(object):
         def get_manual_datum(action_, parent_filter_=''):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
+            filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
+            detail_persistent, detail_inline = self.get_case_tile_datum_attrs(target_module_, target_module_)
+
             return SessionDatum(
                 id=action_.case_session_var,
-                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, target_module_, True) +
-                         parent_filter_),
+                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, filter_xpath=filter_xpath)
+                         + parent_filter_),
                 value="./@case_id",
                 detail_select=self.details_helper.get_detail_id_safe(target_module_, 'case_short'),
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
                     if not referenced_by or referenced_by['type'] != 'load' else None
-                )
+                ),
+                detail_persistent=detail_persistent,
+                detail_inline=detail_inline,
             )
 
         datums = []
@@ -749,7 +698,7 @@ class EntriesHelper(object):
         parent_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
         e.datums.append(SessionDatum(
             id='case_id',
-            nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type, parent_module, False),
+            nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type),
             value="./@case_id",
             detail_select=self.details_helper.get_detail_id_safe(parent_module, 'case_short'),
             detail_confirm=self.details_helper.get_detail_id_safe(parent_module, 'case_long')
@@ -813,3 +762,14 @@ class EntriesHelper(object):
             elif form.mode == 'update':
                 e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
+
+    def get_case_tile_datum_attrs(self, module, detail_module):
+        detail_persistent = None
+        detail_inline = None
+        for detail_type, detail, enabled in module.get_details():
+            if (detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml) and enabled):
+                detail_persistent = id_strings.detail(detail_module, detail_type)
+                if detail.pull_down_tile:
+                    detail_inline = self.details_helper.get_detail_id_safe(detail_module, 'case_long')
+                break
+        return detail_persistent, detail_inline

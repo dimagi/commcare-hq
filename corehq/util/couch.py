@@ -5,10 +5,12 @@ import json
 from copy import deepcopy
 from collections import defaultdict, namedtuple
 from time import sleep
-from couchdbkit import ResourceNotFound, BulkSaveError
+from couchdbkit import ResourceNotFound, BulkSaveError, Document
 from django.http import Http404
 from jsonobject.exceptions import WrappingAttributeError
+from corehq.util.exceptions import DocumentClassNotFound
 from dimagi.utils.chunked import chunked
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.requestskit import get_auth
 from django.conf import settings
 
@@ -57,6 +59,36 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     except DocumentNotFound as e:
         tb = traceback.format_exc()
         raise Http404("{}\n\n{}".format(e, tb))
+
+
+@memoized
+def get_document_class_by_name(name):
+    """
+    Given the name of a document class, get the class itself.
+
+    Raises a DocumentClassNotFound if not found
+    """
+    def _all_subclasses(cls):
+        for subclass in cls.__subclasses__():
+            yield subclass
+            for subsubclass in _all_subclasses(subclass):
+                yield subsubclass
+
+    for subclass in _all_subclasses(Document):
+        if subclass.__name__ == name:
+            return subclass
+
+    raise DocumentClassNotFound(u'No Document class with name "{}" could be found.'.format(name))
+
+
+def get_db_by_doc_type(doc_type):
+    """
+    Lookup a database by document type. Returns None if the database is not found.
+    """
+    try:
+        return get_document_class_by_name(doc_type).get_db()
+    except DocumentClassNotFound:
+        return None
 
 
 def categorize_bulk_save_errors(error):

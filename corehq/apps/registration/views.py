@@ -76,7 +76,11 @@ def register_user(request, domain_type=None):
                     'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
                     'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
                 }  # request.META can't be pickled for use by the task, so we copy the pertinent properties
-                track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
+                track_created_hq_account_on_hubspot.delay(
+                    CouchUser.get_by_username(new_user.username),
+                    request.COOKIES,
+                    meta
+                )
                 track_workflow(new_user.email, "Requested new account")
 
                 login(request, new_user)
@@ -151,7 +155,7 @@ def register_org(request, template="registration/org_request.html"):
 @login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
-    if domain_type not in DOMAIN_TYPES or request.couch_user.is_commcare_user():
+    if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
         raise Http404()
 
     context = get_domain_context(domain_type)

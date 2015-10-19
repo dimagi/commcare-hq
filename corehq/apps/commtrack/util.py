@@ -115,9 +115,9 @@ def _create_commtrack_config_if_needed(domain):
 def _enable_commtrack_previews(domain):
     for toggle_class in (
         toggles.COMMTRACK,
-        feature_previews.LOCATIONS,
         toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
         toggles.VELLUM_ADVANCED_ITEMSETS,
+        toggles.STOCK_TRANSACTION_EXPORT,
     ):
         toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
 
@@ -199,7 +199,6 @@ def submit_mapping_case_block(user, index):
         caseblock = CaseBlock(
             create=False,
             case_id=mapping._id,
-            version=V2,
             index=index
         )
     else:
@@ -207,7 +206,6 @@ def submit_mapping_case_block(user, index):
             create=True,
             case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(user),
-            version=V2,
             owner_id=user._id,
             index=index,
             case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),

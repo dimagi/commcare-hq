@@ -3,7 +3,6 @@ import uuid
 from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
-from corehq.db import Session
 
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
@@ -23,8 +22,8 @@ from corehq.apps.userreports.sql.columns import (
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
+from corehq.form_processor.interfaces import FormProcessorInterface
 
 
 class TestFieldColumn(SimpleTestCase):
@@ -111,7 +110,7 @@ class ChoiceListColumnDbTest(TestCase):
             'long_column': 'duplicate_choice_1',
         })
         # and query it back
-        q = Session.query(adapter.get_table())
+        q = adapter.get_query_object()
         self.assertEqual(1, q.count())
 
 
@@ -125,10 +124,9 @@ class TestExpandedColumn(TestCase):
             create=True,
             case_id=id,
             case_type=self.case_type,
-            version=V2,
             update=properties,
         ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):
@@ -276,6 +274,10 @@ class TestAggregateDateColumn(SimpleTestCase):
     def test_format(self):
         wrapped = ReportColumnFactory.from_spec(self._spec)
         self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
+
+    def test_format_missing(self):
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertEqual('Unknown Date', wrapped.get_format_fn()({'year': None, 'month': None}))
 
 
 class TestPercentageColumn(SimpleTestCase):
