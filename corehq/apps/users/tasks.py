@@ -9,8 +9,6 @@ from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
-from corehq.apps.reminders.tasks import delete_reminders_for_cases
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
@@ -19,7 +17,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX, is_deleted
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
-
 from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.models import XFormInstance
 
@@ -46,6 +43,8 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
 def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
+    from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
+    from corehq.apps.reminders.tasks import delete_reminders_for_cases
     for doc in docs:
         doc['doc_type'] += DELETED_SUFFIX
         doc['-deletion_id'] = deletion_id
