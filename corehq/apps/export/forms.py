@@ -160,15 +160,12 @@ class FilterExportDownloadForm(forms.Form):
         widget=DateRangePickerWidget(),
     )
 
-    def __init__(self, domain, timezone, *args, **kwargs):
-        self.domain = domain
+    def __init__(self, domain_object, timezone, *args, **kwargs):
+        self.domain_object = domain_object
         self.timezone = timezone
-        if not isinstance(self.domain, Domain):
-            self.domain = Domain.get_by_name(self.domain)
-
         super(FilterExportDownloadForm, self).__init__(*args, **kwargs)
 
-        if not self.domain.uses_locations:
+        if not self.domain_object.uses_locations:
             self.fields['user_types'].choices = self._USER_TYPES_CHOICES[:-1]
 
         self.fields['date_range'].help_text = _(
@@ -176,7 +173,7 @@ class FilterExportDownloadForm(forms.Form):
         ) % {
             'timezone': self.timezone,
         }
-        default_datespan = datespan_from_beginning(self.domain.name, self.timezone)
+        default_datespan = datespan_from_beginning(self.domain_object.name, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
         )
@@ -218,7 +215,7 @@ class FilterExportDownloadForm(forms.Form):
                         ),
                     ),
                     CrispyTemplate('export/crispy_html/groups_help.html', {
-                        'domain': self.domain.name,
+                        'domain': self.domain_object.name,
                     }),
                 ),
                 ng_show="formData.type_or_group === 'group'",
@@ -245,7 +242,7 @@ class FilterExportDownloadForm(forms.Form):
             (True,) * HQUserType.count,
             user_filter_toggles
         )
-        return users_matching_filter(self.domain.name, user_filters)
+        return users_matching_filter(self.domain_object.name, user_filters)
 
     def _get_group(self):
         group = self.cleaned_data['group']
@@ -261,7 +258,7 @@ class FilterExportDownloadForm(forms.Form):
 
     def format_export_data(self, export):
         return {
-            'domain': self.domain.name,
+            'domain': self.domain_object.name,
             'sheet_name': export.name,
             'export_id': export.get_id,
             'export_type': self._export_type,
@@ -306,7 +303,7 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditCustomFormExportView
         return reverse(EditCustomFormExportView.urlname,
-                       args=(self.domain.name, export.get_id))
+                       args=(self.domain_object.name, export.get_id))
 
     def format_export_data(self, export):
         export_data = super(FilterFormExportDownloadForm, self).format_export_data(export)
@@ -324,7 +321,7 @@ class FilterCaseExportDownloadForm(FilterExportDownloadForm):
         if group:
             return SerializableFunction(case_group_filter, group=group)
         case_sharing_groups = [g.get_id for g in
-                               Group.get_case_sharing_groups(self.domain.name)]
+                               Group.get_case_sharing_groups(self.domain_object.name)]
         return SerializableFunction(case_users_filter,
                                     users=self._get_filtered_users(),
                                     groups=case_sharing_groups)
@@ -332,4 +329,4 @@ class FilterCaseExportDownloadForm(FilterExportDownloadForm):
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditCustomCaseExportView
         return reverse(EditCustomCaseExportView.urlname,
-                       args=(self.domain.name, export.get_id))
+                       args=(self.domain_object.name, export.get_id))
