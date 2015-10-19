@@ -23,39 +23,37 @@ class RebuildTableException(Exception):
     pass
 
 
-def catch_signal(app, **kwargs):
+def catch_signal(sender, **kwargs):
     if settings.UNIT_TESTING:
         return
 
-    app_name = app.__name__.rsplit('.', 1)[0]
-    if app_name == 'fluff':
-        from fluff import FluffPillow
-        table_pillow_map = {}
-        pillows = list(chain.from_iterable(settings.PILLOWTOPS.values()))
-        for pillow_string in pillows:
-            pillow_class = get_pillow_class(pillow_string)
-            if issubclass(pillow_class, FluffPillow):
-                doc = pillow_class.indicator_class()
-                if doc.save_direct_to_sql:
-                    table_pillow_map[doc._table.name] = {
-                        'doc': doc,
-                        'pillow': pillow_class
-                    }
+    from fluff import FluffPillow
+    table_pillow_map = {}
+    pillows = list(chain.from_iterable(settings.PILLOWTOPS.values()))
+    for pillow_string in pillows:
+        pillow_class = get_pillow_class(pillow_string)
+        if issubclass(pillow_class, FluffPillow):
+            doc = pillow_class.indicator_class()
+            if doc.save_direct_to_sql:
+                table_pillow_map[doc._table.name] = {
+                    'doc': doc,
+                    'pillow': pillow_class
+                }
 
-        print '\tchecking fluff SQL tables for schema changes'
-        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
+    print '\tchecking fluff SQL tables for schema changes'
+    engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
 
-        with engine.begin() as connection:
-            migration_context = get_migration_context(connection, table_pillow_map.keys())
-            diffs = compare_metadata(migration_context, fluff_metadata)
+    with engine.begin() as connection:
+        migration_context = get_migration_context(connection, table_pillow_map.keys())
+        diffs = compare_metadata(migration_context, fluff_metadata)
 
-        tables_to_rebuild = get_tables_to_rebuild(diffs, table_pillow_map.keys())
+    tables_to_rebuild = get_tables_to_rebuild(diffs, table_pillow_map.keys())
 
-        for table in tables_to_rebuild:
-            info = table_pillow_map[table]
-            rebuild_table(engine, info['pillow'], info['doc'])
+    for table in tables_to_rebuild:
+        info = table_pillow_map[table]
+        rebuild_table(engine, info['pillow'], info['doc'])
 
-        engine.dispose()
+    engine.dispose()
 
 
 def get_tables_to_rebuild(diffs, table_names):
@@ -103,6 +101,3 @@ def get_migration_context(connection, table_names):
 
 def include_symbol(names_to_include, table_name, schema):
     return table_name in names_to_include
-
-
-signals.post_syncdb.connect(catch_signal)
