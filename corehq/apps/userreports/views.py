@@ -325,7 +325,7 @@ class ConfigureChartReport(ReportBuilderView):
     page_title = ugettext_noop("Configure Report")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = _("Chart Report: {}")
+    report_title = ugettext_noop("Chart Report: {}")
     report_type = 'chart'
     existing_report = None
 
@@ -338,7 +338,7 @@ class ConfigureChartReport(ReportBuilderView):
         title = self.request.GET.get('report_name', '')
         if self.existing_report:
             title = self.existing_report.title
-        return self.report_title.format(title)
+        return _(self.report_title).format(title)
 
     @property
     def page_context(self):
@@ -400,7 +400,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 
 class ConfigureListReport(ConfigureChartReport):
-    report_title = _("List Report: {}")
+    report_title = ugettext_noop("List Report: {}")
     report_type = 'list'
 
     @property
@@ -410,7 +410,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 
 class ConfigureTableReport(ConfigureChartReport):
-    report_title = _("Table Report: {}")
+    report_title = ugettext_noop("Table Report: {}")
     report_type = 'table'
 
     @property
@@ -420,7 +420,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 
 class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = _("Worker Report: {}")
+    report_title = ugettext_noop("Worker Report: {}")
     report_type = 'worker'
 
     @property
