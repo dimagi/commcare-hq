@@ -49,7 +49,6 @@ from corehq import toggles
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-from corehq.apps.reports.display import FormType
 from corehq.apps.reports.forms import SavedReportConfigForm
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import absolute_reverse, reverse
@@ -1329,7 +1328,6 @@ def _get_form_to_edit(domain, user, instance_id):
 def form_data(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     context = _get_form_context(request, domain, instance)
-    context['form_meta'] = FormType(domain, instance.xmlns, instance.app_id).metadata
     try:
         form_name = instance.form["@name"]
     except KeyError:

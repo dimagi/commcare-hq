@@ -122,9 +122,10 @@ class CaseBlock(dict):
                 'xmlns':                self.XMLNS,
             }
         })
-        create_or_update.update({
-            'owner_id':                 owner_id,
-        })
+        if owner_id is not None:
+            create_or_update.update({
+                'owner_id':                 owner_id,
+            })
         self['update'].update({
             'external_id':              external_id,
         })

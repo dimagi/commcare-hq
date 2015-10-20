@@ -333,7 +333,7 @@ class RestoreState(object):
                     )
                     if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
                         from corehq.apps.reports.standard.deployments import SyncHistoryReport
-                        last_bugfix_date = datetime(2015, 9, 21)
+                        last_bugfix_date = datetime(2015, 10, 20)
                         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
                         sync_history_url = '{}?individual={}'.format(
                             SyncHistoryReport.get_url(self.domain),
