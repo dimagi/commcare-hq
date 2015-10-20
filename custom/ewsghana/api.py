@@ -728,11 +728,11 @@ class EWSApi(APISynchronization):
 
         saved_numbers = []
         for connection in phone_numbers:
-            connection.phone_number = apply_leniency(connection.phone_number)
+            phone_number = apply_leniency(connection.phone_number)
             if connection.default:
-                saved_numbers = [connection.phone_number] + saved_numbers
+                saved_numbers = [phone_number] + saved_numbers
             else:
-                saved_numbers.append(connection.phone_number)
+                saved_numbers.append(phone_number)
         user.phone_numbers = saved_numbers
         user.save()
 
