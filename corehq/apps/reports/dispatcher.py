@@ -284,19 +284,3 @@ class QuestionTemplateDispatcher(ProjectReportDispatcher):
     def get_question_templates(self, domain, report_slug):
         question_templates = dict(self.get_reports(domain))
         return question_templates.get(report_slug, None)
-
-
-class DataExportInterfaceDispatcher(ProjectReportDispatcher):
-    prefix = 'data_export_interface'
-    map_name = 'EXPORT_DATA_INTERFACES'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(DataExportInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
-
-
-class DataDownloadInterfaceDispatcher(ProjectReportDispatcher):
-    prefix = 'data_download_interface'
-    map_name = 'DATA_DOWNLOAD_INTERFACES'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(DataDownloadInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
