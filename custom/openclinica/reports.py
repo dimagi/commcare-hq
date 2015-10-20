@@ -105,9 +105,8 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
                 # Skip cases that are not subjects. TODO: Remove case type selection from UI
                 continue
             if not (hasattr(case, CC_SUBJECT_KEY) and hasattr(case, CC_STUDY_SUBJECT_ID)):
-                raise OpenClinicaIntegrationError(
-                    'Mandatory property "{}" or "{}" missing from subject "{}"'.format(
-                        CC_SUBJECT_KEY, CC_STUDY_SUBJECT_ID, case.name))
+                # Skip subjects that have not been selected for the study
+                continue
             yield case
 
     def subject_headers(self):
