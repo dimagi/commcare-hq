@@ -39,6 +39,7 @@ from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
     XFormException, XForm)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from couchexport.export import FormattedRow
 from couchexport.models import Format
@@ -373,6 +374,9 @@ def view_app(request, domain, app_id=None):
     module_id = request.GET.get('m', None)
     form_id = request.GET.get('f', None)
     if module_id or form_id:
+        soft_assert('{}@{}'.format('skelly', 'dimagi.com')).call(
+            False, 'old m=&f= url still in use'
+        )
         return back_to_main(request, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
 
