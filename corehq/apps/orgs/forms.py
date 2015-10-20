@@ -2,10 +2,12 @@ from django import forms
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 import re
-from corehq.apps.domain.utils import new_domain_re, website_re
+from corehq.apps.domain.utils import website_re
 from corehq.apps.orgs.models import Organization, Team, OrgRequest
-from corehq.apps.registration.forms import OrganizationRegistrationForm
 from corehq.apps.users.models import CouchUser
+
+new_org_re = r"(?:[a-z0-9]+\-)*[a-zA-Z0-9]+" # lowercase and uppercase letters, numbers, and '-' (at most one between "words")
+
 
 class AddProjectForm(forms.Form):
     domain_name = forms.CharField(label="Project Name", help_text="e.g. - public")
@@ -95,6 +97,58 @@ class AddTeamForm(forms.Form):
             if t.name == data:
                 raise forms.ValidationError('A team with that name already exists.')
         return data
+
+
+class OrganizationRegistrationForm(forms.Form):
+    """
+    form for creating an organization for the first time
+    """
+
+    org_title = forms.CharField(label='Organization Title:', max_length=25, help_text='e.g. - Dimagi Inc')
+    org_name = forms.CharField(label='Organization ID:', max_length=25, help_text='e.g. - dimagi')
+    email = forms.CharField(label='Organization Email:', max_length=35, required=False)
+    url = forms.CharField(label='Organization Homepage:', max_length=35, required=False)
+    location = forms.CharField(label='Organization Location:', max_length=25, required=False)
+    # logo = forms.ImageField(label='Organization Logo:', required=False)
+
+    def clean_org_name(self):
+        data = self.cleaned_data['org_name'].strip().lower()
+        if not re.match("^%s$" % new_org_re, data):
+            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+        if Organization.get_by_name(data) or Organization.get_by_name(data.replace('-', '.')):
+            raise forms.ValidationError('Organization name already taken---please try another')
+        return data
+
+    def clean_org_title(self):
+        data = self.cleaned_data['org_title'].strip()
+        return data
+
+    def clean_email(self):
+        data = self.cleaned_data['email'].strip()
+        if not data == '':
+            validate_email(data)
+        return data
+
+    def clean_url(self):
+        data = self.cleaned_data['url'].strip()
+        if not re.match("^%s$" % website_re, data) and not data == '':
+            raise forms.ValidationError('invalid url')
+        return data
+
+    def clean_location(self):
+        data = self.cleaned_data['location']
+        return data
+
+    # def clean_logo(self):
+    #     data = self.cleaned_data['logo']
+    #     #resize image to fit in website nicely
+    #     return data
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
 
 
 class UpdateOrgInfo(OrganizationRegistrationForm):
