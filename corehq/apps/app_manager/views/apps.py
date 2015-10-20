@@ -125,7 +125,7 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
+    return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, 0, 0]))
 
 
 def get_app_view_context(request, app):
@@ -308,7 +308,7 @@ def app_from_template(request, domain, slug):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
+    return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
