@@ -331,7 +331,7 @@ class SmsBillable(models.Model):
                     "No matching gateway fee criteria for SMSLog %s" % message_log._id
                 )
 
-        # Fetch usage_fee todo
+        # Fetch usage_fee
         domain = message_log.domain
         billable.usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain
