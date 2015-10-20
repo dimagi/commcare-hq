@@ -147,67 +147,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(sync_log.get_id, {}, {})
                          
     @run_with_all_restore_configs
-    def testTokenAssociation(self):
-        """
-        Test that individual create, update, and close submissions update
-        the appropriate case lists in the sync token
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-        
-        self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        # a normal update should have no affect
-        self._postWithSyncToken("update_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        # close should remove it from the cases_on_phone list
-        # (and currently puts it into the dependent list though this 
-        # might change.
-        self._postWithSyncToken("close_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {}, {})
-
-    @run_with_all_restore_configs
-    def testMultipleUpdates(self):
-        """
-        Test that multiple update submissions don't update the case lists
-        and don't create duplicates in them
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-
-        self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        self._postWithSyncToken("update_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        self._postWithSyncToken("update_short_2.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-    @run_with_all_restore_configs
-    def testMultiplePartsSingleSubmit(self):
-        """
-        Tests a create and update in the same form
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-
-        self._postWithSyncToken("case_create.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"IKA9G79J4HDSPJLG3ER2OHQUY": []})
-        
-    @run_with_all_restore_configs
-    def testMultipleCases(self):
-        """
-        Test creating multiple cases from multilple forms
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-        
-        self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        self._postWithSyncToken("case_create.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": [],
-                                           "IKA9G79J4HDSPJLG3ER2OHQUY": []})
-    
-    @run_with_all_restore_configs
     def testOwnUpdatesDontSync(self):
         case_id = "own_updates_dont_sync"
         self._createCaseStubs([case_id])
@@ -599,6 +538,30 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_update_to_empty_owner_in_same_form(self):
         case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': ''}, strict=False)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
+    def test_create_relevant_owner_then_submit_again_with_no_owner(self):
+        case = self.factory.create_case()
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case._id,
+            attrs={'owner_id': None}
+        ))
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_then_submit_again_with_no_owner(self):
+        case = self.factory.create_case(owner_id='irrelevant_1')
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case._id,
+            attrs={'owner_id': None}
+        ))
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertFalse(sync_log.phone_is_holding_case(case._id))
 

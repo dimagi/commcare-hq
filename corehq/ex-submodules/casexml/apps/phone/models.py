@@ -563,6 +563,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def get_footprint_of_cases_on_phone(self):
         return list(self.case_ids_on_phone)
 
+    @property
+    def primary_case_ids(self):
+        return self.case_ids_on_phone - self.dependent_case_ids_on_phone
+
     def prune_case(self, case_id):
         """
         Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
@@ -651,6 +655,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         class CaseUpdate(object):
             def __init__(self, case_id):
                 self.case_id = case_id
+                self.was_live_previously = True
                 self.final_owner_id = None
                 self.is_closed = None
                 self.indices_to_add = []
@@ -676,6 +681,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 all_updates[case._id] = CaseUpdate(case_id=case._id)
 
             case_update = all_updates[case._id]
+            case_update.was_live_previously = case._id in self.primary_case_ids
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
@@ -707,8 +713,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if case_update.is_closed:
                 return False
             elif case_update.final_owner_id is None:
-                # we likely didn't touch owner_id so assume it was previously live and still is
-                return True
+                # we likely didn't touch owner_id so just default to whatever it was previously
+                return case_update.was_live_previously
             else:
                 return case_update.final_owner_id in owner_ids
 
