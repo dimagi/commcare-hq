@@ -61,20 +61,7 @@ class DetailContributor(SectionContributor):
                                     if d:
                                         r.append(d)
                 if module.fixture_select.active:
-                    d = Detail(
-                        id=id_strings.fixture_detail(module),
-                        title=Text(),
-                    )
-                    xpath = Xpath(function=module.fixture_select.display_column)
-                    if module.fixture_select.localize:
-                        template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
-                    else:
-                        template_text = Text(xpath_function=module.fixture_select.display_column)
-                    fields = [Field(header=Header(text=Text()),
-                                    template=Template(text=template_text),
-                                    sort_node='')]
-
-                    d.fields = fields
+                    d = self._get_fixture_detail(module)
                     r.append(d)
         return r
 
@@ -267,6 +254,23 @@ class DetailContributor(SectionContributor):
                 os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
         )) as f:
             return f.read().decode('utf-8')
+
+    def _get_fixture_detail(self, module):
+        d = Detail(
+            id=id_strings.fixture_detail(module),
+            title=Text(),
+        )
+        xpath = Xpath(function=module.fixture_select.display_column)
+        if module.fixture_select.localize:
+            template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
+        else:
+            template_text = Text(
+                xpath_function=module.fixture_select.display_column)
+        fields = [Field(header=Header(text=Text()),
+                        template=Template(text=template_text),
+                        sort_node='')]
+        d.fields = fields
+        return d
 
 
 class DetailsHelper(object):
