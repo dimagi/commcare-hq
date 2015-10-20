@@ -18,6 +18,8 @@ class BaseFilter(object):
     """
     Base object for filters.
     """
+    template = None
+    javascript_template = None
 
     def __init__(self, name, params=None):
         self.name = name
@@ -169,9 +171,9 @@ class ChoiceListFilter(BaseFilter):
     """
     Filter for a list of choices. Each choice should be a Choice object as per above.
     """
+    template = 'reports_core/filters/choice_list_filter.html'
 
     def __init__(self, name, datatype, label='Choice List Filter',
-                 template='reports_core/filters/choice_list_filter.html',
                  css_id=None, choices=None):
         params = [
             FilterParam(name, True),
@@ -179,7 +181,6 @@ class ChoiceListFilter(BaseFilter):
         super(ChoiceListFilter, self).__init__(name=name, params=params)
         self.datatype = datatype
         self.label = label
-        self.template = template
         self.css_id = css_id or self.name
         self.choices = choices or []
 
