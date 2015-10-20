@@ -1,53 +1,59 @@
+import calendar
 from collections import defaultdict, namedtuple
-from copy import copy
 from datetime import datetime
 import functools
+import json
 import logging
 from urllib import urlencode
+
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
+from django.conf import settings
+from django.core.validators import validate_email
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 from sqlalchemy.util import immutabledict
 
-from corehq.apps.domain.models import Domain
-from corehq.apps import reports
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
-from couchforms.filters import instances
-from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
-from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import FormQuestionSchema
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.dbaccessors import stale_get_exports_json
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.exceptions import InvalidDaterangeException
-from dimagi.ext.couchdbkit import *
-from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
-    default_case_filter
+from corehq.apps.reports.exceptions import (
+    InvalidDaterangeException,
+    UnsupportedSavedReportError,
+    UnsupportedScheduledReportError,
+)
+from corehq.apps.reports.exportfilters import (
+    default_case_filter,
+    default_form_filter,
+    form_matches_users,
+    is_commconnect_form,
+)
+from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
+
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
-import couchforms
+from couchforms.filters import instances
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
-from django.core.validators import validate_email
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
-import json
-import calendar
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 class HQUserType(object):
