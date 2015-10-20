@@ -66,7 +66,7 @@ class FormDisplay(object):
         return [self.form["form"].get(field) for field in self.report.other_fields]
 
 
-class FormType(object):
+class _FormType(object):
     def __init__(self, domain, xmlns, app_id=None):
         self.domain = domain
         self.xmlns = xmlns
@@ -74,20 +74,16 @@ class FormType(object):
             self.app_id = app_id
         else:
             try:
-                form = FormType.forms_by_xmlns(domain, xmlns, app_id)
+                form = get_form_analytics_metadata(domain, xmlns, app_id)
                 self.app_id = form['app']['id']
             except Exception:
                 self.app_id = {}
 
-    def get_id_tuple(self):
-        return self.domain, self.xmlns, self.app_id or None
-
-
     @property
     @memoized
-    def metadata(self):
+    def _metadata(self):
         try:
-            return FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
+            return get_form_analytics_metadata(self.domain, self.xmlns, self.app_id)
         except Exception, e:
             _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'), notify_admins=True)
             _assert(False, 'Failed on domain: {} | xmlns: {} | app_id: {} | error: {}'.format(
@@ -99,8 +95,8 @@ class FormType(object):
             return None
 
     def get_label(self, html=False, lang=None):
-        if self.metadata:
-            form = self.metadata
+        if self._metadata:
+            form = self._metadata
             if form.get('app'):
                 langs = form['app']['langs']
                 if lang:
@@ -140,17 +136,6 @@ class FormType(object):
             name = self.xmlns
         return name
 
-    @classmethod
-    def forms_by_xmlns(cls, domain, xmlns, app_id):
-        cache_key = 'corehq.apps.reports.display.FormType.forms_by_xmlns|{0}|{1}|{2}'.format(domain, xmlns, app_id)
-        form_json = cache.get(cache_key)
-        if form_json:
-            form = json.loads(form_json)
-        else:
-            form = get_form_analytics_metadata(domain, app_id, xmlns)
-            cache.set(cache_key, json.dumps(form), 30)
-        return form
-
 
 def xmlns_to_name(domain, xmlns, app_id, html=False):
-    return FormType(domain, xmlns, app_id).get_label(html=html)
+    return _FormType(domain, xmlns, app_id).get_label(html=html)
