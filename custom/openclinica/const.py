@@ -2,8 +2,8 @@
 CC_SUBJECT_CASE_TYPE = 'subject'
 
 # Names of case properties used in report
-CC_SUBJECT_KEY = 'name'
-CC_STUDY_SUBJECT_ID = 'screening_number'
+CC_SUBJECT_KEY = 'screening_number'
+CC_STUDY_SUBJECT_ID = 'subject_number'
 CC_ENROLLMENT_DATE = 'assd1'
 CC_SEX = 'sex'
 CC_DOB = 'dob'
