@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import time
 import uuid
 import os
 import hashlib
@@ -98,7 +97,6 @@ class BaseCaseMultimediaTest(TestCase):
                            sync_token=None, date=None):
         self._do_submit(xml_data, dict_attachments, sync_token, date=date)
 
-        time.sleep(2)
         form = XFormInstance.get(doc_id)
 
         self.assertEqual(len(dict_attachments), len(form.attachments))
