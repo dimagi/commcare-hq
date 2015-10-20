@@ -38,6 +38,6 @@ class MigrationNotComplete(Exception):
 
 def assert_initial_complete(migrator):
     def forwards(apps, schema_editor):
-        if not migrator.last_seq and not settings.UNIT_TESTING and not hasattr(settings, 'IS_TRAVIS', False):
+        if not migrator.last_seq and not settings.UNIT_TESTING and not getattr(settings, 'IS_TRAVIS', False):
             raise MigrationNotComplete(MIGRATION_MESSAGE.format(slug=migrator.slug))
     return forwards
