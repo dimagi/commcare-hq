@@ -1220,17 +1220,6 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
             })
 
-        can_view_orgs = (user_is_admin
-                         and self.project and self.project.organization
-                         and has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS))
-
-        if can_view_orgs:
-            from corehq.apps.domain.views import OrgSettingsView
-            project_info.append({
-                'title': _(OrgSettingsView.page_title),
-                'url': reverse(OrgSettingsView.urlname, args=[self.domain])
-            })
-
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
