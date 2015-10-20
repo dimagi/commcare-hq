@@ -41,9 +41,8 @@ class DetailContributor(SectionContributor):
                             )
                             if detail_column_infos:
                                 if detail.use_case_tiles:
-                                    r.append(self.build_case_tile_detail(
-                                        module, detail, detail_type
-                                    ))
+                                    helper = CaseTileHelper(self.app, module, detail, detail_type)
+                                    r.append(helper.build_case_tile_detail())
                                 else:
                                     d = self.build_detail(
                                         module,
@@ -195,68 +194,7 @@ class DetailContributor(SectionContributor):
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
         detail.action.stack.add_frame(frame)
 
-    def build_case_tile_detail(self, module, detail, detail_type):
-        """
-        Return a Detail node from an apps.app_manager.models.Detail that is
-        configured to use case tiles.
 
-        This method does so by injecting the appropriate strings into a template
-        string.
-        """
-        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
-
-        template_args = {
-            "detail_id": id_strings.detail(module, detail_type),
-            "title_text_id": id_strings.detail_title_locale(
-                module, detail_type
-            )
-        }
-        # Get field/case property mappings
-
-        cols_by_tile = {col.case_tile_field: col for col in detail.columns}
-        for template_field in ["header", "top_left", "sex", "bottom_left", "date"]:
-            column = cols_by_tile.get(template_field, None)
-            if column is None:
-                raise SuiteError(
-                    'No column was mapped to the "{}" case tile field'.format(
-                        template_field
-                    )
-                )
-            template_args[template_field] = {
-                "prop_name": get_column_xpath_generator(
-                    self.app, module, detail, column
-                ).xpath,
-                "locale_id": id_strings.detail_column_header_locale(
-                    module, detail_type, column,
-                ),
-                # Just using default language for now
-                # The right thing to do would be to reference the app_strings.txt I think
-                "prefix": escape(
-                    column.header.get(self.app.default_language, "")
-                )
-            }
-            if column.format == "enum":
-                template_args[template_field]["enum_keys"] = {}
-                for mapping in column.enum:
-                    template_args[template_field]["enum_keys"][mapping.key] = \
-                        id_strings.detail_column_enum_variable(
-                            module, detail_type, column, mapping.key_as_variable
-                        )
-        # Populate the template
-        detail_as_string = self._case_tile_template_string.format(**template_args)
-        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
-
-    @property
-    @memoized
-    def _case_tile_template_string(self):
-        """
-        Return a string suitable for building a case tile detail node
-        through `String.format`.
-        """
-        with open(os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
-        )) as f:
-            return f.read().decode('utf-8')
 
     def _get_fixture_detail(self, module):
         d = Detail(
@@ -387,3 +325,76 @@ def get_instances_for_module(app, module, additional_xpaths=None):
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
         return EntryInstances.get_required_instances(xpaths)
+
+
+class CaseTileHelper(object):
+
+    def __init__(self, app, module, detail, detail_type):
+        self.app = app
+        self.module = module
+        self.detail = detail
+        self.detail_type = detail_type
+
+    def build_case_tile_detail(self):
+        """
+        Return a Detail node from an apps.app_manager.models.Detail that is
+        configured to use case tiles.
+
+        This method does so by injecting the appropriate strings into a template
+        string.
+        """
+        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
+
+        template_args = {
+            "detail_id": id_strings.detail(self.module, self.detail_type),
+            "title_text_id": id_strings.detail_title_locale(
+                self.module, self.detail_type
+            )
+        }
+        # Get field/case property mappings
+
+        cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
+
+        for template_field in ["header", "top_left", "sex", "bottom_left", "date"]:
+            column = cols_by_tile_field.get(template_field, None)
+            if column is None:
+                raise SuiteError(
+                    'No column was mapped to the "{}" case tile field'.format(
+                        template_field
+                    )
+                )
+            template_args[template_field] = {
+                "prop_name": get_column_xpath_generator(
+                    self.app, self.module, self.detail, column
+                ).xpath,
+                "locale_id": id_strings.detail_column_header_locale(
+                    self.module, self.detail_type, column,
+                ),
+                # Just using default language for now
+                # The right thing to do would be to reference the app_strings.txt I think
+                "prefix": escape(
+                    column.header.get(self.app.default_language, "")
+                )
+            }
+            if column.format == "enum":
+                template_args[template_field]["enum_keys"] = {}
+                for mapping in column.enum:
+                    template_args[template_field]["enum_keys"][mapping.key] = \
+                        id_strings.detail_column_enum_variable(
+                            self.module, self.detail_type, column, mapping.key_as_variable
+                        )
+        # Populate the template
+        detail_as_string = self._case_tile_template_string.format(**template_args)
+        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+    @property
+    @memoized
+    def _case_tile_template_string(self):
+        """
+        Return a string suitable for building a case tile detail node
+        through `String.format`.
+        """
+        with open(os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
+        )) as f:
+            return f.read().decode('utf-8')
