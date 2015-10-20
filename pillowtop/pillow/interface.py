@@ -48,7 +48,7 @@ class PillowBase(object):
         self.checkpoint.update_to(change['seq'])
 
     def reset_checkpoint(self):
-        self.checkpoint.reset_checkpoint()
+        self.checkpoint.reset()
 
     def run(self):
         """
@@ -95,6 +95,7 @@ class ConstructedPillow(PillowBase):
     def document_store(self):
         return self._document_store
 
+    @property
     def checkpoint(self):
         return self._checkpoint
 

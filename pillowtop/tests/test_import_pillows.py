@@ -3,6 +3,7 @@ from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pill
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.feed.mock import RandomChangeFeed
+from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
 from inspect import isclass
 from pillowtop.pillow.interface import ConstructedPillow
@@ -70,3 +71,15 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
         pillow = pillows[0]
         self.assertFalse(isclass(pillow))
         self.assertEqual(FakeConstructedPillow, type(pillow))
+
+
+@override_settings(PILLOWTOPS=PILLOWTOPS_OVERRIDE)
+class PillowTestCase(SimpleTestCase):
+
+    def test_pillow_reset_checkpoint(self):
+        pillow = make_fake_constructed_pillow()
+        seq_id = '456'
+        pillow.set_checkpoint(Change('123', seq_id))
+        self.assertEqual(pillow.checkpoint.get_or_create()['seq'], seq_id)
+        pillow.reset_checkpoint()
+        self.assertEqual(pillow.checkpoint.get_or_create()['seq'], '0')

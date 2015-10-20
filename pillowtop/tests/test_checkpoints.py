@@ -8,6 +8,11 @@ from pillowtop.exceptions import PillowtopCheckpointReset
 
 class PillowCheckpointTest(SimpleTestCase):
 
+    def setUp(self):
+        self._checkpoint_id = 'test-checkpoint-id'
+        self._dao = MockDocumentStore()
+        self._checkpoint = PillowCheckpoint(self._dao, self._checkpoint_id)
+
     @override_settings(PILLOWTOP_MACHINE_ID='test-ptop')
     def test_get_machine_id_settings(self):
         self.assertEqual('test-ptop', get_machine_id())
@@ -22,14 +27,6 @@ class PillowCheckpointTest(SimpleTestCase):
         checkpoint = checkpoint_manager.get_or_create_checkpoint('some-id')
         self.assertEqual('0', checkpoint['seq'])
         self.assertTrue(bool(checkpoint['timestamp']))
-
-
-class PillowCheckpointTest(SimpleTestCase):
-
-    def setUp(self):
-        self._checkpoint_id = 'test-checkpoint-id'
-        self._dao = MockDocumentStore()
-        self._checkpoint = PillowCheckpoint(self._dao, self._checkpoint_id)
 
     def test_checkpoint_id(self):
         self.assertEqual(self._checkpoint_id, self._checkpoint.checkpoint_id)
