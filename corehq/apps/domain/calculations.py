@@ -166,16 +166,16 @@ def first_form_submission(domain, display=True):
     try:
         submission_time = get_first_form_submission_received(domain)
     except ValueError:
-        return "Unable to parse time of first form"
-    return display_time(submission_time, display) if submission_time else "No forms"
+        return None
+    return display_time(submission_time, display) if submission_time else None
 
 
 def last_form_submission(domain, display=True):
     try:
         submission_time = get_last_form_submission_received(domain)
     except ValueError:
-        return "Unable to parse time of last form"
-    return display_time(submission_time, display) if submission_time else "No forms"
+        return None
+    return display_time(submission_time, display) if submission_time else None
 
 
 def has_app(domain, *args):

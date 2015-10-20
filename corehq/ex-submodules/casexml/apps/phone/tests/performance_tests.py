@@ -79,7 +79,6 @@ class SyncPerformanceTest(SyncBaseTest):
             caseblocks.append(CaseBlock(
                 case_id=case_id,
                 user_id=OTHER_USER_ID,
-                version=V2,
                 update={'favorite_color': 'blue'}
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.other_sync_log.get_id)
@@ -109,7 +108,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 user_id=USER_ID,
                 owner_id=REFERRED_TO_GROUP,
                 case_type=REFERRAL_TYPE,
-                version=V2,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
@@ -140,7 +138,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 user_id=USER_ID,
                 owner_id=SHARED_ID,
                 case_type='child',
-                version=V2,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
@@ -156,7 +153,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 user_id=USER_ID,
                 owner_id=REFERRED_TO_GROUP,
                 case_type=REFERRAL_TYPE,
-                version=V2,
                 index={'parent': ('child', child_case_id)}
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)

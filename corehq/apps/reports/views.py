@@ -49,7 +49,6 @@ from corehq import toggles
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-from corehq.apps.reports.display import FormType
 from corehq.apps.reports.forms import SavedReportConfigForm
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import absolute_reverse, reverse
@@ -1071,6 +1070,8 @@ def rebuild_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def resave_case(request, domain, case_id):
+    """Re-save the case to have it re-processed by pillows
+    """
     case = get_document_or_404(CommCareCase, domain, case_id)
     CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
     messages.success(
@@ -1327,7 +1328,6 @@ def _get_form_to_edit(domain, user, instance_id):
 def form_data(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     context = _get_form_context(request, domain, instance)
-    context['form_meta'] = FormType(domain, instance.xmlns, instance.app_id).metadata
     try:
         form_name = instance.form["@name"]
     except KeyError:
@@ -1523,6 +1523,8 @@ def unarchive_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def resave_form(request, domain, instance_id):
+    """Re-save the form to have it re-processed by pillows
+    """
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     XFormInstance.get_db().save_doc(instance.to_json())
