@@ -32,6 +32,6 @@ def default_language():
 def validate_sql_column_name(s):
     if not isinstance(s, unicode):
         s = unicode(s, "utf-8")
-    # http://stackoverflow.com/questions/954884/what-special-characters-are-allowed-in-t-sql-column-name
-    if not re.match(r'^(?=[\w@#])(?=\D)[\w@#$]+$', s, re.UNICODE):
+    # http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+    if not re.match(r'^(?=[\w])(?=\D)[\w$]+$', s, re.UNICODE):
         raise InvalidSQLColumnNameError(_(u'"{0}" is not a valid SQL column name').format(s))

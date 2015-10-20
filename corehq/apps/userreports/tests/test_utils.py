@@ -37,24 +37,28 @@ class UtilitiesTestCase(SimpleTestCase):
         def _test_is_invalid_column_name(test_str):
             self.assertRaises(InvalidSQLColumnNameError, validate_sql_column_name, test_str)
 
-        _test_is_valid_column_name("a")
-        _test_is_valid_column_name("abc")
-        _test_is_valid_column_name("abc123")
-        _test_is_valid_column_name("_abc123")
-        _test_is_valid_column_name("@_abc123")
-        _test_is_valid_column_name("#@_abc123")
-        _test_is_valid_column_name("#$@_abc123")
-        _test_is_valid_column_name("çabc")
-        _test_is_valid_column_name("abcç")
-        _test_is_valid_column_name(u"çabc")
+        for valid_column_name in [
+            "a",
+            "abc",
+            "abc123",
+            "çabc",
+            "abcç",
+            u"çabc",
+        ]:
+            _test_is_valid_column_name(valid_column_name)
 
-        _test_is_invalid_column_name('"')
-        _test_is_invalid_column_name('a"')
-        _test_is_invalid_column_name("'")
-        _test_is_invalid_column_name("a'")
-        _test_is_invalid_column_name("$")
-        _test_is_invalid_column_name("$a")
-        _test_is_invalid_column_name("1")
-        _test_is_invalid_column_name("1b")
-        _test_is_invalid_column_name(u"∫abc")
-        _test_is_invalid_column_name(u"abc∫")
+        for invalid_column_name in [
+            '"',
+            'a"',
+            "'",
+            "$",
+            "$a",
+            "1",
+            "1b",
+            u"∫abc",
+            u"abc∫",
+            "@_abc123",
+            "#@_abc123",
+            "#$@_abc123",
+        ]:
+            _test_is_invalid_column_name(invalid_column_name)
