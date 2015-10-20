@@ -385,7 +385,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             return url_base + '?' + self.query_string
         except UnsupportedSavedReportError:
             return "#"
-        except Exception:
+        except Exception as e:
+            logging.error(e.message)
             return "#"
 
     @property
