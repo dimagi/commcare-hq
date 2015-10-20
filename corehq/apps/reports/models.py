@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+from copy import copy
 from datetime import datetime
 import functools
 import logging
@@ -363,7 +364,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def view_kwargs(self):
-        kwargs = self.url_kwargs
+        kwargs = copy(self.url_kwargs)
 
         if not self.is_configurable_report:
             kwargs['permissions_check'] = self._dispatcher.permissions_check
