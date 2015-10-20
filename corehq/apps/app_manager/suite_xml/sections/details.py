@@ -100,13 +100,7 @@ class DetailContributor(SectionContributor):
         else:
             # Add lookup
             if detail.lookup_enabled and detail.lookup_action:
-                d.lookup = Lookup(
-                    name=detail.lookup_name or None,
-                    action=detail.lookup_action,
-                    image=detail.lookup_image or None,
-                )
-                d.lookup.extras = [Extra(**e) for e in detail.lookup_extras]
-                d.lookup.responses = [Response(**r) for r in detail.lookup_responses]
+                d.lookup = self._get_lookup_element(detail)
 
             # Add variables
             variables = list(
@@ -138,6 +132,15 @@ class DetailContributor(SectionContributor):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    def _get_lookup_element(self, detail):
+        return Lookup(
+            name=detail.lookup_name or None,
+            action=detail.lookup_action,
+            image=detail.lookup_image or None,
+            extras=[Extra(**e) for e in detail.lookup_extras],
+            responses=[Response(**r) for r in detail.lookup_responses],
+        )
 
     def _add_action_to_detail(self, detail, module):
         # add form action to detail
