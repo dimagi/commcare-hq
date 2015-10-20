@@ -14,17 +14,23 @@
         {{ block.super }}
     {% include "imports/proptable.html" %}
     {% include "imports/fancy-code.html" %}
+
+    <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% new_static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}
     <link rel="stylesheet" href="{% new_static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% new_static 'datatables/media/css/jquery.dataTables.min.css ' %}" />
     <link rel="stylesheet" href="{% new_static 'formplayer/style/webforms.css' %}">
     <link rel="stylesheet" href="{% new_static 'cloudcare/css/cloudcare.css' %}">
 {% endblock %}
 
 {% block js %} {{ block.super }}
     <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% new_static 'style/lib/Datatables-1.10.9/media/js/jquery.dataTables.js' %}"></script>
 
     <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
@@ -35,9 +41,9 @@
     <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
     <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
 
     <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
     <script src="{% new_static 'case/js/casexml.js' %}"></script>
@@ -47,7 +53,6 @@
     <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
     <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
     <script src="{% new_static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
     <script src="{% new_static 'formplayer/script/vendor/purify.js' %}"></script>
     <script src="{% new_static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
