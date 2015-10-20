@@ -52,7 +52,7 @@ class ScheduledReportTest(TestCase):
     def testDefaultValue(self):
         now = datetime.utcnow()
         ReportNotification(hour=now.hour, minute=(now.minute / 30) * 30, interval='daily').save()
-        if now.minute % 30 <= 5:
+        if now.minute % 15 <= 5:
             self._check('daily', None, 1)
         else:
             self.assertRaises(
