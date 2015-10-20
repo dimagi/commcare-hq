@@ -94,13 +94,11 @@ class _FormType(object):
             ))
             return None
 
-    def get_label(self, lang=None):
+    def get_label(self):
         if self._metadata:
             form = self._metadata
             if form.get('app'):
                 langs = form['app']['langs']
-                if lang:
-                    langs = [lang] + langs
                 app_name = form['app']['name']
                 module_name = form_name = None
                 if form.get('is_user_registration'):
