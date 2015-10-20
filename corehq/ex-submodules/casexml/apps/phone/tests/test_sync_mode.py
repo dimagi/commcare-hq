@@ -603,6 +603,18 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self.assertFalse(sync_log.phone_is_holding_case(case._id))
 
     @run_with_all_restore_configs
+    def test_create_relevant_owner_then_submit_again_with_no_owner(self):
+        case = self.factory.create_case()
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case._id,
+            attrs={'owner_id': None}
+        ))
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
     def test_create_irrelevant_owner_then_submit_again_with_no_owner(self):
         case = self.factory.create_case(owner_id='irrelevant_1')
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
