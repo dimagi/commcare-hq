@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+from copy import copy
 from datetime import datetime
 import functools
 import logging
@@ -6,6 +7,9 @@ from urllib import urlencode
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
+
+from sqlalchemy.util import immutabledict
+
 from corehq.apps.domain.models import Domain
 from corehq.apps import reports
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -358,17 +362,17 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
 
-        return kwargs
+        return immutabledict(kwargs)
 
     @property
     @memoized
     def view_kwargs(self):
-        kwargs = self.url_kwargs
+        kwargs = dict(self.url_kwargs)
 
         if not self.is_configurable_report:
             kwargs['permissions_check'] = self._dispatcher.permissions_check
 
-        return kwargs
+        return immutabledict(kwargs)
 
     @property
     @memoized
@@ -384,7 +388,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             return url_base + '?' + self.query_string
         except UnsupportedSavedReportError:
             return "#"
-        except Exception:
+        except Exception as e:
+            logging.exception(e.message)
             return "#"
 
     @property
