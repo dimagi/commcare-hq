@@ -43,7 +43,9 @@
         "is_active": "True",
         "language": "",
         "name": "test1",
-        "phone_numbers":["+1233232"],
+        "phone_numbers": [
+            {"phone_number": "+1233232", "backend": "message_tester", "default": true}
+        ],
         "role": null,
         "supply_point": null,
         "to": "7000"

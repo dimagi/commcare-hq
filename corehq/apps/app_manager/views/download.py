@@ -315,7 +315,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
-    files = None
+    files = []
     try:
         files = source_files(request.app)
     except Exception:
@@ -385,6 +385,8 @@ def source_files(app):
     Return format is a list of tuples where the first item in the tuple is a
     file name and the second is the file contents.
     """
+    if not app.copy_of:
+        app.set_media_versions(None)
     files = download_index_files(app)
     files.append(
         ("app.json", json.dumps(

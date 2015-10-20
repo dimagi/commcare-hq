@@ -17,6 +17,7 @@ from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
 from corehq.apps.domain.models import Domain
+from corehq.apps.reminders.tests.test_util import *
 
 
 class BaseReminderTestCase(BaseAccountingTest):

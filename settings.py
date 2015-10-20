@@ -306,6 +306,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.telerivet',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
+    'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
@@ -374,7 +375,6 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
-    'custom.tdh',
     'custom.up_nrhm',
 
     'custom.care_pathways',
@@ -405,6 +405,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
+    'corehq.messaging.smsbackends.smsgh',
     'crispy_forms',
     'django_extensions',
     'djangobower',
@@ -1000,6 +1001,9 @@ ENVIRONMENT_HOSTS = {
     'pillowtop': ['localhost']
 }
 
+DATADOG_API_KEY = None
+DATADOG_APP_KEY = None
+
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
@@ -1099,7 +1103,7 @@ NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
 NEW_FIXTURES_DB = 'fixtures'
-FIXTURES_DB = None
+FIXTURES_DB = NEW_FIXTURES_DB
 
 COUCHDB_APPS = [
     'api',
@@ -1185,7 +1189,6 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
-    'tdhtesting',
     ('callcenter', 'meta'),
 
     # users and groups
@@ -1277,6 +1280,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.messaging.smsbackends.grapevine.api.GrapevineBackend",
     "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
     "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
+    "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
 ]
 
 IVR_BACKEND_MAP = {
@@ -1368,13 +1372,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        'custom.tdh.models.TDHEnrollChildFluffPillow',
-        'custom.tdh.models.TDHInfantClassificationFluffPillow',
-        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
-        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
-        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
-        'custom.tdh.models.TDHChildClassificationFluffPillow',
-        'custom.tdh.models.TDHChildTreatmentFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
@@ -1524,8 +1521,6 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh',
-    'rec': 'custom.tdh',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }
@@ -1545,7 +1540,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'colalife', 'common', 'compressor',
+        'care_pathways', 'colalife', 'common', 'compressor', 'smsbillables',
     ),
 )
 
@@ -1572,3 +1567,10 @@ if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+
+try:
+    from datadog import initialize
+except ImportError:
+    pass
+else:
+    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)

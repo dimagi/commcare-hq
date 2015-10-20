@@ -189,7 +189,6 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
                 create=False,
                 case_id=c._id,
                 owner_id=owner_id,
-                version=V2,
                 update=update,
             ).as_xml()) for c in filtered_cases
         ]

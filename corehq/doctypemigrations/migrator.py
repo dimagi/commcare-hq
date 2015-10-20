@@ -57,6 +57,10 @@ class Migrator(object):
                     self._record_seq(last_seq)
                     yield StatusUpdate(changes_read=count, last_seq=last_seq, caught_up=False)
 
+    def erase_continuous_progress(self):
+        DocTypeMigrationCheckpoint.objects.filter(migration=self._migration_model)
+        self._record_seq(self.original_seq)
+
     def phase_3_clean_up(self):
         try:
             os.remove(self.data_dump_filename)

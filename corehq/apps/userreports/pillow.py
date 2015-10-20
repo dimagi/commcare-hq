@@ -2,7 +2,7 @@ from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.userreports.exceptions import TableRebuildError
+from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -66,14 +66,18 @@ class ConfigurableIndicatorPillow(PythonPillow):
 
             tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
             for table_name in tables_to_rebuild:
-                table = table_map[table_name]
+                sql_adapter = table_map[table_name]
                 try:
-                    self.rebuild_table(table)
+                    self.rebuild_table(sql_adapter)
                 except TableRebuildError, e:
                     notify_error(unicode(e))
 
-    def rebuild_table(self, table):
-        table.rebuild_table()
+    def rebuild_table(self, sql_adapter):
+        config = sql_adapter.config
+        latest_rev = config.get_db().get_rev(config._id)
+        if config._rev != latest_rev:
+            raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
+        sql_adapter.rebuild_table()
 
     def python_filter(self, doc):
         # filtering is done manually per indicator see change_transport
@@ -105,6 +109,6 @@ class StaticDataSourcePillow(ConfigurableIndicatorPillow):
     def get_all_configs(self):
         return StaticDataSourceConfiguration.all()
 
-    def rebuild_table(self, table):
-        super(StaticDataSourcePillow, self).rebuild_table(table)
-        rebuild_indicators.delay(table.config.get_id)
+    def rebuild_table(self, sql_adapter):
+        super(StaticDataSourcePillow, self).rebuild_table(sql_adapter)
+        rebuild_indicators.delay(sql_adapter.config.get_id)

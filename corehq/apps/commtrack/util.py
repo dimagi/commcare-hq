@@ -199,7 +199,6 @@ def submit_mapping_case_block(user, index):
         caseblock = CaseBlock(
             create=False,
             case_id=mapping._id,
-            version=V2,
             index=index
         )
     else:
@@ -207,7 +206,6 @@ def submit_mapping_case_block(user, index):
             create=True,
             case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(user),
-            version=V2,
             owner_id=user._id,
             index=index,
             case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),

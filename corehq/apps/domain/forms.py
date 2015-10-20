@@ -11,6 +11,7 @@ import uuid
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -411,6 +412,10 @@ class SubAreaMixin():
 
 
 class DomainGlobalSettingsForm(forms.Form):
+    USE_LOCATIONS_CHOICE = "user_location"
+    CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
+    CASES_ONLY_CHOICE = "cases_only"
+
     hr_name = forms.CharField(
         label=ugettext_lazy("Project Name"),
         help_text=ugettext_lazy("This name will appear in the upper right corner "
@@ -441,8 +446,11 @@ class DomainGlobalSettingsForm(forms.Form):
     )
     call_center_type = ChoiceField(
         label=ugettext_lazy("Call Center Type"),
-        initial='cases_and_fixtures',
-        choices=[('cases_and_fixtures', "Create cases and indicators"), ('cases_only', "Create just cases")],
+        initial=CASES_AND_FIXTURES_CHOICE,
+        choices=[
+            (CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"),
+            (CASES_ONLY_CHOICE, "Create just cases"),
+        ],
         help_text=ugettext_lazy(
             """
             If "Create cases and indicators" is selected, each user will have a case associated with it,
@@ -489,9 +497,15 @@ class DomainGlobalSettingsForm(forms.Form):
                 call_center_group_choices = [
                     (group._id, group.name + ' [group]') for group in groups
                 ]
+                call_center_location_choices = []
+                if CALL_CENTER_LOCATION_OWNERS.enabled(domain):
+                    call_center_location_choices = [
+                        (self.USE_LOCATIONS_CHOICE, ugettext_lazy("user's location [location]"))
+                    ]
 
                 self.fields["call_center_case_owner"].choices = \
                     [('', '')] + \
+                    call_center_location_choices + \
                     call_center_user_choices + \
                     call_center_group_choices
 
@@ -514,9 +528,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
         return cleaned_data
 
-    def save(self, request, domain):
-        domain.hr_name = self.cleaned_data['hr_name']
-
+    def _save_logo_configuration(self, domain):
         if self.can_use_custom_logo:
             logo = self.cleaned_data['logo']
             if logo:
@@ -533,13 +545,25 @@ class DomainGlobalSettingsForm(forms.Form):
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
+    def _save_call_center_configuration(self, domain):
         domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
         if domain.call_center_config.enabled:
+
             domain.internal.using_call_center = True
-            domain.call_center_config.use_fixtures = self.cleaned_data['call_center_type'] == "cases_and_fixtures"
-            domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
+            domain.call_center_config.use_fixtures = \
+                self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
+
+            owner = self.cleaned_data.get('call_center_case_owner', None)
+            if owner == self.USE_LOCATIONS_CHOICE:
+                domain.call_center_config.call_center_case_owner = None
+                domain.call_center_config.use_user_location_as_owner = True
+            else:
+                domain.call_center_config.case_owner_id = owner
+                domain.call_center_config.use_user_location_as_owner = False
+
             domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
+    def _save_timezone_configuration(self, domain):
         global_tz = self.cleaned_data['default_timezone']
         if domain.default_timezone != global_tz:
             domain.default_timezone = global_tz
@@ -552,6 +576,12 @@ class DomainGlobalSettingsForm(forms.Form):
                     users_to_save.append(user)
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
+
+    def save(self, request, domain):
+        domain.hr_name = self.cleaned_data['hr_name']
+        self._save_logo_configuration(domain)
+        self._save_call_center_configuration(domain)
+        self._save_timezone_configuration(domain)
         domain.save()
         return True
 
