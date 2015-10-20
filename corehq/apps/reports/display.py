@@ -94,7 +94,7 @@ class _FormType(object):
             ))
             return None
 
-    def get_label(self, html=False, lang=None):
+    def get_label(self, lang=None):
         if self._metadata:
             form = self._metadata
             if form.get('app'):
@@ -125,11 +125,7 @@ class _FormType(object):
                     title += ' [Deleted]'
                 if form.get('duplicate'):
                     title += " [Multiple Forms]"
-
-                if html:
-                    name = u"<span>{title}</span>".format(title=title)
-                else:
-                    name = title
+                name = title
             else:
                 name = self.xmlns
         else:
@@ -137,5 +133,5 @@ class _FormType(object):
         return name
 
 
-def xmlns_to_name(domain, xmlns, app_id, html=False):
-    return _FormType(domain, xmlns, app_id).get_label(html=html)
+def xmlns_to_name(domain, xmlns, app_id):
+    return _FormType(domain, xmlns, app_id).get_label()
