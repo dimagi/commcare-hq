@@ -10,15 +10,18 @@
                 {% block page_navigation %}{% format_sidebar %}{% endblock page_navigation %}
             </div>
             <div id="hq-content" class="col-xs-8 col-sm-9 col-lg-10">
+                {% block two_column_header %}
                 {% captureas page_title_block %}{% block page_title %}{% endblock page_title %}{% endcaptureas %}
                 {% if page_title_block %}
                 <div class="page-header" style="margin-top: 0;">
                     <h1 style="font-size: 1.8em;">{{ page_title_block }}</h1>
                 </div>
                 {% else %}
-                <div class="spacer"></div>
+                    <div class="spacer"></div>
                 {% endif %}
+                {% endblock%}
                 {% block page_content %}{% endblock page_content %}
+            </div>
         </div>
     </div>
 {% endblock content %}
