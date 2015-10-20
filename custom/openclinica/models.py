@@ -26,7 +26,7 @@ class ItemGroup(object):
     def __init__(self, domain, oid):
         self.oid = oid
         self.completed_cc_forms = set([])
-        self.is_repeating = is_item_group_repeating(domain, oid)
+        # self.is_repeating = is_item_group_repeating(domain, oid)  # Unused. We use use CommCare repeat groups
         self.items = defaultdict(dict)
 
 
@@ -39,10 +39,10 @@ class StudyEvent(object):
     StudyEvent. In subsequent projects we should us a study_event subcase of
     the subject case type.
     """
-    def __init__(self, domain, oid, date):
+    def __init__(self, domain, oid):
         self.oid = oid
-        self.date = date
-        self.is_repeating = is_study_event_repeating(domain, oid)
+        # Unused. We use SINGLE_EVENT_FORM_EVENT_INDEX in this project.
+        # self.is_repeating = is_study_event_repeating(domain, oid)
         self.forms = defaultdict(lambda: defaultdict(list))  # a dict of forms containing a dict of item groups
         self.name = get_study_event_name(domain, oid)
         self.start_datetime = None
@@ -94,29 +94,20 @@ class Subject(object):
         """
         Return the current study event. Opens a new study event if necessary.
         """
-        date = form.form['meta']['timeStart'].date()
         count = len(self.data[item.study_event_oid])
         if form.xmlns in SINGLE_EVENT_FORM_EVENT_INDEX:
             # This is a bad way to determine whether to create a new event because it needs "special cases"
             # TODO: Use an "event" subcase of subject
             index = SINGLE_EVENT_FORM_EVENT_INDEX[form.xmlns]
             if count < index + 1:
-                self.data[item.study_event_oid].extend([None for i in range(index + 1 - count)])
+                self.data[item.study_event_oid].extend([None] * (index + 1 - count))
             if self.data[item.study_event_oid][index] is None:
-                self.data[item.study_event_oid][index] = StudyEvent(self._domain, item.study_event_oid, date)
+                self.data[item.study_event_oid][index] = StudyEvent(self._domain, item.study_event_oid)
             return self.data[item.study_event_oid][index]
         if not count:
-            study_event = StudyEvent(self._domain, item.study_event_oid, date)
-            self.data[item.study_event_oid] = [study_event]  # A list because study events can repeat
-            return study_event
-        current_study_event = self.data[item.study_event_oid][-1]
-        if current_study_event.is_repeating and current_study_event.date != date:
-            # This is a very bad way to determine whether to create a new event, because event durations vary
-            # TODO: Use an "event" subcase of subject
-            new_study_event = StudyEvent(self._domain, item.study_event_oid, date)
-            self.data[item.study_event_oid].append(new_study_event)
-            return new_study_event
-        return current_study_event
+            self.data[item.study_event_oid].append(StudyEvent(self._domain, item.study_event_oid))
+        study_event = self.data[item.study_event_oid][-1]
+        return study_event
 
     def get_item_group(self, item, form):
         """
