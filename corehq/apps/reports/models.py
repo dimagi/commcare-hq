@@ -374,13 +374,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def url(self):
         try:
-            from django.core.urlresolvers import reverse
             from corehq.apps.userreports.reports.view import ConfigurableReport
 
             if self.is_configurable_report:
-                url_base = reverse(self.report_slug, args=[self.domain, self.subreport_slug])
+                url_base = absolute_reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
-                url_base = reverse(self._dispatcher.name(), kwargs=self.url_kwargs)
+                url_base = absolute_reverse(self._dispatcher.name(), kwargs=self.url_kwargs)
             return url_base + '?' + self.query_string
         except UnsupportedSavedReportError:
             return "#"
