@@ -55,6 +55,7 @@ branches:
   - report-builder-b3 # Noah 10/20
   - b3-tf # ben 10/1
   - use-absolute_reverse # Nick P 10/20
+  - memoize-immutable # Nick P 10/20
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
