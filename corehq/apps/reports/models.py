@@ -367,7 +367,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def view_kwargs(self):
-        kwargs = dict(**self.url_kwargs)
+        kwargs = dict(self.url_kwargs)
 
         if not self.is_configurable_report:
             kwargs['permissions_check'] = self._dispatcher.permissions_check
