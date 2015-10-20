@@ -29,10 +29,6 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/join_team$', 'join_team', name='join_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/leave_team$', 'leave_team', name='leave_team'),
 
-    url(r'^(?P<org>[\w\.-]+)/reports/$', 'base_report', name='orgs_report'),
-    url(r'^(?P<org>[\w\.-]+)/reports/stats/(?P<stat_slug>[ \w-]+)/$', 'stats', name='orgs_stats'),
-    url(r'^(?P<org>[\w\.-]+)/reports/stats_data/$', 'stats_data', name='orgs_stats_data'),
-
     url(r'^(?P<org>[\w\.-]+)/join/(?P<invitation_id>[ \w-]+)/$', 'accept_invitation', name='orgs_accept_invitation'),
     url(r'^(?P<org>[\w\.-]+)/seen_request/$', 'seen_request', name='orgs_seen'),
     url(r'^(?P<org>[\w\.-]+)/verify_org/$', 'verify_org', name='verify_org'),
