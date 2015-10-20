@@ -18,8 +18,7 @@ from corehq.apps.hqwebapp.utils import InvitationView
 from corehq.apps.orgs.decorators import org_admin_required, org_member_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, InviteMemberForm, AddTeamForm, UpdateOrgInfo
-from corehq.apps.reports.standard.domains import OrgDomainStatsReport
-from corehq.apps.users.models import WebUser, UserRole, OrgRemovalRecord
+from corehq.apps.users.models import WebUser, UserRole
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -274,8 +273,7 @@ class OrgInvitationView(InvitationView):
         return reverse("orgs_landing", args=[self.organization,])
 
     def invite(self, invitation, user):
-        user.add_org_membership(self.organization)
-        user.save()
+        pass
 
 
 @transaction.atomic
@@ -340,13 +338,6 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
 @org_admin_required
 @require_POST
 def join_team(request, org, team_id):
-    username = request.POST.get("username", None)
-    if not username:
-        messages.error(request, "You must specify a member's email address")
-    else:
-        user = WebUser.get_by_username(username)
-        user.add_to_team(org, team_id)
-        user.save()
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
@@ -443,10 +434,6 @@ def set_team_permission_for_domain(request, org, team_id):
 @org_admin_required
 @require_POST
 def add_all_to_team(request, org, team_id):
-    members = request.organization.get_members()
-    for member in members:
-        member.add_to_team(org, team_id)
-        member.save()
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
@@ -475,23 +462,11 @@ def seen_request(request, org):
 @org_admin_required
 @require_POST
 def remove_member(request, org):
-    member_id = request.POST.get("member_id", None)
-    if member_id == request.couch_user.get_id and not request.couch_user.is_superuser:
-        messages.error(request, "You cannot remove yourself from an organization")
-    else:
-        member = WebUser.get(member_id)
-        record = member.delete_org_membership(org, create_record=True)
-        member.save()
-        messages.success(request, 'You have removed {m} from the organization {o}. <a href="{url}" class="post-link">Undo</a>'.format(
-            url=reverse('undo_remove_member', args=[org, record.get_id]), m=member.username, o=org
-        ), extra_tags="html")
     return HttpResponseRedirect(reverse("orgs_members", args=[org]))
 
 
 @org_admin_required
 def undo_remove_member(request, org, record_id):
-    record = OrgRemovalRecord.get(record_id)
-    record.undo()
     return HttpResponseRedirect(reverse('orgs_members', args=[org]))
 
 

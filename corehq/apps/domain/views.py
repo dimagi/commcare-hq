@@ -89,7 +89,6 @@ from corehq.apps.domain.forms import (
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
-from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
@@ -1724,8 +1723,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
     @property
     def can_publish_as_org(self):
-        return (self.domain_object.get_organization()
-                and self.request.couch_user.is_org_admin(self.domain_object.get_organization().name))
+        return False
 
     @property
     @memoized
