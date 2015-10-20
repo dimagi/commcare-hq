@@ -237,9 +237,9 @@ def store_billable(msg):
 @task(queue='background_queue', ignore_result=True, acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for ids in chunked(owner_ids, 50):
-        docs = VerifiedNumber.get_db().view(
+        results = VerifiedNumber.get_db().view(
             'sms/verified_number_by_owner_id',
             keys=ids,
             include_docs=True
         )
-        soft_delete_docs(docs)
+        soft_delete_docs([row['doc'] for row in results], VerifiedNumber)

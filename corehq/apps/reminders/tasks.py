@@ -116,9 +116,9 @@ def delete_reminders_for_cases(domain, case_ids):
         keys = [[domain, handler_id, case_id]
                 for handler_id in handler_ids
                 for case_id in ids]
-        docs = CaseReminder.get_db().view(
+        results = CaseReminder.get_db().view(
             'reminders/by_domain_handler_case',
             keys=keys,
             include_docs=True
         )
-        soft_delete_docs(docs, CaseReminder)
+        soft_delete_docs([row['doc'] for row in results], CaseReminder)
