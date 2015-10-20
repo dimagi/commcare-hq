@@ -328,12 +328,14 @@ def get_instances_for_module(app, module, additional_xpaths=None):
 
 
 class CaseTileHelper(object):
+    tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
 
     def __init__(self, app, module, detail, detail_type):
         self.app = app
         self.module = module
         self.detail = detail
         self.detail_type = detail_type
+        self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
 
     def build_case_tile_detail(self):
         """
@@ -343,49 +345,67 @@ class CaseTileHelper(object):
         This method does so by injecting the appropriate strings into a template
         string.
         """
-        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
+        # Get template context
+        context = self._get_base_context()
+        for template_field in self.tile_fields:
+            column = self._get_matched_detail_column(template_field)
+            context[template_field] = self._get_column_context(column)
 
-        template_args = {
+        # Populate the template
+        detail_as_string = self._case_tile_template_string.format(**context)
+        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+    def _get_matched_detail_column(self, case_tile_field):
+        """
+        Get the detail column that should populate the given case tile field
+        """
+        column = self.cols_by_tile_field.get(case_tile_field, None)
+        if column is None:
+            raise SuiteError(
+                'No column was mapped to the "{}" case tile field'.format(
+                    case_tile_field
+                )
+            )
+        return column
+
+    def _get_base_context(self):
+        """
+        Get the basic context variables for interpolation into the
+        case tile detail template string
+        """
+        return {
             "detail_id": id_strings.detail(self.module, self.detail_type),
             "title_text_id": id_strings.detail_title_locale(
                 self.module, self.detail_type
             )
         }
-        # Get field/case property mappings
 
-        cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
+    def _get_column_context(self, column):
+        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
+        context = {
+            "prop_name": get_column_xpath_generator(
+                self.app, self.module, self.detail, column
+            ).xpath,
+            "locale_id": id_strings.detail_column_header_locale(
+                self.module, self.detail_type, column,
+            ),
+            # Just using default language for now
+            # The right thing to do would be to reference the app_strings.txt I think
+            "prefix": escape(
+                column.header.get(self.app.default_language, "")
+            )
+        }
+        if column.format == "enum":
+            context["enum_keys"] = self._get_enum_keys(column)
+        return context
 
-        for template_field in ["header", "top_left", "sex", "bottom_left", "date"]:
-            column = cols_by_tile_field.get(template_field, None)
-            if column is None:
-                raise SuiteError(
-                    'No column was mapped to the "{}" case tile field'.format(
-                        template_field
-                    )
-                )
-            template_args[template_field] = {
-                "prop_name": get_column_xpath_generator(
-                    self.app, self.module, self.detail, column
-                ).xpath,
-                "locale_id": id_strings.detail_column_header_locale(
-                    self.module, self.detail_type, column,
-                ),
-                # Just using default language for now
-                # The right thing to do would be to reference the app_strings.txt I think
-                "prefix": escape(
-                    column.header.get(self.app.default_language, "")
-                )
-            }
-            if column.format == "enum":
-                template_args[template_field]["enum_keys"] = {}
-                for mapping in column.enum:
-                    template_args[template_field]["enum_keys"][mapping.key] = \
-                        id_strings.detail_column_enum_variable(
-                            self.module, self.detail_type, column, mapping.key_as_variable
-                        )
-        # Populate the template
-        detail_as_string = self._case_tile_template_string.format(**template_args)
-        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+    def _get_enum_keys(self, column):
+        keys = {}
+        for mapping in column.enum:
+            keys[mapping.key] = id_strings.detail_column_enum_variable(
+                self.module, self.detail_type, column, mapping.key_as_variable
+            )
+        return keys
 
     @property
     @memoized
