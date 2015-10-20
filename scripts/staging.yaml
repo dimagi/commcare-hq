@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - flip-fixtures-db  # danny 10/13
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
   - sync-history-email # Cal 9/22
