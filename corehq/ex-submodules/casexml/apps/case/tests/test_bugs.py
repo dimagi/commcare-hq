@@ -1,10 +1,10 @@
 import uuid
+from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2, V1
@@ -35,30 +35,19 @@ class CaseBugTest(TestCase, TestFileMixin):
 
     def test_conflicting_ids(self):
         """
-        If two forms share an ID it's a conflict
+        If a form and a case share an ID it's a conflict
         """
         xml_data = self.get_xml('id_conflicts')
-        form = FormProcessorInterface.post_xform(xml_data)
-        with self.assertRaises(IllegalCaseId):
-            FormProcessorInterface.process_cases(form)
-
-    def test_logging_string_format(self):
-        """
-        Ensure that logging string formats correctly
-        """
-        xml_data = self.get_xml('string_formatting')
-        form = FormProcessorInterface.post_xform(xml_data)
-        # before the bug was fixed this call failed
-        FormProcessorInterface.process_cases(form)
+        with self.assertRaises(BulkSaveError):
+            FormProcessorInterface.submit_form_locally(xml_data)
 
     def test_empty_case_id(self):
         """
         Ensure that form processor fails on empty id
         """
         xml_data = self.get_xml('empty_id')
-        form = FormProcessorInterface.post_xform(xml_data)
-        with self.assertRaises(IllegalCaseId):
-            FormProcessorInterface.process_cases(form)
+        response, form, cases = FormProcessorInterface.submit_form_locally(xml_data)
+        self.assertIn('IllegalCaseId', response.content)
 
     def _testCornerCaseDatatypeBugs(self, value):
 
@@ -74,8 +63,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             format_args.update(custom_format_args)
             for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
                 xml_data = self.get_xml(filename).format(**format_args)
-                form = FormProcessorInterface.post_xform(xml_data)
-                [case] = FormProcessorInterface.process_cases(form)
+                response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
 
                 self.assertEqual(format_args['user_id'], case.user_id)
                 self.assertEqual(format_args['case_name'], case.name)
@@ -108,13 +96,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         Submit multiple values for the same property in an update block
         """
         xml_data = self.get_xml('duplicate_case_properties')
-        form = FormProcessorInterface.post_xform(xml_data)
-        [case] = FormProcessorInterface.process_cases(form)
+        response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual("", case.foo)
 
         xml_data = self.get_xml('duplicate_case_properties_2')
-        form = FormProcessorInterface.post_xform(xml_data)
-        [case] = FormProcessorInterface.process_cases(form)
+        response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual("2", case.bar)
 
     def testMultipleCaseBlocks(self):
@@ -122,8 +108,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('multiple_case_blocks')
-        form = FormProcessorInterface.post_xform(xml_data)
-        [case] = FormProcessorInterface.process_cases(form)
+        response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
 
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
@@ -138,8 +123,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('lots_of_subcases')
-        form = FormProcessorInterface.post_xform(xml_data)
-        cases = FormProcessorInterface.process_cases(form)
+        response, form, cases = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual(11, len(cases))
 
     def testSubmitToDeletedCase(self):
@@ -148,7 +132,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         deleted_doc_type = 'CommCareCase-Deleted'
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
-                      version=V2, update={'foo': 'bar'}).as_xml()
+                      update={'foo': 'bar'}).as_xml()
         ])
         self.assertEqual('bar', case.foo)
         case = FormProcessorInterface.update_case_properties(case, doc_type=deleted_doc_type)
@@ -156,7 +140,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(deleted_doc_type, case.doc_type)
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
-                      version=V2, update={'foo': 'not_bar'}).as_xml()
+                      update={'foo': 'not_bar'}).as_xml()
         ])
         self.assertEqual('not_bar', case.foo)
         self.assertEqual(deleted_doc_type, case.doc_type)
@@ -205,33 +189,27 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def test_complex_index(self):
-        cp = CommCareCase(
-            _id='parent',
-            name='parent',
-            type='parent',
-        )
-        cp.save()
+        factory = CaseFactory()
+        cp = factory.create_or_update_case(CaseStructure(case_id='parent', attrs={'case_type': 'parent'}))[0]
 
         # cases processed according to ID order so ensure that this case is
         # processed after the task case by making its ID sort after task ID
-        cc = CommCareCase(
-            _id='z_goal',
-            name='goal',
-            type='goal',
-            indices=[CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')],
-        )
-        cc.save()
+        factory.create_or_update_case(CaseStructure(
+            case_id='z_goal',
+            attrs={'case_type': 'goal'},
+            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            walk_related=False
+        ))
 
-        cc = CommCareCase(
-            _id='task1',
-            name='task1',
-            type='task',
+        factory.create_or_update_case(CaseStructure(
+            case_id='task1',
+            attrs={'case_type': 'task'},
             indices=[
-                CommCareCaseIndex(identifier='goal', referenced_type='goal', referenced_id='z_goal'),
-                CommCareCaseIndex(identifier='parent', referenced_type='parent', referenced_id='parent')
+                CaseIndex(CaseStructure(case_id='z_goal'), related_type='goal', identifier='goal'),
+                CaseIndex(CaseStructure(case_id='parent'), related_type='parent')
             ],
-        )
-        cc.save()
+            walk_related=False,
+        ))
 
         # with 'ignore_relationship_types' if a case got processed along the ignored relationship first
         # then it got marked as 'seen' and would be not be processed again when it came to the correct relationship

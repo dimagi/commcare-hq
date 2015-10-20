@@ -521,7 +521,6 @@ def requisition_case_xml(data, stock_blocks):
 
     req_case_block = ElementTree.tostring(CaseBlock(
         req_id,
-        version=V2,
         create=create,
         close=close,
         case_type=const.REQUISITION_CASE_TYPE,

@@ -3,7 +3,7 @@ import logging
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.core.management.base import BaseCommand
 from restkit import RequestFailed
-from casexml.apps.case.cleanup import rebuild_case
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.const import CASE_ACTION_REBUILD
 from casexml.apps.case.models import CommCareCase
 from couchlog.models import ExceptionRecord
@@ -131,7 +131,7 @@ class Command(BaseCommand):
                     seen_cases.add(case_id)
                     if should_rebuild(case_id):
                         cases_rebuilt.add(case_id)
-                        rebuild_case(case_id)
+                        rebuild_case_from_forms(case_id)
                         print 'rebuilt case {}'.format(case_id)
                     archive_exception(exception)
                 except Exception, e:

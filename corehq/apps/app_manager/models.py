@@ -129,8 +129,6 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_login': 'brand-banner-login',
 }
 
-_soft_assert_uuid = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
-
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -4263,6 +4261,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
+    use_grid_menus = BooleanProperty(default=False)
 
     @property
     @memoized
@@ -5153,6 +5152,12 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         del source['build_spec']
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+
+    for module in app.get_modules():
+        if isinstance(module, ReportModule):
+            for report_config in module.report_configs:
+                report_config.uuid = random_hex()
+
     app.save()
 
     if not app.is_remote_app():

@@ -95,7 +95,6 @@ def sync_user_case(commcare_user, case_type, owner_id):
                     create=False,
                     case_id=case._id,
                     owner_id=owner_id,
-                    version=V2,
                     case_type=case_type,
                     close=close,
                     update=fields
@@ -107,7 +106,6 @@ def sync_user_case(commcare_user, case_type, owner_id):
                 case_id=uuid.uuid4().hex,
                 owner_id=owner_id,
                 user_id=owner_id,
-                version=V2,
                 case_type=case_type,
                 update=fields
             )
