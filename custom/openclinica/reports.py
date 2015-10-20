@@ -15,10 +15,9 @@ from custom.openclinica.const import (
 from custom.openclinica.models import Subject
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
-    get_question_item,
     get_study_constant,
     originals_first,
-    oc_format_date)
+)
 
 
 class OdmExportReportView(GenericReportView):
@@ -120,20 +119,12 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
         ]
 
     def subject_rows(self):
-        audit_log_id = 0  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
+        audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
         for case in self.get_subject_cases():
             subject = Subject(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), self.domain)
             for form in originals_first(case.get_forms()):
-                updates = form.form['case'].get('update', {})
-                if updates:
-                    for question, answer in updates.iteritems():
-                        item = get_question_item(self.domain, form.xmlns, question)
-                        if item is None:
-                            # This is a CommCare-only question or form
-                            continue
-                        audit_log_id += 1
-                        subject.add_item(item, form, question, oc_format_date(answer), audit_log_id)
-                    subject.close_form(form)
+                # Pass audit log ID by reference to increment it for each audit log
+                subject.add_data(form.form, form, audit_log_id_ref)
             yield subject
 
     def subject_export_rows(self):
