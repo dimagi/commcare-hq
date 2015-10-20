@@ -98,11 +98,11 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
             ]
             yield row
 
-    def get_subject_cases(self):
+    def get_study_subject_cases(self):
         cases = (CommCareCase.wrap(res['_source']) for res in self.es_results['hits'].get('hits', []))
         for case in cases:
             if case.type != CC_SUBJECT_CASE_TYPE:
-                # Skip cases that are not subjects. TODO: Remove case type selection from UI
+                # Skip cases that are not subjects.
                 continue
             if not (hasattr(case, CC_SUBJECT_KEY) and hasattr(case, CC_STUDY_SUBJECT_ID)):
                 # Skip subjects that have not been selected for the study
@@ -119,7 +119,7 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
 
     def subject_rows(self):
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        for case in self.get_subject_cases():
+        for case in self.get_study_subject_cases():
             subject = Subject(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), self.domain)
             for form in originals_first(case.get_forms()):
                 # Pass audit log ID by reference to increment it for each audit log
