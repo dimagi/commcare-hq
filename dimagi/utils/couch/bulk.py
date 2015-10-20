@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import logging
 import requests
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.requestskit import get_auth
 
