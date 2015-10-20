@@ -461,10 +461,6 @@ def remove_all_from_team(request, org, team_id):
     return HttpResponseRedirect(reverse(request.POST.get('redirect_url', 'orgs_team_members'), args=(org, team_id)))
 
 
-def search_orgs(request):
-    return json_response([{'title': o.title, 'name': o.name} for o in Organization.get_all()])
-
-
 @org_admin_required
 @require_POST
 def seen_request(request, org):
