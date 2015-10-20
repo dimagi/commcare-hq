@@ -119,40 +119,6 @@ def register_user(request, domain_type=None):
 
 @transaction.atomic
 @login_required
-def register_org(request, template="registration/org_request.html"):
-    referer_url = request.GET.get('referer', '')
-    if request.method == "POST":
-        form = OrganizationRegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
-            name = form.cleaned_data["org_name"]
-            title = form.cleaned_data["org_title"]
-            email = form.cleaned_data["email"]
-            url = form.cleaned_data["url"]
-            location = form.cleaned_data["location"]
-
-            org = Organization(name=name, title=title, location=location, email=email, url=url)
-            org.save()
-
-            request.couch_user.add_org_membership(org.name, is_admin=True)
-            request.couch_user.save()
-
-            send_new_request_update_email(request.couch_user, get_ip(request), org.name, entity_type="org")
-
-            if referer_url:
-                return redirect(referer_url)
-            messages.info(request, render_to_string('orgs/partials/landing_notification.html',
-                                                       {"org": org, "user": request.couch_user}), extra_tags="html")
-            return HttpResponseRedirect(reverse("orgs_landing", args=[name]))
-    else:
-        form = OrganizationRegistrationForm()
-
-    return render(request, template, {
-        'form': form,
-    })
-
-
-@transaction.atomic
-@login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
     if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
