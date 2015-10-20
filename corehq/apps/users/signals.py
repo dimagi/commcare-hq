@@ -66,6 +66,8 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
 
 # This gets called by UsersAppConfig when the module is set up
 def connect_user_signals():
-    post_save.connect(django_user_post_save_signal, User)
-    successful_form_received.connect(create_user_from_commcare_registration)
-    couch_user_post_save.connect(update_user_in_es)
+    post_save.connect(django_user_post_save_signal, User,
+                      dispatch_uid="django_user_post_save_signal")
+    successful_form_received.connect(create_user_from_commcare_registration,
+                                     dispatch_uid="create_user_from_commcare_registration")
+    couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")
