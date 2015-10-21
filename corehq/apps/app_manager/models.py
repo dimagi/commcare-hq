@@ -1671,9 +1671,17 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
-    custom_xml = StringProperty()
+
+    # If True, a small tile will display the case name after selection.
+    persist_case_context = BooleanProperty()
+
+    # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
+    # If given, use this string for the case tile markup instead of the default temaplte
+    custom_xml = StringProperty()
+
     persist_tile_on_forms = BooleanProperty()
+    # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
