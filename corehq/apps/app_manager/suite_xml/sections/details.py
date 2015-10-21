@@ -10,7 +10,8 @@ from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
-    Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum
+    Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum, \
+    Style
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
@@ -59,6 +60,9 @@ class DetailContributor(SectionContributor):
                                     )
                                     if d:
                                         r.append(d)
+                        if detail.persist_case_context and not detail.persist_tile_on_forms:
+                            d = self._get_persistent_case_context_detail(module)
+                            r.append(d)
                 if module.fixture_select.active:
                     d = self._get_fixture_detail(module)
                     r.append(d)
@@ -194,9 +198,27 @@ class DetailContributor(SectionContributor):
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
         detail.action.stack.add_frame(frame)
 
+    @staticmethod
+    def _get_persistent_case_context_detail(module):
+        return Detail(
+            id=id_strings.persistent_case_context_detail(module),
+            title=Text(),
+            fields=[Field(
+                style=Style(
+                    horz_align="center",
+                    font_size="large",
+                    grid_height=2,
+                    grid_width=12,
+                    grid_x=0,
+                    grid_y=0,
+                ),
+                header=Header(text=Text()),
+                template=Template(text=Text(xpath_function="case_name")),
+            )]
+        )
 
-
-    def _get_fixture_detail(self, module):
+    @staticmethod
+    def _get_fixture_detail(module):
         d = Detail(
             id=id_strings.fixture_detail(module),
             title=Text(),

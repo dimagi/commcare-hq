@@ -768,8 +768,12 @@ class EntriesHelper(object):
 
     def get_detail_persistent_attr(self, module, detail_module, detail_type="case_short"):
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
-        if detail_enabled and self._has_persistent_tile(detail):
-            return id_strings.detail(detail_module, detail_type)
+        if detail_enabled:
+            if self._has_persistent_tile(detail):
+                return id_strings.detail(detail_module, detail_type)
+            if detail.persist_case_context and detail_type == "case_short":
+                # persistent_case_context will not work on product lists.
+                return id_strings.persistent_case_context_detail(detail_module)
         return None
 
     def get_detail_inline_attr(self, module, detail_module, detail_type="case_short"):
