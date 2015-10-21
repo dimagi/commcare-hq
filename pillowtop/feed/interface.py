@@ -12,12 +12,13 @@ class Change(object):
         'deleted': 'deleted'
     }
 
-    def __init__(self, id, sequence_id, document=None, deleted=False):
+    def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None):
         self._dict = {}
         self.id = id
         self.sequence_id = sequence_id
         self.document = document
         self.deleted = deleted
+        self.metadata = metadata
         self._dict = {
             'id': self.id,
             'seq': self.sequence_id,
@@ -26,8 +27,8 @@ class Change(object):
         }
 
     def __repr__(self):
-        return u'Change id: {}, seq: {}, deleted: {}, doc: {}'.format(
-            self.id, self.sequence_id, self.deleted, self.document
+        return u'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
+            self.id, self.sequence_id, self.deleted, self.metadata, self.document
         )
 
     def __len__(self):
