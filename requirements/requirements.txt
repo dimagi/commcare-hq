@@ -38,7 +38,7 @@ https://github.com/dimagi/files/raw/master/python-requirements/pygooglechart-0.3
 python-dateutil==1.5
 python-magic==0.4.10
 pytz==2015.6
-PyYAML==3.10
+PyYAML==3.11
 requests==2.0.0
 tropo-webapi-python==0.1.3
 xlutils==1.4.1
