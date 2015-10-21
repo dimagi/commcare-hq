@@ -3,7 +3,7 @@ from mock import patch
 
 from corehq.util.test_utils import mock_out_couch
 
-from ..models import CommCareUser
+from ..models import CommCareUser, WebUser
 
 # Note that you can't directly patch the signal handler, as that code has
 # already been called.  It's easier to patch something that the handler calls.
@@ -15,12 +15,28 @@ from ..models import CommCareUser
 @mock_out_couch()
 class TestUserSignals(SimpleTestCase):
 
+    @patch('corehq.apps.analytics.signals.update_subscription_properties_by_user')
     @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
-    def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center):
+    def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center,
+                               update_subscription):
         CommCareUser.create("test-domain", "test-username", "guest")
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
         self.assertTrue(sync_call_center.called)
+        self.assertFalse(update_subscription.called)
+
+    @patch('corehq.apps.analytics.signals.update_subscription_properties_by_user')
+    @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
+    @patch('corehq.apps.cachehq.signals.invalidate_document')
+    @patch('corehq.apps.users.signals.send_to_elasticsearch')
+    def test_webuser_save(self, send_to_es, invalidate, sync_call_center,
+                          update_subscription):
+        WebUser.create("test-domain", "test-username", "guest")
+
+        self.assertTrue(send_to_es.called)
+        self.assertTrue(invalidate.called)
+        self.assertFalse(sync_call_center.called)
+        self.assertTrue(update_subscription.called)
