@@ -9,6 +9,11 @@
     <link href="{% new_static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
     <script src="{% new_static 'mocha/mocha.js' %}"></script>
     <script src="{% new_static 'chai/chai.js' %}"></script>
+    <script src="{% new_static 'sinon/index.js' %}"></script>
+    <script>
+        mocha.setup('bdd')
+        window.assert = chai.assert
+    </script>
 
     <!-- Core Libraries -->
     {% block core_libraries %}{% endblock %}
@@ -18,17 +23,15 @@
 
   </head>
   <body>
+      <!-- HTML Fixtures -->
       <div id="mocha"></div>
-    <script>
-      mocha.setup('bdd')
-      window.assert = chai.assert
-    </script>
-    {% block mocha_tests %}{% endblock %}
-    <script type="text/javascript" charset="utf-8">
-      // Only tests run in real browser, injected script run if options.run == true
-      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-	mocha.run();
-      }
-    </script>
+      {% block fixtures %}{% endblock %}
+      {% block mocha_tests %}{% endblock %}
+      <script type="text/javascript" charset="utf-8">
+	// Only tests run in real browser, injected script run if options.run == true
+	if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+	  mocha.run();
+	}
+      </script>
   </body>
 </html>

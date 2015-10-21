@@ -11,22 +11,27 @@ module.exports = function(grunt) {
      */
     var apps = [
         'app_manager',
+        'app_manager#b3',
     ];
 
     var mochaConfig = {},
         watchConfig = {};
 
     apps.forEach(function(app) {
+        var parts = app.split('#');
+        var appName = parts[0];
+        var appParam = parts[1];
+
         mochaConfig[app] = {
             options: {
-                urls: [BASE_URL + app + '/'],
+                urls: [BASE_URL + appName + (appParam ? '?param=' + appParam : '/')],
                 run: true
             }
         };
         watchConfig[app] = {
             files: [
-                'corehq/apps/' + app + '/static/' + app + '/js/**/*.js',
-                'corehq/apps/' + app + '/static/' + app + '/spec/**/*.js',
+                'corehq/apps/' + appName + '/static/' + appName + '/js/**/*.js',
+                'corehq/apps/' + appName + '/static/' + appName + '/spec/**/*.js',
             ],
             tasks: ['mocha:' + app]
         };
