@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, VerifiedNumber
 from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.models import EWSMigrationStats, EWSMigrationProblem, EWSExtension
