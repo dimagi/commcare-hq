@@ -26,7 +26,6 @@ class ConfigurableReportViewTest(TestCase):
             create=True,
             case_id=id,
             case_type=cls.case_type,
-            version=V2,
             update=properties,
         ).as_xml()
         FormProcessorInterface.post_case_blocks([case_block], {'domain': cls.domain})

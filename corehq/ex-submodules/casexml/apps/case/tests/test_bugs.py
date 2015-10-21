@@ -1,4 +1,5 @@
 import uuid
+from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase
 import os
 from django.test.utils import override_settings
@@ -34,30 +35,19 @@ class CaseBugTest(TestCase, TestFileMixin):
 
     def test_conflicting_ids(self):
         """
-        If two forms share an ID it's a conflict
+        If a form and a case share an ID it's a conflict
         """
         xml_data = self.get_xml('id_conflicts')
-        form = FormProcessorInterface.post_xform(xml_data)
-        with self.assertRaises(IllegalCaseId):
-            FormProcessorInterface.process_cases(form)
-
-    def test_logging_string_format(self):
-        """
-        Ensure that logging string formats correctly
-        """
-        xml_data = self.get_xml('string_formatting')
-        form = FormProcessorInterface.post_xform(xml_data)
-        # before the bug was fixed this call failed
-        FormProcessorInterface.process_cases(form)
+        with self.assertRaises(BulkSaveError):
+            FormProcessorInterface.submit_form_locally(xml_data)
 
     def test_empty_case_id(self):
         """
         Ensure that form processor fails on empty id
         """
         xml_data = self.get_xml('empty_id')
-        form = FormProcessorInterface.post_xform(xml_data)
-        with self.assertRaises(IllegalCaseId):
-            FormProcessorInterface.process_cases(form)
+        response, form, cases = FormProcessorInterface.submit_form_locally(xml_data)
+        self.assertIn('IllegalCaseId', response.content)
 
     def _testCornerCaseDatatypeBugs(self, value):
 
@@ -73,8 +63,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             format_args.update(custom_format_args)
             for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
                 xml_data = self.get_xml(filename).format(**format_args)
-                form = FormProcessorInterface.post_xform(xml_data)
-                [case] = FormProcessorInterface.process_cases(form)
+                response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
 
                 self.assertEqual(format_args['user_id'], case.user_id)
                 self.assertEqual(format_args['case_name'], case.name)
@@ -107,13 +96,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         Submit multiple values for the same property in an update block
         """
         xml_data = self.get_xml('duplicate_case_properties')
-        form = FormProcessorInterface.post_xform(xml_data)
-        [case] = FormProcessorInterface.process_cases(form)
+        response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual("", case.foo)
 
         xml_data = self.get_xml('duplicate_case_properties_2')
-        form = FormProcessorInterface.post_xform(xml_data)
-        [case] = FormProcessorInterface.process_cases(form)
+        response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual("2", case.bar)
 
     def testMultipleCaseBlocks(self):
@@ -121,8 +108,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('multiple_case_blocks')
-        form = FormProcessorInterface.post_xform(xml_data)
-        [case] = FormProcessorInterface.process_cases(form)
+        response, form, [case] = FormProcessorInterface.submit_form_locally(xml_data)
 
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
@@ -137,8 +123,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('lots_of_subcases')
-        form = FormProcessorInterface.post_xform(xml_data)
-        cases = FormProcessorInterface.process_cases(form)
+        response, form, cases = FormProcessorInterface.submit_form_locally(xml_data)
         self.assertEqual(11, len(cases))
 
     def testSubmitToDeletedCase(self):
@@ -147,7 +132,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         deleted_doc_type = 'CommCareCase-Deleted'
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
-                      version=V2, update={'foo': 'bar'}).as_xml()
+                      update={'foo': 'bar'}).as_xml()
         ])
         self.assertEqual('bar', case.foo)
         case = FormProcessorInterface.update_case_properties(case, doc_type=deleted_doc_type)
@@ -155,7 +140,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual(deleted_doc_type, case.doc_type)
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
-                      version=V2, update={'foo': 'not_bar'}).as_xml()
+                      update={'foo': 'not_bar'}).as_xml()
         ])
         self.assertEqual('not_bar', case.foo)
         self.assertEqual(deleted_doc_type, case.doc_type)

@@ -153,7 +153,6 @@ class CaseAssignmentTest(TestCase):
             case_id=id,
             case_type='person',
             owner_id=self.original_owner._id,
-            version=V2,
             index=index,
         ).as_xml()
         _, [case] = FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})

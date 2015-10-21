@@ -18,7 +18,7 @@ class CaseDbCacheTest(TestCase):
         FormProcessorInterface.post_case_blocks([
                 CaseBlock(
                     create=True, case_id=id,
-                    user_id='some-user', version=V2
+                    user_id='some-user'
                 ).as_xml()
             ], {'domain': 'good-domain'}
         )
@@ -151,7 +151,6 @@ def _make_some_cases(howmany, domain='dbcache-test'):
             create=True,
             case_id=ids[i],
             user_id='some-user',
-            version=V2,
             update={
                 'my_index': i,
             }

@@ -24,7 +24,6 @@ class UTHTests(TestCase):
             case_type=UTH_CASE_TYPE,
             user_id=user_id,
             owner_id=user_id,
-            version=V2,
             update={
                 'exam_number': scan_id,
                 'scanner_serial': serial,
