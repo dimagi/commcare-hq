@@ -51,7 +51,7 @@ def _get_document_type(document_or_none):
 
 def _get_document_subtype(document_or_none):
     type = _get_document_type(document_or_none)
-    if type == 'CommCareCase':
+    if type in ('CommCareCase', 'CommCareCase-Deleted'):
         return document_or_none.get('type', None)
     elif type in all_known_formlike_doc_types():
         return document_or_none.get('xmlns', None)
