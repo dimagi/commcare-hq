@@ -113,6 +113,7 @@ BOWER_INSTALLED_APPS = (
     'select2-3.4.5-legacy=select2#3.4.5',
     'less#1.7.3',
     'backbone#0.9.1',
+    'bootstrap-daterangepicker#2.1.13',
 )
 
 BOWER_PATH = '/usr/local/bin/bower'
@@ -158,6 +159,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -196,10 +198,12 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
-    "corehq.util.context_processors.raven",
 ]
 
-TEMPLATE_DIRS = []
+location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
+TEMPLATE_DIRS = (
+    location('corehq/apps/domain/templates/login_and_password'),
+)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -219,10 +223,13 @@ DEFAULT_APPS = (
     'couchdbkit.ext.django',
     'crispy_forms',
     'gunicorn',
-    'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
     'tastypie',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -233,7 +240,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'rosetta',
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
@@ -404,14 +410,16 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_extensions',
     'djangobower',
     'django_prbac',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
     'djcelery',
     'djtables',
     'djkombu',
     'gunicorn',
     'langcodes',
     'luna',
-    'raven.contrib.django.raven_compat',
-    'rosetta',
+    'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -880,17 +888,13 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.NotifyExceptionEmailer',
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
         'null': {
             'class': 'django.utils.log.NullHandler',
         },
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -909,22 +913,17 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop', 'sentry'],
+            'handlers': ['pillowtop'],
             'level': 'ERROR',
             'propagate': False,
         },
-        'pillowtop_eval': {
-            'handlers': ['sentry'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'smsbillables': {
-            'handlers': ['file', 'sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -934,7 +933,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -985,6 +984,10 @@ DEFAULT_PROTOCOL = 'http'
 DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
 DROPBOX_APP_NAME = ''
+
+# Amazon S3
+S3_ACCESS_KEY = None
+S3_SECRET_KEY = None
 
 # Supervisor RPC
 SUPERVISOR_RPC_ENABLED = False
