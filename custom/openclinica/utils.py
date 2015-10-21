@@ -38,19 +38,6 @@ def get_question_items(domain):
     Return a map of CommCare form questions to OpenClinica form items
     """
 
-    def get_item_prefix(form_oid, ig_oid):
-        """
-        OpenClinica item OIDs are prefixed with "I_<prefix>_" where <prefix> is derived from the item's form OID
-
-        (Dropping "I_<prefix>_" will give us the CommCare question name in upper case)
-        """
-        form_name = form_oid[2:]  # Drop "F_"
-        ig_name = ig_oid[3:]  # Drop "IG_"
-        prefix = os.path.commonprefix((form_name, ig_name))
-        if prefix.endswith('_'):
-            prefix = prefix[:-1]
-        return prefix
-
     def read_question_item_map(odm):
         """
         Return a dictionary of {question: (study_event_oid, form_oid, item_group_oid, item_oid)}
@@ -67,13 +54,11 @@ def get_question_items(domain):
                 for ig_ref in meta_e.xpath('./odm:FormDef[@OID="{}"]/odm:ItemGroupRef'.format(form_oid),
                                            namespaces=odm_nsmap):
                     ig_oid = ig_ref.get('ItemGroupOID')
-                    prefix = get_item_prefix(form_oid, ig_oid)
-                    prefix_len = len(prefix) + 3  # len of "I_<prefix>_"
                     for item_ref in meta_e.xpath('./odm:ItemGroupDef[@OID="{}"]/odm:ItemRef'.format(ig_oid),
                                                  namespaces=odm_nsmap):
                         item_oid = item_ref.get('ItemOID')
-                        question = item_oid[prefix_len:].lower()
-                        question_item_map[question] = Item(se_oid, form_oid, ig_oid, item_oid)
+                        question = item_oid.lower()
+                        question_item_map[question] = (se_oid, form_oid, ig_oid, item_oid)
         return question_item_map
 
     def read_forms(question_item_map):
