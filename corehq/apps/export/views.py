@@ -366,6 +366,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     allow_preview = False  # disable preview until the next iteration of this (almost there)
+    show_sync_to_dropbox = False  # remove when DBox issue is resolved.
 
     @use_daterangepicker
     @use_bootstrap3
@@ -378,7 +379,6 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             context = self.get_context_data(**kwargs)
             return self.render_to_response(context)
         return super(BaseDownloadExportView, self).post(request, *args, **kwargs)
-
 
     @property
     @memoized
@@ -404,6 +404,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             'export_list_url': self.export_list_url,
             'max_column_size': self.max_column_size,
             'allow_preview': self.allow_preview,
+            'show_sync_to_dropbox': self.show_sync_to_dropbox,
         }
         if (
             self.default_datespan.startdate is not None

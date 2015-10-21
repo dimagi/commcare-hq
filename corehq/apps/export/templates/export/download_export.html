@@ -244,6 +244,7 @@
                                         <i class="fa fa-download"></i>
                                     {% trans "Download" %}
                                 </button>
+                                {% if show_sync_to_dropbox %}
                                 <button button="submit"
                                         class="btn btn-default"
                                         style="margin-top: 5px; width: 100%;"
@@ -252,6 +253,7 @@
                                     <i class="fa fa-dropbox"></i>
                                     {% trans "Sync to Dropbox" %}
                                 </button>
+                                {% endif %}
                             </form>
                             {% endangularjs %}
                         </div>
@@ -296,6 +298,7 @@
                             </button>
                         </div>
                     </div>
+                    {% if show_sync_to_dropbox %}
                     <p class="alert alert-info"
                        style="margin-top: 10px;"
                        ng-show="!showCeleryError">
@@ -309,6 +312,7 @@
                            target="_blank">
                             {% trans 'Learn more about Sync to Dropbox' %}</a>.
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
