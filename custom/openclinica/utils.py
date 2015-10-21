@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, date, time
+import logging
 import re
 from lxml import etree
 import os
@@ -8,6 +9,9 @@ from django.conf import settings
 import yaml
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
+
+
+logger = logging.Logger(__name__)
 
 
 class OpenClinicaIntegrationError(Exception):
@@ -73,22 +77,33 @@ def get_question_item(domain, form_xmlns, question):
         se_oid, form_oid, ig_oid, item_oid = question_items[form_xmlns]['questions'][question]
         return Item(se_oid, form_oid, ig_oid, item_oid)
     except KeyError:
-        raise OpenClinicaIntegrationError('Unknown CommCare question "{}". Please run `./manage.py '
-                                          'map_questions_to_openclinica`'.format(question))
+        # Did an old form set the value of a question that no longer exists? Best to check that out.
+        logger.error('Unknown CommCare question "{}" found in form "{}"'.format(question, form_xmlns))
+        return None
     except TypeError:
         # CommCare question does not match an OpenClinica item. This happens with CommCare-only forms
         return None
 
 
 @quickcache(['domain'])
-def get_study_metadata(domain):
+def get_study_metadata_string(domain):
     """
     Return the study metadata for the given domain
     """
     # For this first OpenClinica integration project, for the sake of simplicity, we are just fetching
     # metadata from custom/openclinica/study_metadata.xml. In future, metadata must be stored for each domain.
     metadata_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
-    return etree.parse(metadata_filename)
+    with open(metadata_filename) as metadata_file:
+        return metadata_file.read()
+
+
+def get_study_metadata(domain):
+    """
+    Return the study metadata for the given domain as an ElementTree
+    """
+    # We can't cache an ElementTree instance. Split this function from get_study_metadata_string() to cache the
+    # return value of get_study_metadata_string() when fetching via web service.
+    return etree.fromstring(get_study_metadata_string(domain))
 
 
 def get_study_constant(domain, name):

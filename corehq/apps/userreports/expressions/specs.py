@@ -23,7 +23,13 @@ class IdentityExpressionSpec(JsonObject):
 
 class ConstantGetterSpec(JsonObject):
     type = TypeProperty('constant')
-    constant = DefaultProperty(required=True)
+    constant = DefaultProperty()
+
+    @classmethod
+    def wrap(self, obj):
+        if 'constant' not in obj:
+            raise BadSpecError('"constant" property is required!')
+        return super(ConstantGetterSpec, self).wrap(obj)
 
     def __call__(self, item, context=None):
         return self.constant
@@ -80,7 +86,7 @@ class ConditionalExpressionSpec(JsonObject):
 class ArrayIndexExpressionSpec(JsonObject):
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
-    index_expression = DictProperty(required=True)
+    index_expression = DefaultProperty(required=True)
 
     def configure(self, array_expression, index_expression):
         self._array_expression = array_expression
@@ -202,3 +208,20 @@ class NestedExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         argument = self._argument_expression(item, context)
         return self._value_expression(argument, context)
+
+
+class DictExpressionSpec(JsonObject):
+    type = TypeProperty('dict')
+    properties = DictProperty(required=True)
+
+    def configure(self, compiled_properties):
+        for key in compiled_properties:
+            if not isinstance(key, basestring):
+                raise BadSpecError("Properties in a dict expression must be strings!")
+        self._compiled_properties = compiled_properties
+
+    def __call__(self, item, context=None):
+        ret = {}
+        for property_name, expression in self._compiled_properties.items():
+            ret[property_name] = expression(item, context)
+        return ret

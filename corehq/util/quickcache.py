@@ -290,7 +290,7 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
             CacheWithTimeout(
                 django_caches['locmem'],
                 timeout=memoize_timeout)]
-        if timeout != 0:
+        if timeout > 0:
             caches.append(
                 CacheWithTimeout(
                     django_caches['default'], timeout=timeout))

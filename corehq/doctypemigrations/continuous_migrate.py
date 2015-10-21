@@ -21,6 +21,8 @@ def copy_docs(source_db, target_db, doc_ids):
     by doc_id
 
     """
+    if not doc_ids:
+        return
     with IterDB(target_db, new_edits=False) as iter_db:
         for doc in iter_docs(source_db, doc_ids, attachments=True):
             iter_db.save(doc)
@@ -29,10 +31,23 @@ def copy_docs(source_db, target_db, doc_ids):
                       .format(iter_db.errors_by_type))
 
 
-def delete_docs(target_db, doc_id_rev_pairs):
+def _bulk_get_revs(target_db, doc_ids):
+    """
+    return (_id, _rev) for every existing doc in doc_ids
+
+    if a doc id is not found in target_db, it is excluded from the result
+    """
+    result = target_db.all_docs(keys=list(doc_ids)).all()
+    return [(row['id'], row['value']['rev']) for row in result if not row.get('error')]
+
+
+def delete_docs(target_db, doc_ids):
     """
     delete docs from database by doc _id and _rev
     """
+    if not doc_ids:
+        return
+    doc_id_rev_pairs = _bulk_get_revs(target_db, doc_ids)
     with IterDB(target_db, new_edits=False) as iter_db:
         for doc_id, doc_rev in doc_id_rev_pairs:
             iter_db.delete({'_id': doc_id, '_rev': doc_rev})
@@ -51,18 +66,18 @@ class ContinuousReplicator(object):
         self.max_changes_before_commit = max_changes_before_commit
         self.max_time_before_commit = max_time_before_commit
         self._ids_to_save = None
-        self._id_rev_pairs_to_delete = None
+        self._ids_to_delete = None
         self._reset()
 
     def _reset(self):
         self._last_commit_time = datetime.datetime.utcnow()
         self._uncommitted_changes_count = 0
         self._ids_to_save = set()
-        self._id_rev_pairs_to_delete = set()
+        self._ids_to_delete = set()
 
     def replicate_change(self, change):
         if change.deleted:
-            self._id_rev_pairs_to_delete.add((change.id, change.rev))
+            self._ids_to_delete.add(change.id)
         else:
             self._ids_to_save.add(change.id)
         self._uncommitted_changes_count += 1
@@ -71,7 +86,7 @@ class ContinuousReplicator(object):
         ids_to_save = filter_doc_ids_by_doc_type(
             self.source_db, self._ids_to_save, self.doc_types)
         copy_docs(self.source_db, self.target_db, ids_to_save)
-        delete_docs(self.target_db, self._id_rev_pairs_to_delete)
+        delete_docs(self.target_db, self._ids_to_delete)
         self._reset()
 
     def _get_time_since_last_commit(self):
@@ -79,4 +94,4 @@ class ContinuousReplicator(object):
 
     def should_commit(self):
         return (self._uncommitted_changes_count > self.max_changes_before_commit or
-                self._get_time_since_last_commit > self.max_time_before_commit)
+                self._get_time_since_last_commit() > self.max_time_before_commit)

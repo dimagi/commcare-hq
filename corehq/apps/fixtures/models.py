@@ -11,6 +11,7 @@ from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
 from corehq.util.soft_assert import soft_assert
+from corehq.util.xml import serialize
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
@@ -268,16 +269,10 @@ class FixtureDataItem(Document):
             raise FixtureTypeCheckError("fields %s from fixture data %s not in fixture data type" % (', '.join(fields), self.get_id))
 
     def to_xml(self):
-        def _serialize(val):
-            if isinstance(val, (int, Decimal)):
-                return unicode(val)
-            else:
-                return val if val is not None else ""
-
         xData = ElementTree.Element(self.data_type.tag)
         for attribute in self.data_type.item_attributes:
             try:
-                xData.attrib[attribute] = _serialize(self.item_attributes[attribute])
+                xData.attrib[attribute] = serialize(self.item_attributes[attribute])
             except KeyError as e:
                 # This should never occur, buf if it does, the OTA restore on mobile will fail and
                 # this error would have been raised and email-logged.
@@ -293,10 +288,10 @@ class FixtureDataItem(Document):
             else:
                 for field_with_attr in self.fields[field.field_name].field_list:
                     xField = ElementTree.SubElement(xData, escaped_field_name)
-                    xField.text = _serialize(field_with_attr.field_value)
+                    xField.text = serialize(field_with_attr.field_value)
                     for attribute in field_with_attr.properties:
                         val = field_with_attr.properties[attribute]
-                        xField.attrib[attribute] = _serialize(val)
+                        xField.attrib[attribute] = serialize(val)
 
         return xData
 

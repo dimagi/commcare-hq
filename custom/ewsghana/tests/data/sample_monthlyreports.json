@@ -1,0 +1,16 @@
+[
+    {
+        "day_of_month": 1,
+        "hours": 8,
+        "report": "RMS and CMS Summary",
+        "users": ["tonikams@yahoo.com"],
+        "view_args": "{\"place\": \"smhd\"}"
+    },
+    {
+        "day_of_month": 1,
+        "hours": 8,
+        "report": "RMS and CMS Summary",
+        "users": ["tonikams@yahoo.com"],
+        "view_args": "{\"place\": \"smhd\"}"
+    }
+]

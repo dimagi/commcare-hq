@@ -1,6 +1,6 @@
 import json
+from datadog import api as datadog_api
 import requests
-import socket
 from django.core.management import call_command
 from django.template.loader import render_to_string
 from dimagi.utils import gitinfo
@@ -10,6 +10,16 @@ from datetime import datetime
 from optparse import make_option
 from django.conf import settings
 from pillow_retry.models import PillowError
+
+STYLE_MARKDOWN = 'markdown'
+STYLE_SLACK = 'slack'
+
+
+def diff_link(style, url):
+    if style == STYLE_MARKDOWN:
+        return '[here]({})'.format(url)
+    elif style == STYLE_SLACK:
+        return '<{}|here>'.format(url)
 
 
 class Command(BaseCommand):
@@ -42,17 +52,30 @@ class Command(BaseCommand):
             print "\n---------------- Pillow Errors Reset ----------------\n" \
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
-        if hasattr(settings, 'MIA_THE_DEPLOY_BOT'):
-            text = "CommCareHQ has been successfully deployed to *{}*. Find the diff <{}|here>".format(
+        deploy_notification_text = (
+            "CommCareHQ has been successfully deployed to *{}* by *{}*. "
+            "Find the diff {{diff_link}}".format(
                 options['environment'],
-                git_snapshot['diff_url'],
+                options['user'],
             )
+        )
+        if hasattr(settings, 'MIA_THE_DEPLOY_BOT'):
+            link = diff_link(STYLE_SLACK, git_snapshot['diff_url'])
             requests.post(settings.MIA_THE_DEPLOY_BOT, data=json.dumps({
                 "channel": "#dev",
                 "username": "Mia the Deploy Bot",
-                "text": text,
+                "text": deploy_notification_text.format(diff_link=link),
                 "icon_emoji": ":see_no_evil:"
             }))
+
+        if settings.DATADOG_API_KEY:
+            tags = ['environment:{}'.format(options['environment'])]
+            link = diff_link(STYLE_MARKDOWN, git_snapshot['diff_url'])
+            datadog_api.Event.create(
+                title="Deploy Success",
+                text=deploy_notification_text.format(diff_link=link),
+                tags=tags
+            )
 
         if options['mail_admins']:
             snapshot_table = render_to_string('hqadmin/partials/project_snapshot.html', dictionary={'snapshot': git_snapshot})

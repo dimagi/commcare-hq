@@ -1,5 +1,5 @@
 from django.test import TestCase
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseRelationship
+from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.tests.util import extract_caseblocks_from_xml
 from casexml.apps.case.xml import V2
@@ -39,7 +39,7 @@ class LoadtestUserTest(TestCase):
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(1, len(caseblocks))
-        self.assertEqual(caseblocks[0].get_case_id(), case._id)
+        self.assertEqual(caseblocks[0].get_case_id(), case.case_id)
 
     @run_with_all_restore_configs
     def test_simple_factor(self):
@@ -55,8 +55,8 @@ class LoadtestUserTest(TestCase):
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == case1._id, caseblocks)))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == case2._id, caseblocks)))
+        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == case1.case_id, caseblocks)))
+        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == case2.case_id, caseblocks)))
         self.assertEqual(3, len(filter(lambda cb: case1.name in cb.get_case_name(), caseblocks)))
         self.assertEqual(3, len(filter(lambda cb: case2.name in cb.get_case_name(), caseblocks)))
 
@@ -67,8 +67,8 @@ class LoadtestUserTest(TestCase):
         child, parent = self.factory.create_or_update_case(
             CaseStructure(
                 attrs={'case_name': 'parent'},
-                relationships=[
-                    CaseRelationship(CaseStructure(attrs={'case_name': 'child'})),
+                indices=[
+                    CaseIndex(CaseStructure(attrs={'case_name': 'child'})),
                 ]
             )
         )
@@ -80,7 +80,7 @@ class LoadtestUserTest(TestCase):
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == child._id, caseblocks)))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == parent._id, caseblocks)))
+        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == child.case_id, caseblocks)))
+        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == parent.case_id, caseblocks)))
         self.assertEqual(3, len(filter(lambda cb: child.name in cb.get_case_name(), caseblocks)))
         self.assertEqual(3, len(filter(lambda cb: parent.name in cb.get_case_name(), caseblocks)))

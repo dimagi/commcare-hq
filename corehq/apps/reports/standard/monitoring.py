@@ -246,7 +246,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
             )
             num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases created or modified in the last 120 days.")
+                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
             )
             num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days

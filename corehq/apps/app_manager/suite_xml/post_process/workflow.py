@@ -243,22 +243,42 @@ class EndOfFormNavigationWorkflow(object):
         Attempt to match the target session variables with ones in the source session.
         Making some large assumptions about how people will actually use this feature
         """
-        datum_index = -1
-        for child in target_frame_elements:
-            if not isinstance(child, WorkflowDatumMeta) or not child.requires_selection:
-                yield child
+        unused_source_datums = list(source_datums)
+        for target_datum in target_frame_elements:
+            if not isinstance(target_datum, WorkflowDatumMeta) or not target_datum.requires_selection:
+                yield target_datum
             else:
-                datum_index += 1
-                try:
-                    source_datum = source_datums[datum_index]
-                except IndexError:
-                    yield child.to_stack_datum()
-                else:
-                    if child.id != source_datum.id and not source_datum.case_type or \
-                            source_datum.case_type == child.case_type:
-                        yield child.to_stack_datum(source_id=source_datum.id)
-                    else:
-                        yield child.to_stack_datum()
+                match = EndOfFormNavigationWorkflow.find_best_match(target_datum, unused_source_datums)
+                if match:
+                    unused_source_datums = [datum for datum in unused_source_datums if datum.id != match.id]
+
+                yield match if match else target_datum.to_stack_datum()
+
+    @staticmethod
+    def find_best_match(target_datum, source_datums):
+        """Find the datum in the list of source datums that best matches the target datum (if any)
+        """
+        candidate = None
+        for source_datum in source_datums:
+            if target_datum.id == source_datum.id:
+                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
+                    # same ID, same case type
+                    candidate = target_datum.to_stack_datum()
+                    break
+                elif not source_datum.case_type:
+                    # same ID, no case type to compare
+                    candidate = target_datum.to_stack_datum()
+            else:
+                if source_datum.case_type and source_datum.case_type == target_datum.case_type:
+                    # different ID, same case type
+                    candidate = target_datum.to_stack_datum(source_id=source_datum.id)
+                    break
+                elif not source_datum.case_type:
+                    # different ID, no case type to compare
+                    if not candidate:
+                        candidate = target_datum.to_stack_datum(source_id=source_datum.id)
+
+        return candidate
 
     @staticmethod
     def get_datums_matched_to_manual_values(target_frame_elements, manual_values):
@@ -285,11 +305,15 @@ class CaseListFormWorkflow(object):
         self.helper = helper
 
     def case_list_forms_frames(self, form):
-        if not form.is_case_list_form or not form.is_registration_form():
+        if not form.is_case_list_form:
             return []
 
         stack_frames = []
         for target_module in form.case_list_modules:
+            target_case_type = target_module.case_type
+            if not form.is_registration_form(target_case_type):
+                continue
+
             stack_frames.extend(self.get_stack_frames_for_case_list_form_target(target_module, form))
 
         return stack_frames

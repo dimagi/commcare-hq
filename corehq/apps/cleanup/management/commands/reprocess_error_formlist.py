@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.cleanup.xforms import reprocess_form_cases
+from corehq.apps.cleanup.management.commands.reprocess_error_form import reprocess_form_cases
 from couchforms import fetch_and_wrap_form
 import csv
 from corehq.apps.cleanup.management.commands.generate_form_case_consistency_list import HEADERS

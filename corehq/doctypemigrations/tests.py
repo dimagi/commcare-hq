@@ -77,14 +77,13 @@ class TestDocTypeMigrations(TestCase):
         self.assert_in_sync()
 
     def test_delete_docs(self):
-        doc_id_rev_pairs = [(doc['_id'], doc['_rev']) for doc in self.docs]
-        delete_docs(self.migration.target_db, doc_id_rev_pairs)
+        doc_ids = [doc['_id'] for doc in self.docs]
+        delete_docs(self.migration.target_db, doc_ids)
         self.assert_no_docs_in_target_db()
 
     def test_delete_docs_non_existent(self):
-        doc_id_rev_pairs = [(doc['_id'], doc['_rev']) for doc in self.docs] + [
-            ('unknown_id', '8-unknown_rev')]
-        delete_docs(self.migration.target_db, doc_id_rev_pairs)
+        doc_ids = [doc['_id'] for doc in self.docs] + ['unknown_id']
+        delete_docs(self.migration.target_db, doc_ids)
         self.assert_no_docs_in_target_db()
 
     def test_continuous_replicator(self):
@@ -97,7 +96,9 @@ class TestDocTypeMigrations(TestCase):
         self.assert_in_sync()
 
         for i, doc in enumerate(self.docs):
-            change = CouchChange(seq=i, id=doc['_id'], rev=doc['_rev'], deleted=True)
+            # deleted=true changes contain a theoretical "next rev" of the deleted doc
+            # that is completely useless, replicate_change has to work without it
+            change = CouchChange(seq=i, id=doc['_id'], rev='go fuck yourself', deleted=True)
             replicator.replicate_change(change)
         replicator.commit()
         self.assert_no_docs_in_target_db()
