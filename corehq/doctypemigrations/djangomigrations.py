@@ -1,7 +1,6 @@
 from django.conf import settings
 
 
-
 MIGRATION_MESSAGE = """
 Before you can merge you must run the {slug} doc_type migration.
 

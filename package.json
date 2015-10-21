@@ -5,7 +5,7 @@
   "description": "CommcareHQ Javascript tests",
   "dependencies": {
     "grunt-mocha": "^0.4.13",
-    "grunt-contrib-watch": "*",
+    "grunt-contrib-watch": "^0.6.1",
     "mocha": "^2.3.3"
   }
 }

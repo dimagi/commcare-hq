@@ -80,21 +80,12 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'django.utils.log.NullHandler',
         },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-        },
     },
     'loggers': {
         '': {
             'level': 'CRITICAL',
             'handler': 'null',
             'propagate': False,
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'propagate': True,
-            'level': 'DEBUG',
         },
         'south': {
             'level': 'CRITICAL',

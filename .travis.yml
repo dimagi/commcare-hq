@@ -46,9 +46,8 @@ install:
   - "python manage.py bower install"
   - "python manage.py migrate --noinput"
   - "python manage.py runserver 8000 &" # Used to run mocha browser tests
-  - "sleep 10" # allow django server to start
   - "npm install"
-script: "grunt mocha --debug && coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER"
+script: "coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER && grunt mocha"
 after_success:
   - coverage report
   - coveralls
