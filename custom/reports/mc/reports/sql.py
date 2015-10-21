@@ -1,12 +1,16 @@
 from collections import defaultdict
+from sqlagg.filters import EQ, OR, AND
+from corehq.apps.domain.views import select
 from corehq.apps.reports.util import make_ctable_table_name
+from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, TableDataFormat, \
+    SqlTabularReport
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin, ProjectReportParametersMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username
 from couchforms.models import XFormInstance
@@ -421,16 +425,16 @@ class HeathFacilityMonthly(MCBase):
     name = ugettext_noop("mc_report_hf_monthly")
     SECTIONS = HF_MONTHLY_REPORT
     format_class = UserDataFormat
-
-class DistrictMonthly(MCBase):
-    fields = [
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'custom.reports.mc.reports.fields.DistrictField',
-    ]
-    slug = 'district_monthly'
-    name = ugettext_noop("mc_report_dist_monthly")
-    SECTIONS = DISTRICT_MONTHLY_REPORT
-    format_class = FacilityDataFormat
+#
+# class DistrictMonthly(MCBase):
+#     fields = [
+#         'corehq.apps.reports.filters.dates.DatespanFilter',
+#         'custom.reports.mc.reports.fields.DistrictField',
+#     ]
+#     slug = 'district_monthly'
+#     name = ugettext_noop("mc_report_dist_monthly")
+#     SECTIONS = DISTRICT_MONTHLY_REPORT
+#     format_class = FacilityDataFormat
 
 class DistrictWeekly(MCBase):
     fields = [
@@ -508,3 +512,54 @@ class HealthFacilityWeekly(MCBase):
     name = ugettext_noop("mc_report_hf_weekly")
     SECTIONS = HF_WEEKLY_REPORT
     format_class = UserDataFormat
+
+
+class DistrictMonthly(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+    fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'custom.reports.mc.reports.fields.DistrictField',
+    ]
+    slug = 'district_monthly'
+    name = ugettext_noop("mc_report_dist_monthly")
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], "malaria_consortium")
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return True
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_('home_visits_pregnant'),
+                           CountColumn('home_visit', filters=self.filters + [EQ('home_visit', 'one')])),
+            DatabaseColumn(_('home_visits_postpartem'),
+                           CountColumn('post_partem', filters=self.filters + [EQ('post_partem', 'one')])),
+            DatabaseColumn(_('home_visits_newborn'),
+                           CountColumn('user_id',
+                                       filters=self.filters + OR([EQ('newborn_reg', 'one'),
+                                                                  EQ('newborn_followup', 'one')]))),
+            DatabaseColumn(_('home_visits_children'),
+                           CountColumn('user_id',
+                                       filters=self.filters + OR([EQ('child_reg', 'one'),
+                                                                  EQ('child_followup', 'one')]))),
+            DatabaseColumn(_('home_visits_other'),
+                           CountColumn('user_id',
+                                       filters=self.filters + OR([
+                                           AND([EQ('home_visit', 'zero'), EQ('post_partem', 'zero')]),
+                                           EQ('sex', 'one'),
+                                           EQ('adult_follow_up', 'one')]))),
+            DataTablesColumn(_('rdt_positive_children'),
+                             CountColumn('user_id',
+                                         filters=self.filters + [EQ('rdt_children', 'one')])),
+            DataTablesColumn(_('rdt_positive_adults'),
+                             CountColumn('user_id',
+                                         filters=self.filters + [EQ('rdt_adult', 'one')])),
+            DataTablesColumn(_('rdt_others'),
+                             CountColumn('user_id',
+                                         filters=self.filters + [OR([EQ('rdt_adult', 'zero'),
+                                                                     EQ('rdt_child', 'zero')])])),
+
+        ]

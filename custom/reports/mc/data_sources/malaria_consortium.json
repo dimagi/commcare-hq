@@ -197,7 +197,7 @@
                     },
                     "expression_if_false": {
                         "type": "constant",
-                        "constant": -1
+                        "constant": 0
                     }
                 },
                 "datatype": "integer"
@@ -223,7 +223,7 @@
                     },
                     "expression_if_false": {
                         "type": "constant",
-                        "constant": -1
+                        "constant": 0
                     }
                 },
                 "datatype": "integer"
