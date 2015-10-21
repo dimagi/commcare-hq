@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from mock import patch
+from mock import patch, MagicMock
 
 from corehq.util.test_utils import mock_out_couch
 
@@ -13,6 +13,7 @@ from ..models import CommCareUser, WebUser
 
 
 @mock_out_couch()
+@patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 class TestUserSignals(SimpleTestCase):
 
     @patch('corehq.apps.analytics.signals.update_subscription_properties_by_user')
@@ -21,7 +22,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center,
                                update_subscription):
-        CommCareUser.create("test-domain", "test-username", "guest")
+        CommCareUser().save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
@@ -34,7 +35,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_webuser_save(self, send_to_es, invalidate, sync_call_center,
                           update_subscription):
-        WebUser.create("test-domain", "test-username", "guest")
+        WebUser().save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
