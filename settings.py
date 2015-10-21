@@ -113,6 +113,7 @@ BOWER_INSTALLED_APPS = (
     'select2-3.4.5-legacy=select2#3.4.5',
     'less#1.7.3',
     'backbone#0.9.1',
+    'bootstrap-daterangepicker#2.1.13',
 )
 
 BOWER_PATH = '/usr/local/bin/bower'
@@ -367,7 +368,6 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
-    'custom.tdh',
     'custom.up_nrhm',
 
     'custom.care_pathways',
@@ -1172,7 +1172,6 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
-    'tdhtesting',
     ('callcenter', 'meta'),
 
     # users and groups
@@ -1356,13 +1355,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        'custom.tdh.models.TDHEnrollChildFluffPillow',
-        'custom.tdh.models.TDHInfantClassificationFluffPillow',
-        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
-        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
-        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
-        'custom.tdh.models.TDHChildClassificationFluffPillow',
-        'custom.tdh.models.TDHChildTreatmentFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
@@ -1512,8 +1504,6 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh',
-    'rec': 'custom.tdh',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }

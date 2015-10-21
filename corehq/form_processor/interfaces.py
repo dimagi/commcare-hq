@@ -8,7 +8,6 @@ from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch.database import iter_docs, safe_delete
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import process_cases
 from couchforms.util import process_xform
 from couchforms.models import doc_types, XFormInstance, XFormError
 from couchforms.exceptions import UnexpectedDeletedXForm
@@ -146,6 +145,7 @@ class FormProcessorInterface(object):
 
     @staticmethod
     @to_generic
+    @unit_testing_only
     def post_xform(instance_xml, attachments=None, process=None, domain='test-domain'):
         """
         create a new xform and releases the lock
@@ -162,13 +162,12 @@ class FormProcessorInterface(object):
                 xform.save()
             return xforms[0]
 
-    @classmethod
-    @to_generic
-    def process_cases(cls, xform_generic, config=None, override_sync_token=None):
-        xform = cls._get_xform(xform_generic.id)
-        if override_sync_token:
-            xform.last_sync_token = override_sync_token
-        return process_cases(xform, config)
+    @staticmethod
+    def submit_form_locally(instance, domain='test-domain', **kwargs):
+        from corehq.apps.receiverwrapper.util import submit_form_locally
+        response, xform, cases = submit_form_locally(instance, domain, **kwargs)
+        # response is an iterable so @to_generic doesn't work
+        return response, xform.to_generic(), [case.to_generic() for case in cases]
 
     @staticmethod
     @to_generic

@@ -68,7 +68,8 @@ All of the following commands should be run in a screen as the cchq user on a pr
 sudo -iu cchq bash
 script /dev/null  # to "own the shell" for screen to work
 screen
-# hit enter to pass screen's opening page
+# hit enter to pass screen's opening page.
+# If the current release is too old, set up a new release and use that instead
 cd /home/cchq/www/production/current
 source python_env/bin/activate
 ```
@@ -141,6 +142,8 @@ $ ./manage.py run_doctype_migration user_db_migration --continuous
 for a continuous topoff based on the couchdb changes feed.
 As that's running, you can check `--stats` to monitor whether you're fully caught up.
 `--continuous` will also output "All caught up" each time it reaches the end of the changes feed.
+
+If you're running this after the blocking migration has already been added to the code then you can go ahead and re-doploy which will flip the DB. Don't forget to clean up afterward (see below).
 
 
 ## Flipping the db

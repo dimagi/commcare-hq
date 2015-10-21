@@ -73,9 +73,7 @@ class SyncBaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = FormProcessorInterface.post_xform(xml_data)
-        
-        FormProcessorInterface.process_cases(form, override_sync_token=token_id)
+        _, form, _ = FormProcessorInterface.submit_form_locally(xml_data, last_sync_token=token_id)
         return form
 
     def _postFakeWithSyncToken(self, caseblocks, token_id):
@@ -149,67 +147,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(sync_log.get_id, {}, {})
                          
     @run_with_all_restore_configs
-    def testTokenAssociation(self):
-        """
-        Test that individual create, update, and close submissions update
-        the appropriate case lists in the sync token
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-        
-        self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        # a normal update should have no affect
-        self._postWithSyncToken("update_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        # close should remove it from the cases_on_phone list
-        # (and currently puts it into the dependent list though this 
-        # might change.
-        self._postWithSyncToken("close_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {}, {})
-
-    @run_with_all_restore_configs
-    def testMultipleUpdates(self):
-        """
-        Test that multiple update submissions don't update the case lists
-        and don't create duplicates in them
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-
-        self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        self._postWithSyncToken("update_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        self._postWithSyncToken("update_short_2.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-    @run_with_all_restore_configs
-    def testMultiplePartsSingleSubmit(self):
-        """
-        Tests a create and update in the same form
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-
-        self._postWithSyncToken("case_create.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"IKA9G79J4HDSPJLG3ER2OHQUY": []})
-        
-    @run_with_all_restore_configs
-    def testMultipleCases(self):
-        """
-        Test creating multiple cases from multilple forms
-        """
-        sync_log = get_exactly_one_wrapped_sync_log()
-        
-        self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": []})
-        
-        self._postWithSyncToken("case_create.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, {"asdf": [],
-                                           "IKA9G79J4HDSPJLG3ER2OHQUY": []})
-    
-    @run_with_all_restore_configs
     def testOwnUpdatesDontSync(self):
         case_id = "own_updates_dont_sync"
         self._createCaseStubs([case_id])
@@ -234,7 +171,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # update the child's index (parent type)
         updated_type = "updated_type"
         child = CaseBlock(
-            create=False, case_id=child_id, user_id=USER_ID, version=V2,
+            create=False, case_id=child_id, user_id=USER_ID,
             index={index_id: (updated_type, parent_id)},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
@@ -293,7 +230,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     def test_delete_only_index(self):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # delete the first index
-        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID,
                           index={index_id: (PARENT_TYPE, "")},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
@@ -335,7 +272,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
                                                 child_id: [parent_ref_1, parent_ref_2]})
 
         # delete the first index
-        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID,
                           index={index_id_1: (PARENT_TYPE, "")},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
@@ -389,9 +326,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
                                                 child_id: [index_ref]})
 
         # close the mother case
-        close = CaseBlock(create=False, case_id=parent_id, user_id=USER_ID,
-                          version=V2, close=True
-        ).as_xml()
+        close = CaseBlock(create=False, case_id=parent_id, user_id=USER_ID, close=True).as_xml()
         self._postFakeWithSyncToken(close, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {child_id: [index_ref]},
                          {parent_id: []})
@@ -427,9 +362,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # assign the child to a new owner
         new_owner = "not_mine"
         self._postFakeWithSyncToken(
-            CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                      owner_id=new_owner
-        ).as_xml(), self.sync_log.get_id)
+            CaseBlock(create=False, case_id=child_id, user_id=USER_ID, owner_id=new_owner).as_xml(),
+            self.sync_log.get_id
+        )
         
         # child should be moved, parent should still be there
         self._testUpdate(self.sync_log.get_id, {parent_id: []}, {})
@@ -448,7 +383,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
             create=False,
             case_id=case_id,
             user_id=USER_ID,
-            version=V2,
             update={"greeting": "hello"}
         ).as_xml()
         form, _ = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
@@ -475,7 +409,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
             case_id=child_id,
             user_id=USER_ID,
             owner_id=USER_ID,
-            version=V2,
             index={'mother': ('mother', parent_id)}
         ).as_xml()
         self._postFakeWithSyncToken(child, other_sync_log.get_id)
@@ -605,6 +538,30 @@ class SyncTokenUpdateTest(SyncBaseTest):
     @run_with_all_restore_configs
     def test_create_irrelevant_owner_and_update_to_empty_owner_in_same_form(self):
         case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': ''}, strict=False)
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
+    def test_create_relevant_owner_then_submit_again_with_no_owner(self):
+        case = self.factory.create_case()
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case._id,
+            attrs={'owner_id': None}
+        ))
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+
+    @run_with_all_restore_configs
+    def test_create_irrelevant_owner_then_submit_again_with_no_owner(self):
+        case = self.factory.create_case(owner_id='irrelevant_1')
+        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=case._id,
+            attrs={'owner_id': None}
+        ))
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertFalse(sync_log.phone_is_holding_case(case._id))
 
@@ -852,7 +809,6 @@ class SyncTokenCachingTest(SyncBaseTest):
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             case_type=PARENT_TYPE,
-            version=V2,
         ).as_xml()])
         next_payload = RestoreConfig(
             project=self.project,
@@ -936,7 +892,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # update from another
         self._postFakeWithSyncToken(
             CaseBlock(create=False, case_id=case_id, user_id=OTHER_USER_ID,
-                      version=V2, update={'greeting': "Hello!"}
+                      update={'greeting': "Hello!"}
         ).as_xml(), latest_sync.get_id)
 
         # original user syncs again
@@ -964,7 +920,6 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=mother_id,
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
-            version=V2,
         ).as_xml()
 
         self._postFakeWithSyncToken(
@@ -981,7 +936,6 @@ class MultiUserSyncTest(SyncBaseTest):
                 case_id=case_id,
                 user_id=OTHER_USER_ID,
                 owner_id=USER_ID,
-                version=V2,
                 index={'mother': ('mother', mother_id)}
             ).as_xml(),
             latest_sync.get_id
@@ -996,12 +950,10 @@ class MultiUserSyncTest(SyncBaseTest):
             user_id=OTHER_USER_ID,
             case_type=PARENT_TYPE,
             owner_id=OTHER_USER_ID,
-            version=V2,
         ).as_xml()
 
         check_user_has_case(self, self.user, expected_parent_case,
-                            restore_id=self.sync_log.get_id, version=V2,
-                            purge_restore_cache=True)
+                            restore_id=self.sync_log.get_id, purge_restore_cache=True)
         _, orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("index" in orig.to_string())
 
@@ -1027,7 +979,6 @@ class MultiUserSyncTest(SyncBaseTest):
             date_modified=time,
             case_id=case_id,
             user_id=USER_ID,
-            version=V2,
             update={'greeting': 'hello'}
         ).as_xml()
         self._postFakeWithSyncToken(
@@ -1041,7 +992,6 @@ class MultiUserSyncTest(SyncBaseTest):
             date_modified=time,
             case_id=case_id,
             user_id=USER_ID,
-            version=V2,
             update={'greeting_2': 'hello'}
         ).as_xml()
         self._postFakeWithSyncToken(
@@ -1056,7 +1006,6 @@ class MultiUserSyncTest(SyncBaseTest):
             date_modified=time,
             case_id=case_id,
             user_id=USER_ID,
-            version=V2,
             update={
                 'greeting': 'hello',
                 'greeting_2': 'hello'
@@ -1066,8 +1015,8 @@ class MultiUserSyncTest(SyncBaseTest):
             case_type='mother',
         ).as_xml()
 
-        check_user_has_case(self, self.user, joint_change, restore_id=main_sync_log.get_id, version=V2)
-        check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id, version=V2)
+        check_user_has_case(self, self.user, joint_change, restore_id=main_sync_log.get_id)
+        check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id)
 
     @run_with_all_restore_configs
     def testOtherUserCloses(self):
@@ -1083,7 +1032,6 @@ class MultiUserSyncTest(SyncBaseTest):
             create=False,
             case_id=case_id,
             user_id=USER_ID,
-            version=V2,
             close=True
         ).as_xml()
         self._postFakeWithSyncToken(
@@ -1115,7 +1063,6 @@ class MultiUserSyncTest(SyncBaseTest):
             create=False,
             case_id=case_id,
             user_id=OTHER_USER_ID,
-            version=V2,
             update={'greeting': 'hello'}
         ).as_xml()
         self._postFakeWithSyncToken(
@@ -1132,13 +1079,12 @@ class MultiUserSyncTest(SyncBaseTest):
         # create a parent and child case (with index) from one user
         parent_id = "indexes_sync_parent"
         case_id = "indexes_sync"
-        self._createCaseStubs([parent_id])
+        self._createCaseStubs([parent_id], owner_id=USER_ID)
         child = CaseBlock(
             create=True,
             case_id=case_id,
             user_id=USER_ID,
             owner_id=USER_ID,
-            version=V2,
             index={'mother': ('mother', parent_id)}
         ).as_xml() 
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
@@ -1153,7 +1099,6 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=case_id,
             user_id=USER_ID,
             owner_id=OTHER_USER_ID,
-            version=V2,
             update={"greeting": "hello"}
         ).as_xml() 
         self._postFakeWithSyncToken(child_update, self.sync_log.get_id)
@@ -1175,7 +1120,6 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=case_id,
             user_id=USER_ID,
             owner_id=USER_ID,
-            version=V2,
             index={'mother': ('mother', parent_id)}
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
@@ -1189,8 +1133,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=parent_id,
             user_id=USER_ID, 
             owner_id=OTHER_USER_ID,
-            update={"greeting": "hello"}, 
-            version=V2).as_xml()
+            update={"greeting": "hello"}).as_xml()
         self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
         
         main_sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
@@ -1199,12 +1142,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue(main_sync_log.phone_is_holding_case(case_id))
         self.assertTrue(main_sync_log.phone_is_holding_case(parent_id))
         
-        # original user syncs again
-        # make sure there are no new changes
-        assert_user_doesnt_have_case(self, self.user, parent_id, restore_id=self.sync_log.get_id,
-                                     purge_restore_cache=True)
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
-
+        # make sure the other user gets the reassigned case
         assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id,
                              purge_restore_cache=True)
         # update the parent case from another user
@@ -1214,7 +1152,6 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=parent_id,
             user_id=OTHER_USER_ID,
             update={"greeting2": "hi"},
-            version=V2
         ).as_xml()
         self._postFakeWithSyncToken(other_parent_update, self.other_sync_log.get_id)
         
@@ -1246,8 +1183,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=parent_id,
             user_id=USER_ID, 
             owner_id=OTHER_USER_ID,
-            update={"greeting": "hello"}, 
-            version=V2).as_xml()
+            update={"greeting": "hello"}).as_xml()
         self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
         
         # sync cases to second user
@@ -1261,8 +1197,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=case_id,
             user_id=OTHER_USER_ID,
             owner_id=OTHER_USER_ID,
-            version=V2,
-            update={"childgreeting": "hi!"}, 
+            update={"childgreeting": "hi!"},
         ).as_xml()
         self._postFakeWithSyncToken(child_reassignment, other_sync_log.get_id)
         
@@ -1272,8 +1207,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=parent_id,
             user_id=OTHER_USER_ID, 
             owner_id=OTHER_USER_ID,
-            update={"other_greeting": "something new"}, 
-            version=V2).as_xml()
+            update={"other_greeting": "something new"}).as_xml()
         self._postFakeWithSyncToken(other_parent_update, other_sync_log.get_id)
         
         # original user syncs again
@@ -1300,8 +1234,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=parent_id,
             user_id=OTHER_USER_ID, 
             owner_id=OTHER_USER_ID,
-            update={"other_greeting": "something different"}, 
-            version=V2).as_xml()
+            update={"other_greeting": "something different"}).as_xml()
         self._postFakeWithSyncToken(other_parent_update, other_sync_log.get_id)
         
         # original user syncs again
@@ -1316,8 +1249,7 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=case_id,
             user_id=OTHER_USER_ID,
             owner_id=OTHER_USER_ID,
-            version=V2,
-            update={"childgreeting": "hi changed!"}, 
+            update={"childgreeting": "hi changed!"},
         ).as_xml()
         self._postFakeWithSyncToken(other_child_update, other_sync_log.get_id)
         
@@ -1333,7 +1265,6 @@ class MultiUserSyncTest(SyncBaseTest):
             case_id=case_id,
             user_id=OTHER_USER_ID,
             owner_id=USER_ID,
-            version=V2
         ).as_xml()
         self._postFakeWithSyncToken(child_reassignment, other_sync_log.get_id)
         
@@ -1482,7 +1413,6 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             user_id=USER_ID,
             owner_id=USER_ID,
             case_type=PARENT_TYPE,
-            version=V2
         ).as_xml()
         try:
             self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
@@ -1509,7 +1439,6 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             user_id=USER_ID,
             owner_id=USER_ID,
             case_type=PARENT_TYPE,
-            version=V2,
             update={'something': "changed"},
         ).as_xml()
 
@@ -1528,7 +1457,6 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             user_id='not_me',
             owner_id='not_me',
             case_type=PARENT_TYPE,
-            version=V2
         ).as_xml() for case_id in [case_id1, case_id2]]
 
         FormProcessorInterface.post_case_blocks(
@@ -1542,7 +1470,6 @@ class SyncTokenReprocessingTest(SyncBaseTest):
                 user_id=USER_ID,
                 owner_id=USER_ID,
                 case_type=PARENT_TYPE,
-                version=V2
             ).as_xml() for id in ids]
 
         try:
@@ -1571,7 +1498,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
     def test_submission_with_bad_log_default(self):
         with self.assertRaises(ResourceNotFound):
             FormProcessorInterface.post_case_blocks(
-                [CaseBlock(create=True, case_id='bad-log-default', version=V2).as_xml()],
+                [CaseBlock(create=True, case_id='bad-log-default').as_xml()],
                 form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
                 domain='some-domain-without-toggle',
             )
@@ -1581,7 +1508,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
 
         def _test():
             FormProcessorInterface.post_case_blocks(
-                [CaseBlock(create=True, case_id='bad-log-toggle-enabled', version=V2).as_xml()],
+                [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_xml()],
                 form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
                 domain=domain,
             )
