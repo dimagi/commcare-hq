@@ -25,6 +25,11 @@ class Change(object):
             'deleted': self.deleted,
         }
 
+    def __repr__(self):
+        return u'Change id: {}, seq: {}, deleted: {}, doc: {}'.format(
+            self.id, self.sequence_id, self.deleted, self.document
+        )
+
     def __len__(self):
         return len(self._dict)
 
