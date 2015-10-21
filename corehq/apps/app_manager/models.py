@@ -10,7 +10,7 @@ import random
 import json
 import types
 import re
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 from functools import wraps
 from copy import deepcopy
@@ -3377,6 +3377,35 @@ class ReportModule(ModuleBase):
     def uses_media(self):
         # for now no media support for ReportModules
         return False
+
+    def check_report_validity(self):
+        """
+        returns is_valid, valid_report_configs
+
+        If any report doesn't exist, is_value is False, otherwise True
+        valid_report_configs is a list of all report configs that refer to existing reports
+
+        """
+        all_report_ids = [report._id for report in self.reports]
+        valid_report_configs = [report_config for report_config in self.report_configs
+                                if report_config.report_id in all_report_ids]
+
+        is_valid = (len(valid_report_configs) == len(self.report_configs))
+        return namedtuple('ReportConfigValidity', 'is_valid valid_report_configs')(
+            is_valid=is_valid,
+            valid_report_configs=valid_report_configs
+        )
+
+    def validate_for_build(self):
+        # Overrides super without calling it, intentionally,
+        # because I don't think anything in super is relevant to ReportModules
+        errors = []
+        if not self.check_report_validity().is_valid:
+            errors.append({
+                'type': 'report config ref invalid',
+                'module': self.get_module_info()
+            })
+        return errors
 
 
 class ShadowModule(ModuleBase, ModuleDetailsMixin):

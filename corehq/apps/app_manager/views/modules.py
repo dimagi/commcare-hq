@@ -185,13 +185,11 @@ def _get_report_module_context(app, module):
         }
 
     all_reports = ReportConfiguration.by_domain(app.domain)
-    all_report_ids = set([r._id for r in all_reports])
-    invalid_report_references = filter(
-        lambda r: r.report_id not in all_report_ids, module.report_configs)
     warnings = []
-    if invalid_report_references:
-        module.report_configs = filter(lambda r: r.report_id in all_report_ids,
-                                       module.report_configs)
+    validity = module.check_report_validity()
+    print validity
+    if not validity.is_valid:
+        module.report_configs = validity.valid_report_configs
         warnings.append(
             gettext_lazy(
                 'Your app contains references to reports that are deleted. These will be removed on save.')
@@ -199,7 +197,6 @@ def _get_report_module_context(app, module):
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
-        'invalid_report_references': invalid_report_references,
         'warnings': warnings,
     }
 
