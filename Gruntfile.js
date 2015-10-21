@@ -46,6 +46,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.registerTask('default', ['mocha']);
     grunt.registerTask('list', 'Lists all available apps to test', function() {
-        apps.forEach(function(app) { console.log(app) });
+        apps.forEach(function(app) { console.log(app); });
     });
 };
