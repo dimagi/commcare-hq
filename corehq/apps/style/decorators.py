@@ -165,4 +165,3 @@ def use_datatables(view_func):
         request.use_datatables = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
-

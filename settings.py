@@ -114,6 +114,7 @@ BOWER_INSTALLED_APPS = (
     'underscore#1.6.0',
     'underscore-legacy=underscore#1.4.4',
     'backbone#0.9.1',
+    'bootstrap-daterangepicker#2.1.13',
     'datatables#1.10.9',
     'bootstrap-daterangepicker#2.1.13',
     'd3#3.1.5',
