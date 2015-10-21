@@ -1384,7 +1384,11 @@ PILLOWTOPS = {
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
     'experimental': [
-        'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        }
     ]
 }
 

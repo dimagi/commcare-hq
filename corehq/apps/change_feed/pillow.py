@@ -1,8 +1,8 @@
 import json
-from django.conf import settings
-from kafka import KafkaClient, KeyedProducer
+from kafka import KeyedProducer
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
+from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.models import ChangeMeta
 from corehq.apps.change_feed.topics import get_topic
 from couchforms.models import all_known_formlike_doc_types
@@ -12,11 +12,9 @@ from pillowtop.listener import PythonPillow
 
 class ChangeFeedPillow(PythonPillow):
 
-    def __init__(self, couch_db=None):
-        # todo: this will need to not be hard-coded if we ever split out forms and cases into their own domains
-        couch_db = couch_db or CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
+    def __init__(self, couch_db, kafka):
         super(ChangeFeedPillow, self).__init__(couch_db=couch_db)
-        self._kafka = KafkaClient(settings.KAFKA_URL)
+        self._kafka = kafka
         self._producer = KeyedProducer(self._kafka)
 
     def get_db_name(self):
@@ -40,6 +38,11 @@ class ChangeFeedPillow(PythonPillow):
                 bytes(change_meta.domain),
                 bytes(json.dumps(change_meta.to_json())),
             )
+
+
+def get_default_couch_db_change_feed_pillow():
+    default_couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
+    return ChangeFeedPillow(couch_db=default_couch_db, kafka=get_kafka_client())
 
 
 def _get_document_type(document_or_none):
