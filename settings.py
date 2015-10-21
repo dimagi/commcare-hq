@@ -473,7 +473,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
+BASE_TEMPLATE_B2 = "style/bootstrap2/base.html"  # should eventually be bootstrap3
+BASE_TEMPLATE_B3 = "style/bootstrap3/base.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -1540,13 +1541,16 @@ if LESS_DEBUG:
     COMPRESS_ENABLED = False
     COMPRESS_PRECOMPILERS = ()
 
-COMPRESS_OFFLINE_CONTEXT = {
-    'base_template': BASE_TEMPLATE,
+offline_context_base = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
     'less_watch': LESS_WATCH,
 }
+COMPRESS_OFFLINE_CONTEXT = [
+    dict(offline_context_base, base_template=BASE_TEMPLATE_B2),
+    dict(offline_context_base, base_template=BASE_TEMPLATE_B3),
+]
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
 

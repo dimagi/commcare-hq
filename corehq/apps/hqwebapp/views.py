@@ -216,7 +216,7 @@ def landing_page(req, template_name="home.html"):
     # somewhere that the login page can access it.
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
-    req.base_template = settings.BASE_TEMPLATE
+    req.base_template = settings.BASE_TEMPLATE_B2
     return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
 
 
@@ -334,7 +334,7 @@ def _login(req, domain_name, template_name):
         req.POST['username'] = format_username(req.POST['username'], domain_name)
         req.POST._mutable = False
 
-    req.base_template = settings.BASE_TEMPLATE
+    req.base_template = settings.BASE_TEMPLATE_B2
 
     context = {}
     if domain_name:
@@ -387,7 +387,7 @@ def logout(req):
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
     # we don't actually do anything with the response here:
-    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
+    django_logout(req, **{"template_name": settings.BASE_TEMPLATE_B2})
 
     if referer and domain and is_mobile_url(referer):
         mobile_mainnav_url = reverse('custom_project_report_dispatcher', args=[domain, 'mobile/mainnav'])

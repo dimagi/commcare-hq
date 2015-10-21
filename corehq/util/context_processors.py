@@ -16,7 +16,7 @@ def base_template(request):
     """This sticks the base_template variable defined in the settings
        into the request context."""
     return {
-        'base_template': settings.BASE_TEMPLATE,
+        'base_template': settings.BASE_TEMPLATE_B2,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
         'less_watch': settings.LESS_WATCH,
