@@ -58,6 +58,7 @@ branches:
   - use-absolute_reverse # Nick P 10/20
   - memoize-immutable # Nick P 10/20
   - update-pillow # Jenny 10/20
+  - requirements # Simon 10/21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
