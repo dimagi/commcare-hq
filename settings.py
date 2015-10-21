@@ -197,7 +197,6 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
-    "corehq.util.context_processors.raven",
 ]
 
 TEMPLATE_DIRS = []
@@ -220,7 +219,6 @@ DEFAULT_APPS = (
     'couchdbkit.ext.django',
     'crispy_forms',
     'gunicorn',
-    'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
     'tastypie',
@@ -411,7 +409,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'gunicorn',
     'langcodes',
     'luna',
-    'raven.contrib.django.raven_compat',
     'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
@@ -472,7 +469,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
+BASE_TEMPLATE_B2 = "style/bootstrap2/base.html"  # should eventually be bootstrap3
+BASE_TEMPLATE_B3 = "style/bootstrap3/base.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -881,17 +879,13 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.NotifyExceptionEmailer',
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
         'null': {
             'class': 'django.utils.log.NullHandler',
         },
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -910,22 +904,17 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop', 'sentry'],
+            'handlers': ['pillowtop'],
             'level': 'ERROR',
             'propagate': False,
         },
-        'pillowtop_eval': {
-            'handlers': ['sentry'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'smsbillables': {
-            'handlers': ['file', 'sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -935,7 +924,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1547,13 +1536,16 @@ if LESS_DEBUG:
     COMPRESS_ENABLED = False
     COMPRESS_PRECOMPILERS = ()
 
-COMPRESS_OFFLINE_CONTEXT = {
-    'base_template': BASE_TEMPLATE,
+offline_context_base = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
     'less_watch': LESS_WATCH,
 }
+COMPRESS_OFFLINE_CONTEXT = [
+    dict(offline_context_base, base_template=BASE_TEMPLATE_B2),
+    dict(offline_context_base, base_template=BASE_TEMPLATE_B3),
+]
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
 

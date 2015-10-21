@@ -11,14 +11,12 @@ COMMCARE = 'commcare'
 
 COMMTRACK = 'commtrack'
 
-RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
-
 
 def base_template(request):
     """This sticks the base_template variable defined in the settings
        into the request context."""
     return {
-        'base_template': settings.BASE_TEMPLATE,
+        'base_template': settings.BASE_TEMPLATE_B2,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
         'less_watch': settings.LESS_WATCH,
@@ -100,9 +98,3 @@ def analytics_js(request):
     d.update(settings.ANALYTICS_IDS)
     d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
     return d
-
-def raven(request):
-    """lets you know whether raven is being used"""
-    return {
-        'RAVEN': RAVEN
-    }
