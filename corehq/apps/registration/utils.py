@@ -49,7 +49,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     return new_user
 
 
-def request_new_domain(request, form, org, domain_type=None, new_user=True):
+def request_new_domain(request, form, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
@@ -73,10 +73,6 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
 
         if form.cleaned_data.get('domain_timezone'):
             new_domain.default_timezone = form.cleaned_data['domain_timezone']
-
-        if org:
-            new_domain.organization = org
-            new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
 
         if not new_user:
             new_domain.is_active = True
