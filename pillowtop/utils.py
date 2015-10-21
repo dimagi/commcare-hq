@@ -54,7 +54,7 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
     if isinstance(pillow_config_string_or_dict, basestring):
         return PillowConfig(
             section,
-            pillow_config_string_or_dict,
+            pillow_config_string_or_dict.rsplit('.', 1)[1],
             pillow_config_string_or_dict,
             pillow_config_string_or_dict
         )
