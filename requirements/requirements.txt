@@ -10,7 +10,7 @@ decorator==4.0.4
 django==1.7.10
 django-braces==1.8.1
 django-celery==3.1.16
-django-json-field==0.5.5
+django-json-field==0.5.7
 dropbox==2.2.0
 defusedxml==0.4.1
 diff-match-patch==20120106
