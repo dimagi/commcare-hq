@@ -174,7 +174,6 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
-    "corehq.util.context_processors.raven",
 ]
 
 TEMPLATE_DIRS = []
@@ -197,7 +196,6 @@ DEFAULT_APPS = (
     'couchdbkit.ext.django',
     'crispy_forms',
     'gunicorn',
-    'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
     'tastypie',
@@ -388,7 +386,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'gunicorn',
     'langcodes',
     'luna',
-    'raven.contrib.django.raven_compat',
     'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
@@ -858,17 +855,13 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.NotifyExceptionEmailer',
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
         'null': {
             'class': 'django.utils.log.NullHandler',
         },
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -887,22 +880,17 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop', 'sentry'],
+            'handlers': ['pillowtop'],
             'level': 'ERROR',
             'propagate': False,
         },
-        'pillowtop_eval': {
-            'handlers': ['sentry'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'smsbillables': {
-            'handlers': ['file', 'sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -912,7 +900,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -963,6 +951,10 @@ DEFAULT_PROTOCOL = 'http'
 DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
 DROPBOX_APP_NAME = ''
+
+# Amazon S3
+S3_ACCESS_KEY = None
+S3_SECRET_KEY = None
 
 # Supervisor RPC
 SUPERVISOR_RPC_ENABLED = False
