@@ -51,12 +51,12 @@ branches:
   - sync-history-email # Cal 9/22
   - shadow-modules # Jenny 10/6
   - b3-tf+exports-ui-changes+report-builder-b3 # Biyeun 10/23
-  - exports-ui-changes+base-template  # simon 10/21
+#  - exports-ui-changes+base-template  # simon 10/21
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3 # Noah 10/20
-  - two-factor-otp-only+base-template
+#  - two-factor-otp-only+base-template
   - two-factor-otp-only # j$ 10/2
-  - base-template # Simon 10/21
+#  - base-template # Simon 10/21
   - b3-tf # ben 10/1
   - use-absolute_reverse # Nick P 10/20
   - memoize-immutable # Nick P 10/20
