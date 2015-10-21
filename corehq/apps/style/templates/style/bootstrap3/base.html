@@ -171,14 +171,19 @@
                 </p>
             </div>
             <div class="container-fluid">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                            <a class="close" data-dismiss="alert" href="#">&times;</a>
-                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                        </div>
-                    {% endfor %}
-                {% endif %}
+                <div class="row">
+                    <div class="col-sm-12">
+                       {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                                    <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
             </div>
             {# todo: handle with angular #}
 {#            <div id="message-alerts" data-bind="foreach: alerts">#}
@@ -313,6 +318,14 @@
         {% if request.use_select2_v4 %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_daterangepicker %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
