@@ -747,9 +747,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.prune_case(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
-                    for index in case_update.indices_to_add:
+                    for index in update.indices_to_add:
                         _add_index(index)
-                    for index in case_update.indices_to_delete:
+                    for index in update.indices_to_delete:
                         self.index_tree.delete_index(index.case_id, index.identifier)
                 made_changes = True
 
