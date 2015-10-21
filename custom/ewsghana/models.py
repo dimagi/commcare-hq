@@ -132,6 +132,8 @@ class EWSMigrationProblem(models.Model):
             return reverse('edit_commcare_user', kwargs={'domain': self.domain, 'couch_user_id': self.object_id})
         elif self.object_type == 'webuser':
             return reverse('user_account', kwargs={'domain': self.domain, 'couch_user_id': self.object_id})
+        elif self.object_type == 'location':
+            return reverse('edit_location', kwargs={'domain': self.domain, 'loc_id': self.object_id})
         return
 
 

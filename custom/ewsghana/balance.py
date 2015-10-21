@@ -1,11 +1,14 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
+from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
+    get_supply_point_case_by_domain_external_id
 from corehq.apps.sms.mixin import apply_leniency, VerifiedNumber
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from custom.ewsghana.models import EWSMigrationStats, EWSMigrationProblem, EWSExtension
 from custom.logistics.mixin import UserMigrationMixin
 from custom.logistics.utils import iterate_over_api_objects
+from dimagi.utils.couch.database import iter_docs
 
 
 class BalanceMigration(UserMigrationMixin):
@@ -72,11 +75,9 @@ class BalanceMigration(UserMigrationMixin):
                     active = self.endpoint.get_supply_point(web_user.supply_point).active
 
                 if active:
-                    print supply_point, web_user.supply_point
                     description += 'Invalid supply point, '
 
             if sms_notifications != web_user.sms_notifications:
-                print sms_notifications, web_user.sms_notifications
                 description += 'Invalid value of sms_notifications field'
 
             if description:
@@ -95,10 +96,8 @@ class BalanceMigration(UserMigrationMixin):
                 ).delete()
 
     @transaction.atomic
-    def validate_sms_users(self, date):
-        for sms_user in iterate_over_api_objects(
-                self.endpoint.get_smsusers, filters=dict(date_updated__gte=date)
-        ):
+    def validate_sms_users(self):
+        for sms_user in iterate_over_api_objects(self.endpoint.get_smsusers):
             description = ""
             user = CommCareUser.get_by_username(self.get_username(sms_user)[0])
             if not user:
@@ -157,6 +156,34 @@ class BalanceMigration(UserMigrationMixin):
                     external_id=sms_user.id
                 ).delete()
 
+    def _check_username(self, usernames, ews_user_id):
+        return any([username.endswith(str(ews_user_id)) for username in usernames])
+
+    def validate_supply_points(self, date):
+        for location in iterate_over_api_objects(
+                self.endpoint.get_locations, filters={'is_active': True, 'date_updated': date}
+        ):
+            for supply_point in location.supply_points:
+                sp = get_supply_point_case_by_domain_external_id(self.domain, supply_point.id)
+                if sp:
+                    sql_location = sp.sql_location
+                    ids = sql_location.facilityincharge_set.all().values_list('user_id', flat=True)
+                    usernames = [user['username'].split('@')[0] for user in iter_docs(CouchUser.get_db(), ids)]
+                    if not all([self._check_username(usernames, incharge) for incharge in supply_point.incharges]):
+                        migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
+                            domain=self.domain,
+                            object_id=sql_location.location_id,
+                        )
+                        migration_problem.object_type = 'location'
+                        migration_problem.external_id = sql_location.external_id
+                        migration_problem.description = 'Invalid in charges'
+                        migration_problem.save()
+                    else:
+                        EWSMigrationProblem.objects.filter(
+                            domain=self.domain,
+                            external_id=sql_location.location_id
+                        ).delete()
+
     def balance_migration(self, date=None):
         products_count = self._get_total_counts(self.endpoint.get_products)
         district_count = self._get_total_counts(
@@ -182,5 +209,6 @@ class BalanceMigration(UserMigrationMixin):
         stats.sms_users_count = sms_users_count
         stats.save()
 
+        self.validate_supply_points(date)
         self.validate_web_users(date)
-        self.validate_sms_users(date)
+        self.validate_sms_users()
