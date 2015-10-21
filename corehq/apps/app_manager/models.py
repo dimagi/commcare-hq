@@ -1772,6 +1772,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     module_filter = StringProperty()
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    auto_select_case = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

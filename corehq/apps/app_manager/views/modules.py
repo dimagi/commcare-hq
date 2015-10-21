@@ -317,6 +317,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     """
     attributes = {
         "all": None,
+        "auto_select_case": None,
         "case_label": None,
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
@@ -393,6 +394,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+    if should_edit("auto_select_case"):
+        module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
     if (feature_previews.MODULE_FILTER.enabled(app.domain) and
             app.enable_module_filtering and
