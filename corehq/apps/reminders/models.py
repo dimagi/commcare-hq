@@ -762,6 +762,10 @@ class CaseReminderHandler(Document):
         return      void
         """
         case = reminder.case
+        if case and case.doc_type.endswith("-Deleted"):
+            reminder.retire()
+            return
+
         recipient = reminder.recipient
         iteration = 0
         reminder.error_retry_count = 0

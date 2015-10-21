@@ -1671,9 +1671,17 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
-    custom_xml = StringProperty()
+
+    # If True, a small tile will display the case name after selection.
+    persist_case_context = BooleanProperty()
+
+    # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
+    # If given, use this string for the case tile markup instead of the default temaplte
+    custom_xml = StringProperty()
+
     persist_tile_on_forms = BooleanProperty()
+    # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
@@ -3407,7 +3415,10 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     @property
     def source_module(self):
         if self.source_module_id:
-            return self._parent.get_module_by_unique_id(self.source_module_id)
+            try:
+                return self._parent.get_module_by_unique_id(self.source_module_id)
+            except ModuleNotFoundException:
+                pass
         return None
 
     @property
@@ -3477,7 +3488,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def validate_for_build(self):
         errors = super(ShadowModule, self).validate_for_build()
         errors += self.validate_details_for_build()
-        if not self.source_module_id:
+        if not self.source_module:
             errors.append({
                 'type': 'no source module id',
                 'module': self.get_module_info()

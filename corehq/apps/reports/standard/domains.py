@@ -77,6 +77,10 @@ class DomainStatsReport(GenericTabularReport):
 
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+                first_form_default_message = _("No Forms")
+                if dom.get("cp_last_form", None):
+                    first_form_default_message = _("Unable to parse date")
+
                 yield [
                     self.get_name_or_link(dom),
                     numcell(dom.get("cp_n_active_cc_users", _("Not yet calculated"))),
@@ -84,7 +88,7 @@ class DomainStatsReport(GenericTabularReport):
                     numcell(dom.get("cp_n_active_cases", _("Not yet calculated"))),
                     numcell(dom.get("cp_n_cases", _("Not yet calculated"))),
                     numcell(dom.get("cp_n_forms", _("Not yet calculated"))),
-                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_first_form"), first_form_default_message),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     numcell(dom.get("cp_n_web_users", _("Not yet calculated")))
                 ]

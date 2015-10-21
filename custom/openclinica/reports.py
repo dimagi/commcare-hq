@@ -124,14 +124,16 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
         for case in self.get_subject_cases():
             subject = Subject(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), self.domain)
             for form in originals_first(case.get_forms()):
-                for question, answer in form.form['case'].get('update', {}).iteritems():
-                    item = get_question_item(self.domain, form.xmlns, question)
-                    if item is None:
-                        # This is a CommCare-only question or form
-                        continue
-                    audit_log_id += 1
-                    subject.add_item(item, form, question, oc_format_date(answer), audit_log_id)
-                subject.close_form(form)
+                updates = form.form['case'].get('update', {})
+                if updates:
+                    for question, answer in updates.iteritems():
+                        item = get_question_item(self.domain, form.xmlns, question)
+                        if item is None:
+                            # This is a CommCare-only question or form
+                            continue
+                        audit_log_id += 1
+                        subject.add_item(item, form, question, oc_format_date(answer), audit_log_id)
+                    subject.close_form(form)
             yield subject
 
     def subject_export_rows(self):

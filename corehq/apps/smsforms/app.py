@@ -1,5 +1,6 @@
 import uuid
 from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.smsforms.util import process_sms_form_complete
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
@@ -178,15 +179,4 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
         cleaned_xml = tostring(root)
         
         # Submit the xml and end the session
-        resp = submit_form_locally(cleaned_xml, session.domain,
-            app_id=session.app_id)
-        xform_id = resp['X-CommCareHQ-FormID']
-        session.end(completed=False)
-        session.submission_id = xform_id
-        session.save()
-        
-        # Tag the submission as a partial submission
-        xform = XFormInstance.get(xform_id)
-        xform.partial_submission = True
-        xform.survey_incentive = session.survey_incentive
-        xform.save()
+        process_sms_form_complete(session, cleaned_xml, completed=False)

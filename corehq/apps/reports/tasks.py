@@ -235,8 +235,9 @@ def update_calculated_properties():
                 "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
                 "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
             }
-            if calced_props['cp_first_form'] == 'No forms':
+            if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']
+            if calced_props['cp_last_form'] is None:
                 del calced_props['cp_last_form']
             send_to_elasticsearch("domains", calced_props)
         except Exception, e:

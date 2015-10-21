@@ -189,6 +189,13 @@ CASE_LIST_TILE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
+    'show_persist_case_context_setting',
+    'Allow toggling the persistent case context tile',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the caselist',
