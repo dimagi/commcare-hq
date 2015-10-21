@@ -115,14 +115,10 @@ BOWER_INSTALLED_APPS = (
     'underscore-legacy=underscore#1.4.4',
     'backbone#0.9.1',
     'bootstrap-daterangepicker#2.1.13',
-<<<<<<< HEAD
     'datatables#1.10.9',
-=======
     'd3#3.1.5',
     'nvd3#1.1.10-beta',
-    'datatables#1.10.9',
     'datatables-bootstrap3#0.1',
->>>>>>> report-builder-b3
 )
 
 BOWER_PATH = '/usr/local/bin/bower'
