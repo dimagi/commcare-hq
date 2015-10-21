@@ -24,7 +24,7 @@ class PillowBase(object):
     @abstractproperty
     def checkpoint(self):
         """
-        Returns a PillowtopCheckpoint instance dealing with checkpoints.
+        Returns a PillowCheckpoint instance dealing with checkpoints.
         """
         pass
 

@@ -25,10 +25,7 @@ class TestElasticPillow(AliasedElasticPillow):
     }
 
     def calc_meta(self):
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determind md5
-        """
+        # must be overridden by subclasses of AliasedElasticPillow
         return self.es_index
 
 
