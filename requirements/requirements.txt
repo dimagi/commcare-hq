@@ -14,7 +14,7 @@ django-json-field==0.5.7
 dropbox==2.2.0
 defusedxml==0.4.1
 diff-match-patch==20120106
-django-tastypie==0.12.1
+django-tastypie==0.12.2
 django-bower==5.0.4
 djtables==0.1.1
 elasticsearch==0.4.4
