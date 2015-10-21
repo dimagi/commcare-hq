@@ -25,14 +25,14 @@ def get_pillow_class(full_class_str):
 
 
 def get_all_pillow_classes():
-    return [config.get_class() for config in _get_all_pillow_configs()]
+    return [config.get_class() for config in get_all_pillow_configs()]
 
 
 def get_all_pillow_instances():
-    return [config.get_instance() for config in _get_all_pillow_configs()]
+    return [config.get_instance() for config in get_all_pillow_configs()]
 
 
-def _get_all_pillow_configs():
+def get_all_pillow_configs():
     if hasattr(settings, 'PILLOWTOPS'):
         for section, list_of_pillows in settings.PILLOWTOPS.items():
             for pillow_config in list_of_pillows:
