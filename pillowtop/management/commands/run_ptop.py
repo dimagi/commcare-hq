@@ -3,7 +3,8 @@ from pillowtop.run_pillowtop import start_pillows, start_pillow
 from optparse import make_option
 import sys
 from django.conf import settings
-from pillowtop.utils import get_all_pillow_instances, get_pillow_instance
+from pillowtop.utils import get_all_pillow_instances, get_pillow_instance, get_all_pillow_configs, \
+    get_pillow_config_from_setting, get_pillow_by_name
 from django.core.management.base import NoArgsCommand
 
 
@@ -43,39 +44,30 @@ class Command(NoArgsCommand):
         list_checkpoints = options['list_checkpoints']
         pillow_name = options['pillow_name']
         pillow_key = options['pillow_key']
-        all_pillows = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
-
         if list_all:
             print "\nPillows registered in system:"
-            for k,v in settings.PILLOWTOPS.items():
-                print "\tKey: %s" % k
-                for p in v:
-                    print "\t\t%s" % p.split('.')[-1]
+            for config in get_all_pillow_configs():
+                print u'{}: {}'.format(config.section, config.name)
+
             print "\n\tRun with --pillow-name <name> to run a pillow"
-            print "\n\tRun with --pillow-key <key> to run a group of pillows together (for local dev convenience purposes)\n"
+            print "\n\tRun with --pillow-key <key> to run a group of pillows together\n"
             sys.exit()
 
         if run_all:
-            pillows_to_run = all_pillows
+            pillows_to_run = get_all_pillow_configs()
         elif not run_all and not pillow_name and pillow_key:
             # get pillows from key
-
             if pillow_key not in settings.PILLOWTOPS:
                 print "\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" % \
                       (pillow_key, settings.PILLOWTOPS.keys())
                 sys.exit()
             else:
-                pillows_to_run = settings.PILLOWTOPS[pillow_key]
+                pillows_to_run = [get_pillow_config_from_setting(pillow_key, config)
+                                  for config in settings.PILLOWTOPS[pillow_key]]
 
         elif not run_all and not pillow_key and pillow_name:
-            abbreviated_pillows = [x.split('.')[-1] for x in all_pillows]
-            if pillow_name not in abbreviated_pillows:
-                print "\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" % \
-                      (pillow_name, settings.PILLOWTOPS.keys())
-                sys.exit()
-            else:
-                pillow_idx = abbreviated_pillows.index(pillow_name)
-                start_pillow(get_pillow_instance(all_pillows[pillow_idx]))
+            pillow = get_pillow_by_name(pillow_name)
+            start_pillow(pillow)
             sys.exit()
         elif list_checkpoints:
             for pillow in get_all_pillow_instances():
@@ -85,4 +77,4 @@ class Command(NoArgsCommand):
             print "\nNo command set, please see --help for runtime instructions"
             sys.exit()
 
-        start_pillows(pillows=[get_pillow_instance(x) for x in pillows_to_run])
+        start_pillows(pillows=[pillow_config.get_instance() for pillow_config in pillows_to_run])
