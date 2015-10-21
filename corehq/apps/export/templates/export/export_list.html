@@ -39,11 +39,11 @@
     <div ng-app="listExportsApp">
         <div ng-controller="ListExportsController"
              ng-cloak>
-            <p class="lead">
+            <p>
                 {% blocktrans %}
                     Exports are a way to download data from CommCare HQ
                     in a variety of formats (CSV, Excel, etc.) for use in
-                    third-party Data Analysis tools.
+                    third-party data analysis tools.
                 {% endblocktrans %}
             </p>
             <p ng-show="!_.isEmpty(exports) || !hasLoaded">
