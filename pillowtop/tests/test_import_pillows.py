@@ -27,8 +27,10 @@ class PillowImportTestCase(SimpleTestCase):
         self.assertFalse(isclass(pillows[0]))
 
     def test_get_pillow_by_name(self):
-        self.assertEqual(FakePillow, type(get_pillow_by_name('FakePillow')))
+        self.assertEqual(FakePillow, get_pillow_by_name('FakePillow', instantiate=False))
 
+    def test_get_pillow_by_name_instantiate(self):
+        self.assertEqual(FakePillow, type(get_pillow_by_name('FakePillow', instantiate=True)))
 
 class FakeConstructedPillow(ConstructedPillow):
 
@@ -49,6 +51,7 @@ def make_fake_constructed_pillow():
 PILLOWTOPS_OVERRIDE = {
     'test': [
         {
+            'name': 'FakeConstructedPillowName',
             'class': 'pillowtop.tests.FakeConstructedPillow',
             'instance': 'pillowtop.tests.make_fake_constructed_pillow'
         }
@@ -65,10 +68,19 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
         self.assertTrue(isclass(pillow_class))
         self.assertEqual(FakeConstructedPillow, pillow_class)
 
-    def test_import_pillows(self):
+    def test_get_pillow_instances(self):
         pillows = get_all_pillow_instances()
         self.assertEquals(len(pillows), 1)
         pillow = pillows[0]
+        self.assertFalse(isclass(pillow))
+        self.assertEqual(FakeConstructedPillow, type(pillow))
+
+    def test_get_pillow_class_by_name(self):
+        pillow = get_pillow_by_name('FakeConstructedPillowName', instantiate=False)
+        self.assertEqual(FakeConstructedPillow, pillow)
+
+    def test_get_pillow_by_name_instantiate(self):
+        pillow = get_pillow_by_name('FakeConstructedPillowName', instantiate=True)
         self.assertFalse(isclass(pillow))
         self.assertEqual(FakeConstructedPillow, type(pillow))
 

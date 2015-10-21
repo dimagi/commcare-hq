@@ -70,14 +70,10 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
 
 
 def get_pillow_by_name(pillow_class_name, instantiate=True):
-    if hasattr(settings, 'PILLOWTOPS'):
-        for k, v in settings.PILLOWTOPS.items():
-            for full_str in v:
-                if pillow_class_name in full_str:
-                    if instantiate:
-                        return get_pillow_instance(full_str)
-                    else:
-                        return get_pillow_class(full_str)
+    all_configs = get_all_pillow_configs()
+    for config in all_configs:
+        if config.name == pillow_class_name:
+            return config.get_instance() if instantiate else config.get_class()
 
 
 def force_seq_int(seq):
