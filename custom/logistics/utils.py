@@ -1,4 +1,5 @@
-def iterate_over_api_objects(func, filters):
+def iterate_over_api_objects(func, filters=None):
+    filters = filters or {}
     offset = 0
     limit = 100
     _, objects = func(limit=limit, offset=offset, filters=filters)
