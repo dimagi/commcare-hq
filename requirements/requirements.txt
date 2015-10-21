@@ -1,5 +1,5 @@
 # needed to build gevent from source
-Cython==0.17.4
+cython==0.23.4
 restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.0
@@ -48,7 +48,7 @@ simplejson==2.6.1
 GitPython==0.3.2.RC1
 gitdb==0.5.4
 sh==1.09
-gevent==1.0
+gevent==1.0.2
 greenlet==0.4.2
 rawes==0.4.0
 numpy==1.7.1
