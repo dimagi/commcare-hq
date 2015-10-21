@@ -115,6 +115,7 @@ BOWER_INSTALLED_APPS = (
     'underscore-legacy=underscore#1.4.4',
     'backbone#0.9.1',
     'datatables#1.10.9',
+    'bootstrap-daterangepicker#2.1.13',
 )
 
 BOWER_PATH = '/usr/local/bin/bower'

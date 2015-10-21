@@ -68,6 +68,15 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_daterangepicker %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+        {% endcompress %}
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
@@ -77,6 +86,16 @@
         <script type="text/javascript" src="{% new_static 'jquery.cookie/jquery.cookie.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq_extensions.jquery.js' %}"></script>
         {% endcompress %}
+
+        {# Up here because if daterangepicker is called from within a form widget, #}
+        {# the javascript requiring the config file is run before js-inline #}
+        {% if request.use_daterangepicker %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
 
         {% if formdesigner %}
         <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
@@ -152,14 +171,19 @@
                 </p>
             </div>
             <div class="container-fluid">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                            <a class="close" data-dismiss="alert" href="#">&times;</a>
-                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                        </div>
-                    {% endfor %}
-                {% endif %}
+                <div class="row">
+                    <div class="col-sm-12">
+                       {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                                    <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
             </div>
             {# todo: handle with angular #}
 {#            <div id="message-alerts" data-bind="foreach: alerts">#}
