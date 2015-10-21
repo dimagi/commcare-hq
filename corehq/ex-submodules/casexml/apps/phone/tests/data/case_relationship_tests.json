@@ -403,7 +403,6 @@
         ]
     },
     {
-        "skip": "Fails prune",
         "name": "Double_Chain",
         "owned": [
             "a",
@@ -431,7 +430,6 @@
         ]
     },
     {
-        "skip": "Fails prune",
         "name": "Double_Index",
         "owned": [
             "a",

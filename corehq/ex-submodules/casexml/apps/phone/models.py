@@ -699,7 +699,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if case_id in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(case_id)
 
-    def _add_index(self, index):
+    def _add_index(self, index, case_update):
         logger.debug('adding index {} --<{}>--> {} ({}).'.format(
             index.case_id, index.relationship, index.referenced_id, index.identifier))
         if index.relationship == const.CASE_INDEX_EXTENSION:
@@ -707,12 +707,21 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if index.referenced_id not in self.case_ids_on_phone:
                 self.case_ids_on_phone.add(index.referenced_id)
                 self.dependent_case_ids_on_phone.add(index.referenced_id)
-            self.dependent_case_ids_on_phone.add(index.case_id)
+
+            if not [idx for idx in case_update.indices_to_add
+                    if idx.relationship == const.CASE_INDEX_CHILD and idx.referenced_id == index.referenced_id]:
+                # if this case has multiple indices and one of them is a child
+                # index to the same case, then this case is not dependent
+                self.dependent_case_ids_on_phone.add(index.case_id)
         else:
             self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
             if index.referenced_id not in self.case_ids_on_phone:
                 self.case_ids_on_phone.add(index.referenced_id)
                 self.dependent_case_ids_on_phone.add(index.referenced_id)
+                # If the indexing case is dependent (e.g. because it also has an
+                # extension index) make it a primary again (child index trumps
+                # extension index)
+                self._add_primary_case(index.case_id)
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
@@ -798,7 +807,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     made_changes = True
 
                 for index in case_update.indices_to_add:
-                    self._add_index(index)
+                    self._add_index(index, case_update)
                     made_changes = True
                 for index in case_update.indices_to_delete:
                     self.index_tree.delete_index(index.case_id, index.identifier)
@@ -815,9 +824,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.prune_case(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
-                    for index in case_update.indices_to_add:
-                        self._add_index(index)
-                    for index in case_update.indices_to_delete:
+                    for index in update.indices_to_add:
+                        self._add_index(index, update)
+                    for index in update.indices_to_delete:
                         self.index_tree.delete_index(index.case_id, index.identifier)
                         self.extension_index_tree.delete_index(index.case_id, index.identifier)
                 made_changes = True
