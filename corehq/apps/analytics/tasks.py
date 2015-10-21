@@ -1,10 +1,15 @@
+import calendar
+import csv
+import os
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 import sys
+import tinys3
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
 from datetime import datetime, date, timedelta
+import time
 import json
 import requests
 import urllib
@@ -294,3 +299,49 @@ def track_periodic_data():
     _soft_assert(processing_time.seconds < 10, msg)
 
     _batch_track_on_hubspot(submit_json)
+    _track_periodic_data_on_kiss(submit_json)
+
+
+def _track_periodic_data_on_kiss(submit_json):
+    """
+    Transform periodic data into a format that is kissmetric submission friendly, then call identify
+    csv format: Identity (email), timestamp (epoch), Prop:<Property name>, etc...
+    :param submit_json: Example Json below, this function assumes
+    [
+      {
+        email: <>,
+        properties: [
+          {
+            property: <>,
+            value: <>
+          }, (can have more than one)
+        ]
+      }
+    ]
+    :return: none
+    """
+    periodic_data_list = json.loads(submit_json)
+
+    headers = [
+        'Identity',
+        'Timestamp',
+    ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
+
+    filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
+    with open(filename, 'wb') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(headers)
+
+        for webuser in periodic_data_list:
+            row = [
+                webuser['email'],
+                int(time.time())
+            ] + [prop['value'] for prop in webuser['properties']]
+            csvwriter.writerow(row)
+
+    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY:
+        s3_connection = tinys3.Connection(settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, tls=True)
+        f = open(filename, 'rb')
+        s3_connection.upload(filename, f, 'kiss-uploads')
+
+    os.remove(filename)
