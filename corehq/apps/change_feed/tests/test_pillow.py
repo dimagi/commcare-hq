@@ -5,7 +5,7 @@ from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client
-from corehq.apps.change_feed.consumer import change_meta_from_kafka_message
+from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import ChangeFeedPillow
 from corehq.apps.change_feed.data_sources import COUCH
 from pillowtop.feed.interface import Change
