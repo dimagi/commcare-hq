@@ -20,13 +20,13 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script>
-    $(function(){
-        ko.applyBindings({
-            auto_select_case: ko.observable({{ module.auto_select_case|JSON }})
-        }, $('#auto-select-case').get(0));
-    });
-</script>
+    <script>
+        $(function(){
+            ko.applyBindings({
+                auto_select_case: ko.observable({{ module.auto_select_case|JSON }})
+            }, $('#auto-select-case').get(0));
+        });
+    </script>
 {% endblock js-inline %}
 
 {% block tab-headers %}{{ block.super }}
