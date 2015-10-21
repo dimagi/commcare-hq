@@ -232,7 +232,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'rosetta',
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
@@ -409,7 +408,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'gunicorn',
     'langcodes',
     'luna',
-    'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
 

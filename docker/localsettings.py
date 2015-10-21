@@ -218,7 +218,7 @@ CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
-                           '^south', '^djcelery', '^debug_toolbar', '^rosetta']
+                           '^south', '^djcelery', '^debug_toolbar']
 
 ####### Selenium tests config ########
 
