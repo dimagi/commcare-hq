@@ -373,12 +373,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def view_kwargs(self):
-        kwargs = dict(self.url_kwargs)
-
         if not self.is_configurable_report:
-            kwargs['permissions_check'] = self._dispatcher.permissions_check
-
-        return immutabledict(kwargs)
+            return self.url_kwargs.union({
+                'permissions_check': self._dispatcher.permissions_check,
+            })
+        return self.url_kwargs
 
     @property
     @memoized
@@ -564,8 +563,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def languages(self):
         if self.is_configurable_report:
-            return self.report.spec.get_languages()
-        return set()
+            return frozenset(self.report.spec.get_languages())
+        return frozenset()
 
     @property
     @memoized
@@ -644,12 +643,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def all_recipient_emails(self):
         # handle old documents
         if not self.owner_id:
-            return [self.owner.get_email()]
+            return frozenset([self.owner.get_email()])
 
-        emails = []
+        emails = frozenset(self.recipient_emails)
         if self.send_to_owner and self.owner_email:
-            emails.append(self.owner_email)
-        emails.extend(self.recipient_emails)
+            emails |= {self.owner_email}
         return emails
 
     @property
@@ -711,7 +709,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             config.owner_id = self.owner_id
             configs = [config]
 
-        return configs
+        return tuple(configs)
 
     @property
     def day_name(self):
@@ -746,7 +744,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         for email in self.all_recipient_emails:
             language = user_languages.get(email, fallback_language)
             recipients[language].append(email)
-        return recipients
+        return immutabledict(recipients)
 
     def send(self):
         # Scenario: user has been removed from the domain that they
