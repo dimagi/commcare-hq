@@ -230,7 +230,7 @@ class EntriesHelper(object):
         if form.form_type == 'module_form' and actions_use_usercase(actions):
             case = UserCaseXPath().case()
             datums.append(FormDatumMeta(
-                datum=SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case), autoselect=True),
+                datum=SessionDatum(id=USERCASE_ID, function=('%s/@case_id' % case)),
                 case_type=USERCASE_TYPE,
                 requires_selection=False,
                 action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])

@@ -2144,10 +2144,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    @property
-    def auto_select_case(self):
-        return self.case_type == USERCASE_TYPE
-
     def validate_for_build(self):
         return super(Module, self).validate_for_build() + self.validate_details_for_build()
 

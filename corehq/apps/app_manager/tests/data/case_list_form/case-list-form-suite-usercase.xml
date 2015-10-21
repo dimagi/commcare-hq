@@ -140,8 +140,7 @@
     <session>
       <datum id="case_id_new_suite_test_0" function="uuid()"/>
       <datum id="usercase_id"
-      function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"
-      autoselect="true"/>
+      function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
     </session>
     <stack>
       <create if="count(instance('commcaresession')/session/data/return_to) = 1 and instance('commcaresession')/session/data/return_to = 'm0' and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_new_suite_test_0]) &gt; 0">
