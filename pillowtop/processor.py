@@ -14,5 +14,8 @@ class LoggingProcessor(PillowProcessor):
     """
     Processor that just logs things - useful in tests or debugging.
     """
+    def __init__(self, logger=None):
+        self.logger = logger or pillow_logging
+
     def process_change(self, pillow_instance, change, do_set_checkpoint):
-        pillow_logging.info(change)
+        self.logger.info(change)
