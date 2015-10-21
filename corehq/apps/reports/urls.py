@@ -34,7 +34,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ConfigurableReport.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
 
-    url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name='report_builder_select_type'),
+    url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name=ReportBuilderTypeSelect.urlname),
     url(r'^builder/(?P<report_type>list|chart|table|worker)/select_source/$', ReportBuilderDataSourceSelect.as_view(), name='report_builder_select_source'),
     url(r'^builder/configure/chart/$', ConfigureChartReport.as_view(), name="configure_chart_report"),
     url(r'^builder/configure/list/$', ConfigureListReport.as_view(), name="configure_list_report"),

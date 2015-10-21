@@ -20,8 +20,6 @@ def base_template(request):
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
         'less_watch': settings.LESS_WATCH,
-        'use_knockout_js': (request.use_knockout_js
-                            if hasattr(request, 'use_knockout_js') else False),
     }
 
 
