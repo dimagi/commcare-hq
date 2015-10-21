@@ -3406,7 +3406,10 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     @property
     def source_module(self):
         if self.source_module_id:
-            return self._parent.get_module_by_unique_id(self.source_module_id)
+            try:
+                return self._parent.get_module_by_unique_id(self.source_module_id)
+            except ModuleNotFoundException:
+                pass
         return None
 
     @property
@@ -3476,7 +3479,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def validate_for_build(self):
         errors = super(ShadowModule, self).validate_for_build()
         errors += self.validate_details_for_build()
-        if not self.source_module_id:
+        if not self.source_module:
             errors.append({
                 'type': 'no source module id',
                 'module': self.get_module_info()
