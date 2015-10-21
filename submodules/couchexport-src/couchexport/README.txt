@@ -1,1 +1,0 @@
-Dynamically export your couch models to excel (or other formats).

@@ -45,12 +45,13 @@
 trunk: master
 name: autostaging
 branches:
+  - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
   - sync-history-email # Cal 9/22
   - two-factor-otp-only # j$ 10/2
   - shadow-modules # Jenny 10/6
-  - exports-ui-changes+report-builder-b3+b3-tf # Biyeun 10/23
+  - b3-tf+exports-ui-changes+report-builder-b3 # Biyeun 10/23
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3 # Noah 10/20
   - b3-tf # ben 10/1
