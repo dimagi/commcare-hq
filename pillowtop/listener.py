@@ -279,13 +279,14 @@ class PythonPillow(BasicPillow):
 
     def process_chunk(self):
         self._couch_db.bulk_load([change['id'] for change in self.change_queue],
-                                purge_existing=True)
+                                 purge_existing=True)
 
         while len(self.change_queue) > 0:
             change = self.change_queue.pop()
             doc = self._couch_db.open_doc(change['id'], check_main=False)
             if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
                 try:
+                    change.document = doc
                     self.process_change(change)
                 except Exception:
                     logging.exception('something went wrong processing change %s (%s)' % (change['seq'], change['id']))
