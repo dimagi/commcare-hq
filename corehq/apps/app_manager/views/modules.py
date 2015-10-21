@@ -187,7 +187,7 @@ def _get_report_module_context(app, module):
     all_reports = ReportConfiguration.by_domain(app.domain)
     warnings = []
     validity = module.check_report_validity()
-    print validity
+
     if not validity.is_valid:
         module.report_configs = validity.valid_report_configs
         warnings.append(
