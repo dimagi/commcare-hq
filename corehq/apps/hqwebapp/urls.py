@@ -27,6 +27,7 @@ urlpatterns = patterns(
     url(r'^jserror/$', 'jserror', name='jserror'),
     url(r'^dropbox_upload/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 'dropbox_upload',
         name='dropbox_upload'),
+    url(r'', include('two_factor.urls', 'two_factor')),
 )
 
 domain_specific = patterns('corehq.apps.hqwebapp.views',
