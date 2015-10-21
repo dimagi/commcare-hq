@@ -85,12 +85,12 @@ class ConstructedPillow(PillowBase):
     An almost-implemented Pillow that relies on being passed the various constructor
     arguments it needs.
     """
-    __metaclass__ = ABCMeta
 
-    def __init__(self, document_store, checkpoint, change_feed):
+    def __init__(self, document_store, checkpoint, change_feed, processor):
         self._document_store = document_store
         self._checkpoint = checkpoint
         self._change_feed = change_feed
+        self._processor = processor
 
     def document_store(self):
         return self._document_store
@@ -101,3 +101,6 @@ class ConstructedPillow(PillowBase):
 
     def get_change_feed(self):
         return self._change_feed
+
+    def processor(self, change, do_set_checkpoint=True):
+        self._processor.process_change(self, change, do_set_checkpoint)
