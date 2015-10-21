@@ -7,16 +7,15 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
     VerifiedNumber
-from custom.ewsghana.models import FacilityInCharge, EWSMigrationProblem
+from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from corehq.apps.reports.models import ReportNotification, ReportConfig
-from custom.logistics.utils import iterate_over_api_objects
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser, CommCareUser
+from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser
 from custom.api.utils import apply_updates
-from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
+from custom.ewsghana.extensions import ews_product_extension
 from custom.logistics.api import ApiSyncObject
 from dimagi.ext.jsonobject import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from jsonobject import JsonObject
@@ -24,7 +23,7 @@ from custom.logistics.api import LogisticsEndpoint, APISynchronization, Migratio
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
 from corehq.apps.programs.models import Program as CouchProgram
-from custom.ewsghana.models import EWSExtension, EWSMigrationStats
+from custom.ewsghana.models import EWSExtension
 
 
 class Group(JsonObject):
@@ -165,6 +164,10 @@ class GhanaEndpoint(LogisticsEndpoint):
     def get_smsuser(self, user_id, **kwargs):
         response = requests.get(self.smsusers_url + str(user_id) + "/", auth=self._auth())
         return SMSUser(response.json())
+
+    def get_supply_point(self, supply_point_id):
+        response = requests.get(self.supply_point_url + str(supply_point_id) + "/", auth=self._auth())
+        return SupplyPoint(response.json())
 
     def get_daily_reports(self, **kwargs):
         meta, reports = self.get_objects(self.dailyreports_url, **kwargs)
@@ -808,79 +811,9 @@ class EWSApi(APISynchronization):
             sms_user.save()
         return sms_user
 
-    def _get_total_counts(self, func, limit=1, **kwargs):
-        meta, _ = func(limit=limit, **kwargs)
-        return meta['total_count'] if meta else 0
-
     def balance_migration(self, date=None):
-        products_count = self._get_total_counts(self.endpoint.get_products)
-        district_count = self._get_total_counts(
-            self.endpoint.get_locations,
-            filters=dict(type='district', is_active=True)
-        )
-        region_count = self._get_total_counts(
-            self.endpoint.get_locations,
-            filters=dict(type='region', is_active=True)
-        )
-        country_count = self._get_total_counts(
-            self.endpoint.get_locations, filters=dict(type='country', is_active=True)
-        )
-        supply_points_count = self._get_total_counts(self.endpoint.get_supply_points, filters=dict(active=True))
-        web_users_count = self._get_total_counts(self.endpoint.get_webusers)
-        sms_users_count = self._get_total_counts(self.endpoint.get_smsusers)
-
-        stats, _ = EWSMigrationStats.objects.get_or_create(domain=self.domain)
-        stats.products_count = products_count
-        stats.locations_count = district_count + region_count + country_count
-        stats.supply_points_count = supply_points_count
-        stats.web_users_count = web_users_count
-        stats.sms_users_count = sms_users_count
-        stats.save()
-
-        for sms_user in iterate_over_api_objects(
-                self.endpoint.get_smsusers, filters=dict(date_updated__gte=date)
-        ):
-            description = ""
-            user = CommCareUser.get_by_username(self.get_username(sms_user)[0])
-            if not user:
-                description = "Not exists"
-                EWSMigrationProblem.objects.create(
-                    domain=self.domain,
-                    external_id=sms_user.id,
-                    object_type='smsuser',
-                    description=description
-                )
-                continue
-
-            phone_numbers = {
-                apply_leniency(connection.phone_number) for connection in sms_user.phone_numbers
-            }
-
-            if phone_numbers - set(user.phone_numbers):
-                description += "Invalid phone numbers, "
-
-            phone_to_backend = {
-                connection.phone_number: connection.backend
-                for connection in sms_user.phone_numbers
-            }
-
-            for phone_number in user.phone_numbers:
-                vn = VerifiedNumber.by_phone(phone_number)
-                if not vn:
-                    description += "Phone number not verified, "
-                    continue
-                backend = phone_to_backend.get(phone_number)
-                if backend == 'message_tester' and vn.backend_id != 'MOBILE_BACKEND_TEST' \
-                        or (not backend and vn.backend_id):
-                    description += "Invalid backend, "
-
-            if description:
-                migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
-                    domain=self.domain,
-                    object_id=user.get_id,
-                )
-                migration_problem.description = description.rstrip(' ,')
-                migration_problem.save()
+        from custom.ewsghana.tasks import balance_migration_task
+        balance_migration_task.delay(self.domain, date)
 
 
 class EmailSettingsSync(object):

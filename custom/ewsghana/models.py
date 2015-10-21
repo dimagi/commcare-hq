@@ -1,7 +1,8 @@
+from django.core.urlresolvers import reverse
 from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.models import WebUser
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
@@ -89,6 +90,12 @@ class EWSExtension(models.Model):
     sms_notifications = models.BooleanField(default=False)
 
     @property
+    def supply_point(self):
+        if not self.location_id:
+            return
+        return Location.get(doc_id=self.location_id).linked_supply_point()
+
+    @property
     def web_user(self):
         return WebUser.get(self.user_id)
 
@@ -108,6 +115,7 @@ class EWSMigrationStats(models.Model):
     sms_users_count = models.IntegerField(default=0)
     web_users_count = models.IntegerField(default=0)
     domain = models.CharField(max_length=128, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
 
 class EWSMigrationProblem(models.Model):
@@ -116,6 +124,15 @@ class EWSMigrationProblem(models.Model):
     object_type = models.CharField(max_length=30)
     description = models.CharField(max_length=128)
     external_id = models.CharField(max_length=128)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    @property
+    def object_url(self):
+        if self.object_type == 'smsuser':
+            return reverse('edit_commcare_user', kwargs={'domain': self.domain, 'couch_user_id': self.object_id})
+        elif self.object_type == 'webuser':
+            return reverse('user_account', kwargs={'domain': self.domain, 'couch_user_id': self.object_id})
+        return
 
 
 @receiver(commcare_domain_pre_delete)

@@ -22,7 +22,8 @@ from corehq.apps.users.models import WebUser, CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
-from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats
+from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
+    EWSMigrationProblem
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
@@ -391,5 +392,6 @@ class BalanceMigrationView(BaseDomainView):
                 domain=self.domain, location_type__administrative=False
             ).exclude(is_archived=True).count(),
             'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
-            'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value']
+            'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
         }

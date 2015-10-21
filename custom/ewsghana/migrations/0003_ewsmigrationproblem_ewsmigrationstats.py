@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
                 ('object_type', models.CharField(max_length=30)),
                 ('description', models.CharField(max_length=128)),
                 ('external_id', models.CharField(max_length=128)),
+                ('last_modified', models.DateTimeField(auto_now=True)),
             ],
             options={
             },
@@ -35,6 +36,7 @@ class Migration(migrations.Migration):
                 ('sms_users_count', models.IntegerField(default=0)),
                 ('web_users_count', models.IntegerField(default=0)),
                 ('domain', models.CharField(max_length=128, db_index=True)),
+                ('last_modified', models.DateTimeField(auto_now=True)),
             ],
             options={
             },
