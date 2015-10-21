@@ -1299,7 +1299,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 notify_exception(
                     None,
                     message="Error occured while syncing user %s: %s" %
-                            (self.username, str(result[1]))
+                            (self.username, repr(result[1]))
                 )
 
     @classmethod
@@ -1424,7 +1424,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 notify_exception(
                     None,
                     message="Error occured while syncing user %s: %s" %
-                            (self.username, str(result[1]))
+                            (self.username, repr(result[1]))
                 )
 
     @property
