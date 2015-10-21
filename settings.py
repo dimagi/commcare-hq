@@ -310,7 +310,6 @@ HQ_APPS = (
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
-    'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
@@ -1096,7 +1095,6 @@ COUCHDB_APPS = [
     'api',
     'app_manager',
     'appstore',
-    'orgs',
     'builds',
     'case',
     'casegroups',
@@ -1400,11 +1398,9 @@ for k, v in LOCAL_PILLOWTOPS.items():
 
 COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserGenerationCache',
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
-    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
