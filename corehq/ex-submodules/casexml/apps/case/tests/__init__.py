@@ -11,7 +11,6 @@ try:
     from .test_exclusion import *
     from .test_extract_caseblocks import *
     from .test_factory import *
-    from .test_force_save import *
     from .test_from_xform import *
     from .test_indexes import *
     from .test_multi_case_submits import *

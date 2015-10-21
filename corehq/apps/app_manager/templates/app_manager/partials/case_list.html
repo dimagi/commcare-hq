@@ -39,6 +39,16 @@
         <option value="yes">Use Case Tiles</option>
     </select>
     {% endif %}
+
+    {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
+    <div data-bind="visible: useCaseTiles() == 'no'">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: persistCaseContext">
+            {% trans "Show the case name at the top of the screen when filling out forms" %}
+        </label>
+    </div>
+    {% endif %}
+
     <div data-bind="visible: useCaseTiles() == 'yes' || window.toggles.CASE_LIST_CUSTOM_XML">
         <label class="checkbox">
             <input type="checkbox" data-bind="checked: persistTileOnForms">

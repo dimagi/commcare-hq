@@ -129,8 +129,6 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_login': 'brand-banner-login',
 }
 
-_soft_assert_uuid = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
-
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -1673,9 +1671,17 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
-    custom_xml = StringProperty()
+
+    # If True, a small tile will display the case name after selection.
+    persist_case_context = BooleanProperty()
+
+    # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
+    # If given, use this string for the case tile markup instead of the default temaplte
+    custom_xml = StringProperty()
+
     persist_tile_on_forms = BooleanProperty()
+    # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
@@ -3307,6 +3313,7 @@ class ReportAppConfig(DocumentSchema):
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    description = DictProperty()
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -3407,7 +3414,10 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     @property
     def source_module(self):
         if self.source_module_id:
-            return self._parent.get_module_by_unique_id(self.source_module_id)
+            try:
+                return self._parent.get_module_by_unique_id(self.source_module_id)
+            except ModuleNotFoundException:
+                pass
         return None
 
     @property
@@ -3477,7 +3487,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def validate_for_build(self):
         errors = super(ShadowModule, self).validate_for_build()
         errors += self.validate_details_for_build()
-        if not self.source_module_id:
+        if not self.source_module:
             errors.append({
                 'type': 'no source module id',
                 'module': self.get_module_info()
@@ -4262,6 +4272,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
+    use_grid_menus = BooleanProperty(default=False)
 
     @property
     @memoized
@@ -5152,6 +5163,12 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         del source['build_spec']
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+
+    for module in app.get_modules():
+        if isinstance(module, ReportModule):
+            for report_config in module.report_configs:
+                report_config.uuid = random_hex()
+
     app.save()
 
     if not app.is_remote_app():

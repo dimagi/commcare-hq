@@ -47,7 +47,7 @@ class Command(BaseCommand):
         username = self._get_required_option('username', options)
         target_domain = self._get_required_option('to_domain', options)
 
-        name = options['name']
+        name = options['to_name']
         url_base = options['url']
         password = options['password']
         if not password:

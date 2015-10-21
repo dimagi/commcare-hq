@@ -41,7 +41,6 @@ def create_cases_for_types(domain, case_types):
                 case_id='person%s' % i,
                 case_type=case_type,
                 user_id='user%s' % i,
-                version=V2,
             ).as_string(), domain)
 
 

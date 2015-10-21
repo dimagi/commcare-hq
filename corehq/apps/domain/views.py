@@ -534,7 +534,6 @@ def test_repeater(request, domain):
                     create=True,
                     case_type='test',
                     case_name='test case',
-                    version=V2,
                 ).as_string()
             else:
                 return "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" % \

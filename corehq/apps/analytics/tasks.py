@@ -1,10 +1,14 @@
+import csv
+import os
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 import sys
+import tinys3
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
 from datetime import datetime, date, timedelta
+import time
 import json
 import requests
 import urllib
@@ -15,6 +19,9 @@ from corehq.util.soft_assert import soft_assert
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
+HUBSPOT_FORM_BUILDER_FORM_ID = "4f118cda-3c73-41d9-a5d1-e371b23b1fb5"
+HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
+HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -107,7 +114,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _link_account_with_cookie(form_id, webuser, cookies, meta):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -139,12 +146,12 @@ def track_created_hq_account_on_hubspot(webuser, cookies, meta):
         'created_account_in_hq': True,
         'is_a_commcare_user': True,
     })
-    _link_account_with_cookie(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
+    _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_user_sign_in_on_hubspot(webuser, cookies, meta):
-    _link_account_with_cookie(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
+    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -169,6 +176,21 @@ def track_confirmed_account_on_hubspot(webuser):
             'confirmed_account': True,
             'domain': domain
         })
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_app_from_template_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
 
 
 def track_workflow(email, event, properties=None):
@@ -231,6 +253,8 @@ def track_periodic_data():
     submit = []
     for user in users_to_domains:
         email = user['email']
+        if not email:
+            continue
         max_forms = 0
         max_workers = 0
 
@@ -274,3 +298,49 @@ def track_periodic_data():
     _soft_assert(processing_time.seconds < 10, msg)
 
     _batch_track_on_hubspot(submit_json)
+    _track_periodic_data_on_kiss(submit_json)
+
+
+def _track_periodic_data_on_kiss(submit_json):
+    """
+    Transform periodic data into a format that is kissmetric submission friendly, then call identify
+    csv format: Identity (email), timestamp (epoch), Prop:<Property name>, etc...
+    :param submit_json: Example Json below, this function assumes
+    [
+      {
+        email: <>,
+        properties: [
+          {
+            property: <>,
+            value: <>
+          }, (can have more than one)
+        ]
+      }
+    ]
+    :return: none
+    """
+    periodic_data_list = json.loads(submit_json)
+
+    headers = [
+        'Identity',
+        'Timestamp',
+    ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
+
+    filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
+    with open(filename, 'wb') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(headers)
+
+        for webuser in periodic_data_list:
+            row = [
+                webuser['email'],
+                int(time.time())
+            ] + [prop['value'] for prop in webuser['properties']]
+            csvwriter.writerow(row)
+
+    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY:
+        s3_connection = tinys3.Connection(settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, tls=True)
+        f = open(filename, 'rb')
+        s3_connection.upload(filename, f, 'kiss-uploads')
+
+    os.remove(filename)

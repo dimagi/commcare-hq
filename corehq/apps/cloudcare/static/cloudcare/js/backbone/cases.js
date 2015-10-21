@@ -280,7 +280,8 @@ cloudCare.CaseListView = Backbone.View.extend({
             bPaginate: false,
             bSort: true,
             oLanguage: {
-                "sSearch": "Filter cases:"
+                "sSearch": "Filter cases:",
+                "sEmptyTable": "No cases available. You must register a case to access this form."
             },
             sScrollX: $('#case-list').css('width'),
             bScrollCollapse: true

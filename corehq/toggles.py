@@ -168,12 +168,6 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
-    'include-multimedia-odk',
-    'Include multimedia in ODK deploy',
-    TAG_ONE_OFF
-)
-
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
@@ -185,7 +179,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 CASE_LIST_TILE = StaticToggle(
@@ -193,6 +187,13 @@ CASE_LIST_TILE = StaticToggle(
     'Allow configuration of case list tiles',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
+    'show_persist_case_context_setting',
+    'Allow toggling the persistent case context tile',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
 )
 
 CASE_LIST_LOOKUP = StaticToggle(
@@ -483,7 +484,7 @@ OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
     'Enable restoring with updated owner cleanliness logic.',
     TAG_PRODUCT_CORE,
     namespaces=[NAMESPACE_DOMAIN],
-    randomness=.25,
+    randomness=.5,
     help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
@@ -696,5 +697,12 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'call_center_location_owners',
     'Enable the use of locations as owners of call center cases',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+GRID_MENUS = StaticToggle(
+    'grid_menus',
+    'Allow using grid menus on Android',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

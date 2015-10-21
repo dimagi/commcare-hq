@@ -261,6 +261,31 @@ class APISynchronization(object):
                                       ilsgateway_smsuser.id)
         return "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part), username_part
 
+    def edit_phone_numbers(self, ilsgateway_smsuser, user):
+        verified_number = user.get_verified_number()
+        phone_number = verified_number.phone_number if verified_number else None
+        if ilsgateway_smsuser.phone_numbers:
+            new_phone_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
+            if new_phone_number != phone_number:
+                if phone_number:
+                    user.delete_verified_number(phone_number)
+                    user.phone_numbers = []
+                self._save_verified_number(user, new_phone_number)
+                user.set_default_phone_number(new_phone_number)
+        elif phone_number:
+            user.phone_numbers = []
+            user.delete_verified_number(phone_number)
+        user.save()
+
+    def add_phone_numbers(self, ilsgateway_smsuser, user):
+        if ilsgateway_smsuser.phone_numbers:
+            cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
+            if cleaned_number:
+                user.phone_numbers = [cleaned_number]
+                user.user_data['backend'] = ilsgateway_smsuser.backend
+                user.save()
+                self._save_verified_number(user, cleaned_number)
+
     def sms_user_sync(self, ilsgateway_smsuser, username_part=None, password=None,
                       first_name='', last_name=''):
         username, username_part = self.get_username(ilsgateway_smsuser, username_part)
@@ -287,12 +312,6 @@ class APISynchronization(object):
         if ilsgateway_smsuser.role:
             user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
-        if ilsgateway_smsuser.phone_numbers:
-            cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
-            if cleaned_number:
-                user_dict['phone_numbers'] = [cleaned_number]
-                user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
-
         if user is None and username_part:
             try:
                 user_password = password or User.objects.make_random_password()
@@ -304,26 +323,11 @@ class APISynchronization(object):
                 user.language = language
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
-                if "phone_numbers" in user_dict:
-                    phone_number = apply_leniency(user_dict["phone_numbers"][0])
-                    user.set_default_phone_number(phone_number)
-                    self._save_verified_number(user, phone_number)
+                self.add_phone_numbers(ilsgateway_smsuser, user)
             except Exception as e:
                 logging.error(e)
         else:
-            verified_number = user.get_verified_number()
-            phone_number = verified_number.phone_number if verified_number else None
-            if apply_updates(user, user_dict):
-                if user_dict.get('phone_numbers'):
-                    new_phone_number = apply_leniency(user_dict['phone_numbers'][0])
-                    if new_phone_number != phone_number:
-                        if phone_number:
-                            user.delete_verified_number(phone_number)
-                        self._save_verified_number(user, new_phone_number)
-                elif phone_number:
-                    user.phone_numbers = []
-                    user.delete_verified_number(phone_number)
-                user.save()
+            self.edit_phone_numbers(ilsgateway_smsuser, user)
         return user
 
     def save_verified_number(self, user, phone_number):

@@ -67,7 +67,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(2, len(child.xform_ids))
 
 
-    @mock.patch("casexml.apps.case.cleanup.rebuild_case")
+    @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_rebuild_cases_with_new_owner(self, rebuild_case):
         """
             If cases have a different owner to the person who submitted it
@@ -88,7 +88,7 @@ class RetireUserTestCase(TestCase):
 
         rebuild_case.assert_called_once_with(case_id)
 
-    @mock.patch("casexml.apps.case.cleanup.rebuild_case")
+    @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_dont_rebuild(self, rebuild_case):
         """ Don't rebuild cases that are owned by other users """
 
@@ -106,7 +106,7 @@ class RetireUserTestCase(TestCase):
 
         self.assertEqual(rebuild_case.call_count, 0)
 
-    @mock.patch("casexml.apps.case.cleanup.rebuild_case")
+    @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_multiple_case_blocks_all_rebuilt(self, rebuild_case):
         """ Rebuild all cases in forms with multiple case blocks """
 
@@ -128,7 +128,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(rebuild_case.call_count, len(case_ids))
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
 
-    @mock.patch("casexml.apps.case.cleanup.rebuild_case")
+    @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_multiple_case_blocks_some_deleted(self, rebuild_case):
         """ Don't rebuild deleted cases """
 

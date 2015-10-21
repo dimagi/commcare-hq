@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
@@ -7,10 +6,10 @@ from casexml.apps.case import const
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.util import get_case_xform_ids, primary_actions
+from casexml.apps.case.update_strategy import ActionsUpdateStrategy
+from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
-from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms import fetch_and_wrap_form
 
@@ -35,7 +34,6 @@ def close_case(case_id, domain, user):
         create=False,
         case_id=case_id,
         close=True,
-        version=V2,
     ).as_xml())
 
     return submit_case_blocks([case_block], domain, username, user_id)
@@ -62,7 +60,8 @@ def _get_actions_from_forms(sorted_forms, case_id):
 
 
 def rebuild_case_from_actions(case, actions):
-    reset_state(case)
+    strategy = ActionsUpdateStrategy(case)
+    strategy.reset_case_state()
     # in addition to resetting the state, also manually clear xform_ids and actions
     # since we're going to rebuild these from the forms
     case.xform_ids = []
@@ -70,10 +69,10 @@ def rebuild_case_from_actions(case, actions):
     case.actions = actions
     # call "rebuild" on the case, which should populate xform_ids
     # and re-sort actions if necessary
-    case.rebuild(strict=False)
+    strategy.soft_rebuild_case(strict=False)
 
 
-def rebuild_case(case_id):
+def rebuild_case_from_forms(case_id):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
     referencing it. Useful when things go wrong or when you need to manually
@@ -108,44 +107,6 @@ def rebuild_case(case_id):
     # add a "rebuild" action
     case.actions.append(_rebuild_action())
     case.save()
-    return case
-
-
-def reset_state(case):
-    """
-    Clear known case properties, and all dynamic properties
-    """
-    dynamic_properties = set([k for action in case.actions for k in action.updated_unknown_properties.keys()])
-    for k in dynamic_properties:
-        try:
-            delattr(case, k)
-        except KeyError:
-            pass
-        except AttributeError:
-            # 'case_id' is not a valid property so don't worry about spamming
-            # this error.
-            if k != 'case_id':
-                logging.error(
-                    "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
-                        'case_id': case._id,
-                        'attribute': k,
-                    }
-                )
-
-    # already deleted means it was explicitly set to "deleted",
-    # as opposed to getting set to that because it has no actions
-    already_deleted = case.doc_type == 'CommCareCase-Deleted' and primary_actions(case)
-    if not already_deleted:
-        case.doc_type = 'CommCareCase'
-
-    # hard-coded normal properties (from a create block)
-    for prop, default_value in KNOWN_PROPERTIES.items():
-        setattr(case, prop, default_value)
-
-    case.closed = False
-    case.modified_on = None
-    case.closed_on = None
-    case.closed_by = ''
     return case
 
 

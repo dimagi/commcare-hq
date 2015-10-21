@@ -178,6 +178,7 @@ def _get_report_module_context(app, module):
         return {
             'report_id': report._id,
             'title': report.title,
+            'description': report.description,
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
             'filter_structure': report.filters,
@@ -485,7 +486,11 @@ def _new_report_module(request, domain, app, name, lang):
     module = app.add_module(ReportModule.new_module(name, lang))
     # by default add all reports
     module.report_configs = [
-        ReportAppConfig(report_id=report._id, header={lang: report.title})
+        ReportAppConfig(
+            report_id=report._id,
+            header={lang: report.title},
+            description={lang: report.description},
+        )
         for report in ReportConfiguration.by_domain(domain)
     ]
     app.save()
@@ -546,6 +551,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     parent_select = params.get('parent_select', None)
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
+    persist_case_context = params.get('persistCaseContext', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
@@ -568,6 +574,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
     if short is not None:
         detail.short.columns = map(DetailColumn.wrap, short)
+        if persist_case_context is not None:
+            detail.short.persist_case_context = persist_case_context
         if use_case_tiles is not None:
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:

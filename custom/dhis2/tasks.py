@@ -203,7 +203,6 @@ def create_case_from_dhis2(dhis2_child, domain, user):
         case_id=case_id,
         owner_id=user.userID,
         user_id=user.userID,
-        version=V2,
         case_type=CASE_TYPE,
         case_name=update[CASE_NAME] if CASE_NAME else '',
         external_id=dhis2_child['Instance'],
@@ -221,7 +220,6 @@ def update_case_external_id(case, external_id):
     caseblock = CaseBlock(
         create=False,
         case_id=case['_id'],
-        version=V2,
         external_id=external_id
     )
     casexml = ElementTree.tostring(caseblock.as_xml())

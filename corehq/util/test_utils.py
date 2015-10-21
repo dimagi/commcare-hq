@@ -69,3 +69,17 @@ def flag_enabled(toggle_class):
         '.'.join([toggle_class.__module__, toggle_class.__class__.__name__, 'enabled']),
         new=lambda *args: True,
     )
+
+
+class DocTestMixin(object):
+    """To be mixed in with a TestCase"""
+
+    def assert_docs_equal(self, doc1, doc2):
+        self.assertEqual(type(doc1), type(doc2))
+        self.assertEqual(doc1.to_json(), doc2.to_json())
+
+    def assert_doc_lists_equal(self, docs1, docs2):
+        self.assertEqual(
+            sorted([(doc._id, doc.to_json()) for doc in docs1]),
+            sorted([(doc._id, doc.to_json()) for doc in docs2]),
+        )

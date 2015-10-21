@@ -6,7 +6,7 @@ from xml.etree import ElementTree
 from corehq.form_processor.interfaces import FormProcessorInterface
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.xml import V1, NS_VERSION_MAP, V2
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_CHILD
 
 
 class CaseBlock(dict):
@@ -23,7 +23,7 @@ class CaseBlock(dict):
     ...     date_opened=NOW,
     ...     date_modified=NOW,
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
+    '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" xmlns="http://commcarehq.org/case/transaction/v2"><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     # Doesn't let you specify a keyword twice (here 'case_name')
     >>> try:
@@ -45,7 +45,7 @@ class CaseBlock(dict):
     ...         'date_opened': FIVE_DAYS_FROM_NOW,
     ...     },
     ... ).as_xml())
-    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24T00:00:00.000000Z</date_modified><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
+    '<case case_id="test-case-id" date_modified="2012-01-24T00:00:00.000000Z" xmlns="http://commcarehq.org/case/transaction/v2"><update><date_opened>2012-01-24T00:00:00.000000Z</date_opened></update></case>'
 
     """
     undefined = object()
@@ -61,37 +61,10 @@ class CaseBlock(dict):
             date_opened=undefined,
             update=None,
             close=False,
-            # V2 only
             index=None,
-            version=V1,
-            compatibility_mode=False,
             strict=True,
         ):
         """
-        From https://bitbucket.org/javarosa/javarosa/wiki/casexml
-
-        <case>
-            <case_id/>        <-- Exactly One: The id of the abstract case to be modified (even in the case of creation)
-            <date_modified/>  <-- Exactly One: The date of this operation
-
-            <create>         <-- At Most One: Create action
-                <case_type_id/>             <-- Exactly One: The ID for the type of case represented
-                <user_id/>                  <-- At Most One: The ID for a user who created the case
-                <case_name/>                <-- Exactly One: A semantically meaningless but human readable name associated with the case
-                <external_id/>              <-- Exactly One: The soft id associated with this record. Generally based on another system's id for this record.
-            </create>
-
-            <update/>         <-- At Most One: Updates data for the case
-                <case_type_id/>             <-- At Most One: Modifies the Case Type for the case
-                <case_name/>                <-- At Most One: A semantically meaningless but human readable name associated with the case
-                <date_opened/>              <-- At Most One: Modifies the Date the case was opened
-                <*/>                        <-- An Arbitrary Number: Creates or mutates a value identified by the key provided
-            </update>
-
-            <close/>          <-- At Most One: Closes the case
-
-        </case>
-
         https://github.com/dimagi/commcare/wiki/casexml20
 
         <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="" >
@@ -121,24 +94,17 @@ class CaseBlock(dict):
         update = copy.copy(update) if update else {}
         index = copy.copy(index) if index else {}
 
-        self.XMLNS = NS_VERSION_MAP.get(version)
+        self.XMLNS = NS_VERSION_MAP.get(V2)
 
-        if version == V1:
-            self.VERSION = V1
-            self.CASE_TYPE = "case_type_id"
-        elif version == V2:
-            self.VERSION = V2
-            self.CASE_TYPE = "case_type"
-        else:
-            raise CaseBlockError("Case XML version must be %s or %s" % (V1, V2))
+        self.VERSION = V2
+        self.CASE_TYPE = "case_type"
 
         if create:
             self['create'] = {}
             # make case_type
             case_type = "" if case_type is CaseBlock.undefined else case_type
             case_name = "" if case_name is CaseBlock.undefined else case_name
-            if version == V2:
-                owner_id = "" if owner_id is CaseBlock.undefined else owner_id
+            owner_id = "" if owner_id is CaseBlock.undefined else owner_id
         self['update'] = update
         self['update'].update({
             'date_opened':                  date_opened
@@ -148,41 +114,21 @@ class CaseBlock(dict):
             'case_name':                    case_name,
         }
 
-        # what to do with case_id, date_modified, user_id, and owner_id, external_id
-        if version == V1:
-            self.update({
-                'case_id':                  case_id, # V1
-                'date_modified':            date_modified, # V1
-            })
-            if create:
-                self['create'].update({
-                    'user_id':              user_id, # V1
-                })
-            else:
-                if not compatibility_mode and user_id is not CaseBlock.undefined:
-                    CaseBlockError("CaseXML V1: You only set user_id when creating a case")
-            self['update'].update({
-                'owner_id':                 owner_id, # V1
-            })
+        self.update({
+            '_attrib': {
+                'case_id':              case_id,
+                'date_modified':        date_modified,
+                'user_id':              user_id,
+                'xmlns':                self.XMLNS,
+            }
+        })
+        if owner_id is not None:
             create_or_update.update({
-                'external_id':              external_id # V1
+                'owner_id':                 owner_id,
             })
-        else:
-            self.update({
-                '_attrib': {
-                    'case_id':              case_id, # V2
-                    'date_modified':        date_modified, # V2
-                    'user_id':              user_id, # V2
-                    'xmlns':                self.XMLNS,
-                }
-            })
-            create_or_update.update({
-                'owner_id':                 owner_id, # V2
-            })
-            self['update'].update({
-                'external_id':              external_id, # V2
-            })
-
+        self['update'].update({
+            'external_id':              external_id,
+        })
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
         if strict:
@@ -201,7 +147,7 @@ class CaseBlock(dict):
 
         if not ['' for val in self['update'].values() if val is not CaseBlock.undefined]:
                 self['update'] = CaseBlock.undefined
-        if index and version == V2:
+        if index:
             self['index'] = {}
             for name in index.keys():
                 case_type = index[name][0]
@@ -298,7 +244,7 @@ class CaseStructure(object):
 
 
 class CaseIndex(object):
-    DEFAULT_RELATIONSHIP = 'child'
+    DEFAULT_RELATIONSHIP = CASE_INDEX_CHILD
     DEFAULT_RELATED_CASE_TYPE = 'default_related_case_type'
 
     def __init__(self, related_structure=None, relationship=DEFAULT_RELATIONSHIP, related_type=None,
@@ -331,9 +277,6 @@ class CaseFactory(object):
         self.domain = domain
         self.case_defaults = case_defaults if case_defaults is not None else {}
         self.form_extras = form_extras if form_extras is not None else {}
-        # almost everything is V2 so override the default for this unless explicitly set
-        if 'version' not in self.case_defaults:
-            self.case_defaults['version'] = V2
 
     def get_case_block(self, case_id, **kwargs):
         for k, v in self.case_defaults.items():
