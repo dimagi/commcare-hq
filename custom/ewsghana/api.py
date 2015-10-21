@@ -804,6 +804,8 @@ class EWSApi(APISynchronization):
             else:
                 couch_location = None
             if couch_location and couch_location.get_id != sms_user.location_id:
+                if not sms_user.get_id:
+                    sms_user.save()
                 sms_user.set_location(couch_location)
                 saved = True
 
