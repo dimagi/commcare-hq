@@ -116,6 +116,9 @@ BOWER_INSTALLED_APPS = (
     'backbone#0.9.1',
     'datatables#1.10.9',
     'bootstrap-daterangepicker#2.1.13',
+    'd3#3.1.5',
+    'nvd3#1.1.10-beta',
+    'datatables-bootstrap3#0.1',
 )
 
 BOWER_PATH = '/usr/local/bin/bower'
