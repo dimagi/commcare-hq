@@ -4,6 +4,7 @@ from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout
 from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.consumer import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import ChangeFeedPillow
 from corehq.apps.change_feed.data_sources import COUCH
@@ -24,7 +25,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             bootstrap_servers=[settings.KAFKA_URL],
             consumer_timeout_ms=100,
         )
-        pillow = ChangeFeedPillow(self._fake_couch)
+        pillow = ChangeFeedPillow(self._fake_couch, kafka=get_kafka_client())
         document = {
             'doc_type': 'CommCareCase',
             'type': 'mother',
