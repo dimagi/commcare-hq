@@ -4,7 +4,7 @@ from functools import partial
 from datetime import datetime
 from dimagi.utils.couch.undo import is_deleted
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.case.dbaccessors import get_extension_case_ids
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
@@ -89,11 +89,11 @@ class CleanOwnerCaseSyncOperation(object):
                 # update the indices in the new sync log
                 if case.indices:
                     # and double check footprint for non-live cases
+                    extension_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices
+                                                   if index.relationship == CASE_INDEX_EXTENSION}
+                    child_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices
+                                               if index.relationship == CASE_INDEX_CHILD}
                     for index in case.indices:
-                        if index.relationship == CASE_INDEX_EXTENSION:
-                            extension_indices[case._id] = {index.identifier: index.referenced_id}
-                        else:
-                            child_indices[case._id] = {index.identifier: index.referenced_id}
                         if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
