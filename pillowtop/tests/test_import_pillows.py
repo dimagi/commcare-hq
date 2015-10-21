@@ -2,6 +2,7 @@ from django.test import override_settings, SimpleTestCase
 from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.dao.mock import MockDocumentStore
+from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
@@ -31,6 +32,11 @@ class PillowImportTestCase(SimpleTestCase):
 
     def test_get_pillow_by_name_instantiate(self):
         self.assertEqual(FakePillow, type(get_pillow_by_name('FakePillow', instantiate=True)))
+
+    def test_get_pillow_by_name_missing(self):
+        with self.assertRaises(PillowNotFoundError):
+            get_pillow_by_name('MissingPillow')
+
 
 class FakeConstructedPillow(ConstructedPillow):
 

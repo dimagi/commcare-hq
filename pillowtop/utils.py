@@ -6,6 +6,7 @@ from dateutil.parser import parse
 import importlib
 from django.conf import settings
 import pytz
+from pillowtop.exceptions import PillowNotFoundError
 
 
 def get_pillow_instance(full_class_str):
@@ -74,6 +75,7 @@ def get_pillow_by_name(pillow_class_name, instantiate=True):
     for config in all_configs:
         if config.name == pillow_class_name:
             return config.get_instance() if instantiate else config.get_class()
+    raise PillowNotFoundError(u'No pillow found with name {}'.format(pillow_class_name))
 
 
 def force_seq_int(seq):
