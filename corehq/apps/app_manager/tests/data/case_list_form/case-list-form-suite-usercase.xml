@@ -52,9 +52,7 @@
         <push>
           <command value="'m1-f0'"/>
           <datum id="case_id_new_suite_test_0" value="uuid()"/>
-          <datum id="usercase_id"
-          value="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"
-/>
+          <datum id="usercase_id" value="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/@case_id"/>
           <datum id="return_to" value="'m0'"/>
         </push>
       </stack>
