@@ -1672,10 +1672,11 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
 
-    persist_case_context = BooleanProperty()
     # If True, a small tile will display the case name after selection.
+    persist_case_context = BooleanProperty()
 
-    use_case_tiles = BooleanProperty()  # If True, use case tiles in the case list
+    # If True, use case tiles in the case list
+    use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
     custom_xml = StringProperty()
 
