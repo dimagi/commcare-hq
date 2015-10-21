@@ -1,6 +1,15 @@
+import os
 from django.test import SimpleTestCase
+from corehq.apps.app_manager.const import APP_V2
 
-from corehq.apps.app_manager.models import ReportAppConfig
+from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
+    ReportGraphConfig, MobileSelectFilter
+from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations
+from corehq.apps.userreports.models import ReportConfiguration, ReportMeta
+from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec
+from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
+    GraphDisplayColumn
 
 
 class ReportAppConfigTest(SimpleTestCase):
@@ -24,3 +33,142 @@ class ReportAppConfigTest(SimpleTestCase):
                 "uuid": existing_uuid,
             }).uuid
         )
+
+
+MAKE_REPORT_CONFIG = lambda domain, report_id: ReportConfiguration(
+    _id=report_id,
+    title="Entry Report",
+    aggregation_columns=["color_94ec39e6"],
+    config_id="516c494736e95b023cc7845b557de0f5",
+    domain=domain,
+    report_meta=ReportMeta(builder_report_type="chart", created_by_builder=True),
+    columns=[
+        FieldColumn(type='field', aggregation="simple", column_id="color_94ec39e6", display="color", field="color_94ec39e6").to_json(),
+    ],
+    configured_charts=[
+        MultibarChartSpec(type='multibar', chart_id="7451243209119342931", x_axis_column="color_94ec39e6",
+                          y_axis_columns=[GraphDisplayColumn(column_id="count", display="count")]).to_json()
+    ],
+    filters=[
+        DynamicChoiceListFilterSpec(
+            type='dynamic_choice_list',
+            display="owner name",
+            field="computed_owner_name_40cc88a0",
+            slug="computed_owner_name_40cc88a0_1"
+        ).to_json()
+    ],
+)
+
+
+class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
+    file_path = 'data', 'mobile_ucr'
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
+        cls.report_config_uuid = 'a98c812873986df34fd1b4ceb45e6164ae9cc664'
+        cls.domain = 'report-filter-test-domain'
+        report_configuration = MAKE_REPORT_CONFIG(cls.domain, cls.report_id)
+        cls.report_configs_by_id = {
+            cls.report_id: report_configuration
+        }
+        cls.app = Application.new_app(cls.domain, "Report Filter Test App", APP_V2)
+        module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
+        module.report_configs.append(
+            ReportAppConfig(
+                report_id=cls.report_id,
+                header={},
+                description="",
+                graph_configs={
+                    '7451243209119342931': ReportGraphConfig(
+                        series_configs={'count': {}}
+                    )
+                },
+                filters={'computed_owner_name_40cc88a0_1': MobileSelectFilter()},
+                uuid=cls.report_config_uuid,
+            )
+        )
+        with mock_report_configurations(cls.report_configs_by_id):
+            cls.suite = cls.app.create_suite()
+
+    def test_filter_entry(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <entry>
+            <command id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664">
+              <text>
+                <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.name"/>
+              </text>
+            </command>
+            <instance id="reports" src="jr://fixture/commcare:reports"/>
+            <instance id="commcaresession" src="jr://instance/session"/>
+            <session>
+              <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
+              <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary"/>
+            </session>
+          </entry>
+        </partial>
+        """, self.suite, "entry")
+
+    def test_filter_detail(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <detail id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0">
+            <title>
+              <text>Username Filter</text>
+            </title>
+            <field>
+              <header>
+                <text>Username</text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="."/>
+                </text>
+              </template>
+            </field>
+          </detail>
+        </partial>
+        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0']")
+
+    def test_data_detail(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <detail nodeset="rows/row[column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]" id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data">
+            <title>
+              <text>
+                <locale id="cchq.report_data_table"/>
+              </text>
+            </title>
+            <field>
+              <header>
+                <text>
+                  <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.headers.color_94ec39e6"/>
+                </text>
+              </header>
+              <template>
+                <text>
+                  <xpath function="column[@id='color_94ec39e6']"/>
+                </text>
+              </template>
+            </field>
+          </detail>
+        </partial>
+        """, self.suite, "detail/detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data']")
+
+    def test_graph(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <template form="graph">
+            <graph type="bar">
+              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
+                <configuration/>
+                <x function="column[@id='color_94ec39e6']"/>
+                <y function="column[@id='count']"/>
+              </series>
+              <configuration/>
+            </graph>
+          </template>
+        </partial>
+        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary']/detail/field/template[@form='graph']")

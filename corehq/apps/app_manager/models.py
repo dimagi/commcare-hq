@@ -3238,7 +3238,7 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
-    def get_filter_value(self):
+    def get_filter_value(self, user):
         raise NotImplementedError
 
 
@@ -3318,6 +3318,11 @@ class StaticDatespanFilter(ReportAppFilter):
     def get_filter_value(self, user):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
         return DateSpan(startdate=start_date, enddate=end_date)
+
+
+class MobileSelectFilter(ReportAppFilter):
+    def get_filter_value(self, user):
+        return []
 
 
 class ReportAppConfig(DocumentSchema):
