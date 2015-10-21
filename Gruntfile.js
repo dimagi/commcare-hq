@@ -20,11 +20,11 @@ module.exports = function(grunt) {
     apps.forEach(function(app) {
         var parts = app.split('#');
         var appName = parts[0];
-        var appParam = parts[1];
+        var config = parts[1];
 
         mochaConfig[app] = {
             options: {
-                urls: [BASE_URL + appName + (appParam ? '?param=' + appParam : '/')],
+                urls: [BASE_URL + appName + '/' + (config ? config : '')],
                 run: true
             }
         };
@@ -45,4 +45,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-mocha');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.registerTask('default', ['mocha']);
+    grunt.registerTask('list', 'Lists all available apps to test', function() {
+        apps.forEach(function(app) { console.log(app) });
+    });
 };

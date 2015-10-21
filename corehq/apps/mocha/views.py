@@ -6,9 +6,9 @@ class MochaView(TemplateView):
     urlname = 'mocha_view'
 
     def dispatch(self, request, *args, **kwargs):
-        param = request.GET.get('param', None)
-        if param:
-            self.template_name = '{}/spec/{}/mocha.html'.format(kwargs['app'], param)
+        config = kwargs.get('config', None)
+        if config:
+            self.template_name = '{}/spec/{}/mocha.html'.format(kwargs['app'], config)
         else:
             self.template_name = '{}/spec/mocha.html'.format(kwargs['app'])
         return super(MochaView, self).dispatch(request, *args, **kwargs)
