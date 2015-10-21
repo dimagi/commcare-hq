@@ -1,4 +1,3 @@
-import calendar
 import csv
 import os
 from celery.schedules import crontab
