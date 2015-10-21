@@ -146,16 +146,15 @@
                                 </td>
                                 {% if allow_bulk_export %}
                                 <td>
-                                    <label class="label label-primary label-md noselect"
-                                           style="cursor: pointer;"
-                                           for="add-to-bulk-{{ export.id }}">
-                                        <input type="checkbox"
-                                               class="bulk-checkbox"
-                                               ng-model="export.addedToBulk"
-                                               ng-change="updateBulkStatus()"
-                                               id="add-to-bulk-{{ export.id }}" />
-                                        &nbsp;{% trans "Add to Bulk Export" %}
-                                    </label>
+                                    <div class="checkbox checkbox-table-cell">
+                                        <label>
+                                            <input type="checkbox"
+                                                   class="bulk-checkbox"
+                                                   ng-model="export.addedToBulk"
+                                                   ng-change="updateBulkStatus()"
+                                                   id="add-to-bulk-{{ export.id }}" />
+                                        </label>
+                                    </div>
                                 </td>
                                 {% endif %}
                             </tr>
