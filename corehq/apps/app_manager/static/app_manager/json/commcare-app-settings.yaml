@@ -169,7 +169,7 @@
 
 - id: use_grid_menus
   name: Use Menu Grids
-  description: Display forms and modules in grids instead of lists.
+  description: Display root menu as a grid instead of list
   widget: bool
   default: false
   since: "2.24"
