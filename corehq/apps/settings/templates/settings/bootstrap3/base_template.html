@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqwebapp/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
