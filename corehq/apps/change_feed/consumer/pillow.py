@@ -1,5 +1,3 @@
-from django.conf import settings
-from kafka import KafkaConsumer
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics, change_feed_logger
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
