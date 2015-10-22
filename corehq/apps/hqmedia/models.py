@@ -400,19 +400,9 @@ class HQMediaMapItem(DocumentSchema):
     version = IntegerProperty()
     unique_id = StringProperty()
 
-    @staticmethod
-    def format_match_map(path, media_type=None, media_id=None, upload_path=""):
-        """
-            This method is deprecated. Use CommCareMultimedia.get_media_info instead.
-        """
-        # todo cleanup references to this method
-        return {
-            "path": path,
-            "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
-            "m_id": media_id if media_id else "",
-            "url": reverse("hqmedia_download", args=[media_type, media_id]) if media_id else "",
-            "upload_path": upload_path
-        }
+    @property
+    def url(self):
+        return reverse("hqmedia_download", args=[self.media_type, self.media_id]) if self.media_id else ""
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
