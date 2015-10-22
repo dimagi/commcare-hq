@@ -58,7 +58,13 @@
                     <!--/ko-->
                     <!--ko if: $data.hasNodeset -->
                         <td data-bind="jqueryElement: header.ui"></td>
-                        <td colspan="2" data-bind="jqueryElement: nodeset.ui"></td>
+                        <td class="control-group" colspan="2" data-bind="css: {error: showWarning}">
+                            <div data-bind="jqueryElement: nodeset.ui"></div>
+                            <div data-bind="visible: showWarning">
+                                <span class="help-inline" data-bind="text: 'A nodeset must be specified.'">
+                                </span>
+                            </div>
+                        </td>
                     <!--/ko-->
                 <!--/ko-->
                 <!-- ko if: $parent.useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->

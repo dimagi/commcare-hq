@@ -515,12 +515,6 @@ var DetailScreenConfig = (function () {
                 that.field.observableVal(that.field.val());
             });
 
-            this.saveAttempted = ko.observable(false);
-            this.showWarning = ko.computed(function() {
-                // True if an invalid property name warning should be displayed.
-                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
-            }, this);
-
             (function () {
                 var i, lang, visibleVal = "", invisibleVal = "", nodesetVal;
                 if (that.original.header && that.original.header[that.lang]) {
@@ -544,8 +538,26 @@ var DetailScreenConfig = (function () {
                         that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab</span>'));
                         that.nodeset.ui.addClass('input-prepend').prepend($('<span class="add-on">Nodeset</span>'));
                     }, 0);
+
+                    // Observe nodeset values for the sake of validation
+                    if (that.hasNodeset) {
+                        that.nodeset.observableVal = ko.observable(that.original.nodeset);
+                        that.nodeset.on("change", function(){
+                            that.nodeset.observableVal(that.nodeset.val());
+                        });
+                    }
                 }
             }());
+
+            this.saveAttempted = ko.observable(false);
+            this.showWarning = ko.computed(function() {
+                if (this.isTab) {
+                    // Data tab missing its nodeset
+                    return this.hasNodeset && !this.nodeset.observableVal();
+                }
+                // Invalid property name
+                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
+            }, this);
 
             // Add the graphing option if this is a graph so that we can set the value to graph
             var menuOptions = DetailScreenConfig.MENU_OPTIONS;
@@ -875,6 +887,10 @@ var DetailScreenConfig = (function () {
                             return;
                         }
                     } else {
+                        if (column.showWarning()){
+                            alert("There are errors in your tabs");
+                            return;
+                        }
                         containsTab = true;
                     }
                 }
