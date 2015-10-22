@@ -240,7 +240,7 @@ def process_stock(xforms, case_db=None):
         case_db.mark_changed(case)
 
     return StockProcessingResult(
-        xform=xform,
+        xform=sorted_forms[-1],
         relevant_cases=relevant_cases,
         stock_report_helpers=stock_report_helpers,
     )
