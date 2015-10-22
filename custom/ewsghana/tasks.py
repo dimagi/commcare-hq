@@ -10,6 +10,7 @@ from custom.ewsghana.api import EWSApi, EmailSettingsSync
 from corehq.apps.commtrack.models import StockState, Product
 
 from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.balance import BalanceMigration
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
@@ -207,3 +208,9 @@ def fix_users_with_more_than_one_phone_number(domain):
             ews_api.sms_user_sync(sms_user)
         offset += 100
         _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True}, offset=offset)
+
+
+@task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
+def balance_migration_task(domain, date):
+    endpoint = GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(domain))
+    BalanceMigration(domain, endpoint).balance_migration(date)
