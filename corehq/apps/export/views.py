@@ -367,6 +367,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     http_method_names = ['get', 'post']
     allow_preview = False  # disable preview until the next iteration of this (almost there)
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
+    show_date_range = False
 
     @use_daterangepicker
     @use_bootstrap3
@@ -405,6 +406,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             'max_column_size': self.max_column_size,
             'allow_preview': self.allow_preview,
             'show_sync_to_dropbox': self.show_sync_to_dropbox,
+            'show_date_range': self.show_date_range,
         }
         if (
             self.default_datespan.startdate is not None
@@ -672,6 +674,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     """View to download a SINGLE Form Export with filters.
     """
     urlname = 'export_download_forms'
+    show_date_range = True
     page_title = ugettext_noop("Download Form Export")
 
     @staticmethod
@@ -745,7 +748,6 @@ class DownloadCaseExportView(BaseDownloadExportView):
     def download_export_form(self):
         return FilterCaseExportDownloadForm(
             self.domain_object,
-            self.timezone,
             initial={
                 'type_or_group': 'type',
             },
@@ -760,7 +762,8 @@ class DownloadCaseExportView(BaseDownloadExportView):
 
     def get_filters(self, filter_form_data):
         filter_form = FilterCaseExportDownloadForm(
-            self.domain_object, self.timezone, filter_form_data)
+            self.domain_object, filter_form_data
+        )
         if not filter_form.is_valid():
             raise ExportFormValidationException()
         return filter_form.get_case_filter()
