@@ -366,3 +366,6 @@ class APISynchronization(UserMigrationMixin):
                 return
             user.set_default_phone_number(phone_number)
             self._save_verified_number(user, phone_number)
+
+    def balance_migration(self, date=None):
+        pass
