@@ -34,10 +34,16 @@ def get_all_pillow_instances():
 
 
 def get_all_pillow_configs():
-    if hasattr(settings, 'PILLOWTOPS'):
-        for section, list_of_pillows in settings.PILLOWTOPS.items():
-            for pillow_config in list_of_pillows:
-                yield get_pillow_config_from_setting(section, pillow_config)
+    return get_pillow_configs_from_settings_dict(getattr(settings, 'PILLOWTOPS', {}))
+
+
+def get_pillow_configs_from_settings_dict(pillow_settings_dict):
+    """
+    The pillow_settings_dict is expected to be a dict mapping groups to list of pillow configs
+    """
+    for section, list_of_pillows in pillow_settings_dict.items():
+        for pillow_config in list_of_pillows:
+            yield get_pillow_config_from_setting(section, pillow_config)
 
 
 class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 'instance_generator'])):
