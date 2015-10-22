@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 import threading
+from fnmatch import fnmatch
 from unittest.case import TestCase
 
 import couchlog.signals
@@ -22,6 +23,92 @@ from nose.plugins import Plugin
 from django_nose.plugin import DatabaseContext
 
 log = logging.getLogger(__name__)
+
+
+class HqTestFinderPlugin(Plugin):
+
+    enabled = True
+
+    INCLUDE_DIRS = [
+        "corehq/ex-submodules/*",
+        "submodules/auditcare-src",
+        "submodules/couchlog-src",
+        "submodules/dimagi-utils-src",
+        "submodules/django-digest-src",
+        "submodules/toggle",
+        "submodules/touchforms-src",
+    ]
+
+    def options(self, parser, env):
+        """Avoid adding a ``--with`` option for this plugin."""
+
+    def configure(self, options, conf):
+        # do not call super (always enabled)
+
+        import corehq
+        abspath = os.path.abspath
+        dirname = os.path.dirname
+        self.hq_root = dirname(dirname(abspath(corehq.__file__)))
+
+    @staticmethod
+    def pathmatch(path, pattern):
+        """Test if globbing pattern matches path
+
+        >>> join = os.path.join
+        >>> match = HqTestFinderPlugin.pathmatch
+        >>> match(join('a', 'b', 'c'), 'a/b/c')
+        True
+        >>> match(join('a', 'b', 'c'), 'a/b/*')
+        True
+        >>> match(join('a', 'b', 'c'), 'a/*/c')
+        True
+        >>> match(join('a'), 'a/*')
+        True
+        >>> match(join('a', 'b', 'c'), 'a/b')
+        >>> match(join('a', 'b', 'c'), 'a/*')
+        >>> match(join('a', 'b', 'c'), 'a/*/x')
+        False
+        >>> match(join('a', 'b', 'x'), 'a/b/c')
+        False
+        >>> match(join('a', 'x', 'c'), 'a/b')
+        False
+
+        :returns: `True` if the pattern matches. `False` if it does not
+                  match. `None` if the match pattern could match, but
+                  has less elements than the path.
+        """
+        parts = path.split(os.path.sep)
+        patterns = pattern.split("/")
+        result = all(fnmatch(part, pat) for part, pat in zip(parts, patterns))
+        if len(patterns) >= len(parts):
+            return result
+        return None if result else False
+
+    def wantDirectory(self, directory):
+        root = self.hq_root + os.path.sep
+        if directory.startswith(root):
+            relname = directory[len(root):]
+            results = [self.pathmatch(relname, p) for p in self.INCLUDE_DIRS]
+            log.debug("want directory? %s -> %s", relname, results)
+            if any(results):
+                return True
+        else:
+            log.debug("ignored directory: %s", directory)
+        return None
+
+    def wantFile(self, path):
+        """Want all .py files in .../tests dir (and all sub-packages)"""
+        pysrc = os.path.splitext(path)[-1] == ".py"
+        if pysrc:
+            parent, base = os.path.split(path)
+            while base and len(parent) > len(self.hq_root):
+                if base == "tests":
+                    return True
+                parent, base = os.path.split(parent)
+
+    def wantModule(self, module):
+        """Want all modules in "tests" package"""
+        return "tests" in module.__name__.split(".")
 
 
 class OmitDjangoInitModuleTestsPlugin(Plugin):

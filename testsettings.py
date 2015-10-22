@@ -15,6 +15,10 @@ NOSE_PLUGINS = [
     # Disable migrations by default. Use --with-migrations to enable them.
     'corehq.tests.nose.DjangoMigrationsPlugin',
     'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
+    'corehq.tests.nose.HqTestFinderPlugin',
+
+    # use with --collect-only when comparing to django runner COLLECT_ONLY output
+    #'testrunner.UniformTestResultPlugin',
 ]
 
 # these settings can be overridden with environment variables
@@ -22,13 +26,28 @@ for key, value in {
     'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
     'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
 
-    # ignore record_deploy_success.py because datadog may not be installed
-    # (only matters when running --with-doctests)
-    'NOSE_IGNORE_FILES': '^(localsettings|record_deploy_success\.py)',
+    'NOSE_IGNORE_FILES': '^(localsettings.*|setup\.py|bootstrap\.py)$',
+
+    'NOSE_EXCLUDE_TESTS': ';'.join([
+        'corehq.apps.sms.tests.inbound_handlers',
+        'corehq.messaging.ivrbackends.kookoo.tests.outbound',
+        'corehq.apps.ota.tests.digest_restore.DigestOtaRestoreTest'
+
+        # revisit these (seems like they should be passing)
+        'corehq.apps.ota.tests.digest_restore.DigestOtaRestoreTest', # not run by django test runner
+
+        # ignore record_deploy_success.py because datadog may not be installed
+        # (only matters when running --with-doctests)
+        'corehq.apps.hqadmin.management.commands.record_deploy_success',
+    ]),
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
         'scripts',
         'testapps',
+
+        # strange error:
+        # TypeError: Attribute setup of <module 'touchforms.backend' ...> is not a python function.
+        'submodules/touchforms-src/touchforms/backend',
 
         # excludes for --with-doctest
         # these cause gevent.threading to be imported, which causes this error:

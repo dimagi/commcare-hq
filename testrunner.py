@@ -1,6 +1,10 @@
 import datetime
+import os
+import sys
 from collections import defaultdict
 from functools import wraps
+from unittest.case import TestCase
+from unittest.runner import TextTestRunner, TextTestResult
 from unittest.util import strclass
 from urlparse import urlparse
 
@@ -12,6 +16,7 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.test import TransactionTestCase
 from django.utils import unittest
+from nose.plugins import Plugin
 from mock import patch, Mock
 from corehq.tests.optimizer import OptimizedTestRunnerMixin
 
@@ -34,6 +39,40 @@ def set_db_enabled(is_enabled):
     return decorator
 
 
+# make django test runner "collect only" (skip every test)
+COLLECT_ONLY = int(os.environ.get("COLLECT_ONLY", 0))
+if COLLECT_ONLY:
+    TestCase.__unittest_skip__ = property(
+        fget=lambda self: True,
+        fset=lambda self, value: None,
+    )
+
+def uniform_description(test):
+    if type(test).__name__ == "DocTestCase":
+        return test._dt_test.name
+    name = "%s:%s.%s" % (
+        test.__module__,
+        type(test).__name__,
+        test._testMethodName
+    )
+    return name
+    #return sys.modules[test.__module__].__file__
+
+class UniformTestResultPlugin(Plugin):
+    def configure(self, *args, **kw):
+        self.enabled = True
+    def describeTest(self, test):
+        return uniform_description(test.test)
+
+class UniformTestResult(TextTestResult):
+    def getDescription(self, test):
+        return uniform_description(test)
+
+class UniformResultTestRunner(TextTestRunner):
+    resultclass = UniformTestResult
+
+
+
 class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
     """
     A test suite runner for Hq.  On top of the couchdb testrunner, also
@@ -45,6 +84,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
     """
 
     dbs = []
+
+    if COLLECT_ONLY:
+        test_runner = UniformResultTestRunner
 
     def setup_test_environment(self, **kwargs):
         self._assert_only_test_databases_accessed()
@@ -64,9 +106,13 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
         self._assert_is_a_test_db(settings.COUCH_DATABASE_NAME)
+        if COLLECT_ONLY:
+            return None
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
+        if COLLECT_ONLY:
+            return None
         self.blob_db.close()
         for db_uri in settings.EXTRA_COUCHDB_DATABASES.values():
             db = Database(db_uri)
