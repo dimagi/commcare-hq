@@ -146,11 +146,11 @@ class BalanceMigration(UserMigrationMixin):
                 vn = VerifiedNumber.by_phone(phone_number)
                 if not vn or vn.owner_id != user.get_id:
                     description += "Phone number not verified, "
-                    continue
-                backend = phone_to_backend.get(phone_number)
-                if backend == 'message_tester' and vn.backend_id != 'MOBILE_BACKEND_TEST' \
-                        or (backend != 'message_tester' and vn.backend_id):
-                    description += "Invalid backend, "
+                else:
+                    backend = phone_to_backend.get(phone_number)
+                    if backend == 'message_tester' and vn.backend_id != 'MOBILE_BACKEND_TEST' \
+                            or (backend != 'message_tester' and vn.backend_id):
+                        description += "Invalid backend, "
 
             if description:
                 migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
