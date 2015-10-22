@@ -706,7 +706,7 @@ class EWSApi(APISynchronization):
         return user
 
     def _reassign_number(self, user, connection):
-        v = VerifiedNumber.by_phone(connection.phone_number, include_pending=True)
+        v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
         if v.domain in self._get_logistics_domains():
             v.delete()
             self.save_verified_number(user, connection)
