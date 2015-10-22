@@ -6,7 +6,6 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 from corehq.apps.domain.views import ProBonoStaticView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.utils import PRICING_LINK
 
@@ -78,8 +77,6 @@ urlpatterns = patterns('',
     (r'^analytics/', include('corehq.apps.analytics.urls')),
     (r'^register/', include('corehq.apps.registration.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
-    (r'^o/', include('corehq.apps.orgs.urls')),
-    (r'^organizations/', include(organizations_urls)),
     (r'^account/', include('corehq.apps.settings.urls')),
     (r'^project_store(.*)$', 'corehq.apps.appstore.views.rewrite_url'),
     (r'^exchange/', include('corehq.apps.appstore.urls')),
