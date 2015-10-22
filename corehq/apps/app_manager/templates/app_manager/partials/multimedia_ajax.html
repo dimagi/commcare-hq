@@ -1,5 +1,5 @@
 {% load i18n %}
-{% if multimedia %}
+{% if multimedia_state.has_media %}
     <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
     <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
     <p><a id="open_checker" target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
