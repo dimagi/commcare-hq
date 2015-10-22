@@ -723,6 +723,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # extension index)
                 self._add_primary_case(index.case_id)
 
+    def _delete_index(self, index):
+        self.index_tree.delete_index(index.case_id, index.identifier)
+        self.extension_index_tree.delete_index(index.case_id, index.identifier)
+
     def update_phone_lists(self, xform, case_list):
         made_changes = False
         logger.debug('updating sync log for {}'.format(self.user_id))
@@ -813,8 +817,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     self._add_index(index, case_update)
                     made_changes = True
                 for index in case_update.indices_to_delete:
-                    self.index_tree.delete_index(index.case_id, index.identifier)
-                    self.extension_index_tree.delete_index(index.case_id, index.identifier)
+                    self._delete_index(index)
                     made_changes = True
             else:
                 # process the non-live updates after all live are already processed
@@ -836,8 +839,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     for index in update.indices_to_add:
                         self._add_index(index, update)
                     for index in update.indices_to_delete:
-                        self.index_tree.delete_index(index.case_id, index.identifier)
-                        self.extension_index_tree.delete_index(index.case_id, index.identifier)
+                        self._delete_index(index)
                 made_changes = True
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
