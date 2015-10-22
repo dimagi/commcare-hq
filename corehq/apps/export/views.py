@@ -365,7 +365,6 @@ def create_basic_form_checkpoint(index):
 class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
-    allow_preview = False  # disable preview until the next iteration of this (almost there)
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
     show_date_range = False
 
@@ -404,7 +403,6 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             'export_list': self.export_list,
             'export_list_url': self.export_list_url,
             'max_column_size': self.max_column_size,
-            'allow_preview': self.allow_preview,
             'show_sync_to_dropbox': self.show_sync_to_dropbox,
             'show_date_range': self.show_date_range,
         }
@@ -631,42 +629,6 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             )
         return format_angular_success({
             'download_id': download.download_id,
-        })
-
-    @allow_remote_invocation
-    def get_preview(self, in_data):
-        """Returns the preview data for an export (currently does NOT support
-        bulk export.
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'preview_data': [
-                {
-                    'table_name': '<table_name>',
-                    'headers': ['<header1>', ...].
-                    'rows': [
-                        ['<col1>',...],
-                    ],
-                },
-            ],
-        }
-        """
-        try:
-            export_filter, export_specs = self._process_filters_and_specs(in_data)
-            export = export_specs[0]
-            export_object = self.get_export_schema(export['export_id'])
-            preview_data = export_object.get_preview_data(export_filter)
-        except ExportAsyncException as e:
-            return format_angular_error(e.message)
-        except Exception as e:
-            return format_angular_error(
-                _("Issue processing preview of export: %s") % e.message,
-                log_error=True,
-                exception=e,
-                request=self.request,
-            )
-        return format_angular_success({
-            'preview_data': preview_data,
         })
 
 
