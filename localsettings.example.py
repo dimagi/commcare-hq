@@ -228,7 +228,7 @@ CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
-                           '^south', '^djcelery', '^debug_toolbar', '^rosetta']
+                           '^south', '^djcelery', '^debug_toolbar']
 
 ####### Selenium tests config ########
 
@@ -320,3 +320,7 @@ INTERNAL_DATA = {
                 "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
                 "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"]
 }
+
+# The passcodes will print out on the console
+# TWO_FACTOR_CALL_GATEWAY = 'two_factor.gateways.fake.Fake'
+# TWO_FACTOR_SMS_GATEWAY = 'two_factor.gateways.fake.Fake'
