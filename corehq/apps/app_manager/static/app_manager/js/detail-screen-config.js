@@ -491,6 +491,10 @@ var DetailScreenConfig = (function () {
             // Tab attributes
             this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
             this.isTab = this.original.isTab;
+            this.original.hasNodeset = this.original.hasNodeset !== undefined ? this.original.hasNodeset : false;
+            this.hasNodeset = this.original.hasNodeset;
+            this.original.nodeset = this.original.nodeset || "";
+            this.nodeset = this.original.nodeset;
 
             this.case_tile_field = ko.observable(this.original.case_tile_field);
 
@@ -537,10 +541,15 @@ var DetailScreenConfig = (function () {
                 }
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.setVisibleValue(visibleVal);
+
+                visibleVal = invisibleVal = that.original.nodeset || "";
+                that.nodeset = uiElement.input().val(invisibleVal);
+                that.nodeset.setVisibleValue(visibleVal);
                 if (that.isTab) {
                     // hack to wait until the input's there to prepend the Tab: label.
                     setTimeout(function () {
-                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab:</span>'));
+                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab</span>'));
+                        that.nodeset.ui.addClass('input-prepend').prepend($('<span class="add-on">Nodeset</span>'));
                     }, 0);
                 }
             }());
@@ -604,6 +613,7 @@ var DetailScreenConfig = (function () {
                 'model',
                 'field',
                 'header',
+                'nodeset',
                 'format',
                 'enum_extra',
                 'graph_extra',
@@ -688,6 +698,7 @@ var DetailScreenConfig = (function () {
                 var column = this.original;
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
+                column.nodeset = this.nodeset.val();
                 column.format = this.format.val();
                 column.enum = this.enum_extra.getItems();
                 column.graph_configuration =
@@ -702,7 +713,9 @@ var DetailScreenConfig = (function () {
                     return {
                         starting_index: this.starting_index,
                         header: column.header,
-                        isTab: true
+                        isTab: true,
+                        has_nodeset: column.hasNodeset,
+                        nodeset: column.nodeset,
                     };
                 }
                 return column;
@@ -803,13 +816,16 @@ var DetailScreenConfig = (function () {
                 columns.splice(
                     tabs[i].starting_index + i,
                     0,
-                    {isTab: true, header: tabs[i].header}
+                    _.extend({
+                        hasNodeset: tabs[i].has_nodeset,
+                    }, _.pick(tabs[i], ["header", "nodeset", "has_nodeset", "isTab"]))
                 );
             }
             if (this.columnKey === 'long') {
-                this.addTab = function() {
+                this.addTab = function(hasNodeset) {
                     var col = that.initColumnAsColumn(Column.init({
                         isTab: true,
+                        hasNodeset: hasNodeset,
                         model: 'tab'
                     }, that));
                     that.columns.splice(0, 0, col);

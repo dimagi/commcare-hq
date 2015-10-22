@@ -1533,6 +1533,8 @@ class DetailTab(IndexedSchema):
     """
     header = DictProperty()
     starting_index = IntegerProperty()
+    has_nodeset = BooleanProperty(default=False)
+    nodeset = StringProperty()
 
 
 class DetailColumn(IndexedSchema):
