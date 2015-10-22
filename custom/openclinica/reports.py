@@ -11,13 +11,12 @@ from custom.openclinica.const import (
     CC_STUDY_SUBJECT_ID,
     CC_SUBJECT_KEY,
     CC_SUBJECT_CASE_TYPE,
+    CC_ENROLLMENT_DATE,
+    CC_SEX,
+    CC_DOB,
 )
 from custom.openclinica.models import Subject
-from custom.openclinica.utils import (
-    OpenClinicaIntegrationError,
-    get_study_constant,
-    originals_first,
-)
+from custom.openclinica.utils import get_study_constant, originals_first
 
 
 class OdmExportReportView(GenericReportView):
@@ -59,6 +58,9 @@ class OdmExportReportView(GenericReportView):
         return DataTablesHeader(
             DataTablesColumn('Subject Key'),
             DataTablesColumn('Study Subject ID'),
+            DataTablesColumn('Enrollment Date'),
+            DataTablesColumn('Sex'),
+            DataTablesColumn('Date of Birth'),
             DataTablesColumn('Events'),
         )
 
@@ -94,6 +96,9 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
             row = [
                 subject.subject_key,  # What OpenClinica refers to as Person ID; i.e. OID with the "SS_" prefix
                 subject.study_subject_id,
+                subject.enrollment_date,
+                subject.sex,
+                subject.dob,
                 subject.get_report_events(),
             ]
             yield row
@@ -121,6 +126,9 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
         for case in self.get_study_subject_cases():
             subject = Subject(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), self.domain)
+            subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE)
+            subject.sex = getattr(case, CC_SEX)
+            subject.dob = getattr(case, CC_DOB)
             for form in originals_first(case.get_forms()):
                 # Pass audit log ID by reference to increment it for each audit log
                 subject.add_data(form.form, form, audit_log_id_ref)

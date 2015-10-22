@@ -50,15 +50,24 @@ class StudyEvent(object):
 
     @property
     def start_short(self):
-        return self.start_datetime.strftime('%Y-%m-%d %H:%M')
+        """
+        Format the start date and time for the UI.
+
+        Format the date and time so that the user to copy and paste into OpenClinica
+        """
+        return self.start_datetime.strftime('%d-%b-%Y %H:%M')  # e.g. 01-Jan-1970 00:00
 
     @property
     def end_short(self):
-        return self.end_datetime.strftime('%Y-%m-%d %H:%M')
+        return self.end_datetime.strftime('%d-%b-%Y %H:%M')
 
     @property
     def start_long(self):
-        # OpenClinica UI doesn't allow the user to set seconds, so theirs is always "%H:%M:00.0". Make ours match:
+        """
+        Format the start date and time for the ODM export.
+
+        OpenClinica UI doesn't allow the user to set seconds, so theirs is always "%H:%M:00.0". Make ours match:
+        """
         return self.start_datetime.strftime('%Y-%m-%d %H:%M:00.0')
 
     @property
@@ -73,6 +82,9 @@ class Subject(object):
     def __init__(self, subject_key, study_subject_id, domain):
         self.subject_key = subject_key
         self.study_subject_id = study_subject_id
+        self.enrollment_date = None
+        self.sex = None
+        self.dob = None
 
         # We need the domain to get study metadata for study events and item groups
         self._domain = domain
