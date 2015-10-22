@@ -26,12 +26,11 @@
     download_export.constant('exportList', []);
     download_export.constant('maxColumnSize', 2000);
     download_export.constant('defaultDateRange', null);
-    download_export.constant('allowPreview', false);
 
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
         $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService,
-        defaultDateRange, allowPreview
+        defaultDateRange
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
@@ -128,29 +127,6 @@
                 $scope.prepareExportError = "default";
             }
             $scope.preparingExport = false;
-        };
-
-        $scope.allowPreview = allowPreview;
-        $scope.isPreviewReady = false;
-        $scope.isPreviewLoading = false;
-        $scope.previewTables = [];
-        $scope.getPreview = function () {
-            $scope.isPreviewLoading = true;
-            $scope.isPreviewReady = false;
-            djangoRMI.get_preview({
-                exports: $scope.exportList,
-                form_data: $scope.formData
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        $scope.isPreviewReady = true;
-
-                        $scope.previewTables = data.preview_data;
-                    }
-                })
-                .error(function (data) {
-                    // todo handle error;
-                });
         };
 
         $scope.$watch(function () {
