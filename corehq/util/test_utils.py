@@ -6,14 +6,12 @@ import os
 from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
-from nose.tools import nottest
 
 
 class UnitTestingRequired(Exception):
     pass
 
 
-@nottest
 def unit_testing_only(fn):
     @wraps(fn)
     def inner(*args, **kwargs):
@@ -22,6 +20,7 @@ def unit_testing_only(fn):
                 'You may only call {} during unit testing'.format(fn.__name__))
         return fn(*args, **kwargs)
     return inner
+unit_testing_only.__test__ = False
 
 
 class TestFileMixin(object):
