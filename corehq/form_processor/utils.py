@@ -2,6 +2,8 @@ import functools
 import types
 import collections
 
+from django.conf import settings
+
 
 class ToFromGeneric(object):
     def to_generic(self):
@@ -33,3 +35,11 @@ def to_generic(fn):
         return _wrap(obj)
 
     return _inner
+
+
+def get_backend():
+    from .backends.couch import XFormCouch
+    return {
+        'sql': '',
+        'couch': XFormCouch,
+    }[settings.PROCESSOR_BACKEND]
