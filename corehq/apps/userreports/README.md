@@ -707,7 +707,12 @@ Report builders may specify translations for the filter display value. See the s
 
 ## Report Columns
 
-Reports are made up of columns. There are currently three supported types of columns: _fields_ (which represent a single value), _percentages_ which combine two values in to a percent, and _expanded_ which expand a select question into multiple columns.
+Reports are made up of columns. The currently supported column types ares:
+
+* [_field_](#field-columns) which represents a single value
+* [_percent_](#percent-columns) which combines two values in to a percent
+* [_aggregate_date_](#aggregatedatecolumn) which aggregates data by month
+* [_expanded_](#expanded-columns) which expands a select question into multiple columns
 
 ### Field columns
 
@@ -753,23 +758,6 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 }
 ```
 
-### AggregateDateColumn
-
-AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`.
-Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
-
-Here's an example of an aggregate date column that aggregates the `received_on`  property for each month (allowing you to count/sum things that happened in that month).
-
-```json
- {
-    "column_id": "received_on",
-    "field": "received_on",
-    "type": "aggregate_date",
-    "display": "Month"
-  }
-```
-
-
 #### Formats
 
 The following percentage formats are supported.
@@ -783,26 +771,20 @@ numeric_percent | Percentage as a number                         | 33
 decimal         | Fraction as a decimal number                   | .333
 
 
-### The "aggregation" column property
+### AggregateDateColumn
 
-The aggregation column property defines how the column should be aggregated.
-If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
+AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`. Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
 
-The following table documents the other aggregation options, which can be used in aggregate reports.
+Here's an example of an aggregate date column that aggregates the `received_on` property for each month (allowing you to count/sum things that happened in that month).
 
-Format          | Description
---------------- | -----------------------------------------------
-simple          | No aggregation
-avg             | Average (statistical mean) of the values
-count_unique    | Count the unique values found
-count           | Count all rows
-min             | Choose the minimum value
-max             | Choose the maximum value
-sum             | Sum the values
-
-#### Column IDs
-
-Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+```json
+ {
+    "column_id": "received_on",
+    "field": "received_on",
+    "type": "aggregate_date",
+    "display": "Month"
+  }
+```
 
 
 ### Expanded Columns
@@ -852,6 +834,28 @@ Then you will get a report like this:
 ```
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
+
+
+### The "aggregation" column property
+
+The aggregation column property defines how the column should be aggregated. If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
+
+The following table documents the other aggregation options, which can be used in aggregate reports.
+
+Format          | Description
+--------------- | -----------------------------------------------
+simple          | No aggregation
+avg             | Average (statistical mean) of the values
+count_unique    | Count the unique values found
+count           | Count all rows
+min             | Choose the minimum value
+max             | Choose the maximum value
+sum             | Sum the values
+
+#### Column IDs
+
+Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+
 
 ### Calculating Column Totals
 
