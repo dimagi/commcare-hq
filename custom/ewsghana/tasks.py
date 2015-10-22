@@ -47,7 +47,7 @@ EWS_FACILITIES = [304, 324, 330, 643, 327, 256, 637, 332, 326, 338, 340, 331, 34
                   526, 4, 30, 1, 14, 23, 521, 532, 516, 461, 520, 525, 961, 641, 257, 348]
 
 
-@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
+@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"), acks_late=True,
                queue='logistics_background_queue')
 def migration_task():
     for config in EWSGhanaConfig.get_all_steady_sync_configs():
@@ -145,7 +145,7 @@ def reminder_to_visit_website():
         VisitWebsiteReminder(domain).send()
 
 
-@task(queue='logistics_background_queue')
+@task(queue='logistics_background_queue', acks_late=True)
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
     return bootstrap_domain(EWSApi(domain, GhanaEndpoint.from_config(ews_config)))

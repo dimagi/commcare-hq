@@ -3,6 +3,7 @@ import json
 import mock
 import os
 
+from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
 from nose.tools import nottest
@@ -86,3 +87,22 @@ class DocTestMixin(object):
             sorted([(doc._id, doc.to_json()) for doc in docs1]),
             sorted([(doc._id, doc.to_json()) for doc in docs2]),
         )
+
+
+def mock_out_couch(views=None, docs=None):
+    """
+    Mock out calls to couch so you can use SimpleTestCase
+
+        @mock_out_couch()
+        class TestMyStuff(SimpleTestCase):
+            ...
+
+    You can optionally pass default return values for specific views and doc
+    gets.  See the FakeCouchDb docstring for more specifics.
+    """
+
+    class FakeCouchDb_(FakeCouchDb):
+        def __init__(self):
+            super(FakeCouchDb_, self).__init__(views=views, docs=docs)
+
+    return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=FakeCouchDb_)
