@@ -364,6 +364,7 @@
                                                     </a>
                                                     {% trans "to your Android device." %}
                                                 </p>
+                                                {% if multimedia_state.has_media %}
                                                 <label class="checkbox" data-bind="visible: allow_media_install">
                                                     <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                                     {% trans "Include Multimedia" %}
@@ -371,6 +372,7 @@
                                                         {% trans "Only supported for versions made after 2013-10-15" %}
                                                     </span>
                                                 </label>
+                                                {% endif %}
                                                 <p>
                                                     <span data-bind="visible: get_short_odk_url()">
                                                         {% blocktrans %}
@@ -434,10 +436,12 @@
                                                             {% trans "You'll be prompted to select this file from your phone's file system and install will begin" %}
                                                         </li>
                                                     </ol>
+                                                    {% if multimedia_state.has_media %}
                                                     <div>
                                                         {% trans "Note: Offline install automatically installs all multimedia included in your form. All subsequent remote updates will also include multimedia which could require a lot of data." %}
                                                         {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>Help Site</a> for more info." %}
                                                     </div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -533,7 +537,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    {% if multimedia %}
+                    {% if multimedia_state.has_media %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
                                 <a class="accordion-toggle" data-toggle="collapse" data-bind="
