@@ -58,8 +58,6 @@ branches:
   - two-factor-otp-only+requirements-update # Nick P 10/21
   - two-factor-otp-only # j$ 10/2
   - b3-tf # ben 10/1
-  - use-absolute_reverse # Nick P 10/20
-  - memoize-immutable # Nick P 10/20
   - requirements-update # Simon 10/21
   - kafka-pillow # cz 10/22
 submodules:
