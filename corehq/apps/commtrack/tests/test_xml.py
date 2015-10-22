@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from casexml.apps.phone.tests import run_with_all_restore_configs
+from casexml.apps.phone.tests.restore_test_utils import run_with_all_restore_configs
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState
 from corehq.apps.domain.models import Domain

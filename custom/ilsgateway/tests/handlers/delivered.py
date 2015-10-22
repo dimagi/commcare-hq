@@ -2,7 +2,7 @@ from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import DELIVERY_PARTIAL_CONFIRM, NOT_DELIVERED_CONFIRM, \
     DELIVERY_CONFIRM_DISTRICT, DELIVERY_CONFIRM_CHILDREN
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSDeliveredTest(ILSTestScript):

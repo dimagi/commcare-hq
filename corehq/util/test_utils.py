@@ -1,16 +1,19 @@
+from __future__ import absolute_import
 import json
 import mock
 import os
 
+from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
-from fakecouch import FakeCouchDb
+from nose.tools import nottest
 
 
 class UnitTestingRequired(Exception):
     pass
 
 
+@nottest
 def unit_testing_only(fn):
     @wraps(fn)
     def inner(*args, **kwargs):

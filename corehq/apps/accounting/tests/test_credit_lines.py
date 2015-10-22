@@ -7,7 +7,8 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, Subscription,
     CreditAdjustmentReason,
 )
-from corehq.apps.accounting.tests import BaseInvoiceTestCase, BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
 class TestCreditLines(BaseInvoiceTestCase):
