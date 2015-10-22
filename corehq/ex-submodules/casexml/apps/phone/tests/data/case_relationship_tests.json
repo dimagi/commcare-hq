@@ -456,6 +456,30 @@
         ]
     },
     {
+        "name": "Extension_Two_Hosts",
+        "owned": [
+            "e"
+        ],
+        "closed": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ],
+            [
+                "e",
+                "b"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "e"
+        ]
+    },
+    {
         "skip": "Fails 'assert_user_doesnt_have_case'",
         "name": "Double_Extension",
         "owned": [
