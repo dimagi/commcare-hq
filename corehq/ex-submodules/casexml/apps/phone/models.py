@@ -739,6 +739,24 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.indices_to_add = []
                 self.indices_to_delete = []
 
+            @property
+            def extension_indices_to_add(self):
+                return [index for index in self.indices_to_add
+                        if index.relationship == const.CASE_INDEX_EXTENSION]
+
+            def has_extension_indices_to_add(self):
+                return len(self.extension_indices_to_add) > 0
+
+            def is_live(self, owner_ids):
+                """returns whether an update is live for a specifc set of owner_ids"""
+                if self.is_closed:
+                    return False
+                elif self.final_owner_id is None:
+                    # we likely didn't touch owner_id so just default to whatever it was previously
+                    return self.was_live_previously
+                else:
+                    return self.final_owner_id in owner_ids
+
         ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id', 'relationship'])
 
         # this is a variable used via closures in the function below
@@ -779,25 +797,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     case_update.is_closed = True
 
-        def _is_live(case_update, owner_ids):
-            if case_update.is_closed:
-                return False
-            elif case_update.final_owner_id is None:
-                # we likely didn't touch owner_id so just default to whatever it was previously
-                return case_update.was_live_previously
-            elif filter(lambda index: index.relationship == const.CASE_INDEX_EXTENSION,
-                        case_update.indices_to_add):
-                # if the case we are adding is open, and it is an extension,
-                # then we are live (e.g when owner of extension case is
-                # immediately delagated)
-                return True
-            else:
-                return case_update.final_owner_id in owner_ids
-
         non_live_updates = []
         for case in case_list:
             case_update = all_updates[case._id]
-            if _is_live(case_update, self.owner_ids_on_phone):
+            if case_update.is_live(self.owner_ids_on_phone):
                 logger.debug('case {} is live.'.format(case_update.case_id))
                 if case._id not in self.case_ids_on_phone:
                     self._add_primary_case(case._id)
@@ -819,6 +822,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         for update in non_live_updates:
             logger.debug('case {} is NOT live.'.format(update.case_id))
+            if update.has_extension_indices_to_add():
+                # non-live cases with extension indices should be added and processed
+                self.case_ids_on_phone.add(update.case_id)
+                for index in update.indices_to_add:
+                    self._add_index(index, update)
+                    made_changes = True
             if update.case_id in self.case_ids_on_phone:
                 # try pruning the case
                 self.prune_case(update.case_id)
