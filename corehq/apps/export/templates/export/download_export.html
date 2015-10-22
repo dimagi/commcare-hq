@@ -64,7 +64,6 @@
     downloadExportsApp.constant('exportList', {{ export_list|JSON }});
     downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
     downloadExportsApp.constant('defaultDateRange', '{{ default_date_range }}');
-    downloadExportsApp.constant('allowPreview', {{ allow_preview|BOOL }});
 }(window.angular));
 </script>
 {% endblock %}
@@ -113,39 +112,6 @@
                 </p>
             </div>
         {% else %}
-            <div class="panel panel-default"
-                 ng-show="!!isPreviewLoading">
-                <div class="panel-heading">{% trans "Export Preview" %}</div>
-                <div class="panel-body" style="height: 300px; overflow-y: scroll;">
-                    <div ng-show="!isPreviewReady">
-                        <p class="lead">
-                            <i class="fa fa-spinner fa-spin"></i>
-                            {% trans "Loading Preview..." %}
-                        </p>
-                    </div>
-                    <div ng-show="!!isPreviewReady">
-                        {% angularjs %}
-                        <div ng-repeat="table in previewTables">
-                            <h4>{{ table.table_name }}</h4>
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th ng-repeat="header in table.headers">{{ header }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr ng-repeat="row in table.rows">
-                                        <td ng-repeat="col in row">
-                                            {{ col }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        {% endangularjs %}
-                    </div>
-                </div>
-            </div>
             <form class="form form-horizontal form-notice-container"
                   name="exportFiltersForm"
                   ng-submit="prepareExport()"
