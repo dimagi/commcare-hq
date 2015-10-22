@@ -283,3 +283,10 @@ class QuickcacheTest(SimpleTestCase):
             @skippable_quickcache(['name'], skip_arg='missing')
             def by_name(name):
                 return 'VALUE'
+
+    def test_dict_arg(self):
+        @quickcache(['dct'])
+        def return_same(dct):
+            return dct
+        self.assertEqual(return_same({}), {})
+        self.assertEqual(return_same({'abc': 123}), {'abc': 123})
