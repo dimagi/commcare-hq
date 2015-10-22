@@ -682,7 +682,7 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
   "slug": "role",
   "field": "role",
   "choices": [
-    {"value": "doctor", display:"Doctor"},
+    {"value": "doctor", "display": "Doctor"},
     {"value": "nurse"}
   ]
 }
