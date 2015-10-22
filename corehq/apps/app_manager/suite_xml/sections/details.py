@@ -55,6 +55,7 @@ class DetailContributor(SectionContributor):
                                         Text(locale_id=id_strings.detail_title_locale(
                                             module, detail_type
                                         )),
+                                        None,   # HQ only supports nodesets on child details (tabs)
                                         0,
                                         len(detail_column_infos)
                                     )
@@ -69,13 +70,13 @@ class DetailContributor(SectionContributor):
         return r
 
     def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs, id, title, start, end):
+                     tabs, id, title, nodeset, start, end):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title)
+        d = Detail(id=id, title=title, nodeset=nodeset)
         if tabs:
             tab_spans = detail.get_tab_spans()
             for tab in tabs:
@@ -89,6 +90,7 @@ class DetailContributor(SectionContributor):
                     Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
+                    tab.nodeset if tab.has_nodeset else None,
                     tab_spans[tab.id][0],
                     tab_spans[tab.id][1]
                 )
