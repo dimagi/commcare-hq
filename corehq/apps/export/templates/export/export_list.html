@@ -161,7 +161,9 @@
                             {% endangularjs %}
                         </tbody>
                     </table>
-                    {% include 'export/partial/export_bulk_notice.html' %}
+                    <div ng-show="exports.length > 6">
+                        {% include 'export/partial/export_bulk_notice.html' %}
+                    </div>
                 </div>
             </div>
         </div>
