@@ -914,7 +914,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
             case_id='extension_2',
             attrs={'create': True, 'owner_id': '-'},
             indices=[CaseIndex(
-                E1,
+                C,
                 identifier='extension',
                 relationship='extension',
                 related_type=case_type,
