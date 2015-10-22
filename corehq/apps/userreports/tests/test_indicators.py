@@ -1,6 +1,7 @@
 from copy import copy
 from decimal import Decimal
 from django.test import SimpleTestCase
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 
@@ -438,3 +439,39 @@ class IndicatorDatatypeTest(SingleIndicatorTestBase):
         self._check_result(indicator, dict(foo=5.5), Decimal(5.5))
         self._check_result(indicator, dict(foo=None), None)
         self._check_result(indicator, dict(foo="banana"), None)
+
+
+class LedgerBalancesIndicatorTest(SimpleTestCase):
+    def setUp(self):
+        self.spec = {
+            "type": "ledger_balances",
+            "column_id": "soh",
+            "display_name": "Stock On Hand",
+            "ledger_section": "soh",
+            "product_codes": [
+                "abc",
+                "def",
+                "ghi",
+            ]
+        }
+
+    @staticmethod
+    def _make_stock_state(value, case_id, product_id, section_id='soh'):
+        return StockState(
+            stock_on_hand=value,
+            case_id=case_id,
+            product_id=product_id,
+            section_id=section_id,
+        )
+
+    def test_ledger_balances_indicator(self):
+        indicator = IndicatorFactory.from_spec(self.spec)
+        self._make_stock_state(32, 'case1', 'abc')
+        self._make_stock_state(85, 'case1', 'def')
+        self._make_stock_state(11, 'case1', 'ghi')
+        values = indicator.get_values({'_id': 'case1'})
+
+        self.assertEqual(
+            [(val.column.id, val.value) for val in values],
+            [('soh_abc', 32), ('soh_def', 85), ('soh_ghi', 11)]
+        )
