@@ -70,6 +70,7 @@ class CleanOwnerCaseSyncOperation(object):
         child_indices = defaultdict(set)
         extension_indices = defaultdict(set)
         all_dependencies_syncing = set()
+        potential_updates_to_sync = []
         while case_ids_to_sync:
             ids = pop_ids(case_ids_to_sync, chunk_size)
             # todo: see if we can avoid wrapping - serialization depends on it heavily for now
@@ -84,7 +85,7 @@ class CleanOwnerCaseSyncOperation(object):
             for update in updates:
                 case = update.case
                 all_synced.add(case._id)
-                append_update_to_response(response, update, self.restore_state)
+                potential_updates_to_sync.append(update)
 
                 # update the indices in the new sync log
                 if case.indices:
@@ -97,7 +98,8 @@ class CleanOwnerCaseSyncOperation(object):
                         if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
-                if not _is_live(case, self.restore_state):
+                if (not _is_live(case, self.restore_state) or
+                        (extension_indices.get(case._id, []) and not child_indices.get(case._id, []))):
                     all_dependencies_syncing.add(case._id)
 
             # commtrack ledger sections for this batch
@@ -134,8 +136,20 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
 
         _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state)
-        # this is a shortcut to prune closed cases we just sent down before saving the sync log
         self.restore_state.current_sync_log.prune_dependent_cases()
+
+        pruned_cases = case_ids_on_phone - self.restore_state.current_sync_log.case_ids_on_phone
+
+        # don't sync pruned cases that were never on the phone
+        if self.restore_state.is_initial:
+            irrelevant_cases = pruned_cases
+        else:
+            irrelevant_cases = pruned_cases - self.restore_state.last_sync_log.case_ids_on_phone
+
+        for update in potential_updates_to_sync:
+            if update.case._id not in irrelevant_cases:
+                append_update_to_response(response, update, self.restore_state)
+
         return response
 
     def get_case_ids_for_owner(self, owner_id):
