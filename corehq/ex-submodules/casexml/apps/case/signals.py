@@ -1,5 +1,5 @@
 from django.dispatch.dispatcher import Signal
-from casexml.apps.stock.models import StockReport, StockTransaction
+from casexml.apps.stock.models import StockTransaction
 from couchforms.signals import xform_archived, xform_unarchived
 
 
