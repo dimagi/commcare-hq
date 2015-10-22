@@ -234,6 +234,8 @@ def process_stock(xforms, case_db=None):
             # since consumption data could change server-side
             case_action.sync_log_id = ''
             case.actions.append(case_action)
+            if action_intent.form_id not in case.xform_ids:
+                case.xform_ids.append(action_intent.form_id)
 
         case_db.mark_changed(case)
 

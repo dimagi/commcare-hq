@@ -6,6 +6,7 @@ import random
 import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests import run_with_all_restore_configs
@@ -431,6 +432,36 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             domain=self.domain.name,
         )
         self.assertEqual(0, StockTransaction.objects.count())
+
+    def test_xform_id_added_to_case_xform_list(self):
+        initial_amounts = [(p._id, float(100)) for p in self.products]
+        submissions = [balance_submission([amount]) for amount in initial_amounts]
+        instance_id = self.submit_xml_form(
+            ''.join(submissions),
+            timestamp=datetime.utcnow() + timedelta(-30)
+        )
+
+        case = CommCareCase.get(self.sp.case_id)
+        self.assertIn(instance_id, case.xform_ids)
+
+    def test_xform_id_added_to_case_xform_list_only_once(self):
+        initial_amounts = [(p._id, float(100)) for p in self.products]
+        submissions = [balance_submission([amount]) for amount in initial_amounts]
+        case_block = CaseBlock(
+            create=False,
+            case_id=self.sp.case_id,
+            user_id='jack',
+            update={'test': '1'}
+        ).as_string()
+        instance_id = self.submit_xml_form(
+            ''.join([case_block] + submissions),
+            timestamp=datetime.utcnow() + timedelta(-30)
+        )
+
+        case = CommCareCase.get(self.sp.case_id)
+        self.assertIn(instance_id, case.xform_ids)
+        # make sure the ID only got added once
+        self.assertEqual(len(case.xform_ids), len(set(case.xform_ids)))
 
 
 class CommTrackSyncTest(CommTrackSubmissionTest):
