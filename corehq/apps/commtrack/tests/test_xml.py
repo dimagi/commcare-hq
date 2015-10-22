@@ -463,6 +463,22 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         # make sure the ID only got added once
         self.assertEqual(len(case.xform_ids), len(set(case.xform_ids)))
 
+    def test_archived_form_gets_removed_from_case_xform_ids(self):
+        initial_amounts = [(p._id, float(100)) for p in self.products]
+        instance_id = self.submit_xml_form(
+            balance_submission(initial_amounts),
+            timestamp=datetime.utcnow() + timedelta(-30)
+        )
+
+        case = CommCareCase.get(self.sp.case_id)
+        self.assertIn(instance_id, case.xform_ids)
+
+        form = XFormInstance.get(instance_id)
+        form.archive()
+
+        case = CommCareCase.get(self.sp.case_id)
+        self.assertNotIn(instance_id, case.xform_ids)
+
 
 class CommTrackSyncTest(CommTrackSubmissionTest):
 
