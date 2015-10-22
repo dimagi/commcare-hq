@@ -1,5 +1,4 @@
 from django.utils.translation import ugettext_lazy as _
-from custom.opm.constants import CHILDREN_FORMS
 
 from dimagi.utils.decorators.memoized import memoized
 
