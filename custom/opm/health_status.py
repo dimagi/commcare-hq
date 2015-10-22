@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext_lazy as _
+from custom.opm.constants import CHILDREN_FORMS
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -527,4 +528,4 @@ class AWCHealthStatus(object):
 
     @property
     def incidence_of_diarrhea(self):
-        return len([c for c in self.all_cases if c.child_has_diarhea])
+        return len([c for c in self.all_cases if c.child_has_diarhea_in_this_month])
