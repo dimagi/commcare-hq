@@ -154,34 +154,15 @@ class FilterExportDownloadForm(forms.Form):
         label=ugettext_lazy("Select Group"),
         required=False,
     )
-    date_range = forms.CharField(
-        label=ugettext_noop("Date Range"),
-        required=True,
-        widget=DateRangePickerWidget(),
-    )
 
-    def __init__(self, domain_object, timezone, *args, **kwargs):
+    def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
-        self.timezone = timezone
         super(FilterExportDownloadForm, self).__init__(*args, **kwargs)
 
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain
             # is not a CommCare Supply domain.
             self.fields['user_types'].choices = self._USER_TYPES_CHOICES[:-1]
-
-        self.fields['date_range'].help_text = _(
-            "The timezone for this export is %(timezone)s."
-        ) % {
-            'timezone': self.timezone,
-        }
-
-        # update date_range filter's initial values to span the entirety of
-        # the domain's submission range
-        default_datespan = datespan_from_beginning(self.domain_object.name, self.timezone)
-        self.fields['date_range'].widget = DateRangePickerWidget(
-            default_datespan=default_datespan
-        )
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -221,13 +202,16 @@ class FilterExportDownloadForm(forms.Form):
                 ),
                 ng_show="formData.type_or_group === 'group'",
             ),
-
-            crispy.Field(
-                'date_range',
-                ng_model='formData.date_range',
-                ng_required='true',
-            ),
+            *self.extra_fields
         )
+
+    @property
+    def extra_fields(self):
+        """
+        :return: a list of extra crispy.Field classes as additional filters
+        depending on type of export.
+        """
+        return []
 
     def _get_filtered_users(self):
         user_types = self.cleaned_data['user_types']
@@ -272,6 +256,39 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
     """The filters for Form Export Download
     """
     _export_type = 'form'
+
+    date_range = forms.CharField(
+        label=ugettext_lazy("Date Range"),
+        required=True,
+        widget=DateRangePickerWidget(),
+    )
+
+    def __init__(self, domain_object, timezone, *args, **kwargs):
+        self.timezone = timezone
+        super(FilterFormExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
+
+        self.fields['date_range'].help_text = _(
+            "The timezone for this export is %(timezone)s."
+        ) % {
+            'timezone': self.timezone,
+        }
+
+        # update date_range filter's initial values to span the entirety of
+        # the domain's submission range
+        default_datespan = datespan_from_beginning(self.domain_object.name, self.timezone)
+        self.fields['date_range'].widget = DateRangePickerWidget(
+            default_datespan=default_datespan
+        )
+
+    @property
+    def extra_fields(self):
+        return [
+            crispy.Field(
+                'date_range',
+                ng_model='formData.date_range',
+                ng_required='true',
+            ),
+        ]
 
     def _get_user_or_group_filter(self):
         group = self._get_group()
