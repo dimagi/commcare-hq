@@ -27,13 +27,15 @@
 
     }
     .form-notice .label {
-        margin: 0 auto;
-        position: absolute;
-        width: 350px;
-        left: 50%;
-        margin-left: -150px;
-        margin-top: -3px;
+        display: block;
         z-index: 5000;
+    }
+    .progress-exports {
+        margin-bottom: 2px;
+        margin-top: 6px;
+    }
+    .form-actions-exports {
+        margin-bottom: 30px;
     }
 </style>
 {% endblock stylesheets %}
@@ -146,14 +148,18 @@
                     {% crispy download_export_form %}
                     <div class="form-notice"
                          ng-show="!!downloadInProgress">
-                        <div class="label label-default label-lg">
-                            <i class="fa fa-info-circle"></i>
-                            {% trans "Filters inactive while download in progress. " %}
+                        <div class="row">
+                            <div class="col-sm-9 col-lg-5 col-sm-offset-3">
+                                <div class="label label-default label-lg">
+                                    <i class="fa fa-info-circle"></i>
+                                    {% trans "Filters inactive while download in progress. " %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="form-actions" ng-show="!downloadInProgress">
-                    <div class="col-sm-5 col-sm-offset-3">
+                <div class="form-actions form-actions-exports" ng-show="!downloadInProgress">
+                    <div class="col-sm-9 col-sm-offset-3">
                         {% angularjs %}
                         <div class="alert alert-warning"
                              ng-show="!!prepareExportError">
@@ -171,13 +177,29 @@
                             </span>
                         </div>
                         {% endangularjs %}
-                        <button type="submit"
-                                class="btn btn-primary"
-                                ng-show="!preparingExport"
-                                ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingExport">
-                            <i class="fa fa-download"></i>
-                            {% trans "Prepare Export" %}
-                        </button>
+                        <div class="row">
+                            <div class="col-xs-6 col-sm-4 col-md-3">
+                                <button type="submit"
+                                        class="btn btn-primary btn-full-width"
+                                        ng-show="!preparingExport"
+                                        ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingExport">
+                                    <i class="fa fa-download"></i>
+                                    {% trans "Prepare Export" %}
+                                </button>
+                                <button type="submit"
+                                        class="btn btn-primary btn-full-width btn-disabled"
+                                        ng-show="preparingExport"
+                                        disabled="disabled">
+                                    <i class="fa-spin fa fa-spinner"></i>
+                                    {% trans "Preparing Export" %}
+                                </button>
+                            </div>
+                            <div class="col-xs-6 col-sm-5 col-md-8">
+                                <a href="{{ export_list_url }}" class="btn btn-default">
+                                    {% trans "Cancel" %}
+                                </a>
+                            </div>
+                        </div>
                         <button type="button"
                                 class="btn btn-info"
                                 data-toggle="modal"
@@ -185,14 +207,6 @@
                                 ng-click="getPreview()">
                             {% trans 'Preview Export' %}
                         </button>
-                        <a href="{{ export_list_url }}" class="btn btn-default">
-                            {% trans "Cancel" %}
-                        </a>
-                        <div class="label label-info label-lg"
-                             ng-show="preparingExport">
-                            <i class="fa-spin fa fa-spinner"></i>
-                            {% trans "Preparing Export" %}
-                        </div>
                     </div>
                 </div>
             </form>
@@ -200,9 +214,9 @@
         </div>
         <div ng-controller="DownloadProgressController"
              ng-cloak>
-            <div class="form-actions"
+            <div class="form-actions form-actions-exports"
                  ng-show="!!showDownloadStatus">
-                <div class="col-sm-9 col-lg-5 col-sm-offset-3">
+                <div class="col-sm-9 col-sm-offset-3">
                     <div class="row"
                          ng-show="!!showCeleryError">
                         <div class="col-sm-12">
@@ -222,14 +236,13 @@
                     </div>
                     <div class="row"
                          ng-show="!showCeleryError">
-                        <div class="col-sm-3 col-md-4">
+                        <div class="col-xs-6 col-sm-4 col-md-3">
                             {% angularjs %}
                             <form class="form-inline download-form"
                                   method="POST"
                                   action="{{ dropboxUrl }}">
                                 <a href="{{ downloadUrl }}"
-                                   class="btn btn-primary btn-lg"
-                                   style="width: 100%;"
+                                   class="btn btn-success btn-full-width"
                                    ng-show="!!isDownloadReady"
                                    ng-disabled="!isDownloadReady"
                                    ng-click="isDownloaded = true;">
@@ -237,16 +250,15 @@
                                         {% trans "Download" %}
                                 </a>
                                 <button type="button"
-                                        class="btn btn-primary btn-lg"
-                                        style="width: 100%;"
+                                        class="btn btn-primary btn-disabled btn-full-width"
                                         ng-show="!isDownloadReady"
-                                        ng-disabled="!isDownloadReady">
-                                        <i class="fa fa-download"></i>
-                                    {% trans "Download" %}
+                                        disabled="disabled">
+                                        <i class="fa-spin fa fa-spinner"></i>
+                                        {% trans "Collecting Data" %}
                                 </button>
                                 {% if show_sync_to_dropbox %}
                                 <button button="submit"
-                                        class="btn btn-default"
+                                        class="btn btn-default btn-full-width"
                                         style="margin-top: 5px; width: 100%;"
                                         ng-disabled="!isDownloadReady"
                                         ng-click="isDownloaded = true;">
@@ -257,26 +269,9 @@
                             </form>
                             {% endangularjs %}
                         </div>
-                        <div class="col-sm-9 col-md-8"
-                             style="padding-top: 10px;"
+                        <div class="col-xs-6 col-md-4"
                              ng-show="!isDownloaded && !showCeleryError">
-                            <div class="label label-danger label-lg"
-                                 ng-show="!!progress.error">
-                                <i class="fa fa-exclamation-triangle"></i>
-                                <strong>{% trans "Something went wrong!" %}</strong>
-                                {{ progress.error_message }}
-                            </div>
-                            <div class="label label-info label-lg"
-                               ng-show="!isDownloadReady">
-                                <i class="fa fa-spinner fa-spin"></i>
-                                {% trans "Collecting Data" %}
-                            </div>
-                            <div class="label label-success label-lg"
-                               ng-show="!!isDownloadReady">
-                                <i class="fa fa-check"></i>
-                                {% trans "Export is Ready" %}
-                            </div>
-                            <div class="progress">
+                            <div class="progress progress-exports">
                                 <div id="download-progress-bar"
                                      class="progress-bar"
                                      role="progressbar"
@@ -288,11 +283,17 @@
                                     {% endangularjs %}
                                 </div>
                             </div>
+                            <div class="label label-danger label-lg"
+                                 ng-show="!!progress.error">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong>{% trans "Something went wrong!" %}</strong>
+                                {{ progress.error_message }}
+                            </div>
                         </div>
                         <div class="col-sm-9 col-md-8"
                              ng-show="!!isDownloaded">
                             <button type="button"
-                                    class="btn btn-default btn-lg"
+                                    class="btn btn-default"
                                     ng-click="resetDownload()">
                                 {% trans "Update Filters" %}
                             </button>
