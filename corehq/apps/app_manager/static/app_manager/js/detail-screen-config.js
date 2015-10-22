@@ -465,7 +465,7 @@ var DetailScreenConfig = (function () {
                 column properites: model, field, header, format
                 column extras: enum, late_flag
             */
-            var that = this, elements, i;
+            var that = this;
             eventize(this);
             this.original = JSON.parse(JSON.stringify(col));
 
@@ -522,7 +522,7 @@ var DetailScreenConfig = (function () {
             }, this);
 
             (function () {
-                var i, lang, visibleVal = "", invisibleVal = "";
+                var i, lang, visibleVal = "", invisibleVal = "", nodesetVal;
                 if (that.original.header && that.original.header[that.lang]) {
                     visibleVal = invisibleVal = that.original.header[that.lang];
                 } else {
@@ -537,9 +537,7 @@ var DetailScreenConfig = (function () {
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.setVisibleValue(visibleVal);
 
-                visibleVal = invisibleVal = that.original.nodeset || "";
-                that.nodeset = uiElement.input().val(invisibleVal);
-                that.nodeset.setVisibleValue(visibleVal);
+                that.nodeset = uiElement.input().val(that.original.nodeset);
                 if (that.isTab) {
                     // hack to wait until the input's there to prepend the Tab: label.
                     setTimeout(function () {
@@ -603,7 +601,10 @@ var DetailScreenConfig = (function () {
             ]).val(this.original.time_ago_interval.toString());
             this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
-            elements = [
+            function fireChange() {
+                that.fire('change');
+            }
+            _.each([
                 'model',
                 'field',
                 'header',
@@ -615,15 +616,9 @@ var DetailScreenConfig = (function () {
                 'filter_xpath_extra',
                 'calc_xpath_extra',
                 'time_ago_extra'
-            ];
-
-            function fireChange() {
-                that.fire('change');
-            }
-
-            for (i = 0; i < elements.length; i += 1) {
-                this[elements[i]].on('change', fireChange);
-            }
+            ], function(element) {
+                that[element].on('change', fireChange);
+            });
             this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
@@ -704,13 +699,10 @@ var DetailScreenConfig = (function () {
                 column.case_tile_field = this.case_tile_field();
                 if (this.isTab) {
                     // Note: starting_index is added by Screen.serialize
-                    return {
+                    return _.extend({
                         starting_index: this.starting_index,
-                        header: column.header,
-                        isTab: true,
                         has_nodeset: column.hasNodeset,
-                        nodeset: column.nodeset,
-                    };
+                    }, _.pick(column, ['header', 'isTab', 'nodeset']));
                 }
                 return column;
             },
@@ -812,7 +804,7 @@ var DetailScreenConfig = (function () {
                     0,
                     _.extend({
                         hasNodeset: tabs[i].has_nodeset,
-                    }, _.pick(tabs[i], ["header", "nodeset", "has_nodeset", "isTab"]))
+                    }, _.pick(tabs[i], ["header", "nodeset", "isTab"]))
                 );
             }
             if (this.columnKey === 'long') {
