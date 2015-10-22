@@ -13,7 +13,7 @@ class FormProcessorInterface(object):
     @staticmethod
     @to_generic
     @unit_testing_only
-    def cost_xform(instance_xml, attachments=None, process=None, domain='test-domain'):
+    def post_xform(instance_xml, attachments=None, process=None, domain='test-domain'):
         """
         create a new xform and releases the lock
 
