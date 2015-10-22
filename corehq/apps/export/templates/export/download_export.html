@@ -9,10 +9,16 @@
 <style type="text/css">
     .form-notice-container {
         position: relative;
+        height: 80px;
+    }
+    .form-notice-container-tall {
         height: 145px;
     }
     @media (max-width: 767px) {
         .form-notice-container {
+            height: 125px;
+        }
+        .form-notice-container-tall {
             height: 217px;
         }
     }
@@ -144,7 +150,7 @@
                   name="exportFiltersForm"
                   ng-submit="prepareExport()"
                   novalidate="novalidate">
-                <div class="form-notice-container">
+                <div class="form-notice-container{% if show_date_range %} form-notice-container-tall{% endif %}">
                     {% crispy download_export_form %}
                     <div class="form-notice"
                          ng-show="!!downloadInProgress">
