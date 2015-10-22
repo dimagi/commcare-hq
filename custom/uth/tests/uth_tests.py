@@ -6,7 +6,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.domain.shortcuts import create_domain
 import os
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.uth import utils
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from casexml.apps.case.models import CommCareCase
