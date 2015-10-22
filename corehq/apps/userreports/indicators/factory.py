@@ -5,11 +5,12 @@ from corehq.apps.userreports.filters import SinglePropertyValueFilter, CustomFil
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
 from corehq.apps.userreports.indicators.specs import (
-    RawIndicatorSpec,
-    ChoiceListIndicatorSpec,
     BooleanIndicatorSpec,
-    IndicatorSpecBase,
+    ChoiceListIndicatorSpec,
     ExpressionIndicatorSpec,
+    IndicatorSpecBase,
+    LedgerBalancesIndicatorSpec,
+    RawIndicatorSpec,
 )
 
 
@@ -85,6 +86,30 @@ def _build_choice_list_indicator(spec, context):
     return CompoundIndicator(base_display_name, choice_indicators)
 
 
+def _build_ledger_balances_indicator(spec, context):
+    wrapped_spec = LedgerBalancesIndicatorSpec.wrap(spec)
+    base_display_name = wrapped_spec.display_name
+
+    def _construct_display(product_code):
+        return '{base} ({product_code})'.format(base=base_display_name,
+                                                product_code=product_code)
+
+    def _construct_column(product):
+        return '{col}_{product}'.format(col=spec['column_id'], product=product)
+
+    product_indicators = [
+        RawIndicator(
+            display_name=_construct_display(product_code),
+            column=Column(
+                id=_construct_column(product_code),
+                datatype="decimal",
+            ),
+            getter=wrapped_spec.getter,
+        ) for product_code in wrapped_spec.product_codes
+    ]
+    return CompoundIndicator(base_display_name, product_indicators)
+
+
 def _build_repeat_iteration_indicator(spec, context):
     return RawIndicator(
         "base document iteration",
@@ -117,9 +142,10 @@ class IndicatorFactory(object):
         'choice_list': _build_choice_list_indicator,
         'count': _build_count_indicator,
         'expression': _build_expression_indicator,
+        'inserted_at': _build_inserted_at,
+        'ledger_balances': _build_ledger_balances_indicator,
         'raw': _build_raw_indicator,
         'repeat_iteration': _build_repeat_iteration_indicator,
-        'inserted_at': _build_inserted_at,
     }
 
     @classmethod

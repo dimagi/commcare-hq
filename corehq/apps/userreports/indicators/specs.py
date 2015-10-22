@@ -97,3 +97,12 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
     def get_operator(self):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
+
+
+class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
+    type = TypeProperty('ledger_balances')
+    product_codes = ListProperty(required=True)
+    ledger_section = StringProperty()
+
+    def getter(self, item, context):
+        return 32
