@@ -7,17 +7,15 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processor import LoggingProcessor
 
 
-def get_case_consumer_pillow():
+def get_demo_case_consumer_pillow():
     document_store = CouchDocumentStore(CommCareCase.get_db())
     checkpoint = PillowCheckpoint(
         document_store,
-        'kafka-case-pillow-checkpoint',
+        'kafka-demo-case-pillow-checkpoint',
     )
     return ConstructedPillow(
         document_store=document_store,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics.CASE),
+        change_feed=KafkaChangeFeed(topic=topics.CASE, group_id='demo-case-group'),
         processor=LoggingProcessor(logger=change_feed_logger),
     )
-
-
