@@ -333,7 +333,7 @@ class RestoreState(object):
                     )
                     if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
                         from corehq.apps.reports.standard.deployments import SyncHistoryReport
-                        last_bugfix_date = datetime(2015, 9, 21)
+                        last_bugfix_date = datetime(2015, 10, 20)
                         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
                         sync_history_url = '{}?individual={}'.format(
                             SyncHistoryReport.get_url(self.domain),
@@ -423,13 +423,15 @@ class RestoreState(object):
 
     def create_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
+        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
             user_id=self.user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
             date=datetime.utcnow(),
-            previous_log_id=previous_log_id
+            previous_log_id=previous_log_id,
+            previous_log_rev=previous_log_rev,
         )
         new_synclog.save(**get_safe_write_kwargs())
         return new_synclog

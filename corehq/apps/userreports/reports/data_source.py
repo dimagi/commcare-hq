@@ -85,7 +85,7 @@ class ConfigurableReportDataSource(SqlData):
             # ask each column for its group_by contribution and combine to a single list
             # if the column isn't found just treat it as a normal field
             if column_id in self._column_configs:
-                return self._column_configs[col_id].get_group_by_columns()
+                return self._column_configs[column_id].get_group_by_columns()
             else:
                 return [column_id]
 

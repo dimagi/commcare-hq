@@ -38,6 +38,7 @@
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
             update_build_comment: '{% url "update_build_comment" domain app.id %}',
+            hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
         };
         var o = {
             urls: urls,
@@ -142,7 +143,7 @@
                 <th>{% trans "CommCare Version" %}</th>
                 <th></th>
                 <th></th>
-                <th>{% trans "Changes" %}</th>
+                <th>{% trans "Comments" %}</th>
                 <th>
                     {% trans "Released" %}
                     <span class="hq-help-template"
@@ -198,7 +199,6 @@
                     <td class="nowrap" data-bind="text: built_on_time"></td>
                     <td class="nowrap">
                         <span data-bind="if: build_label(), text: build_label()"></span>
-                        <p data-bind="text: jar_path"></p>
                         <h6 data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</h6>
                     </td>
                     <td class="nowrap">
@@ -206,11 +206,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() {
-                                    generate_short_url('short_odk_url');
-                                    ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
-                                    analytics.workflow('Clicked Deploy');
-                                }
+                                click: clickDeploy
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -361,6 +357,14 @@
                                         </ul>
                                         <div class="tab-content">
                                             <div class="tab-pane">
+                                                <p>
+                                                    {% trans "Download" %}
+                                                    <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
+                                                        {% trans "CommCare from Google Play" %}
+                                                    </a>
+                                                    {% trans "to your Android device." %}
+                                                </p>
+                                                {% if multimedia_state.has_media %}
                                                 <label class="checkbox" data-bind="visible: allow_media_install">
                                                     <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                                     {% trans "Include Multimedia" %}
@@ -368,11 +372,12 @@
                                                         {% trans "Only supported for versions made after 2013-10-15" %}
                                                     </span>
                                                 </label>
+                                                {% endif %}
                                                 <p>
                                                     <span data-bind="visible: get_short_odk_url()">
                                                         {% blocktrans %}
                                                             Install by typing the following URL
-                                                            into the application install screen:
+                                                            into the CommCare application install screen:
                                                         {% endblocktrans %}
                                                         <code class="bitly"><a data-bind="
                                                             attr: {
@@ -396,6 +401,7 @@
                                                     ">
                                                     {% trans "scan the bar code" %}
                                                     </a>
+                                                    {% trans "using the Barcode Scanner option within CommCare" %}
                                                 </p>
                                             </div>
                                             <div class="tab-pane">
@@ -430,10 +436,12 @@
                                                             {% trans "You'll be prompted to select this file from your phone's file system and install will begin" %}
                                                         </li>
                                                     </ol>
+                                                    {% if multimedia_state.has_media %}
                                                     <div>
                                                         {% trans "Note: Offline install automatically installs all multimedia included in your form. All subsequent remote updates will also include multimedia which could require a lot of data." %}
                                                         {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>Help Site</a> for more info." %}
                                                     </div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -529,7 +537,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    {% if multimedia %}
+                    {% if multimedia_state.has_media %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
                                 <a class="accordion-toggle" data-toggle="collapse" data-bind="

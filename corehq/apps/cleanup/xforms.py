@@ -1,5 +1,3 @@
-from corehq.apps.users.models import CouchUser
-from corehq.elastic import get_es
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormError
 from dimagi.utils.couch.database import iter_docs

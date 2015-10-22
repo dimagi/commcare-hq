@@ -520,7 +520,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
-            'requests': DomainRequest.by_domain(self.domain),
+            'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,

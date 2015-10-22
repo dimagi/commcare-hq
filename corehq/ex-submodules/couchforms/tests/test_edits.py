@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms.models import XFormDeprecated, XFormInstance, \
+from couchforms.models import XFormInstance, \
     UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces import FormProcessorInterface
@@ -19,7 +19,7 @@ class EditFormTest(TestCase):
     domain = 'test-form-edits'
 
     def tearDown(self):
-        XFormInstance.get_db().flush()
+        FormProcessorInterface.delete_all_xforms()
 
     def _get_files(self):
         first_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "original.xml")
@@ -139,7 +139,6 @@ class EditFormTest(TestCase):
             case_id=case_id,
             case_type='person',
             owner_id=owner_id,
-            version=V2,
             update={
                 'property': 'original value'
             }
@@ -161,7 +160,6 @@ class EditFormTest(TestCase):
             case_id=case_id,
             case_type='newtype',
             owner_id=owner_id,
-            version=V2,
             update={
                 'property': 'edited value'
             }
@@ -183,7 +181,6 @@ class EditFormTest(TestCase):
             create=True,
             case_id=case_id,
             case_type='person',
-            version=V2,
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
@@ -192,7 +189,6 @@ class EditFormTest(TestCase):
             create=True,
             case_id='',
             case_type='person',
-            version=V2,
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
@@ -212,7 +208,6 @@ class EditFormTest(TestCase):
             case_id=case_id,
             case_type='person',
             owner_id=owner_id,
-            version=V2,
         ).as_string()
         create_form_id = submit_case_blocks(case_block, domain=self.domain)
 
@@ -228,7 +223,6 @@ class EditFormTest(TestCase):
         case_block = CaseBlock(
             create=False,
             case_id=case_id,
-            version=V2,
             date_modified=edit_date,
             update={
                 'property': 'first value',
@@ -246,7 +240,6 @@ class EditFormTest(TestCase):
         case_block = CaseBlock(
             create=False,
             case_id=case_id,
-            version=V2,
             update={
                 'property': 'final value',
             }
@@ -264,7 +257,6 @@ class EditFormTest(TestCase):
         case_block = CaseBlock(
             create=False,
             case_id=case_id,
-            version=V2,
             date_modified=edit_date,  # need to use the previous edit date for action sort comparisons
             update={
                 'property': 'edited value',
