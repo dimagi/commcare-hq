@@ -469,41 +469,36 @@ var DetailScreenConfig = (function () {
             eventize(this);
             this.original = JSON.parse(JSON.stringify(col));
 
-            function orDefault(value, d) {
-                if (value === undefined) {
-                    return d;
-                } else {
-                    return value;
-                }
-            }
-            this.original.model = this.original.model || screen.model;
-            this.original.field = this.original.field || "";
-            this.original.hasAutocomplete = orDefault(this.original.hasAutocomplete, true);
-            this.original.header = this.original.header || {};
-            this.original.format = this.original.format || "plain";
-            this.original['enum'] = this.original['enum'] || [];
+            // Set defaults for normal (non-tab) column attributes
+            var defaults = {
+                calc_xpath: ".",
+                enum: [],
+                field: "",
+                filter_xpath: "",
+                format: "plain",
+                graph_configuration: {},
+                hasAutocomplete: false,
+                header: {},
+                model: screen.model,
+                time_ago_interval: DetailScreenConfig.TIME_AGO.year,
+            };
+            _.defaults(this.original, defaults);
             this.original.late_flag = _.isNumber(this.original.late_flag) ? this.original.late_flag : 30;
-            this.original.filter_xpath = this.original.filter_xpath || "";
-            this.original.calc_xpath = this.original.calc_xpath || ".";
-            this.original.graph_configuration = this.original.graph_configuration || {};
+
             this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
-
-            // Tab attributes
-            this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
-            this.isTab = this.original.isTab;
-            this.original.hasNodeset = this.original.hasNodeset !== undefined ? this.original.hasNodeset : false;
-            this.hasNodeset = this.original.hasNodeset;
-            this.original.nodeset = this.original.nodeset || "";
-            this.nodeset = this.original.nodeset;
-
             this.case_tile_field = ko.observable(this.original.case_tile_field);
 
-
-            this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
+            // Set up tab attributes
+            var tabDefaults = {
+                isTab: false,
+                hasNodeset: false,
+                nodeset: "",
+            }
+            _.defaults(this.original, tabDefaults);
+            _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
 
             this.screen = screen;
             this.lang = screen.lang;
-
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
@@ -596,7 +591,6 @@ var DetailScreenConfig = (function () {
 
             this.calc_xpath_extra = uiElement.input().val(this.original.calc_xpath.toString());
             this.calc_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.CALC_XPATH_EXTRA_LABEL));
-
 
             this.time_ago_extra = uiElement.select([
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
