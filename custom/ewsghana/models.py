@@ -5,6 +5,8 @@ from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.views import EditWebUserView
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from custom.utils.utils import add_to_module_map
 from casexml.apps.stock.models import DocDomainMapping
@@ -128,12 +130,18 @@ class EWSMigrationProblem(models.Model):
 
     @property
     def object_url(self):
+        from corehq.apps.locations.views import EditLocationView
+
         if self.object_type == 'smsuser':
-            return reverse('edit_commcare_user', kwargs={'domain': self.domain, 'couch_user_id': self.object_id})
+            return reverse(
+                EditCommCareUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
+            )
         elif self.object_type == 'webuser':
-            return reverse('user_account', kwargs={'domain': self.domain, 'couch_user_id': self.object_id})
+            return reverse(
+                EditWebUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
+            )
         elif self.object_type == 'location':
-            return reverse('edit_location', kwargs={'domain': self.domain, 'loc_id': self.object_id})
+            return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
         return
 
 

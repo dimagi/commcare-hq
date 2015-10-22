@@ -61,6 +61,16 @@ class BalanceMigration(UserMigrationMixin):
             if set(phone_numbers) - set(couch_web_user.phone_numbers):
                 description = "Invalid phone numbers, "
 
+            default_phone_number = [
+                connection.phone_number for connection in user_contact.phone_numbers if connection.default
+            ]
+
+            default_phone_number = default_phone_number[0] if default_phone_number else None
+
+            if default_phone_number and \
+                    (apply_leniency(default_phone_number) != couch_web_user.default_phone_number):
+                description += "Invalid default phone number, "
+
             try:
                 extension = EWSExtension.objects.get(user_id=couch_web_user.get_id, domain=self.domain)
                 supply_point = extension.supply_point.external_id if extension.supply_point else None
@@ -84,15 +94,16 @@ class BalanceMigration(UserMigrationMixin):
                 migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
                     domain=self.domain,
                     object_id=couch_web_user.get_id,
+                    object_type='webuser'
                 )
-                migration_problem.object_type = 'webuser'
                 migration_problem.external_id = web_user.email or web_user.username
                 migration_problem.description = description.rstrip(' ,')
                 migration_problem.save()
             else:
                 EWSMigrationProblem.objects.filter(
                     domain=self.domain,
-                    external_id=web_user.email or web_user.username
+                    external_id=web_user.email or web_user.username,
+                    object_type='webuser'
                 ).delete()
 
     @transaction.atomic
@@ -133,39 +144,44 @@ class BalanceMigration(UserMigrationMixin):
 
             for phone_number in user.phone_numbers:
                 vn = VerifiedNumber.by_phone(phone_number)
-                if not vn:
+                if not vn or vn.owner_id != user.get_id:
                     description += "Phone number not verified, "
                     continue
                 backend = phone_to_backend.get(phone_number)
                 if backend == 'message_tester' and vn.backend_id != 'MOBILE_BACKEND_TEST' \
-                        or (not backend and vn.backend_id):
+                        or (backend != 'message_tester' and vn.backend_id):
                     description += "Invalid backend, "
 
             if description:
                 migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
                     domain=self.domain,
                     object_id=user.get_id,
+                    object_type='smsuser'
                 )
-                migration_problem.object_type = 'smsuser'
                 migration_problem.external_id = sms_user.id
                 migration_problem.description = description.rstrip(' ,')
                 migration_problem.save()
             else:
                 EWSMigrationProblem.objects.filter(
                     domain=self.domain,
-                    external_id=sms_user.id
+                    external_id=sms_user.id,
+                    object_type='smsuser'
                 ).delete()
 
     def _check_username(self, usernames, ews_user_id):
         return any([username.endswith(str(ews_user_id)) for username in usernames])
 
+    @transaction.atomic
     def validate_supply_points(self, date):
         for location in iterate_over_api_objects(
-                self.endpoint.get_locations, filters={'is_active': True, 'date_updated': date}
+                self.endpoint.get_locations, filters={'is_active': True, 'date_updated__gte': date}
         ):
             for supply_point in location.supply_points:
                 sp = get_supply_point_case_by_domain_external_id(self.domain, supply_point.id)
                 if sp:
+                    EWSMigrationProblem.objects.filter(
+                        domain=self.domain, external_id=supply_point.id, object_type='supply_point'
+                    ).delete()
                     sql_location = sp.sql_location
                     ids = sql_location.facilityincharge_set.all().values_list('user_id', flat=True)
                     usernames = [user['username'].split('@')[0] for user in iter_docs(CouchUser.get_db(), ids)]
@@ -173,6 +189,7 @@ class BalanceMigration(UserMigrationMixin):
                         migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
                             domain=self.domain,
                             object_id=sql_location.location_id,
+                            object_type='location'
                         )
                         migration_problem.object_type = 'location'
                         migration_problem.external_id = sql_location.external_id
@@ -181,8 +198,18 @@ class BalanceMigration(UserMigrationMixin):
                     else:
                         EWSMigrationProblem.objects.filter(
                             domain=self.domain,
-                            external_id=sql_location.location_id
+                            external_id=sql_location.external_id,
+                            object_type='location'
                         ).delete()
+                elif supply_point.active and supply_point.last_reported:
+                    migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
+                        domain=self.domain,
+                        external_id=supply_point.id,
+                    )
+                    migration_problem.object_type = 'supply_point'
+                    migration_problem.external_id = supply_point.id
+                    migration_problem.description = 'Not exists'
+                    migration_problem.save()
 
     def balance_migration(self, date=None):
         products_count = self._get_total_counts(self.endpoint.get_products)
