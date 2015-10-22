@@ -43,8 +43,16 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
                 report_id=cls.report_id,
                 header={},
                 description={},
-                graph_configs={'': ReportGraphConfig(series_configs={'': {}}, config={})},
-                filters={'': ReportAppFilter()},
+                graph_configs={
+                    '7451243209119342931': ReportGraphConfig(
+                        series_configs={'count': {}}
+                    )
+                },
+                filters={},
                 uuid=cls.report_config_id,
             )
         )
+        cls.suite = cls.app.create_suite()
+
+    def test_filter_detail(self):
+        pass
