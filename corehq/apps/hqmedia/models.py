@@ -766,10 +766,6 @@ class HQMediaMixin(Document):
                 del self.multimedia_map[path]
 
     def check_media_state(self):
-        from corehq.apps.app_manager.models import Application
-        if not isinstance(self, Application):
-            raise NotImplementedError("Sorry, this method is only supported for CommCare HQ Applications.")
-
         has_missing_refs = False
 
         for media in self.all_media:
