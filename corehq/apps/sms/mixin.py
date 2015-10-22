@@ -149,9 +149,8 @@ class VerifiedNumber(Document):
         # We use .one() here because the framework prevents duplicates
         # from being entered when a contact saves a number.
         # See CommCareMobileContactMixin.save_verified_number()
-        from corehq.apps.sms.util import strip_plus
         v = cls.view(view_name,
-                     key=strip_plus(phone_number),
+                     key=apply_leniency(phone_number),
                      include_docs=True).one()
         return v if (include_pending or (v and v.verified)) else None
 
