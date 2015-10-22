@@ -86,7 +86,7 @@ class ReportColumn(JsonObject):
         raise NotImplementedError(_("You can't group by columns of type {}".format(self.type)))
 
     def get_header(self, lang):
-        return localize(self.display, lang)
+        return localize(self.display, lang) if self.display else self.column_id
 
     def get_column_ids(self):
         """
