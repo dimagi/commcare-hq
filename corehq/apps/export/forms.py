@@ -2,7 +2,7 @@ import dateutil
 from django import forms
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
@@ -85,7 +85,7 @@ class CreateCaseExportTagForm(forms.Form):
         help_text=mark_safe(
             '<span ng-show="!!hasNoCaseTypes '
             '&& !!createForm.application">{}</span>'.format(
-                ugettext_noop(
+                ugettext_lazy(
                     """Note: This application does not appear to be using
 <a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management">
 case management</a>."""
@@ -130,28 +130,28 @@ class FilterExportDownloadForm(forms.Form):
     _USER_SUPPLY = 'supply'
 
     _USER_TYPES_CHOICES = [
-        (_USER_MOBILE, ugettext_noop("All Mobile Workers")),
-        (_USER_DEMO, ugettext_noop("Demo User")),
-        (_USER_ADMIN, ugettext_noop("Admin User")),
-        (_USER_UNKNOWN, ugettext_noop("Unknown Users")),
-        (_USER_SUPPLY, ugettext_noop("CommCare Supply")),
+        (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
+        (_USER_DEMO, ugettext_lazy("Demo User")),
+        (_USER_ADMIN, ugettext_lazy("Admin User")),
+        (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
+        (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
     ]
     type_or_group = forms.ChoiceField(
-        label=ugettext_noop("User Types or Group"),
+        label=ugettext_lazy("User Types or Group"),
         required=False,
         choices=(
-            ('type', ugettext_noop("User Types")),
-            ('group', ugettext_noop("Group")),
+            ('type', ugettext_lazy("User Types")),
+            ('group', ugettext_lazy("Group")),
         )
     )
     user_types = forms.MultipleChoiceField(
-        label=ugettext_noop("Select User Types"),
+        label=ugettext_lazy("Select User Types"),
         widget=Select2MultipleChoiceWidget,
         choices=_USER_TYPES_CHOICES,
         required=False,
     )
     group = forms.CharField(
-        label=ugettext_noop("Select Group"),
+        label=ugettext_lazy("Select Group"),
         required=False,
     )
     date_range = forms.CharField(
