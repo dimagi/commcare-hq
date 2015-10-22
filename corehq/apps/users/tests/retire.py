@@ -10,7 +10,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.form_processor.interfaces.case import CaseInterface
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class RetireUserTestCase(TestCase):

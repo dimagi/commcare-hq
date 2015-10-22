@@ -3,7 +3,6 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.form_processor.interfaces.case import CaseInterface
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 

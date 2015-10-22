@@ -1,7 +1,6 @@
 from django.test import TestCase
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.case import CaseInterface
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.xform import XFormInterface
