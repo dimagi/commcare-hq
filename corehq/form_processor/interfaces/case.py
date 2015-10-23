@@ -13,13 +13,6 @@ from ..exceptions import CaseNotFound
 
 class CaseInterface(object):
 
-    @staticmethod
-    @to_generic
-    def create_from_generic(generic_case):
-        case = CommCareCase.from_generic(generic_case)
-        case.save()
-        return case
-
     @classmethod
     def get_attachment(cls, case_id, attachment_name):
         case = cls._get_case(case_id)

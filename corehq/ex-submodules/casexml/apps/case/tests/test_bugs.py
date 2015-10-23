@@ -152,21 +152,16 @@ class TestCaseHierarchy(TestCase):
         delete_all_cases()
 
     def test_normal_index(self):
-        cp = CaseInterface.create_from_generic(GenericCommCareCase(
-            id='parent',
-            name='parent',
-            type='parent',
-        ))
+        factory = CaseFactory()
+        [cp] = factory.create_or_update_case(
+            CaseStructure(case_id='parent', attrs={'case_type': 'parent'})
+        )
 
-        CaseInterface.create_from_generic(GenericCommCareCase(
-            id='child',
-            name='child',
-            type='child',
-            indices=[GenericCommCareCaseIndex(
-                identifier='parent',
-                referenced_type='parent',
-                referenced_id='parent'
-            )],
+        factory.create_or_update_case(CaseStructure(
+            case_id='child',
+            attrs={'case_type': 'child'},
+            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            walk_related=False
         ))
 
         hierarchy = get_case_hierarchy(cp, {})
@@ -174,18 +169,16 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases']))
 
     def test_recursive_indexes(self):
-        c = CaseInterface.create_from_generic(GenericCommCareCase(
-            id='infinite-recursion',
-            name='infinite_recursion',
-            type='bug',
-            indices=[GenericCommCareCaseIndex(
-                identifier='self',
-                referenced_type='bug',
-                referenced_id='infinite-recursion'
-            )],
+        factory = CaseFactory()
+        [case] = factory.create_or_update_case(CaseStructure(
+            case_id='infinite-recursion',
+            attrs={'case_type': 'bug'},
+            indices=[CaseIndex(CaseStructure(case_id='infinite-recursion'), related_type='bug')],
+            walk_related=False
         ))
+
         # this call used to fail with infinite recursion
-        hierarchy = get_case_hierarchy(c, {})
+        hierarchy = get_case_hierarchy(case, {})
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def test_complex_index(self):

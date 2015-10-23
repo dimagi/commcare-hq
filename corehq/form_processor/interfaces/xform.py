@@ -6,11 +6,6 @@ class XFormInterface(object):
     backend = get_backend()
 
     @classmethod
-    @to_generic
-    def create_from_generic(cls, generic_xform, generic_attachment=None):
-        return cls.backend.create_from_generic(generic_xform, generic_attachment)
-
-    @classmethod
     def get_attachment(cls, xform_id, attachment_name):
         return cls.backend.get_attachment(xform_id, attachment_name)
 

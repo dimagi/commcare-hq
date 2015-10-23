@@ -10,14 +10,6 @@ from ..exceptions import XFormNotFound
 class XFormCouch(object):
 
     @staticmethod
-    def create_from_generic(generic_xform, generic_attachment=None):
-        xform = XFormInstance.from_generic(generic_xform)
-        xform.save()
-        if generic_attachment:
-            xform.put_attachment(**generic_attachment.to_json())
-        return xform
-
-    @staticmethod
     def get_attachment(xform_id, attachment_name):
         return XFormInstance.get_db().fetch_attachment(xform_id, attachment_name)
 

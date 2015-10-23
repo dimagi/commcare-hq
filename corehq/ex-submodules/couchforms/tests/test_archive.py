@@ -1,17 +1,29 @@
+import io
+import os
 from datetime import datetime, timedelta
 from django.test import TestCase
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.generic import GenericXFormInstance, GenericFormAttachment
 from corehq.form_processor.interfaces.xform import XFormInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.util.test_utils import TestFileMixin
 
 
-class TestFormArchiving(TestCase):
+class TestFormArchiving(TestCase, TestFileMixin):
+    file_path = ('data', 'xforms')
+    root = os.path.dirname(__file__)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_cases()
 
     def testArchive(self):
-        xform = XFormInterface.create_from_generic(
-            GenericXFormInstance(form={'foo': 'bar'}),
-            GenericFormAttachment(name='form.xml', content='<data/>')
+        xml_data = self.get_xml('basic')
+        response, xform, cases = FormProcessorInterface.submit_form_locally(
+            xml_data,
+            'test-domain',
         )
 
         self.assertEqual("XFormInstance", xform.doc_type)
@@ -57,9 +69,10 @@ class TestFormArchiving(TestCase):
         xform_archived.connect(count_archive)
         xform_unarchived.connect(count_unarchive)
 
-        xform = XFormInterface.create_from_generic(
-            GenericXFormInstance(form={'foo': 'bar'}),
-            GenericFormAttachment(name='form.xml', content='<data/>')
+        xml_data = self.get_xml('basic')
+        response, xform, cases = FormProcessorInterface.submit_form_locally(
+            xml_data,
+            'test-domain',
         )
 
         self.assertEqual(0, archive_counter)
