@@ -132,10 +132,15 @@ def get_pillow_json(pillow_or_class_or_name):
         'name': pillow.__class__.__name__,
         'seq': force_seq_int(checkpoint.get('seq')),
         'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
-        'db_seq': force_seq_int(pillow.get_db_seq()),
+        'db_seq': force_seq_int(_get_current_seq_for_pillow(pillow)),
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
+
+
+def _get_current_seq_for_pillow(pillow):
+    if hasattr(pillow, 'couch_db'):
+        return get_current_seq(pillow.couch_db)
 
 
 def get_current_seq(couch_db):

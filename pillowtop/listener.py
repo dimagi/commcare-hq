@@ -28,7 +28,6 @@ from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
-from pillowtop.utils import get_current_seq
 
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
@@ -144,9 +143,6 @@ class BasicPillow(PillowBase):
     def since(self):
         # todo: see if we can remove this. It is hard to search for.
         return self.get_last_checkpoint_sequence()
-
-    def get_db_seq(self):
-        return get_current_seq(self._couch_db)
 
     def processor(self, change, do_set_checkpoint=True):
         """
