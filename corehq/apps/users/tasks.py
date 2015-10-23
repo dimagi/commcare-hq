@@ -17,7 +17,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX, is_deleted
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
-
 from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.models import XFormInstance
 
@@ -41,13 +40,19 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
         'messages': results
     }
 
+
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
 def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
+    from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
+    from corehq.apps.reminders.tasks import delete_reminders_for_cases
     for doc in docs:
         doc['doc_type'] += DELETED_SUFFIX
         doc['-deletion_id'] = deletion_id
     CommCareCase.get_db().bulk_save(docs)
-    _remove_indices_from_deleted_cases_task.delay(domain, [doc['_id'] for doc in docs])
+    case_ids = [doc['_id'] for doc in docs]
+    _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
+    delete_phone_numbers_for_owners.delay(case_ids)
+    delete_reminders_for_cases.delay(domain, case_ids)
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
@@ -99,7 +104,6 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     case_updates = [
         CaseBlock(
             case_id=index_info.case_id,
-            version=V2,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
             }
@@ -118,9 +122,9 @@ def _rebuild_case_with_retries(self, case_id):
     - retry in 5 min if failure occurs after (default_retry_delay)
     - retry a total of 3 times
     """
-    from casexml.apps.case.cleanup import rebuild_case
+    from casexml.apps.case.cleanup import rebuild_case_from_forms
     try:
-        rebuild_case(case_id)
+        rebuild_case_from_forms(case_id)
     except (UnexpectedDeletedXForm, ResourceConflict) as exc:
         try:
             self.retry(exc=exc)

@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.util.quickcache import quickcache
 
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
@@ -170,7 +172,7 @@ class RegisterGenerator(object):
         return generator_collection.get_default_format()
 
 
-class Repeater(Document, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     base_doc = 'Repeater'
 
     domain = StringProperty()
@@ -210,10 +212,21 @@ class Repeater(Document, UnicodeMixIn):
         repeat_record.save()
         return repeat_record
 
+    def clear_caches(self):
+        if self.__class__ == Repeater:
+            cls = self.get_class_from_doc_type(self.doc_type)
+        else:
+            cls = self.__class__
+        # clear cls.by_domain (i.e. filtered by doc type)
+        Repeater.by_domain.clear(cls, self.domain)
+        # clear Repeater.by_domain (i.e. not filtered by doc type)
+        Repeater.by_domain.clear(Repeater, self.domain)
+
     @classmethod
+    @quickcache(['cls.__name__', 'domain'], timeout=5 * 60, memoize_timeout=10)
     def by_domain(cls, domain):
         key = [domain]
-        if repeater_types.has_key(cls.__name__):
+        if cls.__name__ in repeater_types:
             key.append(cls.__name__)
         elif cls.__name__ == Repeater.__name__:
             # In this case the wrap function delegates to the
@@ -234,18 +247,26 @@ class Repeater(Document, UnicodeMixIn):
         )
 
         return [cls.wrap(repeater_doc['doc']) for repeater_doc in raw_docs
-                if repeater_doc['doc']['doc_type'].replace(DELETED, '') in repeater_types]
+                if cls.get_class_from_doc_type(repeater_doc['doc']['doc_type'])]
 
     @classmethod
     def wrap(cls, data):
-        doc_type = data['doc_type'].replace(DELETED, '')
         if cls.__name__ == Repeater.__name__:
-            if doc_type in repeater_types:
-                return repeater_types[doc_type].wrap(data)
+            cls_ = cls.get_class_from_doc_type(data['doc_type'])
+            if cls_:
+                return cls_.wrap(data)
             else:
                 raise ResourceNotFound('Unknown repeater type: %s' % data)
         else:
             return super(Repeater, cls).wrap(data)
+
+    @staticmethod
+    def get_class_from_doc_type(doc_type):
+        doc_type = doc_type.replace(DELETED, '')
+        if doc_type in repeater_types:
+            return repeater_types[doc_type]
+        else:
+            return None
 
     def retire(self):
         if DELETED not in self['doc_type']:

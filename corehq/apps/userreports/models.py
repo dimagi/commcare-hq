@@ -140,6 +140,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 for name, filter in self.named_filters.items()}
 
     @property
+    @memoized
     def indicators(self):
         default_indicators = [IndicatorFactory.from_spec({
             "column_id": "doc_id",

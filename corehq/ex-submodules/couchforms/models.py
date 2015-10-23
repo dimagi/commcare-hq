@@ -6,6 +6,7 @@ import hashlib
 import logging
 import time
 from copy import copy
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from dimagi.utils.parsing import json_format_datetime
 from jsonobject.api import re_date
 from jsonobject.base import DefaultProperty
@@ -262,7 +263,11 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     def from_generic(cls, generic_xform):
         xform_json = generic_xform.to_json()
         xform_json.pop('metadata', None)
-        return cls.wrap(xform_json)
+        xform_json.pop('is_error', None)
+        xform_json.pop('is_duplicate', None)
+        xform_json.pop('is_deprecated', None)
+        xform_json.pop('is_archived', None)
+        return doc_types()[xform_json.get('doc_type', 'XFormInstance')].wrap(xform_json)
 
     def xpath(self, path):
         """
@@ -401,11 +406,32 @@ class XFormError(XFormInstance):
     problem = StringProperty()
     orig_id = StringProperty()
 
+    @classmethod
+    def from_xform_instance(cls, instance, error_message, with_new_id=False):
+        instance.__class__ = XFormError
+        instance.doc_type = 'XFormError'
+        instance.problem = error_message
+
+        if with_new_id:
+            new_id = XFormError.get_db().server.next_uuid()
+            instance.orig_id = instance._id
+            instance._id = new_id
+            if '_rev' in instance:
+                # clear the rev since we want to make a new doc
+                del instance['_rev']
+
+        return instance
+
     def save(self, *args, **kwargs):
         # we put this here, in case the doc hasn't been modified from an original 
         # XFormInstance we'll force the doc_type to change. 
         self["doc_type"] = "XFormError" 
         super(XFormError, self).save(*args, **kwargs)
+
+    def to_generic(self):
+        generic = super(XFormError, self).to_generic()
+        generic.is_error = True
+        return generic
 
         
 class XFormDuplicate(XFormError):
@@ -419,6 +445,11 @@ class XFormDuplicate(XFormError):
         self["doc_type"] = "XFormDuplicate" 
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
+
+    def to_generic(self):
+        generic = super(XFormDuplicate, self).to_generic()
+        generic.is_duplicate = True
+        return generic
 
 
 class XFormDeprecated(XFormError):
@@ -436,6 +467,11 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
+    def to_generic(self):
+        generic = super(XFormDeprecated, self).to_generic()
+        generic.is_deprecated = True
+        return generic
+
 
 class XFormArchived(XFormError):
     """
@@ -446,6 +482,11 @@ class XFormArchived(XFormError):
         # force set the doc type and call the right superclass
         self["doc_type"] = "XFormArchived"
         XFormInstance.save(self, *args, **kwargs)
+
+    def to_generic(self):
+        generic = super(XFormArchived, self).to_generic()
+        generic.is_archived = True
+        return generic
 
 
 class SubmissionErrorLog(XFormError):
@@ -472,13 +513,18 @@ class SubmissionErrorLog(XFormError):
         """
         Create an instance of this record from a submission body
         """
-        error = SubmissionErrorLog(received_on=datetime.datetime.utcnow(),
-                                   md5=hashlib.md5(instance).hexdigest(),
-                                   problem=message)
-        error.save()
-        error.put_attachment(instance, ATTACHMENT_NAME)
-        error.save()
-        return error
+        attachments_builder = CouchAttachmentsBuilder()
+        attachments_builder.add(
+            content=instance,
+            name=ATTACHMENT_NAME,
+            content_type='text/xml',
+        )
+        return SubmissionErrorLog(
+            received_on=datetime.datetime.utcnow(),
+            md5=hashlib.md5(instance).hexdigest(),
+            problem=message,
+            _attachments=attachments_builder.to_json(),
+        )
 
 
 class DefaultAuthContext(DocumentSchema):

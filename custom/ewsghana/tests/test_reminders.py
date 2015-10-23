@@ -17,7 +17,8 @@ from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 from custom.ewsghana.reminders.stockout_reminder import StockoutReminder
 from custom.ewsghana.reminders.third_soh_reminder import ThirdSOHReminder
 from custom.ewsghana.reminders.visit_website_reminder import VisitWebsiteReminder
-from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user
+from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, create_backend, \
+    set_sms_notifications
 from corehq.apps.sms.backend import test
 
 
@@ -48,6 +49,7 @@ class TestReminders(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
+        cls.sms_backend_mapping, cls.backend = create_backend()
         test.bootstrap(TEST_BACKEND, to_console=True)
         cls.loc1 = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=TEST_DOMAIN)
         cls.loc2 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN)
@@ -89,20 +91,22 @@ class TestReminders(TestCase):
             username='testwebuser',
             password='dummy',
             email='test@example.com',
-            user_data={'sms_notifications': True},
             location=cls.loc2,
             phone_number='5555'
         )
+
+        set_sms_notifications(TEST_DOMAIN, cls.web_user, True)
 
         cls.web_user2 = bootstrap_web_user(
             domain=TEST_DOMAIN,
             username='testwebuser2',
             password='dummy',
             email='test2@example.com',
-            user_data={'sms_notifications': True},
             location=cls.region,
             phone_number='6666'
         )
+
+        set_sms_notifications(TEST_DOMAIN, cls.web_user2, True)
 
         FacilityInCharge.objects.create(
             user_id=cls.in_charge.get_id,
@@ -151,6 +155,9 @@ class TestReminders(TestCase):
         cls.user3.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
+
+        cls.sms_backend_mapping.delete()
+        cls.backend.delete()
 
     def test_first_soh_reminder(self):
         FirstSOHReminder(TEST_DOMAIN).send()
@@ -219,9 +226,10 @@ class TestReminders(TestCase):
     def test_third_soh_reminder(self):
         ThirdSOHReminder(TEST_DOMAIN).send()
         smses = SMS.objects.all()
-        self.assertEqual(smses.count(), 1)
+        self.assertEqual(smses.count(), 2)
 
-        self.assertEqual(smses[0].text, SECOND_STOCK_ON_HAND_REMINDER % {'name': self.in_charge.full_name})
+        self.assertEqual(smses[0].text, SECOND_STOCK_ON_HAND_REMINDER % {'name': self.web_user2.full_name})
+        self.assertEqual(smses[1].text, SECOND_STOCK_ON_HAND_REMINDER % {'name': self.in_charge.full_name})
 
         create_stock_report(self.loc2, {
             'tp': 100
@@ -229,9 +237,13 @@ class TestReminders(TestCase):
         now = datetime.utcnow()
         ThirdSOHReminder(TEST_DOMAIN).send()
         smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 1)
+        self.assertEqual(smses.count(), 2)
         self.assertEqual(
             smses[0].text,
+            SECOND_INCOMPLETE_SOH_REMINDER % {'name': self.web_user2.full_name, 'products': 'Test Product2'}
+        )
+        self.assertEqual(
+            smses[1].text,
             SECOND_INCOMPLETE_SOH_REMINDER % {'name': self.in_charge.full_name, 'products': 'Test Product2'}
         )
 
@@ -270,7 +282,7 @@ class TestReminders(TestCase):
             }
         )
 
-        self.web_user.user_data['sms_notifications'] = False
+        set_sms_notifications(TEST_DOMAIN, self.web_user, False)
         self.web_user.save()
 
         now = datetime.utcnow()
@@ -298,7 +310,7 @@ class TestReminders(TestCase):
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 1)
 
-        self.web_user2.user_data['sms_notifications'] = False
+        set_sms_notifications(TEST_DOMAIN, self.web_user2, False)
         self.web_user2.save()
 
         now = datetime.utcnow()

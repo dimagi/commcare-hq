@@ -747,7 +747,7 @@ var DetailScreenConfig = (function () {
             this.properties = options.properties;
             this.childCaseTypes = options.childCaseTypes;
             this.fixtures = options.fixtures;
-            // The column key is used to retreive the columns from the spec and
+            // The column key is used to retrieve the columns from the spec and
             // as the name of the key in the data object that is sent to the
             // server on save.
             this.columnKey = options.columnKey;
@@ -764,6 +764,7 @@ var DetailScreenConfig = (function () {
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+            this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
             this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
             this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
             this.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -837,6 +838,9 @@ var DetailScreenConfig = (function () {
                 this.saveButton.fire('change');
             });
             this.useCaseTiles.subscribe(function(){
+                that.saveButton.fire('change');
+            });
+            this.persistCaseContext.subscribe(function(){
                 that.saveButton.fire('change');
             });
             this.persistTileOnForms.subscribe(function(){
@@ -935,6 +939,7 @@ var DetailScreenConfig = (function () {
                 ));
 
                 data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
+                data.persistCaseContext = this.persistCaseContext();
                 data.persistTileOnForms = this.persistTileOnForms();
                 data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 

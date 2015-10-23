@@ -128,6 +128,10 @@ class QuickCache(object):
         elif isinstance(value, (list, tuple)):
             return 'L' + self._hash(
                 ','.join(map(self._serialize_for_key, value)))
+        elif isinstance(value, dict):
+            return 'D' + self._hash(
+                ','.join(sorted(map(self._serialize_for_key, value.items())))
+            )
         elif isinstance(value, set):
             return 'S' + self._hash(
                 ','.join(sorted(map(self._serialize_for_key, value))))
@@ -290,7 +294,7 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
             CacheWithTimeout(
                 django_caches['locmem'],
                 timeout=memoize_timeout)]
-        if timeout != 0:
+        if timeout > 0:
             caches.append(
                 CacheWithTimeout(
                     django_caches['default'], timeout=timeout))

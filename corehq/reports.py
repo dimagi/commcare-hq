@@ -23,7 +23,6 @@ from corehq.apps.userreports.reports.view import (
 )
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
-from corehq.apps.reports.commconnect import system_overview
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
@@ -46,7 +45,6 @@ from corehq.apps.accounting.interface import (
     PaymentRecordInterface,
 )
 from corehq.apps.reports.standard.domains import OrgDomainStatsReport
-from corehq.apps.appstore.interfaces import CommCareExchangeAdvanced
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -122,13 +120,6 @@ def REPORTS(project):
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
     ])
-
-    project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
-    if project_can_use_inbound_sms:
-        messaging_reports.extend([
-            system_overview.SystemOverviewReport,
-            system_overview.SystemUsersReport,
-        ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
@@ -284,13 +275,6 @@ SMS_ADMIN_INTERFACES = (
     (_("SMS Billing Administration"), (
         SMSBillablesInterface,
         SMSGatewayFeeCriteriaInterface,
-    )),
-)
-
-
-APPSTORE_INTERFACES = (
-    (_('App Store'), (
-        CommCareExchangeAdvanced,
     )),
 )
 

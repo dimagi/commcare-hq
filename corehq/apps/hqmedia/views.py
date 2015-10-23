@@ -121,23 +121,6 @@ def choose_media(request, domain, app_id):
         raise Http404()
 
 
-@require_can_edit_apps
-def media_urls(request, domain, app_id):
-    # IS THIS USED?????
-    # I rewrote it so it actually produces _something_, but is it useful???
-    app = get_app(domain, app_id)
-    # todo remove get_media_references
-    multimedia = app.get_media_references()
-    pathUrls = {}
-    for section, types in multimedia['references'].items():
-        for media_type, info in types.items():
-            for m in info['maps']:
-                if m.get('path'):
-                    pathUrls[m['path']] = m
-
-    return HttpResponse(json.dumps(pathUrls))
-
-
 class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
     @property

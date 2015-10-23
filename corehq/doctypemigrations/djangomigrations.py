@@ -19,10 +19,15 @@ After you migrate/update your code and everything's working fine, run
 to delete the documents from the source db that have been copied to the target db
 
 
-If you're seeing this on a **production deploy** (or are just curious),
-you should read the full instructions here for the zero-downtime live swap:
+If you're seeing this on a **production deploy**
+take note of the full file path to this aborted release,
+something like "/home/cchq/www/production/releases/2015-10-16_19.37",
+and then follow the full instructions for the zero-downtime live swap:
 
-https://github.com/dimagi/commcare-hq/blob/master/corehq/doctypemigrations/README.md#run-the-doctype-migration.
+https://github.com/dimagi/commcare-hq/blob/master/corehq/doctypemigrations/README.md#run-the-doctype-migration
+
+Instead of the "current" release, use the path to this release.
+(This simply has the effect of running the process on up-to-date code.)
 """
 
 

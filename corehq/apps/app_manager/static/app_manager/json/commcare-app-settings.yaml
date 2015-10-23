@@ -166,3 +166,11 @@
    - 'Not Set'
   default: 'not_set'
   preview: true
+
+- id: use_grid_menus
+  name: Use Menu Grids
+  description: Display root menu as a grid instead of a list.
+  widget: bool
+  default: false
+  since: "2.24"
+  toggle: GRID_MENUS

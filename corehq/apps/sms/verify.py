@@ -70,13 +70,12 @@ def send_verification(domain, user, phone_number, logged_event):
         subevent.completed()
 
 
-def process_verification(phone_number, msg, backend_id=None):
-    v = VerifiedNumber.by_phone(phone_number, True)
-    if not v:
+def process_verification(v, msg):
+    if not v or v.verified:
         return
 
     logged_event = MessagingEvent.get_current_verification_event(
-        v.domain, v.owner_id, phone_number)
+        v.domain, v.owner_id, v.phone_number)
 
     if not logged_event:
         logged_event = MessagingEvent.create_verification_event(v.domain, v.owner)
@@ -99,24 +98,16 @@ def process_verification(phone_number, msg, backend_id=None):
     ):
         return
 
-    if backend_id:
-        backend = MobileBackend.load(backend_id)
-    else:
-        backend = MobileBackend.auto_load(phone_number, v.domain)
-
-    assert v.owner_doc_type == 'CommCareUser'
-    owner = CommCareUser.get(v.owner_id)
-
-    v = owner.save_verified_number(v.domain, phone_number, True, backend.name)
+    v.verified = True
+    v.save()
 
     logged_event.completed()
-
     subevent = logged_event.create_subevent_for_single_sms(
         v.owner_doc_type,
         v.owner_id
     )
 
-    with localize(owner.language):
+    with localize(v.owner.get_language_code()):
         send_sms_to_verified_number(v, _(CONFIRM),
             metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
         subevent.completed()

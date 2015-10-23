@@ -1,5 +1,5 @@
 from django.test import TestCase
-from casexml.apps.case.cleanup import rebuild_case
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.helpers import make_product
@@ -93,7 +93,7 @@ class RebuildStockStateTest(TestCase):
         """
         form_id = self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         case_id = self.case.case_id
-        rebuild_case(case_id)
+        rebuild_case_from_forms(case_id)
         case = CommCareCase.get(case_id)
         self.assertEqual(case.xform_ids, [form_id])
         self.assertEqual(case.actions[0].xform_id, form_id)

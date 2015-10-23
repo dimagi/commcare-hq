@@ -797,7 +797,7 @@ def child_locations_for_select2(request, domain):
         user_loc = user.get_sql_location(domain)
 
         if user_can_edit_any_location(user, request.project):
-            locs = SQLLocation.objects.filter(domain=domain)
+            locs = SQLLocation.objects.filter(domain=domain, is_archived=False)
         elif user_loc:
             locs = user_loc.get_descendants(include_self=True)
 

@@ -249,7 +249,6 @@ def new_update_case_properties():
                 "case_id": case["case_id"],
                 "update": case["update"],
                 "close": case["close"],
-                "version": V2,
             }
             if case.get("owner_id", None):
                 kwargs["owner_id"] = case["owner_id"]

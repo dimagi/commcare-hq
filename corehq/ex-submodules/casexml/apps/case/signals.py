@@ -4,9 +4,9 @@ from couchforms.signals import xform_archived, xform_unarchived
 
 def rebuild_form_cases(sender, xform, *args, **kwargs):
     from casexml.apps.case.xform import get_case_ids_from_form
-    from casexml.apps.case.cleanup import rebuild_case
+    from casexml.apps.case.cleanup import rebuild_case_from_forms
     for case_id in get_case_ids_from_form(xform):
-        rebuild_case(case_id)
+        rebuild_case_from_forms(case_id)
 
 
 xform_archived.connect(rebuild_form_cases)

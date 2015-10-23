@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from itertools import imap
 import json
-import logging
 import uuid
-from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
@@ -23,7 +21,6 @@ from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
-from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
@@ -66,24 +63,6 @@ for lang in all_langs:
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
 
-
-class DomainMigrations(DocumentSchema):
-    has_migrated_permissions = BooleanProperty(default=False)
-
-    def apply(self, domain):
-        if not self.has_migrated_permissions:
-            logging.info("Applying permissions migration to domain %s" % domain.name)
-            from corehq.apps.users.models import UserRole, WebUser
-            UserRole.init_domain_with_presets(domain.name)
-            for web_user in WebUser.by_domain(domain.name):
-                try:
-                    web_user.save()
-                except ResourceConflict:
-                    # web_user has already been saved by another thread in the last few seconds
-                    pass
-
-            self.has_migrated_permissions = True
-            domain.save()
 
 LICENSES = {
     'cc': 'Creative Commons Attribution (CC BY)',
@@ -130,11 +109,16 @@ class Deployment(DocumentSchema, UpdatableSchema):
 
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
+    use_fixtures = BooleanProperty(default=True)
+    use_user_location_as_owner = BooleanProperty(default=False)
     case_owner_id = StringProperty()
     case_type = StringProperty()
 
-    def is_active_and_valid(self):
-        return self.enabled and self.case_owner_id and self.case_type
+    def fixtures_are_active(self):
+        return self.enabled and self.use_fixtures
+
+    def config_is_valid(self):
+        return self.case_owner_id and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
@@ -323,8 +307,6 @@ class Domain(Document, SnapshotMixin):
     image_path = StringProperty()
     image_type = StringProperty()
 
-    migrations = SchemaProperty(DomainMigrations)
-
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
@@ -391,8 +373,6 @@ class Domain(Document, SnapshotMixin):
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
-        if self.get_id:
-            self.apply_migrations()
         if should_save:
             self.save()
         return self
@@ -434,9 +414,9 @@ class Domain(Document, SnapshotMixin):
     def field_by_prefix(cls, field, prefix='', is_approved=True):
         # unichr(0xfff8) is something close to the highest character available
         res = cls.view("domain/fields_by_prefix",
-                                    group=True,
-                                    startkey=[field, is_approved, prefix],
-                                    endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
+                       group=True,
+                       startkey=[field, is_approved, prefix],
+                       endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]
@@ -444,9 +424,6 @@ class Domain(Document, SnapshotMixin):
     @classmethod
     def get_by_field(cls, field, value, is_approved=True):
         return cls.view('domain/fields_by_prefix', key=[field, is_approved, value], reduce=False, include_docs=True).all()
-
-    def apply_migrations(self):
-        self.migrations.apply(self)
 
     def add(self, model_instance, is_active=True):
         """
@@ -603,7 +580,6 @@ class Domain(Document, SnapshotMixin):
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
             )
-            new_domain.migrations = DomainMigrations(has_migrated_permissions=True)
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
