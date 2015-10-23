@@ -615,6 +615,8 @@ class ProjectDataTab(UITab):
                 import EditDataInterfaceDispatcher
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
+            from corehq.apps.data_interfaces.views \
+                import CaseGroupCaseManagementView, ArchiveFormView
             if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
                 edit_section[0][1].append({
                     'title': ArchiveFormView.page_title,
@@ -917,8 +919,7 @@ class MessagingTab(UITab):
             )
 
         if self.couch_user.can_edit_data():
-            from corehq.apps.data_interfaces.views \
-                import CaseGroupListView, CaseGroupCaseManagementView, ArchiveFormView
+            from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
             contacts_urls.append({
                 'title': CaseGroupListView.page_title,
                 'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
