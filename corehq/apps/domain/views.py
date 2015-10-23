@@ -34,6 +34,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -404,7 +405,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def initial_call_center_case_owner(self):
         config = self.domain_object.call_center_config
         if config.use_user_location_as_owner:
-            return DomainGlobalSettingsForm.USE_LOCATIONS_CHOICE
+            if config.user_location_ancestor_level == 1:
+                return DomainGlobalSettingsForm.USE_PARENT_LOCATION_CHOICE
+            return DomainGlobalSettingsForm.USE_LOCATION_CHOICE
         return self.domain_object.call_center_config.case_owner_id
 
     @property
@@ -2486,6 +2489,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Feature Flags")
     template_name = 'domain/admin/feature_flags.html'
 
+    @use_bootstrap3
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)

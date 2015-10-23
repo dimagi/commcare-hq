@@ -20,9 +20,9 @@ def fast_distinct(model_cls, column):
     SELECT NULL WHERE EXISTS(SELECT * FROM {table} WHERE {column} IS NULL);
     """.format(column=column, table=table)
     from django.db import connection
-    cursor = connection.cursor()
-    cursor.execute(command)
-    result = []
-    for value, in cursor.fetchall():
-        result.append(value)
+    with connection.cursor() as cursor:
+        cursor.execute(command)
+        result = []
+        for value, in cursor.fetchall():
+            result.append(value)
     return result

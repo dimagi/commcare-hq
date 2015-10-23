@@ -253,7 +253,7 @@ class DocumentClassLookupTest(SimpleTestCase):
             self.assertEqual(model_class, get_document_class_by_name(model_name))
 
     def test_missing(self):
-        test_cases = [None, '', 'FooDocument']
+        test_cases = [None, 'FooDocument']
         for bad_model in test_cases:
             with self.assertRaises(DocumentClassNotFound):
                 get_document_class_by_name(bad_model)

@@ -4,7 +4,7 @@ import time
 from django.test.utils import override_settings
 from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
 from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
 from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams, CachedResponse

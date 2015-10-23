@@ -533,8 +533,8 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 def _get_terms_list(terms):
     """
     >>> terms = ["Sahora", "Kenar Paharpur", "   ", " Patear"]
-    >>> _get_filter_list(terms)
-    [["sahora"], ["kenar", "paharpur"], ["patear"]]
+    >>> _get_terms_list(terms)
+    [['sahora'], ['kenar', 'paharpur'], ['patear']]
     """
     return filter(None, [term.lower().split() for term in terms])
 
