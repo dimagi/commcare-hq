@@ -15,6 +15,10 @@ class TestFormArchiving(TestCase, TestFileMixin):
     file_path = ('data', 'xforms')
     root = os.path.dirname(__file__)
 
+    @classmethod
+    def setUpClass(self):
+        self.interface = XFormInterface('test-domain')
+
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_cases()
@@ -30,10 +34,10 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(0, len(xform.history))
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        XFormInterface.archive(xform, user='mr. librarian')
+        self.interface.archive(xform, user='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = XFormInterface.get_xform(xform.id)
+        xform = self.interface.get_xform(xform.id)
         self.assertEqual('XFormArchived', xform.doc_type)
 
         [archival] = xform.history
@@ -42,10 +46,10 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('mr. librarian', archival.user)
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        XFormInterface.unarchive(xform, user='mr. researcher')
+        self.interface.unarchive(xform, user='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = XFormInterface.get_xform(xform.id)
+        xform = self.interface.get_xform(xform.id)
         self.assertEqual('XFormInstance', xform.doc_type)
 
         [archival, restoration] = xform.history
@@ -78,10 +82,10 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(0, archive_counter)
         self.assertEqual(0, restore_counter)
 
-        XFormInterface.archive(xform)
+        self.interface.archive(xform)
         self.assertEqual(1, archive_counter)
         self.assertEqual(0, restore_counter)
 
-        XFormInterface.unarchive(xform)
+        self.interface.unarchive(xform)
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)

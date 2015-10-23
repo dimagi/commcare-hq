@@ -96,7 +96,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
             last_sync_token=sync_token,
             received_on=date
         )
-        attachments = XFormInterface.get_attachments(form.id)
+        attachments = XFormInterface(TEST_DOMAIN_NAME).get_attachments(form.id)
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
         [case] = cases
@@ -108,10 +108,10 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
                            sync_token=None, date=None):
         response, form, cases = self._do_submit(xml_data, dict_attachments, sync_token, date=date)
 
-        attachments = XFormInterface.get_attachments(form.id)
+        attachments = XFormInterface(TEST_DOMAIN_NAME).get_attachments(form.id)
         self.assertEqual(len(dict_attachments), len(attachments))
         for k, vstream in dict_attachments.items():
-            fileback = XFormInterface.get_attachment(form.id, k)
+            fileback = XFormInterface(TEST_DOMAIN_NAME).get_attachment(form.id, k)
             # rewind the pointer before comparing
             orig_attachment = vstream
             orig_attachment.seek(0)
@@ -151,22 +151,23 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
         self.assertEqual(
             self._calc_file_hash(single_attach),
-            hashlib.md5(XFormInterface.get_attachment(case.id, single_attach)).hexdigest()
+            hashlib.md5(XFormInterface(TEST_DOMAIN_NAME).get_attachment(case.id, single_attach)).hexdigest()
         )
 
     def testArchiveAfterAttach(self):
         single_attach = 'fruity_file'
+        interface = XFormInterface(TEST_DOMAIN_NAME)
         _, _, [case] = self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
         for xform_id in case.xform_ids:
-            form = XFormInterface.get_xform(xform_id)
+            form = interface.get_xform(xform_id)
 
-            XFormInterface.archive(form)
-            form = XFormInterface.get_xform(xform_id)
+            interface.archive(form)
+            form = interface.get_xform(xform_id)
             self.assertTrue(form.is_archived)
 
-            XFormInterface.unarchive(form)
-            form = XFormInterface.get_xform(xform_id)
+            interface.unarchive(form)
+            form = interface.get_xform(xform_id)
             self.assertFalse(form.is_archived)
 
     def testAttachRemoveSingle(self):

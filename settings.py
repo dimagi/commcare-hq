@@ -968,7 +968,7 @@ ENVIRONMENT_HOSTS = {
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
-PROCESSOR_BACKEND = 'couch'  # either couch or postgres
+TEST_SHOULD_USE_SQL_BACKEND = True
 
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.

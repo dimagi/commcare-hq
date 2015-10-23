@@ -2,7 +2,6 @@ import os
 from django.test import TestCase
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.form_processor.generic import GenericXFormInstance
 from couchforms.models import XFormInstance

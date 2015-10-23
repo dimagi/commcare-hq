@@ -22,6 +22,8 @@ class CaseProcessingErrorsTest(TestCase):
             </case>
         </data>
         """
+
+        domain = 'special_domain'
         submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
@@ -31,9 +33,9 @@ class CaseProcessingErrorsTest(TestCase):
                 <update><foo>bar</foo></update>
             </case>
             </data>""",
-            'my_very_special_domain',
+            domain,
         )
-        xform_errors = XFormInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
+        xform_errors = XFormInterface(domain).get_by_doc_type(domain, 'XFormError')
 
         related_errors = [xform_error for xform_error in xform_errors
                           if xform_error.id == 'abc-easy-as-123']
@@ -51,6 +53,7 @@ class CaseProcessingErrorsTest(TestCase):
         - the form is not saved under its original id
         - an XFormError is saved with the original id as orig_id
         """
+        domain = 'special_domain'
         submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
@@ -65,9 +68,9 @@ class CaseProcessingErrorsTest(TestCase):
                 </referral>
             </case>
             </data>""",
-            'my_very_special_domain',
+            domain,
         )
-        xform_errors = XFormInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
+        xform_errors = XFormInterface(domain).get_by_doc_type(domain, 'XFormError')
 
         related_errors = [xform_error for xform_error in xform_errors
                           if xform_error.id == 'abc-easy-as-456']

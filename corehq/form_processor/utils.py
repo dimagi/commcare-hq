@@ -1,6 +1,8 @@
+from django.conf import settings
 import functools
 import types
 import collections
+from corehq.toggles import USE_SQL_BACKEND
 
 from django.conf import settings
 
@@ -37,9 +39,10 @@ def to_generic(fn):
     return _inner
 
 
-def get_backend():
-    from .backends.couch import XFormCouch
-    return {
-        'sql': '',
-        'couch': XFormCouch,
-    }[settings.PROCESSOR_BACKEND]
+def should_use_sql_backend(domain):
+    toggle_to_check = USE_SQL_BACKEND
+    if settings.UNIT_TESTING:
+        override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
+        if override is not None:
+            return override
+    return toggle_to_check.enabled(domain)
