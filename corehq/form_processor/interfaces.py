@@ -1,13 +1,13 @@
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.dbaccessors import get_reverse_indices_for_case_id
 from casexml.apps.case.util import get_case_xform_ids, post_case_blocks
-from casexml.apps.phone.models import SyncLog
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.couch.database import iter_docs, safe_delete
+from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.models import SyncLog
 from couchforms.util import process_xform
 from couchforms.models import doc_types, XFormInstance, XFormError
 from couchforms.exceptions import UnexpectedDeletedXForm
@@ -41,6 +41,16 @@ class FormProcessorInterface(object):
     @staticmethod
     def get_attachment(xform_id, attachment_name):
         return XFormInstance.get_db().fetch_attachment(xform_id, attachment_name)
+
+    @classmethod
+    def get_attachments(cls, xform_id):
+        xform = cls._get_xform(xform_id)
+        return xform.attachments
+
+    @classmethod
+    def get_case_attachment(cls, case_id, attachment_name):
+        case = cls._get_case(case_id)
+        return case.get_attachment(attachment_name)
 
     @classmethod
     def archive_xform(cls, xform_generic, user=None):
@@ -82,6 +92,11 @@ class FormProcessorInterface(object):
             return cls._get_case(case_id)
         except ResourceNotFound:
             raise CaseNotFound
+
+    @classmethod
+    def case_to_xml(cls, case_id, version):
+        case = cls._get_case(case_id)
+        return case.to_xml(version)
 
     @staticmethod
     def _get_case(case_id):
@@ -186,29 +201,12 @@ class FormProcessorInterface(object):
         case = cls._get_case(case_generic.id)
         safe_hard_delete(case)
 
-    @classmethod
-    @unit_testing_only
-    def delete_all_cases(cls):
-        cls._delete_all(CommCareCase.get_db(), 'case/get_lite')
 
-    @classmethod
-    @unit_testing_only
-    def delete_all_xforms(cls):
-        cls._delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
-
-    @classmethod
-    @unit_testing_only
-    def delete_all_sync_logs(cls):
-        cls._delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
+class FormProcessorSyncLogInterface(object):
 
     @staticmethod
-    def _delete_all(db, viewname):
-        deleted = set()
-        for row in db.view(viewname, reduce=False):
-            doc_id = row['id']
-            if id not in deleted:
-                try:
-                    safe_delete(db, doc_id)
-                    deleted.add(doc_id)
-                except ResourceNotFound:
-                    pass
+    @to_generic
+    def create_from_generic(generic_sync_log, generic_attachment=None):
+        sync_log = SyncLog.from_generic(generic_sync_log)
+        sync_log.save()
+        return sync_log
