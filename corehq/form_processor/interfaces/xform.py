@@ -39,8 +39,3 @@ class XFormInterface(object):
     @to_generic
     def get_by_doc_type(cls, domain, doc_type):
         return cls.backend.get_by_doc_type(domain, doc_type)
-
-    @classmethod
-    @to_generic
-    def update_properties(cls, xform_generic, **properties):
-        return cls.backend.update_properties(xform_generic, **properties)

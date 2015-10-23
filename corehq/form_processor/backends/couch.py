@@ -67,12 +67,3 @@ class XFormCouch(object):
             reduce=False,
             include_docs=True,
         ).all()
-
-    @classmethod
-    def update_properties(cls, xform_generic, **properties):
-        xform = cls._get_xform(xform_generic.id)
-        for prop, value in properties.iteritems():
-            setattr(xform, prop, value)
-        xform.save()
-        return xform
-

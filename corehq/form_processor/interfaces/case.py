@@ -65,15 +65,6 @@ class CaseInterface(object):
     def get_reverse_indices(domain, case_id):
         return get_reverse_indices_for_case_id(domain, case_id)
 
-    @classmethod
-    @to_generic
-    def update_properties(cls, case_generic, **properties):
-        case = cls._get_case(case_generic.id)
-        for prop, value in properties.iteritems():
-            setattr(case, prop, value)
-        case.save()
-        return case
-
     @staticmethod
     def get_case_xform_ids_from_couch(case_id):
         return get_case_xform_ids(case_id)

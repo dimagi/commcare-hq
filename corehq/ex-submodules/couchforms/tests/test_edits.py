@@ -39,18 +39,14 @@ class EditFormTest(TestCase):
         xml_data1, xml_data2 = self._get_files()
         yesterday = datetime.utcnow() - timedelta(days=1)
 
-        xform = FormProcessorInterface.post_xform(xml_data1)
+        def process(form):
+            form.domain = self.domain
+            form.received_on = yesterday
+        xform = FormProcessorInterface.post_xform(xml_data1, process=process)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("", xform.form['vitals']['height'])
         self.assertEqual("other", xform.form['assessment']['categories'])
-
-        # post form back in time to simulate an edit
-        XFormInterface.update_properties(
-            xform,
-            domain=self.domain,
-            received_on=yesterday,
-        )
 
         xform = FormProcessorInterface.post_xform(xml_data2, domain=self.domain)
         self.assertEqual(self.ID, xform.id)
