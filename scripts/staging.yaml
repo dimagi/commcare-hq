@@ -77,10 +77,12 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches: []
+    branches:
+      - more-cleanup  # cz 10/23
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
   submodules/fluff-src:
-    branches: []
+    branches:
+      - config  # cz 10/23

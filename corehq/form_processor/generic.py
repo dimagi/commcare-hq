@@ -198,8 +198,8 @@ class GenericCommCareCase(JsonObject):
     @property
     @memoized
     def reverse_indices(self):
-        from corehq.form_processor.interfaces import FormProcessorInterface
-        return FormProcessorInterface.get_reverse_indices(self.domain, self.id)
+        from corehq.form_processor.interfaces.case import CaseInterface
+        return CaseInterface.get_reverse_indices(self.domain, self.id)
 
     def has_index(self, id):
         return id in (i.identifier for i in self.indices)

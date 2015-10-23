@@ -15,7 +15,10 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
-from corehq.form_processor.interfaces import FormProcessorInterface, FormProcessorSyncLogInterface
+from corehq.form_processor.interfaces.sync_log import SyncLogInterface
+from corehq.form_processor.interfaces.case import CaseInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.form_processor.generic import GenericSyncLog
 from corehq.util.test_utils import TestFileMixin
@@ -93,7 +96,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
             last_sync_token=sync_token,
             received_on=date
         )
-        attachments = FormProcessorInterface.get_attachments(form.id)
+        attachments = XFormInterface.get_attachments(form.id)
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
         [case] = cases
@@ -105,10 +108,10 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
                            sync_token=None, date=None):
         response, form, cases = self._do_submit(xml_data, dict_attachments, sync_token, date=date)
 
-        attachments = FormProcessorInterface.get_attachments(form.id)
+        attachments = XFormInterface.get_attachments(form.id)
         self.assertEqual(len(dict_attachments), len(attachments))
         for k, vstream in dict_attachments.items():
-            fileback = FormProcessorInterface.get_attachment(form.id, k)
+            fileback = XFormInterface.get_attachment(form.id, k)
             # rewind the pointer before comparing
             orig_attachment = vstream
             orig_attachment.seek(0)
@@ -148,7 +151,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
         self.assertEqual(
             self._calc_file_hash(single_attach),
-            hashlib.md5(FormProcessorInterface.get_attachment(case.id, single_attach)).hexdigest()
+            hashlib.md5(XFormInterface.get_attachment(case.id, single_attach)).hexdigest()
         )
 
     def testArchiveAfterAttach(self):
@@ -156,14 +159,14 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         _, _, [case] = self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
         for xform_id in case.xform_ids:
-            form = FormProcessorInterface.get_xform(xform_id)
+            form = XFormInterface.get_xform(xform_id)
 
-            FormProcessorInterface.archive_xform(form)
-            form = FormProcessorInterface.get_xform(xform_id)
+            XFormInterface.archive(form)
+            form = XFormInterface.get_xform(xform_id)
             self.assertTrue(form.is_archived)
 
-            FormProcessorInterface.unarchive_xform(form)
-            form = FormProcessorInterface.get_xform(xform_id)
+            XFormInterface.unarchive(form)
+            form = XFormInterface.get_xform(xform_id)
             self.assertFalse(form.is_archived)
 
     def testAttachRemoveSingle(self):
@@ -203,7 +206,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self._validateOTARestore(case.id, restore_attachments)
 
     def _validateOTARestore(self, case_id, restore_attachments):
-        case_xml = FormProcessorInterface.case_to_xml(case_id, V2)
+        case_xml = CaseInterface.to_xml(case_id, V2)
         root_node = lxml.etree.fromstring(case_xml)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))
@@ -238,7 +241,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             self.assertTrue(attach_name in case.case_attachments)
             self.assertEqual(
                 self._calc_file_hash(attach_name),
-                hashlib.md5(FormProcessorInterface.get_case_attachment(case.id, attach_name)).hexdigest()
+                hashlib.md5(CaseInterface.get_attachment(case.id, attach_name)).hexdigest()
             )
 
     def testUpdateWithNoNewAttachment(self):
@@ -270,7 +273,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
              if value.get('data')], [])
 
     def test_sync_log_invalidation_bug(self):
-        sync_log = FormProcessorSyncLogInterface.create_from_generic(
+        sync_log = SyncLogInterface.create_from_generic(
             GenericSyncLog(user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5')
         )
         _, _, [case] = self._doCreateCaseWithMultimedia()

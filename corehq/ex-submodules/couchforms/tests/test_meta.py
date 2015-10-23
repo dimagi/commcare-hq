@@ -5,7 +5,7 @@ from django.test import TestCase
 from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class TestMeta(TestCase):

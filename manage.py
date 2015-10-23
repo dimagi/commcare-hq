@@ -36,11 +36,13 @@ def _set_source_root(source_root):
     sys.path.insert(1, os.path.join(filedir, source_root))
 
 
-if __name__ == "__main__":
-
+def init_hq_python_path():
     _set_source_root_parent('submodules')
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
+
+if __name__ == "__main__":
+    init_hq_python_path()
 
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues

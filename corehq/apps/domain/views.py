@@ -405,7 +405,9 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def initial_call_center_case_owner(self):
         config = self.domain_object.call_center_config
         if config.use_user_location_as_owner:
-            return DomainGlobalSettingsForm.USE_LOCATIONS_CHOICE
+            if config.user_location_ancestor_level == 1:
+                return DomainGlobalSettingsForm.USE_PARENT_LOCATION_CHOICE
+            return DomainGlobalSettingsForm.USE_LOCATION_CHOICE
         return self.domain_object.call_center_config.case_owner_id
 
     @property
