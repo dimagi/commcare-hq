@@ -2,37 +2,13 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block head %}{{ block.super }}
-    {# needed for the sortable knockout of binding #}
-    {% include "imports/hq-oldstyle-js.html" %}
-    {# needed for the knockout typeahead binding #}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-    <style>
-        {% comment %}
-            This style gets applied to elements in this template:
-                apps/userreports/templates/userreports/partials/report_filter_configuration.html
-            This might not be imediately obvious because that snippet is injected into the page
-            through crispy forms.
-        {% endcomment %}
-        .table tbody + tbody.add-prop,
-        tbody.add-prop td
-        {
-            border-top-width: 0px;
-        }
-        legend div.subtext
-        {
-            {# These values are sort of arbitrary. Would be good to base off of less variables #}
-            line-height: 18px;
-            margin-bottom: 8px;
-        }
-    </style>
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    {# needed for the sortable and typeahead knockout of binding #}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
+
+{% block page_title %}{% trans "Configure Report Settings" %}{% endblock page_title %}
 
 {% block js-inline %}{{ block.super }}
     <script>
