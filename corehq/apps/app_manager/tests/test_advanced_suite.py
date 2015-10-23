@@ -49,6 +49,12 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         app = Application.wrap(self.get_json('suite-advanced'))
         self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
 
+    def test_advanced_suite_auto_select_case_mobile(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).auto_select_case = True
+        self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-case-mobile'), app.create_suite(),
+                                   './entry[2]')
+
     def test_advanced_suite_auto_select_user(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(

@@ -2,8 +2,7 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_PARTIAL_CONFIRM, SOH_BAD_FORMAT
-from custom.ilsgateway.tests import ILSTestScript
-from custom.ilsgateway.tests.handlers.utils import add_products
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript, add_products
 
 
 class ILSSoHTest(ILSTestScript):

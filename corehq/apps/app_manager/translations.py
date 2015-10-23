@@ -756,11 +756,11 @@ def has_at_least_one_translation(row, prefix, langs):
     """
     Returns true if the given row has at least one translation.
 
-    >>> has_at_least_one_translation(
+    >> has_at_least_one_translation(
         {'default_en': 'Name', 'case_property': 'name'}, 'default', ['en', 'fra']
     )
     true
-    >>> has_at_least_one_translation(
+    >> has_at_least_one_translation(
         {'case_property': 'name'}, 'default', ['en', 'fra']
     )
     false

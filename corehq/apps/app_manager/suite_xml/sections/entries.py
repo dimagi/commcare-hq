@@ -173,7 +173,8 @@ class EntriesHelper(object):
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
                     detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
                     detail_persistent=self.get_detail_persistent_attr(module, module, "case_short"),
-                    detail_inline=self.get_detail_inline_attr(module, module, "case_short")
+                    detail_inline=self.get_detail_inline_attr(module, module, "case_short"),
+                    autoselect=module.auto_select_case,
                 ))
                 if self.app.commtrack_enabled:
                     e.datums.append(SessionDatum(
@@ -358,6 +359,7 @@ class EntriesHelper(object):
                     ),
                     detail_persistent=detail_persistent,
                     detail_inline=detail_inline,
+                    autoselect=datum['module'].auto_select_case,
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
@@ -496,6 +498,7 @@ class EntriesHelper(object):
                 ),
                 detail_persistent=self.get_detail_persistent_attr(target_module_, target_module_, "case_short"),
                 detail_inline=self.get_detail_inline_attr(target_module_, target_module_, "case_short"),
+                autoselect=target_module_.auto_select_case,
             )
 
         datums = []

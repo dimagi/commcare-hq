@@ -5,7 +5,6 @@ from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id i
     get_supply_point_case_by_domain_external_id
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
-from custom.ewsghana.models import EWSExtension
 from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
     VerifiedNumber
 from custom.ewsghana.models import FacilityInCharge
@@ -16,7 +15,7 @@ from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser
 from custom.api.utils import apply_updates
-from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
+from custom.ewsghana.extensions import ews_product_extension
 from custom.logistics.api import ApiSyncObject
 from dimagi.ext.jsonobject import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from jsonobject import JsonObject
@@ -24,6 +23,7 @@ from custom.logistics.api import LogisticsEndpoint, APISynchronization, Migratio
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
 from corehq.apps.programs.models import Program as CouchProgram
+from custom.ewsghana.models import EWSExtension
 
 
 class Group(JsonObject):
@@ -164,6 +164,10 @@ class GhanaEndpoint(LogisticsEndpoint):
     def get_smsuser(self, user_id, **kwargs):
         response = requests.get(self.smsusers_url + str(user_id) + "/", auth=self._auth())
         return SMSUser(response.json())
+
+    def get_supply_point(self, supply_point_id):
+        response = requests.get(self.supply_point_url + str(supply_point_id) + "/", auth=self._auth())
+        return SupplyPoint(response.json())
 
     def get_daily_reports(self, **kwargs):
         meta, reports = self.get_objects(self.dailyreports_url, **kwargs)
@@ -702,7 +706,7 @@ class EWSApi(APISynchronization):
         return user
 
     def _reassign_number(self, user, connection):
-        v = VerifiedNumber.by_phone(connection.phone_number, include_pending=True)
+        v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
         if v.domain in self._get_logistics_domains():
             v.delete()
             self.save_verified_number(user, connection)
@@ -800,12 +804,18 @@ class EWSApi(APISynchronization):
             else:
                 couch_location = None
             if couch_location and couch_location.get_id != sms_user.location_id:
+                if not sms_user.get_id:
+                    sms_user.save()
                 sms_user.set_location(couch_location)
                 saved = True
 
         if not sms_user.get_id or (changed and not saved):
             sms_user.save()
         return sms_user
+
+    def balance_migration(self, date=None):
+        from custom.ewsghana.tasks import balance_migration_task
+        balance_migration_task.delay(self.domain, date)
 
 
 class EmailSettingsSync(object):
