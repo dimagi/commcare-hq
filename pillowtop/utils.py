@@ -77,11 +77,16 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
 
 
 def get_pillow_by_name(pillow_class_name, instantiate=True):
+    config = get_pillow_config_by_name(pillow_class_name)
+    return config.get_instance() if instantiate else config.get_class()
+
+
+def get_pillow_config_by_name(pillow_name):
     all_configs = get_all_pillow_configs()
     for config in all_configs:
-        if config.name == pillow_class_name:
-            return config.get_instance() if instantiate else config.get_class()
-    raise PillowNotFoundError(u'No pillow found with name {}'.format(pillow_class_name))
+        if config.name == pillow_name:
+            return config
+    raise PillowNotFoundError(u'No pillow found with name {}'.format(pillow_name))
 
 
 def force_seq_int(seq):
