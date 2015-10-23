@@ -97,15 +97,18 @@ def run_case_update_rules(now=None):
 @task(queue='background_queue', acks_late=True, ignore_result=True)
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
-    rules = AutomaticUpdateRule.by_domain(domain)
-    boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-    case_ids = AutomaticUpdateRule.get_case_ids(domain, boundary_date)
+    all_rules = AutomaticUpdateRule.by_domain(domain)
+    rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
-    for doc in iter_docs(CommCareCase.get_db(), case_ids):
-        case = CommCareCase.wrap(doc)
+    for case_type, rules in rules_by_case_type.iteritems():
+        boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
+        case_ids = AutomaticUpdateRule.get_case_ids(domain, boundary_date, case_type)
+
+        for doc in iter_docs(CommCareCase.get_db(), case_ids):
+            case = CommCareCase.wrap(doc)
+            for rule in rules:
+                rule.apply_rule(case, now)
+
         for rule in rules:
-            rule.apply_rule(case, now)
-
-    for rule in rules:
-        rule.last_run = now
-        rule.save()
+            rule.last_run = now
+            rule.save()

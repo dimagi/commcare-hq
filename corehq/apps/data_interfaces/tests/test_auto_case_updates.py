@@ -15,6 +15,8 @@ class AutomaticCaseUpdateTest(TestCase):
         self.domain = 'auto-update-test'
         self.rule = AutomaticUpdateRule(
             domain=self.domain,
+            name='test-rule',
+            case_type='test-case-type',
             active=True,
             server_modified_boundary=30,
         )
@@ -38,7 +40,7 @@ class AutomaticCaseUpdateTest(TestCase):
             ),
         ]
 
-        case = CommCareCase(domain=self.domain)
+        case = CommCareCase(domain=self.domain, type='test-case-type')
         case.save()
         self.case_id = case.get_id
 

@@ -12,6 +12,8 @@ ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 
 class AutomaticUpdateRule(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
+    name = models.CharField(max_length=126)
+    case_type = models.CharField(max_length=126)
     active = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
 
@@ -29,15 +31,26 @@ class AutomaticUpdateRule(models.Model):
         return AutomaticUpdateRule.objects.filter(**filters)
 
     @classmethod
+    def organize_rules_by_case_type(cls, rules):
+        rules_by_case_type = {}
+        for rule in rules:
+            if rule.case_type not in rules_by_case_type:
+                rules_by_case_type[rule.case_type] = [rule]
+            else:
+                rules_by_case_type[rule.case_type].append(rule)
+        return rules_by_case_type
+
+    @classmethod
     def get_boundary_date(cls, rules, now):
         min_boundary = min([rule.server_modified_boundary for rule in rules])
         date = now - timedelta(days=min_boundary)
         return date
 
     @classmethod
-    def get_case_ids(cls, domain, boundary_date):
+    def get_case_ids(cls, domain, boundary_date, case_type):
         query = (CaseES()
                  .domain(domain)
+                 .case_type(self.case_type)
                  .server_modified_range(lte=boundary_date)
                  .is_closed(closed=False)
                  .fields([]))
@@ -45,6 +58,9 @@ class AutomaticUpdateRule(models.Model):
         return results.doc_ids
 
     def rule_matches_case(self, case, now):
+        if case.type != self.case_type:
+            return False
+
         if (case.server_modified_on >
                 (now - timedelta(days=self.server_modified_boundary))):
             return False
