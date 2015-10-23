@@ -1,5 +1,5 @@
 from custom.ilsgateway.tanzania.reminders import SUPERVISION_CONFIRM_YES, SUPERVISION_CONFIRM_NO
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class TestSupervision(ILSTestScript):

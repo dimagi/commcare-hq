@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
 from corehq.form_processor.interfaces.processor import FormProcessorInterface

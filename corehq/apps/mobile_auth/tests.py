@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
-from casexml.apps.case.tests import check_xml_line_by_line
+from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload
 from dimagi.ext.jsonobject import HISTORICAL_DATETIME_FORMAT
 

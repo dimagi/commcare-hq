@@ -59,6 +59,12 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         return final_xml
 
     def _prepAttachments(self, new_attachments, removes=[]):
+        """
+        Returns:
+            attachment_block - An XML representation of the attachment
+            dict_attachments - A key-value dict where the key is the name and the value is a Stream of the
+            attachment
+        """
         attachment_block = ''.join([self._singleAttachBlock(x) for x in new_attachments] + [self._singleAttachRemoveBlock(x) for x in removes])
         dict_attachments = dict((MEDIA_FILES[attach_name], self._attachmentFileStream(attach_name)) for attach_name in new_attachments)
         return attachment_block, dict_attachments

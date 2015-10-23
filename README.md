@@ -53,7 +53,7 @@ individual project sites when necessary.
   - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
   - `brew install homebrew/versions/elasticsearch090` works well on mac
 + redis >= 3.0.3 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
-+ [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
++ [Jython][jython] 2.5.3 (optional, only needed for CloudCare), CloudCare will _not_ work on 2.7.0 which is the default download
 + For additional requirements necessary only if you want to modify the default
   JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
 
@@ -452,6 +452,67 @@ The tests for CloudCare currently expect the "Basic Tests" app from the
 Make sure to edit the selenium user credentials in `localsettings.py`.  Then run
 
     ./manage.py seltest
+
+## Javascript tests
+
+### Setup
+
+In order to run the javascript tests you'll need to install the required npm packages:
+
+```
+npm install
+```
+
+It's recommended to install grunt globally in order to use grunt from the command line:
+
+```
+npm install -g grunt
+npm install -g grunt-cli
+```
+
+In order for the tests to run the __development server needs to be running on port 8000__.
+
+### Running tests from the command line
+
+To run all javascript tests in all the apps:
+
+```
+grunt mocha
+```
+
+To run the javascript tests for a particular app run:
+
+```
+grunt mocha:<app_name> // (e.g. grunt mocha:app_manager)
+```
+
+To list all the apps available to run:
+
+```
+grunt list
+```
+
+### Running tests from the browser
+
+To run tests from the browser (useful for debugging) visit this url:
+
+```
+http://localhost:8000/mocha/<app_name>
+```
+
+Occasionally you will see an app specified with a `#`, like `app_manager#b3`. The string after `#` specifies that the test uses an alternate configuration. To visit this suite in the browser go to:
+
+```
+http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
+```
+
+### Continuous javascript testing
+
+By running the `watch` command, it's possible to continuously run the javascript test suite while developing 
+
+```
+grunt watch:<app_name>  // (e.g. grunt watch:app_manager)
+```
 
 ## Sniffer
 

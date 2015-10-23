@@ -1,5 +1,5 @@
 {% load i18n %}
-{% if multimedia %}
+{% if multimedia_state.has_media %}
     <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
     <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
     <p><a id="open_checker" target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
@@ -7,5 +7,5 @@
     <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
     {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True%}
 {% else %}
-    {% blocktrans %}No Multimedia{% endblocktrans %}
+    <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}

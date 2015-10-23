@@ -1,10 +1,14 @@
+import csv
+import os
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 import sys
+import tinys3
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
 from datetime import datetime, date, timedelta
+import time
 import json
 import requests
 import urllib
@@ -12,6 +16,7 @@ import KISSmetrics
 
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
+from corehq.apps.accounting.models import SoftwarePlanEdition
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -189,6 +194,20 @@ def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
 
 
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_user_subscriptions_on_hubspot(webuser, properties):
+    vid = _get_user_hubspot_id(webuser)
+    if vid:
+        _track_on_hubspot(webuser, {
+            'is_on_community_plan': properties[SoftwarePlanEdition.COMMUNITY],
+            'is_on_standard_plan': properties[SoftwarePlanEdition.STANDARD],
+            'is_on_pro_plan': properties[SoftwarePlanEdition.PRO],
+            'is_on_advanced_plan': properties[SoftwarePlanEdition.ADVANCED],
+            'is_on_enterprise_plan': properties[SoftwarePlanEdition.ENTERPRISE],
+            'is_on_pro_bono_or_discounted_plan': properties["Pro Bono"],
+        })
+
+
 def track_workflow(email, event, properties=None):
     """
     Record an event in KISSmetrics.
@@ -294,3 +313,49 @@ def track_periodic_data():
     _soft_assert(processing_time.seconds < 10, msg)
 
     _batch_track_on_hubspot(submit_json)
+    _track_periodic_data_on_kiss(submit_json)
+
+
+def _track_periodic_data_on_kiss(submit_json):
+    """
+    Transform periodic data into a format that is kissmetric submission friendly, then call identify
+    csv format: Identity (email), timestamp (epoch), Prop:<Property name>, etc...
+    :param submit_json: Example Json below, this function assumes
+    [
+      {
+        email: <>,
+        properties: [
+          {
+            property: <>,
+            value: <>
+          }, (can have more than one)
+        ]
+      }
+    ]
+    :return: none
+    """
+    periodic_data_list = json.loads(submit_json)
+
+    headers = [
+        'Identity',
+        'Timestamp',
+    ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
+
+    filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
+    with open(filename, 'wb') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(headers)
+
+        for webuser in periodic_data_list:
+            row = [
+                webuser['email'],
+                int(time.time())
+            ] + [prop['value'] for prop in webuser['properties']]
+            csvwriter.writerow(row)
+
+    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY:
+        s3_connection = tinys3.Connection(settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, tls=True)
+        f = open(filename, 'rb')
+        s3_connection.upload(filename, f, 'kiss-uploads')
+
+    os.remove(filename)

@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.api import incoming, send_sms
 from corehq.apps.sms.models import PhoneNumber

@@ -13,27 +13,41 @@ class _PillowAction(jsonobject.JsonObject):
 
 
 def apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
-    return _apply_pillow_actions_to_pillows(map(_PillowAction, pillow_actions),
-                                            pillows_by_group)
+    def coerce_to_pillow_action(obj):
+        if isinstance(obj, _PillowAction):
+            return obj
+        return _PillowAction(obj)
+
+    return _apply_pillow_actions_to_pillows(map(coerce_to_pillow_action, pillow_actions), pillows_by_group)
 
 
 def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
-    all_pillows_items = pillows_by_group.items()
-    selected_pillows = {pillow
-                        for _, pillows in all_pillows_items
-                        for pillow in pillows}
-    for action in pillow_actions:
-        for group_key, pillows in all_pillows_items:
-            for pillow in pillows:
-                if group_key in action.exclude_groups:
-                    selected_pillows.remove(pillow)
-                if group_key in action.include_groups:
-                    selected_pillows.add(pillow)
-                if pillow in action.exclude_pillows:
-                    selected_pillows.remove(pillow)
-                if pillow in action.include_pillows:
-                    selected_pillows.add(pillow)
-    return selected_pillows
+    def is_relevant(pillow_actions, pillow_config):
+        # the default is to include if nothing specified
+        relevant = True
+        # the order of these checks is important since the actions are resolved in the order they are passed in
+        for action in pillow_actions:
+            if pillow_config.section in action.include_groups:
+                assert pillow_config.section not in action.exclude_groups
+                relevant = True
+            if pillow_config.section in action.exclude_groups:
+                relevant = False
+            if pillow_config.class_name in action.include_pillows:
+                assert pillow_config.class_name not in action.exclude_pillows
+                relevant = True
+            if pillow_config.class_name in action.exclude_pillows:
+                relevant = False
+
+        return relevant
+
+    # this sucks, but not sure there's a better way to make it available to fabric
+    from manage import init_hq_python_path
+    init_hq_python_path()
+    from pillowtop.utils import get_pillow_configs_from_settings_dict
+    return filter(
+        lambda p_conf: is_relevant(pillow_actions, p_conf),
+        set(get_pillow_configs_from_settings_dict(pillows_by_group))
+    )
 
 
 def get_pillow_actions_for_env(env_name, base_path=None):
@@ -76,7 +90,7 @@ def get_pillows_for_env(env_name, pillows_by_group=None, base_path=None):
         from django.conf import settings
         pillows_by_group = settings.PILLOWTOPS
     pillow_actions = get_pillow_actions_for_env(env_name, base_path)
-    return _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group)
+    return apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group)
 
 
 def test_pillow_settings(env_name, pillows_by_group, extra_debugging=False):

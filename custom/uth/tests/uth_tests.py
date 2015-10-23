@@ -8,7 +8,7 @@ from corehq.apps.domain.shortcuts import create_domain
 import os
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.uth import utils
-from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from casexml.apps.case.models import CommCareCase
 from custom.uth.const import UTH_DOMAIN, UTH_CASE_TYPE
 from couchdbkit import MultipleResultsFound
