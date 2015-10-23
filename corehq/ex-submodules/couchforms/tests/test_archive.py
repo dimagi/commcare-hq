@@ -16,8 +16,8 @@ class TestFormArchiving(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     @classmethod
-    def setUpClass(self):
-        self.interface = XFormInterface('test-domain')
+    def setUpClass(cls):
+        cls.interface = XFormInterface('test-domain')
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
