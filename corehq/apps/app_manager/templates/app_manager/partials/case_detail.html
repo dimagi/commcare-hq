@@ -9,15 +9,15 @@
 </div>
 
 {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
-    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(); }">
+    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
         <i class="icon-plus"></i>
-        Add tab
+        {% trans "Add tab" %}
     </button>
 {% endif %}
 
 {% if request|toggle_enabled:"DETAIL_LIST_TAB_NODESETS" %}
     <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(true); }">
         <i class="icon-plus"></i>
-        Add data tab
+        {% trans "Add data tab" %}
     </button>
 {% endif %}

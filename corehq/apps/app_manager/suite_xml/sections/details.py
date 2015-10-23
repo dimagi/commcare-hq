@@ -67,7 +67,7 @@ class DetailContributor(SectionContributor):
         return r
 
     def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs=[], id=None, title=None, nodeset=None, start=0, end=None):
+                     tabs=None, id=None, title=None, nodeset=None, start=0, end=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
