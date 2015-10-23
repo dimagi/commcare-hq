@@ -55,8 +55,8 @@ branches:
   - report-builder-b3+requirements-update  # Simon 10/23
   - report-builder-b3 # Noah 10/20
   - requirements-update # Simon 10/21
-  - update-pillow # Jenny 10/20
   - update-pillow+two-factor-otp-only+requirements-update # Nick P 10/21
+  - update-pillow # Jenny 10/20
   - two-factor-otp-only+requirements-update # Nick P 10/21
   - two-factor-otp-only # j$ 10/2
   - b3-tf # ben 10/1
