@@ -60,6 +60,7 @@ branches:
   - b3-tf # ben 10/1
   - requirements-update # Simon 10/21
   - kafka-pillow # cz 10/22
+  - fab-pillows # cz 10/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -76,11 +77,11 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches: []
+    branches:
+      - split # cz 10/23
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
   submodules/fluff-src:
     branches: []
-
