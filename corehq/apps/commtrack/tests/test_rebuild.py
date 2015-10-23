@@ -110,6 +110,7 @@ class RebuildStockStateTest(TestCase):
         self.assertEqual(all_txns.count(), 1)
         case = CommCareCase.get(id=self.case.case_id)
         self.assertEqual(1, len(case.actions))
+        self.assertEqual([form_id], case.xform_ids)
 
         # change the value to 50
         edit_quantity = 50
@@ -124,3 +125,4 @@ class RebuildStockStateTest(TestCase):
         self.assertEqual(stock_state.stock_on_hand, edit_quantity)
         self.assertEqual(latest_txn.stock_on_hand, edit_quantity)
         self.assertEqual(all_txns.count(), 1)
+        self.assertEqual([form_id], case.xform_ids)

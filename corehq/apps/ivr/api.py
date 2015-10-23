@@ -37,7 +37,7 @@ def convert_media_path_to_hq_url(path, app):
         return None
     else:
         url_base = get_url_base()
-        return url_base + HQMediaMapItem.format_match_map(path, media_type=media.media_type, media_id=media.multimedia_id)["url"] + "foo.wav"
+        return url_base + media.url + "foo.wav"
 
 def validate_answer(answer, question):
     """

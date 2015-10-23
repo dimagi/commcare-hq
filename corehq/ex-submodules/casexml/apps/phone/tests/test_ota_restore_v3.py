@@ -5,7 +5,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import FileRestoreResponse

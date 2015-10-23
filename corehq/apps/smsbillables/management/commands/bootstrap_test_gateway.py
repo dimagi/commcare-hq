@@ -38,6 +38,8 @@ def bootstrap_test_gateway(apps):
 
     logger.info("Updated Test gateway fees.")
 
+bootstrap_test_gateway.__test__ = False
+
 
 class Command(LabelCommand):
     help = "bootstrap Test SMS backend gateway fees"

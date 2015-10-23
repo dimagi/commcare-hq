@@ -2,7 +2,7 @@ from django.test import TestCase
 from couchforms.models import DefaultAuthContext
 import os
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class AuthTest(TestCase):
