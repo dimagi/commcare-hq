@@ -146,7 +146,9 @@ if 'rosetta' in settings.INSTALLED_APPS:
 
 #django-staticfiles static/ url mapper
 if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^mocha/', include('corehq.apps.mocha.urls')),
+    )
     urlpatterns += patterns('django.contrib.staticfiles.views',
         url(r'^static/(?P<path>.*)$', 'serve'),
     )
-

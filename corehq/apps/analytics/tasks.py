@@ -16,6 +16,7 @@ import KISSmetrics
 
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
+from corehq.apps.accounting.models import SoftwarePlanEdition
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -191,6 +192,20 @@ def track_app_from_template_on_hubspot(webuser, cookies, meta):
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_user_subscriptions_on_hubspot(webuser, properties):
+    vid = _get_user_hubspot_id(webuser)
+    if vid:
+        _track_on_hubspot(webuser, {
+            'is_on_community_plan': properties[SoftwarePlanEdition.COMMUNITY],
+            'is_on_standard_plan': properties[SoftwarePlanEdition.STANDARD],
+            'is_on_pro_plan': properties[SoftwarePlanEdition.PRO],
+            'is_on_advanced_plan': properties[SoftwarePlanEdition.ADVANCED],
+            'is_on_enterprise_plan': properties[SoftwarePlanEdition.ENTERPRISE],
+            'is_on_pro_bono_or_discounted_plan': properties["Pro Bono"],
+        })
 
 
 def track_workflow(email, event, properties=None):

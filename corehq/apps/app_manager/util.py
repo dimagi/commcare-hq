@@ -459,7 +459,7 @@ def version_key(ver):
     >>> version_key('2.9B')
     Traceback (most recent call last):
       ...
-    ValueError: invalid literal for int() ...
+    ValueError: invalid literal for int() with base 10: '9B'
 
     """
     padded = ver + '.0.0'
