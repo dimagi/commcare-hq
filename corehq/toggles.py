@@ -236,6 +236,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
 )
 
 GRAPH_CREATION = StaticToggle(
