@@ -493,7 +493,7 @@ var DetailScreenConfig = (function () {
                 isTab: false,
                 hasNodeset: false,
                 nodeset: "",
-            }
+            };
             _.defaults(this.original, tabDefaults);
             _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
 
