@@ -148,9 +148,6 @@
         {% if request.project.is_snapshot %}
             <div class="alert alert-info">
                 {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
-                {% if request.project.copied_from.organization %}
-                    by <a href="{% url "orgs_landing" request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
-                {% endif %}
             </div>
         {% endif %}
 
