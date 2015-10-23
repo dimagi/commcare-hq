@@ -77,11 +77,16 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
 
 
 def get_pillow_by_name(pillow_class_name, instantiate=True):
+    config = get_pillow_config_by_name(pillow_class_name)
+    return config.get_instance() if instantiate else config.get_class()
+
+
+def get_pillow_config_by_name(pillow_name):
     all_configs = get_all_pillow_configs()
     for config in all_configs:
-        if config.name == pillow_class_name:
-            return config.get_instance() if instantiate else config.get_class()
-    raise PillowNotFoundError(u'No pillow found with name {}'.format(pillow_class_name))
+        if config.name == pillow_name:
+            return config
+    raise PillowNotFoundError(u'No pillow found with name {}'.format(pillow_name))
 
 
 def force_seq_int(seq):
@@ -95,23 +100,17 @@ def force_seq_int(seq):
 
 
 def get_all_pillows_json():
-    pillow_classes = get_all_pillow_classes()
-    return [get_pillow_json(pillow_class) for pillow_class in pillow_classes]
+    pillow_configs = get_all_pillow_configs()
+    return [get_pillow_json(pillow_config) for pillow_config in pillow_configs]
 
 
-def get_pillow_json(pillow_or_class_or_name):
+def get_pillow_json(pillow_config):
+    assert isinstance(pillow_config, PillowConfig)
     from pillowtop.listener import AliasedElasticPillow
 
-    def instantiate(pillow_class):
-        return pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow) else pillow_class()
-
-    if isinstance(pillow_or_class_or_name, basestring):
-        pillow_class = get_pillow_by_name(pillow_or_class_or_name, instantiate=False)
-        pillow = instantiate(pillow_class)
-    elif inspect.isclass(pillow_or_class_or_name):
-        pillow = instantiate(pillow_or_class_or_name)
-    else:
-        pillow = pillow_or_class_or_name
+    pillow_class = pillow_config.get_class()
+    pillow = (pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow)
+              else pillow_config.get_instance())
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.get('timestamp')
@@ -132,10 +131,15 @@ def get_pillow_json(pillow_or_class_or_name):
         'name': pillow.__class__.__name__,
         'seq': force_seq_int(checkpoint.get('seq')),
         'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
-        'db_seq': force_seq_int(pillow.get_db_seq()),
+        'db_seq': force_seq_int(_get_current_seq_for_pillow(pillow)),
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
+
+
+def _get_current_seq_for_pillow(pillow):
+    if hasattr(pillow, 'couch_db'):
+        return get_current_seq(pillow.couch_db)
 
 
 def get_current_seq(couch_db):
