@@ -8,7 +8,8 @@ from corehq.apps.domain.models import Domain
 
 from corehq.apps.users.models import WebUser
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import TEST_CASE_ID, BaseCaseMultimediaTest, delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.test_multimedia import BaseCaseMultimediaTest, TEST_CASE_ID
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 
 

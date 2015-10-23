@@ -73,59 +73,41 @@ class _FormType(object):
         if app_id:
             self.app_id = app_id
         else:
+            form = get_form_analytics_metadata(domain, xmlns, app_id)
             try:
-                form = get_form_analytics_metadata(domain, xmlns, app_id)
                 self.app_id = form['app']['id']
-            except Exception:
+            except KeyError:
                 self.app_id = {}
 
-    @property
-    @memoized
-    def _metadata(self):
-        try:
-            return get_form_analytics_metadata(self.domain, self.xmlns, self.app_id)
-        except Exception, e:
-            _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'), notify_admins=True)
-            _assert(False, 'Failed on domain: {} | xmlns: {} | app_id: {} | error: {}'.format(
-                self.domain,
-                self.xmlns,
-                self.app_id,
-                e,
-            ))
-            return None
-
     def get_label(self):
-        if self._metadata:
-            form = self._metadata
-            if form.get('app'):
-                langs = form['app']['langs']
-                app_name = form['app']['name']
-                module_name = form_name = None
-                if form.get('is_user_registration'):
-                    form_name = "User Registration"
-                    title = "%s > %s" % (app_name, form_name)
-                else:
-                    for lang in langs + form['module']['name'].keys():
-                        module_name = form['module']['name'].get(lang)
-                        if module_name is not None:
-                            break
-                    for lang in langs + form['form']['name'].keys():
-                        form_name = form['form']['name'].get(lang)
-                        if form_name is not None:
-                            break
-                    if module_name is None:
-                        module_name = "?"
-                    if form_name is None:
-                        form_name = "?"
-                    title = "%s > %s > %s" % (app_name, module_name, form_name)
-
-                if form.get('app_deleted'):
-                    title += ' [Deleted]'
-                if form.get('duplicate'):
-                    title += " [Multiple Forms]"
-                name = title
+        form = get_form_analytics_metadata(self.domain, self.xmlns, self.app_id)
+        if form and form.get('app'):
+            langs = form['app']['langs']
+            app_name = form['app']['name']
+            module_name = form_name = None
+            if form.get('is_user_registration'):
+                form_name = "User Registration"
+                title = "%s > %s" % (app_name, form_name)
             else:
-                name = self.xmlns
+                for lang in langs + form['module']['name'].keys():
+                    module_name = form['module']['name'].get(lang)
+                    if module_name is not None:
+                        break
+                for lang in langs + form['form']['name'].keys():
+                    form_name = form['form']['name'].get(lang)
+                    if form_name is not None:
+                        break
+                if module_name is None:
+                    module_name = "?"
+                if form_name is None:
+                    form_name = "?"
+                title = "%s > %s > %s" % (app_name, module_name, form_name)
+
+            if form.get('app_deleted'):
+                title += ' [Deleted]'
+            if form.get('duplicate'):
+                title += " [Multiple Forms]"
+            name = title
         else:
             name = self.xmlns
         return name

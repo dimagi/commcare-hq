@@ -16,7 +16,7 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        from casexml.apps.case.tests import delete_all_xforms
+        from casexml.apps.case.tests.util import delete_all_xforms
         delete_all_xforms()
         cls.now = datetime.datetime.utcnow()
         cls._60_days = datetime.timedelta(days=60)

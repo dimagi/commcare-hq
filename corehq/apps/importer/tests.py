@@ -1,6 +1,6 @@
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
