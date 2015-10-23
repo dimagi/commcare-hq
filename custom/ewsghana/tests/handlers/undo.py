@@ -1,5 +1,6 @@
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.models import StockState
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from couchforms.models import XFormInstance
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN
 
@@ -7,14 +8,7 @@ from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN
 class TestUndo(EWSScriptTest):
 
     def tearDown(self):
-        for xform in XFormInstance.view(
-            'reports_forms/all_forms',
-            startkey=['submission', TEST_DOMAIN],
-            endkey=['submission', TEST_DOMAIN, {}],
-            reduce=False,
-            include_docs=True,
-        ):
-            xform.delete()
+        FormProcessorTestUtils.delete_all_xforms(TEST_DOMAIN, self.user1._id)
 
     def test_no_product_reports(self):
         a = """

@@ -93,34 +93,6 @@ LOCALE_PATHS = (
 # collectstatic
 BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
 
-BOWER_INSTALLED_APPS = (
-    'jquery#1.11.1',
-    'jquery-1.7.1-legacy=jquery#1.7.1',
-    'underscore#1.6.0',
-    'underscore-legacy=underscore#1.4.4',
-    'jquery-form#3.45.0',
-    'jquery.cookie#1.4.1',
-    'jquery-timeago#1.2.0',
-    'jquery-ui#1.11.4',
-    'angular#1.4.4',
-    'angular-route#1.4.4',
-    'angular-resource#1.4.4',
-    'angular-message-format#1.4.4',
-    'angular-messages#1.4.4',
-    'angular-cookies#1.4.4',
-    'angular-sanitize#1.4.4',
-    'knockout-2.3.0-legacy=knockout.js#2.3',
-    'knockout#3.1.0',
-    'select2-3.4.5-legacy=select2#3.4.5',
-    'less#1.7.3',
-    'backbone#0.9.1',
-    'bootstrap-daterangepicker#2.1.13',
-    'd3#3.1.5',
-    'nvd3#1.1.10-beta',
-    'datatables#1.10.9',
-    'datatables-bootstrap3#0.1',
-)
-
 BOWER_PATH = '/usr/local/bin/bower'
 
 STATICFILES_FINDERS = (
@@ -219,7 +191,6 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djangobower',
-    'djkombu',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -237,7 +208,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'rosetta',
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
@@ -410,11 +380,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_prbac',
     'djcelery',
     'djtables',
-    'djkombu',
     'gunicorn',
     'langcodes',
     'luna',
-    'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -1038,6 +1006,8 @@ if DEBUG:
             'luna',
         )
 
+    INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
+
     import warnings
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
@@ -1206,6 +1176,42 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+
+### BOWER APPS ###
+BOWER_CORE_APPS = (
+    'jquery#1.11.1',
+    'jquery-1.7.1-legacy=jquery#1.7.1',
+    'underscore#1.6.0',
+    'underscore-legacy=underscore#1.4.4',
+    'jquery-form#3.45.0',
+    'jquery.cookie#1.4.1',
+    'jquery-timeago#1.2.0',
+    'angular#1.4.4',
+    'angular-route#1.4.4',
+    'angular-resource#1.4.4',
+    'angular-message-format#1.4.4',
+    'angular-messages#1.4.4',
+    'angular-cookies#1.4.4',
+    'angular-sanitize#1.4.4',
+    'knockout-2.3.0-legacy=knockout.js#2.3',
+    'knockout#3.1.0',
+    'select2-3.4.5-legacy=select2#3.4.5',
+    'less#1.7.3',
+    'backbone#0.9.1',
+    'bootstrap-daterangepicker#2.1.13',
+)
+
+BOWER_TEST_APPS = (
+    'chai#3.3.0',
+    'mocha#2.3.3',
+    'sinon=http://sinonjs.org/releases/sinon-1.17.0.js',
+    'angular-mocks#1.4.4',
+)
+
+BOWER_INSTALLED_APPS = BOWER_CORE_APPS
+
+if DEBUG:
+    BOWER_INSTALLED_APPS += BOWER_TEST_APPS
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = SharedDriveConfiguration(

@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class TestNamespaces(TestCase):

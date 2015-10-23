@@ -138,15 +138,11 @@ urlpatterns = patterns('',
 if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
-# django rosetta support if configured
-if 'rosetta' in settings.INSTALLED_APPS:
-    urlpatterns += patterns('',
-        url(r'^rosetta/', include('rosetta.urls')),
-    )
-
 #django-staticfiles static/ url mapper
 if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^mocha/', include('corehq.apps.mocha.urls')),
+    )
     urlpatterns += patterns('django.contrib.staticfiles.views',
         url(r'^static/(?P<path>.*)$', 'serve'),
     )
-

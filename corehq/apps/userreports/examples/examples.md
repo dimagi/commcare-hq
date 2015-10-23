@@ -3,8 +3,6 @@ UCR Examples
 
 This page lists some common examples/design patterns for user configurable reports and CommCare HQ data models.
 
-Arguments listed inside `"[brackets]"` are meant to be replaced.
-
 # Data source filters
 
 The following are example filter expressions that are common in data sources.
@@ -23,7 +21,7 @@ The following filters apply to data sources built on top of forms.
         "property_name": "xmlns"
     },
     "operator": "eq",
-    "property_value": "[http://openrosa.org/formdesigner/my-registration-form]"
+    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
 }
 ```
 ### Filter by a set of form types using the XMLNS
@@ -37,9 +35,9 @@ The following filters apply to data sources built on top of forms.
     },
     "operator": "in",
     "property_value": [
-        "[http://openrosa.org/formdesigner/my-registration-form]",
-        "[http://openrosa.org/formdesigner/my-follow-up-form]",
-        "[http://openrosa.org/formdesigner/my-close-form]"
+        "http://openrosa.org/formdesigner/my-registration-form",
+        "http://openrosa.org/formdesigner/my-follow-up-form",
+        "http://openrosa.org/formdesigner/my-close-form"
     ]
 }
 ```
@@ -58,7 +56,7 @@ The following filters apply to data sources built on top of cases.
         "property_name": "type"
     },
     "operator": "eq",
-    "property_value": "[child]"
+    "property_value": "child"
 }
 ```
 ## Filter by multiple case types
@@ -71,7 +69,7 @@ The following filters apply to data sources built on top of cases.
         "property_name": "type"
     },
     "operator": "in",
-    "property_value": ["[child]", "[mother]"]
+    "property_value": ["child", "mother"]
 }
 ```
 
@@ -105,7 +103,7 @@ NOTE: this should be changed to use boolean datatypes once those exist.
     },
     "column_id": "count",
     "datatype": "integer",
-    "display_name": "[count of forms]"
+    "display_name": "count of forms"
 }
 ```
 
