@@ -26,23 +26,32 @@ class CallCenterLocationOwnerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Create domain
         cls.domain = create_domain(TEST_DOMAIN)
-        user = CommCareUser.create(TEST_DOMAIN, 'user1', '***')
-        cls.user_id = user.user_id
         cls.domain.call_center_config = cls.get_call_center_config()
         cls.domain.save()
 
+        # Create user
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***')
+
+        # Create locations
         LocationType.objects.get_or_create(
             domain=cls.domain.name,
             name=LOCATION_TYPE,
+        )
+        cls.root_location = make_loc(
+            'root_loc', type=LOCATION_TYPE, domain=TEST_DOMAIN
+        )
+        cls.child_location = make_loc(
+            'child_loc', type=LOCATION_TYPE, domain=TEST_DOMAIN, parent=cls.root_location
+        )
+        cls.grandchild_location = make_loc(
+            'grandchild_loc', type=LOCATION_TYPE, domain=TEST_DOMAIN, parent=cls.child_location
         )
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-
-    def setUp(self):
-        self.user = CommCareUser.get(self.user_id)
 
     def tearDown(self):
         delete_all_cases()
@@ -51,23 +60,20 @@ class CallCenterLocationOwnerTest(TestCase):
         self.user.unset_location()
         self.user.save()
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
-        self.assertEqual(case.owner_id, "")
+        self.assertCallCenterCaseOwner("")
 
     def test_location_sync(self):
-        location = make_loc('loc', type=LOCATION_TYPE, domain=TEST_DOMAIN)
-        self.user.set_location(location)
+        self.user.set_location(self.root_location)
         self.user.save()
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
-        self.assertEqual(case.owner_id, location._id)
+        self.assertCallCenterCaseOwner(self.root_location._id)
 
     def test_location_change_sync(self):
-        location = make_loc('loc', type=LOCATION_TYPE, domain=TEST_DOMAIN)
-        self.user.set_location(location)
+        self.user.set_location(self.root_location)
         self.user.save()
-        location_2 = make_loc('loc2', type=LOCATION_TYPE, domain=TEST_DOMAIN)
-        self.user.set_location(location_2)
+        self.user.set_location(self.child_location)
         self.user.save()
+        self.assertCallCenterCaseOwner(self.child_location._id)
 
+    def assertCallCenterCaseOwner(self, owner_id):
         case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
-        self.assertEqual(case.owner_id, location_2._id)
+        self.assertEqual(case.owner_id, owner_id)
