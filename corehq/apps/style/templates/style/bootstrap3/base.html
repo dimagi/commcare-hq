@@ -68,15 +68,29 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_daterangepicker %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+        {% endcompress %}
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'jquery-form/jquery.form.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'underscore/underscore.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'jquery.cookie/jquery.cookie.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/hq_extensions.jquery.js' %}"></script>
+        {% include "style/includes/bootstrap3/core_libraries.html" %}
         {% endcompress %}
+
+        {# Up here because if daterangepicker is called from within a form widget, #}
+        {# the javascript requiring the config file is run before js-inline #}
+        {% if request.use_daterangepicker %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
 
         {% if formdesigner %}
         <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
@@ -272,14 +286,7 @@
 
         {# always use angular js by default, as this will be our core library #}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'angular/angular.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'angular-route/angular-route.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'angular-resource/angular-resource.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'angular-message-format/angular-message-format.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'angular-messages/angular-messages.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'angular-cookies/angular-cookies.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>
+        {% include "style/includes/bootstrap3/angular.html" %}
         {% endcompress %}
 
         {% if request.use_select2 %}

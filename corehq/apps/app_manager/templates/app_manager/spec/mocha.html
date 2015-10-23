@@ -1,0 +1,10 @@
+{% extends "mocha/bootstrap2/base.html" %}
+{% load hq_shared_tags %}
+
+{% block dependencies %}
+<script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
+{% endblock %}
+
+{% block mocha_tests %}
+<script src="{% static 'app_manager/spec/form_workflow_spec.js' %}"></script>
+{% endblock %}

@@ -5,6 +5,7 @@ import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
+from corehq.form_processor.utils import ToFromGeneric
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
@@ -108,7 +109,7 @@ LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
 
 
-class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
+class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn, ToFromGeneric):
     date = DateTimeProperty()
     # domain = StringProperty()
     user_id = StringProperty()
@@ -149,6 +150,13 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
+
+    @classmethod
+    def from_generic(cls, generic_sync_log):
+        sync_log = cls.wrap(generic_sync_log.to_json())
+        if generic_sync_log.id:
+            sync_log['_id'] = generic_sync_log.id
+        return sync_log
 
     def case_count(self):
         """
@@ -248,6 +256,13 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
+
+    def to_generic(self):
+        from corehq.form_processor.generic import GenericSyncLog
+        generic = GenericSyncLog(self.to_json())
+        if '_id' in self:
+            generic.id = self['_id']
+        return generic
 
     def case_count(self):
         return len(self.cases_on_phone)
@@ -563,6 +578,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def get_footprint_of_cases_on_phone(self):
         return list(self.case_ids_on_phone)
 
+    @property
+    def primary_case_ids(self):
+        return self.case_ids_on_phone - self.dependent_case_ids_on_phone
+
     def prune_case(self, case_id):
         """
         Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
@@ -651,6 +670,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         class CaseUpdate(object):
             def __init__(self, case_id):
                 self.case_id = case_id
+                self.was_live_previously = True
                 self.final_owner_id = None
                 self.is_closed = None
                 self.indices_to_add = []
@@ -676,6 +696,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 all_updates[case._id] = CaseUpdate(case_id=case._id)
 
             case_update = all_updates[case._id]
+            case_update.was_live_previously = case._id in self.primary_case_ids
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
                 logger.debug('{}: {}'.format(case._id, action.action_type))
@@ -707,8 +728,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if case_update.is_closed:
                 return False
             elif case_update.final_owner_id is None:
-                # we likely didn't touch owner_id so assume it was previously live and still is
-                return True
+                # we likely didn't touch owner_id so just default to whatever it was previously
+                return case_update.was_live_previously
             else:
                 return case_update.final_owner_id in owner_ids
 
@@ -741,9 +762,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.prune_case(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
-                    for index in case_update.indices_to_add:
+                    for index in update.indices_to_add:
                         _add_index(index)
-                    for index in case_update.indices_to_delete:
+                    for index in update.indices_to_delete:
                         self.index_tree.delete_index(index.case_id, index.identifier)
                 made_changes = True
 

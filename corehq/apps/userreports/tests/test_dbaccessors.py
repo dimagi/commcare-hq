@@ -5,6 +5,8 @@ from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, \
 
 
 class DBAccessorsTest(TestCase):
+    maxDiff = None
+
     @classmethod
     def setUpClass(cls):
         cls.data_source_id = 'd36c7c934cb84725899cca9a0ef96e3a'

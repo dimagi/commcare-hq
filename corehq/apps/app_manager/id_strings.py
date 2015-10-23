@@ -262,6 +262,10 @@ def detail(module, detail_type):
     return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
+def persistent_case_context_detail(module):
+    return detail(module, 'persistent_case_context')
+
+
 def fixture_detail(module):
     return detail(module, 'fixture_select')
 

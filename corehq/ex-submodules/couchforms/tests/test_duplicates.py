@@ -2,6 +2,7 @@ import os
 from django.test import TestCase
 
 from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.form_processor.generic import GenericXFormInstance
 from couchforms.models import XFormInstance
 
@@ -10,7 +11,7 @@ class DuplicateFormTest(TestCase):
     ID = '7H46J37FGH3'
 
     def tearDown(self):
-        FormProcessorInterface.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms()
 
     def _get_file(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "duplicate.xml")
