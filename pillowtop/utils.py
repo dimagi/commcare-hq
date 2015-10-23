@@ -100,23 +100,17 @@ def force_seq_int(seq):
 
 
 def get_all_pillows_json():
-    pillow_classes = get_all_pillow_classes()
-    return [get_pillow_json(pillow_class) for pillow_class in pillow_classes]
+    pillow_configs = get_all_pillow_configs()
+    return [get_pillow_json(pillow_config) for pillow_config in pillow_configs]
 
 
-def get_pillow_json(pillow_or_class_or_name):
+def get_pillow_json(pillow_config):
+    assert isinstance(pillow_config, PillowConfig)
     from pillowtop.listener import AliasedElasticPillow
 
-    def instantiate(pillow_class):
-        return pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow) else pillow_class()
-
-    if isinstance(pillow_or_class_or_name, basestring):
-        pillow_class = get_pillow_by_name(pillow_or_class_or_name, instantiate=False)
-        pillow = instantiate(pillow_class)
-    elif inspect.isclass(pillow_or_class_or_name):
-        pillow = instantiate(pillow_or_class_or_name)
-    else:
-        pillow = pillow_or_class_or_name
+    pillow_class = pillow_config.get_class()
+    pillow = (pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow)
+              else pillow_config.get_instance())
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.get('timestamp')
