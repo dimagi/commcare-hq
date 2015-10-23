@@ -4,6 +4,7 @@ from django.core.cache.backends.locmem import LocMemCache
 from django.test import SimpleTestCase
 import time
 from corehq.util.quickcache import quickcache, TieredCache, SkippableQuickCache, skippable_quickcache
+from dimagi.utils import make_uuid
 
 BUFFER = []
 
@@ -283,3 +284,19 @@ class QuickcacheTest(SimpleTestCase):
             @skippable_quickcache(['name'], skip_arg='missing')
             def by_name(name):
                 return 'VALUE'
+
+    def test_dict_arg(self):
+        @quickcache(['dct'])
+        def return_random(dct):
+            return make_uuid()
+        value_1 = return_random({})
+        self.assertEqual(return_random({}), value_1)
+
+        value_2 = return_random({'abc': 123})
+        self.assertEqual(return_random({'abc': 123}), value_2)
+        self.assertNotEqual(value_2, value_1)
+
+        value_3 = return_random({'abc': 123, 'def': 456})
+        self.assertEqual(return_random({'abc': 123, 'def': 456}), value_3)
+        self.assertNotEqual(value_3, value_1)
+        self.assertNotEqual(value_3, value_2)

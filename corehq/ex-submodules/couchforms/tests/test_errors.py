@@ -1,7 +1,7 @@
 from django.test import TestCase
 from corehq.apps.receiverwrapper import submit_form_locally
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.xform import XFormInterface
 
 
 class CaseProcessingErrorsTest(TestCase):
@@ -33,7 +33,7 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             'my_very_special_domain',
         )
-        xform_errors = FormProcessorInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
+        xform_errors = XFormInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
 
         related_errors = [xform_error for xform_error in xform_errors
                           if xform_error.id == 'abc-easy-as-123']
@@ -67,7 +67,7 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             'my_very_special_domain',
         )
-        xform_errors = FormProcessorInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
+        xform_errors = XFormInterface.get_by_doc_type('my_very_special_domain', 'XFormError')
 
         related_errors = [xform_error for xform_error in xform_errors
                           if xform_error.id == 'abc-easy-as-456']
