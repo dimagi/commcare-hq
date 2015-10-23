@@ -8,6 +8,7 @@ from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
 from inspect import isclass
 from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processor import LoggingProcessor
 
 
 class FakePillow(BasicPillow):
@@ -39,9 +40,7 @@ class PillowImportTestCase(SimpleTestCase):
 
 
 class FakeConstructedPillow(ConstructedPillow):
-
-    def processor(self, change, do_set_checkpoint=True):
-        pass
+    pass
 
 
 def make_fake_constructed_pillow():
@@ -49,7 +48,8 @@ def make_fake_constructed_pillow():
     pillow = FakeConstructedPillow(
         document_store=fake_dao,
         checkpoint=PillowCheckpoint(fake_dao, 'fake-constructed-pillow'),
-        change_feed=RandomChangeFeed(10)
+        change_feed=RandomChangeFeed(10),
+        processor=LoggingProcessor(),
     )
     return pillow
 
