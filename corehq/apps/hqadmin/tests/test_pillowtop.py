@@ -42,18 +42,18 @@ class TestPillowTopFiltering(SimpleTestCase):
         }
 
     def test_no_blacklist_items(self):
-        expected_pillows = {u'corehq.pillows.case.CasePillow',
-                            u'corehq.pillows.xform.XFormPillow',
-                            u'corehq.pillows.domain.DomainPillow',
-                            u'corehq.pillows.user.UserPillow',
-                            u'corehq.pillows.application.AppPillow',
-                            u'corehq.pillows.group.GroupPillow',
-                            u'corehq.pillows.sms.SMSPillow',
-                            u'corehq.pillows.user.GroupToUserPillow',
-                            u'corehq.pillows.user.UnknownUsersPillow',
-                            u'corehq.pillows.sofabed.FormDataPillow',
-                            u'corehq.pillows.sofabed.CaseDataPillow',
-                            u'corehq.pillows.log.PhoneLogPillow',
+        expected_pillows = {'corehq.pillows.case.CasePillow',
+                            'corehq.pillows.xform.XFormPillow',
+                            'corehq.pillows.domain.DomainPillow',
+                            'corehq.pillows.user.UserPillow',
+                            'corehq.pillows.application.AppPillow',
+                            'corehq.pillows.group.GroupPillow',
+                            'corehq.pillows.sms.SMSPillow',
+                            'corehq.pillows.user.GroupToUserPillow',
+                            'corehq.pillows.user.UnknownUsersPillow',
+                            'corehq.pillows.sofabed.FormDataPillow',
+                            'corehq.pillows.sofabed.CaseDataPillow',
+                            'corehq.pillows.log.PhoneLogPillow',
                             'pillowtop.tests.FakeConstructedPillow',
                             }
 
@@ -61,17 +61,17 @@ class TestPillowTopFiltering(SimpleTestCase):
             [], self.pillowtops))
 
     def test_with_blacklist_items(self):
-        expected_pillows = {u'corehq.pillows.case.CasePillow',
-                            u'corehq.pillows.xform.XFormPillow',
-                            u'corehq.pillows.domain.DomainPillow',
-                            u'corehq.pillows.user.UserPillow',
-                            u'corehq.pillows.application.AppPillow',
-                            u'corehq.pillows.group.GroupPillow',
-                            u'corehq.pillows.sms.SMSPillow',
-                            u'corehq.pillows.user.GroupToUserPillow',
-                            u'corehq.pillows.user.UnknownUsersPillow',
-                            u'corehq.pillows.sofabed.FormDataPillow',
-                            u'corehq.pillows.sofabed.CaseDataPillow',
+        expected_pillows = {'corehq.pillows.case.CasePillow',
+                            'corehq.pillows.xform.XFormPillow',
+                            'corehq.pillows.domain.DomainPillow',
+                            'corehq.pillows.user.UserPillow',
+                            'corehq.pillows.application.AppPillow',
+                            'corehq.pillows.group.GroupPillow',
+                            'corehq.pillows.sms.SMSPillow',
+                            'corehq.pillows.user.GroupToUserPillow',
+                            'corehq.pillows.user.UnknownUsersPillow',
+                            'corehq.pillows.sofabed.FormDataPillow',
+                            'corehq.pillows.sofabed.CaseDataPillow',
                             'pillowtop.tests.FakeConstructedPillow',
                             }
 
