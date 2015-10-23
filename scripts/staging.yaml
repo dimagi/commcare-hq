@@ -49,7 +49,6 @@ branches:
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
   - sync-history-email # Cal 9/22
-  - shadow-modules # Jenny 10/6
   - b3-tf+exports-ui-changes+report-builder-b3 # Biyeun 10/23
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3+requirements-update  # Simon 10/23
