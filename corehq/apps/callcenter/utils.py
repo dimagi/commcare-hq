@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -118,15 +117,19 @@ def sync_user_case(commcare_user, case_type, owner_id):
 def sync_call_center_user_case(user):
     domain = user.project
     if domain and domain.call_center_config.enabled:
-        owner_id = domain.call_center_config.case_owner_id
-        if domain.call_center_config.use_user_location_as_owner:
-            owner_id = user.location_id
+        owner_id = call_center_case_owner(user, domain.call_center_config)
+        sync_user_case(user, domain.call_center_config.case_type, owner_id)
 
-        sync_user_case(
-            user,
-            domain.call_center_config.case_type,
-            owner_id
-        )
+
+def call_center_case_owner(user, config):
+    """
+    Return the appropriate owner id for the given users call center case.
+    """
+    if not config.use_user_location_as_owner:
+        owner_id = config.case_owner_id
+    else:
+        owner_id = user.location_id
+    return owner_id
 
 
 def sync_usercase(user):
