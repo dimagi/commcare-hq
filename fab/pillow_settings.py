@@ -31,12 +31,12 @@ def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
         # the order of these checks is important since the actions are resolved in the order they are passed in
         for action in pillow_actions:
             if pillow_config.section in action.include_groups:
-                assert not pillow_config.section in action.exclude_groups
+                assert pillow_config.section not in action.exclude_groups
                 relevant = True
             if pillow_config.section in action.exclude_groups:
                 relevant = False
             if pillow_config.class_name in action.include_pillows:
-                assert not pillow_config.class_name in action.exclude_pillows
+                assert pillow_config.class_name not in action.exclude_pillows
                 relevant = True
             if pillow_config.class_name in action.exclude_pillows:
                 relevant = False
