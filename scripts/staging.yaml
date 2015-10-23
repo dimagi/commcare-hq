@@ -83,4 +83,5 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   submodules/fluff-src:
-    branches: []
+    branches:
+      - config
