@@ -4,8 +4,6 @@ import types
 import collections
 from corehq.toggles import USE_SQL_BACKEND
 
-from django.conf import settings
-
 
 class ToFromGeneric(object):
     def to_generic(self):
