@@ -9,8 +9,9 @@ from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.form_processor.interfaces.case import CaseInterface
 from corehq.util.test_utils import TestFileMixin
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.generic import GenericCommCareCase, GenericCommCareCaseIndex
 
 
@@ -135,7 +136,7 @@ class CaseBugTest(TestCase, TestFileMixin):
                       update={'foo': 'bar'}).as_xml()
         ])
         self.assertEqual('bar', case.foo)
-        case = FormProcessorInterface.update_case_properties(case, doc_type=deleted_doc_type)
+        case = CaseInterface.update_properties(case, doc_type=deleted_doc_type)
 
         self.assertEqual(deleted_doc_type, case.doc_type)
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
@@ -152,13 +153,13 @@ class TestCaseHierarchy(TestCase):
         delete_all_cases()
 
     def test_normal_index(self):
-        cp = FormProcessorInterface.create_case_from_generic(GenericCommCareCase(
+        cp = CaseInterface.create_from_generic(GenericCommCareCase(
             id='parent',
             name='parent',
             type='parent',
         ))
 
-        FormProcessorInterface.create_case_from_generic(GenericCommCareCase(
+        CaseInterface.create_from_generic(GenericCommCareCase(
             id='child',
             name='child',
             type='child',
@@ -174,7 +175,7 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases']))
 
     def test_recursive_indexes(self):
-        c = FormProcessorInterface.create_case_from_generic(GenericCommCareCase(
+        c = CaseInterface.create_from_generic(GenericCommCareCase(
             id='infinite-recursion',
             name='infinite_recursion',
             type='bug',

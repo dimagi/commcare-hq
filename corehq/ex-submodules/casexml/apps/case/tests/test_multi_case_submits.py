@@ -1,8 +1,9 @@
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
-from corehq.form_processor.interfaces import FormProcessorInterface
+from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from corehq.form_processor.interfaces.case import CaseInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -40,6 +41,6 @@ class MultiCaseTest(TestCase):
 
     def _check_ids(self, form, cases):
         for case in cases:
-            ids = FormProcessorInterface.get_case_xform_ids_from_couch(case.id)
+            ids = CaseInterface.get_case_xform_ids_from_couch(case.id)
             self.assertEqual(1, len(ids))
             self.assertEqual(form._id, ids[0])
