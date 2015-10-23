@@ -314,7 +314,7 @@ class CaseFactory(object):
         return self.create_or_update_cases([case_structure], form_extras)
 
     def create_or_update_cases(self, case_structures, form_extras=None):
-        from corehq.form_processor.interfaces.processor import CaseInterface
+        from corehq.form_processor.interfaces.case import CaseInterface
 
         def _get_case_block(substructure):
             return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
