@@ -11,7 +11,7 @@ from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.update_strategy import _action_sort_key_function, ActionsUpdateStrategy
 from casexml.apps.case.util import primary_actions
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.models import XFormInstance
 
 

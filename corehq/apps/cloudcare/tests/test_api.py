@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_cases
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.xml import date_to_xml_string
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain

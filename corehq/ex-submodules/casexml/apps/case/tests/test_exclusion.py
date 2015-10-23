@@ -4,7 +4,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

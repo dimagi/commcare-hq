@@ -2,7 +2,7 @@ from django.test import TestCase
 from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 import os
 import json
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from ..config import DocumentTransform

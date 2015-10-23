@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
 
