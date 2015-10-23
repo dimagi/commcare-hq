@@ -32,6 +32,13 @@ class TestPillowTopFiltering(SimpleTestCase):
             'phonelog': [
                 'corehq.pillows.log.PhoneLogPillow',
             ],
+            'newstyle': [
+                {
+                    'name': 'FakeConstructedPillowName',
+                    'class': 'pillowtop.tests.FakeConstructedPillow',
+                    'instance': 'pillowtop.tests.make_fake_constructed_pillow'
+                }
+            ]
         }
 
     def test_no_blacklist_items(self):
@@ -46,7 +53,9 @@ class TestPillowTopFiltering(SimpleTestCase):
                             u'corehq.pillows.user.UnknownUsersPillow',
                             u'corehq.pillows.sofabed.FormDataPillow',
                             u'corehq.pillows.sofabed.CaseDataPillow',
-                            u'corehq.pillows.log.PhoneLogPillow'}
+                            u'corehq.pillows.log.PhoneLogPillow',
+                            'pillowtop.tests.FakeConstructedPillow',
+                            }
 
         self.assertEqual(expected_pillows, apply_pillow_actions_to_pillows(
             [], self.pillowtops))
@@ -62,7 +71,9 @@ class TestPillowTopFiltering(SimpleTestCase):
                             u'corehq.pillows.user.GroupToUserPillow',
                             u'corehq.pillows.user.UnknownUsersPillow',
                             u'corehq.pillows.sofabed.FormDataPillow',
-                            u'corehq.pillows.sofabed.CaseDataPillow'}
+                            u'corehq.pillows.sofabed.CaseDataPillow',
+                            'pillowtop.tests.FakeConstructedPillow',
+                            }
 
         self.assertEqual(expected_pillows, apply_pillow_actions_to_pillows(
             [{'exclude_groups': ['phonelog']}], self.pillowtops))
