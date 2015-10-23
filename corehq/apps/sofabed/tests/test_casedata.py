@@ -4,7 +4,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq.apps.sofabed.models import CaseData, CASE_NAME_LEN
 from datetime import date, datetime, timedelta
-from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from corehq.form_processor.interfaces import FormProcessorInterface
 
 TEST_DOMAIN = 'test'

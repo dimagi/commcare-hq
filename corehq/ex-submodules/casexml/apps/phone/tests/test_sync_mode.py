@@ -649,6 +649,48 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # before this test was written, the case stayed on the sync log even though it was closed
         self.assertFalse(sync_log.phone_is_holding_case(case_id))
 
+    def test_index_chain_with_closed_parents(self):
+        grandparent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'close': True}
+        )
+        parent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'close': True},
+            indices=[CaseIndex(
+                grandparent,
+                relationship=CHILD_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+            )]
+        )
+        child = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            indices=[CaseIndex(
+                parent,
+                relationship=CHILD_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+            )]
+        )
+        parent_ref = CommCareCaseIndex(
+            identifier=PARENT_TYPE,
+            referenced_type=PARENT_TYPE,
+            referenced_id=parent.case_id)
+        grandparent_ref = CommCareCaseIndex(
+            identifier=PARENT_TYPE,
+            referenced_type=PARENT_TYPE,
+            referenced_id=grandparent.case_id)
+
+        self.factory.create_or_update_cases([child])
+
+        self._testUpdate(
+            self.sync_log._id,
+            {child.case_id: [parent_ref],
+             parent.case_id: [grandparent_ref],
+             grandparent.case_id: []},
+            {parent.case_id: [grandparent.case_id],
+             grandparent.case_id: []}
+        )
+
 
 class ChangingOwnershipTest(SyncBaseTest):
 

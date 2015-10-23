@@ -12,6 +12,7 @@ from couchforms.models import XFormInstance, \
     UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 
 
 class EditFormTest(TestCase):
@@ -19,7 +20,7 @@ class EditFormTest(TestCase):
     domain = 'test-form-edits'
 
     def tearDown(self):
-        FormProcessorInterface.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms()
 
     def _get_files(self):
         first_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "original.xml")

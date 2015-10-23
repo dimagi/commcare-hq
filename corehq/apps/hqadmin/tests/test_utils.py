@@ -68,7 +68,7 @@ class TestPillowCheckpointSeqStore(TestCase):
         self.pillow.set_checkpoint({'seq': seq})
         pillow_seq_store()
 
-        store = PillowCheckpointSeqStore.get_by_pillow_name('corehq.apps.hqadmin.tests.test_utils.DummyPillow')
+        store = PillowCheckpointSeqStore.get_by_pillow_name('DummyPillow')
         self.assertIsNotNone(store)
 
         store = PillowCheckpointSeqStore.get_by_pillow_name('DummyPillowThatDoesNotExist')
