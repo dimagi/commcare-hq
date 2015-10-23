@@ -9,7 +9,6 @@ from corehq.apps.accounting.utils import get_active_reminders_by_domain_name
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.orgs.models import Organization
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.const import USER_DATE_FORMAT
@@ -305,14 +304,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Organization menu and corresponding reports are hidden on downgrade.
         """
-        if self.domain.organization:
-            org = Organization.get_by_name(self.domain.organization)
-            return self._fmt_alert(
-                _("You will lose access to cross-project reports for the "
-                  "organization '%(org_name)s'.") %
-                {
-                    'org_name': org.title,
-                })
+        return None
 
     @property
     @memoized
