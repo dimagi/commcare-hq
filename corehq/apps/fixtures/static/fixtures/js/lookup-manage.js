@@ -318,7 +318,7 @@ $(function () {
             var dataType = makeDataType({
                 tag: "",
                 fields: ko.observableArray([]),
-                is_global: false
+                is_global: true
             }, self);
             dataType.editing(true);
             self.data_types.push(dataType);
