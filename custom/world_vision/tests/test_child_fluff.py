@@ -1,6 +1,6 @@
 from datetime import date
 from custom.world_vision.models import WorldVisionChildFluff
-from custom.world_vision.tests import WVTest
+from custom.world_vision.tests.utils import WVTest
 
 
 class TestChildFluff(WVTest):

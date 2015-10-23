@@ -27,7 +27,7 @@ def get_user_docs_by_username(usernames):
     from corehq.apps.users.models import CouchUser
     return [res['doc'] for res in CouchUser.get_db().view(
         'users/by_username',
-        keys=usernames,
+        keys=list(usernames),
         reduce=False,
         include_docs=True,
     ).all()]

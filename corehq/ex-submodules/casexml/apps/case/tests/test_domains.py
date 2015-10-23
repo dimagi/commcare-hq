@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test.utils import override_settings
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.case import CaseInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 ALICE_XML = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/D95E58BD-A228-414F-83E6-EEE716F0B3AD">
@@ -77,7 +78,7 @@ class DomainTest(TestCase):
         response, form, cases = FormProcessorInterface.submit_form_locally(EVE_XML, EVE_DOMAIN)
 
         self.assertIn('IllegalCaseId', response.content)
-        self.assertFalse(hasattr(FormProcessorInterface.get_case(case.id), 'plan_to_buy_gun'))
+        self.assertFalse(hasattr(CaseInterface.get_case(case.id), 'plan_to_buy_gun'))
 
         FormProcessorInterface.submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
-        self.assertEqual(FormProcessorInterface.get_case(case.id).plan_to_buy_gun, 'no')
+        self.assertEqual(CaseInterface.get_case(case.id).plan_to_buy_gun, 'no')

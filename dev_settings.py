@@ -18,7 +18,8 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.locations.models', 'Location'),
-    ('corehq.apps.users.models', ('CommCareUser', 'CommCareCase')),
+    ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
+    ('casexml.apps.case.models', 'CommCareCase'),
     ('couchforms.models', 'XFormInstance'),
 
     # Data querying utils

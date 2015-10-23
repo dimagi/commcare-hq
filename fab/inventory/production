@@ -46,6 +46,3 @@ hqes0.internal.commcarehq.org elasticsearch_node_name=hqes0
 
 [shared_dir_host]
 hqdb0.internal.commcarehq.org
-
-[sentry]
-logs.internal.dimagi.com

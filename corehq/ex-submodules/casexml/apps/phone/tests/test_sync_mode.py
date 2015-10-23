@@ -10,7 +10,8 @@ from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, gen
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
@@ -388,7 +389,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         form, _ = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
-        FormProcessorInterface.archive_xform(form)
+        XFormInterface.archive(form)
         assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id, purge_restore_cache=True)
 
     @run_with_all_restore_configs
@@ -648,6 +649,48 @@ class SyncTokenUpdateTest(SyncBaseTest):
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         # before this test was written, the case stayed on the sync log even though it was closed
         self.assertFalse(sync_log.phone_is_holding_case(case_id))
+
+    def test_index_chain_with_closed_parents(self):
+        grandparent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'close': True}
+        )
+        parent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'close': True},
+            indices=[CaseIndex(
+                grandparent,
+                relationship=CHILD_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+            )]
+        )
+        child = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            indices=[CaseIndex(
+                parent,
+                relationship=CHILD_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+            )]
+        )
+        parent_ref = CommCareCaseIndex(
+            identifier=PARENT_TYPE,
+            referenced_type=PARENT_TYPE,
+            referenced_id=parent.case_id)
+        grandparent_ref = CommCareCaseIndex(
+            identifier=PARENT_TYPE,
+            referenced_type=PARENT_TYPE,
+            referenced_id=grandparent.case_id)
+
+        self.factory.create_or_update_cases([child])
+
+        self._testUpdate(
+            self.sync_log._id,
+            {child.case_id: [parent_ref],
+             parent.case_id: [grandparent_ref],
+             grandparent.case_id: []},
+            {parent.case_id: [grandparent.case_id],
+             grandparent.case_id: []}
+        )
 
 
 class ChangingOwnershipTest(SyncBaseTest):
@@ -1290,7 +1333,7 @@ class MultiUserSyncTest(SyncBaseTest):
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
-            form = FormProcessorInterface.get_xform(form.id)
+            form = XFormInterface.get_xform(form.id)
             self.assertFalse(hasattr(form, "problem"))
             synclog_from_restore_payload(
                 generate_restore_payload(self.project, self.user, version="2.0")

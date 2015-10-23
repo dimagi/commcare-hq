@@ -1,7 +1,0 @@
-*.pyc
-.project
-.pydevproject
-*localsettings.py
-*~
-*.db
-.coverage

@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.dates import utcnow_sans_milliseconds
@@ -194,14 +195,14 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
 
 @unit_testing_only
 def delete_all_cases():
-    FormProcessorInterface.delete_all_cases()
+    FormProcessorTestUtils.delete_all_cases()
 
 
 @unit_testing_only
 def delete_all_xforms():
-    FormProcessorInterface.delete_all_xforms()
+    FormProcessorTestUtils.delete_all_xforms()
 
 
 @unit_testing_only
 def delete_all_sync_logs():
-    FormProcessorInterface.delete_all_sync_logs()
+    FormProcessorTestUtils.delete_all_sync_logs()
