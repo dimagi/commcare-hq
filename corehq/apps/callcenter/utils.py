@@ -11,6 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
+from corehq.apps.locations.models import SQLLocation
 from corehq.feature_previews import CALLCENTER
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -125,10 +126,22 @@ def call_center_case_owner(user, config):
     """
     Return the appropriate owner id for the given users call center case.
     """
-    if not config.use_user_location_as_owner:
-        owner_id = config.case_owner_id
+    if config.use_user_location_as_owner:
+        return call_center_location_owner(user, config.user_location_ancestor_level)
     else:
+        return config.case_owner_id
+
+
+def call_center_location_owner(user, ancestor_level):
+    if ancestor_level == 0:
         owner_id = user.location_id
+    else:
+        location = SQLLocation.objects.get(location_id=user.location_id)
+        ancestors = location.get_ancestors(ascending=True, include_self=True)
+        try:
+            owner_id = ancestors[ancestor_level].location_id
+        except IndexError:
+            owner_id = ancestors[-1].location_id
     return owner_id
 
 
