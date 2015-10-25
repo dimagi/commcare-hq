@@ -15,6 +15,7 @@ class AutomaticUpdateRule(models.Model):
     name = models.CharField(max_length=126)
     case_type = models.CharField(max_length=126)
     active = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
 
     # For performance reasons, the server_modified_boundary is a
@@ -28,7 +29,7 @@ class AutomaticUpdateRule(models.Model):
         filters = {'domain': domain}
         if active_only:
             filters['active'] = True
-        return AutomaticUpdateRule.objects.filter(**filters)
+        return AutomaticUpdateRule.objects.filter(deleted=False, **filters)
 
     @classmethod
     def organize_rules_by_case_type(cls, rules):
@@ -81,6 +82,9 @@ class AutomaticUpdateRule(models.Model):
         update_case(case.domain, case.get_id, case_properties=properties, close=close)
 
     def apply_rule(self, case, now):
+        if self.deleted:
+            raise Exception("Attempted to call apply_rule on a deleted rule")
+
         if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise Exception("Invalid case given")
 

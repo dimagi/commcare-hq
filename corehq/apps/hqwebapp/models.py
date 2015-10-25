@@ -615,8 +615,10 @@ class ProjectDataTab(UITab):
                 import EditDataInterfaceDispatcher
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
-            from corehq.apps.data_interfaces.views \
-                import CaseGroupListView, CaseGroupCaseManagementView, ArchiveFormView
+            from corehq.apps.data_interfaces.views import (CaseGroupListView,
+                CaseGroupCaseManagementView, ArchiveFormView,
+                AutomaticUpdateRuleListView)
+
             edit_section[0][1].append({
                 'title': CaseGroupListView.page_title,
                 'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
@@ -627,6 +629,12 @@ class ProjectDataTab(UITab):
                     }
                 ]
             })
+
+            if toggles.AUTOMATIC_CASE_CLOSURE.enabled(self.domain):
+                edit_section[0][1].append({
+                    'title': AutomaticUpdateRuleListView.page_title,
+                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                })
 
             if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
                 edit_section[0][1].append({

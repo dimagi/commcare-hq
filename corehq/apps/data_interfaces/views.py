@@ -13,12 +13,15 @@ from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_user
 from django.utils.decorators import method_decorator
 from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm)
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -26,11 +29,14 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemExce
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
+from corehq.apps.style.decorators import use_bootstrap3
+from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
 from django.shortcuts import render
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
@@ -539,3 +545,125 @@ def xform_management_job_poll(request, domain, download_id,
                                        args=[domain, BulkFormManagementInterface.slug])
     })
     return render(request, template, context)
+
+
+class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
+    template_name = 'data_interfaces/list_automatic_update_rules.html'
+    urlname = 'automatic_update_rule_list'
+    page_title = ugettext_lazy("Automatically Update Cases")
+
+    ACTION_ACTIVATE = 'activate'
+    ACTION_DEACTIVATE = 'deactivate'
+    ACTION_DELETE = 'delete'
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'pagination_limit_cookie_name': ('hq.pagination.limit'
+                                             '.automatic_update_rule_list.%s'
+                                             % self.domain)
+        }
+
+    def _format_rule(self, rule):
+        return {
+            'id': rule.pk,
+            'name': rule.name,
+            'case_type': rule.case_type,
+            'active': rule.active,
+            'last_run': (ServerTime(rule.last_run)
+                         .user_time(self.project_timezone)
+                         .done()
+                         .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+        }
+
+    @allow_remote_invocation
+    def get_pagination_data(self, in_data):
+        try:
+            limit = int(in_data['limit'])
+            page = int(in_data['page'])
+        except (TypeError, KeyError, ValueError):
+            return {
+                'success': False,
+                'error': _("Please provide pagination info."),
+            }
+
+        start = (page - 1) * limit
+        stop = limit * page
+
+        rules = AutomaticUpdateRule.objects.filter(
+            domain=self.domain,
+            deleted=False
+        ).order_by('name')[start:stop]
+
+        total = AutomaticUpdateRule.objects.filter(
+            domain=self.domain,
+            deleted=False
+        ).count()
+
+        return {
+            'response': {
+                'itemList': map(self._format_rule, rules),
+                'total': total,
+                'page': page,
+            },
+            'success': True,
+        }
+
+    @allow_remote_invocation
+    def update_rule(self, in_data):
+        try:
+            rule_id = in_data['id']
+        except KeyError:
+            return {
+                'error': _("Please provide an id."),
+            }
+
+        try:
+            action = in_data['update_action']
+        except KeyError:
+            return {
+                'error': _("Please provide an update_action."),
+            }
+
+        if action not in (
+            self.ACTION_ACTIVATE,
+            self.ACTION_DEACTIVATE,
+            self.ACTION_DELETE,
+        ):
+            return {
+                'error': _("Unrecognized update_action."),
+            }
+
+        try:
+            rule = AutomaticUpdateRule.objects.get(pk=rule_id)
+        except AutomaticUpdateRule.DoesNotExist:
+            return {
+                'error': _("Rule not found."),
+            }
+
+        if rule.domain != self.domain:
+            return {
+                'error': _("Rule not found."),
+            }
+
+        if action == self.ACTION_ACTIVATE:
+            rule.active = True
+        elif action == self.ACTION_DEACTIVATE:
+            rule.active = False
+        elif action == self.ACTION_DELETE:
+            rule.deleted = True
+
+        rule.save()
+
+        return {
+            'success': True,
+        }

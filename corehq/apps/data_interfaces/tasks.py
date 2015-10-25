@@ -86,7 +86,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
 def run_case_update_rules(now=None):
     domains = (AutomaticUpdateRule
                .objects
-               .filter(active=True)
+               .filter(active=True, deleted=False)
                .values_list('domain', flat=True)
                .distinct()
                .order_by('domain'))
