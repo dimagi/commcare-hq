@@ -162,10 +162,9 @@ class Group(UndoableDocument):
     def get_static_users(self, is_active=True):
         return self.get_users(is_active)
 
-
     @classmethod
     def by_domain(cls, domain):
-        return stale_group_by_domain(domain).all()
+        return stale_group_by_domain(domain)
 
     @classmethod
     def choices_by_domain(cls, domain):
@@ -182,8 +181,8 @@ class Group(UndoableDocument):
     @classmethod
     def by_name(cls, domain, name, one=True):
         result = stale_group_by_name(domain, name)
-        if one:
-            return result.one()
+        if one and result:
+            return result[0]
         else:
             return result
 
