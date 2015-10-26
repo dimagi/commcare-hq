@@ -30,6 +30,7 @@ import re
 from dimagi.utils.decorators.memoized import memoized
 from django.core.cache import cache
 import logging
+from dimagi.utils.make_uuid import random_hex
 
 logger = logging.getLogger(__name__)
 
@@ -527,13 +528,13 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
 
 
 def update_unique_ids(app_source):
-    from corehq.apps.app_manager.models import FormBase, form_id_references, jsonpath_update
+    from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
 
     def change_unique_id(form):
         unique_id = form['unique_id']
-        new_unique_id = FormBase.generate_id()
+        new_unique_id = random_hex()
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)

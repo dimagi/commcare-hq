@@ -749,10 +749,6 @@ class FormBase(DocumentSchema):
             return super(FormBase, cls).wrap(data)
 
     @classmethod
-    def generate_id(cls):
-        return hex(random.getrandbits(160))[2:-1]
-
-    @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         try:
             d = Application.get_db().view(
@@ -875,7 +871,7 @@ class FormBase(DocumentSchema):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     def get_app(self):
@@ -1804,7 +1800,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     get_forms = IndexedSchema.Getter('forms')
