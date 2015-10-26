@@ -14,11 +14,6 @@ class XFormCouch(object):
         return XFormInstance.get_db().fetch_attachment(xform_id, attachment_name)
 
     @classmethod
-    def get_attachments(cls, xform_id):
-        xform = cls._get_xform(xform_id)
-        return xform.attachments
-
-    @classmethod
     def archive(cls, xform_generic, user=None):
         xform = cls._get_xform(xform_generic.id)
         return xform.archive(user=user)

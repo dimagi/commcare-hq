@@ -22,9 +22,6 @@ class XFormInterface(object):
     def get_attachment(cls, xform_id, attachment_name):
         return cls.backend.get_attachment(xform_id, attachment_name)
 
-    def get_attachments(cls, xform_id):
-        return cls.backend.get_attachments(xform_id)
-
     def archive(cls, xform_generic, user=None):
         return cls.backend.archive(xform_generic, user=user)
 

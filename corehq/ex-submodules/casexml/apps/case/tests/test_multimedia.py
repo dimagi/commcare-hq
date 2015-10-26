@@ -96,7 +96,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
             last_sync_token=sync_token,
             received_on=date
         )
-        attachments = XFormInterface(TEST_DOMAIN_NAME).get_attachments(form.id)
+        attachments = form.attachments
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
         [case] = cases
@@ -108,7 +108,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
                            sync_token=None, date=None):
         response, form, cases = self._do_submit(xml_data, dict_attachments, sync_token, date=date)
 
-        attachments = XFormInterface(TEST_DOMAIN_NAME).get_attachments(form.id)
+        attachments = form.attachments
         self.assertEqual(len(dict_attachments), len(attachments))
         for k, vstream in dict_attachments.items():
             fileback = XFormInterface(TEST_DOMAIN_NAME).get_attachment(form.id, k)

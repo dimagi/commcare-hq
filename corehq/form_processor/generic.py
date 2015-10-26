@@ -72,6 +72,8 @@ class GenericXFormInstance(JsonObject):
     xmlns = StringProperty()
     form = DictProperty()
     received_on = DateTimeProperty()
+    attachments = DictProperty()
+
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
     partial_submission = BooleanProperty(default=False)
