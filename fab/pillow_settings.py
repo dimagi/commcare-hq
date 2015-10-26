@@ -18,10 +18,7 @@ def apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
             return obj
         return _PillowAction(obj)
 
-    return {
-        conf.class_name for conf in
-        _apply_pillow_actions_to_pillows(map(coerce_to_pillow_action, pillow_actions), pillows_by_group)
-    }
+    return _apply_pillow_actions_to_pillows(map(coerce_to_pillow_action, pillow_actions), pillows_by_group)
 
 
 def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
