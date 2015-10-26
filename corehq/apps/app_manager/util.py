@@ -532,7 +532,7 @@ def update_unique_ids(app_source):
 
     app_source = deepcopy(app_source)
 
-    def change_unique_id(form):
+    def change_form_unique_id(form):
         unique_id = form['unique_id']
         new_unique_id = random_hex()
         form['unique_id'] = new_unique_id
@@ -540,18 +540,23 @@ def update_unique_ids(app_source):
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
         return new_unique_id
 
-    change_unique_id(app_source['user_registration'])
+    change_form_unique_id(app_source['user_registration'])
     id_changes = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = change_unique_id(app_source['modules'][m]['forms'][f])
+            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f])
             id_changes[old_id] = new_id
 
     for reference_path in form_id_references:
         for reference in reference_path.find(app_source):
             if reference.value in id_changes:
                 jsonpath_update(reference, id_changes[reference.value])
+
+    for module in app_source['modules']:
+        if module['module_type'] == 'report':
+            for report_config in module['report_configs']:
+                report_config['uuid'] = random_hex()
 
     return app_source
 
