@@ -1,6 +1,7 @@
-from collections import defaultdict
-from sqlagg.filters import EQ, OR, AND
-from corehq.apps.domain.views import select
+from selenium.selenium import selenium
+from sqlagg import AliasColumn
+from sqlagg.base import AliasColumn
+from sqlagg.filters import EQ, OR, AND, LTE, BETWEEN
 from corehq.apps.reports.util import make_ctable_table_name
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
@@ -102,7 +103,7 @@ class FacilityDataFormat(TableDataFormat):
         self.columns = columns
         self.no_value = NO_VALUE
         self.users = users
-        self.facility_user_map = defaultdict(lambda: [])
+        # self.facility_user_map = defaultdict(lambda: [])
         for u in users:
             if u.user_data.get('health_facility'):
                 self.facility_user_map[u.user_data.get('health_facility')].append(u)
@@ -514,7 +515,7 @@ class HealthFacilityWeekly(MCBase):
     format_class = UserDataFormat
 
 
-class DistrictMonthly(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+class DistrictMonthly(SqlTabularReport, DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.DistrictField',
@@ -531,35 +532,179 @@ class DistrictMonthly(SqlTabularReport, CustomProjectReport, ProjectReportParame
         return True
 
     @property
+    def filters(self):
+        return [BETWEEN('date', 'startdate', 'enddate')]
+
+    @property
+    def config(self):
+        return {
+            'domain': self.domain,
+            'startdate': self.datespan.startdate,
+            'enddate': self.datespan.enddate,
+            'one': 1,
+            'zero': 0
+        }
+
+    @property
+    def group_by(self):
+        return ['location']
+
+    @property
     def columns(self):
+        def add_all(*args):
+            return sum([(a or 0) for a in args])
+
         return [
+            DatabaseColumn("Indicator", SimpleColumn('location')),
             DatabaseColumn(_('home_visits_pregnant'),
-                           CountColumn('home_visit', filters=self.filters + [EQ('home_visit', 'one')])),
+                           CountColumn('home_visit', alias="home_visits_pregnant",
+                                       filters=self.filters + [EQ('home_visit', 'one')])),
             DatabaseColumn(_('home_visits_postpartem'),
-                           CountColumn('post_partem', filters=self.filters + [EQ('post_partem', 'one')])),
+                           CountColumn('post_partem', alias="post_partem",
+                                       filters=self.filters + [EQ('post_partem', 'one')])),
             DatabaseColumn(_('home_visits_newborn'),
-                           CountColumn('user_id',
-                                       filters=self.filters + OR([EQ('newborn_reg', 'one'),
-                                                                  EQ('newborn_followup', 'one')]))),
+                           CountColumn('doc_id', alias="home_visits_newborn",
+                                       filters=self.filters + [OR([EQ('newborn_reg', 'one'),
+                                                                   EQ('newborn_followup', 'one')])])),
             DatabaseColumn(_('home_visits_children'),
-                           CountColumn('user_id',
-                                       filters=self.filters + OR([EQ('child_reg', 'one'),
-                                                                  EQ('child_followup', 'one')]))),
+                           CountColumn('doc_id', alias="home_visits_children",
+                                       filters=self.filters + [OR([EQ('child_reg', 'one'),
+                                                                   EQ('child_followup', 'one')])])),
             DatabaseColumn(_('home_visits_other'),
-                           CountColumn('user_id',
-                                       filters=self.filters + OR([
+                           CountColumn('doc_id', alias="home_visits_other",
+                                       filters=self.filters + [OR([
                                            AND([EQ('home_visit', 'zero'), EQ('post_partem', 'zero')]),
                                            EQ('sex', 'one'),
-                                           EQ('adult_follow_up', 'one')]))),
-            DataTablesColumn(_('rdt_positive_children'),
-                             CountColumn('user_id',
+                                           EQ('adult_followup', 'one')])])),
+            AggregateColumn(_("home_visits_total"), add_all, [
+                AliasColumn("home_visits_pregnant"),
+                AliasColumn("post_partem"),
+                AliasColumn("home_visits_newborn"),
+                AliasColumn("home_visits_children"),
+                AliasColumn("home_visits_other"),
+            ]),
+            DatabaseColumn(_('rdt_positive_children'),
+                             CountColumn('doc_id', alias='rdt_positive_children',
                                          filters=self.filters + [EQ('rdt_children', 'one')])),
-            DataTablesColumn(_('rdt_positive_adults'),
-                             CountColumn('user_id',
+            DatabaseColumn(_('rdt_positive_adults'),
+                             CountColumn('doc_id', alias='rdt_positive_adults',
                                          filters=self.filters + [EQ('rdt_adult', 'one')])),
-            DataTablesColumn(_('rdt_others'),
-                             CountColumn('user_id',
+            DatabaseColumn(_('rdt_others'),
+                             CountColumn('doc_id', alias='rdt_others',
                                          filters=self.filters + [OR([EQ('rdt_adult', 'zero'),
-                                                                     EQ('rdt_child', 'zero')])])),
-
+                                                                     EQ('rdt_children', 'zero')])])),
+            AggregateColumn(_('rdt_total'), add_all, [
+                AliasColumn('rdt_positive_children'),
+                AliasColumn('rdt_positive_adults'),
+                AliasColumn('rdt_others')
+            ]),
+            DatabaseColumn(_('diagnosed_malaria_child'),
+                           CountColumn('malaria_child', alias='malaria_child',
+                                       filters=self.filters + [EQ('malaria_child', 'one')])),
+            DatabaseColumn(_('diagnosed_malaria_adult'),
+                           CountColumn('malaria_adult', alias='malaria_adult',
+                                       filters=self.filters + [EQ('malaria_adult', 'one')])),
+            DatabaseColumn(_('diagnosed_diarrhea'),
+                           CountColumn('doc_id', alias='diagnosed_diarrhea',
+                                       filters=self.filters + [OR([
+                                           EQ('diarrhea_child', 'one'),
+                                           EQ('diarrhea_adult', 'one')
+                                       ])])),
+            DatabaseColumn(_('diagnosed_ari'),
+                           CountColumn('doc_id', alias='diagnosed_ari',
+                                       filters=self.filters + [OR([
+                                           EQ('ari_child', 'one'),
+                                           EQ('ari_adult', 'one')
+                                       ])])),
+            AggregateColumn(_('diagnosed_total'), add_all, [
+                AliasColumn('malaria_child'),
+                AliasColumn('malaria_adult'),
+                AliasColumn('diagnosed_diarrhea'),
+                AliasColumn('diagnosed_ari')
+            ]),
+            DatabaseColumn(_('treated_malaria'),
+                           CountColumn('doc_id', alias='treated_malaria', filters=self.filters + [OR([
+                               AND([EQ('it_malaria_child', 'one'), EQ('malaria_child', 'one')]),
+                               AND([EQ('it_malaria_adult', 'one'), EQ('malaria_adult', 'one')])
+                           ])])),
+            DatabaseColumn(_('treated_diarrhea'),
+                           CountColumn('doc_id',  alias='treated_diarrhea', filters=self.filters + [OR([
+                               AND([EQ('diarrhea_child', 'one'), EQ('it_diarrhea_child', 'one')]),
+                               AND([EQ('diarrhea_adult', 'one'), EQ('it_diarrhea_adult', 'one')])
+                           ])])),
+            DatabaseColumn(_('treated_ari'),
+                           CountColumn('doc_id', alias='treated_ari', filters=self.filters + [OR([
+                               AND([EQ('ari_child', 'one'), EQ('it_ari_child', 'one')]),
+                               AND([EQ('ari_adult', 'one'), EQ('it_ari_adult', 'one')])
+                           ])])),
+            AggregateColumn(_('treated_total'), add_all, [
+                AliasColumn('treated_malaria'),
+                AliasColumn('treated_diarrhea'),
+                AliasColumn('treated_ari')
+            ]),
+            DatabaseColumn(_('transfer_malnutrition'),
+                           CountColumn('doc_id', alias='transfer_malnutrition', filters=self.filters + [OR([
+                               EQ('malnutrition_child', 'one'),
+                               EQ('malnutrition_adult', 'one')
+                           ])])),
+            DatabaseColumn(_('transfer_incomplete_vaccination'),
+                           CountColumn('doc_id', alias='transfer_incomplete_vaccination',
+                                       filters=self.filters + [OR([
+                                           EQ('vaccination_child', 'one'),
+                                           EQ('vaccination_adult', 'one'),
+                                           EQ('vaccination_newborn', 'one')
+                                       ])])),
+            DatabaseColumn(_('transfer_danger_signs'),
+                           CountColumn('doc_id', alias='transfer_danger_signs', filters=self.filters + [OR([
+                               EQ('danger_sign_child', 'one'),
+                               EQ('danger_sign_adult', 'one'),
+                               EQ('danger_sign_newborn', 'one')
+                           ])])),
+            DatabaseColumn(_('transfer_prenatal_consult'),
+                           CountColumn('doc_id', alias='prenatal_consult',
+                                       filters=self.filters + [EQ('prenatal_consult', 'one')])),
+            DatabaseColumn(_('transfer_missing_malaria_meds'),
+                           CountColumn('doc_id', alias='transfer_missing_malaria_meds',
+                                       filters=self.filters + [OR([
+                                           EQ('missing_malaria_meds_child', 'one'),
+                                           EQ('missing_malaria_meds_adult', 'one')
+                                       ])])),
+            DatabaseColumn(_('transfer_other'),
+                           CountColumn('doc_id', alias='transfer_other', filters=self.filters + [OR([
+                               EQ('other_child', 'one'),
+                               EQ('other_adult', 'one'),
+                               EQ('other_newborn', 'one')
+                           ])])),
+            AggregateColumn(_('transfer_total'), add_all, [
+                AliasColumn('transfer_malnutrition'),
+                AliasColumn('transfer_incomplete_vaccination'),
+                AliasColumn('transfer_danger_signs'),
+                AliasColumn('prenatal_consult'),
+                AliasColumn('transfer_missing_malaria_meds'),
+                AliasColumn('transfer_other'),
+            ]),
+            DatabaseColumn(_('deaths_newborn'),
+                           CountColumn('doc_id', alias='deaths_newborn',
+                                       filters=self.filters + [EQ('deaths_newborn', 'one')])),
+            DatabaseColumn(_('deaths_children'),
+                           CountColumn('doc_id', alias='deaths_children',
+                                       filters=self.filters + [EQ('deaths_children', 'one')])),
+            DatabaseColumn(_('deaths_mothers'),
+                           CountColumn('doc_id', alias='deaths_adult',
+                                       filters=self.filters + [EQ('deaths_mothers', 'one')])),
+            DatabaseColumn(_('deaths_others'),
+                           CountColumn('doc_id', alias='deaths_others',
+                                       filters=self.filters + [EQ('deaths_mothers', 'one')])),
+            AggregateColumn(_('deaths_total'), add_all, [
+                AliasColumn('deaths_newborn'),
+                AliasColumn('deaths_children'),
+                AliasColumn('deaths_adult'),
+                AliasColumn('deaths_other'),
+            ]),
+            DatabaseColumn(_('heath_ed_talks'),
+                           CountColumn('doc_id', alias='heath_ed_talks',
+                                       filters=self.filters + [EQ('heath_ed_talks', 'one')])),
+            DatabaseColumn(_('heath_ed_participants'),
+                           CountColumn('doc_id', alias='heath_ed_participants',
+                                       filters=self.filters + [EQ('heath_ed_participants', 'one')])),
         ]

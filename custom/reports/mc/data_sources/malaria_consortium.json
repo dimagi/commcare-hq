@@ -48,6 +48,40 @@
                 "datatype": "string"
             },
             {
+                "column_id": "location",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": ["user_data", "health_facility"]
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "district",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": ["user_data", "district"]
+                    }
+                },
+                "datatype": "string"
+            },
+            {
                 "column_id": "home_visit",
                 "type": "expression",
                 "expression": {
