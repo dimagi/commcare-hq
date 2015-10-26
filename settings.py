@@ -254,6 +254,7 @@ HQ_APPS = (
     'langcodes',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
+    'corehq.apps.change_feed',
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
@@ -979,6 +980,9 @@ DATADOG_APP_KEY = None
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+
+KAFKA_URL = 'localhost:9092'
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -1391,6 +1395,18 @@ PILLOWTOPS = {
         'mvp_docs.pillows.MVPFormIndicatorPillow',
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
+    'experimental': [
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'KafkaCaseConsumerPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
+        }
+    ]
 }
 
 
