@@ -19,6 +19,15 @@ odm_nsmap = {
     'xsi': "http://www.w3.org/2001/XMLSchema-instance",
 }
 
+xform_nsmap = {
+    'h': "http://www.w3.org/1999/xhtml",
+    'orx': "http://openrosa.org/jr/xforms",
+    'f': "http://www.w3.org/2002/xforms",
+    'xsd': "http://www.w3.org/2001/XMLSchema",
+    'jr': "http://openrosa.org/javarosa",
+    'vellum': "http://commcarehq.org/xforms/vellum"
+}
+
 
 def get_item_prefix(form_oid, ig_oid):
     """
@@ -63,14 +72,6 @@ def read_question_item_map(odm):
 
 
 class CCForm(object):
-    nsmap = {
-        'h': "http://www.w3.org/1999/xhtml",
-        'orx': "http://openrosa.org/jr/xforms",
-        'f': "http://www.w3.org/2002/xforms",
-        'xsd': "http://www.w3.org/2001/XMLSchema",
-        'jr': "http://openrosa.org/javarosa",
-        'vellum': "http://commcarehq.org/xforms/vellum",
-    }
 
     def __init__(self, pathname):
         self.pathname = pathname
@@ -94,8 +95,8 @@ class CCForm(object):
 
     @property
     def _data_element(self):
-        instances = self.tree.xpath('./h:head/f:model/f:instance', namespaces=self.nsmap)
-        data_nodes = [n for i in instances for n in i]
+        instances = self.tree.xpath('./h:head/f:model/f:instance', namespaces=xform_nsmap)
+        data_nodes = [n for i in instances for n in i]  # TODO: Huh? Why not do this with xpath?
         return data_nodes[0]
 
     @property
@@ -162,6 +163,30 @@ def replace_question(question, item, string):
     return pattern.sub(repl, string)
 
 
+def strip_case(string):
+    """
+    Remove case and meta tags so that the form can be imported
+    """
+    def remove_tags(root_):
+        for case_elem in root_.xpath('./h:head/f:model/f:instance/f:data/f:case'):
+            case_elem.getparent().remove(case_elem)
+        for meta_elem in root_.xpath('./h:head/f:model/f:instance/f:data/orx:meta'):
+            meta_elem.getparent().remove(meta_elem)
+
+    def remove_refs(root_):
+        for bind_elem in root_.xpath('./h:head/f:model/f:bind'):
+            if bind_elem['nodeset'].startswith('/data/case') or bind_elem['nodeset'].startswith('/data/meta'):
+                bind_elem.getparent().remove(bind_elem)
+        for setvalue_elem in root_.xpath('./h:head/f:model/f:setvalue'):
+            if setvalue_elem['ref'].startswith('/data/case') or setvalue_elem['ref'].startswith('/data/meta'):
+                setvalue_elem.getparent().remove(setvalue_elem)
+
+    root = etree.fromstring(string)
+    remove_tags(root)
+    remove_refs(root)
+    return etree.tostring(root)
+
+
 def rename_questions(ccz_pathname, question_item_map):
     x = n = m = 0
     with CCZFile(ccz_pathname) as ccz_file:
@@ -206,7 +231,7 @@ def rename_questions(ccz_pathname, question_item_map):
                             print 'Question "{}" in {}/{}.xml could be any of {}'.format(
                                 question, ccmodule.name, ccform.name, ', '.join([i.item_oid for i in items]))
                 if changed:
-                    # last_event is set if string has been changed. Save it.
+                    strip_case(string)
                     ccform.write(string)
     print 'Changed {} of {} OpenClinica items, of {} CommCare questions'.format(x, m, n)
 
