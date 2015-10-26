@@ -155,7 +155,7 @@ class IterDBTest(TestCase):
         self.assertEqual({old._id}, iter_db.error_ids)
 
     def test_delete(self):
-        with IterDB(self.db, chunksize=5, refresh_view_funcs=[refresh_group_views]) as iter_db:
+        with IterDB(self.db, chunksize=5) as iter_db:
             deleted_groups = set()
             for group in self.groups[:4]:
                 deleted_groups.add(group._id)
@@ -165,6 +165,7 @@ class IterDBTest(TestCase):
             for group in self.groups[4:]:
                 saved_groups.add(group._id)
                 iter_db.save(group)
+        refresh_group_views()
 
         self.assertEqual(deleted_groups, iter_db.deleted_ids)
         self.assertEqual(saved_groups, iter_db.saved_ids)
@@ -190,7 +191,8 @@ class IterDBTest(TestCase):
                 return DocUpdate(group, delete=True)
 
         ids = [g._id for g in self.groups] + ['NOT_REAL_ID']
-        res = iter_update(self.db, mark_cool, ids, refresh_view_funcs=[refresh_group_views])
+        res = iter_update(self.db, mark_cool, ids)
+        refresh_group_views()
         self.assertEqual(res.not_found_ids, {'NOT_REAL_ID'})
         for result_ids, action in [
             (res.ignored_ids, 'IGNORE'),

@@ -114,11 +114,10 @@ class IterDB(object):
     `new_edits` param will be passed directly to db.bulk_save
     """
     def __init__(self, database, chunksize=100, throttle_secs=None,
-                 new_edits=None, refresh_view_funcs=None):
+                 new_edits=None):
         self.db = database
         self.chunksize = chunksize
         self.throttle_secs = throttle_secs
-        self.refresh_view_funcs = refresh_view_funcs or []
         self.saved_ids = set()
         self.deleted_ids = set()
         self.error_ids = set()
@@ -172,8 +171,6 @@ class IterDB(object):
             self._commit_save()
         if self.to_delete:
             self._commit_delete()
-        for refresh_view_func in self.refresh_view_funcs:
-            refresh_view_func()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
@@ -212,7 +209,7 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
-def iter_update(db, fn, ids, max_retries=3, verbose=False, refresh_view_funcs=None):
+def iter_update(db, fn, ids, max_retries=3, verbose=False):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -247,7 +244,7 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False, refresh_view_funcs=No
     results = IterResults(set(), set(), set(), set(), set())
 
     def _iter_update(doc_ids, try_num):
-        with IterDB(db, chunksize=100, refresh_view_funcs=refresh_view_funcs) as iter_db:
+        with IterDB(db, chunksize=100) as iter_db:
             for chunk in chunked(set(doc_ids), 100):
                 for res in send_keys_to_couch(db, keys=chunk):
                     raw_doc = res.get('doc')
