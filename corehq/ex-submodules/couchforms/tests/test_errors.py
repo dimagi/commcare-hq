@@ -1,7 +1,6 @@
 from django.test import TestCase
 from corehq.apps.receiverwrapper import submit_form_locally
 
-from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 

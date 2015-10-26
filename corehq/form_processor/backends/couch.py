@@ -1,6 +1,6 @@
 from couchdbkit import ResourceNotFound
 
-from couchforms.models import doc_types, XFormInstance, XFormError
+from couchforms.models import doc_types, XFormInstance
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
