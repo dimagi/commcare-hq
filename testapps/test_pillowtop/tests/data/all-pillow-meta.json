@@ -435,17 +435,6 @@
         "couch_filter": null, 
         "include_docs": false
     }, 
-    "OpmFormFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.OpmFormFluffPillow.testhq", 
-        "class_name": "OpmFormFluffPillow", 
-        "extra_args": {
-            "domains": "opm", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
     "MVPFormIndicatorPillow": {
         "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
         "class_name": "MVPFormIndicatorPillow", 

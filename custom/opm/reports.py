@@ -44,55 +44,6 @@ from .filters import (HierarchyFilter, MetHierarchyFilter,
 from .constants import *
 
 
-class OpmFormSqlData(SqlData):
-    table_name = "fluff_OpmFormFluff"
-
-    def __init__(self, domain, user_id, datespan):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
-        )
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        filters = [
-            "domain = :domain",
-            "date between :startdate and :enddate"
-        ]
-        if self.user_id:
-            filters.append("user_id = :user_id")
-        return filters
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn("User ID", SimpleColumn("user_id")),
-            DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
-            DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
-        ]
-
-    @property
-    def data(self):
-        if self.user_id is None:
-            return super(OpmFormSqlData, self).data
-        if self.user_id in super(OpmFormSqlData, self).data:
-            return super(OpmFormSqlData, self).data[self.user_id]
-        else:
-            return None
-
-
 class SharedDataProvider(object):
     """
     Data provider for report data that can be shared across rows in an instance

@@ -3,7 +3,6 @@ Fluff IndicatorDocument definitions for the OPM reports.
 """
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser
-from couchforms.models import XFormInstance
 import fluff
 
 from . import user_calcs
@@ -67,27 +66,4 @@ def _get_user_id(form):
         return case.get('@user_id')
 
 
-# This is a more typical fluff doc, storing arbitrary info pulled from forms.
-# Some stuff only pertains to case level queries, others to user level
-class OpmFormFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
-
-    domains = ('opm',)
-    group_by = (
-        'domain',
-        fluff.AttributeGetter('user_id', _get_user_id),
-    )
-    save_direct_to_sql = True
-
-    name = flat_field(lambda form: form.name)
-
-    # per user
-    service_forms = user_calcs.ServiceForms()
-    growth_monitoring = user_calcs.GrowthMonitoring()
-
-    class Meta:
-        app_label = 'opm'
-
-
 OpmUserFluffPillow = OpmUserFluff.pillow()
-OpmFormFluffPillow = OpmFormFluff.pillow()

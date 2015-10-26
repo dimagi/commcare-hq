@@ -5,7 +5,6 @@ include_groups:
 include_pillows:
   - custom.bihar.models.CareBiharFluffPillow
   - custom.opm.models.OpmUserFluffPillow
-  - custom.opm.models.OpmFormFluffPillow
   - custom.opm.models.OpmHealthStatusAllInfoFluffPillow
   - custom.apps.cvsu.models.UnicefMalawiFluffPillow
   - custom.reports.mc.models.MalariaConsortiumFluffPillow

@@ -20,7 +20,6 @@
         "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
         "custom.bihar.models.CareBiharFluffPillow",
         "custom.opm.models.OpmUserFluffPillow",
-        "custom.opm.models.OpmFormFluffPillow",
         "custom.opm.models.OpmHealthStatusAllInfoFluffPillow",
         "custom.opm.models.OPMHierarchyFluffPillow",
         "custom.apps.cvsu.models.UnicefMalawiFluffPillow",
