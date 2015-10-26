@@ -54,21 +54,17 @@ def check_rabbitmq():
     return ret
 
 
-
-
-
 def check_celery_health():
 
     def get_stats(celery_monitoring, status_only=False):
         cresource = Resource(celery_monitoring, timeout=3)
         endpoint = "api/workers"
-        if status_only:
-            endpoint += '?status=true'
+        params = {'status': 'true'} if status_only else {}
         try:
-            t = cresource.get(endpoint).body_string()
+            t = cresource.get(endpoint, params_dict=params).body_string()
             return json.loads(t)
-        except Exception, ex:
-            pass
+        except Exception:
+            return {}
 
     ret = {}
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
@@ -88,16 +84,17 @@ def check_celery_health():
 
             tasks_html = mark_safe('<span class="label %s">unknown</span>' % tasks_full)
             try:
-                worker_stats = detailed_stats[worker_name]
-                running_tasks = worker_stats['pool']['writes']['inqueues']['active']
-                concurrency = worker_stats['pool']['max-concurrency']
-                completed_tasks = worker_stats['pool']['writes']['total']
+                pool_stats = detailed_stats[worker_name]['stats']['pool']
+                running_tasks = pool_stats['writes']['inqueues']['active']
+                concurrency = pool_stats['max-concurrency']
+                completed_tasks = pool_stats['writes']['total']
 
                 tasks_class = tasks_full if running_tasks == concurrency else tasks_ok
                 tasks_html = mark_safe(
                     '<span class="label %s">%d / %d</span> :: %d' % (
                         tasks_class, running_tasks, concurrency, completed_tasks
-                ))
+                    )
+                )
             except KeyError:
                 pass
             worker_info.append(' '.join([worker_name, status_html, tasks_html]))
