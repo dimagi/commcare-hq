@@ -1,7 +1,8 @@
 import re
+from django.utils.safestring import mark_safe
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
 from crispy_forms.layout import Field as OldField, LayoutObject
-from crispy_forms.utils import render_field, get_template_pack
+from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import Context
 from django.template.loader import render_to_string
 
@@ -66,4 +67,36 @@ class StaticField(LayoutObject):
             'field_label': self.field_label,
             'field_value': self.field_value,
         })
+        return render_to_string(self.template, context)
+
+
+class B3MultiField(LayoutObject):
+    template = 'style/crispy/multi_field.html'
+
+    def __init__(self, field_label, *fields, **kwargs):
+        self.fields = list(fields)
+        self.label_html = field_label
+        self.flat_attrs = flatatt(kwargs)
+
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        html = u''
+        for field in self.fields:
+            html += render_field(field, form, form_style, context, template_pack=template_pack)
+        context.update({
+            'label_html': mark_safe(self.label_html),
+            'field_html': mark_safe(html),
+            'multifield': self,
+        })
+        return render_to_string(self.template, context)
+
+
+class CrispyTemplate(object):
+
+    def __init__(self, template, context):
+        self.template = template
+        self.context = context
+
+    def render(self, form, form_style, context, template_pack=None):
+        context.update(self.context)
         return render_to_string(self.template, context)

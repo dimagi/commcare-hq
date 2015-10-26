@@ -8,7 +8,6 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 
 # from .filters.urls import urlpatterns as filter_urls
 from corehq.apps.example_reports.testreport import TestReport
-from corehq.apps.reports.views import AddSavedReportConfigView
 from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
@@ -23,6 +22,7 @@ from corehq.apps.userreports.views import (
     ReportBuilderTypeSelect,
 )
 from .filters import urls as filter_urls
+from .views import EditFormInstance, AddSavedReportConfigView
 
 
 custom_report_urls = patterns('',
@@ -34,7 +34,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ConfigurableReport.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
 
-    url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name='report_builder_select_type'),
+    url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name=ReportBuilderTypeSelect.urlname),
     url(r'^builder/(?P<report_type>list|chart|table|worker)/select_source/$', ReportBuilderDataSourceSelect.as_view(), name='report_builder_select_source'),
     url(r'^builder/configure/chart/$', ConfigureChartReport.as_view(), name="configure_chart_report"),
     url(r'^builder/configure/list/$', ConfigureListReport.as_view(), name="configure_list_report"),
@@ -62,7 +62,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', 'edit_form_instance', name='edit_form_instance'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', 'restore_edit', name='restore_edit'),
     url(r'^form_data/download/media/$',
         'form_multimedia_export', name='form_multimedia_export'),
