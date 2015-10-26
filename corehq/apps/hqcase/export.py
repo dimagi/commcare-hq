@@ -59,13 +59,11 @@ def export_cases(domain, cases, workbook, filter_group=None, users=None, all_gro
         else:
             return get_owner_id(case)
 
-    def might_be_relevant(case):
-        return get_owner_id(case) in owner_ids
 
     for i, case in enumerate(cases):
         if process:
             DownloadBase.set_progress(process, i, num_cases)
-        if might_be_relevant(case):
+        if get_owner_id(case) in owner_ids:
             matching_owner = get_matching_owner(case)
             case_row = {'dynamic_properties': {}}
             for key in case_static_keys:
