@@ -90,7 +90,6 @@ from corehq.apps.domain.forms import (
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
-from corehq.apps.orgs.models import Organization, OrgRequest, Team
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
@@ -1727,8 +1726,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
     @property
     def can_publish_as_org(self):
-        return (self.domain_object.get_organization()
-                and self.request.couch_user.is_org_admin(self.domain_object.get_organization().name))
+        return False
 
     @property
     @memoized
@@ -2139,40 +2137,6 @@ class AddFormRepeaterView(AddRepeaterView):
         repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
-
-
-class OrgSettingsView(BaseAdminProjectSettingsView):
-    template_name = 'domain/orgs_settings.html'
-    urlname = 'domain_org_settings'
-    page_title = ugettext_lazy("Organization")
-
-    @method_decorator(requires_privilege_with_fallback(privileges.CROSS_PROJECT_REPORTS))
-    def dispatch(self, request, *args, **kwargs):
-        return super(OrgSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        domain = self.domain_object
-        org_users = []
-        teams = Team.get_by_domain(domain.name)
-        for team in teams:
-            for user in team.get_members():
-                user.team_id = team.get_id
-                user.team = team.name
-                org_users.append(user)
-
-        for user in org_users:
-            user.current_domain = domain.name
-
-        all_orgs = Organization.get_all()
-
-        return {
-            "project": domain,
-            'domain': domain.name,
-            "organization": Organization.get_by_name(getattr(domain, "organization", None)),
-            "org_users": org_users,
-            "all_orgs": all_orgs,
-        }
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
@@ -2699,48 +2663,6 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
         return self.get(request, *args, **kwargs)
-
-
-@require_POST
-@domain_admin_required
-def org_request(request, domain):
-    org_name = request.POST.get("org_name", None)
-    org = Organization.get_by_name(org_name)
-    if org:
-        org_request = OrgRequest.get_requests(org_name, domain=domain, user_id=request.couch_user.get_id)
-        if not org_request:
-            org_request = OrgRequest(organization=org_name, domain=domain,
-                requested_by=request.couch_user.get_id, requested_on=datetime.datetime.utcnow())
-            org_request.save()
-            _send_request_notification_email(request, org, domain)
-            messages.success(request,
-                "Your request was submitted. The admin of organization %s can now choose to manage the project %s" %
-                (org_name, domain))
-        else:
-            messages.error(request, "You've already submitted a request to this organization")
-    else:
-        messages.error(request, "The organization '%s' does not exist" % org_name)
-    return HttpResponseRedirect(reverse('domain_org_settings', args=[domain]))
-
-
-def _send_request_notification_email(request, org, dom):
-    params = {"org": org, "dom": dom, "requestee": request.couch_user,
-              "url_base": get_site_domain()}
-    text_content = render_to_string(
-        "domain/email/org_request_notification.txt", params)
-    html_content = render_to_string(
-        "domain/email/org_request_notification.html", params)
-    recipients = [member.email for member in org.get_members()
-                  if member.is_org_admin(org.name)]
-    subject = "New request to add a project to your organization! -- CommcareHQ"
-    try:
-        for recipient in recipients:
-            send_html_email_async.delay(subject, recipient, html_content,
-                                        text_content=text_content,
-                                        email_from=settings.DEFAULT_FROM_EMAIL)
-    except Exception:
-        logging.warning("Can't send notification email, "
-                        "but the message was:\n%s" % text_content)
 
 
 class BaseCardView(DomainAccountingSettings):
