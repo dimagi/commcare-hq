@@ -75,7 +75,7 @@ class _FormType(object):
         else:
             form = get_form_analytics_metadata(domain, app_id, xmlns)
             try:
-                self.app_id = form['app']['id']
+                self.app_id = form['app']['id'] if form else None
             except KeyError:
                 self.app_id = None
 
