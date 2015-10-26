@@ -80,14 +80,22 @@ class AppManagerTest(TestCase):
         self.assertEqual(self.app.modules[1].name['en'], m0)
 
     @patch_default_builds
-    def testImportApp(self):
-        self.assertTrue(self.app._attachments)
-        new_app = import_app(self.app.id, self.domain)
+    def _test_import_app(self, app_id_or_source):
+        new_app = import_app(app_id_or_source, self.domain)
         self.assertEqual(set(new_app._attachments.keys()).intersection(self.app._attachments.keys()), set())
         new_forms = list(new_app.get_forms())
         old_forms = list(self.app.get_forms())
         for new_form, old_form in zip(new_forms, old_forms):
             self.assertEqual(new_form.source, old_form.source)
+            self.assertNotEqual(new_form.unique_id, old_form.unique_id)
+
+    def testImportApp_from_id(self):
+        self.assertTrue(self.app._attachments)
+        self._test_import_app(self.app.id)
+
+    def testImportApp_from_source(self):
+        app_source = Application.get_db().get(self.app.id)
+        self._test_import_app(app_source)
 
     def testAppsBrief(self):
         """Test that ApplicationBase can wrap the
