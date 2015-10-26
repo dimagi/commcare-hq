@@ -16,11 +16,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         from casexml.apps.phone.cleanliness import (
-            set_cleanliness_flags_for_domain, set_cleanliness_flags_for_enabled_domains)
+            set_cleanliness_flags_for_domain, set_cleanliness_flags_for_all_domains)
         force_full = options['force']
         if len(args) == 1:
             domain = args[0]
             set_cleanliness_flags_for_domain(domain, force_full=force_full)
         else:
             assert len(args) == 0
-            set_cleanliness_flags_for_enabled_domains(force_full=force_full)
+            set_cleanliness_flags_for_all_domains(force_full=force_full)
