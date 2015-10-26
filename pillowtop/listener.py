@@ -274,18 +274,34 @@ class PythonPillow(BasicPillow):
         return True
 
     def process_chunk(self):
-        self._couch_db.bulk_load([change['id'] for change in self.change_queue],
+        def _assert_change_has_id(change):
+            if 'id' not in change:
+                # use an inline import for tests since corehq is not a dependency
+                # we can remove this once the assertion is better understood
+                from corehq.util.soft_assert import soft_assert
+                _assertion = soft_assert(to='@'.join(('czue', 'dimagi.com')))
+                _assertion(False, "expected 'id' in change, but wasn't found! change is: {}".format(
+                    simplejson.dumps(change)
+                ))
+                return False
+            return True
+
+        changes_to_process = filter(_assert_change_has_id, self.change_queue)
+        self._couch_db.bulk_load([change['id'] for change in changes_to_process],
                                  purge_existing=True)
 
-        while len(self.change_queue) > 0:
-            change = self.change_queue.pop()
+        for change in changes_to_process:
             doc = self._couch_db.open_doc(change['id'], check_main=False)
             if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
                 try:
                     change.document = doc
                     self.process_change(change)
                 except Exception:
-                    logging.exception('something went wrong processing change %s (%s)' % (change['seq'], change['id']))
+                    logging.exception('something went wrong processing change %s (%s)' %
+                                      (change.get('seq', None), change['id']))
+
+        # reset the queue after we've processed this chunk
+        self.change_queue = []
 
     def processor(self, change, do_set_checkpoint=True):
         self.changes_seen += 1
