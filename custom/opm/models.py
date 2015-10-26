@@ -1,18 +1,18 @@
 """
 Fluff IndicatorDocument definitions for the OPM reports.
 """
-from corehq.fluff.calculators.case import CasePropertyFilter
 from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser, CommCareCase
 from couchforms.models import XFormInstance
 import fluff
 
-from . import case_calcs, user_calcs
+from . import user_calcs
 
 # OpmCaseFluff and OpmUserFluff are unusual in that they store only
 # flat information about a specific case or user - no aggregation will
 # be performed
 from custom.utils.utils import flat_field
+
 
 # This calculator is necessary to generate 'date' field which is required in the database
 class Numerator(fluff.Calculator):
@@ -124,23 +124,6 @@ class OpmFormFluff(fluff.IndicatorDocument):
         app_label = 'opm'
 
 
-
-class VhndAvailabilityFluff(fluff.IndicatorDocument):
-
-    document_class = CommCareCase
-    domains = ('opm',)
-    group_by = ('owner_id',)
-    save_direct_to_sql = True
-    document_filter = CasePropertyFilter(type='vhnd')
-
-    vhnd = case_calcs.VhndAvailabilityCalc()
-
-    class Meta:
-        app_label = 'opm'
-
-
-# These Pillows need to be added to the list of PILLOWTOPS in settings.py
 OpmCaseFluffPillow = OpmCaseFluff.pillow()
 OpmUserFluffPillow = OpmUserFluff.pillow()
 OpmFormFluffPillow = OpmFormFluff.pillow()
-VhndAvailabilityFluffPillow = VhndAvailabilityFluff.pillow()

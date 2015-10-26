@@ -255,17 +255,6 @@
         "couch_filter": null, 
         "include_docs": false
     }, 
-    "VhndAvailabilityFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.VhndAvailabilityFluffPillow.testhq", 
-        "class_name": "VhndAvailabilityFluffPillow", 
-        "extra_args": {
-            "domains": "opm", 
-            "doc_type": "CommCareCase"
-        }, 
-        "document_class": "CommCareCase", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
     "CouvertureFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.CouvertureFluffPillow.testhq", 
         "class_name": "CouvertureFluffPillow", 
