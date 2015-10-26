@@ -4,7 +4,6 @@
         "corehq.pillows.log.PhoneLogPillow",
         "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
         "custom.bihar.models.CareBiharFluffPillow",
-        "custom.opm.models.OpmCaseFluffPillow",
         "custom.opm.models.OpmUserFluffPillow",
         "custom.opm.models.OpmFormFluffPillow",
         "custom.opm.models.OpmHealthStatusAllInfoFluffPillow",

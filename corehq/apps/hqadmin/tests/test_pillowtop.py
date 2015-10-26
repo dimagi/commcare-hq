@@ -81,11 +81,9 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_india_server_exclusions(self):
         self.pillowtops['fluff'] = [
             'custom.bihar.models.CareBiharFluffPillow',
-            'custom.opm.models.OpmCaseFluffPillow',
             'custom.opm.models.OpmUserFluffPillow',
         ]
 
         pillows = get_pillows_for_env('india', self.pillowtops)
-        self.assertNotIn('custom.opm.models.OpmCaseFluffPillow', pillows)
         self.assertNotIn('custom.opm.models.OpmUserFluffPillow', pillows)
         self.assertIn('custom.bihar.models.CareBiharFluffPillow', pillows)

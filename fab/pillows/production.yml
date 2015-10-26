@@ -4,7 +4,6 @@ include_groups:
   - mvp_indicators
 include_pillows:
   - custom.bihar.models.CareBiharFluffPillow
-  - custom.opm.models.OpmCaseFluffPillow
   - custom.opm.models.OpmUserFluffPillow
   - custom.opm.models.OpmFormFluffPillow
   - custom.opm.models.OpmHealthStatusAllInfoFluffPillow
