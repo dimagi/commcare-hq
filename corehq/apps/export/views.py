@@ -411,11 +411,11 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             and self.default_datespan.enddate is not None
         ):
             context.update({
-                'default_date_range': '%(startdate)s%(separator)s%(enddate)s' % {
-                    'startdate': self.default_datespan.startdate.strftime('%Y-%m-%d'),
-                    'enddate': self.default_datespan.enddate.strftime('%Y-%m-%d'),
-                    'separator': DateRangePickerWidget.separator,
-                },
+                'default_date_range': '{startdate}{separator}{enddate}'.format(
+                    startdate=self.default_datespan.startdate.strftime('%Y-%m-%d'),
+                    enddate=self.default_datespan.enddate.strftime('%Y-%m-%d'),
+                    separator=DateRangePickerWidget.separator,
+                ),
             })
         else:
             context.update({
@@ -796,7 +796,7 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
             saved_exports = map(self.fmt_export_data, saved_exports)
         except Exception as e:
             return format_angular_error(
-                _("Issue fetching list of exports: %s") % e.message,
+                _("Issue fetching list of exports: %s").format(e.message),
                 log_error=True,
                 exception=e,
                 request=self.request,
@@ -876,7 +876,7 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
             )
         except Exception as e:
             return format_angular_error(
-                _("Problem getting link to custom export form: %s") % e.message,
+                _("Problem getting link to custom export form: {}").format(e),
             )
         return format_angular_success({
             'url': create_url,
@@ -960,7 +960,7 @@ class FormExportListView(BaseExportListView):
                 )
         except Exception as e:
             return format_angular_error(
-                _("Problem getting Create Export Form: %s") % e.message,
+                _("Problem getting Create Export Form: {}").format(e),
             )
         return format_angular_success({
             'apps': app_choices,
@@ -1042,7 +1042,7 @@ class CaseExportListView(BaseExportListView):
                     ]
         except Exception as e:
             return format_angular_error(
-                _("Problem getting Create Export Form: %s") % e.message,
+                _("Problem getting Create Export Form: {}").format(e.message),
                 log_error=True,
                 exception=e,
                 request=self.request,
@@ -1064,6 +1064,6 @@ class CaseExportListView(BaseExportListView):
         return reverse(
             CreateCustomCaseExportView.urlname,
             args=[self.domain],
-        ) + ('?export_tag="%(export_tag)s"' % {
-            'export_tag': case_type,
-        })
+        ) + ('?export_tag="{export_tag}"'.format(
+            export_tag=case_type,
+        ))
