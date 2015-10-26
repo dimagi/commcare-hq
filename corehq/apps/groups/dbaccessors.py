@@ -1,42 +1,53 @@
 import settings
 
 
-def group_by_domain(domain, include_docs=True, **kwargs):
+def _group_by_domain(domain, **kwargs):
     from corehq.apps.groups.models import Group
-    return Group.view(
+    return list(Group.view(
         'groups/by_domain',
         key=domain,
-        include_docs=include_docs,
         **kwargs
+    ))
+
+
+def group_by_domain(domain, include_docs=True):
+    return _group_by_domain(
+        domain,
+        include_docs=include_docs,
     )
 
 
-def stale_group_by_domain(domain, include_docs=True, **kwargs):
-    return group_by_domain(
+def stale_group_by_domain(domain, include_docs=True):
+    return _group_by_domain(
         domain,
         include_docs=include_docs,
         stale=settings.COUCH_STALE_QUERY,
-        **kwargs
     )
 
 
-def group_by_name(domain, name, include_docs=True, **kwargs):
+def _group_by_name(domain, name, **kwargs):
     from corehq.apps.groups.models import Group
-    return Group.view(
+    return list(Group.view(
         'groups/by_name',
         key=[domain, name],
-        include_docs=include_docs,
         **kwargs
+    ))
+
+
+def group_by_name(domain, name, include_docs=True):
+    return _group_by_name(
+        domain,
+        name,
+        include_docs=include_docs,
     )
 
 
-def stale_group_by_name(domain, name, include_docs=True, **kwargs):
-    return group_by_name(
+def stale_group_by_name(domain, name, include_docs=True):
+    return _group_by_name(
         domain,
         name,
         include_docs=include_docs,
         stale=settings.COUCH_STALE_QUERY,
-        **kwargs
     )
 
 
