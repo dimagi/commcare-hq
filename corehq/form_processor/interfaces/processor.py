@@ -1,7 +1,10 @@
+from dimagi.utils.decorators.memoized import memoized
 from corehq.form_processor.utils import to_generic
 from corehq.util.test_utils import unit_testing_only
 from couchforms.util import process_xform
 from casexml.apps.case.util import post_case_blocks
+
+from ..utils import should_use_sql_backend
 
 
 class FormProcessorInterface(object):
@@ -9,6 +12,16 @@ class FormProcessorInterface(object):
     The FormProcessorInterface serves as the base transactions that take place in forms. Different
     backends can implement this class in order to make common interface.
     """
+    @property
+    @memoized
+    def backend(self):
+        from ..backends.couch.processor import FormProcessorCouch
+        from ..backends.sql.processor import FormProcessorSql
+
+        if should_use_sql_backend(self.domain):
+            return FormProcessorSql
+        else:
+            return FormProcessorCouch
 
     @staticmethod
     @to_generic
@@ -40,3 +53,6 @@ class FormProcessorInterface(object):
     @to_generic
     def post_case_blocks(case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
+
+    def new_xform(self, instance_xml, attachments=None, process=None):
+        return self.backend.new_xform(instance_xml, attachments, process)

@@ -96,6 +96,7 @@ class MultiLockManager(list):
 
 
 def process_xform(instance, attachments=None, process=None, domain=None):
+    from corehq.form_processor.backends.couch.processor import FormProcessorCouch
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -108,7 +109,7 @@ def process_xform(instance, attachments=None, process=None, domain=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = create_xform(instance, process=process, attachments=attachments)
+        xform_lock = FormProcessorCouch.new_xform(instance, process=process, attachments=attachments)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)
