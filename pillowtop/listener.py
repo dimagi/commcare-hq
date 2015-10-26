@@ -18,7 +18,6 @@ import sys
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from pillow_retry.models import PillowError
-from corehq.util.soft_assert import soft_assert
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.const import CHECKPOINT_FREQUENCY
@@ -277,6 +276,9 @@ class PythonPillow(BasicPillow):
     def process_chunk(self):
         def _assert_change_has_id(change):
             if 'id' not in change:
+                # use an inline import for tests since corehq is not a dependency
+                # we can remove this once the assertion is better understood
+                from corehq.util.soft_assert import soft_assert
                 _assertion = soft_assert(to='@'.join(('czue', 'dimagi.com')))
                 _assertion(False, "expected 'id' in change, but wasn't found! change is: {}".format(
                     simplejson.dumps(change)
