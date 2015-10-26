@@ -12,9 +12,6 @@ from corehq.apps.domain.shortcuts import create_domain
 
 
 class AppManagerTest(TestCase):
-    with codecs.open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml"), encoding='utf-8') as f:
-        xform_str = f.read()
-
     @classmethod
     def setUpClass(cls):
         cls.build1 = {'version': '1.2.dev', 'build_number': 7106}
@@ -25,6 +22,9 @@ class AppManagerTest(TestCase):
 
         cls.domain = 'test-domain'
         create_domain(cls.domain)
+
+        with codecs.open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml"), encoding='utf-8') as f:
+            cls.xform_str = f.read()
 
     def setUp(self):
         self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
