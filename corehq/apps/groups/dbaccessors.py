@@ -1,4 +1,4 @@
-import settings
+from django.conf import settings
 
 
 def _group_by_domain(domain, **kwargs):
