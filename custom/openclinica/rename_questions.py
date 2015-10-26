@@ -166,12 +166,14 @@ def rename_questions(ccz_pathname, question_item_map):
     x = n = m = 0
     with CCZFile(ccz_pathname) as ccz_file:
         for ccmodule in ccz_file.get_modules():
-            if ccmodule.name in ('modules-8', 'modules-5'):
+            if ccmodule.name in ('modules-0', 'modules-1', 'modules-8'):
                 # CommCare-only module
                 continue
-            elif ccmodule.name == 'modules-2':
-                last_event = 'SE_VISIT1EVENT'
-            elif ccmodule.name == 'modules-12':
+            elif ccmodule.name == 'modules-6':
+                last_event = 'SE_VISIT2EVENT'
+            elif ccmodule.name == 'modules-8':
+                last_event = 'SE_ENDOFSTUDY'
+            elif ccmodule.name == 'modules-13':
                 last_event = 'SE_UNSCHEDULEDVISIT'
             else:
                 last_event = None
@@ -195,8 +197,7 @@ def rename_questions(ccz_pathname, question_item_map):
                         else:
                             if last_event:
                                 # Try to guess
-                                guesses = [i for i in items
-                                           if i.study_event_oid == last_event]
+                                guesses = [i for i in items if i.study_event_oid == last_event]
                                 if len(guesses) == 1:
                                     x += 1
                                     string = replace_question(question, guesses[0], string)
