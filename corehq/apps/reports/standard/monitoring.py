@@ -656,7 +656,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
     @property
     def headers(self):
-        if self.selected_form_data:
+        if not self.selected_form_data:
             return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
             DataTablesColumn(_("Average"), sort_type=DTSortType.NUMERIC),
