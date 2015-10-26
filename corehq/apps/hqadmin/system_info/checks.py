@@ -54,32 +54,53 @@ def check_rabbitmq():
     return ret
 
 
+
+
+
 def check_celery_health():
+
+    def get_stats(celery_monitoring, status_only=False):
+        cresource = Resource(celery_monitoring, timeout=3)
+        endpoint = "api/workers"
+        if status_only:
+            endpoint += '?status=true'
+        try:
+            t = cresource.get(endpoint).body_string()
+            return json.loads(t)
+        except Exception, ex:
+            pass
 
     ret = {}
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     worker_status = ""
     if celery_monitoring:
-        cresource = Resource(celery_monitoring, timeout=3)
-        all_workers = {}
-        try:
-            t = cresource.get("api/workers").body_string()
-            all_workers = json.loads(t)
-        except Exception, ex:
-            pass
         worker_ok = '<span class="label label-success">OK</span>'
         worker_bad = '<span class="label label-important">Down</span>'
 
         tasks_ok = 'label-success'
         tasks_full = 'label-warning'
 
-
         worker_info = []
-        for hostname, w in all_workers.items():
-            status_html = mark_safe(worker_ok if w['status'] else worker_bad)
-            tasks_class = tasks_full if w['running_tasks'] == w['concurrency'] else tasks_ok
-            tasks_html = mark_safe('<span class="label %s">%d / %d</span> :: %d' % (tasks_class, w['running_tasks'], w['concurrency'], w['completed_tasks']))
-            worker_info.append(' '.join([hostname, status_html, tasks_html]))
+        worker_status = get_stats(celery_monitoring, status_only=True)
+        detailed_stats = get_stats(celery_monitoring)
+        for worker_name, status in worker_status.items():
+            status_html = mark_safe(worker_ok if status else worker_bad)
+
+            tasks_html = mark_safe('<span class="label %s">unknown</span>' % tasks_full)
+            try:
+                worker_stats = detailed_stats[worker_name]
+                running_tasks = worker_stats['pool']['writes']['inqueues']['active']
+                concurrency = worker_stats['pool']['max-concurrency']
+                completed_tasks = worker_stats['pool']['writes']['total']
+
+                tasks_class = tasks_full if running_tasks == concurrency else tasks_ok
+                tasks_html = mark_safe(
+                    '<span class="label %s">%d / %d</span> :: %d' % (
+                        tasks_class, running_tasks, concurrency, completed_tasks
+                ))
+            except KeyError:
+                pass
+            worker_info.append(' '.join([worker_name, status_html, tasks_html]))
         worker_status = '<br>'.join(worker_info)
     ret['worker_status'] = mark_safe(worker_status)
     ret['heartbeat'] = heartbeat.is_alive()
