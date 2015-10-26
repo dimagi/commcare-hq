@@ -49,13 +49,3 @@ class XFormCouch(object):
         if doc['doc_type'] == "%s%s" % (XFormInstance.__name__, DELETED_SUFFIX):
             raise UnexpectedDeletedXForm(xform_id)
         raise ResourceNotFound(xform_id)
-
-    @staticmethod
-    def get_by_doc_type(domain, doc_type):
-        return XFormError.view(
-            'domain/docs',
-            startkey=[domain, doc_type],
-            endkey=[domain, doc_type, {}],
-            reduce=False,
-            include_docs=True,
-        ).all()

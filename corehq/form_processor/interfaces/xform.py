@@ -37,7 +37,3 @@ class XFormInterface(object):
     @to_generic
     def get_xform(cls, xform_id):
         return cls.backend.get_xform(xform_id)
-
-    @to_generic
-    def get_by_doc_type(cls, domain, doc_type):
-        return cls.backend.get_by_doc_type(domain, doc_type)

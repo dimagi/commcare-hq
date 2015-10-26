@@ -16,11 +16,15 @@ from corehq.form_processor.interfaces.case import CaseInterface
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.util.test_utils import TestFileMixin
 
 
-class EditFormTest(TestCase):
+class EditFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
     domain = 'test-form-edits'
+
+    file_path = ('data', 'deprecation')
+    root = os.path.dirname(__file__)
 
     @classmethod
     def setUpClass(cls):
@@ -29,37 +33,28 @@ class EditFormTest(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
 
-    def _get_files(self):
-        first_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "original.xml")
-        edit_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "edit.xml")
-
-        with open(first_file, "rb") as f:
-            xml_data1 = f.read()
-        with open(edit_file, "rb") as f:
-            xml_data2 = f.read()
-
-        return xml_data1, xml_data2
-
     def test_basic_edit(self):
-        xml_data1, xml_data2 = self._get_files()
+        original_xml = self.get_xml('original')
+        edit_xml = self.get_xml('edit')
         yesterday = datetime.utcnow() - timedelta(days=1)
 
         def process(form):
             form.domain = self.domain
             form.received_on = yesterday
-        xform = FormProcessorInterface.post_xform(xml_data1, process=process)
+
+        xform = FormProcessorInterface.post_xform(original_xml, process=process)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("", xform.form['vitals']['height'])
         self.assertEqual("other", xform.form['assessment']['categories'])
 
-        xform = FormProcessorInterface.post_xform(xml_data2, domain=self.domain)
+        xform = FormProcessorInterface.post_xform(edit_xml, domain=self.domain)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("100", xform.form['vitals']['height'])
         self.assertEqual("Edited Baby!", xform.form['assessment']['categories'])
 
-        [deprecated_xform] = self.interface.get_by_doc_type(self.domain, 'XFormDeprecated')
+        deprecated_xform = self.interface.get_xform(xform.deprecated_form_id)
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
         self.assertNotEqual(self.ID, deprecated_xform.id)
@@ -73,9 +68,9 @@ class EditFormTest(TestCase):
 
         self.assertEqual(
             self.interface.get_attachment(deprecated_xform.id, 'form.xml'),
-            xml_data1
+            original_xml
         )
-        self.assertEqual(self.interface.get_attachment(self.ID, 'form.xml'), xml_data2)
+        self.assertEqual(self.interface.get_attachment(self.ID, 'form.xml'), edit_xml)
 
     def test_broken_save(self):
         """
@@ -98,13 +93,10 @@ class EditFormTest(TestCase):
             def __exit__(self, exc_type, exc_val, exc_tb):
                 self.db.bulk_save = self.old['bulk_save']
 
-        xforms = self.interface.get_by_doc_type(self.domain, 'XFormInstance')
-        self.assertEqual(len(xforms), 0)
+        original_xml = self.get_xml('original')
+        edit_xml = self.get_xml('edit')
 
-        xml_data1, xml_data2 = self._get_files()
-
-        submit_form_locally(xml_data1, self.domain)
-        xform = self.interface.get_xform(self.ID)
+        _, xform, _ = FormProcessorInterface.submit_form_locally(original_xml, self.domain)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual(self.domain, xform.domain)
@@ -117,11 +109,11 @@ class EditFormTest(TestCase):
         # This seems like a couch specific test util. Will likely need postgres test utils
         with BorkDB(XFormInstance.get_db()):
             with self.assertRaises(RequestFailed):
-                submit_form_locally(xml_data2, self.domain)
+                FormProcessorInterface.submit_form_locally(edit_xml, self.domain)
 
         # it didn't go through, so make sure there are no edits still
-        xforms = self.interface.get_by_doc_type(self.domain, 'XFormDeprecated')
-        self.assertEqual(len(xforms), 0)
+        self.assertIsNone(xform.deprecated_form_id)
+
         xform = self.interface.get_xform(self.ID)
         self.assertIsNotNone(xform)
         self.assertEqual(

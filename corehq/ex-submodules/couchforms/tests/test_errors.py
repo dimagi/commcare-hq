@@ -1,7 +1,8 @@
 from django.test import TestCase
 from corehq.apps.receiverwrapper import submit_form_locally
 
-from corehq.form_processor.interfaces.xform import XFormInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class CaseProcessingErrorsTest(TestCase):
@@ -24,7 +25,7 @@ class CaseProcessingErrorsTest(TestCase):
         """
 
         domain = 'special_domain'
-        submit_form_locally(
+        _, xform, _ = FormProcessorInterface.submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-123</instanceID>
@@ -35,14 +36,8 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             domain,
         )
-        xform_errors = XFormInterface(domain).get_by_doc_type(domain, 'XFormError')
-
-        related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.id == 'abc-easy-as-123']
-        self.assertEqual(len(related_errors), 1)
-        related_error = related_errors[0]
-        self.assertEqual(related_error.problem,
-                         'IllegalCaseId: case_id must not be empty')
+        self.assertTrue(xform.is_error)
+        self.assertEqual(xform.problem, 'IllegalCaseId: case_id must not be empty')
 
     def test_uses_referrals(self):
         """
@@ -54,7 +49,7 @@ class CaseProcessingErrorsTest(TestCase):
         - an XFormError is saved with the original id as orig_id
         """
         domain = 'special_domain'
-        submit_form_locally(
+        _, xform, _ = FormProcessorInterface.submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-456</instanceID>
@@ -70,11 +65,5 @@ class CaseProcessingErrorsTest(TestCase):
             </data>""",
             domain,
         )
-        xform_errors = XFormInterface(domain).get_by_doc_type(domain, 'XFormError')
-
-        related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.id == 'abc-easy-as-456']
-        self.assertEqual(len(related_errors), 1)
-        related_error = related_errors[0]
-        self.assertEqual(related_error.problem,
-                'UsesReferrals: Sorry, referrals are no longer supported!')
+        self.assertTrue(xform.is_error)
+        self.assertEqual(xform.problem, 'UsesReferrals: Sorry, referrals are no longer supported!')
