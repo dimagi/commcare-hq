@@ -18,19 +18,24 @@
 
 {% block js %}
 <script type="text/javascript" src="{% new_static 'export/js/list_exports.ng.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'app_manager/js/hq.app_data_drilldown.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
 <script type="text/javascript">
 (function (angular, undefined) {
    'use strict';
-    var listExportsApp = angular.module('listExportsApp', ['hq.list_exports']);
+    var listExportsApp = angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
     listExportsApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
     }]);
     listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
+    listExportsApp.constant('formModalSelector', '#createExportOptionsModal');
+    listExportsApp.constant('processApplicationDataFormSuccessCallback', function (data) {
+        window.location = data.url;
+    });
 }(window.angular));
 </script>
 {% endblock %}
@@ -169,11 +174,11 @@
         </div>
         <div class="modal fade"
              id="createExportOptionsModal"
-             ng-controller="CreateExportController">
+             ng-controller="DrilldownToFormController">
             <div class="modal-dialog">
                 <form name="exportOptionsForm"
                       class="form form-horizontal"
-                      ng-submit="handleCreateExport()">
+                      ng-submit="handleSubmitForm()">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">
@@ -186,18 +191,18 @@
                             <i class="fa fa-spinner fa-spin"></i> {% trans 'Loading Form' %}
                         </div>
                         <div class="modal-body"
-                             ng-show="!showNoAppsError && !formLoadError && !!isLoaded && !isFetchingUrl">
+                             ng-show="!showNoAppsError && !formLoadError && !!isLoaded && !isSubmittingForm">
                             <div class="alert alert-warning"
-                                 ng-show="!!fetchingUrlError">
+                                 ng-show="!!formSubmissionError">
                                 <i class="fa fa-exclamation-triangle"></i>
-                                <strong ng-if="fetchingUrlError === 'default'">
+                                <strong ng-if="formSubmissionError === 'default'">
                                     {% blocktrans %}
                                         There was an issue fetching the export data.
                                         Please check your internet connection.
                                     {% endblocktrans %}
                                 </strong>
-                                <strong ng-if="fetchingUrlError !== 'default'">
-                                    {% angularjs %}{{ fetchingUrlError }}{% endangularjs %}
+                                <strong ng-if="formSubmissionError !== 'default'">
+                                    {% angularjs %}{{ formSubmissionError }}{% endangularjs %}
                                 </strong>
                                 <p>
                                     If this problem persists,
@@ -206,9 +211,69 @@
                                 </p>
                             </div>
                             {% crispy create_export_form %}
+                            <div class="alert alert-info"
+                                 ng-show="hasNoCaseTypes && !!formData.application">
+                                {% blocktrans %}
+                                    This application does not appear to be using
+                                    <a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management"
+                                       target="_blank"><i class="fa fa-info-circle"></i> case management</a>.
+                                {% endblocktrans %}
+                             </div>
+                            <div class="alert alert-info"
+                                 ng-show="!_.isEmpty(selectedFormData)">
+                                {% angularjs %}
+                                    {{ selectedFormData.submissions }}
+                                    {% blocktrans %}form submission<span ng-show="selectedFormData.submissions != 1">s</span> available.{% endblocktrans %}
+                                {% endangularjs %}
+                            </div>
+                            <div class="alert alert-warning"
+                                 ng-show="formData.app_type === '_unknown' && !formData.form && !selectedFormData.app_copy">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                {% trans "Mislabeled" %}
+                            </div>
+                            <div class="well"
+                                 ng-show="formData.app_type === '_unknown' && !formData.form && !selectedFormData.no_suggestions">
+                                <h4>{% trans "Suggestions" %}:</h4>
+                                <div ng-show="selectedFormData.app_does_not_exist">
+                                    {% trans "These form submissions are tagged as if they belong to an application that doesn't exist." %}
+                                </div>
+                                <div ng-show="selectedFormData.duplicate">
+                                    <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
+                                    {% angularjs %}
+                                    <ul>
+                                        <li ng-repeat="possiblitly in selectedFormData.possibilities">
+                                            {{ possibility.app.name }} &gt;
+                                            <span ng-if="selectedFormData.is_user_registration">
+                                                {% trans "User Registration" %}
+                                            </span>
+                                            <span ng-if="!selectedFormData.is_user_registration">
+                                                {{ selectedFormData.name }}
+                                            </span>
+                                            <span ng-if="possiblity.app_deleted">
+                                                {% trans "App was deleted." %}
+                                            </span>
+                                        </li>
+                                    </ul>
+                                    {% endangularjs %}
+                                </div>
+                             </div>
+                            {% if request.couch_user.can_edit_apps %}
+                                <div class="well"
+                                     ng-show="formData.app_type === 'deleted' && !!formData.application">
+                                    {% angularjs %}
+                                        <h4>
+                                            "{{ selectedAppData.name }}" {% trans "is a deleted Application." %}
+                                        </h4>
+                                        <p>
+                                            <a class="btn btn-default"
+                                               href="{{ selectedAppData.restoreUrl }}">{% trans "Restore App" %}</a>
+                                        </p>
+                                    {% endangularjs %}
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="modal-body"
-                             ng-show="!!isFetchingUrl">
+                             ng-show="!!isSubmittingForm">
                             <p class="lead">
                                 <i class="fa fa-spinner fa-spin"></i>
                                 {% blocktrans %}
@@ -265,11 +330,11 @@
                             <button type="button"
                                     class="btn btn-default"
                                     data-dismiss="modal"
-                                    ng-disabled="!!isFetchingUrl">{% trans 'Cancel' %}</button>
+                                    ng-disabled="!!isSubmittingForm">{% trans 'Cancel' %}</button>
                             <button type="submit"
                                     class="btn btn-success"
                                     ng-show="!showNoAppsError && !formLoadError"
-                                    ng-disabled="!!exportOptionsForm.$invalid || !!isFetchingUrl">
+                                    ng-disabled="!!exportOptionsForm.$invalid || !!isSubmittingForm">
                                 {% trans "Create Export" %}
                             </button>
                         </div>
