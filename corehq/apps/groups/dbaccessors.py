@@ -53,13 +53,12 @@ def stale_group_by_name(domain, name, include_docs=True):
 
 def refresh_group_views():
     from corehq.apps.groups.models import Group
-    Group.view(
+    for view_name in [
         'groups/by_domain',
-        include_docs=False,
-        limit=1,
-    ).fetch()
-    Group.view(
         'groups/by_name',
-        include_docs=False,
-        limit=1,
-    ).fetch()
+    ]:
+        Group.view(
+            view_name,
+            include_docs=False,
+            limit=1,
+        ).fetch()
