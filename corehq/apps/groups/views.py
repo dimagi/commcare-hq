@@ -25,7 +25,7 @@ def add_group(request, domain):
             "please give it a name first"
         ))
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
-    group = Group.by_name(domain, group_name, one=False).first()
+    group = Group.by_name(domain, group_name)
     if group:
         messages.warning(request, _(
             "A group with this name already exists: instead of making "
@@ -89,7 +89,7 @@ def edit_group(request, domain, group_id):
                 "but every group must have a name so we left it unchanged."
             ))
         elif group.name != name:
-            dupe = Group.by_name(domain, name, one=False).first()
+            dupe = Group.by_name(domain, name)
             if dupe:
                 messages.warning(request, _(
                     "We didn't rename your group because there's already "
