@@ -25,15 +25,6 @@ def export_cases(domain, cases, workbook, filter_group=None, users=None, all_gro
         "domain",
         "external_id",
     )
-    referral_keys = (
-        "case_id",
-        'referral_id',
-        "type",
-        "opened_on",
-        "modified_on",
-        "followup_on",
-        "closed",
-    )
     case_dynamic_keys = get_case_properties(domain)
     case_rows = []
 

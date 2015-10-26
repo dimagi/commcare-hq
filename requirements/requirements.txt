@@ -78,3 +78,6 @@ tinys3==0.1.11
 # required by ctable
 SQLAlchemy==0.8.2
 alembic==0.6.4
+
+# required by celery
+tornado==3.1.1
