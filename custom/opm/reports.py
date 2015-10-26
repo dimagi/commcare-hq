@@ -18,9 +18,8 @@ from couchforms.models import XFormInstance
 from custom.opm.utils import numeric_fn
 
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.decorators.memoized import memoized
-from sqlagg.columns import SimpleColumn, SumColumn
+from sqlagg.columns import SimpleColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
@@ -349,20 +348,6 @@ def _get_terms_list(terms):
     [['sahora'], ['kenar', 'paharpur'], ['patear']]
     """
     return filter(None, [term.lower().split() for term in terms])
-
-
-def get_nested_terms_filter(prop, terms):
-    filters = []
-
-    def make_filter(term):
-        return es_filters.term(prop, term)
-
-    for term in _get_terms_list(terms):
-        if len(term) == 1:
-            filters.append(make_filter(term[0]))
-        elif len(term) > 1:
-            filters.append(es_filters.AND(*(make_filter(t) for t in term)))
-    return es_filters.OR(*filters)
 
 
 class CaseReportMixin(object):
@@ -929,34 +914,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
 
     def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
-
-
-def this_month_if_none(month, year):
-    if month is not None:
-        assert year is not None, \
-            "You must pass either nothing or a month AND a year"
-        return month, year
-    else:
-        this_month = datetime.datetime.utcnow()
-        return this_month.month, this_month.year
-
-
-def calculate_total_row(rows):
-    regexp = re.compile('(.*?)>([0-9]+)<.*')
-    total_row = []
-    if len(rows) > 0:
-        num_cols = len(rows[0])
-        for i in range(num_cols):
-            colrows = [cr[i] for cr in rows]
-            if i == 0:
-                total_row.append("Total:")
-            else:
-                columns = [int(regexp.match(r).group(2)) for r in colrows]
-                if len(columns):
-                    total_row.append("<span style='display: block; text-align:center;'>%s</span>" % reduce(lambda x, y: x + y, columns, 0))
-                else:
-                    total_row.append('')
-    return total_row
 
 
 def _unformat_row(row):

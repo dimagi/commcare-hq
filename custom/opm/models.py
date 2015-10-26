@@ -58,10 +58,4 @@ class OpmUserFluff(fluff.IndicatorDocument):
         app_label = 'opm'
 
 
-def _get_user_id(form):
-    case = form.form.get('case', {})
-    if hasattr(case, 'get'):
-        return case.get('@user_id')
-
-
 OpmUserFluffPillow = OpmUserFluff.pillow()
