@@ -5,8 +5,6 @@ from fluff.filters import CustomFilter
 from corehq.apps.users.models import CommCareUser
 import fluff
 
-from . import user_calcs
-
 # OpmUserFluff is unusual in that it stores only flat information about a
 # specific case or user - no aggregation will be performed
 from custom.utils.utils import flat_field
