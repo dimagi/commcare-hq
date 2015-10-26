@@ -38,9 +38,8 @@ def to_generic(fn):
 
 
 def should_use_sql_backend(domain):
-    toggle_to_check = USE_SQL_BACKEND
     if settings.UNIT_TESTING:
         override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
         if override is not None:
             return override
-    return toggle_to_check.enabled(domain)
+    return USE_SQL_BACKEND.enabled(domain)
