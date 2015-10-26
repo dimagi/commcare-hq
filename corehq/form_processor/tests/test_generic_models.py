@@ -29,3 +29,4 @@ class GenericDynamicPropertiesTest(SimpleTestCase):
         self.assertEqual('some property', props_dict['new_property'])
         self.assertEqual('some other property', props_dict['bar'])
 
+

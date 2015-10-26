@@ -11,8 +11,8 @@ class XFormInterface(object):
     @property
     @memoized
     def backend(self):
-        from ..backends.couch import XFormCouch
-        from ..backends.sql import XFormSql
+        from ..backends.couch.xform import XFormCouch
+        from ..backends.sql.xform import XFormSql
 
         if should_use_sql_backend(self.domain):
             return XFormSql

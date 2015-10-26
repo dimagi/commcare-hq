@@ -3,11 +3,9 @@ from __future__ import absolute_import
 import hashlib
 import datetime
 import logging
-import pytz
-
 from StringIO import StringIO
-from django.test.client import Client
 
+from django.test.client import Client
 from couchdbkit import ResourceNotFound, BulkSaveError
 from django.http import (
     HttpRequest,
@@ -15,22 +13,15 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
-import iso8601
 from redis import RedisError
-from corehq.apps.tzmigration import phone_timezones_should_be_processed, timezone_migration_in_progress
+from corehq.apps.tzmigration import timezone_migration_in_progress
 from corehq.util.soft_assert import soft_assert
-from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
-
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch import uid, LockManager, ReleaseOnError
-from dimagi.utils.parsing import json_format_datetime
-import xml2json
-
+from dimagi.utils.couch import LockManager
 import couchforms
 from .const import BadRequest
-from .attachments import AttachmentsManager
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -85,21 +76,6 @@ def _extract_meta_instance_id(form):
         return None
 
 
-def convert_xform_to_json(xml_string):
-    """
-    takes xform payload as xml_string and returns the equivalent json
-    i.e. the json that will show up as xform.form
-
-    """
-
-    try:
-        name, json_form = xml2json.xml2json(xml_string)
-    except xml2json.XMLSyntaxError as e:
-        raise couchforms.XMLSyntaxError(u'Invalid XML: %s' % e)
-    json_form['#type'] = name
-    return json_form
-
-
 def acquire_lock_for_xform(xform_id):
     # this is high, but I want to test if MVP conflicts disappear
     lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
@@ -119,92 +95,8 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
-def adjust_datetimes(data, parent=None, key=None):
-    """
-    find all datetime-like strings within data (deserialized json)
-    and format them uniformly, in place.
-
-    """
-    # this strips the timezone like we've always done
-    # todo: in the future this will convert to UTC
-    if isinstance(data, basestring) and re_loose_datetime.match(data):
-        try:
-            matching_datetime = iso8601.parse_date(data)
-        except iso8601.ParseError:
-            pass
-        else:
-            if phone_timezones_should_be_processed():
-                parent[key] = unicode(json_format_datetime(
-                    matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
-                ))
-            else:
-                parent[key] = unicode(json_format_datetime(
-                    matching_datetime.replace(tzinfo=None)))
-
-    elif isinstance(data, dict):
-        for key, value in data.items():
-            adjust_datetimes(value, parent=data, key=key)
-    elif isinstance(data, list):
-        for i, value in enumerate(data):
-            adjust_datetimes(value, parent=data, key=i)
-
-    # return data, just for convenience in testing
-    # this is the original input, modified, not a new data structure
-    return data
-
-
-def create_xform(xml_string, attachments=None, process=None):
-    """
-    create but do not save an XFormInstance from an xform payload (xml_string)
-    optionally set the doc _id to a predefined value (_id)
-    return doc _id of the created doc
-
-    `process` is transformation to apply to the form right before saving
-    This is to avoid having to save multiple times
-
-    If xml_string is bad xml
-      - raise couchforms.XMLSyntaxError
-
-    """
-    assert attachments is not None
-    json_form = convert_xform_to_json(xml_string)
-    adjust_datetimes(json_form)
-
-    _id = _extract_meta_instance_id(json_form) or XFormInstance.get_db().server.next_uuid()
-    assert _id
-
-    xform = XFormInstance(
-        # form has to be wrapped
-        {'form': json_form},
-        # other properties can be set post-wrap
-        _id=_id,
-        xmlns=json_form.get('@xmlns'),
-        received_on=datetime.datetime.utcnow(),
-    )
-    attachment_manager = AttachmentsManager(xform)
-
-    # Always save the Form XML as an attachment
-    attachment_manager.store_attachment('form.xml', xml_string, 'text/xml')
-
-    for name, filestream in attachments.items():
-        attachment_manager.store_attachment(name, filestream, filestream.content_type)
-
-    attachment_manager.commit()
-
-    # this had better not fail, don't think it ever has
-    # if it does, nothing's saved and we get a 500
-    if process:
-        process(xform)
-
-    lock = acquire_lock_for_xform(_id)
-    with ReleaseOnError(lock):
-        if _id in XFormInstance.get_db():
-            raise DuplicateError(xform)
-
-    return LockManager(xform, lock)
-
-
 def process_xform(instance, attachments=None, process=None, domain=None):
+    from corehq.form_processor.backends.couch.processor import FormProcessorCouch
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -217,7 +109,7 @@ def process_xform(instance, attachments=None, process=None, domain=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = create_xform(instance, process=process, attachments=attachments)
+        xform_lock = FormProcessorCouch.new_xform(instance, process=process, attachments=attachments)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)
