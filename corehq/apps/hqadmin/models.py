@@ -3,6 +3,7 @@ from django.db import models
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
+from pillowtop.exceptions import PillowNotFoundError
 
 
 class HqDeploy(Document):
@@ -45,7 +46,7 @@ class PillowCheckpointSeqStore(models.Model):
     def get_by_pillow_name(cls, pillow_name):
         try:
             pillow = get_pillow_by_name(pillow_name)
-        except ValueError:
+        except PillowNotFoundError:
             # Could not find the pillow
             return None
 

@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from datetime import datetime
 from casexml.apps.case.xml import V2

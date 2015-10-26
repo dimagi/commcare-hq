@@ -40,9 +40,14 @@ install:
   - "cp .travis/localsettings.py localsettings.py"
   - "pip install coverage unittest2 mock --use-mirrors"
   - "npm install -g bower"
+  - "npm install -g grunt"
+  - "npm install -g grunt-cli"
   - "ln -nfs `which bower` /home/travis/bower"
   - "python manage.py bower install"
-script: "coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER"
+  - "python manage.py migrate --noinput"
+  - "python manage.py runserver 8000 &" # Used to run mocha browser tests
+  - "npm install"
+script: "coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER && grunt mocha"
 after_success:
   - coverage report
   - coveralls

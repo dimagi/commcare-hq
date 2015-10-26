@@ -4,7 +4,7 @@ from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import TEST_BACKEND
-from corehq.apps.locations.tests import make_loc
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
