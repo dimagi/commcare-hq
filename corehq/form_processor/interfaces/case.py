@@ -63,10 +63,12 @@ class CaseInterface(object):
         return get_case_xform_ids(case_id)
 
     @classmethod
+    @to_generic
     def soft_delete(cls, case_id):
         case = cls._get_case(case_id)
         case.doc_type += DELETED_SUFFIX
         case.save()
+        return case
 
     @classmethod
     def hard_delete(cls, case_generic):

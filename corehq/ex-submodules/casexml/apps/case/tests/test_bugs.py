@@ -130,20 +130,21 @@ class CaseBugTest(TestCase, TestFileMixin):
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
         case_id = 'immagetdeleted'
-        deleted_doc_type = 'CommCareCase-Deleted'
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
-                update={'foo': 'bar', 'doc_type': deleted_doc_type}).as_xml()
+                update={'foo': 'bar'}).as_xml()
         ])
+        case = CaseInterface.soft_delete(case.id)
+
         self.assertEqual('bar', case.foo)
-        self.assertEqual(deleted_doc_type, case.doc_type)
+        self.assertTrue(case.is_deleted)
 
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
                       update={'foo': 'not_bar'}).as_xml()
         ])
         self.assertEqual('not_bar', case.foo)
-        self.assertEqual(deleted_doc_type, case.doc_type)
+        self.assertTrue(case.is_deleted)
 
 
 class TestCaseHierarchy(TestCase):
