@@ -967,8 +967,7 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
         rows = []
         for user in self.users_matching_filter:
             user_case_list = self.awc_data.get(user['doc_id'], None)
-            form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
-            row = self.model(user, self, user_case_list, form_sql_data.data)
+            row = self.model(user, self, user_case_list)
             data = []
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
