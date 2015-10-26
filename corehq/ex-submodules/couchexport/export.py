@@ -117,6 +117,7 @@ def get_writer(format):
             Format.XLS_2007: writers.Excel2007ExportWriter,
             Format.UNZIPPED_CSV: writers.UnzippedCsvExportWriter,
             Format.CDISC_ODM: writers.CdiscOdmExportWriter,
+            Format.PYTHON_DICT: writers.PythonDictWriter,
         }[format]()
     except KeyError:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
