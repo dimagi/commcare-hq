@@ -2,6 +2,7 @@ import os
 from django.test import TestCase
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.form_processor.generic import GenericXFormInstance
 from couchforms.models import XFormInstance
@@ -32,16 +33,16 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         domain = 'test-domain'
         instance = self.get_xml('duplicate')
 
-        def process(form):
-            form.doc_type = 'Foo'
-
         # Post an xform with an alternate doc_type
         xform1 = FormProcessorInterface.post_xform(
             instance,
             domain=domain,
-            process=process,
         )
-        self.assertEqual(xform1.doc_type, 'Foo')
+
+        # Change the doc_type of the form by archiving it
+        XFormInterface(domain).archive(xform1)
+        xform1 = XFormInterface(domain).get_xform(xform1.id)
+        self.assertTrue(xform1.is_archived)
 
         # Post an xform with that has different doc_type but same id
         _, xform2, _ = FormProcessorInterface.submit_form_locally(
