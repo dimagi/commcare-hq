@@ -1,9 +1,7 @@
 import dateutil
 from django import forms
 from django.core.urlresolvers import reverse
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -27,19 +25,19 @@ from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
 
 class CreateFormExportTagForm(forms.Form):
     """The information necessary to create an export tag to begin creating a
-    Form Export. This form interacts with CreateExportController in
-    list_exports.ng.js
+    Form Export. This form interacts with DrilldownToFormController in
+    hq.app_data_drilldown.ng.js
     """
-    application = forms.CharField(required=False)
-    module = forms.CharField(required=False)
-    form = forms.CharField(required=False)
+    app_type = forms.CharField()
+    application = forms.CharField()
+    module = forms.CharField()
+    form = forms.CharField()
 
     def __init__(self, *args, **kwargs):
         super(CreateFormExportTagForm, self).__init__(*args, **kwargs)
@@ -50,26 +48,36 @@ class CreateFormExportTagForm(forms.Form):
         self.helper.field_class = 'col-sm-10'
 
         self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field(
+                    'app_type',
+                    placeholder=_("Select Application Type"),
+                    ng_model="formData.app_type",
+                    ng_change="updateAppChoices()",
+                    ng_required="true",
+                ),
+                ng_show="hasSpecialAppTypes",
+            ),
             crispy.Field(
                 'application',
                 placeholder=_("Select Application"),
-                ng_model="createForm.application",
-                ng_change="updateModules()",
+                ng_model="formData.application",
+                ng_change="updateModuleChoices()",
                 ng_required="true",
             ),
             crispy.Field(
                 'module',
                 placeholder=_("Select Module"),
-                ng_model="createForm.module",
-                ng_disabled="!createForm.application",
-                ng_change="updateForms()",
+                ng_model="formData.module",
+                ng_disabled="!formData.application",
+                ng_change="updateFormChoices()",
                 ng_required="true",
             ),
             crispy.Field(
                 'form',
                 placeholder=_("Select Form"),
-                ng_model="createForm.form",
-                ng_disabled="!createForm.module",
+                ng_model="formData.form",
+                ng_disabled="!formData.module",
                 ng_required="true",
             ),
         )
@@ -80,19 +88,9 @@ class CreateCaseExportTagForm(forms.Form):
     Case Export. This form interacts with CreateExportController in
     list_exports.ng.js
     """
+    app_type = forms.CharField()
     application = forms.CharField()
-    case_type = forms.CharField(
-        help_text=mark_safe(
-            '<span ng-show="!!hasNoCaseTypes '
-            '&& !!createForm.application">{}</span>'.format(
-                ugettext_lazy(
-                    """Note: This application does not appear to be using
-<a href="https://wiki.commcarehq.org/display/commcarepublic/Case+Management">
-case management</a>."""
-                )
-            ),
-        ),
-    )
+    case_type = forms.CharField()
 
     def __init__(self, *args, **kwargs):
         super(CreateCaseExportTagForm, self).__init__(*args, **kwargs)
@@ -104,17 +102,24 @@ case management</a>."""
 
         self.helper.layout = crispy.Layout(
             crispy.Field(
+                'app_type',
+                placeholder=_("Select Application Type"),
+                ng_model="formData.app_type",
+                ng_change="updateAppChoices()",
+                ng_required="true",
+            ),
+            crispy.Field(
                 'application',
                 placeholder=_("Select Application"),
-                ng_model="createForm.application",
-                ng_change="updateCaseTypes()",
+                ng_model="formData.application",
+                ng_change="updateCaseTypeChoices()",
                 ng_required="true",
             ),
             crispy.Field(
                 'case_type',
                 placeholder=_("Select Case Type"),
-                ng_model="createForm.case_type",
-                ng_disabled="!createForm.application",
+                ng_model="formData.case_type",
+                ng_disabled="!formData.application",
                 ng_required="true",
             ),
         )
