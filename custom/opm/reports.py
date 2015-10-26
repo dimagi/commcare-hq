@@ -1,17 +1,7 @@
-"""
-Custom report definitions - control display of reports.
-
-The BaseReport is somewhat general, but it's
-currently specific to monthly reports.  It would be pretty simple to make
-this more general and subclass for montly reports , but I'm holding off on
-that until we actually have another use case for it.
-"""
 from collections import defaultdict, OrderedDict
 from itertools import chain
 import datetime
-import logging
 import pickle
-import json
 import re
 import urllib
 from dateutil import parser
@@ -25,10 +15,9 @@ from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from couchforms.models import XFormInstance
-from custom.common import ALL_OPTION
 from custom.opm.utils import numeric_fn
 
-from dimagi.utils.couch.database import iter_docs, get_db
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn, SumColumn
@@ -89,9 +78,6 @@ EDD_DOD_FILTER = """
        (dod <= :enddate and dod != '')
     )
 """
-
-def ret_val(value):
-    return value
 
 
 class OpmCaseSqlData(SqlData):
@@ -314,6 +300,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     include_out_of_range_cases = False
 
     _debug_data = []
+
     @property
     def debug(self):
         return bool(self.request.GET.get('debug'))
@@ -384,7 +371,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             else:
                 filter_by = [('block', 'block')]
         return filter_by
-
 
     @property
     def headers(self):
@@ -636,7 +622,6 @@ class CaseReportMixin(object):
     @memoized
     def data_provider(self):
         return SharedDataProvider(self.cases)
-
 
 
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
