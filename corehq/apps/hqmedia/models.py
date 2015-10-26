@@ -402,7 +402,7 @@ class HQMediaMapItem(DocumentSchema):
 
     @property
     def url(self):
-        return reverse("hqmedia_download", args=[self.media_type, self.media_id]) if self.media_id else ""
+        return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
 
     @classmethod
     def gen_unique_id(cls, m_id, path):

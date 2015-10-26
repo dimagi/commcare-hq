@@ -11,5 +11,4 @@ south
 django-rosetta
 GitPython
 gitdb
-tornado
 django-kombu
