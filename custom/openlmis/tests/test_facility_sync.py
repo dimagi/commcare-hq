@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
-from casexml.apps.case.tests import delete_all_cases
-from corehq.apps.commtrack.tests import bootstrap_domain
+from casexml.apps.case.tests.util import delete_all_cases
+from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.locations.models import Location, LocationType
 from custom.openlmis.api import get_facilities
 from custom.openlmis.commtrack import sync_facility_to_supply_point, get_supply_point

@@ -10,7 +10,8 @@ from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import User
 from django.test import TestCase, SimpleTestCase
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from couchforms.models import XFormError
 
 USER_ID = 'test-index-user'
@@ -63,7 +64,7 @@ class IndexTest(TestCase):
     FATHER_CASE_ID = 'text-index-father-case'
 
     def tearDown(self):
-        FormProcessorInterface.delete_all_cases()
+        FormProcessorTestUtils.delete_all_cases()
 
     def testIndexes(self):
         user = User(user_id=USER_ID, username="", password="", date_joined="")

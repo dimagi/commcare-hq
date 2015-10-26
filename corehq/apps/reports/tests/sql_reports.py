@@ -5,6 +5,8 @@ from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from dimagi.utils.decorators.memoized import memoized
 
+from nose.tools import nottest
+
 from sqlagg import *
 from sqlagg.columns import *
 
@@ -21,6 +23,7 @@ def combine_indicator(num, denom):
         return None
 
 
+@nottest
 def test_report(report, keys=None, filters=None, group_by=None):
     class TestReportInst(report):
         database = "test_commcarehq"

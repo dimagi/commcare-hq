@@ -30,6 +30,7 @@ import xml2json
 
 import couchforms
 from .const import BadRequest
+from .attachments import AttachmentsManager
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -165,27 +166,12 @@ def create_xform(xml_string, attachments=None, process=None):
       - raise couchforms.XMLSyntaxError
 
     """
-    from corehq.util.couch_helpers import CouchAttachmentsBuilder
-
     assert attachments is not None
     json_form = convert_xform_to_json(xml_string)
     adjust_datetimes(json_form)
 
     _id = _extract_meta_instance_id(json_form) or XFormInstance.get_db().server.next_uuid()
     assert _id
-    attachments_builder = CouchAttachmentsBuilder()
-    attachments_builder.add(
-        content=xml_string,
-        name='form.xml',
-        content_type='text/xml',
-    )
-
-    for key, value in attachments.items():
-        attachments_builder.add(
-            content=value,
-            name=key,
-            content_type=value.content_type,
-        )
 
     xform = XFormInstance(
         # form has to be wrapped
@@ -193,9 +179,17 @@ def create_xform(xml_string, attachments=None, process=None):
         # other properties can be set post-wrap
         _id=_id,
         xmlns=json_form.get('@xmlns'),
-        _attachments=attachments_builder.to_json(),
         received_on=datetime.datetime.utcnow(),
     )
+    attachment_manager = AttachmentsManager(xform)
+
+    # Always save the Form XML as an attachment
+    attachment_manager.store_attachment('form.xml', xml_string, 'text/xml')
+
+    for name, filestream in attachments.items():
+        attachment_manager.store_attachment(name, filestream, filestream.content_type)
+
+    attachment_manager.commit()
 
     # this had better not fail, don't think it ever has
     # if it does, nothing's saved and we get a 500

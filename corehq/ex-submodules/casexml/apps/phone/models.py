@@ -5,6 +5,7 @@ import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
+from corehq.form_processor.utils import ToFromGeneric
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
@@ -108,7 +109,7 @@ LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
 
 
-class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
+class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn, ToFromGeneric):
     date = DateTimeProperty()
     # domain = StringProperty()
     user_id = StringProperty()
@@ -149,6 +150,13 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
+
+    @classmethod
+    def from_generic(cls, generic_sync_log):
+        sync_log = cls.wrap(generic_sync_log.to_json())
+        if generic_sync_log.id:
+            sync_log['_id'] = generic_sync_log.id
+        return sync_log
 
     def case_count(self):
         """
@@ -248,6 +256,13 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
+
+    def to_generic(self):
+        from corehq.form_processor.generic import GenericSyncLog
+        generic = GenericSyncLog(self.to_json())
+        if '_id' in self:
+            generic.id = self['_id']
+        return generic
 
     def case_count(self):
         return len(self.cases_on_phone)
@@ -747,9 +762,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.prune_case(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
-                    for index in case_update.indices_to_add:
+                    for index in update.indices_to_add:
                         _add_index(index)
-                    for index in case_update.indices_to_delete:
+                    for index in update.indices_to_delete:
                         self.index_tree.delete_index(index.case_id, index.identifier)
                 made_changes = True
 

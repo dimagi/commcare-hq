@@ -12,7 +12,7 @@ from corehq.apps.app_manager.models import (
     LoadUpdateAction,
     PreloadAction,
 )
-from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem, autoset_owner_id_for_advanced_action
 from corehq.apps.app_manager.xpath import session_var
 from couchdbkit import BadValueError

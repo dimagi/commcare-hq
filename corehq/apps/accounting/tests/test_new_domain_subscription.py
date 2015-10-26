@@ -5,7 +5,7 @@ from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     SubscriptionAdjustmentMethod, SubscriptionType, EntryPoint,)
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 
 
 class TestNewDomainSubscription(BaseAccountingTest):

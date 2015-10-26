@@ -30,7 +30,7 @@ openpyxl==2.2.5
 Pillow==2.7.0
 phonenumberslite==7.1.0
 poster==0.8.1
-psycopg2==2.6.2
+psycopg2==2.6.1
 psycogreen==1.0
 pycrypto==2.6.1
 py-KISSmetrics==1.0.1
@@ -79,3 +79,6 @@ tinys3==0.1.11
 # required by ctable
 SQLAlchemy==0.8.2
 alembic==0.6.4
+
+# required by celery
+tornado==3.1.1

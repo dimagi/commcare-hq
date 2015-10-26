@@ -10,8 +10,8 @@ DESCRIPTION = _(
 BASE_ITEM_EXPRESSION = _(
     'You can leave this blank unless you are '
     '<a target="_blank" href="'
-    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#saving-repeat-data'
-    '">saving repeat data</a>')
+    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#saving-multiple-rows-per-caseform'
+    '">saving multiple rows per case or form</a>')
 CONFIGURED_FILTER = _(
     'Look at '
     '<a target="_blank" href="'
