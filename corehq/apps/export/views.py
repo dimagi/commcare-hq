@@ -11,9 +11,7 @@ from django.utils.safestring import mark_safe
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import toggles, privileges
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -813,7 +811,6 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         raise NotImplementedError("must implement create_export_title")
 
     @property
-    @memoized
     def create_export_form(self):
         """Returns a django form that gets the information necessary to create
         an export tag, which is the first step in creating a new export.
@@ -822,35 +819,16 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         - CreateFormExportTagForm
         - CreateCaseExportTagForm
 
-        This form is what will interact with the CreateExportController in
-        exports/list_exports.ng.js
+        This form is what will interact with the DrilldownToFormController in
+        hq.app_data_drilldown.ng.js
         """
         raise NotImplementedError("must implement create_export_form")
 
     @allow_remote_invocation
-    def get_initial_create_form_data(self, in_data):
-        """Called by the ANGULAR.JS controller CreateExportController in
-        exports/list_exports.ng.js.
-        :param in_data: dict passed by the  angular js controller.
-        :return: {
-            'success': True,
-            'apps': [{'id': '<app_id>', 'text': '<app_name>'}, ...],
-            the rest is dependent on form requirements, but as an example:
-                'modules': {
-                    '<app_id>': [{'id': '<module_id>', 'text': '<module_name>'}],
-                },
-                'placeholders': {
-                  'applications': "Select Application",
-                }
-            }
-
-        Notes:
-        ----
-        This returned dict also provides additional selection information for
-        modules, forms, and case_types depending on what application is selected
-        and which form is being used.
-
-        This dict also returns placeholder info for the select2 widgets.
+    def get_app_data_drilldown_values(self, in_data):
+        """Called by the ANGULAR.JS controller DrilldownToFormController in
+        hq.app_data_drilldown.ng.js  Use ApplicationDataRMIHelper to help
+        format the response.
         """
         NotImplementedError("Must implement get_intial_form_data")
 
@@ -861,9 +839,9 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         raise NotImplementedError("Must implement generate_create_form_url")
 
     @allow_remote_invocation
-    def process_create_form(self, in_data):
+    def submit_app_data_drilldown_form(self, in_data):
         try:
-            form_data = in_data['createFormData']
+            form_data = in_data['formData']
         except KeyError:
             return format_angular_error(
                 _("The form's data was not correctly formatted.")
@@ -921,57 +899,15 @@ class FormExportListView(BaseExportListView):
         }
 
     @allow_remote_invocation
-    def get_initial_create_form_data(self, in_data):
+    def get_app_data_drilldown_values(self, in_data):
         try:
-            apps = get_apps_in_domain(self.domain)
-            app_choices = map(
-                lambda a: {'id': a._id, 'text': a.name},
-                apps
-            )
-            modules = {}
-            forms = {}
-
-            def _fmt_name(n):
-                if isinstance(n, dict):
-                    return n.get(default_lang, _("Untitled"))
-                if isinstance(n, basestring):
-                    return n
-                return _("Untitled")
-
-            for app in apps:
-                default_lang = app.default_language
-                modules[app._id] = map(
-                    lambda m: {
-                        'id': m.unique_id,
-                        'text': _fmt_name(m.name),
-                    },
-                    app.modules
-                )
-                forms[app._id] = map(
-                    lambda f: {
-                        'id': f['form'].get_unique_id(),
-                        'text': _fmt_name(f['form'].name),
-                        'module': (
-                            f['module'].unique_id if 'module' in f
-                            else '_registration'
-                        ),
-                    },
-                    app.get_forms(bare=False)
-                )
+            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            response = rmi_helper.get_form_rmi_response()
         except Exception as e:
             return format_angular_error(
                 _("Problem getting Create Export Form: {}").format(e),
             )
-        return format_angular_success({
-            'apps': app_choices,
-            'modules': modules,
-            'forms': forms,
-            'placeholders': {
-                'application': _("Select Application"),
-                'module': _("Select Module"),
-                'form': _("Select Form"),
-            }
-        })
+        return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
         create_form = CreateFormExportTagForm(form_data)
@@ -979,17 +915,15 @@ class FormExportListView(BaseExportListView):
             raise ExportFormValidationException()
 
         app_id = create_form.cleaned_data['application']
-        form_unique_id = create_form.cleaned_data['form']
+        form_xmlns = create_form.cleaned_data['form']
         return reverse(
             CreateCustomFormExportView.urlname,
             args=[self.domain],
-        ) + ('?export_tag="%(export_tag)s"&app_id=%(app_id)s' % {
-            'app_id': app_id,
-            'export_tag': [
-                form for form in Application.get(app_id).get_forms()
-                if form.get_unique_id() == form_unique_id
-            ][0].xmlns,
-        })
+        ) + ('?export_tag="{export_tag}"{app_id}'.format(
+            app_id=('&app_id={}'.format(app_id)
+                    if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE else ""),
+            export_tag=form_xmlns,
+        ))
 
 
 class CaseExportListView(BaseExportListView):
@@ -1026,20 +960,10 @@ class CaseExportListView(BaseExportListView):
         }
 
     @allow_remote_invocation
-    def get_initial_create_form_data(self, in_data):
+    def get_app_data_drilldown_values(self, in_data):
         try:
-            apps = get_apps_in_domain(self.domain)
-            app_choices = map(
-                lambda a: {'id': a._id, 'text': a.name},
-                apps
-            )
-            case_types = {}
-            for app in apps:
-                if hasattr(app, 'modules'):
-                    case_types[app.get_id] = [
-                        {'id': module.case_type, 'text': module.case_type}
-                        for module in app.modules if module.case_type
-                    ]
+            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            response = rmi_helper.get_case_rmi_response()
         except Exception as e:
             return format_angular_error(
                 _("Problem getting Create Export Form: {}").format(e.message),
@@ -1047,14 +971,7 @@ class CaseExportListView(BaseExportListView):
                 exception=e,
                 request=self.request,
             )
-        return format_angular_success({
-            'apps': app_choices,
-            'case_types': case_types,
-            'placeholders': {
-                'application': _("Select Application"),
-                'case_types': _("select Case Type"),
-            },
-        })
+        return format_angular_success(response)
 
     def get_create_export_url(self, form_data):
         create_form = CreateCaseExportTagForm(form_data)
