@@ -59,7 +59,6 @@ branches:
   - two-factor-otp-only # j$ 10/2
   - b3-tf # ben 10/1
   - kafka-pillow # cz 10/22
-  - use-names # cz 10/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
