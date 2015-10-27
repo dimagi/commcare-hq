@@ -107,8 +107,6 @@ class IndicatorConfigFilterTest(SimpleTestCase):
 
     def setUp(self):
         self.config = get_sample_data_source()
-        self.pillow = ConfigurableIndicatorPillow()
-        self.pillow.bootstrap(configs=[self.config])
 
     def test_filter(self):
         not_matching = [
@@ -117,9 +115,9 @@ class IndicatorConfigFilterTest(SimpleTestCase):
             dict(doc_type="CommCareCase", domain='user-reports', type='not-ticket'),
         ]
         for document in not_matching:
-            self.assertFalse(self.pillow.python_filter(document)), 'Failing dog: %s' % document
+            self.assertFalse(self.config.filter(document)), 'Failing dog: %s' % document
 
-        self.assertTrue(self.pillow.python_filter(
+        self.assertTrue(self.config.filter(
             dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
         ))
 
