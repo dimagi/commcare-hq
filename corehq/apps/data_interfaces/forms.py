@@ -153,7 +153,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         self.helper.form_action = '#'
         self.helper.layout = Layout(
             Fieldset(
-               _("Basic Information"),
+                _("Basic Information"),
                 Field(
                     'name',
                     **{'ng-model': 'name'}
@@ -173,7 +173,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 Div(**{'ng-include': '', 'src': "'conditions.tpl'"}),
             ),
             Fieldset(
-               _("Action"),
+                _("Action"),
                 Field(
                     'close_case',
                     disabled=True,
