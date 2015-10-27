@@ -11,7 +11,7 @@ from corehq.util.test_utils import TestFileMixin
 
 
 class TestFormArchiving(TestCase, TestFileMixin):
-    file_path = ('data', 'xforms')
+    file_path = ('data', 'sample_xforms')
     root = os.path.dirname(__file__)
 
     @classmethod
