@@ -73,12 +73,17 @@ def global_keyword_update(v, text, msg, text_words, open_sessions):
     outbound_metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
     )
+
+    if v.owner_doc_type != 'CommCareUser':
+        send_sms_to_verified_number(v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v), metadata=outbound_metadata)
+        return True
+
     if len(text_words) > 1:
         keyword = text_words[1]
         if keyword.upper() == LOCATION_KEYWORD:
             site_code = text_words[2:]
             if not site_code:
-                send_sms_to_verified_number(v, get_message(MSG_UPDATE_LOCATION_SITE_CODE, v),
+                send_sms_to_verified_number(v, get_message(MSG_UPDATE_LOCATION_SYNTAX, v),
                                             metadata=outbound_metadata)
                 return True
 
@@ -89,14 +94,14 @@ def global_keyword_update(v, text, msg, text_words, open_sessions):
                 v.owner.set_location(location)
                 send_sms_to_verified_number(
                     v,
-                    get_message(MSG_UPDATE_LOCATION_SITE_CODE_SUCCESS),
+                    get_message(MSG_UPDATE_LOCATION_SUCCESS),
                     metadata=outbound_metadata
                 )
                 return True
             else:
                 send_sms_to_verified_number(
                     v,
-                    get_message(MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND, v).format(site_code),
+                    get_message(MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND, v, context=[site_code]),
                     metadata=outbound_metadata
                 )
                 return True

@@ -10,6 +10,7 @@ from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.smsbackends.test.api import TestSMSBackend
+import corehq.apps.sms.messages as messages
 
 
 def create_mobile_worker(domain, username, password, phone_number, save_vn=True):
@@ -75,26 +76,26 @@ class UpdateLocationKeywordTest(TestCase):
 
     def test_message_without_keyword(self):
         incoming('4444', '#update', 'TEST')
-        self.assertEqual(self._get_last_outbound_message(), get_message('sms.update'))
+        self.assertEqual(self._get_last_outbound_message(), get_message(messages.MSG_UPDATE))
 
     def test_with_invalid_action(self):
         incoming('4444', '#update notexists', 'TEST')
-        self.assertEqual(self._get_last_outbound_message(), get_message('sms.update.unrecognized_action'))
+        self.assertEqual(self._get_last_outbound_message(), get_message(messages.MSG_UPDATE_UNRECOGNIZED_ACTION))
 
     def test_message_without_site_code(self):
         incoming('4444', '#update location', 'TEST')
-        self.assertEqual(self._get_last_outbound_message(), get_message('sms.update.location.site_code'))
+        self.assertEqual(self._get_last_outbound_message(), get_message(messages.MSG_UPDATE_LOCATION_SYNTAX))
 
     def test_message_with_invalid_site_code(self):
         incoming('4444', '#update location notexists', 'TEST')
         self.assertEqual(
             self._get_last_outbound_message(),
-            get_message('sms.update.location.site_code.not_found').format('notexists')
+            get_message(messages.MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND, context=['notexists'])
         )
 
-    def test_with_valid_message(self):
+    def test_valid_message(self):
         incoming('4444', '#update location site_code', 'TEST')
-        self.assertEqual(self._get_last_outbound_message(), get_message('sms.update.location.site_code.success'))
+        self.assertEqual(self._get_last_outbound_message(), get_message(messages.MSG_UPDATE_LOCATION_SUCCESS))
         user = CommCareUser.get(docid=self.user.get_id)
         self.assertEqual(user.location_id, self.location.get_id)
 
