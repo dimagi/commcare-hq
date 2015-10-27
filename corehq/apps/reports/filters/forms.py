@@ -699,21 +699,6 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
     use_only_last = True
     show_global_hide_fuzzy_checkbox = False
 
-    def get_selected_forms(self, filter_results):
-        xmlns = None
-        app_id = None
-        if self.show_unknown and self.selected_unknown_xmlns:
-            xmlns = self.selected_unknown_xmlns
-        elif filter_results and filter_results[-1]['slug'] == 'xmlns':
-            xmlns = filter_results[-1]['value']
-            if self.fuzzy_forms and self.hide_fuzzy_results:
-                app_id = filter_results[-3]['value']
-            app_id = app_id if app_id != self.unknown_remote_app_id else {}
-        return {
-            'xmlns': xmlns,
-            'app_id': app_id,
-        }
-
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     slug = "sub_time"

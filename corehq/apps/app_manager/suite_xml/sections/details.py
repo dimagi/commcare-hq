@@ -10,7 +10,8 @@ from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
-    Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum
+    Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum, \
+    Style
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
@@ -41,9 +42,8 @@ class DetailContributor(SectionContributor):
                             )
                             if detail_column_infos:
                                 if detail.use_case_tiles:
-                                    r.append(self.build_case_tile_detail(
-                                        module, detail, detail_type
-                                    ))
+                                    helper = CaseTileHelper(self.app, module, detail, detail_type)
+                                    r.append(helper.build_case_tile_detail())
                                 else:
                                     d = self.build_detail(
                                         module,
@@ -60,21 +60,11 @@ class DetailContributor(SectionContributor):
                                     )
                                     if d:
                                         r.append(d)
+                        if detail.persist_case_context and not detail.persist_tile_on_forms:
+                            d = self._get_persistent_case_context_detail(module)
+                            r.append(d)
                 if module.fixture_select.active:
-                    d = Detail(
-                        id=id_strings.fixture_detail(module),
-                        title=Text(),
-                    )
-                    xpath = Xpath(function=module.fixture_select.display_column)
-                    if module.fixture_select.localize:
-                        template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
-                    else:
-                        template_text = Text(xpath_function=module.fixture_select.display_column)
-                    fields = [Field(header=Header(text=Text()),
-                                    template=Template(text=template_text),
-                                    sort_node='')]
-
-                    d.fields = fields
+                    d = self._get_fixture_detail(module)
                     r.append(d)
         return r
 
@@ -113,13 +103,7 @@ class DetailContributor(SectionContributor):
         else:
             # Add lookup
             if detail.lookup_enabled and detail.lookup_action:
-                d.lookup = Lookup(
-                    name=detail.lookup_name or None,
-                    action=detail.lookup_action,
-                    image=detail.lookup_image or None,
-                )
-                d.lookup.extras = [Extra(**e) for e in detail.lookup_extras]
-                d.lookup.responses = [Response(**r) for r in detail.lookup_responses]
+                d.lookup = self._get_lookup_element(detail)
 
             # Add variables
             variables = list(
@@ -151,6 +135,15 @@ class DetailContributor(SectionContributor):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    def _get_lookup_element(self, detail):
+        return Lookup(
+            name=detail.lookup_name or None,
+            action=detail.lookup_action,
+            image=detail.lookup_image or None,
+            extras=[Extra(**e) for e in detail.lookup_extras],
+            responses=[Response(**r) for r in detail.lookup_responses],
+        )
 
     def _add_action_to_detail(self, detail, module):
         # add form action to detail
@@ -205,68 +198,42 @@ class DetailContributor(SectionContributor):
         frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
         detail.action.stack.add_frame(frame)
 
-    def build_case_tile_detail(self, module, detail, detail_type):
-        """
-        Return a Detail node from an apps.app_manager.models.Detail that is
-        configured to use case tiles.
-
-        This method does so by injecting the appropriate strings into a template
-        string.
-        """
-        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
-
-        template_args = {
-            "detail_id": id_strings.detail(module, detail_type),
-            "title_text_id": id_strings.detail_title_locale(
-                module, detail_type
-            )
-        }
-        # Get field/case property mappings
-
-        cols_by_tile = {col.case_tile_field: col for col in detail.columns}
-        for template_field in ["header", "top_left", "sex", "bottom_left", "date"]:
-            column = cols_by_tile.get(template_field, None)
-            if column is None:
-                raise SuiteError(
-                    'No column was mapped to the "{}" case tile field'.format(
-                        template_field
-                    )
-                )
-            template_args[template_field] = {
-                "prop_name": get_column_xpath_generator(
-                    self.app, module, detail, column
-                ).xpath,
-                "locale_id": id_strings.detail_column_header_locale(
-                    module, detail_type, column,
+    @staticmethod
+    def _get_persistent_case_context_detail(module):
+        return Detail(
+            id=id_strings.persistent_case_context_detail(module),
+            title=Text(),
+            fields=[Field(
+                style=Style(
+                    horz_align="center",
+                    font_size="large",
+                    grid_height=2,
+                    grid_width=12,
+                    grid_x=0,
+                    grid_y=0,
                 ),
-                # Just using default language for now
-                # The right thing to do would be to reference the app_strings.txt I think
-                "prefix": escape(
-                    column.header.get(self.app.default_language, "")
-                )
-            }
-            if column.format == "enum":
-                template_args[template_field]["enum_keys"] = {}
-                for mapping in column.enum:
-                    template_args[template_field]["enum_keys"][mapping.key] = \
-                        id_strings.detail_column_enum_variable(
-                            module, detail_type, column, mapping.key_as_variable
-                        )
-        # Populate the template
-        detail_as_string = self._case_tile_template_string.format(**template_args)
-        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+                header=Header(text=Text()),
+                template=Template(text=Text(xpath_function="case_name")),
+            )]
+        )
 
-    @property
-    @memoized
-    def _case_tile_template_string(self):
-        """
-        Return a string suitable for building a case tile detail node
-        through `String.format`.
-        """
-        with open(os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
-        )) as f:
-            return f.read().decode('utf-8')
+    @staticmethod
+    def _get_fixture_detail(module):
+        d = Detail(
+            id=id_strings.fixture_detail(module),
+            title=Text(),
+        )
+        xpath = Xpath(function=module.fixture_select.display_column)
+        if module.fixture_select.localize:
+            template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
+        else:
+            template_text = Text(
+                xpath_function=module.fixture_select.display_column)
+        fields = [Field(header=Header(text=Text()),
+                        template=Template(text=template_text),
+                        sort_node='')]
+        d.fields = fields
+        return d
 
 
 class DetailsHelper(object):
@@ -380,3 +347,96 @@ def get_instances_for_module(app, module, additional_xpaths=None):
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
         return EntryInstances.get_required_instances(xpaths)
+
+
+class CaseTileHelper(object):
+    tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
+
+    def __init__(self, app, module, detail, detail_type):
+        self.app = app
+        self.module = module
+        self.detail = detail
+        self.detail_type = detail_type
+        self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
+
+    def build_case_tile_detail(self):
+        """
+        Return a Detail node from an apps.app_manager.models.Detail that is
+        configured to use case tiles.
+
+        This method does so by injecting the appropriate strings into a template
+        string.
+        """
+        # Get template context
+        context = self._get_base_context()
+        for template_field in self.tile_fields:
+            column = self._get_matched_detail_column(template_field)
+            context[template_field] = self._get_column_context(column)
+
+        # Populate the template
+        detail_as_string = self._case_tile_template_string.format(**context)
+        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+    def _get_matched_detail_column(self, case_tile_field):
+        """
+        Get the detail column that should populate the given case tile field
+        """
+        column = self.cols_by_tile_field.get(case_tile_field, None)
+        if column is None:
+            raise SuiteError(
+                'No column was mapped to the "{}" case tile field'.format(
+                    case_tile_field
+                )
+            )
+        return column
+
+    def _get_base_context(self):
+        """
+        Get the basic context variables for interpolation into the
+        case tile detail template string
+        """
+        return {
+            "detail_id": id_strings.detail(self.module, self.detail_type),
+            "title_text_id": id_strings.detail_title_locale(
+                self.module, self.detail_type
+            )
+        }
+
+    def _get_column_context(self, column):
+        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
+        context = {
+            "prop_name": get_column_xpath_generator(
+                self.app, self.module, self.detail, column
+            ).xpath,
+            "locale_id": id_strings.detail_column_header_locale(
+                self.module, self.detail_type, column,
+            ),
+            # Just using default language for now
+            # The right thing to do would be to reference the app_strings.txt I think
+            "prefix": escape(
+                column.header.get(self.app.default_language, "")
+            )
+        }
+        if column.format == "enum":
+            context["enum_keys"] = self._get_enum_keys(column)
+        return context
+
+    def _get_enum_keys(self, column):
+        keys = {}
+        for mapping in column.enum:
+            keys[mapping.key] = id_strings.detail_column_enum_variable(
+                self.module, self.detail_type, column, mapping.key_as_variable
+            )
+        return keys
+
+    @property
+    @memoized
+    def _case_tile_template_string(self):
+        """
+        Return a string suitable for building a case tile detail node
+        through `String.format`.
+        """
+        with open(os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
+        )) as f:
+            return f.read().decode('utf-8')

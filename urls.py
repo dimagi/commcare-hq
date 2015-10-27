@@ -54,7 +54,6 @@ domain_specific = patterns('',
     (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
     (r'^case/', include('corehq.apps.hqcase.urls')),
-    (r'^cleanup/', include('corehq.apps.cleanup.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
@@ -147,7 +146,9 @@ if 'rosetta' in settings.INSTALLED_APPS:
 
 #django-staticfiles static/ url mapper
 if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^mocha/', include('corehq.apps.mocha.urls')),
+    )
     urlpatterns += patterns('django.contrib.staticfiles.views',
         url(r'^static/(?P<path>.*)$', 'serve'),
     )
-

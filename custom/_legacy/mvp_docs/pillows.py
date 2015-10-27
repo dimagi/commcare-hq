@@ -10,7 +10,6 @@ from mvp_docs.models import IndicatorXForm, IndicatorCase
 from pillowtop.listener import BasicPillow
 
 pillow_logging = logging.getLogger("pillowtop")
-pillow_eval_logging = logging.getLogger("pillowtop_eval")
 
 
 class MVPIndicatorPillowBase(BasicPillow):
@@ -73,12 +72,12 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
         try:
             indicator_form = IndicatorXForm.wrap_for_indicator_db(doc_dict)
             indicator_form.update_indicators_in_bulk(
-                form_indicator_defs, logger=pillow_eval_logging,
+                form_indicator_defs, logger=pillow_logging,
                 save_on_update=False
             )
             indicator_form.save()
         except Exception as e:
-            pillow_eval_logging.error(
+            pillow_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
                 "%(error)s" % {
                     'form_id': doc_dict['_id'],
@@ -109,12 +108,12 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
         try:
             indicator_case = IndicatorCase.wrap_for_indicator_db(doc_dict)
             indicator_case.update_indicators_in_bulk(
-                case_indicator_defs, logger=pillow_eval_logging,
+                case_indicator_defs, logger=pillow_logging,
                 save_on_update=False
             )
             indicator_case.save()
         except Exception as e:
-            pillow_eval_logging.error(
+            pillow_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
                 "%(error)s" % {
                     'form_id': doc_dict['_id'],
@@ -140,7 +139,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
                     xform_doc = IndicatorXForm.wrap_for_indicator_db(xform_dict)
                     related_xform_indicators = get_form_indicators(namespaces, domain, xform_doc.xmlns)
                 except ResourceNotFound:
-                    pillow_eval_logging.error(
+                    pillow_logging.error(
                         "Could not find an XFormInstance with id %(xform_id)s "
                         "related to Case %(case_id)s" % {
                             'xform_id': xform_id,
@@ -162,7 +161,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
                 )
             xform_doc.update_indicators_in_bulk(
                 related_xform_indicators,
-                logger=pillow_eval_logging,
+                logger=pillow_logging,
                 save_on_update=False
             )
             xform_doc.save()

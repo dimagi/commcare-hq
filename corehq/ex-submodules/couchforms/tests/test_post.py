@@ -5,7 +5,8 @@ from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 
 
 class PostTest(TestCase):
@@ -13,7 +14,7 @@ class PostTest(TestCase):
     maxDiff = None
 
     def tearDown(self):
-        FormProcessorInterface.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms()
 
     def _test(self, name, any_id_ok=False, tz_differs=False):
         with open(os.path.join(os.path.dirname(__file__), 'data', '{name}.xml'.format(name=name))) as f:
@@ -46,7 +47,7 @@ class PostTest(TestCase):
     @run_pre_and_post_timezone_migration
     def test_cloudant_template(self):
         self._test('cloudant-template', tz_differs=True)
-        FormProcessorInterface.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms()
 
     def test_decimalmeta(self):
         self._test('decimalmeta', any_id_ok=True)

@@ -45,6 +45,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
+from zipfile import BadZipfile
 
 
 @login_and_domain_required
@@ -226,7 +227,7 @@ class ArchiveFormView(DataInterfaceSection):
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
             return WorkbookJSONReader(bulk_file)
-        except InvalidFileException:
+        except (InvalidFileException, BadZipfile):
             try:
                 csv.DictReader(io.StringIO(bulk_file.read().decode('utf-8'),
                                            newline=None))
@@ -396,7 +397,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
             return WorkbookJSONReader(bulk_file)
-        except InvalidFileException:
+        except (InvalidFileException, BadZipfile):
             try:
                 csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
                                            newline=None))

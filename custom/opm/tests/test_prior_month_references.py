@@ -1,4 +1,6 @@
-from custom.opm.tests import OPMCaseReportTestBase, MockDataProvider, OPMCase, MockCaseRow
+from custom.opm.tests.case_reports import (
+    OPMCaseReportTestBase, MockDataProvider, OPMCase, MockCaseRow
+)
 from dimagi.utils.dates import add_months_to_date
 
 

@@ -1,9 +1,10 @@
-import os
 import json
+import os
+import re
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from corehq.apps.app_manager.tests import add_build
+from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
 from corehq.apps.builds.models import BuildSpec
@@ -210,3 +211,47 @@ class TestViews(TestCase):
             'app_id': self.app.id,
             'module_id': module.id,
         })
+
+
+class TestTemplateAppViews(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain(name='template-app-testviews-domain', is_active=True)
+        cls.domain.save()
+        cls.username = 'cornelius'
+        cls.password = 'fudge'
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True)
+        cls.user.is_superuser = True
+        cls.user.save()
+
+    def setUp(self):
+        self.client.login(username=self.username, password=self.password)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        cls.domain.delete()
+
+    def _check_response(self, response):
+        self.assertEqual(response.status_code, 302)
+        redirect_location = response['Location']
+        [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
+        expected = '{}/modules-0/forms-0/source/'.format(app_id)
+        self.assertTrue(redirect_location.endswith(expected))
+        self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
+
+    def test_app_from_template(self):
+        response = self.client.get(reverse('app_from_template', kwargs={
+            'domain': self.domain.name,
+            'slug': 'case_management'
+        }), follow=False)
+
+        self._check_response(response)
+
+    def test_default_new_app(self):
+        response = self.client.get(reverse('default_new_app', kwargs={
+            'domain': self.domain.name,
+        }), follow=False)
+
+        self._check_response(response)

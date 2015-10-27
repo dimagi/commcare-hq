@@ -10,6 +10,7 @@ from custom.ewsghana.api import EWSApi, EmailSettingsSync
 from corehq.apps.commtrack.models import StockState, Product
 
 from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.balance import BalanceMigration
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
@@ -47,7 +48,7 @@ EWS_FACILITIES = [304, 324, 330, 643, 327, 256, 637, 332, 326, 338, 340, 331, 34
                   526, 4, 30, 1, 14, 23, 521, 532, 516, 461, 520, 525, 961, 641, 257, 348]
 
 
-@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
+@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"), acks_late=True,
                queue='logistics_background_queue')
 def migration_task():
     for config in EWSGhanaConfig.get_all_steady_sync_configs():
@@ -145,7 +146,7 @@ def reminder_to_visit_website():
         VisitWebsiteReminder(domain).send()
 
 
-@task(queue='logistics_background_queue')
+@task(queue='logistics_background_queue', acks_late=True)
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
     return bootstrap_domain(EWSApi(domain, GhanaEndpoint.from_config(ews_config)))
@@ -207,3 +208,9 @@ def fix_users_with_more_than_one_phone_number(domain):
             ews_api.sms_user_sync(sms_user)
         offset += 100
         _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True}, offset=offset)
+
+
+@task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
+def balance_migration_task(domain, date):
+    endpoint = GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(domain))
+    BalanceMigration(domain, endpoint).balance_migration(date)

@@ -39,6 +39,7 @@ from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
     XFormException, XForm)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from couchexport.export import FormattedRow
 from couchexport.models import Format
@@ -124,7 +125,7 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
+    return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, 0, 0]))
 
 
 def get_app_view_context(request, app):
@@ -307,7 +308,7 @@ def app_from_template(request, domain, slug):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
+    return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -373,6 +374,9 @@ def view_app(request, domain, app_id=None):
     module_id = request.GET.get('m', None)
     form_id = request.GET.get('f', None)
     if module_id or form_id:
+        soft_assert('{}@{}'.format('skelly', 'dimagi.com')).call(
+            False, 'old m=&f= url still in use'
+        )
         return back_to_main(request, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
 
