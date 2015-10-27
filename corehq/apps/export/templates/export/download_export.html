@@ -64,6 +64,7 @@
     downloadExportsApp.constant('exportList', {{ export_list|JSON }});
     downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
     downloadExportsApp.constant('defaultDateRange', '{{ default_date_range }}');
+    downloadExportsApp.constant('checkForMultimedia', {{ check_for_multimedia|BOOL }});
 }(window.angular));
 </script>
 {% endblock %}
@@ -119,7 +120,7 @@
                 <div class="form-notice-container{% if show_date_range %} form-notice-container-tall{% endif %}">
                     {% crispy download_export_form %}
                     <div class="form-notice"
-                         ng-show="!!downloadInProgress">
+                         ng-show="downloadInProgress">
                         <div class="row">
                             <div class="col-sm-9 col-lg-5 col-sm-offset-3">
                                 <div class="label label-default label-lg">
@@ -166,19 +167,31 @@
                                     {% trans "Preparing Export" %}
                                 </button>
                             </div>
-                            <div class="col-xs-6 col-sm-5 col-md-8">
-                                <a href="{{ export_list_url }}" class="btn btn-default">
+                            <div class="col-xs-6 col-sm-4 col-md-3"
+                                 ng-show="hasMultimedia">
+                                <button type="button"
+                                        class="btn btn-info btn-full-width"
+                                        ng-click="prepareMultimediaExport()"
+                                        ng-show="!preparingMultimediaExport"
+                                        ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingMultimediaExport">
+                                    <i class="fa fa-download"></i>
+                                    {% trans "Prepare Multimedia" %}
+                                </button>
+                                <button type="button"
+                                        class="btn btn-info btn-full-width btn-disabled"
+                                        ng-show="preparingMultimediaExport"
+                                        disabled="disabled">
+                                    <i class="fa-spin fa fa-spinner"></i>
+                                    {% trans "Preparing Multimedia" %}
+                                </button>
+                            </div>
+                            <div class="col-xs-12 col-sm-4 col-md-5">
+                                <a href="{{ export_list_url }}"
+                                   class="btn btn-default">
                                     {% trans "Cancel" %}
                                 </a>
                             </div>
                         </div>
-                        <button type="button"
-                                class="btn btn-info"
-                                data-toggle="modal"
-                                ng-show="!!allowPreview"
-                                ng-click="getPreview()">
-                            {% trans 'Preview Export' %}
-                        </button>
                     </div>
                 </div>
             </form>
@@ -219,20 +232,22 @@
                                    ng-disabled="!isDownloadReady"
                                    ng-click="isDownloaded = true;">
                                         <i class="fa fa-download"></i>
-                                        {% trans "Download" %}
+                                        <span ng-show="!isMultimediaDownload">{% trans "Download" %}</span>
+                                        <span ng-show="isMultimediaDownload">{% trans "Download Multimedia" %}</span>
                                 </a>
                                 <button type="button"
                                         class="btn btn-primary btn-disabled btn-full-width"
                                         ng-show="!isDownloadReady"
                                         disabled="disabled">
                                         <i class="fa-spin fa fa-spinner"></i>
-                                        {% trans "Collecting Data" %}
+                                        <span ng-show="!isMultimediaDownload">{% trans "Collecting Data" %}</span>
+                                        <span ng-show="isMultimediaDownload">{% trans "Collecting Multimedia" %}</span>
                                 </button>
                                 {% if show_sync_to_dropbox %}
                                 <button button="submit"
                                         class="btn btn-default btn-full-width"
                                         style="margin-top: 5px; width: 100%;"
-                                        ng-disabled="!isDownloadReady"
+                                        ng-disabled="!isDownloadReady && !isMultimediaDownload"
                                         ng-click="isDownloaded = true;">
                                     <i class="fa fa-dropbox"></i>
                                     {% trans "Sync to Dropbox" %}
@@ -274,7 +289,7 @@
                     {% if show_sync_to_dropbox %}
                     <p class="alert alert-info"
                        style="margin-top: 10px;"
-                       ng-show="!showCeleryError">
+                       ng-show="!showCeleryError && !isMultimediaDownload">
                         <i class="fa fa-info-circle"></i>
                         {% blocktrans %}
                             If you are downloading a large file over

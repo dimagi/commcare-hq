@@ -1,3 +1,4 @@
+from datetime import timedelta
 import dateutil
 from django import forms
 from django.core.urlresolvers import reverse
@@ -305,15 +306,18 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
                                     users=self._get_filtered_users())
 
     def _get_datespan_filter(self):
-        date_range = self.cleaned_data['date_range']
-        dates = date_range.split(DateRangePickerWidget.separator)
-        startdate = dateutil.parser.parse(dates[0])
-        enddate = dateutil.parser.parse(dates[1])
-        datespan = DateSpan(startdate, enddate)
+        datespan = self._get_datespan()
         if datespan.is_valid():
             datespan.set_timezone(self.timezone)
             return SerializableFunction(datespan_export_filter,
                                         datespan=datespan)
+
+    def _get_datespan(self):
+        date_range = self.cleaned_data['date_range']
+        dates = date_range.split(DateRangePickerWidget.separator)
+        startdate = dateutil.parser.parse(dates[0])
+        enddate = dateutil.parser.parse(dates[1])
+        return DateSpan(startdate, enddate)
 
     def get_form_filter(self):
         form_filter = SerializableFunction(app_export_filter, app_id=None)
@@ -327,6 +331,22 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
         from corehq.apps.export.views import EditCustomFormExportView
         return reverse(EditCustomFormExportView.urlname,
                        args=(self.domain_object.name, export.get_id))
+
+    def get_multimedia_task_kwargs(self, export, download_id):
+        """These are the kwargs for the Multimedia Download task,
+        specific only to forms.
+        """
+        datespan = self._get_datespan()
+        return {
+            'domain': self.domain_object.name,
+            'startdate': datespan.startdate.isoformat(),
+            'enddate': (datespan.enddate + timedelta(days=1)).isoformat(),
+            'app_id': export.app_id,
+            'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
+            'export_id': export.get_id,
+            'zip_name': 'multimedia-{}'.format(export.name),
+            'download_id': download_id
+        }
 
     def format_export_data(self, export):
         export_data = super(FilterFormExportDownloadForm, self).format_export_data(export)
