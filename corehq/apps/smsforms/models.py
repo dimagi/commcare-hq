@@ -57,6 +57,11 @@ class SQLXFormsSession(models.Model):
         self.modified_time = self.end_time = datetime.utcnow()
 
     @property
+    def related_subevent(self):
+        subevents = self.messagingsubevent_set.all()
+        return subevents[0] if subevents else None
+
+    @property
     def status(self):
         xform_instance = None
         if self.submission_id:
