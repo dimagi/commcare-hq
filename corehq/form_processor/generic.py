@@ -15,6 +15,7 @@ from casexml.apps.case import const
 from casexml.apps.phone.models import LOG_FORMAT_LEGACY
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
 class GenericXFormOperation(JsonObject):
@@ -71,6 +72,8 @@ class GenericXFormInstance(JsonObject):
     xmlns = StringProperty()
     form = DictProperty()
     received_on = DateTimeProperty()
+    attachments = DictProperty()
+
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
     partial_submission = BooleanProperty(default=False)
@@ -200,6 +203,10 @@ class GenericCommCareCase(JsonObject):
     def reverse_indices(self):
         from corehq.form_processor.interfaces.case import CaseInterface
         return CaseInterface.get_reverse_indices(self.domain, self.id)
+
+    @property
+    def is_deleted(self):
+        return self.doc_type.endswith(DELETED_SUFFIX)
 
     def has_index(self, id):
         return id in (i.identifier for i in self.indices)

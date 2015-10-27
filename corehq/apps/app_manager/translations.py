@@ -621,6 +621,9 @@ def update_case_list_translations(sheet, rows, app):
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
     module = app.get_module(module_index)
 
+    if isinstance(module, ReportModule):
+        return msgs
+
     # It is easier to process the translations if mapping and graph config
     # rows are nested under their respective DetailColumns.
 
