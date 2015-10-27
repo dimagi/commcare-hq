@@ -65,6 +65,12 @@ class ReportColumn(JsonObject):
     transform = DictProperty()
     calculate_total = BooleanProperty(default=False)
 
+    @classmethod
+    def wrap(cls, obj):
+        if 'display' not in obj:
+            obj['display'] = obj['column_id']
+        return super(ReportColumn, cls).wrap(obj)
+
     def format_data(self, data):
         """
         Subclasses can apply formatting to the entire dataset.
