@@ -1021,7 +1021,7 @@ A multibar chart takes a single x-axis column (typically a user, date, or select
 Field          | Description
 ---------------| -----------------------------------------------
 x_axis_column  | This will be the x-axis on the chart.
-y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format)
+y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format).
 
 Here's a sample spec:
 
@@ -1031,8 +1031,14 @@ Here's a sample spec:
     "title": "HIV Mismatch by Clinic",
     "x_axis_column": "clinic",
     "y_axis_columns": [
-        "diagnoses_match_no",
-        "diagnoses_match_yes"
+        {
+            "column_id": "diagnoses_match_no",
+            "display": "No match"
+        },
+        {
+            "column_id": "diagnoses_match_yes",
+            "display": "Match"
+        }
     ]
 }
 ```
