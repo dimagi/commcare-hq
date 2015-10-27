@@ -33,7 +33,7 @@ var ReportModule = (function () {
                 var series_configs = {};
                 var chart_series = [];
                 for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
-                    var series = currentChart.y_axis_columns[k];
+                    var series = currentChart.y_axis_columns[k].column_id;
                     chart_series.push(series);
                     series_configs[series] = new Config(
                         currentReportId === report_id ? (graph_config.series_configs || {})[series] || {} : {}
