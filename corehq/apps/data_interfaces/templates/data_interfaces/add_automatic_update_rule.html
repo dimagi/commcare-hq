@@ -33,6 +33,9 @@
         $scope.matchesDaysSince = function(condition) {
             return condition.property_match_type == 'DAYS';
         };
+        $scope.matchesExists = function(condition) {
+            return condition.property_match_type == 'EXISTS';
+        };
     });
 }(window.angular, {{ form.current_values|JSON }}));
 </script>
@@ -57,7 +60,7 @@
             <tbody>
                 <tr>
                     <td>server_modified_on</div>
-                    <td>{% trans "After date by" %}</td>
+                    <td>{% trans "after date by" %}</td>
                     <td>
                         <input class="textinput textInput form-control"
                                type="text"
@@ -81,13 +84,17 @@
                     <td>
                         <select class="select form-control"
                                 ng-model="condition.property_match_type">
-                            <option value="DAYS">{% trans "After Date By" %}</option>
+                            <option value="DAYS">{% trans "after date by" %}</option>
+                            <option value="EXISTS">{% trans "exists" %}</option>
+                            <option value="EQUAL">{% trans "equals" %}</option>
+                            <option value="NOT_EQUAL">{% trans "does not equal" %}</option>
                         </select>
                     </td>
                     <td>
                         <input class="textinput textInput form-control"
                                type="text"
-                               ng-model="condition.property_value" />
+                               ng-model="condition.property_value"
+                               ng-hide="matchesExists(condition)" />
                     </td>
                     <td>
                         <span ng-show="matchesDaysSince(condition)">{% trans "days" %}</span>
