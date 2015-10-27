@@ -9,9 +9,28 @@ from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
-from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
-    Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum, \
-    Style
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Action,
+    Detail,
+    DetailVariable,
+    Display,
+    Extra,
+    Field,
+    Header,
+    Id,
+    Locale,
+    LocalizedAction,
+    Lookup,
+    PushFrame,
+    Response,
+    Stack,
+    StackDatum,
+    Style,
+    Template,
+    Text,
+    Xpath,
+)
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
@@ -95,6 +114,9 @@ class DetailContributor(SectionContributor):
                 if sub_detail:
                     d.details.append(sub_detail)
             if len(d.details):
+                helper = EntriesHelper(self.app)
+                datums = helper.get_datum_meta_module(module)
+                d.variables.extend([DetailVariable(name=datum.datum.id, function=datum.datum.value) for datum in datums])
                 return d
             else:
                 return None
