@@ -332,6 +332,48 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_dirty()
         self.assertFalse(self._owner_cleanliness_for_id(other_owner_id).is_clean)
 
+    def test_long_extension_chain_with_branches(self):
+        """An extension chain of unowned extensions that ends at an owned case is dirty"""
+        owner_1 = uuid.uuid4().hex
+        self._owner_cleanliness_for_id(owner_1)
+        owner_2 = uuid.uuid4().hex
+        self._owner_cleanliness_for_id(owner_2)
+        host = CaseStructure(case_id=self.sample_case.case_id, attrs={'create': False})
+        host_2 = CaseStructure(
+            case_id="host_with_other_owner",
+            attrs={'owner_id': owner_1}
+        )
+        extension_1 = CaseStructure(
+            case_id="extension1",
+            attrs={'owner_id': UNOWNED_EXTENSION_OWNER_ID},
+            indices=[
+                CaseIndex(
+                    host,
+                    relationship=CASE_INDEX_EXTENSION,
+                    identifier="host_1",
+                ),
+                CaseIndex(
+                    host_2,
+                    relationship=CASE_INDEX_EXTENSION,
+                    identifier="host_2",
+                )
+            ]
+        )
+        extension_2 = CaseStructure(
+            case_id="extension2",
+            attrs={'owner_id': owner_2},
+            indices=[
+                CaseIndex(
+                    extension_1,
+                    relationship=CASE_INDEX_EXTENSION,
+                )
+            ]
+        )
+        self.factory.create_or_update_case(extension_2)
+        self.assert_owner_dirty()
+        self.assertFalse(self._owner_cleanliness_for_id(owner_1).is_clean)
+        self.assertFalse(self._owner_cleanliness_for_id(owner_2).is_clean)
+
 
 class SetCleanlinessFlagsTest(TestCase):
 
