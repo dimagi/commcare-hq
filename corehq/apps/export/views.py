@@ -12,6 +12,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import toggles, privileges
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
+from corehq.apps.app_manager.models import Application
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -35,6 +36,7 @@ from corehq.apps.reports.models import FormExportSchema, CaseExportSchema
 from corehq.apps.reports.standard.export import (
     CaseExportReport,
     ExcelExportReport,
+    sizeof_fmt,
 )
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
@@ -58,6 +60,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
+from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
@@ -365,6 +368,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     http_method_names = ['get', 'post']
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
     show_date_range = False
+    check_for_multimedia = False
 
     @use_daterangepicker
     @use_bootstrap3
@@ -403,6 +407,7 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             'max_column_size': self.max_column_size,
             'show_sync_to_dropbox': self.show_sync_to_dropbox,
             'show_date_range': self.show_date_range,
+            'check_for_multimedia': self.check_for_multimedia,
         }
         if (
             self.default_datespan.startdate is not None
@@ -573,9 +578,8 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             max_column_size=max_column_size,
         )
 
-    def _process_filters_and_specs(self, in_data):
-        """Returns a the export filters and a list of JSON export specs
-        """
+    @staticmethod
+    def _get_form_data_and_specs(in_data):
         try:
             export_specs = in_data['exports']
             filter_form_data = in_data['form_data']
@@ -588,6 +592,12 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             # make double sure that group is none
             filter_form_data['group'] = ''
 
+        return filter_form_data, export_specs
+
+    def _process_filters_and_specs(self, in_data):
+        """Returns a the export filters and a list of JSON export specs
+        """
+        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
         try:
             export_filter = self.get_filters(filter_form_data)
         except ExportFormValidationException:
@@ -636,6 +646,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     urlname = 'export_download_forms'
     show_date_range = True
     page_title = ugettext_noop("Download Form Export")
+    check_for_multimedia = True
 
     @staticmethod
     def get_export_schema(export_id):
@@ -675,6 +686,60 @@ class DownloadFormExportView(BaseDownloadExportView):
 
     def get_export_object(self, export_id):
         return FormExportSchema.get(export_id)
+
+    def _get_attachment_size_by_app_id(self):
+        # hash of app_id, xmlns to size of attachments
+        startkey = [self.domain]
+        db = Application.get_db()
+        view = db.view('attachments/attachments', startkey=startkey,
+                       endkey=startkey + [{}], group_level=3, reduce=True,
+                       group=True)
+        available_attachments =  {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
+        return available_attachments
+
+    @allow_remote_invocation
+    def has_multimedia(self, in_data):
+        """Checks to see if this form export has multimedia available to export
+        """
+        try:
+            size_hash = self._get_attachment_size_by_app_id()
+            export_object = self.get_export_object(self.export_id)
+            hash_key = (export_object.app_id, export_object.xmlns
+                        if hasattr(export_object, 'xmlns') else '')
+            has_multimedia = hash_key in size_hash
+        except Exception as e:
+            return format_angular_error(e.message)
+        return format_angular_success({
+            'hasMultimedia': has_multimedia,
+        })
+
+    @allow_remote_invocation
+    def prepare_form_multimedia(self, in_data):
+        """Gets the download_id for the multimedia zip and sends it to the
+        exportDownloadService in download_export.ng.js to begin polling for the
+        zip file download.
+        """
+        try:
+            filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+            filter_form = FilterFormExportDownloadForm(
+                self.domain_object, self.timezone, filter_form_data
+            )
+            if not filter_form.is_valid():
+                raise ExportFormValidationException(
+                    _("Please check that you've submitted all required filters.")
+                )
+            download = DownloadBase()
+            export_object = self.get_export_schema(export_specs[0]['export_id'])
+            task_kwargs = filter_form.get_multimedia_task_kwargs(
+                export_object, download.download_id
+            )
+            from corehq.apps.reports.tasks import build_form_multimedia_zip
+            download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
+        except Exception as e:
+            return format_angular_error(e)
+        return format_angular_success({
+            'download_id': download.download_id,
+        })
 
 
 class BulkDownloadFormExportView(DownloadFormExportView):
