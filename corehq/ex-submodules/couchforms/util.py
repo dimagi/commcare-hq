@@ -274,10 +274,10 @@ def _handle_duplicate(new_doc, instance):
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
-        new_doc.doc_type = XFormDuplicate.__name__
-        dupe = XFormDuplicate.wrap(new_doc.to_json())
-        dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
-        return _assign_new_id_and_lock(dupe)
+        duplicate = deduplicate_xform(new_doc)
+        return MultiLockManager([
+            LockManager(duplicate, acquire_lock_for_xform(duplicate._id)),
+        ])
 
 
 def is_deprecation(xform):
