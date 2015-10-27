@@ -4,7 +4,6 @@ from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from datetime import datetime, date
 from dimagi.utils.parsing import json_format_datetime
-from django.conf import settings
 from django.test import TestCase
 from mock import patch
 

@@ -1,6 +1,5 @@
 import json
 from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria
-from corehq.apps.hqwebapp.crispy import HiddenFieldWithErrors
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms

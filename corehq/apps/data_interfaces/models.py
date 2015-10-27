@@ -51,7 +51,7 @@ class AutomaticUpdateRule(models.Model):
     def get_case_ids(cls, domain, boundary_date, case_type):
         query = (CaseES()
                  .domain(domain)
-                 .case_type(self.case_type)
+                 .case_type(case_type)
                  .server_modified_range(lte=boundary_date)
                  .is_closed(closed=False)
                  .fields([]))
