@@ -12,6 +12,7 @@ from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.xform import XFormInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
     delete_all_xforms, delete_all_cases, assert_user_doesnt_have_case,
@@ -38,9 +39,9 @@ class SyncBaseTest(TestCase):
     """
 
     def setUp(self):
-        delete_all_cases()
-        delete_all_xforms()
-        delete_all_sync_logs()
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_sync_logs()
         self.project = Domain(name=TEST_DOMAIN_NAME)
         self.user = User(user_id=USER_ID, username=USERNAME,
                          password="changeme", date_joined=datetime(2011, 6, 9))
@@ -389,7 +390,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         form, _ = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
-        XFormInterface.archive(form)
+        XFormInterface(TEST_DOMAIN_NAME).archive(form)
         assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id, purge_restore_cache=True)
 
     @run_with_all_restore_configs
@@ -1333,7 +1334,7 @@ class MultiUserSyncTest(SyncBaseTest):
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
-            form = XFormInterface.get_xform(form.id)
+            form = XFormInterface(TEST_DOMAIN_NAME).get_xform(form.id)
             self.assertFalse(hasattr(form, "problem"))
             synclog_from_restore_payload(
                 generate_restore_payload(self.project, self.user, version="2.0")
