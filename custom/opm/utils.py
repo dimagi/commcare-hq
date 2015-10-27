@@ -25,13 +25,6 @@ class BaseMixin(object):
         return [] if hierarchy_gp and hierarchy_gp[0] == ALL_OPTION else hierarchy_gp
 
 
-def _safeint(value):
-    try:
-        return int(value)
-    except (ValueError, TypeError):
-        return 0
-
-
 class UserSqlData(SqlData):
     table_name = "fluff_OpmUserFluff"
     group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
