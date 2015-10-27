@@ -352,14 +352,25 @@ def _get_or_update_cases(xforms, case_db):
                         index.referenced_id,
                     )
 
-    def _get_dirtiness_flags_for_outgoing_indices(case):
+    def _get_dirtiness_flags_for_outgoing_indices(case, tree_owners=None):
         """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
+        if tree_owners is None:
+            tree_owners = set()
+
         extension_indices = [index for index in case.indices if index.relationship == CASE_INDEX_EXTENSION]
-        indexed_owned_ids = {case_db.get(index.referenced_id).owner_id
-                             for index in case.indices if case_db.doc_exist(index.referenced_id)}
-        potential_clean_owner_ids = indexed_owned_ids | set([UNOWNED_EXTENSION_OWNER_ID])
-        more_than_one_owner_touched = len(indexed_owned_ids) > 1
-        touches_different_owner = len(indexed_owned_ids) == 1 and case.owner_id not in potential_clean_owner_ids
+
+        unowned_host_cases = []
+        for index in extension_indices:
+            host_case = case_db.get(index.referenced_id)
+            if host_case and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID:
+                unowned_host_cases.append(host_case)
+
+        owner_ids = {case_db.get(index.referenced_id).owner_id
+                     for index in case.indices if case_db.doc_exist(index.referenced_id)} | tree_owners
+        potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
+        more_than_one_owner_touched = len(owner_ids) > 1
+        touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
+
         if (more_than_one_owner_touched or touches_different_owner):
             yield DirtinessFlag(case._id, case.owner_id)
             if extension_indices:
@@ -367,6 +378,15 @@ def _get_or_update_cases(xforms, case_db):
                 for index in case.indices:
                     referenced_case = case_db.get(index.referenced_id)
                     yield DirtinessFlag(referenced_case._id, referenced_case.owner_id)
+
+        if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
+            tree_owners.add(case.owner_id)
+        for unowned_host_case in unowned_host_cases:
+            # A host case of this extension is unowned, which means it could potentially touch an owned case
+            # Check these unowned cases' outgoing indices and mark dirty if appropriate
+            for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(unowned_host_case,
+                                                                            tree_owners=tree_owners):
+                yield dirtiness_flag
 
     def _get_dirtiness_flags_for_child_cases(domain, cases):
         child_cases = get_reverse_indexed_cases(domain, [c['_id'] for c in cases])
