@@ -236,19 +236,17 @@ def _handle_id_conflict(instance, xform, domain):
     assert domain
     conflict_id = xform._id
 
-    existing_doc = XFormInstance.get_db().get(conflict_id, attachments=True)
-    if existing_doc.get('domain') != domain or existing_doc.get('doc_type') not in doc_types():
+    if is_duplicate_or_edit(conflict_id, domain):
+        # It looks like a duplicate/edit in the same domain so pursue that workflow.
+        return _handle_duplicate(xform, instance)
+    else:
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
         return _assign_new_id_and_lock(xform)
-    else:
-        # It looks like a duplicate/edit in the same domain so pursue that workflow.
-        existing_doc = XFormInstance.wrap(existing_doc)
-        return _handle_duplicate(existing_doc, xform, instance)
 
 
-def _handle_duplicate(existing_doc, new_doc, instance):
+def _handle_duplicate(new_doc, instance):
     """
     Handle duplicate xforms and xform editing ('deprecation')
 
@@ -256,7 +254,10 @@ def _handle_duplicate(existing_doc, new_doc, instance):
     and *must* include inline attachments
 
     """
-    conflict_id = existing_doc.get_id
+    conflict_id = new_doc._id
+    existing_doc = XFormInstance.get_db().get(conflict_id, attachments=True)
+    existing_doc = XFormInstance.wrap(existing_doc)
+
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()
 
@@ -265,29 +266,11 @@ def _handle_duplicate(existing_doc, new_doc, instance):
         #  - "Deprecate" the old form by making a new document with the same contents
         #    but a different ID and a doc_type of XFormDeprecated
         #  - Save the new instance to the previous document to preserve the ID
-
-        old_id = existing_doc._id
-        multi_lock_manager = _assign_new_id_and_lock(new_doc)
-
-        # swap the two documents so the original ID now refers to the new one
-        # and mark original as deprecated
-        new_doc._id, existing_doc._id = old_id, new_doc._id
-        new_doc._rev, existing_doc._rev = existing_doc._rev, new_doc._rev
-
-        # flag the old doc with metadata pointing to the new one
-        existing_doc.doc_type = deprecation_type()
-        existing_doc.orig_id = old_id
-
-        # and give the new doc server data of the old one and some metadata
-        new_doc.received_on = existing_doc.received_on
-        new_doc.deprecated_form_id = existing_doc._id
-        new_doc.edited_on = datetime.datetime.utcnow()
-
-        multi_lock_manager.append(
-            LockManager(existing_doc,
-                        acquire_lock_for_xform(old_id))
-        )
-        return multi_lock_manager
+        existing_doc, new_doc = deprecate_xform(existing_doc, new_doc)
+        return MultiLockManager([
+            LockManager(new_doc, acquire_lock_for_xform(existing_doc._id)),
+            LockManager(existing_doc, acquire_lock_for_xform(existing_doc.orig_id)),
+        ])
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
