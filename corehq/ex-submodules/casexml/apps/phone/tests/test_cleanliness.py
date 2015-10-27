@@ -40,6 +40,16 @@ class OwnerCleanlinessTest(SyncBaseTest):
                 ]
             )
         )
+        self.extension, self.host = self.factory.create_or_update_case(
+            CaseStructure(
+                attrs={'owner_id': UNOWNED_EXTENSION_OWNER_ID},
+                indices=[
+                    CaseIndex(
+                        relationship=CASE_INDEX_EXTENSION
+                    ),
+                ]
+            )
+        )
         self.assert_owner_clean()  # this is an actual assertion
 
     def _verify_set_cleanliness_flags(self):
@@ -145,6 +155,23 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_dirty()
         self.assertEqual(self.child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
+
+    def test_change_host_owner_remains_clean(self):
+        """change owner for unowned extension, owner remains clean"""
+        new_owner = uuid.uuid4().hex
+        self._owner_cleanliness_for_id(new_owner)
+        self._set_owner(self.host.case_id, new_owner)
+        self.assert_owner_clean()
+        self.assertTrue(self._owner_cleanliness_for_id(new_owner).is_clean)
+        self._verify_set_cleanliness_flags()
+
+    def test_change_host_owner_makes_extension_chain_dirty(self):
+        """change owner for extension, both owners dirty"""
+        new_owner = uuid.uuid4().hex
+        self._owner_cleanliness_for_id(new_owner)
+        self._set_owner(self.extension.case_id, new_owner)
+        self.assert_owner_dirty()
+        self.assertFalse(self._owner_cleanliness_for_id(new_owner).is_clean)
 
     def test_set_flag_clean_no_data(self):
         unused_owner_id = uuid.uuid4().hex
