@@ -91,12 +91,22 @@ class AutomaticUpdateRule(models.Model):
         if self.rule_matches_case(case, now):
             self.apply_actions(case)
 
+    def activate(self, active=True):
+        self.active = active
+        self.save()
+
+    def soft_delete(self):
+        self.deleted = True
+        self.save()
+
 
 class AutomaticUpdateRuleCriteria(models.Model):
     DATA_TYPE_DATE = 'DATE'
+    DATA_TYPE_STRING = 'STRING'
 
     DATA_TYPE_CHOICES = (
         (DATA_TYPE_DATE, DATA_TYPE_DATE),
+        (DATA_TYPE_STRING, DATA_TYPE_STRING),
     )
 
     MATCH_DAYS_SINCE = 'DAYS'

@@ -77,7 +77,7 @@
 {% block page_content %}
 <div ng-app="autoUpdateRuleApp">
     <div class="btn-toolbar" style="margin-bottom: 20px;">
-        <a href="">
+        <a href="{% url "add_automatic_update_rule" domain %}">
             <button type="button" class="btn btn-success">
                 <i class="fa fa-plus"></i> {% trans "Add Automatic Update Rule" %}
             </button>
@@ -121,7 +121,7 @@
                     <tr ng-repeat="rule in paginatedItems">
                         {% angularjs %}
                         <td>
-                            <a href="">
+                            <a href="{{ rule.edit_url }}">
                                 <strong>{{ rule.name }}</strong>
                             </a>
                         </td>

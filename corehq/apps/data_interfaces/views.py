@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
@@ -20,8 +21,10 @@ from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
-    AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm)
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+    AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
+    AddAutomaticCaseUpdateRuleForm)
+from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
+    AutomaticUpdateRuleCriteria, AutomaticUpdateAction)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -33,6 +36,7 @@ from corehq.apps.style.decorators import use_bootstrap3
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
+from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
 from django.shortcuts import render
@@ -583,6 +587,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
                          .user_time(self.project_timezone)
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+            'edit_url': reverse(EditAutomaticUpdateRuleView.urlname, args=[self.domain, rule.pk]),
         }
 
     @allow_remote_invocation
@@ -656,14 +661,154 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
             }
 
         if action == self.ACTION_ACTIVATE:
-            rule.active = True
+            rule.activate()
         elif action == self.ACTION_DEACTIVATE:
-            rule.active = False
+            rule.activate(False)
         elif action == self.ACTION_DELETE:
-            rule.deleted = True
-
-        rule.save()
+            rule.soft_delete()
 
         return {
             'success': True,
         }
+
+
+class AddAutomaticUpdateRuleView(DataInterfaceSection):
+    template_name = 'data_interfaces/add_automatic_update_rule.html'
+    urlname = 'add_automatic_update_rule'
+    page_title = ugettext_lazy("Add Automatic Update Rule")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def initial_rule_form(self):
+        return AddAutomaticCaseUpdateRuleForm()
+
+    @property
+    @memoized
+    def rule_form(self):
+        if self.request.method == 'POST':
+            return AddAutomaticCaseUpdateRuleForm(self.request.POST)
+        else:
+            return self.initial_rule_form
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.rule_form,
+        }
+
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(AddAutomaticUpdateRuleView, self).dispatch(*args, **kwargs)
+
+    def create_criteria(self, rule):
+        for condition in self.rule_form.cleaned_data['conditions']:
+            AutomaticUpdateRuleCriteria.objects.create(
+                rule=rule,
+                property_name=condition['property_name'],
+                property_data_type=(
+                    AutomaticUpdateRuleCriteria.DATA_TYPE_DATE
+                    if condition['property_match_type'] == AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE
+                    else AutomaticUpdateRuleCriteria.DATA_TYPE_STRING
+                ),
+                property_value=condition['property_value'],
+                match_type=condition['property_match_type'],
+            )
+
+    def create_actions(self, rule):
+        AutomaticUpdateAction.objects.create(
+            rule=rule,
+            action=AutomaticUpdateAction.ACTION_CLOSE,
+        )
+        if self.rule_form.cleaned_data['update_case']:
+            AutomaticUpdateAction.objects.create(
+                rule=rule,
+                action=AutomaticUpdateAction.ACTION_UPDATE,
+                property_name=self.rule_form.cleaned_data['update_property_name'],
+                property_value=self.rule_form.cleaned_data['update_property_value'],
+            )
+
+    def create_rule(self):
+        with transaction.atomic():
+            rule = AutomaticUpdateRule.objects.create(
+                domain=self.domain,
+                name=self.rule_form.cleaned_data['name'],
+                case_type=self.rule_form.cleaned_data['case_type'],
+                active=True,
+                server_modified_boundary=self.rule_form.cleaned_data['server_modified_boundary'],
+            )
+            self.create_criteria(rule)
+            self.create_actions(rule)
+
+    def post(self, request, *args, **kwargs):
+        if self.rule_form.is_valid():
+            self.create_rule()
+            return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)
+
+
+class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
+    urlname = 'edit_automatic_update_rule'
+    page_title = ugettext_lazy("Edit Automatic Update Rule")
+
+    @property
+    @memoized
+    def rule_id(self):
+        return self.kwargs.get('rule_id')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.rule_id])
+
+    @property
+    @memoized
+    def rule(self):
+        try:
+            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id)
+        except AutomaticUpdateRule.DoesNotExist:
+            raise Http404()
+
+        if rule.domain != self.domain or rule.deleted:
+            raise Http404()
+
+        return rule
+
+    @property
+    def initial_rule_form(self):
+        conditions = []
+        for criterion in self.rule.automaticupdaterulecriteria_set.all():
+            conditions.append({
+                'property_name': criterion.property_name,
+                'property_match_type': criterion.match_type,
+                'property_value': criterion.property_value,
+            })
+
+        update_case = False
+        update_property_name = None
+        update_property_value = None
+        for action in self.rule.automaticupdateaction_set.all():
+            if action.action == AutomaticUpdateAction.ACTION_UPDATE:
+                update_case = True
+                update_property_name = action.property_name
+                update_property_value = action.property_value
+                break
+
+        initial = {
+            'name': self.rule.name,
+            'case_type': self.rule.case_type,
+            'server_modified_boundary': self.rule.server_modified_boundary,
+            'conditions': json.dumps(conditions),
+            'update_case': update_case,
+            'update_property_name': update_property_name,
+            'update_property_value': update_property_value,
+        }
+        return AddAutomaticCaseUpdateRuleForm(initial=initial)
+
+    def post(self, request, *args, **kwargs):
+        if self.rule_form.is_valid():
+            self.rule.soft_delete()
+            self.create_rule()
+            return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
+        return self.get(request, *args, **kwargs)

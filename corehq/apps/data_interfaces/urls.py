@@ -5,7 +5,9 @@ from corehq.apps.data_interfaces.views import (CaseGroupListView,
                                                ArchiveFormView,
                                                XFormManagementView,
                                                XFormManagementStatusView,
-                                               AutomaticUpdateRuleListView)
+                                               AutomaticUpdateRuleListView,
+                                               AddAutomaticUpdateRuleView,
+                                               EditAutomaticUpdateRuleView)
 from corehq.apps.reports.dispatcher import (
     DataDownloadInterfaceDispatcher,
     DataExportInterfaceDispatcher,
@@ -34,6 +36,10 @@ edit_data_urls = patterns(
         CaseGroupCaseManagementView.as_view(), name=CaseGroupCaseManagementView.urlname),
     url(r'^automatic_updates/$', AutomaticUpdateRuleListView.as_view(),
         name=AutomaticUpdateRuleListView.urlname),
+    url(r'^automatic_updates/add/$', AddAutomaticUpdateRuleView.as_view(),
+        name=AddAutomaticUpdateRuleView.urlname),
+    url(r'^automatic_updates/edit/(?P<rule_id>\d+)/$', EditAutomaticUpdateRuleView.as_view(),
+        name=EditAutomaticUpdateRuleView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
 )
 
