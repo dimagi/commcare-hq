@@ -231,14 +231,12 @@ class BalanceMigration(UserMigrationMixin):
             self.endpoint.get_locations, filters=dict(type='country', is_active=True)
         )
         supply_points_count = self._get_total_counts(self.endpoint.get_supply_points, filters=dict(active=True))
-        web_users_count = self._get_total_counts(self.endpoint.get_webusers)
         sms_users_count = self._get_total_counts(self.endpoint.get_smsusers)
 
         stats, _ = EWSMigrationStats.objects.get_or_create(domain=self.domain)
         stats.products_count = products_count
         stats.locations_count = district_count + region_count + country_count
         stats.supply_points_count = supply_points_count
-        stats.web_users_count = web_users_count
         stats.sms_users_count = sms_users_count
         stats.save()
 
