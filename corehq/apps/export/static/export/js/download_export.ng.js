@@ -26,11 +26,12 @@
     download_export.constant('exportList', []);
     download_export.constant('maxColumnSize', 2000);
     download_export.constant('defaultDateRange', null);
+    download_export.constant('checkForMultimedia', false);
 
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
         $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService,
-        defaultDateRange
+        defaultDateRange, checkForMultimedia
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
@@ -40,6 +41,20 @@
             exportData.filename = encodeURIComponent(exportData.name);
             return exportData;
         });
+
+        $scope.hasMultimedia = false;
+        if (checkForMultimedia) {
+            djangoRMI.has_multimedia({})
+                .success(function (data) {
+                        console.log(data);
+                    if (data.success) {
+                        $scope.hasMultimedia = data.hasMultimedia;
+                    }
+                })
+                .error(function () {
+                    // silent error for now
+                });
+        }
 
         $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
@@ -129,6 +144,26 @@
             $scope.preparingExport = false;
         };
 
+        $scope.preparingMultimediaExport = false;
+        $scope.prepareMultimediaExport = function () {
+            $scope.prepareExportError = null;
+            $scope.preparingMultimediaExport = true;
+            djangoRMI.prepare_form_multimedia({
+                exports: $scope.exportList,
+                form_data: $scope.formData
+            })
+                .success(function (data) {
+                    if (data.success) {
+                        $scope.preparingMultimediaExport = false;
+                        $scope.downloadInProgress = true;
+                        exportDownloadService.startMultimediaDownload(data.download_id);
+                    } else {
+                        self._handlePrepareError(data);
+                    }
+                })
+                .error(self._handlePrepareError);
+        };
+
         $scope.$watch(function () {
             return exportDownloadService.showDownloadStatus;
         }, function (status) {
@@ -151,6 +186,7 @@
             $scope.downloadUrl = null;
             $scope.progress = {};
             $scope.showCeleryError = false;
+            $scope.isMultimediaDownload = false;
             $element.progress().css('width', '0%');
             $element.progress().removeClass('progress-bar-success');
         };
@@ -198,6 +234,12 @@
         }, function (status) {
             $scope.showCeleryError = status;
         });
+
+        $scope.$watch(function () {
+            return exportDownloadService.isMultimediaDownload;
+        }, function (status) {
+            $scope.isMultimediaDownload = status;
+        });
     };
     download_export.controller(exportsControllers);
 
@@ -213,6 +255,7 @@
             self.showDownloadStatus = false;
             self.downloadError = null;
             self.showCeleryError = false;
+            self.isMultimediaDownload = false;
         };
 
         self.resetDownload();
@@ -267,6 +310,11 @@
             self.showDownloadStatus = true;
             self.downloadId = downloadId;
             self._promise = $interval(self._checkDownloadProgress, 2000);
+        };
+
+        self.startMultimediaDownload = function(downloadId) {
+            self.isMultimediaDownload = true;
+            self.startDownload(downloadId);
         };
 
         return self;
