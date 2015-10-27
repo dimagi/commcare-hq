@@ -42,7 +42,8 @@ from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorExcept
     pillow_supervisor_status
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
-from pillowtop import get_all_pillows_json, get_pillow_by_name
+from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
@@ -85,7 +86,6 @@ from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
-from pillowtop.utils import get_pillow_json
 
 
 @require_superuser
@@ -399,7 +399,12 @@ def db_comparisons(request):
 def pillow_operation_api(request):
     pillow_name = request.POST["pillow_name"]
     operation = request.POST["operation"]
-    pillow = get_pillow_by_name(pillow_name)
+    try:
+        pillow_config = get_pillow_config_by_name(pillow_name)
+        pillow = pillow_config.get_instance()
+    except PillowNotFoundError:
+        pillow_config = None
+        pillow = None
 
     def get_response(error=None):
         response = {
@@ -409,8 +414,8 @@ def pillow_operation_api(request):
             'message': error,
         }
         response.update(pillow_supervisor_status(pillow_name))
-        if pillow:
-            response.update(get_pillow_json(pillow))
+        if pillow_config:
+            response.update(get_pillow_json(pillow_config))
         return json_response(response)
 
     @any_toggle_enabled(SUPPORT)
@@ -682,29 +687,39 @@ def loadtest(request):
     template = "hqadmin/loadtest.html"
     return render(request, template, context)
 
+
+def _lookup_id_in_couch(doc_id):
+    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
+    for url in db_urls:
+        db = Database(url)
+        try:
+            doc = db.get(doc_id)
+        except ResourceNotFound:
+            pass
+        else:
+            return {
+                "doc": json.dumps(doc, indent=4, sort_keys=True),
+                "doc_id": doc_id,
+                "doc_type": doc.get('doc_type', 'Unknown'),
+                "dbname": db.dbname,
+            }
+    return {
+        "doc": "NOT FOUND",
+        "doc_id": doc_id,
+    }
+
+
 @require_superuser
 def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
         return render(request, "hqadmin/doc_in_es.html", {})
 
-    couch_doc = {}
-    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
-    for url in db_urls:
-        try:
-            couch_doc = Database(url).get(doc_id)
-            break
-        except ResourceNotFound:
-            pass
-    query = {"filter":
-                {"ids": {
-                    "values": [doc_id]}}}
-
     def to_json(doc):
         return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
 
+    query = {"filter": {"ids": {"values": [doc_id]}}}
     found_indices = {}
-    doc_type = couch_doc.get('doc_type')
     es_doc_type = None
     for index, url in ES_URLS.items():
         res = run_query(url, query)
@@ -713,16 +728,23 @@ def doc_in_es(request):
             found_indices[index] = to_json(es_doc)
             es_doc_type = es_doc_type or es_doc.get('doc_type')
 
-    doc_type = doc_type or es_doc_type or 'Unknown'
-
     context = {
         "doc_id": doc_id,
-        "status": "found" if found_indices else "NOT FOUND!",
-        "doc_type": doc_type,
-        "couch_doc": to_json(couch_doc),
-        "found_indices": found_indices,
+        "es_info": {
+            "status": "found" if found_indices else "NOT FOUND IN ELASTICSEARCH!",
+            "doc_type": es_doc_type,
+            "found_indices": found_indices,
+        },
+        "couch_info": _lookup_id_in_couch(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
+
+
+@require_superuser
+def raw_couch(request):
+    doc_id = request.GET.get("id")
+    context = _lookup_id_in_couch(doc_id) if doc_id else {}
+    return render(request, "hqadmin/raw_couch.html", context)
 
 
 @require_superuser

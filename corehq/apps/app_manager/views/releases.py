@@ -63,11 +63,8 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
-    include_media = toggles.APP_BUILDER_INCLUDE_MULTIMEDIA_ODK.enabled(
-        request.user.username
-    )
     for app in saved_apps:
-        app['include_media'] = include_media and app['doc_type'] != 'RemoteApp'
+        app['include_media'] = app['doc_type'] != 'RemoteApp'
     return json_response(saved_apps)
 
 
@@ -87,10 +84,9 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
-        # todo remove get_media_references
-        multimedia = app.get_media_references()
+        multimedia_state = app.check_media_state()
         context.update({
-            'multimedia': multimedia,
+            'multimedia_state': multimedia_state,
         })
     response = render(request, template, context)
     response.set_cookie('lang', encode_if_unicode(context['lang']))

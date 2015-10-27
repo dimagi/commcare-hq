@@ -5,7 +5,7 @@ from casexml.apps.case.xml import V2
 from corehq.apps.sofabed.models import CaseData, CASE_NAME_LEN
 from datetime import date, datetime, timedelta
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 TEST_DOMAIN = 'test'
 TEST_NAME_LEN = CASE_NAME_LEN-8
@@ -22,7 +22,6 @@ class CaseDataTests(TestCase):
                 create=True,
                 case_id='mother_case_id',
                 case_type='mother-case',
-                version=V2,
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
@@ -39,7 +38,6 @@ class CaseDataTests(TestCase):
                 case_name=('a' * TEST_NAME_LEN) + '123456789',
                 external_id='external_id',
                 date_modified=self.date_modified,
-                version=V2,
                 update={'foo': 'bar'},
                 index={'mom': ('mother-case', 'mother_case_id')}
             ).as_xml()
@@ -88,7 +86,6 @@ class CaseDataTests(TestCase):
                 case_id='grand_mother_case_id',
                 case_type='mother-case',
                 owner_id='owner',
-                version=V2,
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
@@ -99,7 +96,6 @@ class CaseDataTests(TestCase):
                 case_id=self.case_id,
                 user_id='user2',
                 date_modified=date_modified,
-                version=V2,
                 index={'gmom': ('mother-case', 'grand_mother_case_id')}
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
@@ -138,7 +134,6 @@ class CaseDataTests(TestCase):
                 create=True,
                 case_id=case_id,
                 case_type='nameless',
-                version=V2,
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
@@ -157,7 +152,6 @@ class CaseDataTests(TestCase):
                 case_type='c_type',
                 case_name='bob',
                 date_modified=self.date_modified,
-                version=V2,
                 update={'foo': 'bar'},
             ).as_xml()
         ], {'domain': TEST_DOMAIN})

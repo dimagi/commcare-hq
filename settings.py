@@ -93,28 +93,6 @@ LOCALE_PATHS = (
 # collectstatic
 BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
 
-BOWER_INSTALLED_APPS = (
-    'jquery#1.11.1',
-    'jquery-1.7.1-legacy=jquery#1.7.1',
-    'underscore#1.6.0',
-    'underscore-legacy=underscore#1.4.4',
-    'jquery-form#3.45.0',
-    'jquery.cookie#1.4.1',
-    'jquery-timeago#1.2.0',
-    'angular#1.4.4',
-    'angular-route#1.4.4',
-    'angular-resource#1.4.4',
-    'angular-message-format#1.4.4',
-    'angular-messages#1.4.4',
-    'angular-cookies#1.4.4',
-    'angular-sanitize#1.4.4',
-    'knockout-2.3.0-legacy=knockout.js#2.3',
-    'knockout#3.1.0',
-    'select2-3.4.5-legacy=select2#3.4.5',
-    'less#1.7.3',
-    'backbone#0.9.1',
-)
-
 BOWER_PATH = '/usr/local/bin/bower'
 
 STATICFILES_FINDERS = (
@@ -196,7 +174,6 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
-    "corehq.util.context_processors.raven",
 ]
 
 TEMPLATE_DIRS = []
@@ -219,7 +196,6 @@ DEFAULT_APPS = (
     'couchdbkit.ext.django',
     'crispy_forms',
     'gunicorn',
-    'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
     'tastypie',
@@ -300,6 +276,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.telerivet',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
+    'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
@@ -368,7 +345,6 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
-    'custom.tdh',
     'custom.up_nrhm',
 
     'custom.care_pathways',
@@ -399,6 +375,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
+    'corehq.messaging.smsbackends.smsgh',
     'crispy_forms',
     'django_extensions',
     'djangobower',
@@ -409,7 +386,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'gunicorn',
     'langcodes',
     'luna',
-    'raven.contrib.django.raven_compat',
     'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
@@ -879,17 +855,13 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.NotifyExceptionEmailer',
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
         'null': {
             'class': 'django.utils.log.NullHandler',
         },
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -908,22 +880,17 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop', 'sentry'],
+            'handlers': ['pillowtop'],
             'level': 'ERROR',
             'propagate': False,
         },
-        'pillowtop_eval': {
-            'handlers': ['sentry'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'smsbillables': {
-            'handlers': ['file', 'sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -933,7 +900,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -985,6 +952,10 @@ DROPBOX_KEY = ''
 DROPBOX_SECRET = ''
 DROPBOX_APP_NAME = ''
 
+# Amazon S3
+S3_ACCESS_KEY = None
+S3_SECRET_KEY = None
+
 # Supervisor RPC
 SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
@@ -993,6 +964,11 @@ SUBSCRIPTION_PASSWORD = None
 ENVIRONMENT_HOSTS = {
     'pillowtop': ['localhost']
 }
+
+DATADOG_API_KEY = None
+DATADOG_APP_KEY = None
+
+TEST_SHOULD_USE_SQL_BACKEND = False
 
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
@@ -1035,6 +1011,8 @@ if DEBUG:
         INSTALLED_APPS = INSTALLED_APPS + (
             'luna',
         )
+
+    INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
 
     import warnings
     warnings.simplefilter('default')
@@ -1093,7 +1071,7 @@ NEW_USERS_GROUPS_DB = 'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
 NEW_FIXTURES_DB = 'fixtures'
-FIXTURES_DB = None
+FIXTURES_DB = NEW_FIXTURES_DB
 
 COUCHDB_APPS = [
     'api',
@@ -1179,7 +1157,6 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
-    'tdhtesting',
     ('callcenter', 'meta'),
 
     # users and groups
@@ -1205,6 +1182,42 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+
+### BOWER APPS ###
+BOWER_CORE_APPS = (
+    'jquery#1.11.1',
+    'jquery-1.7.1-legacy=jquery#1.7.1',
+    'underscore#1.6.0',
+    'underscore-legacy=underscore#1.4.4',
+    'jquery-form#3.45.0',
+    'jquery.cookie#1.4.1',
+    'jquery-timeago#1.2.0',
+    'angular#1.4.4',
+    'angular-route#1.4.4',
+    'angular-resource#1.4.4',
+    'angular-message-format#1.4.4',
+    'angular-messages#1.4.4',
+    'angular-cookies#1.4.4',
+    'angular-sanitize#1.4.4',
+    'knockout-2.3.0-legacy=knockout.js#2.3',
+    'knockout#3.1.0',
+    'select2-3.4.5-legacy=select2#3.4.5',
+    'less#1.7.3',
+    'backbone#0.9.1',
+    'bootstrap-daterangepicker#2.1.13',
+)
+
+BOWER_TEST_APPS = (
+    'chai#3.3.0',
+    'mocha#2.3.3',
+    'sinon=http://sinonjs.org/releases/sinon-1.17.0.js',
+    'angular-mocks#1.4.4',
+)
+
+BOWER_INSTALLED_APPS = BOWER_CORE_APPS
+
+if DEBUG:
+    BOWER_INSTALLED_APPS += BOWER_TEST_APPS
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = SharedDriveConfiguration(
@@ -1271,6 +1284,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.messaging.smsbackends.grapevine.api.GrapevineBackend",
     "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
     "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
+    "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
 ]
 
 IVR_BACKEND_MAP = {
@@ -1338,10 +1352,7 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.models.OpmCaseFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.opm.models.OpmFormFluffPillow',
-        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
@@ -1362,13 +1373,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        'custom.tdh.models.TDHEnrollChildFluffPillow',
-        'custom.tdh.models.TDHInfantClassificationFluffPillow',
-        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
-        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
-        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
-        'custom.tdh.models.TDHChildClassificationFluffPillow',
-        'custom.tdh.models.TDHChildTreatmentFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'mvp_indicators': [
@@ -1518,8 +1522,6 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh',
-    'rec': 'custom.tdh',
     'kemri': 'custom.openclinica',
     'novartis': 'custom.openclinica',
 }
@@ -1539,7 +1541,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'colalife', 'common', 'compressor',
+        'care_pathways', 'colalife', 'common', 'compressor', 'smsbillables',
     ),
 )
 
@@ -1566,3 +1568,10 @@ if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+
+try:
+    from datadog import initialize
+except ImportError:
+    pass
+else:
+    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)

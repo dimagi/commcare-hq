@@ -18,6 +18,7 @@ from django.http import (
 import iso8601
 from redis import RedisError
 from corehq.apps.tzmigration import phone_timezones_should_be_processed, timezone_migration_in_progress
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
@@ -29,6 +30,7 @@ import xml2json
 
 import couchforms
 from .const import BadRequest
+from .attachments import AttachmentsManager
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -46,6 +48,7 @@ from .signals import (
 )
 from .xml import ResponseNature, OpenRosaResponse
 
+legacy_soft_assert = soft_assert('{}@{}'.format('skelly', 'dimagi.com'))
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
@@ -150,7 +153,7 @@ def adjust_datetimes(data, parent=None, key=None):
     return data
 
 
-def create_xform(xml_string, attachments=None, _id=None, process=None):
+def create_xform(xml_string, attachments=None, process=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -163,28 +166,12 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
       - raise couchforms.XMLSyntaxError
 
     """
-    from corehq.util.couch_helpers import CouchAttachmentsBuilder
-
     assert attachments is not None
     json_form = convert_xform_to_json(xml_string)
     adjust_datetimes(json_form)
 
-    _id = (_id or _extract_meta_instance_id(json_form)
-           or XFormInstance.get_db().server.next_uuid())
+    _id = _extract_meta_instance_id(json_form) or XFormInstance.get_db().server.next_uuid()
     assert _id
-    attachments_builder = CouchAttachmentsBuilder()
-    attachments_builder.add(
-        content=xml_string,
-        name='form.xml',
-        content_type='text/xml',
-    )
-
-    for key, value in attachments.items():
-        attachments_builder.add(
-            content=value,
-            name=key,
-            content_type=value.content_type,
-        )
 
     xform = XFormInstance(
         # form has to be wrapped
@@ -192,9 +179,17 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
         # other properties can be set post-wrap
         _id=_id,
         xmlns=json_form.get('@xmlns'),
-        _attachments=attachments_builder.to_json(),
         received_on=datetime.datetime.utcnow(),
     )
+    attachment_manager = AttachmentsManager(xform)
+
+    # Always save the Form XML as an attachment
+    attachment_manager.store_attachment('form.xml', xml_string, 'text/xml')
+
+    for name, filestream in attachments.items():
+        attachment_manager.store_attachment(name, filestream, filestream.content_type)
+
+    attachment_manager.commit()
 
     # this had better not fail, don't think it ever has
     # if it does, nothing's saved and we get a 500
@@ -204,13 +199,12 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
     lock = acquire_lock_for_xform(_id)
     with ReleaseOnError(lock):
         if _id in XFormInstance.get_db():
-            raise DuplicateError()
+            raise DuplicateError(xform)
 
     return LockManager(xform, lock)
 
 
-def process_xform(instance, attachments=None, process=None, domain=None,
-                  _id=None):
+def process_xform(instance, attachments=None, process=None, domain=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -223,14 +217,12 @@ def process_xform(instance, attachments=None, process=None, domain=None,
     attachments = attachments or {}
 
     try:
-        xform_lock = create_xform(instance, process=process,
-                                  attachments=attachments, _id=_id)
+        xform_lock = create_xform(instance, process=process, attachments=attachments)
     except couchforms.XMLSyntaxError as e:
-        xform = _log_hard_failure(instance, attachments, e)
+        xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)
-    except DuplicateError:
-        return _handle_id_conflict(instance, attachments, process=process,
-                                   domain=domain)
+    except DuplicateError as e:
+        return _handle_id_conflict(instance, e.xform, domain)
     return MultiLockManager([xform_lock])
 
 
@@ -238,14 +230,14 @@ def _has_errors(response, errors):
     return errors or "error" in response
 
 
-def _extract_id_from_raw_xml(xml):
-    # the code this is replacing didn't deal with the error either
-    # presumably because it's already been run once by the time it gets here
-    _, json_form = xml2json.xml2json(xml)
-    return _extract_meta_instance_id(json_form) or ''
+def _assign_new_id_and_lock(xform):
+    new_id = XFormInstance.get_db().server.next_uuid()
+    xform._id = new_id
+    lock = acquire_lock_for_xform(new_id)
+    return MultiLockManager([LockManager(xform, lock)])
 
 
-def _handle_id_conflict(instance, attachments, process, domain):
+def _handle_id_conflict(instance, xform, domain):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the
@@ -253,22 +245,21 @@ def _handle_id_conflict(instance, attachments, process, domain):
     """
 
     assert domain
-    conflict_id = _extract_id_from_raw_xml(instance)
+    conflict_id = xform._id
 
     existing_doc = XFormInstance.get_db().get(conflict_id, attachments=True)
     if existing_doc.get('domain') != domain or existing_doc.get('doc_type') not in doc_types():
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
-        return process_xform(instance, attachments=attachments,
-                             process=process, _id=uid.new())
+        return _assign_new_id_and_lock(xform)
     else:
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
         existing_doc = XFormInstance.wrap(existing_doc)
-        return _handle_duplicate(existing_doc, instance, attachments, process)
+        return _handle_duplicate(existing_doc, xform, instance)
 
 
-def _handle_duplicate(existing_doc, instance, attachments, process):
+def _handle_duplicate(existing_doc, new_doc, instance):
     """
     Handle duplicate xforms and xform editing ('deprecation')
 
@@ -287,25 +278,21 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
         #  - Save the new instance to the previous document to preserve the ID
 
         old_id = existing_doc._id
-        new_id = XFormInstance.get_db().server.next_uuid()
-
-        multi_lock_manager = process_xform(instance, attachments=attachments,
-                                           process=process, _id=new_id)
-        [(xform, _)] = multi_lock_manager
+        multi_lock_manager = _assign_new_id_and_lock(new_doc)
 
         # swap the two documents so the original ID now refers to the new one
         # and mark original as deprecated
-        xform._id, existing_doc._id = old_id, new_id
-        xform._rev, existing_doc._rev = existing_doc._rev, xform._rev
+        new_doc._id, existing_doc._id = old_id, new_doc._id
+        new_doc._rev, existing_doc._rev = existing_doc._rev, new_doc._rev
 
         # flag the old doc with metadata pointing to the new one
         existing_doc.doc_type = deprecation_type()
         existing_doc.orig_id = old_id
 
         # and give the new doc server data of the old one and some metadata
-        xform.received_on = existing_doc.received_on
-        xform.deprecated_form_id = existing_doc._id
-        xform.edited_on = datetime.datetime.utcnow()
+        new_doc.received_on = existing_doc.received_on
+        new_doc.deprecated_form_id = existing_doc._id
+        new_doc.edited_on = datetime.datetime.utcnow()
 
         multi_lock_manager.append(
             LockManager(existing_doc,
@@ -315,14 +302,10 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
-        new_doc_id = uid.new()
-        new_form, lock = create_xform(instance, attachments=attachments,
-                                      _id=new_doc_id, process=process)
-
-        new_form.doc_type = XFormDuplicate.__name__
-        dupe = XFormDuplicate.wrap(new_form.to_json())
+        new_doc.doc_type = XFormDuplicate.__name__
+        dupe = XFormDuplicate.wrap(new_doc.to_json())
         dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
-        return MultiLockManager([LockManager(dupe, lock)])
+        return _assign_new_id_and_lock(dupe)
 
 
 def is_deprecation(xform):
@@ -338,7 +321,7 @@ def is_override(xform):
     return bool(getattr(xform, 'deprecated_form_id', None))
 
 
-def _log_hard_failure(instance, attachments, error):
+def _log_hard_failure(instance, process, error):
     """
     Handle's a hard failure from posting a form to couch.
 
@@ -350,7 +333,12 @@ def _log_hard_failure(instance, attachments, error):
     except UnicodeDecodeError:
         message = unicode(str(error), encoding='utf-8')
 
-    return SubmissionErrorLog.from_instance(instance, message)
+    error_log = SubmissionErrorLog.from_instance(instance, message)
+    if process:
+        process(error_log)
+
+    error_log.save()
+    return error_log
 
 
 def scrub_meta(xform):
@@ -464,7 +452,9 @@ class SubmissionPost(object):
 
         def process(xform):
             self._attach_shared_props(xform)
-            scrub_meta(xform)
+            if xform.doc_type != 'SubmissionErrorLog':
+                found_old = scrub_meta(xform)
+                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform._id)
 
         try:
             lock_manager = process_xform(self.instance,
@@ -535,14 +525,13 @@ class SubmissionPost(object):
                         )
                         unfinished_submission_stub.save()
                         cases = case_db.get_changed()
-                        # todo: this property is useless now
+                        # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
-                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-                        docs = xforms + cases
 
                         # in saving the cases, we have to do all the things
                         # done in CommCareCase.save()
                         for case in cases:
+                            legacy_soft_assert(case.version == "2.0", "v1.0 case updated", case.case_id)
                             case.initial_processing_complete = True
                             case.server_modified_on = now
                             try:
@@ -556,8 +545,11 @@ class SubmissionPost(object):
                                         case.get_id, case.get_rev, rev
                                     )
                                 )
+
+                        # verify that these DB's are the same so that we can save them with one call to bulk_save
+                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
+                        docs = xforms + cases
                         try:
-                            # save both the forms and cases
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
@@ -654,10 +646,8 @@ class SubmissionPost(object):
             status=201,
         ).response()
 
-    def get_exception_response(self, error_log):
-        error_doc = SubmissionErrorLog.get(error_log.get_id)
-        self._attach_shared_props(error_doc)
-        error_doc.save()
+    @staticmethod
+    def get_exception_response(error_log):
         return OpenRosaResponse(
             message=("The sever got itself into big trouble! "
                      "Details: %s" % error_log.problem),
@@ -673,11 +663,7 @@ def _handle_known_error(e, instance):
         u"Warning in case or stock processing "
         u"for form {}: {}."
     ).format(instance._id, error_message))
-    instance.__class__ = XFormError
-    instance.doc_type = 'XFormError'
-    instance.problem = error_message
-    return instance
-
+    return XFormError.from_xform_instance(instance, error_message)
 
 def _handle_unexpected_error(instance, error_message):
     # The following code saves the xform instance
@@ -686,20 +672,12 @@ def _handle_unexpected_error(instance, error_message):
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
-    new_id = XFormError.get_db().server.next_uuid()
+    instance = XFormError.from_xform_instance(instance, error_message, with_new_id=True)
     notify_exception(None, (
         u"Error in case or stock processing "
         u"for form {}: {}. "
         u"Error saved as {}"
-    ).format(instance._id, error_message, new_id))
-    instance.__class__ = XFormError
-    instance.orig_id = instance._id
-    instance._id = new_id
-    if '_rev' in instance:
-        # clear the rev since we want to make a new doc
-        # this is necessary for errors that come from editing submissions
-        del instance['_rev']
-    instance.problem = error_message
+    ).format(instance.orig_id, error_message, instance._id))
     return instance
 
 

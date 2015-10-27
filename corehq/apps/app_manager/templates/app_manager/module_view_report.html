@@ -87,11 +87,11 @@
             </div>
             <table class="table" id="report-list">
                 <thead>
-
                     <tr class="row control-group" >
                         <th></th>
                         <th>{% trans "Report" %}</th>
                         <th>{% trans "Display" %}</th>
+                        <th>{% trans "Description" %}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -108,6 +108,9 @@
                         </td>
                         <td>
                             <input type="text" data-bind="value: display">
+                        </td>
+                        <td>
+                            <input type="text" data-bind="value: description">
                         </td>
                         <td>
                             <i title="{% trans 'Delete' %}" style="cursor: pointer;"

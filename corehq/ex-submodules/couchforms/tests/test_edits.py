@@ -6,56 +6,55 @@ from mock import MagicMock
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.models import XFormInstance, \
     UnfinishedSubmissionStub
+from corehq.form_processor.interfaces.case import CaseInterface
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.xform import XFormInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.util.test_utils import TestFileMixin
 
 
-class EditFormTest(TestCase):
+class EditFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
     domain = 'test-form-edits'
 
+    file_path = ('data', 'deprecation')
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.interface = XFormInterface(TEST_DOMAIN_NAME)
+
     def tearDown(self):
-        FormProcessorInterface.delete_all_xforms()
-
-    def _get_files(self):
-        first_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "original.xml")
-        edit_file = os.path.join(os.path.dirname(__file__), "data", "deprecation", "edit.xml")
-
-        with open(first_file, "rb") as f:
-            xml_data1 = f.read()
-        with open(edit_file, "rb") as f:
-            xml_data2 = f.read()
-
-        return xml_data1, xml_data2
+        FormProcessorTestUtils.delete_all_xforms()
 
     def test_basic_edit(self):
-        xml_data1, xml_data2 = self._get_files()
+        original_xml = self.get_xml('original')
+        edit_xml = self.get_xml('edit')
         yesterday = datetime.utcnow() - timedelta(days=1)
 
-        xform = FormProcessorInterface.post_xform(xml_data1)
+        def process(form):
+            form.domain = self.domain
+            form.received_on = yesterday
+
+        xform = FormProcessorInterface.post_xform(original_xml, process=process)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("", xform.form['vitals']['height'])
         self.assertEqual("other", xform.form['assessment']['categories'])
 
-        # post form back in time to simulate an edit
-        FormProcessorInterface.update_properties(
-            xform,
-            domain=self.domain,
-            received_on=yesterday,
-        )
-
-        xform = FormProcessorInterface.post_xform(xml_data2, domain=self.domain)
+        xform = FormProcessorInterface.post_xform(edit_xml, domain=self.domain)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("100", xform.form['vitals']['height'])
         self.assertEqual("Edited Baby!", xform.form['assessment']['categories'])
 
-        [deprecated_xform] = FormProcessorInterface.get_by_doc_type(self.domain, 'XFormDeprecated')
+        deprecated_xform = self.interface.get_xform(xform.deprecated_form_id)
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
         self.assertNotEqual(self.ID, deprecated_xform.id)
@@ -68,10 +67,10 @@ class EditFormTest(TestCase):
         self.assertTrue(xform.edited_on > deprecated_xform.received_on)
 
         self.assertEqual(
-            FormProcessorInterface.get_attachment(deprecated_xform.id, 'form.xml'),
-            xml_data1
+            self.interface.get_attachment(deprecated_xform.id, 'form.xml'),
+            original_xml
         )
-        self.assertEqual(FormProcessorInterface.get_attachment(self.ID, 'form.xml'), xml_data2)
+        self.assertEqual(self.interface.get_attachment(self.ID, 'form.xml'), edit_xml)
 
     def test_broken_save(self):
         """
@@ -94,13 +93,10 @@ class EditFormTest(TestCase):
             def __exit__(self, exc_type, exc_val, exc_tb):
                 self.db.bulk_save = self.old['bulk_save']
 
-        xforms = FormProcessorInterface.get_by_doc_type(self.domain, 'XFormInstance')
-        self.assertEqual(len(xforms), 0)
+        original_xml = self.get_xml('original')
+        edit_xml = self.get_xml('edit')
 
-        xml_data1, xml_data2 = self._get_files()
-
-        submit_form_locally(xml_data1, self.domain)
-        xform = FormProcessorInterface.get_xform(self.ID)
+        _, xform, _ = FormProcessorInterface.submit_form_locally(original_xml, self.domain)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual(self.domain, xform.domain)
@@ -113,12 +109,12 @@ class EditFormTest(TestCase):
         # This seems like a couch specific test util. Will likely need postgres test utils
         with BorkDB(XFormInstance.get_db()):
             with self.assertRaises(RequestFailed):
-                submit_form_locally(xml_data2, self.domain)
+                FormProcessorInterface.submit_form_locally(edit_xml, self.domain)
 
         # it didn't go through, so make sure there are no edits still
-        xforms = FormProcessorInterface.get_by_doc_type(self.domain, 'XFormDeprecated')
-        self.assertEqual(len(xforms), 0)
-        xform = FormProcessorInterface.get_xform(self.ID)
+        self.assertIsNone(xform.deprecated_form_id)
+
+        xform = self.interface.get_xform(self.ID)
         self.assertIsNotNone(xform)
         self.assertEqual(
             UnfinishedSubmissionStub.objects.filter(xform_id=self.ID,
@@ -139,7 +135,6 @@ class EditFormTest(TestCase):
             case_id=case_id,
             case_type='person',
             owner_id=owner_id,
-            version=V2,
             update={
                 'property': 'original value'
             }
@@ -147,7 +142,7 @@ class EditFormTest(TestCase):
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
-        case = FormProcessorInterface.get_case(case_id)
+        case = CaseInterface.get_case(case_id)
         self.assertEqual(case.type, 'person')
         self.assertEqual(case.property, 'original value')
         self.assertEqual([form_id], case.xform_ids)
@@ -161,14 +156,13 @@ class EditFormTest(TestCase):
             case_id=case_id,
             case_type='newtype',
             owner_id=owner_id,
-            version=V2,
             update={
                 'property': 'edited value'
             }
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        case = FormProcessorInterface.get_case(case_id)
+        case = CaseInterface.get_case(case_id)
         self.assertEqual(case.type, 'newtype')
         self.assertEqual(case.property, 'edited value')
         self.assertEqual([form_id], case.xform_ids)
@@ -183,7 +177,6 @@ class EditFormTest(TestCase):
             create=True,
             case_id=case_id,
             case_type='person',
-            version=V2,
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
@@ -192,14 +185,13 @@ class EditFormTest(TestCase):
             create=True,
             case_id='',
             case_type='person',
-            version=V2,
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        xform = FormProcessorInterface.get_xform(form_id)
+        xform = self.interface.get_xform(form_id)
         self.assertEqual('XFormError', xform.doc_type)
 
-        deprecated_xform = FormProcessorInterface.get_xform(xform.deprecated_form_id)
+        deprecated_xform = self.interface.get_xform(xform.deprecated_form_id)
         self.assertEqual('XFormDeprecated', deprecated_xform.doc_type)
 
     def test_case_management_ordering(self):
@@ -212,12 +204,11 @@ class EditFormTest(TestCase):
             case_id=case_id,
             case_type='person',
             owner_id=owner_id,
-            version=V2,
         ).as_string()
         create_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
-        case = FormProcessorInterface.get_case(case_id)
+        case = CaseInterface.get_case(case_id)
         self.assertEqual([create_form_id], case.xform_ids)
         self.assertEqual([create_form_id], [a.xform_id for a in case.actions])
         for a in case.actions:
@@ -228,7 +219,6 @@ class EditFormTest(TestCase):
         case_block = CaseBlock(
             create=False,
             case_id=case_id,
-            version=V2,
             date_modified=edit_date,
             update={
                 'property': 'first value',
@@ -237,7 +227,7 @@ class EditFormTest(TestCase):
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
-        case = FormProcessorInterface.get_case(case_id)
+        case = CaseInterface.get_case(case_id)
         self.assertEqual(case.property, 'first value')
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
         self.assertEqual([create_form_id, edit_form_id], [a.xform_id for a in case.actions])
@@ -246,7 +236,6 @@ class EditFormTest(TestCase):
         case_block = CaseBlock(
             create=False,
             case_id=case_id,
-            version=V2,
             update={
                 'property': 'final value',
             }
@@ -254,7 +243,7 @@ class EditFormTest(TestCase):
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
-        case = FormProcessorInterface.get_case(case_id)
+        case = CaseInterface.get_case(case_id)
         self.assertEqual(case.property, 'final value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], [a.xform_id for a in
@@ -264,7 +253,6 @@ class EditFormTest(TestCase):
         case_block = CaseBlock(
             create=False,
             case_id=case_id,
-            version=V2,
             date_modified=edit_date,  # need to use the previous edit date for action sort comparisons
             update={
                 'property': 'edited value',
@@ -275,7 +263,7 @@ class EditFormTest(TestCase):
 
         # ensure that the middle edit stays in the right place and is applied
         # before the final one
-        case = FormProcessorInterface.get_case(case_id)
+        case = CaseInterface.get_case(case_id)
         self.assertEqual(case.property, 'final value')
         self.assertEqual(case.added_property, 'added value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)

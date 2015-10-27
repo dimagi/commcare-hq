@@ -24,7 +24,7 @@ from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.dbaccessors import get_forms_by_type
 from time import sleep
 from dateutil.parser import parse
@@ -130,7 +130,6 @@ class TouchformsTestCase(LiveServerTestCase):
             case_type='participant',
             owner_id=owner._id,
             user_id=owner._id,
-            version=V2
         ).as_xml()
         FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
 
@@ -140,7 +139,6 @@ class TouchformsTestCase(LiveServerTestCase):
             case_id=uuid.uuid4().hex,
             case_type='magic_map',
             owner_id=user._id,
-            version=V2,
             index={'parent': ('participant', case._id)}
         ).as_xml()
         FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})

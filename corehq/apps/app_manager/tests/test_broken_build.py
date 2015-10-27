@@ -3,7 +3,7 @@ import os
 from django.test import TestCase, Client
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tests import add_build
+from corehq.apps.app_manager.tests.util import add_build
 
 
 class BrokenBuildTest(TestCase):

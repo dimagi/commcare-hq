@@ -7,7 +7,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class OtaRestoreBugTest(TestCase):
@@ -33,7 +33,6 @@ class OtaRestoreBugTest(TestCase):
                 case_type='duck',
                 user_id=user._id,
                 owner_id=user._id,
-                version=V2,
             ).as_xml()
             _, [case] = FormProcessorInterface.post_case_blocks([case_block], {'domain': domain})
             return case

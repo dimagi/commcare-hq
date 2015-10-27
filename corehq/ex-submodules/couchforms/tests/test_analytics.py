@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from django.test import TestCase
+from corehq.util.test_utils import DocTestMixin
 from couchforms.analytics import domain_has_submission_in_last_30_days, \
     get_number_of_forms_per_domain, get_number_of_forms_in_domain, \
     get_first_form_submission_received, get_last_form_submission_received, \
@@ -11,11 +12,11 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
 from couchforms.models import XFormInstance
 
 
-class CouchformsAnalyticsTest(TestCase):
+class CouchformsAnalyticsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        from casexml.apps.case.tests import delete_all_xforms
+        from casexml.apps.case.tests.util import delete_all_xforms
         delete_all_xforms()
         cls.now = datetime.datetime.utcnow()
         cls._60_days = datetime.timedelta(days=60)
@@ -96,7 +97,3 @@ class CouchformsAnalyticsTest(TestCase):
         info = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
         self.assertEqual(self.xmlns, info['xmlns'])
         self.assertEqual(2, info['submissions'])
-
-    def assert_docs_equal(self, doc1, doc2):
-        self.assertEqual(type(doc1), type(doc2))
-        self.assertEqual(doc1.to_json(), doc2.to_json())

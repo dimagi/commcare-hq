@@ -34,6 +34,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -360,9 +361,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
-            'call_center_type':
-                'cases_and_fixtures' if self.domain_object.call_center_config.use_fixtures else 'cases_only',
-            'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
+            'call_center_type': self.initial_call_center_type,
+            'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
@@ -399,6 +399,23 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             domain=self.domain_object.name,
             can_use_custom_logo=self.can_use_custom_logo
         )
+
+    @property
+    @memoized
+    def initial_call_center_case_owner(self):
+        config = self.domain_object.call_center_config
+        if config.use_user_location_as_owner:
+            if config.user_location_ancestor_level == 1:
+                return DomainGlobalSettingsForm.USE_PARENT_LOCATION_CHOICE
+            return DomainGlobalSettingsForm.USE_LOCATION_CHOICE
+        return self.domain_object.call_center_config.case_owner_id
+
+    @property
+    @memoized
+    def initial_call_center_type(self):
+        if self.domain_object.call_center_config.use_fixtures:
+            return DomainGlobalSettingsForm.CASES_AND_FIXTURES_CHOICE
+        return DomainGlobalSettingsForm.CASES_ONLY_CHOICE
 
     @property
     def page_context(self):
@@ -519,7 +536,6 @@ def test_repeater(request, domain):
                     create=True,
                     case_type='test',
                     case_name='test case',
-                    version=V2,
                 ).as_string()
             else:
                 return "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" % \
@@ -2473,6 +2489,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Feature Flags")
     template_name = 'domain/admin/feature_flags.html'
 
+    @use_bootstrap3
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)

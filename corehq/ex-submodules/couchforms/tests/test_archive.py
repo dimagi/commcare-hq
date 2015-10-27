@@ -1,27 +1,42 @@
+import os
 from datetime import datetime, timedelta
 from django.test import TestCase
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.generic import GenericXFormInstance, GenericFormAttachment
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.xform import XFormInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.util.test_utils import TestFileMixin
 
 
-class TestFormArchiving(TestCase):
+class TestFormArchiving(TestCase, TestFileMixin):
+    file_path = ('data', 'sample_xforms')
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.interface = XFormInterface('test-domain')
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_cases()
 
     def testArchive(self):
-        xform = FormProcessorInterface.create_from_generic(
-            GenericXFormInstance(form={'foo': 'bar'}),
-            GenericFormAttachment(name='form.xml', content='<data/>')
+        xml_data = self.get_xml('basic')
+        response, xform, cases = FormProcessorInterface.submit_form_locally(
+            xml_data,
+            'test-domain',
         )
 
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual(0, len(xform.history))
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        FormProcessorInterface.archive_xform(xform, user='mr. librarian')
+        self.interface.archive(xform, user='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = FormProcessorInterface.get_xform(xform.id)
+        xform = self.interface.get_xform(xform.id)
         self.assertEqual('XFormArchived', xform.doc_type)
 
         [archival] = xform.history
@@ -30,10 +45,10 @@ class TestFormArchiving(TestCase):
         self.assertEqual('mr. librarian', archival.user)
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        FormProcessorInterface.unarchive_xform(xform, user='mr. researcher')
+        self.interface.unarchive(xform, user='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = FormProcessorInterface.get_xform(xform.id)
+        xform = self.interface.get_xform(xform.id)
         self.assertEqual('XFormInstance', xform.doc_type)
 
         [archival, restoration] = xform.history
@@ -57,18 +72,19 @@ class TestFormArchiving(TestCase):
         xform_archived.connect(count_archive)
         xform_unarchived.connect(count_unarchive)
 
-        xform = FormProcessorInterface.create_from_generic(
-            GenericXFormInstance(form={'foo': 'bar'}),
-            GenericFormAttachment(name='form.xml', content='<data/>')
+        xml_data = self.get_xml('basic')
+        response, xform, cases = FormProcessorInterface.submit_form_locally(
+            xml_data,
+            'test-domain',
         )
 
         self.assertEqual(0, archive_counter)
         self.assertEqual(0, restore_counter)
 
-        FormProcessorInterface.archive_xform(xform)
+        self.interface.archive(xform)
         self.assertEqual(1, archive_counter)
         self.assertEqual(0, restore_counter)
 
-        FormProcessorInterface.unarchive_xform(xform)
+        self.interface.unarchive(xform)
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)

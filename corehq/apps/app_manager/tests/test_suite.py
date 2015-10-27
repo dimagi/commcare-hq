@@ -401,6 +401,160 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./entry/session"
         )
 
+    def test_persistent_case_tiles_in_advanced_forms(self):
+        """
+        Test that the detail-persistent attributes is set correctly when persistent
+        case tiles are used on advanced forms.
+        """
+        factory = AppFactory()
+        module, form = factory.new_advanced_module("my_module", "person")
+        factory.form_requires_case(form, "person")
+        module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.short.persist_tile_on_forms = True
+        suite = factory.app.create_suite()
+
+        # The relevant check is really that detail-persistent="m0_case_short"
+        # but assertXmlPartialEqual xpath implementation doesn't currently
+        # support selecting attributes
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <datum
+                    detail-confirm="m0_case_long"
+                    detail-persistent="m0_case_short"
+                    detail-select="m0_case_short"
+                    id="case_id_load_person_0"
+                    nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                    value="./@case_id"
+                />
+            </partial>
+            """,
+            suite,
+            "entry/session/datum"
+        )
+
+    def test_persistent_case_tiles_in_advanced_module_case_lists(self):
+        """
+        Test that the detail-persistent attributes is set correctly when persistent
+        case tiles are used on advanced module case lists
+        """
+        factory = AppFactory()
+        module, form = factory.new_advanced_module("my_module", "person")
+        factory.form_requires_case(form, "person")
+        module.case_list.show = True
+        module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.short.persist_tile_on_forms = True
+        suite = factory.app.create_suite()
+
+        # The relevant check is really that detail-persistent="m0_case_short"
+        # but assertXmlPartialEqual xpath implementation doesn't currently
+        # support selecting attributes
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <datum
+                    detail-confirm="m0_case_long"
+                    detail-persistent="m0_case_short"
+                    detail-select="m0_case_short"
+                    id="case_id_case_person"
+                    nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                    value="./@case_id"
+                />
+            </partial>
+            """,
+            suite,
+            'entry/command[@id="m0-case-list"]/../session/datum',
+        )
+
+    def test_persistent_case_name_in_forms(self):
+        """
+        Test that the detail-persistent attributes are set correctly when the
+        module is configured to persist the case name at the top of the form.
+        Also confirm that the appropriate <detail> element is added to the suite.
+        """
+        factory = AppFactory()
+        module, form = factory.new_basic_module("my_module", "person")
+        factory.form_requires_case(form, "person")
+        module.case_details.short.persist_case_context = True
+        suite = factory.app.create_suite()
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <detail id="m0_persistent_case_context">
+                    <title>
+                        <text/>
+                    </title>
+                    <field>
+                        <style font-size="large" horz-align="center">
+                            <grid grid-height="2" grid-width="12" grid-x="0" grid-y="0"/>
+                        </style>
+                        <header>
+                            <text/>
+                        </header>
+                        <template>
+                            <text>
+                                <xpath function="case_name"/>
+                            </text>
+                        </template>
+                    </field>
+                </detail>
+            </partial>
+            """,
+            suite,
+            "detail[@id='m0_persistent_case_context']"
+        )
+
+        # The attribute we care about here is detail-persistent="m0_persistent_case_context"
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <datum
+                    detail-confirm="m0_case_long"
+                    detail-persistent="m0_persistent_case_context"
+                    detail-select="m0_case_short"
+                    id="case_id"
+                    nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                    value="./@case_id"
+                />
+            </partial>
+            """,
+            suite,
+            "entry/session/datum"
+        )
+
+    def test_persistent_case_name_when_tiles_enabled(self):
+        """
+        Confirm that the persistent case name context is not added when case tiles
+        are configured to persist in forms
+        """
+        factory = AppFactory()
+        module, form = factory.new_advanced_module("my_module", "person")
+        factory.form_requires_case(form, "person")
+        module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.short.persist_tile_on_forms = True
+        module.case_details.short.persist_case_context = True
+        suite = factory.app.create_suite()
+
+        self.assertXmlDoesNotHaveXpath(suite, "detail[@id='m0_persistent_case_context']")
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <datum
+                    detail-confirm="m0_case_long"
+                    detail-persistent="m0_case_short"
+                    detail-select="m0_case_short"
+                    id="case_id_load_person_0"
+                    nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                    value="./@case_id"
+                />
+            </partial>
+            """,
+            suite,
+            "entry/session/datum"
+        )
+
+
     def test_subcase_repeat_mixed(self):
         app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
         module_0 = app.add_module(Module.new_module('parent', None))
@@ -444,7 +598,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                                    './entry[1]/session')
 
     def test_report_module(self):
-        from corehq.apps.userreports.tests import get_sample_report_config
+        from corehq.apps.userreports.tests.utils import get_sample_report_config
 
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 

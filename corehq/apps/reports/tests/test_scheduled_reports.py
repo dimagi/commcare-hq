@@ -19,8 +19,20 @@ class GuessReportingMinuteTest(SimpleTestCase):
     def testAfterTheHalfHour(self):
         self.assertEqual(30, guess_reporting_minute(datetime(2014, 10, 31, 12, 35)))
 
+    def testOnQuarterAfter(self):
+        self.assertEqual(15, guess_reporting_minute(datetime(2014, 10, 31, 12, 15)))
+
+    def testAfterQuarterAfter(self):
+        self.assertEqual(15, guess_reporting_minute(datetime(2014, 10, 31, 12, 20)))
+
+    def testOnQuarterOf(self):
+        self.assertEqual(45, guess_reporting_minute(datetime(2014, 10, 31, 12, 45)))
+
+    def testAfterQuarterOf(self):
+        self.assertEqual(45, guess_reporting_minute(datetime(2014, 10, 31, 12, 50)))
+
     def testOutOfBounds(self):
-        for minute in (6, 15, 29, 36, 45, 59):
+        for minute in (6, 14, 21, 29, 36, 44, 51, 59):
             self.assertRaises(ValueError, guess_reporting_minute, datetime(2014, 10, 31, 12, minute))
 
 
@@ -39,8 +51,9 @@ class ScheduledReportTest(TestCase):
 
     def testDefaultValue(self):
         now = datetime.utcnow()
-        ReportNotification(hour=now.hour, minute=(now.minute / 30) * 30, interval='daily').save()
-        if now.minute % 30 <= 5:
+        # This line makes sure that the date of the ReportNotification is an increment of 15 minutes
+        ReportNotification(hour=now.hour, minute=(now.minute / 15) * 15, interval='daily').save()
+        if now.minute % 15 <= 5:
             self._check('daily', None, 1)
         else:
             self.assertRaises(

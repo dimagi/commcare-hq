@@ -5,10 +5,12 @@ from __future__ import absolute_import
 import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import logging
 import re
 
 from restkit.errors import NoMoreData
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -37,10 +39,10 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin, QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
-from corehq.apps.domain.models import LicenseAgreement
+from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     normalize_username,
     user_data_from_registration_form,
@@ -229,7 +231,7 @@ class UserRolePresets(object):
         return preset_map[preset]()
 
 
-class UserRole(Document):
+class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
@@ -336,11 +338,15 @@ class UserRole(Document):
 
     @classmethod
     def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
+        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
+                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
     @classmethod
     def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
+        return [('none','(none)')] + [
+            (role.get_qualified_id(), role.name or '(No Name)')
+            for role in list(cls.by_domain(domain))
+        ]
 
     @property
     def ids_of_assigned_users(self):
@@ -436,6 +442,7 @@ class DomainMembership(Membership):
         return super(DomainMembership, cls).wrap(data)
 
     @property
+    @memoized
     def role(self):
         if self.is_admin:
             return AdminUserRole(self.domain)
@@ -951,6 +958,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete() # Call the "real" delete() method.
+        from .signals import couch_user_post_save
         couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
 
     def delete_phone_number(self, phone_number):
@@ -1283,6 +1291,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
             super(CouchUser, self).save(**params)
 
+        from .signals import couch_user_post_save
         results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error
@@ -1290,10 +1299,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 notify_exception(
                     None,
                     message="Error occured while syncing user %s: %s" %
-                            (self.username, str(result[1]))
+                            (self.username, repr(result[1]))
                 )
-
-
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1409,7 +1416,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def save(self, **params):
         super(CommCareUser, self).save(**params)
 
-        from corehq.apps.users.signals import commcare_user_post_save
+        from .signals import commcare_user_post_save
         results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
         for result in results:
             # Second argument is None if there was no error
@@ -1417,7 +1424,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 notify_exception(
                     None,
                     message="Error occured while syncing user %s: %s" %
-                            (self.username, str(result[1]))
+                            (self.username, repr(result[1]))
                 )
 
     @property
@@ -1913,7 +1920,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock = CaseBlock(
                     create=False,
                     case_id=mapping._id,
-                    version=V2,
                     index=self.supply_point_index_mapping(sp, True)
                 )
 
@@ -1961,7 +1967,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),
-            version=V2,
             owner_id=self._id,
             index=index
         )
@@ -2543,7 +2548,3 @@ class UserCache(object):
             user = CouchUser.get_by_user_id(user_id)
             self.cache[user_id] = user
             return user
-
-
-from .signals import *
-from corehq.apps.domain.models import Domain

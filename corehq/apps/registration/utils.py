@@ -16,7 +16,7 @@ from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CouchUser
+from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -92,6 +92,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         new_domain.save() # we need to get the name from the _id
 
     create_30_day_trial(new_domain)
+    UserRole.init_domain_with_presets(new_domain.name)
 
     dom_req.domain = new_domain.name
 

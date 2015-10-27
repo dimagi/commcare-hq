@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.reminders.models import *
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.users.models import CommCareUser
@@ -17,6 +17,7 @@ from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
 from corehq.apps.domain.models import Domain
+from corehq.apps.reminders.tests.test_util import *
 
 
 class BaseReminderTestCase(BaseAccountingTest):

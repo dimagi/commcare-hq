@@ -5,7 +5,7 @@ function SavedApp(o, r) {
         self[attr] = self[attr] || ko.observable();
     });
     if (!self.include_media) {
-        self.include_media = ko.observable(false);
+        self.include_media = ko.observable(self.doc_type() !== "RemoteApp");
     }
     if(!self.generating_url){
         self.generating_url = ko.observable(false);
@@ -116,6 +116,13 @@ function SavedApp(o, r) {
         // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
         $('.modal.fade.in').modal('hide')
         modal.modal({show: true});
+    };
+
+    self.clickDeploy = function () {
+        self.generate_short_url('short_odk_url');
+        ga_track_event('App Manager', 'Deploy Button', self.id());
+        analytics.workflow('Clicked Deploy');
+        $.post(r.options.urls.hubspot_click_deploy);
     };
 
     return self;

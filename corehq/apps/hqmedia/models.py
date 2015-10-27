@@ -400,19 +400,9 @@ class HQMediaMapItem(DocumentSchema):
     version = IntegerProperty()
     unique_id = StringProperty()
 
-    @staticmethod
-    def format_match_map(path, media_type=None, media_id=None, upload_path=""):
-        """
-            This method is deprecated. Use CommCareMultimedia.get_media_info instead.
-        """
-        # todo cleanup references to this method
-        return {
-            "path": path,
-            "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
-            "m_id": media_id if media_id else "",
-            "url": reverse("hqmedia_download", args=[media_type, media_id]) if media_id else "",
-            "upload_path": upload_path
-        }
+    @property
+    def url(self):
+        return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
@@ -765,65 +755,17 @@ class HQMediaMixin(Document):
             if not media or (not media.is_shared and self.domain not in media.owners):
                 del self.multimedia_map[path]
 
-    def get_media_references(self, request=None):
-        """
-            DEPRECATED METHOD: Use self.all_media instead.
-            Use this to check all Application media against the stored multimedia_map.
-        """
-        #todo this should get updated to use self.all_media
-        from corehq.apps.app_manager.models import Application
-        if not isinstance(self, Application):
-            raise NotImplementedError("Sorry, this method is only supported for CommCare HQ Applications.")
+    def check_media_state(self):
+        has_missing_refs = False
 
-        from corehq.apps.hqmedia.utils import get_application_media
-        all_media, form_errors = get_application_media(self)
-
-        # Because couchdbkit is terrible?
-        multimedia_map = self.multimedia_map
-
-        missing_refs = False
-
-        references = {}
-        for section, media in all_media.items():
-            references[section] = {}
-            for media_type, paths in media.items():
-                maps = []
-                missing = 0
-                matched = 0
-                errors = 0
-                for path in paths:
-                    match_map = None
-                    try:
-                        media_item = multimedia_map[path]
-                        match_map = HQMediaMapItem.format_match_map(path,
-                            media_item.media_type, media_item.multimedia_id)
-                        matched += 1
-                    except KeyError:
-                        match_map = HQMediaMapItem.format_match_map(path)
-                        missing += 1
-                    except AttributeError:
-                        errors += 1
-                        if request:
-                            messages.error(request, _("Encountered an AttributeError for media: %s" % path))
-                    except UnicodeEncodeError:
-                        errors += 1
-                        if request:
-                            messages.error(request, _("This application has unsupported text in one "
-                                                      "of it's media file label fields: %s" % path))
-                    if match_map:
-                        maps.append(match_map)
-                    if errors > 0 or missing > 0:
-                        missing_refs = True
-
-                references[section][media_type] = {
-                    'maps': maps,
-                    'missing': missing,
-                    'matched': matched,
-                    'errors': errors,
-                }
+        for media in self.all_media:
+            try:
+                self.multimedia_map[media.path]
+            except KeyError:
+                has_missing_refs = True
 
         return {
-            "references": references,
-            "form_errors": form_errors,
-            "missing_refs": missing_refs,
+            "has_media": bool(self.all_media),
+            "has_form_errors": self.media_form_errors,
+            "has_missing_refs": has_missing_refs,
         }

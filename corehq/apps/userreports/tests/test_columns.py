@@ -18,12 +18,13 @@ from corehq.apps.userreports.sql.columns import (
     _get_distinct_values,
     DEFAULT_MAXIMUM_EXPANSION,
 )
+from corehq.db import connection_manager, UCR_ENGINE_ID
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class TestFieldColumn(SimpleTestCase):
@@ -124,7 +125,6 @@ class TestExpandedColumn(TestCase):
             create=True,
             case_id=id,
             case_type=self.case_type,
-            version=V2,
             update=properties,
         ).as_xml()
         FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
@@ -173,6 +173,7 @@ class TestExpandedColumn(TestCase):
         )
         data_source_config.validate()
         data_source_config.save()
+        self.addCleanup(data_source_config.delete)
         if build_data_source:
             tasks.rebuild_indicators(data_source_config._id)
 
@@ -191,12 +192,17 @@ class TestExpandedColumn(TestCase):
             configured_charts=[]
         )
         report_config.save()
+        self.addCleanup(report_config.delete)
         data_source = ReportFactory.from_spec(report_config)
 
         return data_source, data_source.column_configs[0]
 
     def setUp(self):
         delete_all_cases()
+
+    def tearDown(self):
+        delete_all_cases()
+        connection_manager.dispose_engine(UCR_ENGINE_ID)
 
     def test_getting_distinct_values(self):
         data_source, column = self._build_report([
