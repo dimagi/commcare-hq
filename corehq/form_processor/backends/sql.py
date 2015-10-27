@@ -1,0 +1,2 @@
+class XFormSql(object):
+    pass

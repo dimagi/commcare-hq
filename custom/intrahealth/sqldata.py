@@ -327,7 +327,7 @@ class FicheData(BaseSqlData):
 
 class PPSAvecDonnees(BaseSqlData):
     slug = 'pps_avec_donnees'
-    title = 'PPS Avec Données'
+    title = u'PPS Avec Données'
     table_name = 'fluff_CouvertureFluff'
     col_names = ['location_id']
     have_groups = False

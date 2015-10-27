@@ -1,15 +1,4 @@
 {
-    "OpmCaseFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.OpmCaseFluffPillow.testhq", 
-        "class_name": "OpmCaseFluffPillow", 
-        "extra_args": {
-            "domains": "opm", 
-            "doc_type": "CommCareCase"
-        }, 
-        "document_class": "CommCareCase", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
     "ProjectIndicatorsCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
         "class_name": "ProjectIndicatorsCaseFluffPillow", 
@@ -255,17 +244,6 @@
         "couch_filter": null, 
         "include_docs": false
     }, 
-    "VhndAvailabilityFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.VhndAvailabilityFluffPillow.testhq", 
-        "class_name": "VhndAvailabilityFluffPillow", 
-        "extra_args": {
-            "domains": "opm", 
-            "doc_type": "CommCareCase"
-        }, 
-        "document_class": "CommCareCase", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
     "CouvertureFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.CouvertureFluffPillow.testhq", 
         "class_name": "CouvertureFluffPillow", 
@@ -454,17 +432,6 @@
             "doc_type": "CommCareCase"
         }, 
         "document_class": "CommCareCase", 
-        "couch_filter": null, 
-        "include_docs": false
-    }, 
-    "OpmFormFluffPillow": {
-        "checkpoint_id": "pillowtop_fluff.OpmFormFluffPillow.testhq", 
-        "class_name": "OpmFormFluffPillow", 
-        "extra_args": {
-            "domains": "opm", 
-            "doc_type": "XFormInstance"
-        }, 
-        "document_class": "XFormInstance", 
         "couch_filter": null, 
         "include_docs": false
     }, 

@@ -36,9 +36,3 @@ class InvalidRow(Exception):
     """
     Raise this in the row constructor to skip row
     """
-
-
-class CaseOutOfRange(InvalidRow):
-    """
-    The row is invalid because the window calculations are out of range.
-    """

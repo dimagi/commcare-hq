@@ -13,13 +13,6 @@ from ..exceptions import CaseNotFound
 
 class CaseInterface(object):
 
-    @staticmethod
-    @to_generic
-    def create_from_generic(generic_case):
-        case = CommCareCase.from_generic(generic_case)
-        case.save()
-        return case
-
     @classmethod
     def get_attachment(cls, case_id, attachment_name):
         case = cls._get_case(case_id)
@@ -65,24 +58,17 @@ class CaseInterface(object):
     def get_reverse_indices(domain, case_id):
         return get_reverse_indices_for_case_id(domain, case_id)
 
-    @classmethod
-    @to_generic
-    def update_properties(cls, case_generic, **properties):
-        case = cls._get_case(case_generic.id)
-        for prop, value in properties.iteritems():
-            setattr(case, prop, value)
-        case.save()
-        return case
-
     @staticmethod
     def get_case_xform_ids_from_couch(case_id):
         return get_case_xform_ids(case_id)
 
     @classmethod
+    @to_generic
     def soft_delete(cls, case_id):
         case = cls._get_case(case_id)
         case.doc_type += DELETED_SUFFIX
         case.save()
+        return case
 
     @classmethod
     def hard_delete(cls, case_generic):
