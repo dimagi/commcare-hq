@@ -607,14 +607,11 @@ There are also additional examples in the [examples](https://github.com/dimagi/c
 
 A report configuration takes data from a data source and renders it in the UI. A report configuration consists of a few different sections:
 
-1. A list of filter fields. These map to filters that show up in the UI, and
-   should translate to queries that can be made to limit the returned data.
-2. A list of aggregation columns. These defines how indicator data will be
-   aggregated into rows in the report. The complete list of aggregations fields
-   forms the *primary key* of each row in the report.  If you're unsure, this
-   should probably be ["doc_id"]
-3. A list of columns. Columns define the report columns that show up from the
-   data source, as well as any aggregation information needed.
+1. [Report Filters](#report-filters) - These map to filters that show up in the UI, and should translate to queries that can be made to limit the returned data.
+2. [Aggregation](#aggregation) - A list of aggregation columns. These defines how indicator data will be aggregated into rows in the report. The complete list of aggregations fields forms the *primary key* of each row in the report.
+3. [Report Columns](#report-columns) - Columns define the report columns that show up from the data source, as well as any aggregation information needed.
+4. [Charts](#charts) - Definition of charts to display on the report.
+5. [Sort Expression](#sort-expression) - How the rows in the report are ordered.
 
 ## Samples
 
