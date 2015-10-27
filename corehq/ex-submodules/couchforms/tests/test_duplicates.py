@@ -19,12 +19,12 @@ class DuplicateFormTest(TestCase, TestFileMixin):
 
     def test_basic_duplicate(self):
         xml_data = self.get_xml('duplicate')
-        xform = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("test-domain", xform.domain)
 
-        xform = FormProcessorInterface.post_xform(xml_data, domain='test-domain')
+        xform = FormProcessorInterface().post_xform(xml_data, domain='test-domain')
         self.assertNotEqual(self.ID, xform.id)
         self.assertEqual("XFormDuplicate", xform.doc_type)
         self.assertTrue(self.ID in xform.problem)
@@ -34,7 +34,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         instance = self.get_xml('duplicate')
 
         # Post an xform with an alternate doc_type
-        xform1 = FormProcessorInterface.post_xform(
+        xform1 = FormProcessorInterface().post_xform(
             instance,
             domain=domain,
         )
@@ -45,7 +45,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform1.is_archived)
 
         # Post an xform with that has different doc_type but same id
-        _, xform2, _ = FormProcessorInterface.submit_form_locally(
+        _, xform2, _ = FormProcessorInterface().submit_form_locally(
             instance,
             domain=domain,
         )
@@ -56,11 +56,11 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         domain = 'test-domain'
         instance = self.get_xml('duplicate')
 
-        _, xform1, _ = FormProcessorInterface.submit_form_locally(
+        _, xform1, _ = FormProcessorInterface().submit_form_locally(
             instance,
             domain='wrong-domain',
         )
-        _, xform2, _ = FormProcessorInterface.submit_form_locally(
+        _, xform2, _ = FormProcessorInterface().submit_form_locally(
             instance,
             domain=domain,
         )

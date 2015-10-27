@@ -75,7 +75,7 @@ class SyncBaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, form, _ = FormProcessorInterface.submit_form_locally(xml_data, last_sync_token=token_id)
+        _, form, _ = FormProcessorInterface().submit_form_locally(xml_data, last_sync_token=token_id)
         return form
 
     def _postFakeWithSyncToken(self, caseblocks, token_id):
@@ -83,7 +83,7 @@ class SyncBaseTest(TestCase):
             # can't use list(caseblocks) since that returns children of the node
             # http://lxml.de/tutorial.html#elements-are-lists
             caseblocks = [caseblocks]
-        return FormProcessorInterface.post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
+        return FormProcessorInterface().post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
 
     def _checkLists(self, l1, l2, msg=None):
         self.assertEqual(set(l1), set(l2), msg)
@@ -847,7 +847,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token
         case_id = "cache_noninvalidation"
-        FormProcessorInterface.post_case_blocks([CaseBlock(
+        FormProcessorInterface().post_case_blocks([CaseBlock(
             create=True,
             case_id=case_id,
             user_id=self.user.user_id,
@@ -1503,7 +1503,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             case_type=PARENT_TYPE,
         ).as_xml() for case_id in [case_id1, case_id2]]
 
-        FormProcessorInterface.post_case_blocks(
+        FormProcessorInterface().post_case_blocks(
             initial_caseblocks,
         )
 
@@ -1517,7 +1517,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             ).as_xml() for id in ids]
 
         try:
-            FormProcessorInterface.post_case_blocks(
+            FormProcessorInterface().post_case_blocks(
                 _get_bad_caseblocks([case_id1, case_id2]),
                 form_extras={ "last_sync_token": self.sync_log._id }
             )
@@ -1527,7 +1527,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             pass
 
         try:
-            FormProcessorInterface.post_case_blocks(
+            FormProcessorInterface().post_case_blocks(
                 _get_bad_caseblocks([case_id2, case_id1]),
                 form_extras={ "last_sync_token": self.sync_log._id }
             )
@@ -1541,7 +1541,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
 
     def test_submission_with_bad_log_default(self):
         with self.assertRaises(ResourceNotFound):
-            FormProcessorInterface.post_case_blocks(
+            FormProcessorInterface().post_case_blocks(
                 [CaseBlock(create=True, case_id='bad-log-default').as_xml()],
                 form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
                 domain='some-domain-without-toggle',
@@ -1551,7 +1551,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
         domain = 'submission-domain-with-toggle'
 
         def _test():
-            FormProcessorInterface.post_case_blocks(
+            FormProcessorInterface().post_case_blocks(
                 [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_xml()],
                 form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
                 domain=domain,

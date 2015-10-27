@@ -42,13 +42,13 @@ class EditFormTest(TestCase, TestFileMixin):
             form.domain = self.domain
             form.received_on = yesterday
 
-        xform = FormProcessorInterface.post_xform(original_xml, process=process)
+        xform = FormProcessorInterface().post_xform(original_xml, process=process)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("", xform.form['vitals']['height'])
         self.assertEqual("other", xform.form['assessment']['categories'])
 
-        xform = FormProcessorInterface.post_xform(edit_xml, domain=self.domain)
+        xform = FormProcessorInterface().post_xform(edit_xml, domain=self.domain)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("100", xform.form['vitals']['height'])
@@ -96,7 +96,7 @@ class EditFormTest(TestCase, TestFileMixin):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
 
-        _, xform, _ = FormProcessorInterface.submit_form_locally(original_xml, self.domain)
+        _, xform, _ = FormProcessorInterface().submit_form_locally(original_xml, self.domain)
         self.assertEqual(self.ID, xform.id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual(self.domain, xform.domain)
@@ -109,7 +109,7 @@ class EditFormTest(TestCase, TestFileMixin):
         # This seems like a couch specific test util. Will likely need postgres test utils
         with BorkDB(XFormInstance.get_db()):
             with self.assertRaises(RequestFailed):
-                FormProcessorInterface.submit_form_locally(edit_xml, self.domain)
+                FormProcessorInterface().submit_form_locally(edit_xml, self.domain)
 
         # it didn't go through, so make sure there are no edits still
         self.assertIsNone(xform.deprecated_form_id)

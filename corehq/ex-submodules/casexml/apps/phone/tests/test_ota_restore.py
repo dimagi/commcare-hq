@@ -123,7 +123,7 @@ class OtaRestoreTest(TestCase):
             xml_data = f.read()
 
         # implicit length assertion
-        _, _, [newcase] = FormProcessorInterface.submit_form_locally(xml_data, domain=self.project.name)
+        _, _, [newcase] = FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
         user = dummy_user()
 
         self.assertEqual(1, len(list(
@@ -195,7 +195,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        FormProcessorInterface.submit_form_locally(xml_data, domain=self.project.name)
+        FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
 
         time.sleep(1)
         restore_payload = generate_restore_payload(self.project, dummy_user(), items=items)
@@ -240,7 +240,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "update_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        FormProcessorInterface.submit_form_locally(xml_data, domain=self.project.name)
+        FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
 
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(
@@ -272,7 +272,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "attributes.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, _, [newcase] = FormProcessorInterface.submit_form_locally(xml_data, domain=self.project.name)
+        _, _, [newcase] = FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
 
         self.assertTrue(isinstance(newcase.adate, dict))
         self.assertEqual(date(2012, 02, 01), newcase.adate["#text"])

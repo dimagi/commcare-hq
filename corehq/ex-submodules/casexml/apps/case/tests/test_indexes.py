@@ -71,7 +71,7 @@ class IndexTest(TestCase):
 
         # Step 0. Create mother and father cases
         for prereq in [self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
-            FormProcessorInterface.post_case_blocks([
+            FormProcessorInterface().post_case_blocks([
                 CaseBlock(create=True, case_id=prereq, user_id=USER_ID).as_xml()
             ])
 
@@ -84,7 +84,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
         ).as_xml()
 
-        FormProcessorInterface.post_case_blocks([create_index])
+        FormProcessorInterface().post_case_blocks([create_index])
         check_user_has_case(self, user, create_index)
 
         # Step 2. Update the case to delete <mom> and create <dad>
@@ -106,7 +106,7 @@ class IndexTest(TestCase):
             date_modified=now,
         ).as_xml()
 
-        FormProcessorInterface.post_case_blocks([update_index])
+        FormProcessorInterface().post_case_blocks([update_index])
 
         check_user_has_case(self, user, update_index_expected)
 
@@ -130,7 +130,7 @@ class IndexTest(TestCase):
             date_modified=now,
         ).as_xml()
 
-        FormProcessorInterface.post_case_blocks([update_index])
+        FormProcessorInterface().post_case_blocks([update_index])
 
         check_user_has_case(self, user, update_index_expected)
 
@@ -139,14 +139,14 @@ class IndexTest(TestCase):
         parent_domain = 'parent'
         child_domain = 'child'
 
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(create=True, case_id=case_in_other_domain, user_id=USER_ID).as_xml()
         ], form_extras={'domain': parent_domain})
 
         block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID,
                           index={'bad': ('bad-case', case_in_other_domain)})
 
-        xform, _ = FormProcessorInterface.post_case_blocks([block.as_xml()],
+        xform, _ = FormProcessorInterface().post_case_blocks([block.as_xml()],
                                     form_extras={'domain': child_domain})
 
         self.assertTrue(xform.is_error)
@@ -164,7 +164,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')},
         ).as_xml()
 
-        FormProcessorInterface.post_case_blocks([create_index])
+        FormProcessorInterface().post_case_blocks([create_index])
         check_user_has_case(self, user, create_index)
 
 

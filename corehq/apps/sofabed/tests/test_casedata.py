@@ -17,7 +17,7 @@ class CaseDataTests(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id='mother_case_id',
@@ -28,7 +28,7 @@ class CaseDataTests(TestCase):
         self.case_id = 'test_case_1'
         self.date_modified = datetime.utcnow() - timedelta(hours=1)
         self.date_modified = self.date_modified.replace(microsecond=0)
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=self.case_id,
@@ -80,7 +80,7 @@ class CaseDataTests(TestCase):
         self.assertEqual('mother_case_id', indices[0].referenced_id)
 
     def test_update(self):
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id='grand_mother_case_id',
@@ -90,7 +90,7 @@ class CaseDataTests(TestCase):
         ], {'domain': TEST_DOMAIN})
 
         date_modified = datetime.utcnow()
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 close=True,
                 case_id=self.case_id,
@@ -129,7 +129,7 @@ class CaseDataTests(TestCase):
 
     def test_empty_name(self):
         case_id = 'case_with_no_name'
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface(TEST_DOMAIN).post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=case_id,
@@ -144,7 +144,7 @@ class CaseDataTests(TestCase):
 
     def test_empty_owner_id(self):
         case_id = 'case_with_no_owner'
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=case_id,

@@ -291,7 +291,7 @@ class CaseFactory(object):
         submit_form_extras = copy.copy(self.form_extras)
         if form_extras is not None:
             submit_form_extras.update(form_extras)
-        return FormProcessorInterface.post_case_blocks(
+        return FormProcessorInterface().post_case_blocks(
             caseblocks,
             form_extras=submit_form_extras,
             domain=self.domain,
