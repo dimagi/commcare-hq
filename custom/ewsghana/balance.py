@@ -22,7 +22,8 @@ class BalanceMigration(UserMigrationMixin):
         return meta['total_count'] if meta else 0
 
     @transaction.atomic
-    def validate_web_users(self, date):
+    def validate_web_users(self, date=None):
+        unique_usernames = set()
         for web_user in iterate_over_api_objects(
             self.endpoint.get_webusers, filters=dict(date_joined__gte=date)
         ):
@@ -38,8 +39,9 @@ class BalanceMigration(UserMigrationMixin):
                     # We are not migrating users without valid email in v1
                     continue
 
+            unique_usernames.add(username)
             couch_web_user = WebUser.get_by_username(username)
-            if not couch_web_user:
+            if not couch_web_user or self.domain not in couch_web_user.get_domains():
                 description = "Not exists"
                 EWSMigrationProblem.objects.create(
                     domain=self.domain,
@@ -105,6 +107,10 @@ class BalanceMigration(UserMigrationMixin):
                     external_id=web_user.email or web_user.username,
                     object_type='webuser'
                 ).delete()
+
+        migration_stats = EWSMigrationStats.objects.get(domain=self.domain)
+        migration_stats.web_users_count = len(unique_usernames)
+        migration_stats.save()
 
     @transaction.atomic
     def validate_sms_users(self):

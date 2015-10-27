@@ -658,6 +658,9 @@ class EWSApi(APISynchronization):
             if self.domain not in user.get_domains():
                 user.add_domain_membership(self.domain, location_id=location_id)
 
+            # We are migrating only active users
+            user.is_active = True
+
         dm = user.get_domain_membership(self.domain)
 
         if dm.location_id != location_id:
