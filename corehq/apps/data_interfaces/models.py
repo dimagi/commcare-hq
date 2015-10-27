@@ -101,14 +101,6 @@ class AutomaticUpdateRule(models.Model):
 
 
 class AutomaticUpdateRuleCriteria(models.Model):
-    DATA_TYPE_DATE = 'DATE'
-    DATA_TYPE_STRING = 'STRING'
-
-    DATA_TYPE_CHOICES = (
-        (DATA_TYPE_DATE, DATA_TYPE_DATE),
-        (DATA_TYPE_STRING, DATA_TYPE_STRING),
-    )
-
     MATCH_DAYS_SINCE = 'DAYS'
 
     MATCH_TYPE_CHOICES = (
@@ -117,7 +109,6 @@ class AutomaticUpdateRuleCriteria(models.Model):
 
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     property_name = models.CharField(max_length=126)
-    property_data_type = models.CharField(max_length=10, choices=DATA_TYPE_CHOICES)
     property_value = models.CharField(max_length=126)
     match_type = models.CharField(max_length=10, choices=MATCH_TYPE_CHOICES)
 

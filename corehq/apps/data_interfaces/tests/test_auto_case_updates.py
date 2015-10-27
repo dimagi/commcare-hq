@@ -24,7 +24,6 @@ class AutomaticCaseUpdateTest(TestCase):
         self.rule.automaticupdaterulecriteria_set = [
             AutomaticUpdateRuleCriteria(
                 property_name='last_visit_date',
-                property_data_type=AutomaticUpdateRuleCriteria.DATA_TYPE_DATE,
                 property_value='30',
                 match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE,
             ),

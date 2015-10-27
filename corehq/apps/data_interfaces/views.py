@@ -708,11 +708,6 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
             AutomaticUpdateRuleCriteria.objects.create(
                 rule=rule,
                 property_name=condition['property_name'],
-                property_data_type=(
-                    AutomaticUpdateRuleCriteria.DATA_TYPE_DATE
-                    if condition['property_match_type'] == AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE
-                    else AutomaticUpdateRuleCriteria.DATA_TYPE_STRING
-                ),
                 property_value=condition['property_value'],
                 match_type=condition['property_match_type'],
             )
