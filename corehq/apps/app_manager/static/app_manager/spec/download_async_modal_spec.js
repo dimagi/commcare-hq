@@ -43,12 +43,20 @@ describe('Async Download Modal', function() {
     describe('#AsyncDownloader', function() {
         var downloader = null,
             modal = $('#download-zip-modal-test'),
-            ajax_stub;
+            ajax_stub,
+            clock;
+
+        before(function() {
+           clock = sinon.useFakeTimers();
+        });
+
+        after(function() {
+           clock.restore();
+        });
 
         beforeEach(function() {
             ajax_stub = sinon.stub($, 'ajax');
             downloader = new AsyncDownloader(modal, url);
-            downloader.POLL_FREQUENCY = 0;
         });
 
         afterEach(function() {
@@ -77,13 +85,15 @@ describe('Async Download Modal', function() {
                 ajax_stub.onSecondCall().yieldsTo("success", 'html progress content');
                 ajax_stub.onThirdCall().yieldsTo("success", 'html read content ' + test.state + downloadId);
                 modal.modal({show: true});
-                setTimeout(function () {
-                    assert.equal($.ajax.callCount, 3, 'Expecting 3 ajax calls');
-                    assert.equal(ajax_stub.firstCall.args[0].url, url);
-                    assert.equal(ajax_stub.secondCall.args[0].url, pollUrl);
-                    assert.equal(ajax_stub.thirdCall.args[0].url, pollUrl);
-                    done();
-                }, 5);
+
+                assert.equal($.ajax.callCount, 2);
+                assert.equal(ajax_stub.firstCall.args[0].url, url);
+                assert.equal(ajax_stub.secondCall.args[0].url, pollUrl);
+
+                clock.tick(downloader.POLL_FREQUENCY);
+                assert.equal($.ajax.callCount, 3);
+                assert.equal(ajax_stub.thirdCall.args[0].url, pollUrl);
+                done();
             });
         });
     });
