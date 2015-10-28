@@ -378,28 +378,6 @@ class RestoreState(object):
         return self.params.version
 
     @property
-    def use_clean_restore(self):
-        def should_use_clean_restore(domain):
-            toggle_to_check = OWNERSHIP_CLEANLINESS_RESTORE
-            if settings.UNIT_TESTING:
-                # disable randomness globally for tests since they already handle everything explicitly
-                toggle_to_check = copy(toggle_to_check)
-                toggle_to_check.randomness = 0
-                override = getattr(
-                    settings, 'TESTS_SHOULD_USE_CLEAN_RESTORE', None)
-                if override is not None:
-                    return override
-            return toggle_to_check.enabled(domain)
-
-        # this can be overridden explicitly in the params but will default to the domain setting
-        if self.params.force_restore_mode == 'clean':
-            return True
-        elif self.params.force_restore_mode == 'legacy':
-            return False
-
-        return should_use_clean_restore(self.domain)
-
-    @property
     @memoized
     def owner_ids(self):
         return set(self.user.get_owner_ids())
@@ -438,8 +416,7 @@ class RestoreState(object):
 
     @property
     def sync_log_class(self):
-        format = LOG_FORMAT_SIMPLIFIED if self.use_clean_restore else LOG_FORMAT_LEGACY
-        return get_sync_log_class_by_format(format)
+        return get_sync_log_class_by_format(LOG_FORMAT_SIMPLIFIED)
 
     @property
     @memoized

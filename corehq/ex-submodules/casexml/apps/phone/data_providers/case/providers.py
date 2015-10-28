@@ -8,10 +8,7 @@ class CasePayloadProvider(LongRunningRestoreDataProvider):
     Long running restore provider responsible for generating the case and stock payloads.
     """
     def get_response(self, restore_state):
-        if restore_state.use_clean_restore:
-            return get_case_payload(restore_state)
-        else:
-            return _batched_response(restore_state)
+        return get_case_payload(restore_state)
 
 
 def _batched_response(restore_state):
