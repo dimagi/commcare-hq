@@ -61,29 +61,6 @@ class SyncPerformanceTest(SyncBaseTest):
         RestoreConfig.get_payload,
         get_related_cases,
     ])
-    def test_profile_filter_cases_modified_elsewhere_since_sync(self):
-        total_cases = 100
-        proportion_modified = 0
-
-        modified = total_cases * proportion_modified
-        id_list = ['case_id_{}'.format(i) for i in range(total_cases)]
-        self._createCaseStubs(id_list, user_id=USER_ID, owner_id=SHARED_ID)
-
-        caseblocks = []
-        for case_id in id_list[:modified]:
-            caseblocks.append(CaseBlock(
-                case_id=case_id,
-                user_id=OTHER_USER_ID,
-                update={'favorite_color': 'blue'}
-            ).as_xml())
-        self._postFakeWithSyncToken(caseblocks, self.other_sync_log.get_id)
-
-        assert_user_has_cases(self, self.user, id_list[:modified], restore_id=self.sync_log.get_id)
-
-    @line_profile([
-        RestoreConfig.get_payload,
-        get_related_cases,
-    ])
     def test_profile_get_related_cases(self):
         total_parent_cases = 50
 
