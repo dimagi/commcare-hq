@@ -33,10 +33,6 @@ describe('Async Download Modal', function() {
                 expect(downloader.isDone(test.input)).to.be.equal(test.expected);
             });
         });
-
-        it('should return false for empty input', function() {
-            expect(downloader.isDone('')).to.be.false;
-        });
     });
 
     describe('#AsyncDownloader', function() {
