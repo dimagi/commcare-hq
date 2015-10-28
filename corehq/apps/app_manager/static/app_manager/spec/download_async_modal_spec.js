@@ -1,8 +1,7 @@
 /* global chai, $, sinon */
 
 describe('Async Download Modal', function() {
-    var url = 'test_url',
-        expect = chai.expect;
+    var url = 'test_url';
 
     describe('#AsyncDownloader.isDone', function() {
         var downloader = null,
@@ -26,7 +25,7 @@ describe('Async Download Modal', function() {
 
         test_done.forEach(function(test) {
             it('should return ' + test.expected + ' for input "' + test.input + '"', function() {
-                expect(downloader.isDone(test.input)).to.be.equal(test.expected);
+                assert.equal(downloader.isDone(test.input), test.expected);
             });
         });
     });
@@ -48,7 +47,7 @@ describe('Async Download Modal', function() {
 
         it('should only make one download request', function(done) {
             modal.modal({show: true});
-            expect($.ajax.callCount).to.equal(1, 'Only expecting 1 ajax call');
+            assert.equal($.ajax.callCount, 1, 'Only expecting 1 ajax call');
             done();
         });
 
@@ -69,10 +68,10 @@ describe('Async Download Modal', function() {
                 ajax_stub.onThirdCall().yieldsTo("success", 'html read content ' + test.state + downloadId);
                 modal.modal({show: true});
                 setTimeout(function () {
-                    expect($.ajax.callCount).to.equal(3, 'Expecting 3 ajax calls');
-                    expect(ajax_stub.firstCall.args[0].url).to.equal(url);
-                    expect(ajax_stub.secondCall.args[0].url).to.equal(pollUrl);
-                    expect(ajax_stub.thirdCall.args[0].url).to.equal(pollUrl);
+                    assert.equal($.ajax.callCount, 3, 'Expecting 3 ajax calls');
+                    assert.equal(ajax_stub.firstCall.args[0].url, url);
+                    assert.equal(ajax_stub.secondCall.args[0].url, pollUrl);
+                    assert.equal(ajax_stub.thirdCall.args[0].url, pollUrl);
                     done();
                 }, 5);
             });
