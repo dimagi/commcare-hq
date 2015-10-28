@@ -20,7 +20,9 @@ $(function(){
         };
 
         self.startPollDownloadStatus = function(data){
-            var keep_polling = true;
+            var keep_polling = true,
+                ready_id = 'ready_' + data.download_id,
+                error_id = 'error_' + data.download_id;
             var pollDownloadStatus = function(){
                 if (keep_polling) {
                     $.ajax({
@@ -29,7 +31,10 @@ $(function(){
                             if (resp.trim().length) {
                                 self.$downloading.addClass("hide");
                                 self.$download_progress.html(resp).removeClass("hide");
-                                if (self.$download_progress.find(".alert-success").length) {
+                                var done = _.find([ready_id, error_id], function(el_id) {
+                                    return resp.indexOf(el_id) > 0;
+                                });
+                                if (done) {
                                     keep_polling = false;
                                 }
                             }
