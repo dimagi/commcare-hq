@@ -2,12 +2,11 @@ from django.test import TestCase, SimpleTestCase
 import os
 import time
 from django.test.utils import override_settings
-from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
 from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
-from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams, CachedResponse
+from casexml.apps.phone.restore import RestoreConfig, CachedResponse
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
 from casexml.apps.phone import xml
@@ -124,11 +123,7 @@ class OtaRestoreTest(TestCase):
 
         # implicit length assertion
         _, _, [newcase] = FormProcessorInterface.submit_form_locally(xml_data, domain=self.project.name)
-        user = dummy_user()
 
-        self.assertEqual(1, len(list(
-            BatchedCaseSyncOperation(RestoreState(self.project, user, RestoreParams())).get_all_case_updates()
-        )))
         expected_case_block = """
         <case>
             <case_id>asdf</case_id>
