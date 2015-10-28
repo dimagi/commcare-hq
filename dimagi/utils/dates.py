@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import datetime
 from calendar import month_name
+from django.utils.translation import ugettext_lazy as _
 import logging
 
 try:
@@ -312,16 +314,17 @@ class DateSpan(object):
     
     def get_validation_reason(self):
         if self.startdate is None or self.enddate is None:
-            return "You have to specify both dates!"
+            return _("You have to specify both dates!")
         elif self.enddate < self.startdate:
-            return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
+            return _("You can't have an end date of {end} after start date of {start}").format(
+                end=self.enddate, start=self.startdate)
         elif self.startdate < datetime.datetime(1900, 01, 01) or self.enddate < datetime.datetime(1900, 01, 01):
-            return "You can't use dates earlier than the year 1900"
+            return _("You can't use dates earlier than the year 1900")
         elif self.max_days is not None:
             delta = self.enddate - self.startdate
             if delta.days > self.max_days:
-                return "You are limited to a span of {} days, but this date range spans {} days".format(
-                    self.max_days, delta.days)
+                return _("You are limited to a span of {max} days, but this date range spans {total} days").format(
+                    max=self.max_days, total=delta.days)
         return ""
     
     def __str__(self):
