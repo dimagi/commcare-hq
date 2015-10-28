@@ -1,17 +1,16 @@
 from datetime import datetime
 import uuid
 from django.test import TestCase, SimpleTestCase
-from django.test.utils import override_settings
 from jsonobject import JsonObject
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
     CaseState
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
+from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.toggles import OWNERSHIP_CLEANLINESS_RESTORE, LEGACY_SYNC_SUPPORT
+from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
 
 
