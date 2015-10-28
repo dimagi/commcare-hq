@@ -50,7 +50,7 @@ $(function(){
                 error_id = 'error_' + self.download_poll_id;
             return progress_response &&
                 progress_response.trim().length &&
-                _.find([ready_id, error_id], function(el_id) {
+                _.any([ready_id, error_id], function(el_id) {
                     return progress_response.indexOf(el_id) > 0;
                 });
         };
