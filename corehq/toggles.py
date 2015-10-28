@@ -231,6 +231,14 @@ DETAIL_LIST_TABS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DETAIL_LIST_TAB_NODESETS = StaticToggle(
+    'detail-list-tab-nodesets',
+    'Associate a nodeset with a case detail tab',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -477,15 +485,6 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
-)
-
-OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
-    'enable_owner_cleanliness_restore',
-    'Enable restoring with updated owner cleanliness logic.',
-    TAG_PRODUCT_CORE,
-    namespaces=[NAMESPACE_DOMAIN],
-    randomness=.5,
-    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
 )
 
 MOBILE_UCR = StaticToggle(

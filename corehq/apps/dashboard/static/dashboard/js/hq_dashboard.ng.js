@@ -9,6 +9,11 @@
         staticRoot: '/'
     });
 
+    dashboard.constant('analyticsConfig', {
+        category: "Dashboard",
+        action: "Dashboard Action"
+    });
+
     var utils = {
         getTemplate: function (config, filename) {
             return config.staticRoot + 'dashboard/ng_partials/' + filename;
@@ -25,6 +30,7 @@
         $scope.total = 0;
         $scope.maxSize = 8;
         $scope.default = {};
+        $scope.analytics = {};
 
         self.retries = 0;
 
@@ -86,6 +92,7 @@
             $scope.isLoading = false;
             $scope.default = data.response.default || {};
             $scope.helpText = data.response.helpText;
+            $scope.analytics = data.response.analytics;
         };
 
         self.retry = function () {
@@ -105,6 +112,7 @@
         $scope.url = '';
         $scope.isExternal = false;
         $scope.helpText = '';
+        $scope.analytics = {};
 
         self.retries = 0;
 
@@ -126,6 +134,7 @@
                 $scope.url = data.response.url;
                 $scope.isExternal = !!data.response.isExternal;
                 $scope.helpText = data.response.helpText;
+                $scope.analytics = data.response.analytics;
                 if ($scope.isExternal) {
                     $($scope.externalLink).attr('target', '_blank');
                 }
@@ -207,9 +216,22 @@
         };
     };
 
-    dashboardDirectives.trackAnalyticsDirective = function () {
-        // todo
+    dashboardDirectives.trackAnalyticsDirective = function (analyticsConfig) {
         var link = function ($scope, element, attrs) {
+
+            var eventTrackingSet = false;
+
+            $scope.$watch('analytics', function (currentVal, oldVal) {
+                if (!eventTrackingSet && !_.isEmpty(currentVal)) {
+                    eventTrackingSet = true;
+                    if (!_.isEmpty(currentVal.usage_label)) {
+                        gaTrackLink(element, analyticsConfig.category, analyticsConfig.action, currentVal.usage_label);
+                    }
+                    if (!_.isEmpty(currentVal.workflow_label)) {
+                        analytics.trackWorkflowLink(element, currentVal.workflow_label);
+                    }
+                }
+            });
         };
 
         return {
