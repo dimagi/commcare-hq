@@ -292,7 +292,7 @@ class DatespanMixin(object):
     """
     datespan_field = 'corehq.apps.reports.filters.dates.DatespanFilter'
     datespan_default_days = 7
-    datespan_max_days = -1
+    datespan_max_days = None
     inclusive = True
 
     _datespan = None
