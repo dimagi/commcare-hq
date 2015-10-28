@@ -12,75 +12,82 @@ $(function(){
         self.el_id = $el.attr("id");
         self.$download_progress = self.$el.find("#" + self.el_id + "-download-progress");
         self.$downloading = self.$el.find("#" + self.el_id + "-downloading");
-        self.downloadGenerated = false;
+
+        self.download_in_progress = false;
+        self.download_poll_url = null;
+        self.download_poll_id = null;
 
         self.init = function(){
+            self.download_in_progress = false;
+            self.download_poll_url = null;
+            self.download_poll_id = null;
             self.$download_progress.addClass("hide");
             self.$downloading.removeClass("hide");
         };
 
-        self.startPollDownloadStatus = function(data){
-            var keep_polling = true,
-                ready_id = 'ready_' + data.download_id,
-                error_id = 'error_' + data.download_id;
-            var pollDownloadStatus = function(){
-                if (keep_polling) {
-                    $.ajax({
-                        url: data.download_url,
-                        success: function (resp) {
-                            if (resp.trim().length) {
-                                self.$downloading.addClass("hide");
-                                self.$download_progress.html(resp).removeClass("hide");
-                                var done = _.find([ready_id, error_id], function(el_id) {
-                                    return resp.indexOf(el_id) > 0;
-                                });
-                                if (done) {
-                                    keep_polling = false;
-                                }
-                            }
-                            if (keep_polling) {
-                                setTimeout(pollDownloadStatus, self.POLL_FREQUENCY);
-                            }
-                        },
-                        error: function (resp) {
-                            self.downloadError(resp.responseText);
+        self.pollDownloadStatus = function(){
+            if (self.download_in_progress) {
+                $.ajax({
+                    url: self.download_poll_url,
+                    success: function (resp) {
+                        self.updateProgress(resp);
+                        if (!self.isDone(resp)) {
+                            setTimeout(self.pollDownloadStatus, self.POLL_FREQUENCY);
                         }
-                    });
-                }
-            };
+                    },
+                    error: function (resp) {
+                        self.downloadError(resp.responseText);
+                    }
+                });
+            }
+        };
 
-            self.$el.on("hidden hidden.bs.modal", function(){
-                keep_polling = false;
-                self.init();
-            });
+        self.updateProgress = function (progress_response) {
+            if (progress_response.trim().length) {
+                self.$downloading.addClass("hide");
+                self.$download_progress.html(progress_response).removeClass("hide");
+            }
+        };
 
-            pollDownloadStatus();
+        self.isDone = function (progress_response) {
+            var ready_id = 'ready_' + self.download_poll_id,
+                error_id = 'error_' + self.download_poll_id;
+            return !!progress_response &&
+                !!progress_response.trim().length &&
+                !!_.find([ready_id, error_id], function(el_id) {
+                    return progress_response.indexOf(el_id) > 0;
+                });
         };
 
         self.generateDownload = function(){
             // prevent multiple calls
-            if (!self.downloadGenerated) {
+            if (!self.download_in_progress) {
+                self.download_in_progress = true;
                 $.ajax({
                     url: self.download_url,
                     type: "GET",
                     dataType: "json",
                     success: function (data) {
-                        self.startPollDownloadStatus(data);
+                        self.download_poll_url = data.download_url;
+                        self.download_poll_id = data.download_id;
+                        self.pollDownloadStatus();
                     },
                     error: function () {
                         self.downloadError(self.ERROR_MESSAGE);
                     }
                 });
-                self.downloadGenerated = true;
             }
         };
 
         self.downloadError = function(text){
-            self.$downloading.addClass("hide");
-            self.$download_progress.removeClass("hide").html(text);
+            self.init();
+            self.$download_progress.html(text);
         };
 
         self.$el.on("show show.bs.modal", self.generateDownload);
+        self.$el.on("hidden hidden.bs.modal", function(){
+            self.init();
+        });
         self.init();
     };
 }());

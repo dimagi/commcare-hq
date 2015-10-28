@@ -3,11 +3,46 @@
 describe('Async Download Modal', function() {
     var downloader = null,
         expect = chai.expect,
-        modal = $('#download-zip-modal-test'),
-        url = 'test_url',
-        ajax_stub;
+        url = 'test_url';
+
+    describe('#AsyncDownloader.isDone', function() {
+        var modal = $('#modal'),
+            download_poll_id = '12345';
+
+        beforeEach(function() {
+            downloader = new AsyncDownloader(modal, url);
+            downloader.download_poll_id = download_poll_id;
+        });
+
+        afterEach(function() {
+            downloader.init();
+        });
+
+        var test_done = [
+            {input: null, expected: false},
+            {input: undefined, expected: false},
+            {input: '', expected: false},
+            {input: 'progress', expected: false},
+            {input: 'progress ready_' + download_poll_id, expected: true},
+            {input: 'progress error_' + download_poll_id, expected: true}
+
+        ];
+
+        test_done.forEach(function(test) {
+            it('should return ' + test.expected + ' for input "' + test.input + '"', function() {
+                expect(downloader.isDone(test.input)).to.be.equal(test.expected);
+            });
+        });
+
+        it('should return false for empty input', function() {
+            expect(downloader.isDone('')).to.be.false;
+        });
+    });
 
     describe('#AsyncDownloader', function() {
+        var modal = $('#download-zip-modal-test'),
+            ajax_stub;
+
         beforeEach(function() {
             ajax_stub = sinon.stub($, 'ajax');
             downloader = new AsyncDownloader(modal, url);
