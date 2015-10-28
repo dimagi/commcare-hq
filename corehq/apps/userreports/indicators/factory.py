@@ -104,7 +104,7 @@ def _build_ledger_balances_indicator(spec, context):
                 return StockState.objects.get(
                     section_id=wrapped_spec.ledger_section,
                     case_id=doc['_id'],
-                    product_id=product_code,
+                    sql_product__code=product_code,
                 ).stock_on_hand
             except StockState.DoesNotExist:
                 return 0
