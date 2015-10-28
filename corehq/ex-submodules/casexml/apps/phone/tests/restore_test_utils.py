@@ -45,13 +45,3 @@ def run_with_multiple_configs(fn, run_configs):
         return helper(*args, **kwargs)
 
     return inner
-
-
-run_with_all_restore_configs = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        RunConfig(
-            settings={},
-        ),
-    ]
-)
