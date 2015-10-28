@@ -136,14 +136,16 @@ class DateSpan(object):
     format = None
     inclusive = True
     is_default = False
-    max_days = -1
+    max_days = None
 
-    def __init__(self, startdate, enddate, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
+    def __init__(self, startdate, enddate, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc,
+                 max_days=None):
         self.startdate = startdate
         self.enddate = enddate
         self.format = format
         self.inclusive = inclusive
         self.timezone = timezone
+        self.max_days = max_days
 
     def __getstate__(self):
         """
@@ -173,7 +175,7 @@ class DateSpan(object):
         self.inclusive = state.get('inclusive', True)
         self.timezone = pytz.utc
         self.is_default = state.get('is_default', False)
-        self.max_days = state.get('max_days', -1)
+        self.max_days = state.get('max_days')
         try:
             self.timezone = pytz.timezone(state.get('timezone'))
         except Exception as e:
