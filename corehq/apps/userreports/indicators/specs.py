@@ -103,6 +103,3 @@ class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
     type = TypeProperty('ledger_balances')
     product_codes = ListProperty(required=True)
     ledger_section = StringProperty()
-
-    def getter(self, item, context):
-        return 32

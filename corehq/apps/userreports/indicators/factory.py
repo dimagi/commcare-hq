@@ -12,6 +12,7 @@ from corehq.apps.userreports.indicators.specs import (
     LedgerBalancesIndicatorSpec,
     RawIndicatorSpec,
 )
+from corehq.apps.commtrack.models import StockState
 
 
 def _build_count_indicator(spec, context):
@@ -97,6 +98,18 @@ def _build_ledger_balances_indicator(spec, context):
     def _construct_column(product):
         return '{col}_{product}'.format(col=spec['column_id'], product=product)
 
+    def _make_get_stock_state(product_code):
+        def get_stock_state(doc, context):
+            try:
+                return StockState.objects.get(
+                    section_id=wrapped_spec.ledger_section,
+                    case_id=doc['_id'],
+                    product_id=product_code,
+                ).stock_on_hand
+            except StockState.DoesNotExist:
+                return 0
+        return get_stock_state
+
     product_indicators = [
         RawIndicator(
             display_name=_construct_display(product_code),
@@ -104,7 +117,7 @@ def _build_ledger_balances_indicator(spec, context):
                 id=_construct_column(product_code),
                 datatype="decimal",
             ),
-            getter=wrapped_spec.getter,
+            getter=_make_get_stock_state(product_code),
         ) for product_code in wrapped_spec.product_codes
     ]
     return CompoundIndicator(base_display_name, product_indicators)
