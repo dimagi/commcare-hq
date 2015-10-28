@@ -21,7 +21,7 @@ def drop_tables(apps, schema_editor):
         'fluff_OpmHealthStatusAllInfoFluff',
         'fluff_VhndAvailabilityFluff',
     ]:
-        Table(table_name, metadata).drop()
+        Table(table_name, metadata).drop(checkfirst=True)
 
 
 class Migration(migrations.Migration):
