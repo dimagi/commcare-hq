@@ -453,6 +453,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     is_cacheable = False
     ajax_pagination = True
     exportable_all = True
+    datespan_max_days = 90
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -471,11 +472,14 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
-        for d in self.dates:
-            headers.add_column(DataTablesColumn(json_format_date(d), sort_type=DTSortType.NUMERIC))
-        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
-        return headers
+        if self.datespan.is_valid():
+            headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
+            for d in self.dates:
+                headers.add_column(DataTablesColumn(json_format_date(d), sort_type=DTSortType.NUMERIC))
+            headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
+            return headers
+        else:
+            return DataTablesHeader(DataTablesColumn(_("Error")))
 
     @property
     def date_field(self):
@@ -570,21 +574,23 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def rows(self):
-        self.sort_col = self.request_params.get('iSortCol_0', 0)
-        totals_col = self.column_count - 1
-        order = self.request_params.get('sSortDir_0')
-        if self.sort_col == totals_col:
-            users = self.users_by_range(self.startdate, self.enddate, order)
-        elif 0 < self.sort_col < totals_col:
-            start = self.dates[self.sort_col-1]
-            end = start + datetime.timedelta(days=1)
-            users = self.users_by_range(start, end, order)
-        else:
-            users = self.users_by_username(order)
+        if self.datespan.is_valid():
+            self.sort_col = self.request_params.get('iSortCol_0', 0)
+            totals_col = self.column_count - 1
+            order = self.request_params.get('sSortDir_0')
+            if self.sort_col == totals_col:
+                users = self.users_by_range(self.startdate, self.enddate, order)
+            elif 0 < self.sort_col < totals_col:
+                start = self.dates[self.sort_col-1]
+                end = start + datetime.timedelta(days=1)
+                users = self.users_by_range(start, end, order)
+            else:
+                users = self.users_by_username(order)
 
-        rows = [self.get_row(user) for user in users]
-        self.total_row = self.get_row()
-        return rows
+            rows = [self.get_row(user) for user in users]
+            self.total_row = self.get_row()
+            return rows
+        return [[self.datespan.get_validation_reason()]]
 
     @property
     def get_all_rows(self):
