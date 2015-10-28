@@ -165,7 +165,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
             )
             if verified_number is not None:
                 send_sms_to_verified_number(verified_number,
-                    message, metadata)
+                    message, metadata, logged_subevent=logged_subevent)
             elif isinstance(recipient, CouchUser) and unverified_number:
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
@@ -254,7 +254,8 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                             xforms_session_couch_id=session._id,
                         )
                         resp = current_question(session_id)
-                        send_sms_to_verified_number(vn, resp.event.text_prompt, metadata)
+                        send_sms_to_verified_number(vn, resp.event.text_prompt, metadata,
+                            logged_subevent=session.related_subevent)
     else:
         reminder.xforms_session_ids = []
         domain_obj = Domain.get_by_name(reminder.domain, strict=True)
@@ -340,7 +341,8 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                     xforms_session_couch_id=session._id,
                 )
                 if verified_number:
-                    send_sms_to_verified_number(verified_number, message, metadata)
+                    send_sms_to_verified_number(verified_number, message, metadata,
+                        logged_subevent=logged_subevent)
                 else:
                     send_sms(reminder.domain, recipient, unverified_number,
                         message, metadata)

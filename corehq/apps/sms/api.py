@@ -14,11 +14,12 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_available_backends)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
-    PhoneNumber, SMS, SelfRegistrationInvitation)
+    PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
-from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
+from corehq.apps.sms.mixin import (MobileBackend, VerifiedNumber, SMSBackend,
+    BadSMSConfigException)
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
@@ -97,7 +98,8 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
     return queue_outgoing_sms(msg)
 
 
-def send_sms_to_verified_number(verified_number, text, metadata=None):
+def send_sms_to_verified_number(verified_number, text, metadata=None,
+        logged_subevent=None):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -106,7 +108,15 @@ def send_sms_to_verified_number(verified_number, text, metadata=None):
 
     return  True on success, False on failure
     """
-    backend = verified_number.backend
+    try:
+        backend = verified_number.backend
+    except BadSMSConfigException as e:
+        if logged_subevent:
+            logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
+                additional_error_text=e.message)
+            return False
+        raise
+
     msg = SMSLog(
         couch_recipient_doc_type = verified_number.owner_doc_type,
         couch_recipient = verified_number.owner_id,
