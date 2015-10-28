@@ -997,9 +997,18 @@ class Domain(Document, SnapshotMixin):
         LocationType.objects.filter(domain=self.name).delete()
         DocDomainMapping.objects.filter(domain_name=self.name).delete()
 
-        from corehq.apps.accounting.models import Subscription, Subscriber, SubscriptionAdjustment
+        from corehq.apps.accounting.models import Subscription, Subscriber, SubscriptionAdjustment, Invoice, \
+            BillingRecord, LineItem, CreditAdjustment, CreditLine
 
         SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
+        BillingRecord.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(credit_line__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(related_credit__subscription__subscriber__domain=self.name).delete()
+
+        CreditLine.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Invoice.objects.filter(subscription__subscriber__domain=self.name).delete()
         Subscription.objects.filter(subscriber__domain=self.name).delete()
         Subscriber.objects.filter(domain=self.name).delete()
 
