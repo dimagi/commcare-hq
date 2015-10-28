@@ -16,26 +16,6 @@ from dimagi.utils.parsing import string_to_utc_datetime
 logger = logging.getLogger(__name__)
 
 
-def get_case_payload_batched(restore_state):
-    response = restore_state.restore_class()
-
-    sync_operation = BatchedCaseSyncOperation(restore_state)
-    for update in sync_operation.get_all_case_updates():
-        append_update_to_response(response, update, restore_state)
-
-    sync_state = sync_operation.global_state
-    restore_state.current_sync_log.cases_on_phone = sync_state.actual_owned_cases
-    restore_state.current_sync_log.dependent_cases_on_phone = sync_state.actual_extended_cases
-
-    # commtrack ledger sections
-    commtrack_elements = get_stock_payload(
-        restore_state.project, restore_state.stock_settings, sync_state.all_synced_cases
-    )
-    response.extend(commtrack_elements)
-
-    return response, sync_operation.batch_count
-
-
 class GlobalSyncState(object):
     """
     Object containing global state for a BatchedCaseSyncOperation.
