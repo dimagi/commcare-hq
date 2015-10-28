@@ -28,7 +28,7 @@ def get_subcases(case):
             subcases.append(CommCareCase.get(index.referenced_id))
     return subcases
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True)
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True)
 def case_changed(case_id, handler_ids, retry_num=0):
     try:
         _case_changed(case_id, handler_ids)
@@ -65,7 +65,7 @@ def _case_changed(case_id, handler_ids):
                 for subcase in subcases:
                     handler.case_changed(subcase, **kwargs)
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True, acks_late=True)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:

@@ -267,26 +267,3 @@ class CleanlinessUtilitiesTest(SimpleTestCase):
         self.assertEqual(5, len(back))
         self.assertEqual(0, len(five))
         self.assertEqual(set(back), set(range(5)))
-
-
-class OverrideSyncModeTest(SimpleTestCase):
-
-    @override_settings(TESTS_SHOULD_USE_CLEAN_RESTORE=True)
-    def test_override_settings_clean(self):
-        self.assertEqual(True, _dummy_restore_state(force_restore_mode=None).use_clean_restore)
-        self.assertEqual(True, _dummy_restore_state(force_restore_mode='clean').use_clean_restore)
-        self.assertEqual(False, _dummy_restore_state(force_restore_mode='legacy').use_clean_restore)
-
-    @override_settings(TESTS_SHOULD_USE_CLEAN_RESTORE=False)
-    def test_override_settings_legacy(self):
-        self.assertEqual(False, _dummy_restore_state(force_restore_mode=None).use_clean_restore)
-        self.assertEqual(True, _dummy_restore_state(force_restore_mode='clean').use_clean_restore)
-        self.assertEqual(False, _dummy_restore_state(force_restore_mode='legacy').use_clean_restore)
-
-
-def _dummy_restore_state(force_restore_mode=None):
-    return RestoreState(
-        project=Domain(name='clean'),
-        user=CommCareUser(username='testing'),
-        params=RestoreParams(force_restore_mode=force_restore_mode)
-    )

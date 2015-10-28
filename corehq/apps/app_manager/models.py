@@ -749,10 +749,6 @@ class FormBase(DocumentSchema):
             return super(FormBase, cls).wrap(data)
 
     @classmethod
-    def generate_id(cls):
-        return hex(random.getrandbits(160))[2:-1]
-
-    @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         try:
             d = Application.get_db().view(
@@ -875,7 +871,7 @@ class FormBase(DocumentSchema):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     def get_app(self):
@@ -1525,14 +1521,18 @@ class GraphConfiguration(DocumentSchema):
 
 class DetailTab(IndexedSchema):
     """
-    Represents a tab in the case detail screen on the phone. Ex:
-        {
-            'name': 'Medical',
-            'starting_index': 3
-        }
+    Represents a tab in the case detail screen on the phone.
+    Each tab is itself a detail, nested inside the app's "main" detail.
     """
     header = DictProperty()
+
+    # The first index, of all fields in the parent detail, that belongs to this tab
     starting_index = IntegerProperty()
+
+    # A tab may be associated with a nodeset, resulting in a detail that
+    # iterates through sub-nodes of an entity rather than a single entity
+    has_nodeset = BooleanProperty(default=False)
+    nodeset = StringProperty()
 
 
 class DetailColumn(IndexedSchema):
@@ -1804,7 +1804,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     get_forms = IndexedSchema.Getter('forms')
@@ -5193,11 +5193,6 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         del source['build_spec']
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
-
-    for module in app.get_modules():
-        if isinstance(module, ReportModule):
-            for report_config in module.report_configs:
-                report_config.uuid = random_hex()
 
     app.save()
 

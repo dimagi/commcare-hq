@@ -1,17 +1,7 @@
-"""
-Custom report definitions - control display of reports.
-
-The BaseReport is somewhat general, but it's
-currently specific to monthly reports.  It would be pretty simple to make
-this more general and subclass for montly reports , but I'm holding off on
-that until we actually have another use case for it.
-"""
 from collections import defaultdict, OrderedDict
 from itertools import chain
 import datetime
-import logging
 import pickle
-import json
 import re
 import urllib
 from dateutil import parser
@@ -25,13 +15,11 @@ from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from couchforms.models import XFormInstance
-from custom.common import ALL_OPTION
 from custom.opm.utils import numeric_fn
 
-from dimagi.utils.couch.database import iter_docs, get_db
-from dimagi.utils.dates import add_months_to_date
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from sqlagg.columns import SimpleColumn, SumColumn
+from sqlagg.columns import SimpleColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
@@ -53,183 +41,6 @@ from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
-
-
-DATE_FILTER = "date between :startdate and :enddate"
-DATE_FILTER_EXTENDED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    ) OR (
-    opened_on <= :enddate AND (
-        closed_on >= :startdate or closed_on <= :enddate
-        )
-    )
-"""
-DATE_FILTER_EXTENDED_OPENED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    )
-"""
-DATE_FILTER_EXTENDED_CLOSED = """(
-    opened_on <= :enddate AND (
-        closed_on <= :enddate AND
-        closed_on != ''
-        )
-    )
-"""
-
-EDD_DOD_FILTER = """
-    (
-       (edd >= :edd_startdate AND edd <= :edd_enddate)
-       OR
-       (dod <= :enddate and dod != '')
-    )
-"""
-
-def ret_val(value):
-    return value
-
-
-class OpmCaseSqlData(SqlData):
-
-    table_name = "fluff_OpmCaseFluff"
-
-    def __init__(self, domain, user_id, datespan):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=str(self.datespan.startdate_utc.date()),
-            enddate=str(self.datespan.enddate_utc.date()),
-            edd_startdate=self.datespan.startdate.date().isoformat(),
-            edd_enddate=add_months_to_date(self.datespan.enddate_utc.date(), 5).isoformat(),
-            test_account='111%',
-        )
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        filters = [
-            "domain = :domain",
-            "user_id = :user_id",
-            "account_number not like :test_account",
-            DATE_FILTER_EXTENDED_OPENED,
-            EDD_DOD_FILTER
-        ]
-        return filters
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn("User ID", SimpleColumn("user_id")),
-            DatabaseColumn("Women registered", SumColumn("women_registered_total")),
-            DatabaseColumn("Children registered", SumColumn("children_registered_total"))
-        ]
-
-    @property
-    def data(self):
-        if self.user_id in super(OpmCaseSqlData, self).data:
-            return super(OpmCaseSqlData, self).data[self.user_id]
-        else:
-            return None
-
-
-class OpmFormSqlData(SqlData):
-    table_name = "fluff_OpmFormFluff"
-
-    def __init__(self, domain, user_id, datespan):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
-        )
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        filters = [
-            "domain = :domain",
-            "date between :startdate and :enddate"
-        ]
-        if self.user_id:
-            filters.append("user_id = :user_id")
-        return filters
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn("User ID", SimpleColumn("user_id")),
-            DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
-            DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
-        ]
-
-    @property
-    def data(self):
-        if self.user_id is None:
-            return super(OpmFormSqlData, self).data
-        if self.user_id in super(OpmFormSqlData, self).data:
-            return super(OpmFormSqlData, self).data[self.user_id]
-        else:
-            return None
-
-
-VHND_PROPERTIES = [
-    "vhnd_available",
-    "vhnd_anm_present",
-    "vhnd_asha_present",
-    "vhnd_cmg_present",
-    "vhnd_ifa_available",
-    "vhnd_adult_scale_available",
-    "vhnd_child_scale_available",
-    "vhnd_adult_scale_functional",
-    "vhnd_child_scale_functional",
-    "vhnd_ors_available",
-    "vhnd_zn_available",
-    "vhnd_measles_vacc_available",
-]
-
-class VhndAvailabilitySqlData(SqlData):
-
-    table_name = "fluff_VhndAvailabilityFluff"
-
-    @property
-    def filter_values(self):
-        return {}
-
-    @property
-    def group_by(self):
-        return ['owner_id', 'date']
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def columns(self):
-        return [DatabaseColumn('date', SimpleColumn("date"))] +\
-               [DatabaseColumn("", SumColumn(prop)) for prop in VHND_PROPERTIES]
 
 
 class SharedDataProvider(object):
@@ -351,6 +162,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     include_out_of_range_cases = False
 
     _debug_data = []
+
     @property
     def debug(self):
         return bool(self.request.GET.get('debug'))
@@ -421,7 +233,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             else:
                 filter_by = [('block', 'block')]
         return filter_by
-
 
     @property
     def headers(self):
@@ -537,20 +348,6 @@ def _get_terms_list(terms):
     [['sahora'], ['kenar', 'paharpur'], ['patear']]
     """
     return filter(None, [term.lower().split() for term in terms])
-
-
-def get_nested_terms_filter(prop, terms):
-    filters = []
-
-    def make_filter(term):
-        return es_filters.term(prop, term)
-
-    for term in _get_terms_list(terms):
-        if len(term) == 1:
-            filters.append(make_filter(term[0]))
-        elif len(term) > 1:
-            filters.append(es_filters.AND(*(make_filter(t) for t in term)))
-    return es_filters.OR(*filters)
 
 
 class CaseReportMixin(object):
@@ -673,7 +470,6 @@ class CaseReportMixin(object):
     @memoized
     def data_provider(self):
         return SharedDataProvider(self.cases)
-
 
 
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
@@ -1107,8 +903,7 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
         rows = []
         for user in self.users_matching_filter:
             user_case_list = self.awc_data.get(user['doc_id'], None)
-            form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
-            row = self.model(user, self, user_case_list, form_sql_data.data)
+            row = self.model(user, self, user_case_list)
             data = []
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
@@ -1119,34 +914,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
 
     def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
-
-
-def this_month_if_none(month, year):
-    if month is not None:
-        assert year is not None, \
-            "You must pass either nothing or a month AND a year"
-        return month, year
-    else:
-        this_month = datetime.datetime.utcnow()
-        return this_month.month, this_month.year
-
-
-def calculate_total_row(rows):
-    regexp = re.compile('(.*?)>([0-9]+)<.*')
-    total_row = []
-    if len(rows) > 0:
-        num_cols = len(rows[0])
-        for i in range(num_cols):
-            colrows = [cr[i] for cr in rows]
-            if i == 0:
-                total_row.append("Total:")
-            else:
-                columns = [int(regexp.match(r).group(2)) for r in colrows]
-                if len(columns):
-                    total_row.append("<span style='display: block; text-align:center;'>%s</span>" % reduce(lambda x, y: x + y, columns, 0))
-                else:
-                    total_row.append('')
-    return total_row
 
 
 def _unformat_row(row):

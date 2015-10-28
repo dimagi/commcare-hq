@@ -109,7 +109,7 @@ def _get_summary_details(config):
                         form='graph',
                         graph=Graph(
                             type=graph_config.graph_type,
-                            series=[_column_to_series(c) for c in chart_config.y_axis_columns],
+                            series=[_column_to_series(c.column_id) for c in chart_config.y_axis_columns],
                             configuration=ConfigurationGroup(configs=[
                                 ConfigurationItem(id=key, xpath_function=value)
                                 for key, value in graph_config.config.items()
