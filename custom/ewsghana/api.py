@@ -658,6 +658,9 @@ class EWSApi(APISynchronization):
             if self.domain not in user.get_domains():
                 user.add_domain_membership(self.domain, location_id=location_id)
 
+            # We are migrating only active users
+            user.is_active = True
+
         dm = user.get_domain_membership(self.domain)
 
         if dm.location_id != location_id:
@@ -708,8 +711,15 @@ class EWSApi(APISynchronization):
     def _reassign_number(self, user, connection):
         v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
         if v.domain in self._get_logistics_domains():
-            v.delete()
-            self.save_verified_number(user, connection)
+            v.domain = self.domain
+            v.owner_doc_type = user.doc_type
+            v.owner_id = user.get_id
+            backend_id = None
+            if connection.backend == 'message_tester':
+                backend_id = 'MOBILE_BACKEND_TEST'
+            v.backend_id = backend_id
+            v.verified = True
+            v.save()
 
     def _save_verified_number(self, user, connection):
         try:

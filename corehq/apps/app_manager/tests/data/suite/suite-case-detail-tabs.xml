@@ -67,7 +67,7 @@
         </template>
       </field>
     </detail>
-    <detail>
+    <detail nodeset="some/expression">
       <title>
         <text>
           <locale id="m0.case_long.tab.2.title"/>

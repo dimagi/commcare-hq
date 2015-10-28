@@ -7,9 +7,17 @@
 <div data-bind="with: longScreen">
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
+
 {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
-    <a href="#" data-bind="click: longScreen.addTab">
+    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
         <i class="icon-plus"></i>
-        Add a tab
-    </a>
+        {% trans "Add tab" %}
+    </button>
+{% endif %}
+
+{% if request|toggle_enabled:"DETAIL_LIST_TAB_NODESETS" %}
+    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(true); }">
+        <i class="icon-plus"></i>
+        {% trans "Add data tab" %}
+    </button>
 {% endif %}
