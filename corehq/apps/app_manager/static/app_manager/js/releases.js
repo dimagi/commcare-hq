@@ -114,7 +114,7 @@ function SavedApp(o, r) {
         new COMMCAREHQ.AsyncDownloader(modal, url);
         // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
         // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
-        $('.modal.fade.in').modal('hide')
+        $('.modal.fade.in').modal('hide');
         modal.modal({show: true});
     };
 
