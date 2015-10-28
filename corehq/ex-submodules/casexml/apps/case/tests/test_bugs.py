@@ -130,21 +130,21 @@ class CaseBugTest(TestCase, TestFileMixin):
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
         case_id = 'immagetdeleted'
-        deleted_doc_type = 'CommCareCase-Deleted'
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
-                      update={'foo': 'bar'}).as_xml()
+                update={'foo': 'bar'}).as_xml()
         ])
-        self.assertEqual('bar', case.foo)
-        case = CaseInterface.update_properties(case, doc_type=deleted_doc_type)
+        case = CaseInterface.soft_delete(case.id)
 
-        self.assertEqual(deleted_doc_type, case.doc_type)
+        self.assertEqual('bar', case.foo)
+        self.assertTrue(case.is_deleted)
+
         [xform, [case]] = FormProcessorInterface.post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
                       update={'foo': 'not_bar'}).as_xml()
         ])
         self.assertEqual('not_bar', case.foo)
-        self.assertEqual(deleted_doc_type, case.doc_type)
+        self.assertTrue(case.is_deleted)
 
 
 class TestCaseHierarchy(TestCase):
@@ -153,21 +153,16 @@ class TestCaseHierarchy(TestCase):
         delete_all_cases()
 
     def test_normal_index(self):
-        cp = CaseInterface.create_from_generic(GenericCommCareCase(
-            id='parent',
-            name='parent',
-            type='parent',
-        ))
+        factory = CaseFactory()
+        [cp] = factory.create_or_update_case(
+            CaseStructure(case_id='parent', attrs={'case_type': 'parent'})
+        )
 
-        CaseInterface.create_from_generic(GenericCommCareCase(
-            id='child',
-            name='child',
-            type='child',
-            indices=[GenericCommCareCaseIndex(
-                identifier='parent',
-                referenced_type='parent',
-                referenced_id='parent'
-            )],
+        factory.create_or_update_case(CaseStructure(
+            case_id='child',
+            attrs={'case_type': 'child'},
+            indices=[CaseIndex(CaseStructure(case_id='parent'), related_type='parent')],
+            walk_related=False
         ))
 
         hierarchy = get_case_hierarchy(cp, {})
@@ -175,18 +170,16 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases']))
 
     def test_recursive_indexes(self):
-        c = CaseInterface.create_from_generic(GenericCommCareCase(
-            id='infinite-recursion',
-            name='infinite_recursion',
-            type='bug',
-            indices=[GenericCommCareCaseIndex(
-                identifier='self',
-                referenced_type='bug',
-                referenced_id='infinite-recursion'
-            )],
+        factory = CaseFactory()
+        [case] = factory.create_or_update_case(CaseStructure(
+            case_id='infinite-recursion',
+            attrs={'case_type': 'bug'},
+            indices=[CaseIndex(CaseStructure(case_id='infinite-recursion'), related_type='bug')],
+            walk_related=False
         ))
+
         # this call used to fail with infinite recursion
-        hierarchy = get_case_hierarchy(c, {})
+        hierarchy = get_case_hierarchy(case, {})
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def test_complex_index(self):

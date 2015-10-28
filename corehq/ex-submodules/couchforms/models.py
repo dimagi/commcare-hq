@@ -257,6 +257,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         generic._metadata = GenericMetadata.wrap(self.metadata.to_json() if self.metadata else None)
         if '_id' in self:
             generic.id = self['_id']
+        generic.attachments = self.attachments
         return generic
 
     @classmethod

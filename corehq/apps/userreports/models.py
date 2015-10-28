@@ -94,15 +94,15 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @memoized
     def _get_deleted_filter(self):
-        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
+        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type), include_configured=False)
 
-    def _get_filter(self, doc_types):
+    def _get_filter(self, doc_types, include_configured=True):
         if not doc_types:
             return None
 
         extras = (
             [self.configured_filter]
-            if self.configured_filter else []
+            if include_configured and self.configured_filter else []
         )
         built_in_filters = [
             self._get_domain_filter_spec(),

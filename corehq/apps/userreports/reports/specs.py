@@ -369,12 +369,35 @@ class PieChartSpec(ChartSpec):
     value_column = StringProperty(required=True)
 
 
+class GraphDisplayColumn(JsonObject):
+    column_id = StringProperty(required=True)
+    display = StringProperty(required=True)
+
+    @classmethod
+    def wrap(cls, obj):
+        # automap column_id to display if display isn't set
+        if isinstance(obj, dict) and 'column_id' in obj and 'display' not in obj:
+            obj['display'] = obj['column_id']
+        return super(GraphDisplayColumn, cls).wrap(obj)
+
+
 class MultibarChartSpec(ChartSpec):
     type = TypeProperty('multibar')
     aggregation_column = StringProperty()
     x_axis_column = StringProperty(required=True)
-    y_axis_columns = ListProperty(unicode)
+    y_axis_columns = ListProperty(GraphDisplayColumn)
     is_stacked = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        def _convert_columns_to_properly_dicts(cols):
+            for column in cols:
+                if isinstance(column, basestring):
+                    yield {'column_id': column, 'display': column}
+                else:
+                    yield column
+        obj['y_axis_columns'] = list(_convert_columns_to_properly_dicts(obj.get('y_axis_columns', [])))
+        return super(MultibarChartSpec, cls).wrap(obj)
 
 
 class MultibarAggregateChartSpec(ChartSpec):
