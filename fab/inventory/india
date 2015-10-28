@@ -39,6 +39,11 @@ _indiacloud3
 [rabbitmq:children]
 _indiacloud3
 
+[zookeeper:children]
+_indiacloud4
+
+[kafka]
+_indiacloud4 kafka_broker_id=0
 
 [elasticsearch:children]
 _indiacloud4
