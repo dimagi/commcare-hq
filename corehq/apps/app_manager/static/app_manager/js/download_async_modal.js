@@ -23,7 +23,7 @@ $(function(){
             var pollDownloadStatus = function(){
                 if (keep_polling) {
                     $.ajax({
-                        url: data.download_url,
+                        url: self.getDownloadUrl(data),
                         success: function (resp) {
                             if (resp.trim().length) {
                                 self.$downloading.addClass("hide");
@@ -69,6 +69,14 @@ $(function(){
         self.downloadError = function(text){
             self.$downloading.addClass("hide");
             self.$download_progress.removeClass("hide").html(text);
+        };
+
+        self.getDownloadUrl = function(data){
+            var url = data.download_url;
+            if (data.message) {
+                url += '?message=' + encodeURIComponent(data.message);
+            }
+            return url
         };
 
         self.$el.on("show show.bs.modal", self.generateDownload);

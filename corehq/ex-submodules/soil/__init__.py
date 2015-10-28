@@ -31,7 +31,7 @@ class DownloadBase(object):
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None,
                  cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
-                 suffix=None):
+                 suffix=None, message=None):
         self.content_type = content_type if content_type else mimetype
         self.content_disposition = content_disposition
         self.transfer_encoding = transfer_encoding
@@ -40,6 +40,7 @@ class DownloadBase(object):
         self.cache_backend = cache_backend
         # legacy default
         self.suffix = suffix or ''
+        self.message = message
 
     def get_cache(self):
         return cache.caches[self.cache_backend]
@@ -87,7 +88,8 @@ class DownloadBase(object):
     def get_start_response(self):
         return HttpResponse(json.dumps({
             'download_id': self.download_id,
-            'download_url': reverse('ajax_job_poll', kwargs={'download_id': self.download_id})
+            'download_url': reverse('ajax_job_poll', kwargs={'download_id': self.download_id}),
+            'message': self.message
         }))
 
     def __str__(self):

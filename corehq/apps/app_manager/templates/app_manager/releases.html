@@ -414,7 +414,7 @@
                                                         <li>
                                                             {% trans "Download" %}
                                                             <a href="#" data-bind="click: function () {
-                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}');
+                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}', '{% trans 'Your application download is ready' %}');
                                                             }">
                                                                 CommCare.ccz
                                                             </a>
