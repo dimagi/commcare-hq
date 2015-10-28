@@ -70,6 +70,6 @@
     <div data-bind="template: 'key_value_mapping_display_template'"></div>
     <button class="btn" data-bind="click: openModal, visible: $data.edit">
         <i class="icon-pencil"></i>
-        Edit
+        <span data-bind="text: $data.buttonText"></span>
     </button>
 </div>

@@ -493,6 +493,7 @@ var DetailScreenConfig = (function () {
                 isTab: false,
                 hasNodeset: false,
                 nodeset: "",
+                connectors: [],
             };
             _.defaults(this.original, tabDefaults);
             _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
@@ -532,6 +533,14 @@ var DetailScreenConfig = (function () {
                 that.header.setVisibleValue(visibleVal);
 
                 that.nodeset = uiElement.input().val(that.original.nodeset);
+                var o = {
+                    lang: that.lang,
+                    langs: that.screen.langs,
+                    items: that.original['connectors'],
+                    modalTitle: 'Editing connectors',
+                    buttonText: 'Connectors',
+                };
+                that.connectors = uiElement.key_value_mapping(o);
                 if (that.isTab) {
                     // hack to wait until the input's there to prepend the Tab: label.
                     setTimeout(function () {
@@ -621,6 +630,7 @@ var DetailScreenConfig = (function () {
                 'field',
                 'header',
                 'nodeset',
+                'connectors',
                 'format',
                 'enum_extra',
                 'graph_extra',
@@ -700,6 +710,7 @@ var DetailScreenConfig = (function () {
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.nodeset = this.nodeset.val();
+                column.connectos = this.connectors.getItems();
                 column.format = this.format.val();
                 column.enum = this.enum_extra.getItems();
                 column.graph_configuration =
@@ -714,7 +725,7 @@ var DetailScreenConfig = (function () {
                     return _.extend({
                         starting_index: this.starting_index,
                         has_nodeset: column.hasNodeset,
-                    }, _.pick(column, ['header', 'isTab', 'nodeset']));
+                    }, _.pick(column, ['header', 'isTab', 'nodeset', 'connectors']));
                 }
                 return column;
             },
@@ -816,7 +827,7 @@ var DetailScreenConfig = (function () {
                     0,
                     _.extend({
                         hasNodeset: tabs[i].has_nodeset,
-                    }, _.pick(tabs[i], ["header", "nodeset", "isTab"]))
+                    }, _.pick(tabs[i], ["header", "nodeset", "isTab", "connectors"]))
                 );
             }
             if (this.columnKey === 'long') {
@@ -824,7 +835,8 @@ var DetailScreenConfig = (function () {
                     var col = that.initColumnAsColumn(Column.init({
                         isTab: true,
                         hasNodeset: hasNodeset,
-                        model: 'tab'
+                        model: 'tab',
+                        connectors: [],
                     }, that));
                     that.columns.splice(0, 0, col);
                 };
