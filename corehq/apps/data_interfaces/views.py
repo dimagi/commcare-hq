@@ -567,6 +567,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         return get_timezone_for_user(None, self.domain)
 
     @use_bootstrap3
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
 
@@ -701,6 +702,7 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
         }
 
     @use_bootstrap3
+    @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AddAutomaticUpdateRuleView, self).dispatch(*args, **kwargs)
 
