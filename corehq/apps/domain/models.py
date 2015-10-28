@@ -960,8 +960,9 @@ class Domain(Document, SnapshotMixin):
 
     def _delete_web_users_from_domain(self):
         from corehq.apps.users.models import WebUser
-        web_users = WebUser.by_domain(self.name)
-        for web_user in web_users:
+        active_web_users = WebUser.by_domain(self.name)
+        inactive_web_users = WebUser.by_domain(self.name, is_active=False)
+        for web_user in list(active_web_users) + list(inactive_web_users):
             web_user.delete_domain_membership(self.name)
             web_user.save()
 
@@ -995,6 +996,12 @@ class Domain(Document, SnapshotMixin):
         SQLLocation.objects.filter(domain=self.name).delete()
         LocationType.objects.filter(domain=self.name).delete()
         DocDomainMapping.objects.filter(domain_name=self.name).delete()
+
+        from corehq.apps.accounting.models import Subscription, Subscriber, SubscriptionAdjustment
+
+        SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Subscription.objects.filter(subscriber__domain=self.name).delete()
+        Subscriber.objects.filter(domain=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
