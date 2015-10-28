@@ -1,9 +1,11 @@
 from copy import copy
 from decimal import Decimal
+from mock import patch
 from django.test import SimpleTestCase
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.specs import EvaluationContext
 
 
 class SingleIndicatorTestBase(SimpleTestCase):
@@ -454,6 +456,14 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
                 "ghi",
             ]
         }
+        self.stock_states = {}
+        for val, case_id, product_id in [
+            (32, 'case1', 'abc'),
+            (85, 'case1', 'def'),
+            (11, 'case1', 'ghi'),
+        ]:
+            stock_state = self._make_stock_state(val, case_id, product_id)
+            self.stock_states[(case_id, product_id)] = stock_state
 
     @staticmethod
     def _make_stock_state(value, case_id, product_id, section_id='soh'):
@@ -464,12 +474,19 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
             section_id=section_id,
         )
 
-    def test_ledger_balances_indicator(self):
+    def mock_getter(self, section_id, case_id, product_id):
+        if (case_id, product_id) in self.stock_states:
+            return self.stock_states[(case_id, product_id)]
+        else:
+            raise StockState.DoesNotExist()
+
+    @patch('corehq.apps.userreports.indicators.factory.StockState.objects')
+    def test_ledger_balances_indicator(self, stock_states):
         indicator = IndicatorFactory.from_spec(self.spec)
-        self._make_stock_state(32, 'case1', 'abc')
-        self._make_stock_state(85, 'case1', 'def')
-        self._make_stock_state(11, 'case1', 'ghi')
-        values = indicator.get_values({'_id': 'case1'})
+        stock_states.get = self.mock_getter
+
+        doc = {'_id': 'case1'}
+        values = indicator.get_values(doc, EvaluationContext(doc, 0))
 
         self.assertEqual(
             [(val.column.id, val.value) for val in values],
