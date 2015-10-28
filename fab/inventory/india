@@ -8,7 +8,7 @@
 10.10.1.23
 
 [_indiacloud4]
-10.10.1.24
+10.10.1.24 kafka_broker_id=0
 
 [_indiacloud5]
 10.10.1.25
@@ -43,7 +43,7 @@ _indiacloud3
 _indiacloud4
 
 [kafka:children]
-_indiacloud4 kafka_broker_id=0
+_indiacloud4
 
 [elasticsearch:children]
 _indiacloud4
