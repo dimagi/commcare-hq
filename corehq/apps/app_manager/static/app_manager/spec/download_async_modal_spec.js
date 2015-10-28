@@ -1,21 +1,17 @@
 /* global chai, $, sinon */
 
 describe('Async Download Modal', function() {
-    var downloader = null,
-        expect = chai.expect,
-        url = 'test_url';
+    var url = 'test_url',
+        expect = chai.expect;
 
     describe('#AsyncDownloader.isDone', function() {
-        var modal = $('#modal'),
+        var downloader = null,
+            modal = $('#modal'),
             download_poll_id = '12345';
 
         beforeEach(function() {
             downloader = new AsyncDownloader(modal, url);
             downloader.download_poll_id = download_poll_id;
-        });
-
-        afterEach(function() {
-            downloader.init();
         });
 
         var test_done = [
@@ -36,7 +32,8 @@ describe('Async Download Modal', function() {
     });
 
     describe('#AsyncDownloader', function() {
-        var modal = $('#download-zip-modal-test'),
+        var downloader = null,
+            modal = $('#download-zip-modal-test'),
             ajax_stub;
 
         beforeEach(function() {
