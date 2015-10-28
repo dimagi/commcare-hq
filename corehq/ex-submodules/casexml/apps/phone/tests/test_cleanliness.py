@@ -188,7 +188,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         # since it isn't invalidated right away
         self.assert_owner_dirty()
         # explicitly make sure the hint is no longer valid
-        self.assertFalse(hint_still_valid(self.domain, self.owner_id, self.owner_cleanliness.hint))
+        self.assertFalse(hint_still_valid(self.domain, self.owner_cleanliness.hint))
         # reset the cleanliness flag and ensure it worked
         set_cleanliness_flags(self.domain, self.owner_id)
         self.assert_owner_clean()
@@ -290,20 +290,25 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
     def test_owned_extension(self):
         """Extension owned by another owner should be dirty"""
+        other_owner_id = uuid.uuid4().hex
+        self._owner_cleanliness_for_id(other_owner_id)
         [extension, host] = self.factory.create_or_update_case(
             CaseStructure(
-                case_id=self.sample_case.case_id,
-                attrs={'owner_id': 'owned_extension'},
+                attrs={'owner_id': other_owner_id},
                 indices=[
                     CaseIndex(
-                        CaseStructure(),
+                        CaseStructure(case_id="host"),
                         relationship=CASE_INDEX_EXTENSION
                     )
                 ]
             )
         )
         self.assert_owner_dirty()
-        self._verify_set_cleanliness_flags()
+        self.assertFalse(self._owner_cleanliness_for_id(other_owner_id).is_clean)
+        self.assertEqual(extension._id, self.owner_cleanliness.hint)
+        self.assertEqual(extension._id, self._owner_cleanliness_for_id(other_owner_id).hint)
+        self._verify_set_cleanliness_flags(self.owner_id)
+        self._verify_set_cleanliness_flags(other_owner_id)
 
     def test_multiple_indices_multiple_owners(self):
         """Extension that indexes a case with another owner should make all owners dirty"""
