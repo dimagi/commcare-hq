@@ -29,8 +29,7 @@ class EntryInstances(PostProcessor):
 
         return relevance_by_menu, menu_by_command
 
-    @staticmethod
-    def add_referenced_instances(entry, details_by_id, relevance_by_menu, menu_by_command):
+    def add_referenced_instances(self, entry, details_by_id, relevance_by_menu, menu_by_command):
         detail_ids = set()
         xpaths = set()
 
@@ -59,6 +58,16 @@ class EntryInstances(PostProcessor):
         xpaths.discard(None)
 
         instances = EntryInstances.get_required_instances(xpaths)
+
+        # Collect any extra connectors specified for details with nodesets
+        connectors = {}
+        for module in self.modules:
+            if module.requires_case_details():
+                for tab in module.case_details.long.tabs:
+                    for c in tab.connectors:
+                        connectors[c.key] = c.value
+        for id, src in connectors.iteritems():
+            entry.require_instance(Instance(id=id, src=src))
 
         entry.require_instance(*instances)
 
