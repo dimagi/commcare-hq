@@ -1533,6 +1533,9 @@ class DetailTab(IndexedSchema):
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
+
+    # Any instance connectors necessary for the nodeset,
+    # e.g., "reports" => "jr://fixture/reports"
     connectors = SchemaListProperty(MappingItem)
 
 
