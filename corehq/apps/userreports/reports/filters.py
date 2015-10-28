@@ -1,6 +1,19 @@
 from datetime import timedelta
+
 from django.core.urlresolvers import reverse
-from sqlagg.filters import BasicFilter, BetweenFilter, ISNULLFilter, INFilter
+
+from sqlagg.filters import (
+    BetweenFilter,
+    EQFilter,
+    GTEFilter,
+    GTFilter,
+    INFilter,
+    ISNULLFilter,
+    LTEFilter,
+    LTFilter,
+    NOTEQFilter,
+)
+
 from dimagi.utils.dates import DateSpan
 
 
@@ -54,23 +67,28 @@ class DateFilterValue(FilterValue):
 
 
 class NumericFilterValue(FilterValue):
+    operators_to_filters = {
+        '=': EQFilter,
+        '!=': NOTEQFilter,
+        '>=': GTEFilter,
+        '>': GTFilter,
+        '<=': LTEFilter,
+        '<': LTFilter,
+    }
 
     def __init__(self, filter, value):
         assert filter.type == "numeric"
         assert (isinstance(value, dict) and "operator" in value and "operand" in value) or value is None
         if value:
-            assert value['operator'] in ["=", "!=", "<", "<=", ">", ">="]
+            assert value['operator'] in self.operators_to_filters.keys()
             assert isinstance(value['operand'], int) or isinstance(value['operand'], float)
         super(NumericFilterValue, self).__init__(filter, value)
 
     def to_sql_filter(self):
         if self.value is None:
             return ""
-        ret = BasicFilter(
-            self.filter.field, self.filter.slug,
-            operator=self.value['operator']
-        )
-        return ret
+        filter_class = self.operators_to_filters[self.value['operator']]
+        return filter_class(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
         if self.value is None:
@@ -102,14 +120,19 @@ class ChoiceListFilterValue(FilterValue):
             return ''
         if self.is_null:
             return ISNULLFilter(self.filter.field)
-        return INFilter(self.filter.field, self.filter.field)
+        return INFilter(
+            self.filter.field,
+            tuple("%s_%d" % (self.filter.slug, i) for i, val in enumerate(self.value))
+        )
 
     def to_sql_values(self):
         if self.show_all or self.is_null:
             return {}
         return {
-            self.filter.field: tuple(val.value for val in self.value),
+            "%s_%d" % (self.filter.slug, i): val.value
+            for i, val in enumerate(self.value)
         }
+
 
 def dynamic_choice_list_url(domain, report, filter):
     return reverse('choice_list_api', args=[domain, report.spec._id, filter.name])
