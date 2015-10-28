@@ -101,6 +101,7 @@ class UpdateLocationKeywordTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.user.delete()
         cls.backend_mapping.delete()
         cls.backend.delete()
         cls.domain_obj.delete()
