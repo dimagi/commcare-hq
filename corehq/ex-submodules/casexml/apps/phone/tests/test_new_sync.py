@@ -174,7 +174,7 @@ class TestNewSyncSpecifics(TestCase):
         # enabling the toggle should prevent the failure the second time
         # though we also need to hackily set the request object in the threadlocals
         LEGACY_SYNC_SUPPORT.set(self.domain, True, namespace='domain')
-        request = JsonObject(domain=self.domain)
+        request = JsonObject(domain=self.domain, path='testsubmit')
         set_request(request)
         factory.create_or_update_cases([
             CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
