@@ -82,7 +82,40 @@ past_x_date = lambda tz, past_x_days: (datetime.datetime.now(tz) - datetime.time
 get_none_or_value = lambda _obj, _attr: getattr(_obj, _attr) if (hasattr(_obj, _attr)) else ''
 
 
-def get_cases_to_modify():
+@periodic_task(
+    run_every=crontab(minute=1, hour="*/6"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+)
+def new_update_case_properties():
+    """
+    Submits case blocks in chunks of up to importer CASEBLOCK_CHUNKSIZE
+    """
+    case_blocks = []
+    last_domain = None
+    for case, domain in iter_cases_to_modify():
+        if not last_domain:
+            last_domain = domain
+
+        if len(case_blocks) == CASEBLOCK_CHUNKSIZE or domain != last_domain:
+            submit_case_blocks(case_blocks, last_domain)
+            last_domain = domain
+            case_blocks = []
+
+        kwargs = {
+            'create': False,
+            'case_id': case['case_id'],
+            'update': case['update'],
+            'close': case['close'],
+        }
+        if case.get('owner_id', None):
+            kwargs['owner_id'] = case['owner_id']
+        case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
+
+    if case_blocks:
+        submit_case_blocks(case_blocks, last_domain)
+
+
+def iter_cases_to_modify():
     _domain = Domain.get_by_name(DOMAINS[0])
     if _domain is None:
         return
@@ -252,36 +285,3 @@ def get_cases_to_modify():
                     "update": update,
                     "close": True,
                 }, domain
-
-
-@periodic_task(
-    run_every=crontab(minute=1, hour="*/6"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
-)
-def new_update_case_properties():
-    """
-    Submits case blocks in chunks of up to importer CASEBLOCK_CHUNKSIZE
-    """
-    case_blocks = []
-    last_domain = None
-    for case, domain in get_cases_to_modify():
-        if not last_domain:
-            last_domain = domain
-
-        if len(case_blocks) == CASEBLOCK_CHUNKSIZE or domain != last_domain:
-            submit_case_blocks(case_blocks, last_domain)
-            last_domain = domain
-            case_blocks = []
-
-        kwargs = {
-            'create': False,
-            'case_id': case['case_id'],
-            'update': case['update'],
-            'close': case['close'],
-        }
-        if case.get('owner_id', None):
-            kwargs['owner_id'] = case['owner_id']
-        case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
-
-    if case_blocks:
-        submit_case_blocks(case_blocks, last_domain)

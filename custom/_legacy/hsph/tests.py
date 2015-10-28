@@ -4,7 +4,7 @@ from mock import Mock
 import tasks
 
 
-def get_cases_to_modify():
+def iter_cases_to_modify():
     for domain in ('foo', 'bar', 'baz'):
         for case_id in ('ham', 'spam', 'eggs'):
             yield {
@@ -25,9 +25,9 @@ class NewUpdateCasePropertiesTest(SimpleTestCase):
         """
         submit_case_blocks should be called with chunks of up to 2, and called when the domain changes
         """
-        mock_get_cases_to_modify = Mock(side_effect=get_cases_to_modify)
+        mock_iter_cases_to_modify = Mock(side_effect=iter_cases_to_modify)
         mock_submit_case_blocks = Mock()
-        tasks.get_cases_to_modify = mock_get_cases_to_modify
+        tasks.iter_cases_to_modify = mock_iter_cases_to_modify
         tasks.submit_case_blocks = mock_submit_case_blocks
         tasks.CASEBLOCK_CHUNKSIZE = 2
 
