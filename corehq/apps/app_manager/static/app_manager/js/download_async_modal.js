@@ -13,10 +13,6 @@ $(function(){
         self.$download_progress = self.$el.find("#" + self.el_id + "-download-progress");
         self.$downloading = self.$el.find("#" + self.el_id + "-downloading");
 
-        self.download_in_progress = false;
-        self.download_poll_url = null;
-        self.download_poll_id = null;
-
         self.init = function(){
             self.download_in_progress = false;
             self.download_poll_url = null;
