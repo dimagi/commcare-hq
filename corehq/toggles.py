@@ -685,6 +685,13 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+TWO_FACTOR_AUTH = StaticToggle(
+    'two_factor_auth',
+    "Enforce two factor auth before accessing the domain",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
     'Uses a sql backend instead of a couch backend for form processing',
