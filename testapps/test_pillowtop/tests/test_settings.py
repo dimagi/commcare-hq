@@ -36,7 +36,7 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
         with open(self.get_path('all-pillow-meta', 'json'), 'w') as f:
             f.write(
                 json.dumps({cls.__name__: _pillow_meta_from_class(cls) for cls in pillow_classes},
-                           indent=4)
+                           indent=4, sort_keys=True)
             )
 
 
