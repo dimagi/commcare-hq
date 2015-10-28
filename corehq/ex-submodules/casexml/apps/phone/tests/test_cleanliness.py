@@ -283,7 +283,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
             )
         )
         self.assert_owner_clean()
-        # self._verify_set_cleanliness_flags()
+        self._verify_set_cleanliness_flags()
 
     def test_owned_extension(self):
         """Extension owned by another owner should be dirty"""
@@ -300,7 +300,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
             )
         )
         self.assert_owner_dirty()
-        # self._verify_set_cleanliness_flags()
+        self._verify_set_cleanliness_flags()
 
     def test_multiple_indices_multiple_owners(self):
         """Extension that indexes a case with another owner should make all owners dirty"""
@@ -329,6 +329,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )
         self.assert_owner_dirty()
         self.assertFalse(self._owner_cleanliness_for_id(other_owner_id).is_clean)
+        self._verify_set_cleanliness_flags()
 
     def test_extension_chain_with_other_owner_makes_dirty(self):
         """An extension chain of unowned extensions that ends at an owned case is dirty"""
@@ -358,6 +359,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.factory.create_or_update_case(extension_2)
         self.assert_owner_dirty()
         self.assertFalse(self._owner_cleanliness_for_id(other_owner_id).is_clean)
+        self._verify_set_cleanliness_flags()
 
     def test_long_extension_chain_with_branches(self):
         """An extension chain of unowned extensions that ends at an owned case is dirty"""
@@ -400,7 +402,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_dirty()
         self.assertFalse(self._owner_cleanliness_for_id(owner_1).is_clean)
         self.assertFalse(self._owner_cleanliness_for_id(owner_2).is_clean)
-
+        self._verify_set_cleanliness_flags()
 
 class SetCleanlinessFlagsTest(TestCase):
 
