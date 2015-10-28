@@ -50,19 +50,8 @@ def run_with_multiple_configs(fn, run_configs):
 run_with_all_restore_configs = functools.partial(
     run_with_multiple_configs,
     run_configs=[
-        # clean restore code but without cleanliness flags
         RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_CLEAN_RESTORE': True,
-            },
-            post_run=lambda *args, **kwargs: args[0].tearDown()
-        ),
-        # original code
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_CLEAN_RESTORE': False,
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
+            settings={},
         ),
     ]
 )
