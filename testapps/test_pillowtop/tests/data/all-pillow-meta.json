@@ -1,449 +1,491 @@
 {
     "AllHmisCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.AllHmisCaseFluffPillow.testhq", 
-        "class_name": "AllHmisCaseFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "m4change test-pathfinder"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.m4change.models.AllHmisCaseFluffPillow", 
+        "include_docs": false, 
+        "name": "AllHmisCaseFluffPillow"
     }, 
     "AncHmisCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.AncHmisCaseFluffPillow.testhq", 
-        "class_name": "AncHmisCaseFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "m4change test-pathfinder"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.m4change.models.AncHmisCaseFluffPillow", 
+        "include_docs": false, 
+        "name": "AncHmisCaseFluffPillow"
     }, 
     "AppPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.application.AppPillow.93d8007a66254463abc4f8938811eea9.testhq", 
-        "class_name": "AppPillow", 
         "couch_filter": "app_manager/all_apps", 
         "document_class": "ApplicationBase", 
         "es_alias": "hqapps", 
         "es_index": "hqapps_12f505392bcec1a43d1c2c9ef9e0cb51", 
         "es_type": "app", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.application.AppPillow", 
         "include_docs": true, 
+        "name": "AppPillow", 
         "unique_id": "93d8007a66254463abc4f8938811eea9"
     }, 
     "CacheInvalidatePillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq", 
-        "class_name": "CacheInvalidatePillow", 
         "couch_filter": "hqadmin/not_case_form", 
         "document_class": null, 
         "extra_args": {}, 
-        "include_docs": true
+        "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow", 
+        "include_docs": true, 
+        "name": "CacheInvalidatePillow"
     }, 
     "CareBiharFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.CareBiharFluffPillow.testhq", 
-        "class_name": "CareBiharFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_type": "CommCareCase", 
             "domains": "care-bihar bihar"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.bihar.models.CareBiharFluffPillow", 
+        "include_docs": false, 
+        "name": "CareBiharFluffPillow"
     }, 
     "CaseDataPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.sofabed.CaseDataPillow.testhq", 
-        "class_name": "CaseDataPillow", 
         "couch_filter": "case/casedocs", 
         "document_class": "CommCareCase", 
         "extra_args": {}, 
-        "include_docs": false
+        "full_class_name": "corehq.pillows.sofabed.CaseDataPillow", 
+        "include_docs": false, 
+        "name": "CaseDataPillow"
     }, 
     "CasePillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.case.CasePillow.d94ad23a98ddd2e9c36a9dc73bb58bac.testhq", 
-        "class_name": "CasePillow", 
         "couch_filter": "case/casedocs", 
         "document_class": "CommCareCase", 
         "es_alias": "hqcases", 
         "es_index": "hqcases_7a8d2b81335e0a8cef1de718313a23b9", 
         "es_type": "case", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.case.CasePillow", 
         "include_docs": true, 
+        "name": "CasePillow", 
         "unique_id": "d94ad23a98ddd2e9c36a9dc73bb58bac"
     }, 
     "ConfigurableIndicatorPillow": {
         "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq", 
-        "class_name": "ConfigurableIndicatorPillow", 
         "couch_filter": null, 
         "document_class": null, 
         "extra_args": {}, 
-        "include_docs": false
+        "full_class_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow", 
+        "include_docs": false, 
+        "name": "ConfigurableIndicatorPillow"
     }, 
     "CouvertureFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.CouvertureFluffPillow.testhq", 
-        "class_name": "CouvertureFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "ipm-senegal testing-ipm-senegal ct-apr"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.intrahealth.models.CouvertureFluffPillow", 
+        "include_docs": false, 
+        "name": "CouvertureFluffPillow"
     }, 
     "DomainPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.domain.DomainPillow.hqdomains_20150909_1150.testhq", 
-        "class_name": "DomainPillow", 
         "couch_filter": "domain/domains_inclusive", 
         "document_class": "Domain", 
         "es_alias": "hqdomains", 
         "es_index": "hqdomains_20150909_1150", 
         "es_type": "hqdomain", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.domain.DomainPillow", 
         "include_docs": true, 
+        "name": "DomainPillow", 
         "unique_id": "hqdomains_20150909_1150"
     }, 
     "FarmerRecordFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.FarmerRecordFluffPillow.testhq", 
-        "class_name": "FarmerRecordFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_type": "CommCareCase", 
             "domains": "pathways-india-mis pathways-tanzania"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow", 
+        "include_docs": false, 
+        "name": "FarmerRecordFluffPillow"
     }, 
     "FormDataPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.sofabed.FormDataPillow.testhq", 
-        "class_name": "FormDataPillow", 
         "couch_filter": "couchforms/xforms", 
         "document_class": "XFormInstance", 
         "extra_args": {}, 
-        "include_docs": false
+        "full_class_name": "corehq.pillows.sofabed.FormDataPillow", 
+        "include_docs": false, 
+        "name": "FormDataPillow"
     }, 
     "GeographyFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.GeographyFluffPillow.testhq", 
-        "class_name": "GeographyFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_type": "CommCareCase", 
             "domains": "pathways-india-mis pathways-tanzania"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.care_pathways.models.GeographyFluffPillow", 
+        "include_docs": false, 
+        "name": "GeographyFluffPillow"
     }, 
     "GroupPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
-        "class_name": "GroupPillow", 
         "couch_filter": "groups/all_groups", 
         "document_class": "Group", 
         "es_alias": "hqgroups", 
         "es_index": "hqgroups_20150403_1501", 
         "es_type": "group", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.group.GroupPillow", 
         "include_docs": true, 
+        "name": "GroupPillow", 
         "unique_id": "hqgroups_20150403_1501"
     }, 
     "GroupToUserPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.user.GroupToUserPillow.testhq", 
-        "class_name": "GroupToUserPillow", 
         "couch_filter": null, 
         "document_class": "CommCareUser", 
         "extra_args": {}, 
-        "include_docs": false
+        "full_class_name": "corehq.pillows.user.GroupToUserPillow", 
+        "include_docs": false, 
+        "name": "GroupToUserPillow"
     }, 
     "ImmunizationHmisCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.ImmunizationHmisCaseFluffPillow.testhq", 
-        "class_name": "ImmunizationHmisCaseFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "m4change test-pathfinder"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.m4change.models.ImmunizationHmisCaseFluffPillow", 
+        "include_docs": false, 
+        "name": "ImmunizationHmisCaseFluffPillow"
     }, 
     "IntraHealthFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.IntraHealthFluffPillow.testhq", 
-        "class_name": "IntraHealthFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "ipm-senegal testing-ipm-senegal ct-apr"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.intrahealth.models.IntraHealthFluffPillow", 
+        "include_docs": false, 
+        "name": "IntraHealthFluffPillow"
     }, 
     "LdHmisCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.LdHmisCaseFluffPillow.testhq", 
-        "class_name": "LdHmisCaseFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "m4change test-pathfinder"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.m4change.models.LdHmisCaseFluffPillow", 
+        "include_docs": false, 
+        "name": "LdHmisCaseFluffPillow"
     }, 
     "LivraisonFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.LivraisonFluffPillow.testhq", 
-        "class_name": "LivraisonFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "ipm-senegal testing-ipm-senegal ct-apr"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.intrahealth.models.LivraisonFluffPillow", 
+        "include_docs": false, 
+        "name": "LivraisonFluffPillow"
     }, 
     "MVPCaseIndicatorPillow": {
         "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
-        "class_name": "MVPCaseIndicatorPillow", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_types": "CommCareCase CommCareCase-Deleted", 
             "domains": ""
         }, 
-        "include_docs": true
+        "full_class_name": "mvp_docs.pillows.MVPCaseIndicatorPillow", 
+        "include_docs": true, 
+        "name": "MVPCaseIndicatorPillow"
     }, 
     "MVPFormIndicatorPillow": {
         "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
-        "class_name": "MVPFormIndicatorPillow", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_types": "XFormInstance XFormInstance-Deleted XFormArchived", 
             "domains": ""
         }, 
-        "include_docs": true
+        "full_class_name": "mvp_docs.pillows.MVPFormIndicatorPillow", 
+        "include_docs": true, 
+        "name": "MVPFormIndicatorPillow"
     }, 
     "MalariaConsortiumFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.MalariaConsortiumFluffPillow.testhq", 
-        "class_name": "MalariaConsortiumFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "mc-inscale"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.reports.mc.models.MalariaConsortiumFluffPillow", 
+        "include_docs": false, 
+        "name": "MalariaConsortiumFluffPillow"
     }, 
     "McctMonthlyAggregateFormFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.McctMonthlyAggregateFormFluffPillow.testhq", 
-        "class_name": "McctMonthlyAggregateFormFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "m4change test-pathfinder"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.m4change.models.McctMonthlyAggregateFormFluffPillow", 
+        "include_docs": false, 
+        "name": "McctMonthlyAggregateFormFluffPillow"
     }, 
     "OpmUserFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.OpmUserFluffPillow.testhq", 
-        "class_name": "OpmUserFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareUser", 
         "extra_args": {
             "doc_type": "CommCareUser", 
             "domains": "opm"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.opm.models.OpmUserFluffPillow", 
+        "include_docs": false, 
+        "name": "OpmUserFluffPillow"
     }, 
     "PhoneLogPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.log.PhoneLogPillow.testhq", 
-        "class_name": "PhoneLogPillow", 
         "couch_filter": "phonelog/all_logs", 
         "document_class": "XFormInstance", 
         "extra_args": {}, 
-        "include_docs": true
+        "full_class_name": "corehq.pillows.log.PhoneLogPillow", 
+        "include_docs": true, 
+        "name": "PhoneLogPillow"
     }, 
     "ProjectIndicatorsCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
-        "class_name": "ProjectIndicatorsCaseFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "m4change test-pathfinder"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.m4change.models.ProjectIndicatorsCaseFluffPillow", 
+        "include_docs": false, 
+        "name": "ProjectIndicatorsCaseFluffPillow"
     }, 
     "RecapPassageFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.RecapPassageFluffPillow.testhq", 
-        "class_name": "RecapPassageFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "ipm-senegal testing-ipm-senegal ct-apr"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.intrahealth.models.RecapPassageFluffPillow", 
+        "include_docs": false, 
+        "name": "RecapPassageFluffPillow"
     }, 
     "RecouvrementFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.RecouvrementFluffPillow.testhq", 
-        "class_name": "RecouvrementFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_type": "CommCareCase", 
             "domains": "ipm-senegal testing-ipm-senegal ct-apr"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.intrahealth.models.RecouvrementFluffPillow", 
+        "include_docs": false, 
+        "name": "RecouvrementFluffPillow"
     }, 
     "ReportCasePillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.reportcase.ReportCasePillow.8c10a7564b6af5052f8b86693bf6ac07.testhq", 
-        "class_name": "ReportCasePillow", 
         "couch_filter": "case/casedocs", 
         "document_class": "CommCareCase", 
         "es_alias": "report_cases", 
         "es_index": "report_cases_czei39du507m9mmpqk3y01x72a3ux4p0", 
         "es_type": "report_case", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.reportcase.ReportCasePillow", 
         "include_docs": true, 
+        "name": "ReportCasePillow", 
         "unique_id": "8c10a7564b6af5052f8b86693bf6ac07"
     }, 
     "ReportXFormPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.reportxform.ReportXFormPillow.report_xforms_20150406_1136.testhq", 
-        "class_name": "ReportXFormPillow", 
         "couch_filter": "couchforms/xforms", 
         "document_class": "XFormInstance", 
         "es_alias": "report_xforms", 
         "es_index": "report_xforms_20150406_1136", 
         "es_type": "report_xform", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.reportxform.ReportXFormPillow", 
         "include_docs": false, 
+        "name": "ReportXFormPillow", 
         "unique_id": "report_xforms_20150406_1136"
     }, 
     "SMSPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq", 
-        "class_name": "SMSPillow", 
         "couch_filter": "sms/all_logs", 
         "document_class": "SMSLog", 
         "es_alias": "smslogs", 
         "es_index": "smslogs_708c77f8e5fe00286fa5791e9fa7d45f", 
         "es_type": "sms", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.sms.SMSPillow", 
         "include_docs": true, 
+        "name": "SMSPillow", 
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     }, 
     "StaticDataSourcePillow": {
         "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq", 
-        "class_name": "StaticDataSourcePillow", 
         "couch_filter": null, 
         "document_class": null, 
         "extra_args": {}, 
-        "include_docs": false
+        "full_class_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow", 
+        "include_docs": false, 
+        "name": "StaticDataSourcePillow"
     }, 
     "TauxDeRuptureFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.TauxDeRuptureFluffPillow.testhq", 
-        "class_name": "TauxDeRuptureFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "ipm-senegal testing-ipm-senegal ct-apr"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.intrahealth.models.TauxDeRuptureFluffPillow", 
+        "include_docs": false, 
+        "name": "TauxDeRuptureFluffPillow"
     }, 
     "TauxDeSatisfactionFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.TauxDeSatisfactionFluffPillow.testhq", 
-        "class_name": "TauxDeSatisfactionFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "ipm-senegal testing-ipm-senegal ct-apr"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.intrahealth.models.TauxDeSatisfactionFluffPillow", 
+        "include_docs": false, 
+        "name": "TauxDeSatisfactionFluffPillow"
     }, 
     "UCLAPatientFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.UCLAPatientFluffPillow.testhq", 
-        "class_name": "UCLAPatientFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_type": "CommCareCase", 
             "domains": "succeed"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.succeed.models.UCLAPatientFluffPillow", 
+        "include_docs": false, 
+        "name": "UCLAPatientFluffPillow"
     }, 
     "UnicefMalawiFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.UnicefMalawiFluffPillow.testhq", 
-        "class_name": "UnicefMalawiFluffPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {
             "doc_type": "XFormInstance", 
             "domains": "cvsulive"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.apps.cvsu.models.UnicefMalawiFluffPillow", 
+        "include_docs": false, 
+        "name": "UnicefMalawiFluffPillow"
     }, 
     "UnknownUsersPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.user.UnknownUsersPillow.testhq", 
-        "class_name": "UnknownUsersPillow", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
         "extra_args": {}, 
-        "include_docs": false
+        "full_class_name": "corehq.pillows.user.UnknownUsersPillow", 
+        "include_docs": false, 
+        "name": "UnknownUsersPillow"
     }, 
     "UserPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_20150430_1821.testhq", 
-        "class_name": "UserPillow", 
         "couch_filter": "users/all_users", 
         "document_class": "CommCareUser", 
         "es_alias": "hqusers", 
         "es_index": "hqusers_20150430_1821", 
         "es_type": "user", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.user.UserPillow", 
         "include_docs": true, 
+        "name": "UserPillow", 
         "unique_id": "hqusers_20150430_1821"
     }, 
     "WorldVisionChildFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.WorldVisionChildFluffPillow.testhq", 
-        "class_name": "WorldVisionChildFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_type": "CommCareCase", 
             "domains": "wvindia2"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.world_vision.models.WorldVisionChildFluffPillow", 
+        "include_docs": false, 
+        "name": "WorldVisionChildFluffPillow"
     }, 
     "WorldVisionHierarchyFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.WorldVisionHierarchyFluffPillow.testhq", 
-        "class_name": "WorldVisionHierarchyFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareUser", 
         "extra_args": {
             "doc_type": "CommCareUser", 
             "domains": "wvindia2"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.world_vision.models.WorldVisionHierarchyFluffPillow", 
+        "include_docs": false, 
+        "name": "WorldVisionHierarchyFluffPillow"
     }, 
     "WorldVisionMotherFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.WorldVisionMotherFluffPillow.testhq", 
-        "class_name": "WorldVisionMotherFluffPillow", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
         "extra_args": {
             "doc_type": "CommCareCase", 
             "domains": "wvindia2"
         }, 
-        "include_docs": false
+        "full_class_name": "custom.world_vision.models.WorldVisionMotherFluffPillow", 
+        "include_docs": false, 
+        "name": "WorldVisionMotherFluffPillow"
     }, 
     "XFormPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.xform.XFormPillow.xforms_20150403-1728.testhq", 
-        "class_name": "XFormPillow", 
         "couch_filter": "couchforms/xforms", 
         "document_class": "XFormInstance", 
         "es_alias": "xforms", 
         "es_index": "xforms_20150403-1728", 
         "es_type": "xform", 
         "extra_args": {}, 
+        "full_class_name": "corehq.pillows.xform.XFormPillow", 
         "include_docs": false, 
+        "name": "XFormPillow", 
         "unique_id": "xforms_20150403-1728"
     }
 }
