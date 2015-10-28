@@ -142,6 +142,7 @@ class EntriesHelper(object):
                 e.datums.append(datum)
                 e.assertions.extend(assertions)
 
+            self._add_extra_entry_connectors(e, module)
             results.append(e)
 
         if hasattr(module, 'case_list') and module.case_list.show:
@@ -183,12 +184,27 @@ class EntriesHelper(object):
                         value="./@id",
                         detail_select=self.details_helper.get_detail_id_safe(module, 'product_short')
                     ))
+            self._add_extra_entry_connectors(e, module)
             results.append(e)
 
         for entry in module.get_custom_entries():
             results.append(entry)
 
         return results
+
+
+    def _add_extra_entry_connectors(self, entry, module):
+        # Collect any extra connectors specified for details with nodesets
+        connectors = {}
+        if module.requires_case_details():
+            for tab in module.case_details.long.tabs:
+                for c in tab.connectors:
+                    # Sources are stored as though they're locale-specific, but
+                    # they aren't, so grab the first one. Not proud of this logic.
+                    connectors[c.key] = c.value.values()[0]
+        for id, src in connectors.iteritems():
+            entry.require_instance(Instance(id=id, src=src))
+
 
     @staticmethod
     def get_assertion(test, locale_id, locale_arguments=None):

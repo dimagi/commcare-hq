@@ -59,18 +59,6 @@ class EntryInstances(PostProcessor):
 
         instances = EntryInstances.get_required_instances(xpaths)
 
-        # Collect any extra connectors specified for details with nodesets
-        connectors = {}
-        for module in self.modules:
-            if module.requires_case_details():
-                for tab in module.case_details.long.tabs:
-                    for c in tab.connectors:
-                        # Sources are stored as though they're locale-specific, but
-                        # they aren't, so grab the first one. Not proud of this logic.
-                        connectors[c.key] = c.value.values()[0]
-        for id, src in connectors.iteritems():
-            entry.require_instance(Instance(id=id, src=src))
-
         entry.require_instance(*instances)
 
     @staticmethod
