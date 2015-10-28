@@ -136,6 +136,7 @@ class DateSpan(object):
     format = None
     inclusive = True
     is_default = False
+    max_days = -1
 
     def __init__(self, startdate, enddate, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         self.startdate = startdate
@@ -154,7 +155,8 @@ class DateSpan(object):
             format=self.format,
             inclusive=self.inclusive,
             is_default=self.is_default,
-            timezone=self.timezone.zone
+            timezone=self.timezone.zone,
+            max_days=self.max_days,
         )
 
     def __setstate__(self, state):
@@ -171,6 +173,7 @@ class DateSpan(object):
         self.inclusive = state.get('inclusive', True)
         self.timezone = pytz.utc
         self.is_default = state.get('is_default', False)
+        self.max_days = state.get('max_days', -1)
         try:
             self.timezone = pytz.timezone(state.get('timezone'))
         except Exception as e:
@@ -303,6 +306,11 @@ class DateSpan(object):
             return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
         elif self.startdate < datetime.datetime(1900, 01, 01) or self.enddate < datetime.datetime(1900, 01, 01):
             return "You can't use dates earlier than the year 1900"
+        elif self.max_days >= 0:
+            delta = self.enddate - self.startdate
+            if delta.days > self.max_days:
+                return "You are limited to a span of {} days, but this date range spans {} days".format(
+                    self.max_days, delta.days)
         return ""
     
     def __str__(self):
