@@ -5,13 +5,12 @@ import logging
 
 from sqlalchemy import Table, MetaData
 from corehq.db import connection_manager
+from corehq.util.decorators import change_log_level
 from django.db import migrations
 
 
+@change_log_level('sqlalchemy.engine', logging.INFO)  # show SQL commands
 def drop_tables(apps, schema_editor):
-    # show SQL commands
-    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
     metadata = MetaData(bind=connection_manager.get_engine())
 
     for table_name in [
