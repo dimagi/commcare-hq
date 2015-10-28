@@ -100,6 +100,15 @@
         "include_docs": false, 
         "name": "CouvertureFluffPillow"
     }, 
+    "DefaultChangeFeedPillow": {
+        "checkpoint_id": "pillowtop_corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq", 
+        "couch_filter": null, 
+        "document_class": null, 
+        "extra_args": {}, 
+        "full_class_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow", 
+        "include_docs": false, 
+        "name": "DefaultChangeFeedPillow"
+    }, 
     "DomainPillow": {
         "checkpoint_id": "pillowtop_corehq.pillows.domain.DomainPillow.hqdomains_20150909_1150.testhq", 
         "couch_filter": "domain/domains_inclusive", 
@@ -191,6 +200,11 @@
         "full_class_name": "custom.intrahealth.models.IntraHealthFluffPillow", 
         "include_docs": false, 
         "name": "IntraHealthFluffPillow"
+    }, 
+    "KafkaCaseConsumerPillow": {
+        "checkpoint_id": "kafka-demo-case-pillow-checkpoint", 
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow", 
+        "name": "KafkaCaseConsumerPillow"
     }, 
     "LdHmisCaseFluffPillow": {
         "checkpoint_id": "pillowtop_fluff.LdHmisCaseFluffPillow.testhq", 
