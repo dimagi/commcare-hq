@@ -14,18 +14,28 @@ describe('Async Download Modal', function() {
         });
 
         var test_done = [
-            {input: null, expected: false},
-            {input: undefined, expected: false},
-            {input: '', expected: false},
-            {input: 'progress', expected: false},
             {input: 'progress ready_' + download_poll_id, expected: true},
             {input: 'progress error_' + download_poll_id, expected: true}
 
         ];
 
         test_done.forEach(function(test) {
-            it('should return ' + test.expected + ' for input "' + test.input + '"', function() {
-                assert.equal(downloader.isDone(test.input), test.expected);
+            it('should be done for input "' + test.input + '"', function() {
+                assert.ok(downloader.isDone(test.input));
+            });
+        });
+
+        var test_not_done = [
+            {input: null, expected: false},
+            {input: undefined, expected: false},
+            {input: '', expected: false},
+            {input: 'progress', expected: false},
+
+        ];
+
+        test_not_done.forEach(function(test) {
+            it('should not be done for input "' + test.input + '"', function() {
+                assert.notOk(downloader.isDone(test.input));
             });
         });
     });
