@@ -4,7 +4,7 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch import Elasticsearch
 from psycopg2._psycopg import InterfaceError
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 import traceback
 import math
@@ -230,6 +230,7 @@ class BasicPillow(PillowBase):
 
 PYTHONPILLOW_CHUNK_SIZE = 250
 PYTHONPILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
+PYTHONPILLOW_MAX_WAIT_TIME = 60
 
 
 class PythonPillow(BasicPillow):
@@ -249,7 +250,7 @@ class PythonPillow(BasicPillow):
 
     def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
                  checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
-                 couch_db=None):
+                 couch_db=None, max_processing_wait=PYTHONPILLOW_MAX_WAIT_TIME):
         """
         Use chunk_size = 0 to disable chunking
         """
@@ -259,6 +260,8 @@ class PythonPillow(BasicPillow):
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
         self.include_docs = not self.use_chunking
+        self.max_processing_wait = max_processing_wait
+        self.last_processed_time = None
         if couch_db:
             self._couch_db = couch_db
         elif self.document_class:
@@ -302,12 +305,25 @@ class PythonPillow(BasicPillow):
 
         # reset the queue after we've processed this chunk
         self.change_queue = []
+        self.last_processed_time = datetime.utcnow()
+
+    @property
+    def queue_full(self):
+        return len(self.change_queue) > self.chunk_size
+
+    @property
+    def wait_expired(self):
+        if not self.last_processed_time:
+            return False
+
+        wait_time = datetime.utcnow() - self.last_processed_time
+        return wait_time > timedelta(seconds=self.max_processing_wait)
 
     def processor(self, change, do_set_checkpoint=True):
         self.changes_seen += 1
         if self.use_chunking:
             self.change_queue.append(change)
-            if len(self.change_queue) > self.chunk_size:
+            if self.queue_full or self.wait_expired:
                 self.process_chunk()
         elif self.python_filter(change['doc']) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
@@ -320,6 +336,7 @@ class PythonPillow(BasicPillow):
 
     def run(self):
         self.change_queue = []
+        self.last_processed_time = datetime.utcnow()
         super(PythonPillow, self).run()
 
 
