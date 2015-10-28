@@ -191,7 +191,6 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djangobower',
-    'djkombu',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -209,7 +208,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'rosetta',
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
@@ -381,11 +379,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_prbac',
     'djcelery',
     'djtables',
-    'djkombu',
     'gunicorn',
     'langcodes',
     'luna',
-    'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
 
