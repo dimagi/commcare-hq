@@ -171,7 +171,6 @@ class TestChangingSyncMode(TestCase):
             restore_config.get_payload()
 
 
-@override_settings(TESTS_SHOULD_USE_CLEAN_RESTORE=True)
 class TestNewSyncSpecifics(TestCase):
 
     @classmethod
