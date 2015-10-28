@@ -1533,6 +1533,7 @@ class DetailTab(IndexedSchema):
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
+    connectors = SchemaListProperty(MappingItem)
 
 
 class DetailColumn(IndexedSchema):
