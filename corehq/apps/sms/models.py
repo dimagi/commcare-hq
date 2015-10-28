@@ -806,6 +806,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
     ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
+    ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
 
     ERROR_MESSAGES = {
@@ -849,6 +850,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
             ugettext_noop('No suitable gateway could be found.'),
+        ERROR_GATEWAY_NOT_FOUND:
+            ugettext_noop('Gateway could not be found.'),
         ERROR_NO_EMAIL_ADDRESS:
             ugettext_noop('Recipient has no email address.'),
     }
