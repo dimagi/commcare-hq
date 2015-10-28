@@ -12,6 +12,7 @@ $(function(){
         self.el_id = $el.attr("id");
         self.$download_progress = self.$el.find("#" + self.el_id + "-download-progress");
         self.$downloading = self.$el.find("#" + self.el_id + "-downloading");
+        self.downloadGenerated = false;
 
         self.init = function(){
             self.$download_progress.addClass("hide");
@@ -53,17 +54,21 @@ $(function(){
         };
 
         self.generateDownload = function(){
-            $.ajax({
-                url: self.download_url,
-                type: "GET",
-                dataType: "json",
-                success: function(data){
-                    self.startPollDownloadStatus(data);
-                },
-                error: function(){
-                    self.downloadError(self.ERROR_MESSAGE);
-                }
-            });
+            // prevent multiple calls
+            if (!self.downloadGenerated) {
+                $.ajax({
+                    url: self.download_url,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        self.startPollDownloadStatus(data);
+                    },
+                    error: function () {
+                        self.downloadError(self.ERROR_MESSAGE);
+                    }
+                });
+                self.downloadGenerated = true;
+            }
         };
 
         self.downloadError = function(text){
