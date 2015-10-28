@@ -11,11 +11,18 @@
     > a:hover {
       background-color: #dbdbdb;
     }
-    &.active {
-      > a, > a:link, > a:visited, > a:hover {
-        background-color: @brand-primary;
-        color: #ffffff;
-      }
+  }
+  &.nav li.active {
+    > a, > a:link, > a:visited, > a:hover {
+      background-color: @brand-primary;
+      color: #ffffff;
     }
   }
+  &.nav > li li a {
+    padding-left: 30px;
+  }
+}
+
+.page-actions-toolbar {
+  padding: 15px;
 }
