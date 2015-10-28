@@ -377,7 +377,7 @@ def _get_or_update_cases(xforms, case_db):
                 # If this case is an extension, each of the touched cases is also dirty
                 for index in case.indices:
                     referenced_case = case_db.get(index.referenced_id)
-                    yield DirtinessFlag(referenced_case._id, referenced_case.owner_id)
+                    yield DirtinessFlag(case._id, referenced_case.owner_id)
 
         if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
             tree_owners.add(case.owner_id)

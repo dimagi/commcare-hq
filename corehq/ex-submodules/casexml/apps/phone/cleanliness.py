@@ -1,11 +1,12 @@
 from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.dbaccessors import get_indexed_case_ids, \
-    get_all_reverse_indices_info, get_extension_case_ids
+    get_all_reverse_indices_info, get_extension_case_ids, get_reverse_indices_for_case_id
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import get_indexed_cases
+from casexml.apps.case.util import get_indexed_cases, get_extension_cases
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
@@ -14,11 +15,11 @@ from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
 from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, iter_docs
 from dimagi.utils.logging import notify_exception
 
 
-FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
+FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids', 'extension_ids'])
 CleanlinessFlag = namedtuple('CleanlinessFlag', ['is_clean', 'hint'])
 
 
@@ -88,7 +89,7 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
         # if it already is clean we don't need to do anything since that gets invalidated on submission
         # if dirty, first check the hint and only do a full check if it's not valid
         return not cleanliness_obj.is_clean and (
-            not cleanliness_obj.hint or not hint_still_valid(domain, owner_id, cleanliness_obj.hint)
+            not cleanliness_obj.hint or not hint_still_valid(domain, cleanliness_obj.hint)
         )
 
     needs_check = needs_full_check(domain, cleanliness_object)
@@ -120,12 +121,18 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
     cleanliness_object.save()
 
 
-def hint_still_valid(domain, owner_id, hint):
+def hint_still_valid(domain, hint):
     """
     For a given domain/owner/cleanliness hint check if it's still valid
     """
-    related_cases = get_indexed_cases(domain, [hint])
-    return any([c.owner_id != owner_id for c in related_cases])
+    try:
+        hint_case = CommCareCase.get(hint)
+        hint_owner = hint_case.owner_id
+    except ResourceNotFound:
+        # hint was deleted
+        return False
+    indexed_cases = set(get_indexed_cases(domain, [hint]))
+    return any([c.owner_id != hint_owner for c in indexed_cases])
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
@@ -133,7 +140,13 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
     cases_to_check = footprint_info.all_ids - footprint_info.base_ids
     if cases_to_check:
         closed_owned_case_ids = set(get_closed_case_ids(domain, owner_id))
-        cases_to_check = cases_to_check - closed_owned_case_ids
+        cases_to_check = cases_to_check - closed_owned_case_ids - footprint_info.extension_ids
+        extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - footprint_info.base_ids  # unowned extensions
+        for extension_case_doc in iter_docs(CommCareCase.get_db(), extension_cases_to_check):
+            extension_case = CommCareCase.wrap(extension_case_doc)
+            if extension_case.owner_id not in [owner_id, UNOWNED_EXTENSION_OWNER_ID]:
+                return CleanlinessFlag(False, extension_case._id)
+
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
             reverse_index_infos = get_all_reverse_indices_info(domain, list(cases_to_check))
@@ -186,10 +199,12 @@ def get_case_footprint_info(domain, owner_id):
     # get base set of cases (anything open with this owner id)
     open_case_ids = get_open_case_ids(domain, owner_id)
     new_case_ids = set(open_case_ids)
+    all_extensions = set()
     while new_case_ids:
         all_case_ids = all_case_ids | new_case_ids
         referenced_case_ids = set(get_indexed_case_ids(domain, list(new_case_ids)))
         extension_case_ids = set(get_extension_case_ids(domain, list(new_case_ids | referenced_case_ids)))
+        all_extensions = all_extensions | extension_case_ids
         new_case_ids = (referenced_case_ids | extension_case_ids) - all_case_ids
 
-    return FootprintInfo(base_ids=set(open_case_ids), all_ids=all_case_ids)
+    return FootprintInfo(base_ids=set(open_case_ids), all_ids=all_case_ids, extension_ids=all_extensions)
