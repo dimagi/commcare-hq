@@ -11,6 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.importer.tasks import CASEBLOCK_CHUNKSIZE
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -258,7 +259,20 @@ def get_cases_to_modify():
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def new_update_case_properties():
+    """
+    Submits case blocks in chunks of up to importer CASEBLOCK_CHUNKSIZE
+    """
+    case_blocks = []
+    last_domain = None
     for case, domain in get_cases_to_modify():
+        if not last_domain:
+            last_domain = domain
+
+        if len(case_blocks) == CASEBLOCK_CHUNKSIZE or domain != last_domain:
+            submit_case_blocks(case_blocks, last_domain)
+            last_domain = domain
+            case_blocks = []
+
         kwargs = {
             'create': False,
             'case_id': case['case_id'],
@@ -267,6 +281,7 @@ def new_update_case_properties():
         }
         if case.get('owner_id', None):
             kwargs['owner_id'] = case['owner_id']
-        case_block = ElementTree.tostring(CaseBlock(**kwargs).as_xml())
-        # FB 185783: Do one at a time
-        submit_case_blocks(case_block, domain)
+        case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
+
+    if case_blocks:
+        submit_case_blocks(case_blocks, last_domain)
