@@ -1,7 +1,7 @@
 $(function(){
     "use strict";
 
-    COMMCAREHQ.AsyncDownloader = function($el, download_url){
+    window.AsyncDownloader = function($el, download_url){
         var self = this;
         self.POLL_FREQUENCY = 1500; //ms
         self.ERROR_MESSAGE = "Sorry, something went wrong with the download. " +
@@ -48,7 +48,6 @@ $(function(){
                     });
                 }
             };
-
 
             self.$el.on("hidden hidden.bs.modal", function(){
                 keep_polling = false;

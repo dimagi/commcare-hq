@@ -111,7 +111,7 @@ function SavedApp(o, r) {
     self.download_application_zip = function (url) {
         var modal = $('#download-zip-modal');
         url = url.replace('_____', self.id());
-        new COMMCAREHQ.AsyncDownloader(modal, url);
+        new AsyncDownloader(modal, url);
         // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
         // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
         $('.modal.fade.in').modal('hide');
