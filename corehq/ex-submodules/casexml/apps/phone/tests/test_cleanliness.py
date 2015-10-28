@@ -52,21 +52,24 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )
         self.assert_owner_clean()  # this is an actual assertion
 
-    def _verify_set_cleanliness_flags(self):
+    def _verify_set_cleanliness_flags(self, owner_id=None):
         """
         Can be run at the end of any relevant test to check the current state of the
         OwnershipCleanliness object and verify that rebuilding it from scratch produces
         the same result
         """
-        is_clean = self.owner_cleanliness.is_clean
-        hint = self.owner_cleanliness.hint
-        self.owner_cleanliness.delete()
-        set_cleanliness_flags(self.domain, self.owner_id, force_full=True)
-        new_cleanliness = OwnershipCleanlinessFlag.objects.get(owner_id=self.owner_id)
+        if owner_id is None:
+            owner_id = self.owner_id
+        owner_cleanliness = self._owner_cleanliness_for_id(owner_id)
+        is_clean = owner_cleanliness.is_clean
+        hint = owner_cleanliness.hint
+        owner_cleanliness.delete()
+        set_cleanliness_flags(self.domain, owner_id, force_full=True)
+        new_cleanliness = OwnershipCleanlinessFlag.objects.get(owner_id=owner_id)
         self.assertEqual(is_clean, new_cleanliness.is_clean)
         self.assertEqual(hint, new_cleanliness.hint)
         if hint:
-            self.assertTrue(hint_still_valid(self.domain, self.owner_id, hint))
+            self.assertTrue(hint_still_valid(self.domain, hint))
 
     @property
     def owner_cleanliness(self):
