@@ -196,12 +196,14 @@ class EntriesHelper(object):
     def _add_extra_entry_connectors(self, entry, module):
         # Collect any extra connectors specified for details with nodesets
         connectors = {}
+        detail_ids = [datum.detail_confirm for datum in entry.datums]
         if module.requires_case_details():
-            for tab in module.case_details.long.tabs:
-                for c in tab.connectors:
-                    # Sources are stored as though they're locale-specific, but
-                    # they aren't, so grab the first one. Not proud of this logic.
-                    connectors[c.key] = c.value.values()[0]
+            if self.details_helper.get_detail_id_safe(module, 'case_long') in detail_ids:
+                for tab in module.case_details.long.tabs:
+                    for c in tab.connectors:
+                        # Sources are stored as though they're locale-specific, but
+                        # they aren't, so grab the first one. Not proud of this logic.
+                        connectors[c.key] = c.value.values()[0]
         for id, src in connectors.iteritems():
             entry.require_instance(Instance(id=id, src=src))
 
