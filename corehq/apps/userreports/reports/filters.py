@@ -32,7 +32,11 @@ class DateFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return ""
-        return BetweenFilter(self.filter.field, 'startdate', 'enddate')
+        return BetweenFilter(
+            self.filter.field,
+            '%s_startdate' % self.filter.slug,
+            '%s_enddate' % self.filter.slug
+        )
 
     def to_sql_values(self):
         if self.value is None:
@@ -48,8 +52,8 @@ class DateFilterValue(FilterValue):
             enddate = str(enddate)
 
         return {
-            'startdate': startdate,
-            'enddate': enddate,
+            '%s_startdate' % self.filter.slug: startdate,
+            '%s_enddate' % self.filter.slug: enddate,
         }
 
 
