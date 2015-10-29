@@ -1,3 +1,4 @@
+from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db
 
 
@@ -18,4 +19,13 @@ def get_doc_ids_in_domain_by_type(domain, doc_type, database=None):
         endkey=[domain, doc_type, {}],
         reduce=False,
         include_docs=False,
+    )]
+
+
+def get_domain_ids_by_names(names):
+    return [result['id'] for result in Domain.view(
+        "domain/domains",
+        keys=names,
+        reduce=False,
+        include_docs=False
     )]

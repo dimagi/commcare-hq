@@ -1,6 +1,7 @@
 import uuid
 from django.test import TestCase
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class, get_domain_ids_by_names
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
 from couchforms.models import XFormInstance
@@ -55,3 +56,19 @@ class DBAccessorsTest(TestCase):
         ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
         self.assertEqual(0, len(ids))
         self.db.delete_doc(doc)
+
+    def test_get_domain_ids_by_names(self):
+        def _create_domain(name):
+            domain = Domain(name=name)
+            domain.save()
+            self.addCleanup(domain.delete)
+            return domain._id
+
+        names = ['b', 'a', 'c']
+        expected_ids = [_create_domain(name) for name in names]
+
+        ids = get_domain_ids_by_names(names)
+        self.assertEqual(ids, expected_ids)
+
+        ids = get_domain_ids_by_names(names[:-1])
+        self.assertEqual(ids, expected_ids[:-1])
