@@ -67,6 +67,7 @@ def _messages(hf_user_data):
 def hf_message_content(report):
     if report.needs_filters:
         return {}
+
     def _user_section(username, data):
         return {
             'username': raw_username(username),
@@ -205,7 +206,15 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
                 r = []
                 if 'type' in section:
                     r.append(_("form/stock/" + col))
-                    append_rows(r, col, weekly_forms)
+                    for key in self.records.keys():
+                        if key in weekly_forms:
+                            values = weekly_forms[key]
+                            try:
+                                r.append(values[col])
+                            except KeyError:
+                                r.append(self.no_value)
+                        else:
+                            r.append(self.no_value)
                 else:
                     r.append(_(col))
                     append_rows(r, col, records)
@@ -512,7 +521,7 @@ class WeeklyForms(SqlData):
     def group_by(self):
         return [
             'date',
-            'location',
+            'hf',
             'district',
             'stock_amox_pink',
             'stock_amox_green',
@@ -565,8 +574,8 @@ class WeeklyForms(SqlData):
         data = super(WeeklyForms, self).get_data()
         weekly = {}
         for row in sorted(data, key=lambda x: x['date']):
-            weekly.update({row['location']: row})
-        return sorted(weekly.values(), key=lambda x: x['location'])
+            weekly.update({row['hf']: row})
+        return weekly
 
 
 class HeathFacilityMonthly(DistrictMonthly):

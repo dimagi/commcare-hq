@@ -811,7 +811,6 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 # deprecated - use IndicatorDocument.save_direct_to_sql
 FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
-    'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
     'OpmUserFluff': 'SQL',
 }
@@ -1340,7 +1339,6 @@ PILLOWTOPS = {
         'custom.opm.models.OpmFormFluffPillow',
         'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
