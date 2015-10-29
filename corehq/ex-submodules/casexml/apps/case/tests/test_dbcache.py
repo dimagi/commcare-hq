@@ -15,7 +15,7 @@ class CaseDbCacheTest(TestCase):
 
     def testDomainCheck(self):
         id = uuid.uuid4().hex
-        FormProcessorInterface.post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
                 CaseBlock(
                     create=True, case_id=id,
                     user_id='some-user'
@@ -146,7 +146,7 @@ class CaseDbCacheNoDbTest(SimpleTestCase):
 
 def _make_some_cases(howmany, domain='dbcache-test'):
     ids = [uuid.uuid4().hex for i in range(howmany)]
-    FormProcessorInterface.post_case_blocks([
+    FormProcessorInterface().post_case_blocks([
         CaseBlock(
             create=True,
             case_id=ids[i],

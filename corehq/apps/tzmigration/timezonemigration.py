@@ -13,10 +13,10 @@ from dimagi.utils.couch.database import iter_docs
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete
 from corehq.apps.tzmigration.planning import PlanningDB
+from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms import convert_xform_to_json
 from couchforms.models import XFormInstance
-from couchforms.util import adjust_datetimes, scrub_meta
+from couchforms.util import scrub_meta
 from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 
 

@@ -57,7 +57,7 @@ class StateHashTest(TestCase):
                        owner_id=self.user.user_id).as_xml()
         c2 = CaseBlock(case_id="123abc", create=True, 
                        owner_id=self.user.user_id).as_xml()
-        FormProcessorInterface.post_case_blocks([c1, c2],
+        FormProcessorInterface().post_case_blocks([c1, c2],
                          form_extras={"last_sync_token": self.sync_log.get_id})
         
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)

@@ -34,7 +34,7 @@ class OtaRestoreBugTest(TestCase):
                 user_id=user._id,
                 owner_id=user._id,
             ).as_xml()
-            _, [case] = FormProcessorInterface.post_case_blocks([case_block], {'domain': domain})
+            _, [case] = FormProcessorInterface().post_case_blocks([case_block], {'domain': domain})
             return case
 
         good_case = _submit_case(good_domain)

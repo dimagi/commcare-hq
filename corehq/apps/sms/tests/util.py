@@ -131,7 +131,7 @@ class TouchformsTestCase(LiveServerTestCase):
             owner_id=owner._id,
             user_id=owner._id,
         ).as_xml()
-        FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
 
     def add_parent_access(self, user, case):
         case_block = CaseBlock(
@@ -141,7 +141,7 @@ class TouchformsTestCase(LiveServerTestCase):
             owner_id=user._id,
             index={'parent': ('participant', case._id)}
         ).as_xml()
-        FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
         user = WebUser.create(self.domain, username, password)

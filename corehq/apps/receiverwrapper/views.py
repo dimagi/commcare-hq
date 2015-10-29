@@ -14,8 +14,8 @@ from corehq.apps.receiverwrapper.auth import (
     domain_requires_auth,
 )
 from corehq.apps.receiverwrapper.util import get_app_and_build_ids, determine_authtype
+from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.datadog.utils import count_by_response_code
-from couchforms import convert_xform_to_json
 import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt

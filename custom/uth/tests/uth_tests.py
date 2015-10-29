@@ -31,7 +31,7 @@ class UTHTests(TestCase):
                 'scan_time': scan_time
             }
         ).as_xml()
-        FormProcessorInterface.post_case_blocks([case_block], {'domain': UTH_DOMAIN})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': UTH_DOMAIN})
 
         return case_id
 

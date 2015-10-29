@@ -308,7 +308,7 @@ def _create_case(user, type, close=False, **extras):
             case_id=case_id,
             close=True,
         ).as_xml(format_datetime=date_to_xml_string))
-    FormProcessorInterface.post_case_blocks(blocks, {'domain': TEST_DOMAIN})
+    FormProcessorInterface(TEST_DOMAIN).post_case_blocks(blocks, {'domain': TEST_DOMAIN})
     case = CommCareCase.get(case_id)
     assert case.closed == close
     return case

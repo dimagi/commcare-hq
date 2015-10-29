@@ -24,7 +24,7 @@ class CaseProcessingErrorsTest(TestCase):
         """
 
         domain = 'special_domain'
-        _, xform, _ = FormProcessorInterface.submit_form_locally(
+        _, xform, _ = FormProcessorInterface().submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-123</instanceID>
@@ -48,7 +48,7 @@ class CaseProcessingErrorsTest(TestCase):
         - an XFormError is saved with the original id as orig_id
         """
         domain = 'special_domain'
-        _, xform, _ = FormProcessorInterface.submit_form_locally(
+        _, xform, _ = FormProcessorInterface().submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-456</instanceID>

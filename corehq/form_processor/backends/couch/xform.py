@@ -4,7 +4,7 @@ from couchforms.models import doc_types, XFormInstance
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from ..exceptions import XFormNotFound
+from corehq.form_processor.exceptions import XFormNotFound
 
 
 class XFormCouch(object):

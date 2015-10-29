@@ -18,7 +18,7 @@ class OutOfOrderCaseTest(TestCase):
             with open(os.path.join(dir, fname), "rb") as f:
                 xml_data = f.read()
 
-            FormProcessorInterface.submit_form_locally(xml_data)
+            FormProcessorInterface().submit_form_locally(xml_data)
 
         case = CaseInterface.get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
         self.assertEqual('from the update form', case.pupdate)
