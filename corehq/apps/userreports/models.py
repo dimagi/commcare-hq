@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 import json
+from corehq.apps.userreports.util import validate_sql_column_name
 from corehq.db import UCR_ENGINE_ID
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -344,6 +345,9 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         self.ui_filters
         self.charts
         self.sort_order
+
+        for agg_col in self.aggregation_columns:
+            validate_sql_column_name(agg_col)
 
     @classmethod
     def by_domain(cls, domain):

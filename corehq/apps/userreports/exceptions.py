@@ -48,3 +48,7 @@ class DataSourceConfigurationNotFoundError(BadSpecError):
 
 class ReportConfigurationNotFoundError(UserReportsError):
     pass
+
+
+class InvalidSQLColumnNameError(UserReportsError):
+    pass

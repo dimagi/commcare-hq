@@ -1,4 +1,9 @@
 import collections
+import re
+
+from django.utils.translation import ugettext as _
+
+from corehq.apps.userreports.exceptions import InvalidSQLColumnNameError
 
 
 def localize(value, lang):
@@ -22,3 +27,11 @@ def localize(value, lang):
 
 def default_language():
     return "en"
+
+
+def validate_sql_column_name(s):
+    if not isinstance(s, unicode):
+        s = unicode(s, "utf-8")
+    # http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+    if not re.match(r'^(?=[\w])(?=\D)[\w$]+$', s, re.UNICODE):
+        raise InvalidSQLColumnNameError(_(u'"{0}" is not a valid SQL column name').format(s))
