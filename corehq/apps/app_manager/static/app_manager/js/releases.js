@@ -1,5 +1,5 @@
-function SavedApp(o, releasesMain) {
-    var self = ko.mapping.fromJS(o);
+function SavedApp(app_data, releasesMain) {
+    var self = ko.mapping.fromJS(app_data);
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
