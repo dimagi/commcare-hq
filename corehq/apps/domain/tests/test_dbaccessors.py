@@ -1,5 +1,5 @@
 from django.test import TestCase
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
 from couchforms.models import XFormInstance
@@ -21,5 +21,5 @@ class DBAccessorsTest(TestCase):
         self.addCleanup(user_role.delete)
         self.addCleanup(group.delete)
         self.addCleanup(xform.delete)
-        [doc_id] = get_doc_ids_in_domain_by_type(self.domain, UserRole)
+        [doc_id] = get_doc_ids_in_domain_by_class(self.domain, UserRole)
         self.assertEqual(doc_id, user_role.get_id)

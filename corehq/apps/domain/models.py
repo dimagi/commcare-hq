@@ -662,7 +662,7 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
         from corehq.apps.fixtures.models import FixtureDataType
         from corehq.apps.users.models import UserRole
 
@@ -720,7 +720,7 @@ class Domain(Document, SnapshotMixin):
                 if component:
                     new_app_components[original_doc_id] = component
 
-            for doc_id in get_doc_ids_in_domain_by_type(self.name, FixtureDataType):
+            for doc_id in get_doc_ids_in_domain_by_class(self.name, FixtureDataType):
                 if copy_by_id and doc_id not in copy_by_id:
                     continue
                 component = self.copy_component(
@@ -728,11 +728,11 @@ class Domain(Document, SnapshotMixin):
                 copy_data_items(doc_id, component._id)
 
             if share_reminders:
-                for doc_id in get_doc_ids_in_domain_by_type(self.name, CaseReminderHandler):
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
                     self.copy_component(
                         'CaseReminderHandler', doc_id, new_domain_name, user=user)
             if share_user_roles:
-                for doc_id in get_doc_ids_in_domain_by_type(self.name, UserRole):
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
 
             new_domain.save()
