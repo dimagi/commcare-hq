@@ -361,6 +361,25 @@ def scrub_meta(xform):
     return found_old
 
 
+def bulk_save_docs(docs, instance):
+    try:
+        XFormInstance.get_db().bulk_save(docs)
+    except BulkSaveError as e:
+        logging.error('BulkSaveError saving forms', exc_info=1,
+                      extra={'details': {'errors': e.errors}})
+        raise
+    except Exception as e:
+        docs_being_saved = [doc['_id'] for doc in docs]
+        error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+            type(e).__name__,
+            unicode(e),
+            ', '.join(docs_being_saved)
+        )
+        instance = _handle_unexpected_error(instance, error_message)
+        instance.save()
+        raise
+
+
 class SubmissionPost(object):
 
     failed_auth_response = HttpResponseForbidden('Bad auth')
@@ -478,7 +497,7 @@ class SubmissionPost(object):
                             xforms[0] = instance
                             # this is usually just one document, but if an edit errored we want
                             # to save the deprecated form as well
-                            XFormInstance.get_db().bulk_save(xforms)
+                            bulk_save_docs(xforms, instance)
                             response = self._get_open_rosa_response(
                                 instance, None)
                             return response, instance, cases
@@ -524,24 +543,9 @@ class SubmissionPost(object):
                         # verify that these DB's are the same so that we can save them with one call to bulk_save
                         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
                         docs = xforms + cases
-                        try:
-                            XFormInstance.get_db().bulk_save(docs)
-                        except BulkSaveError as e:
-                            logging.error('BulkSaveError saving forms', exc_info=1,
-                                          extra={'details': {'errors': e.errors}})
-                            raise
-                        except Exception as e:
-                            docs_being_saved = [doc['_id'] for doc in docs]
-                            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
-                                type(e).__name__,
-                                unicode(e),
-                                ', '.join(docs_being_saved)
-                            )
-                            instance = _handle_unexpected_error(instance, error_message)
-                            instance.save()
-                            raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
+                        bulk_save_docs(docs, instance)
                         case_result.commit_dirtiness_flags()
                         stock_result.commit()
                         for case in cases:
