@@ -136,13 +136,15 @@ class DateSpanValidationTests(SimpleTestCase):
         self.assertEqual(datespan.get_validation_reason(), "You can't use dates earlier than the year 1900")
 
     def test_datespan_ok(self):
-        datespan = DateSpan(datetime(2015, 01, 01), datetime(2015, 04, 01))
-        datespan.max_days = 90
+        datespan = DateSpan(datetime(2015, 01, 01), datetime(2015, 04, 01), max_days=90)
         self.assertTrue(datespan.is_valid())
 
     def test_datespan_too_long(self):
-        datespan = DateSpan(datetime(2015, 01, 01), datetime(2015, 07, 01))
-        datespan.max_days = 90
+        datespan = DateSpan(datetime(2015, 01, 01), datetime(2015, 07, 01), max_days=90)
         self.assertFalse(datespan.is_valid())
         self.assertEqual(datespan.get_validation_reason(),
                          "You are limited to a span of 90 days, but this date range spans 181 days")
+
+    def test_negative_max_days(self):
+        with self.assertRaisesRegexp(ValueError, 'max_days cannot be less than 0'):
+            DateSpan(datetime(2015, 01, 01), datetime(2015, 04, 01), max_days=-1)

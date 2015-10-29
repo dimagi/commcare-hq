@@ -136,7 +136,7 @@ class DateSpan(object):
     format = None
     inclusive = True
     is_default = False
-    max_days = None
+    _max_days = None
 
     def __init__(self, startdate, enddate, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc,
                  max_days=None):
@@ -181,6 +181,15 @@ class DateSpan(object):
         except Exception as e:
             logging.error("Could not unpack timezone for DateSpan. Error: %s" % e)
 
+    @property
+    def max_days(self):
+        return self._max_days
+
+    @max_days.setter
+    def max_days(self, value):
+        if value is not None and value < 0:
+            raise ValueError('max_days cannot be less than 0')
+        self._max_days = value
 
     def to_dict(self):
         return {
@@ -308,7 +317,7 @@ class DateSpan(object):
             return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
         elif self.startdate < datetime.datetime(1900, 01, 01) or self.enddate < datetime.datetime(1900, 01, 01):
             return "You can't use dates earlier than the year 1900"
-        elif self.max_days >= 0:
+        elif self.max_days is not None:
             delta = self.enddate - self.startdate
             if delta.days > self.max_days:
                 return "You are limited to a span of {} days, but this date range spans {} days".format(
