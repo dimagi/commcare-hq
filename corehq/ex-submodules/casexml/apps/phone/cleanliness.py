@@ -1,7 +1,7 @@
 from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.dbaccessors import get_indexed_case_ids, \
     get_all_reverse_indices_info, get_extension_case_ids, get_reverse_indices_for_case_id
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -132,26 +132,38 @@ def hint_still_valid(domain, hint):
         # hint was deleted
         return False
     indexed_cases = set(get_indexed_cases(domain, [hint]))
-    return any([c.owner_id != hint_owner for c in indexed_cases])
+    extension_cases = set(get_extension_cases(domain, [hint]))
+    relevant_cases = indexed_cases | extension_cases
+    return any([c.owner_id != hint_owner for c in relevant_cases])
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
     footprint_info = get_case_footprint_info(domain, owner_id)
-    cases_to_check = footprint_info.all_ids - footprint_info.base_ids
+    owned_cases = footprint_info.base_ids
+    cases_to_check = footprint_info.all_ids - owned_cases
     if cases_to_check:
         closed_owned_case_ids = set(get_closed_case_ids(domain, owner_id))
         cases_to_check = cases_to_check - closed_owned_case_ids - footprint_info.extension_ids
-        extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - footprint_info.base_ids  # unowned extensions
-        for extension_case_doc in iter_docs(CommCareCase.get_db(), extension_cases_to_check):
-            extension_case = CommCareCase.wrap(extension_case_doc)
-            if extension_case.owner_id not in [owner_id, UNOWNED_EXTENSION_OWNER_ID]:
-                return CleanlinessFlag(False, extension_case._id)
+        extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - owned_cases  # unowned or owned by others
+        while extension_cases_to_check:
+            extension_case = extension_cases_to_check.pop()
+            dependent_cases = set(get_dependent_cases(domain, [extension_case]).all_ids)
+            unowned_dependent_cases = dependent_cases - owned_cases
+            extension_cases_to_check = extension_cases_to_check - dependent_cases
+            dependent_cases_owned_by_other_owners = {
+                dependent_case['_id']
+                for dependent_case in iter_docs(CommCareCase.get_db(), unowned_dependent_cases)
+                if dependent_case['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
+            }
+            if dependent_cases_owned_by_other_owners:
+                hint_id = dependent_cases & owned_cases
+                return CleanlinessFlag(False, hint_id.pop())
 
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
             reverse_index_infos = get_all_reverse_indices_info(domain, list(cases_to_check))
             reverse_index_ids = set([r.case_id for r in reverse_index_infos])
-            indexed_with_right_owner = (reverse_index_ids & (footprint_info.base_ids | closed_owned_case_ids))
+            indexed_with_right_owner = (reverse_index_ids & (owned_cases | closed_owned_case_ids))
             found_deleted_cases = False
             while indexed_with_right_owner:
                 hint_id = indexed_with_right_owner.pop()
