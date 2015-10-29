@@ -911,7 +911,7 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
             saved_exports = map(self.fmt_export_data, saved_exports)
         except Exception as e:
             return format_angular_error(
-                _("Issue fetching list of exports: %s").format(e.message),
+                _("Issue fetching list of exports: {}").format(e),
                 log_error=True,
                 exception=e,
                 request=self.request,
