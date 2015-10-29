@@ -429,7 +429,7 @@ class DistrictMonthly(BaseReport):
                                AND([EQ('it_malaria_adult', 'one'), EQ('malaria_adult', 'one')])
                            ])])),
             DatabaseColumn(_('treated_diarrhea'),
-                           CountColumn('doc_id',  alias='treated_diarrhea', filters=self.filters + [OR([
+                           CountColumn('doc_id', alias='treated_diarrhea', filters=self.filters + [OR([
                                AND([EQ('diarrhea_child', 'one'), EQ('it_diarrhea_child', 'one')]),
                                AND([EQ('diarrhea_adult', 'one'), EQ('it_diarrhea_adult', 'one')])
                            ])])),
@@ -559,7 +559,7 @@ class WeeklyForms(SqlData):
             DatabaseColumn(_('form/stock/stock_ors'), SimpleColumn('stock_ors')),
             DatabaseColumn(_('form/stock/stock_ra_50'), SimpleColumn('stock_ra_50')),
             DatabaseColumn(_('form/stock/stock_ra_200'), SimpleColumn('stock_ra_200')),
-            DatabaseColumn(_('form/stock/stock_zinc'),  SimpleColumn('stock_zinc')),
+            DatabaseColumn(_('form/stock/stock_zinc'), SimpleColumn('stock_zinc')),
             DatabaseColumn(_('form/stock/stock_coartem_yellow'), SimpleColumn('stock_coartem_yellow')),
             DatabaseColumn(_('form/stock/stock_coartem_blue'), SimpleColumn('stock_coartem_blue')),
             DatabaseColumn(_('form/stock/stock_coartem_green'), SimpleColumn('stock_coartem_green')),
