@@ -55,15 +55,3 @@ class DBAccessorsTest(TestCase):
         ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
         self.assertEqual(0, len(ids))
         self.db.delete_doc(doc)
-
-    def get_doc_ids_in_domain_by_type_nomatch(self):
-        id = uuid.uuid4().hex
-        doc = {
-            '_id': id,
-            'domain': 'nomatch-domain',
-            'doc_type': 'match-type',
-}
-        self.db.save_doc(doc)
-        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
-        self.assertEqual(0, len(ids))
-        self.db.delete_doc(doc)
