@@ -192,7 +192,6 @@ class EntriesHelper(object):
 
         return results
 
-
     def _add_extra_entry_connectors(self, entry, module):
         # Collect any extra connectors specified for details with nodesets
         connectors = {}

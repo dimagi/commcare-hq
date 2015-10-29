@@ -536,7 +536,7 @@ var DetailScreenConfig = (function () {
                 var o = {
                     lang: that.lang,
                     langs: that.screen.langs,
-                    items: that.original['connectors'],
+                    items: that.original.connectors,
                     modalTitle: 'Editing connectors',
                     buttonText: 'Connectors',
                 };
