@@ -20,10 +20,6 @@ env:
 branches:
   only:
     - master
-before_install:
-  - "curl http://localhost:5984/"  # print couch info
-  - "uname -a"
-  - "lsb_release -a"
 addons:
   apt:
     packages:
@@ -31,6 +27,9 @@ addons:
     - libblas-dev
     - liblapack-dev
 before_install:
+  - "curl http://localhost:5984/"  # print couch info
+  - "uname -a"
+  - "lsb_release -a"
   - "git clone https://github.com/dimagi/commcarehq-venv.git"
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
