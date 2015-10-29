@@ -101,6 +101,9 @@ class AddCaseToGroupForm(forms.Form):
 
 
 class AddAutomaticCaseUpdateRuleForm(forms.Form):
+    ACTION_CLOSE = 'CLOSE'
+    ACTION_UPDATE_AND_CLOSE = 'UPDATE_AND_CLOSE'
+
     name = TrimmedCharField(
         label=ugettext_lazy("Name"),
         required=True,
@@ -115,13 +118,14 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     conditions = forms.CharField(
         required=True,
     )
-    close_case = forms.BooleanField(
-        label=ugettext_lazy("Close the Case"),
-        required=False,
-    )
-    update_case = forms.BooleanField(
-        label=ugettext_lazy("Set a case property"),
-        required=False,
+    action = forms.ChoiceField(
+        label=ugettext_lazy("When all conditions match"),
+        choices=(
+            (ACTION_CLOSE,
+                ugettext_lazy("close the case")),
+            (ACTION_UPDATE_AND_CLOSE,
+                ugettext_lazy("set a case property and then close the case")),
+        ),
     )
     update_property_name = TrimmedCharField(
         label=ugettext_lazy("Property"),
@@ -147,8 +151,8 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         super(AddAutomaticCaseUpdateRuleForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-1 col-md-1'
-        self.helper.field_class = 'col-sm-3 col-md-2'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-4 col-md-3'
         self.helper.form_method = 'POST'
         self.helper.form_action = '#'
         self.helper.layout = Layout(
@@ -175,13 +179,8 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             Fieldset(
                 _("Action"),
                 Field(
-                    'close_case',
-                    disabled=True,
-                    checked='',
-                ),
-                Field(
-                    'update_case',
-                    ng_model='update_case',
+                    'action',
+                    ng_model='action',
                 ),
                 Div(
                     Field(
@@ -192,7 +191,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                         'update_property_value',
                         ng_model='update_property_value',
                     ),
-                    ng_show='update_case',
+                    ng_show='showUpdateProperty()',
                 ),
             ),
             FormActions(
@@ -259,9 +258,12 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             ))
         return result
 
+    def _updates_case(self):
+        return self.cleaned_data.get('action') == self.ACTION_UPDATE_AND_CLOSE
+
     def clean_update_property_name(self):
         value = None
-        if self.cleaned_data.get('update_case'):
+        if self._updates_case():
             value = self.cleaned_data.get('update_property_name')
             if not value:
                 raise ValidationError(_("This field is required"))
@@ -269,7 +271,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
 
     def clean_update_property_value(self):
         value = None
-        if self.cleaned_data.get('update_case'):
+        if self._updates_case():
             value = self.cleaned_data.get('update_property_value')
             if not value:
                 raise ValidationError(_("This field is required"))

@@ -685,7 +685,11 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
 
     @property
     def initial_rule_form(self):
-        return AddAutomaticCaseUpdateRuleForm()
+        return AddAutomaticCaseUpdateRuleForm(
+            initial={
+                'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
+            }
+        )
 
     @property
     @memoized
@@ -720,7 +724,7 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
             rule=rule,
             action=AutomaticUpdateAction.ACTION_CLOSE,
         )
-        if self.rule_form.cleaned_data['update_case']:
+        if self.rule_form._updates_case():
             AutomaticUpdateAction.objects.create(
                 rule=rule,
                 action=AutomaticUpdateAction.ACTION_UPDATE,
@@ -798,7 +802,11 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             'case_type': self.rule.case_type,
             'server_modified_boundary': self.rule.server_modified_boundary,
             'conditions': json.dumps(conditions),
-            'update_case': update_case,
+            'action': (
+                AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
+                if update_case
+                else AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
+            ),
             'update_property_name': update_property_name,
             'update_property_value': update_property_value,
         }

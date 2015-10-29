@@ -12,8 +12,7 @@
     autoUpdateRuleApp.controller('UpdateRuleController', function($scope) {
         $scope.name = initial.name;
         $scope.case_type = initial.case_type;
-        $scope.close_case = initial.close_case;
-        $scope.update_case = initial.update_case;
+        $scope.action = initial.action;
         $scope.update_property_name = initial.update_property_name;
         $scope.update_property_value = initial.update_property_value;
         $scope.server_modified_boundary = initial.server_modified_boundary;
@@ -35,6 +34,9 @@
         };
         $scope.matchesExists = function(condition) {
             return condition.property_match_type == 'EXISTS';
+        };
+        $scope.showUpdateProperty = function() {
+            return $scope.action == 'UPDATE_AND_CLOSE';
         };
     });
 }(window.angular, {{ form.current_values|JSON }}));
