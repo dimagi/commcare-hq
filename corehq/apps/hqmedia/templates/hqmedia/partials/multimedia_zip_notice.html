@@ -4,7 +4,7 @@
     <p>
         <a class="btn btn-warning" style="color: #ffffff;"
             {% if include_modal %}
-                href="#multimedia-zip-modal" data-toggle="modal"
+                href="#multimedia-zip-modal" data-toggle="modal" onclick="download_application_zip()"
             }
             {% else %}
                 {# This happens when the template gets included in app_manager/releases.html #}

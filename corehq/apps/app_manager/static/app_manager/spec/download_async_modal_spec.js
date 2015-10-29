@@ -10,7 +10,6 @@ describe('Async Download Modal', function() {
 
         beforeEach(function() {
             downloader = new AsyncDownloader(modal);
-            downloader.init(url);
             downloader.download_poll_id = download_poll_id;
         });
 
@@ -58,7 +57,7 @@ describe('Async Download Modal', function() {
 
         beforeEach(function() {
             ajax_stub = sinon.stub($, 'ajax');
-            downloader.init(url);
+            downloader.init();
         });
 
         afterEach(function() {
@@ -66,7 +65,7 @@ describe('Async Download Modal', function() {
         });
 
         it('should only make one download request', function(done) {
-            modal.modal({show: true});
+            downloader.generateDownload(url);
             assert.equal($.ajax.callCount, 1, 'Only expecting 1 ajax call');
             done();
         });
@@ -81,7 +80,7 @@ describe('Async Download Modal', function() {
             });
             ajax_stub.onSecondCall().yieldsTo("success", 'html progress content');
             ajax_stub.onThirdCall().yieldsTo("success", 'html read content ' + state + downloadId);
-            modal.modal({show: true});
+            downloader.generateDownload(url);
 
             assert.equal($.ajax.callCount, 2);
             assert.equal(ajax_stub.firstCall.args[0].url, url);
@@ -105,7 +104,6 @@ describe('Async Download Modal', function() {
 
         it('should handle multiple downloads correctly', function() {
             verify_download('ready_');
-            downloader.init(url);
             verify_download('ready_');
         });
     });

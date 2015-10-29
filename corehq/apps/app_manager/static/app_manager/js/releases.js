@@ -143,7 +143,7 @@ function ReleasesMain(o) {
     self.download_application_zip = function(appId, multimedia_only) {
         var url_slug = multimedia_only ? 'download_multimedia' : 'download_zip';
         var url = self.url(url_slug, appId);
-        self.async_downloader.init(url);
+        self.async_downloader.generateDownload(url);
         // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
         // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
         $('.modal.fade.in').modal('hide');
