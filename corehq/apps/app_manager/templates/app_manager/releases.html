@@ -50,9 +50,7 @@
         };
         var el = $('#releases-table');
         var releasesMain = new ReleasesMain(o);
-        setTimeout(function () {
-            releasesMain.getMoreSavedApps();
-        }, 0);
+        _.defer(function(){ releasesMain.getMoreSavedApps(); });
         ko.applyBindings(releasesMain, el.get(0));
         el.show();
     });
