@@ -107,8 +107,8 @@ function SavedApp(app_data, releasesMain) {
         });
     };
 
-    self.download_application_zip = function () {
-        releasesMain.download_application_zip(self.id());
+    self.download_application_zip = function (multimedia_only) {
+        releasesMain.download_application_zip(self.id(), multimedia_only);
     };
 
     self.clickDeploy = function () {
@@ -140,8 +140,9 @@ function ReleasesMain(o) {
     self.download_modal = $(self.options.download_modal_id);
     self.async_downloader = new AsyncDownloader(self.download_modal);
 
-    self.download_application_zip = function(appId) {
-        var url = self.url('download_zip', appId);
+    self.download_application_zip = function(appId, multimedia_only) {
+        var url_slug = multimedia_only ? 'download_multimedia' : 'download_zip';
+        var url = self.url(url_slug, appId);
         self.async_downloader.init(url);
         // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
         // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error

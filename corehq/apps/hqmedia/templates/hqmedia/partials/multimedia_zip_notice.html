@@ -10,7 +10,7 @@
                 {# This happens when the template gets included in app_manager/releases.html #}
                 {# See app_manager/js/releases.js #}
                 data-bind="click: function () {
-                    download_application_zip('{% url "download_multimedia_zip" app.domain '_____' %}');
+                    download_application_zip(true);
                 }"
             {% endif %}
         >

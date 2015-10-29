@@ -5,6 +5,7 @@ describe('App Releases', function() {
         var releases = null,
             urls = {
                 download_zip: 'download_zip_url',
+                download_multimedia: 'download_multimedia_url',
                 fetch: 'fetch_url',
                 odk_media: 'odk_media'
             },
@@ -54,5 +55,18 @@ describe('App Releases', function() {
             assert.equal($.ajax.callCount, 1);
         });
 
+        it('should use the correct URL for downloading ccz', function() {
+            app = releases.savedApps()[0];
+            app.download_application_zip();
+            assert.equal($.ajax.callCount, 1);
+            assert.equal(ajax_stub.firstCall.args[0].url, urls['download_zip']);
+        });
+
+        it('should use the correct URL for downloading multimedia', function() {
+            app = releases.savedApps()[0];
+            app.download_application_zip(true);
+            assert.equal($.ajax.callCount, 1);
+            assert.equal(ajax_stub.firstCall.args[0].url, urls['download_multimedia']);
+        });
     });
 });

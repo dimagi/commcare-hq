@@ -39,7 +39,8 @@
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
             update_build_comment: '{% url "update_build_comment" domain app.id %}',
             hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
-            download_zip: '{% url "download_ccz" app.domain '___' %}'
+            download_zip: '{% url "download_ccz" app.domain '___' %}',
+            download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}'
         };
         var o = {
             urls: urls,
@@ -421,7 +422,9 @@
                                                     <ol>
                                                         <li>
                                                             {% trans "Download" %}
-                                                            <a href="#" data-bind="click: download_application_zip">
+                                                            <a href="#" data-bind="click: function () {
+                                                                download_application_zip(false);
+                                                            }">
                                                                 CommCare.ccz
                                                             </a>
                                                         </li>
