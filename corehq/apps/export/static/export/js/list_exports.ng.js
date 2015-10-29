@@ -79,6 +79,20 @@
             });
             $scope.updateBulkStatus();
         };
+        $scope.updateEmailedExportData = function (component, exp) {
+            $('#modalRefreshExportConfirm-' + exp.id + '-' + component.groupId).modal('hide');
+            component.updatingData = true;
+            djangoRMI.update_emailed_export_data({
+                'component': component,
+                'export': exp
+            })
+                .success(function (data) {
+                    if (data.success) {
+                        component.updatingData = false;
+                        component.updatedDataTriggered = true;
+                    }
+                });
+        };
     };
 
     list_exports.controller(exportsControllers);

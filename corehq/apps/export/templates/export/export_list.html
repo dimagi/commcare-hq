@@ -138,6 +138,105 @@
                                     <p ng-show="!!export.formname">
                                         <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
                                     </p>
+                                    <div class="alert alert-neutral alert-small"
+                                         ng-show="!_.isEmpty(export.emailedExports)">
+                                        <div ng-repeat="component in export.emailedExports">
+                                            <h5>
+                                                <i class="fa fa-envelope"></i>
+                                                {% trans "Saved for Daily Report" %}
+                                                <button type="button"
+                                                        class="btn btn-default btn-xs"
+                                                        ng-show="!component.updatingData"
+                                                        data-toggle="modal"
+                                                        data-target="#modalRefreshExportConfirm-{{ export.id }}-{{ component.groupId }}">
+                                                    <i class="fa fa-refresh"></i>
+                                                    {% trans "Update Data" %}
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-default btn-xs btn-disabled"
+                                                        ng-show="component.updatingData"
+                                                        disabled="disabled">
+                                                    <i class="fa fa-refresh fa-spin"></i>
+                                                    {% trans "Updating Data, please wait..." %}
+                                                </button>
+                                            </h5>
+                                            <p class="text-warning"
+                                               ng-if="component.hasFile && component.fileData.showExpiredWarning && !component.updateDataTriggered">
+                                                <i class="fa fa-exclamation-triangle"></i>
+                                                {% blocktrans %}
+                                                    This saved export has expired because it has not been used in
+                                                    the last 35 days. To renew daily updates, click the 'Update Data'
+                                                    button and download the file.
+                                                {% endblocktrans %}
+                                            </p>
+                                            <p ng-if="component.updatedDataTriggered">
+                                                <i class="fa fa-check"></i>
+                                                <strong>{% trans "Data update started." %}</strong><br />
+                                                {% trans "Please check back later for updates. (Page refresh required)" %}
+                                            </p>
+                                            <p ng-if="component.hasFile">
+                                                <a href="{{ component.fileData.downloadUrl }}"
+                                                   class="btn btn-info btn-xs">
+                                                    <i class="fa fa-download"></i>
+                                                    {% trans "Download" %}
+                                                </a>&nbsp;&nbsp;
+                                                <strong>{% trans "Size:" %}</strong> {{ component.fileData.size }}&nbsp;&nbsp;&nbsp;
+                                                <strong>{% trans "Last Updated:" %}</strong> {{ component.fileData.lastUpdated }}
+                                            </p>
+                                            <p ng-if="!component.hasFile && !component.updatingData">
+                                                {% blocktrans %}
+                                                <strong>No data is available yet.</strong><br />
+                                                    Please check back later once the automatic scheduler
+                                                    has finished the update. If nothing changes in a while,
+                                                    you may Force Refresh the data.
+                                                {% endblocktrans %}
+                                            </p>
+                                            <div class="modal fade"
+                                                 id="modalRefreshExportConfirm-{{ export.id }}-{{ component.groupId }}">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                                                            <h4 class="modal-title">{% trans "Are you sure you want to refresh?" %}</h4>
+                                                        </div>
+                                                        <div class="modal-body" ng-if="component.hasFile && component.fileData.showExpiredWarning">
+                                                            {% blocktrans %}
+                                                                To renew daily updates, click the Update Data button below and check back in a little
+                                                                bit once the updates have finished processing.
+                                                            {% endblocktrans %}
+                                                        </div>
+                                                        <div class="modal-body" ng-if="!(component.hasFile && component.fileData.showExpiredWarning)">
+                                                            <p class="lead">
+                                                                {% blocktrans %}
+                                                                    <strong>Note: A data refresh should occur automatically on a daily basis.</strong>
+                                                                {% endblocktrans %}
+                                                            </p>
+                                                            <p>
+                                                                {% blocktrans %}
+                                                                    Please check back periodically and refresh to see if the data has been updated.
+                                                                {% endblocktrans %}
+                                                            </p>
+                                                            <p>
+                                                                {% blocktrans %}
+                                                                    To download data now, please click the Export button instead.
+                                                                {% endblocktrans %}
+                                                            </p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <a href="#"
+                                                               class="btn btn-default"
+                                                               data-dismiss="modal">{% trans "Cancel" %}</a>
+                                                            <button type="button"
+                                                                    class="btn btn-primary"
+                                                                    ng-click="updateEmailedExportData(component, export)">
+                                                                {% trans "Update Data" %}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
                                     <a href="{{ export.editUrl }}"

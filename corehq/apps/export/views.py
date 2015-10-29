@@ -1,9 +1,12 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from couchdbkit import ResourceNotFound
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.template.defaultfilters import filesizeformat
 from django.utils.decorators import method_decorator
 import json
 from django.utils.safestring import mark_safe
@@ -32,13 +35,15 @@ from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
-from corehq.apps.reports.models import FormExportSchema, CaseExportSchema
+from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
+    HQGroupExportConfiguration
 from corehq.apps.reports.standard.export import (
     CaseExportReport,
     ExcelExportReport,
     sizeof_fmt,
 )
 from corehq.apps.reports.util import datespan_from_beginning
+from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import (
     use_bootstrap3,
@@ -836,6 +841,19 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         """
         raise NotImplementedError("must implement get_saved_exports")
 
+    @property
+    @memoized
+    def emailed_export_groups(self):
+        """The groups of saved exports by domain for daily emailed exports.
+        """
+        return HQGroupExportConfiguration.by_domain(self.domain)
+
+    @property
+    def daily_emailed_exports(self):
+        """Returns a list of exports marked for a daily email.
+        """
+        raise NotImplementedError("must implement saved_exports")
+
     def fmt_export_data(self, export):
         """Returns the object used for each row (per export)
         in the saved exports table. This data will eventually be processed as
@@ -843,6 +861,40 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         :return dict
         """
         raise NotImplementedError("must implement fmt_export_data")
+
+    def fmt_emailed_export_data(self, component):
+        file_data = {}
+        has_file = component.saved_version is not None and component.saved_version.has_file()
+        if has_file:
+            file_data = {
+                'fileId': component.saved_version.get_id,
+                'size': filesizeformat(component.saved_version.size),
+                'lastUpdated': naturaltime(component.saved_version.last_updated),
+                'showExpiredWarning': (
+                    component.saved_version.last_accessed and
+                    component.saved_version.last_accessed <
+                    (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
+                ),
+                'downloadUrl': '{}?group_export_id={}'.format(
+                    reverse('hq_download_saved_export', args=[
+                        self.domain, component.saved_version.get_id
+                    ]),
+                    component.group_id
+                ),
+            }
+        return {
+            'groupId': component.group_id,
+            'hasFile': has_file,
+            'index': component.config.index,
+            'fileData': file_data,
+        }
+
+    def get_formatted_emailed_exports(self, export):
+        emailed_exports = filter(
+            lambda x: x.config.index[-1] == export.get_id,
+            self.daily_emailed_exports
+        )
+        return map(lambda x: self.fmt_emailed_export_data(x), emailed_exports)
 
     @allow_remote_invocation
     def get_exports_list(self, in_data):
@@ -903,6 +955,20 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         """
         raise NotImplementedError("Must implement generate_create_form_url")
 
+    def get_emailed_indexes(self, email_group):
+        """Return a list of indexes of the components of the HQGroupExportConfiguration
+        ExportConfiguration list"""
+        raise NotImplementedError("must implement get_emailed_indexes")
+
+    @allow_remote_invocation
+    def update_emailed_export_data(self, in_data):
+        group_id = in_data['component']['groupId']
+        relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
+        indexes = map(lambda x: x[0].index, relevant_group.all_exports)
+        place_index = indexes.index(in_data['component']['index'])
+        rebuild_export_task.delay(group_id, place_index)
+        return format_angular_success({})
+
     @allow_remote_invocation
     def submit_app_data_drilldown_form(self, in_data):
         try:
@@ -943,6 +1009,14 @@ class FormExportListView(BaseExportListView):
 
     @property
     @memoized
+    def daily_emailed_exports(self):
+        all_form_exports = []
+        for group in self.emailed_export_groups:
+            all_form_exports.extend(group.form_exports)
+        return all_form_exports
+
+    @property
+    @memoized
     def create_export_form(self):
         return CreateFormExportTagForm()
 
@@ -951,12 +1025,14 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
+        emailed_exports = self.get_formatted_emailed_exports(export)
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
             'name': export.name,
             'formname': export.formname,
             'addedToBulk': False,
+            'emailedExports': emailed_exports,
             'editUrl': reverse(EditCustomFormExportView.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': reverse(DownloadFormExportView.urlname,
@@ -996,6 +1072,14 @@ class CaseExportListView(BaseExportListView):
     page_title = ugettext_noop("Export Cases")
     allow_bulk_export = False
 
+    @property
+    @memoized
+    def daily_emailed_exports(self):
+        all_case_exports = []
+        for group in self.emailed_export_groups:
+            all_case_exports.extend(group.case_exports)
+        return all_case_exports
+
     @memoized
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
@@ -1013,11 +1097,13 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
+        emailed_exports = self.get_formatted_emailed_exports(export)
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
             'name': export.name,
             'addedToBulk': False,
+            'emailedExports': emailed_exports,
             'editUrl': reverse(EditCustomCaseExportView.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': reverse(DownloadCaseExportView.urlname,
