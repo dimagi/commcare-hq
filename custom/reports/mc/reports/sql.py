@@ -3,6 +3,7 @@ import re
 from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.sql import get_table_name
+from corehq.toggles import USER_CONFIGURABLE_REPORTS
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -134,7 +135,7 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return True
+        return USER_CONFIGURABLE_REPORTS.enabled(user.username)
 
     @property
     def config(self):
@@ -238,7 +239,7 @@ class DistrictWeekly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly'
-    name = ugettext_noop("mc_report_dist_weekly")
+    name = "UCR Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_WEEKLY_REPORT
 
     @property
@@ -350,7 +351,7 @@ class DistrictMonthly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly'
-    name = ugettext_noop("mc_report_dist_monthly")
+    name = "UCR Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_MONTHLY_REPORT
 
     @property
@@ -584,7 +585,7 @@ class HeathFacilityMonthly(DistrictMonthly):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = ugettext_noop("mc_report_hf_monthly")
+    name = "UCR Relatorio Mensal aos Supervisores dos APEs"
     section = HF_MONTHLY_REPORT
 
 
@@ -596,7 +597,8 @@ class HealthFacilityWeekly(DistrictWeekly):
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     slug = 'hf_weekly'
-    name = ugettext_noop("mc_report_hf_weekly")
+    #TODO change to ugettext when old reports remove
+    name = "UCR Relatorio Semanal aos Supervisores dos APEs"
     section = HF_WEEKLY_REPORT
 
     @property
