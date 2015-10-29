@@ -14,5 +14,5 @@ class AuthTest(TestCase):
         def process(xform):
             xform['auth_context'] = DefaultAuthContext().to_json()
 
-        xform = FormProcessorInterface.post_xform(xml_data, process=process)
+        xform = FormProcessorInterface().post_xform(xml_data, process=process)
         self.assertEqual(xform.auth_context, {'doc_type': 'DefaultAuthContext'})

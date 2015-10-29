@@ -21,7 +21,7 @@ class FormDeidentificationTestCase(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        instance = FormProcessorInterface.post_xform(xml_data)
+        instance = FormProcessorInterface().post_xform(xml_data)
         instance = XFormInstance.get(instance.id)
         transform = DocumentTransform(instance._doc, get_db())
         self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))
@@ -36,7 +36,7 @@ class FormDeidentificationTestCase(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        instance = FormProcessorInterface.post_xform(xml_data)
+        instance = FormProcessorInterface().post_xform(xml_data)
         instance = XFormInstance.get(instance.id)
         transform = DocumentTransform(instance._doc, get_db())
         self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))

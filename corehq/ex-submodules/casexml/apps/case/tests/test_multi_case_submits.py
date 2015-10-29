@@ -19,7 +19,7 @@ class MultiCaseTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        _, form, cases = FormProcessorInterface.submit_form_locally(xml_data, domain=self.domain)
+        _, form, cases = FormProcessorInterface().submit_form_locally(xml_data, domain=self.domain)
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
 
@@ -27,7 +27,7 @@ class MultiCaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "mixed_cases.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, form, cases = FormProcessorInterface.submit_form_locally(xml_data, domain=self.domain)
+        _, form, cases = FormProcessorInterface().submit_form_locally(xml_data, domain=self.domain)
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
 
@@ -35,7 +35,7 @@ class MultiCaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, form, cases = FormProcessorInterface.submit_form_locally(xml_data, domain=self.domain)
+        _, form, cases = FormProcessorInterface().submit_form_locally(xml_data, domain=self.domain)
         self.assertEqual(3, len(cases))
         self._check_ids(form, cases)
 

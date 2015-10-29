@@ -24,7 +24,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
     def testArchive(self):
         xml_data = self.get_xml('basic')
-        response, xform, cases = FormProcessorInterface.submit_form_locally(
+        response, xform, cases = FormProcessorInterface().submit_form_locally(
             xml_data,
             'test-domain',
         )
@@ -73,7 +73,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform_unarchived.connect(count_unarchive)
 
         xml_data = self.get_xml('basic')
-        response, xform, cases = FormProcessorInterface.submit_form_locally(
+        response, xform, cases = FormProcessorInterface().submit_form_locally(
             xml_data,
             'test-domain',
         )

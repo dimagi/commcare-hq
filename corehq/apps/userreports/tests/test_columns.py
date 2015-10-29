@@ -127,7 +127,7 @@ class TestExpandedColumn(TestCase):
             case_type=self.case_type,
             update=properties,
         ).as_xml()
-        FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):

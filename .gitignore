@@ -53,3 +53,4 @@ celerybeat-schedule
 # compiled translations
 /locale/*/*/*.mo
 .grunt
+node_modules/

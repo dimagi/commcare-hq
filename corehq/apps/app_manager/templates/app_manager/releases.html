@@ -39,14 +39,19 @@
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
             update_build_comment: '{% url "update_build_comment" domain app.id %}',
             hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
+            download_zip: '{% url "download_ccz" app.domain '___' %}',
+            download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}'
         };
         var o = {
             urls: urls,
             currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }}
+            recipient_contacts: {{ sms_contacts|JSON }},
+            download_modal_id: '#download-zip-modal'
         };
         var el = $('#releases-table');
-        ko.applyBindings(new ReleasesMain(o), el.get(0));
+        var releasesMain = new ReleasesMain(o);
+        _.defer(function(){ releasesMain.getMoreSavedApps(); });
+        ko.applyBindings(releasesMain, el.get(0));
         el.show();
     });
 
@@ -416,7 +421,7 @@
                                                         <li>
                                                             {% trans "Download" %}
                                                             <a href="#" data-bind="click: function () {
-                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}');
+                                                                download_application_zip(false);
                                                             }">
                                                                 CommCare.ccz
                                                             </a>
