@@ -6,5 +6,6 @@ if [ "${MATRIX_TYPE}" = "python" ]; then
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
     python manage.py migrate --noinput
     python manage.py runserver 8000 &  # Used to run mocha browser tests
+    sleep 5
     grunt mocha
 fi
