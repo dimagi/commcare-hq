@@ -12,10 +12,11 @@ if [ "${MATRIX_TYPE}" = "python" ]; then
     sleep 5
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case --zookeeper localhost:2181
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
-    npm install -g bower
     npm install -g grunt
     npm install -g grunt-cli
-    ln -nfs `which bower` /home/travis/bower
-    python manage.py bower install
     npm install
 fi
+
+npm install -g bower
+ln -nfs `which bower` /home/travis/bower
+python manage.py bower install
