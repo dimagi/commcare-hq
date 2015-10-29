@@ -29,7 +29,7 @@ describe('Async Download Modal', function() {
             {input: null, expected: false},
             {input: undefined, expected: false},
             {input: '', expected: false},
-            {input: 'progress', expected: false},
+            {input: 'progress', expected: false}
 
         ];
 
