@@ -17,3 +17,7 @@ This can be accomplished using the following script (assuming you have an approp
 ansible-playbook -i inventories/development -e '@vars/dev.yml' deploy_stack.yml --tags=kafka
 ```
 
+# Configuration
+
+If you use the default configuration you should not have to do anything.
+If you are running kafka in a VM, on another machine, or on a nonstandard port, you will need to override `KAFKA_URL` in your `localsettings.py`.
