@@ -9,7 +9,7 @@ def get_doc_ids_in_domain_by_class(domain, doc_class):
     return [result['id'] for result in results]
 
 
-def get_doc_ids(domain, doc_type, database=None):
+def get_doc_ids_in_domain_by_type(domain, doc_type, database=None):
     """
     Given a domain and doc type, get all docs matching that domain and type
     """

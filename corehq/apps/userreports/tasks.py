@@ -3,7 +3,7 @@ import logging
 from celery.task import task
 from sqlalchemy.exc import DataError
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.dbaccessors import get_doc_ids
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from couchforms.models import XFormInstance
@@ -26,7 +26,7 @@ def rebuild_indicators(indicator_config_id):
     adapter.rebuild_table()
 
     couchdb = _get_db(config.referenced_doc_type)
-    relevant_ids = get_doc_ids(config.domain, config.referenced_doc_type,
+    relevant_ids = get_doc_ids_in_domain_by_type(config.domain, config.referenced_doc_type,
                                database=couchdb)
 
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):

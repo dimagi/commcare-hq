@@ -1,6 +1,6 @@
 import uuid
 from django.test import TestCase
-from corehq.apps.domain.dbaccessors import get_doc_ids
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from dimagi.utils.couch.database import get_db
 
 
@@ -10,7 +10,7 @@ class TestDomainUtils(TestCase):
         self.db = get_db()
 
     def test_get_doc_ids_initial_empty(self):
-        self.assertEqual(0, len(get_doc_ids('some-domain', 'some-doc-type')))
+        self.assertEqual(0, len(get_doc_ids_in_domain_by_type('some-domain', 'some-doc-type')))
 
     def test_get_doc_ids_match(self):
         id = uuid.uuid4().hex
@@ -20,7 +20,7 @@ class TestDomainUtils(TestCase):
             'doc_type': 'match-type',
         }
         self.db.save_doc(doc)
-        ids = get_doc_ids('match-domain', 'match-type')
+        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
         self.assertEqual(1, len(ids))
         self.assertEqual(id, ids[0])
         self.db.delete_doc(doc)
@@ -33,7 +33,7 @@ class TestDomainUtils(TestCase):
             'doc_type': 'nomatch-type',
         }
         self.db.save_doc(doc)
-        ids = get_doc_ids('match-domain', 'match-type')
+        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
         self.assertEqual(0, len(ids))
         self.db.delete_doc(doc)
 
@@ -45,6 +45,6 @@ class TestDomainUtils(TestCase):
             'doc_type': 'match-type',
 }
         self.db.save_doc(doc)
-        ids = get_doc_ids('match-domain', 'match-type')
+        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
         self.assertEqual(0, len(ids))
         self.db.delete_doc(doc)
