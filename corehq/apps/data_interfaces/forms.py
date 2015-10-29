@@ -156,11 +156,11 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 _("Basic Information"),
                 Field(
                     'name',
-                    **{'ng-model': 'name'}
+                    ng_model='name',
                 ),
                 Field(
                     'case_type',
-                    **{'ng-model': 'case_type'}
+                    ng_model='case_type',
                 ),
             ),
             Fieldset(
@@ -168,9 +168,9 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 Field(
                     'conditions',
                     type='hidden',
-                    **{'ng-value': 'conditions'}
+                    ng_value='conditions',
                 ),
-                Div(**{'ng-include': '', 'src': "'conditions.tpl'"}),
+                Div(ng_include='', src="'conditions.tpl'"),
             ),
             Fieldset(
                 _("Action"),
@@ -181,18 +181,18 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 ),
                 Field(
                     'update_case',
-                    **{'ng-model': 'update_case'}
+                    ng_model='update_case',
                 ),
                 Div(
                     Field(
                         'update_property_name',
-                        **{'ng-model': 'update_property_name'}
+                        ng_model='update_property_name',
                     ),
                     Field(
                         'update_property_value',
-                        **{'ng-model': 'update_property_value'}
+                        ng_model='update_property_value',
                     ),
-                    **{'ng-show': 'update_case'}
+                    ng_show='update_case',
                 ),
             ),
             FormActions(
