@@ -48,7 +48,7 @@ describe('App Releases', function() {
             });
         }
 
-        it('should have 5 saved apps', function() {
+        it('should only make one request when downloading zip', function() {
             app = releases.savedApps()[0];
             app.download_application_zip();
             assert.equal($.ajax.callCount, 1);
