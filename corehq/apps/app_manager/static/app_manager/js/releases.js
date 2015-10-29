@@ -1,5 +1,4 @@
-function SavedApp(o, r) {
-    var $root = r;
+function SavedApp(o, releasesMain) {
     var self = ko.mapping.fromJS(o);
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
@@ -68,7 +67,7 @@ function SavedApp(o, r) {
 
     self.get_odk_install_url = ko.computed(function() {
         var slug = self.include_media() ? 'odk_media' : 'odk';
-        return $root.url(slug, self.id());
+        return releasesMain.url(slug, self.id());
     });
 
     self.sms_url = function(index) {
@@ -91,7 +90,7 @@ function SavedApp(o, r) {
     self.submit_new_comment = function () {
         self.pending_comment_update(true);
         $.ajax({
-            url: r.options.urls.update_build_comment,
+            url: releasesMain.options.urls.update_build_comment,
             type: 'POST',
             dataType: 'JSON',
             data: {"build_id": self.id(), "comment": self.new_comment()},
@@ -109,14 +108,14 @@ function SavedApp(o, r) {
     };
 
     self.download_application_zip = function () {
-        $root.download_application_zip(self.id());
+        releasesMain.download_application_zip(self.id());
     };
 
     self.clickDeploy = function () {
         self.generate_short_url('short_odk_url');
         ga_track_event('App Manager', 'Deploy Button', self.id());
         analytics.workflow('Clicked Deploy');
-        $.post(r.options.urls.hubspot_click_deploy);
+        $.post(releasesMain.options.urls.hubspot_click_deploy);
     };
 
     return self;
