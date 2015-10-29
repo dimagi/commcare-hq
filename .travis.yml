@@ -40,6 +40,7 @@ install:
   - "bash -e scripts/uninstall-requirements.sh"
   - "time (pip install --exists-action w -r requirements/requirements.txt --use-mirrors --timeout 60)"
   - "cp .travis/localsettings.py localsettings.py"
+  - "bash -e .travis/matrix-installs.sh"
 script: "bash -e .travis/matrix-runner.sh"
 after_success:
   - coverage report
