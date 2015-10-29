@@ -1,6 +1,6 @@
 import uuid
 from django.test import TestCase
-from corehq.apps.domain.utils import get_doc_ids
+from corehq.apps.domain.dbaccessors import get_doc_ids
 from dimagi.utils.couch.database import get_db
 
 

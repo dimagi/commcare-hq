@@ -3,7 +3,7 @@ import logging
 from celery.task import task
 from sqlalchemy.exc import DataError
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.utils import get_doc_ids
+from corehq.apps.domain.dbaccessors import get_doc_ids
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from couchforms.models import XFormInstance
