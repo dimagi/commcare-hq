@@ -137,6 +137,9 @@
         </template>
       </field>
     </detail>
+    <variables>
+        <case_id function="./@case_id"/>
+    </variables>
   </detail>
   <entry>
     <form>http://openrosa.org/formdesigner/B520859B-BE3D-4DAB-B8E9-585C3E1019C5</form>
