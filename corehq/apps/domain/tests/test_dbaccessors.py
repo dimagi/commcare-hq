@@ -28,10 +28,10 @@ class DBAccessorsTest(TestCase):
         [doc_id] = get_doc_ids_in_domain_by_class(self.domain, UserRole)
         self.assertEqual(doc_id, user_role.get_id)
 
-    def get_doc_ids_in_domain_by_type_initial_empty(self):
+    def test_get_doc_ids_in_domain_by_type_initial_empty(self):
         self.assertEqual(0, len(get_doc_ids_in_domain_by_type('some-domain', 'some-doc-type')))
 
-    def get_doc_ids_in_domain_by_type_match(self):
+    def test_get_doc_ids_in_domain_by_type_match(self):
         id = uuid.uuid4().hex
         doc = {
             '_id': id,
@@ -44,7 +44,7 @@ class DBAccessorsTest(TestCase):
         self.assertEqual(id, ids[0])
         self.db.delete_doc(doc)
 
-    def get_doc_ids_in_domain_by_type_nomatch(self):
+    def test_get_doc_ids_in_domain_by_type_nomatch(self):
         id = uuid.uuid4().hex
         doc = {
             '_id': id,
