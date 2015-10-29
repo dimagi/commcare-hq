@@ -1,3 +1,6 @@
+#!/bin/bash
+set -ev
+
 if [ $MATRIX_TYPE == "python" ]; then
     coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TESTRUNNER
 elif [ $MATRIX_TYPE == "javascript" ]; then

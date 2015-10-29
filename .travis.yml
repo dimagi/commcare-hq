@@ -35,13 +35,13 @@ before_install:
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
 install:
-  - "bash -e .travis/misc-setup.sh"
+  - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
-  - "bash -e scripts/uninstall-requirements.sh"
+  - "scripts/uninstall-requirements.sh"
   - "time (pip install --exists-action w -r requirements/requirements.txt --use-mirrors --timeout 60)"
   - "cp .travis/localsettings.py localsettings.py"
-  - "bash -e .travis/matrix-installs.sh"
-script: "bash -e .travis/matrix-runner.sh"
+  - ".travis/matrix-installs.sh"
+script: ".travis/matrix-runner.sh"
 after_success:
   - coverage report
   - coveralls

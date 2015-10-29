@@ -1,3 +1,6 @@
+#!/bin/bash
+set -ev
+
 uninstall=requirements/uninstall-requirements.txt
 tmp=requirements/uninstall-tmp.txt
 

@@ -1,3 +1,6 @@
+#!/bin/bash
+set -ev
+
 keytool -genkey \
   -keyalg RSA \
   -keysize 2048 \

@@ -1,3 +1,6 @@
+#!/bin/bash
+set -ev
+
 if [ $MATRIX_TYPE == "python" ]; then
     pip install coverage unittest2 mock --use-mirrors
 elif [ $MATRIX_TYPE == "javascript" ]; then
