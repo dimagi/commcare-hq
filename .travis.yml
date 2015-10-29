@@ -27,10 +27,11 @@ addons:
     - moreutils
     - libblas-dev
     - liblapack-dev
-install:
+before_install:
   - "git clone https://github.com/dimagi/commcarehq-venv.git"
   - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
   - "source ~/virtualenv/bin/activate"
+install:
   - "bash -e scripts/uninstall-requirements.sh"
   # set env variables for couch username/password, used by install.sh, to blank
   - "bash -e .travis/java-key-gen.sh"
