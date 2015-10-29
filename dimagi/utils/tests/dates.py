@@ -108,3 +108,43 @@ class DateSpanInRequestTest(SimpleTestCase):
         self.assertIsInstance(datespan, DateSpan)
         self.assertEqual(datespan.enddate, end_date)
         self.assertEqual(datespan.startdate, start_date)
+
+
+class DateSpanValidationTests(SimpleTestCase):
+
+    def test_ok(self):
+        datespan = DateSpan(datetime(2015, 01, 01), datetime(2015, 02, 01))
+        self.assertTrue(datespan.is_valid())
+        self.assertEqual(datespan.get_validation_reason(), "")
+
+    def test_date_missing(self):
+        datespan = DateSpan(datetime(2015, 01, 01), None)
+        self.assertFalse(datespan.is_valid())
+        self.assertEqual(datespan.get_validation_reason(), "You have to specify both dates!")
+
+    def test_end_before_start(self):
+        startdate = datetime(2015, 02, 01)
+        enddate = datetime(2015, 01, 01)
+        datespan = DateSpan(startdate, enddate)
+        self.assertFalse(datespan.is_valid())
+        self.assertEqual(datespan.get_validation_reason(),
+                         "You can't have an end date of %s after start date of %s" % (enddate, startdate))
+
+    def test_wrong_century(self):
+        datespan = DateSpan(datetime(1815, 01, 01), datetime(1815, 02, 01))
+        self.assertFalse(datespan.is_valid())
+        self.assertEqual(datespan.get_validation_reason(), "You can't use dates earlier than the year 1900")
+
+    def test_datespan_ok(self):
+        datespan = DateSpan(datetime(2015, 01, 01), datetime(2015, 04, 01), max_days=90)
+        self.assertTrue(datespan.is_valid())
+
+    def test_datespan_too_long(self):
+        datespan = DateSpan(datetime(2015, 01, 01), datetime(2015, 07, 01), max_days=90)
+        self.assertFalse(datespan.is_valid())
+        self.assertEqual(datespan.get_validation_reason(),
+                         "You are limited to a span of 90 days, but this date range spans 181 days")
+
+    def test_negative_max_days(self):
+        with self.assertRaisesRegexp(ValueError, 'max_days cannot be less than 0'):
+            DateSpan(datetime(2015, 01, 01), datetime(2015, 04, 01), max_days=-1)

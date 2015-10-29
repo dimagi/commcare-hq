@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import datetime
 from calendar import month_name
+from django.utils.translation import ugettext_lazy as _
 import logging
 
 try:
@@ -136,13 +138,16 @@ class DateSpan(object):
     format = None
     inclusive = True
     is_default = False
+    _max_days = None
 
-    def __init__(self, startdate, enddate, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
+    def __init__(self, startdate, enddate, format=ISO_DATE_FORMAT, inclusive=True, timezone=pytz.utc,
+                 max_days=None):
         self.startdate = startdate
         self.enddate = enddate
         self.format = format
         self.inclusive = inclusive
         self.timezone = timezone
+        self.max_days = max_days
 
     def __getstate__(self):
         """
@@ -154,7 +159,8 @@ class DateSpan(object):
             format=self.format,
             inclusive=self.inclusive,
             is_default=self.is_default,
-            timezone=self.timezone.zone
+            timezone=self.timezone.zone,
+            max_days=self.max_days,
         )
 
     def __setstate__(self, state):
@@ -171,11 +177,21 @@ class DateSpan(object):
         self.inclusive = state.get('inclusive', True)
         self.timezone = pytz.utc
         self.is_default = state.get('is_default', False)
+        self.max_days = state.get('max_days')
         try:
             self.timezone = pytz.timezone(state.get('timezone'))
         except Exception as e:
             logging.error("Could not unpack timezone for DateSpan. Error: %s" % e)
 
+    @property
+    def max_days(self):
+        return self._max_days
+
+    @max_days.setter
+    def max_days(self, value):
+        if value is not None and value < 0:
+            raise ValueError('max_days cannot be less than 0')
+        self._max_days = value
 
     def to_dict(self):
         return {
@@ -298,11 +314,17 @@ class DateSpan(object):
     
     def get_validation_reason(self):
         if self.startdate is None or self.enddate is None:
-            return "You have to specify both dates!"
+            return _("You have to specify both dates!")
         elif self.enddate < self.startdate:
-            return "You can't have an end date of %s after start date of %s" % (self.enddate, self.startdate)
+            return _("You can't have an end date of {end} after start date of {start}").format(
+                end=self.enddate, start=self.startdate)
         elif self.startdate < datetime.datetime(1900, 01, 01) or self.enddate < datetime.datetime(1900, 01, 01):
-            return "You can't use dates earlier than the year 1900"
+            return _("You can't use dates earlier than the year 1900")
+        elif self.max_days is not None:
+            delta = self.enddate - self.startdate
+            if delta.days > self.max_days:
+                return _("You are limited to a span of {max} days, but this date range spans {total} days").format(
+                    max=self.max_days, total=delta.days)
         return ""
     
     def __str__(self):
