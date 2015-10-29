@@ -1,9 +1,9 @@
 #!/bin/bash
 set -ev
 
-if [ $MATRIX_TYPE == "python" ]; then
+if [ "${MATRIX_TYPE}" = "python" ]; then
     pip install coverage unittest2 mock --use-mirrors
-elif [ $MATRIX_TYPE == "javascript" ]; then
+elif [ "${MATRIX_TYPE}" = "javascript" ]; then
     npm install -g bower
     npm install -g grunt
     npm install -g grunt-cli
