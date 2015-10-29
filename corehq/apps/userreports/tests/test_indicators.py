@@ -457,26 +457,27 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
             ]
         }
         self.stock_states = {}
-        for val, case_id, product_id in [
+        for val, case_id, product_code in [
             (32, 'case1', 'abc'),
             (85, 'case1', 'def'),
             (11, 'case1', 'ghi'),
         ]:
-            stock_state = self._make_stock_state(val, case_id, product_id)
-            self.stock_states[(case_id, product_id)] = stock_state
+            stock_state = self._make_stock_state(val, case_id, product_code)
+            self.stock_states[(case_id, product_code)] = stock_state
 
     @staticmethod
-    def _make_stock_state(value, case_id, product_id, section_id='soh'):
+    def _make_stock_state(value, case_id, product_code, section_id='soh'):
+        # if this gets switched to a db test, we'll also need to make products
         return StockState(
             stock_on_hand=value,
             case_id=case_id,
-            product_id=product_id,
+            product_id=product_code,
             section_id=section_id,
         )
 
-    def mock_getter(self, section_id, case_id, product_id):
-        if (case_id, product_id) in self.stock_states:
-            return self.stock_states[(case_id, product_id)]
+    def mock_getter(self, section_id, case_id, sql_product__code):
+        if (case_id, sql_product__code) in self.stock_states:
+            return self.stock_states[(case_id, sql_product__code)]
         else:
             raise StockState.DoesNotExist()
 
