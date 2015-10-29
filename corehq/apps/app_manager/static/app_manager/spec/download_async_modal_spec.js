@@ -69,31 +69,34 @@ describe('Async Download Modal', function() {
             done();
         });
 
+        function verify_download(state) {
+            var pollUrl = 'ajax/temp/123',
+                downloadId = '123';
+            ajax_stub.onFirstCall(0).yieldsTo("success", {
+                download_id: downloadId,
+                download_url: pollUrl
+            });
+            ajax_stub.onSecondCall().yieldsTo("success", 'html progress content');
+            ajax_stub.onThirdCall().yieldsTo("success", 'html read content ' + state + downloadId);
+            modal.modal({show: true});
+
+            assert.equal($.ajax.callCount, 2);
+            assert.equal(ajax_stub.firstCall.args[0].url, url);
+            assert.equal(ajax_stub.secondCall.args[0].url, pollUrl);
+
+            clock.tick(downloader.POLL_FREQUENCY);
+            assert.equal($.ajax.callCount, 3);
+            assert.equal(ajax_stub.thirdCall.args[0].url, pollUrl);
+        }
+
         var tests_state = [
             {state: 'ready_'},
             {state: 'error_'}
         ];
 
         tests_state.forEach(function(test) {
-            it('should poll until ' + test.state, function(done) {
-                var pollUrl = 'ajax/temp/123',
-                    downloadId = '123';
-                ajax_stub.onFirstCall(0).yieldsTo("success", {
-                    download_id: downloadId,
-                    download_url: pollUrl
-                });
-                ajax_stub.onSecondCall().yieldsTo("success", 'html progress content');
-                ajax_stub.onThirdCall().yieldsTo("success", 'html read content ' + test.state + downloadId);
-                modal.modal({show: true});
-
-                assert.equal($.ajax.callCount, 2);
-                assert.equal(ajax_stub.firstCall.args[0].url, url);
-                assert.equal(ajax_stub.secondCall.args[0].url, pollUrl);
-
-                clock.tick(downloader.POLL_FREQUENCY);
-                assert.equal($.ajax.callCount, 3);
-                assert.equal(ajax_stub.thirdCall.args[0].url, pollUrl);
-                done();
+            it('should poll until ' + test.state, function() {
+                verify_download(test.state);
             });
         });
     });
