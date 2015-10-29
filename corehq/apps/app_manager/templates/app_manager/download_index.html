@@ -23,7 +23,7 @@
         </tr>
         <tr>
             <td>
-                <a href="#download_ccz" data-toggle="modal">CommCare.ccz</a>
+                <a href="#download_ccz" data-toggle="modal" onclick="download_application_zip()">CommCare.ccz</a>
             </td>
         </tr>
     </table>
@@ -50,7 +50,7 @@
 {% block modals %}
     {{ block.super }}
     {% url "download_ccz" app.domain app.id as ccz_url %}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" download_url=ccz_url %}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" %}
 {% endblock %}
 
 {% block js-inline %}

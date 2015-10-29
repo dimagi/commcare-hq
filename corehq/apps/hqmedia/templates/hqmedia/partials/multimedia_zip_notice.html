@@ -4,13 +4,13 @@
     <p>
         <a class="btn btn-warning" style="color: #ffffff;"
             {% if include_modal %}
-                href="#multimedia-zip-modal" data-toggle="modal"
+                href="#multimedia-zip-modal" data-toggle="modal" onclick="download_application_zip()"
             }
             {% else %}
                 {# This happens when the template gets included in app_manager/releases.html #}
                 {# See app_manager/js/releases.js #}
                 data-bind="click: function () {
-                    download_application_zip('{% url "download_multimedia_zip" app.domain '_____' %}');
+                    download_application_zip(true);
                 }"
             {% endif %}
         >
@@ -44,6 +44,6 @@
 
 {% if include_modal %}
     {% url "download_multimedia_zip" domain app.get_id as multimedia_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' download_url=multimedia_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
     {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=multimedia_url%}
 {% endif %}

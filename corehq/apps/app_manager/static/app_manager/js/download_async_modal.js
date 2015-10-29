@@ -1,12 +1,11 @@
 $(function(){
     "use strict";
 
-    window.AsyncDownloader = function($el, download_url){
+    window.AsyncDownloader = function($el){
         var self = this;
         self.POLL_FREQUENCY = 1500; //ms
         self.ERROR_MESSAGE = "Sorry, something went wrong with the download. " +
                              "If you see this repeatedly please report an issue.";
-        self.download_url = download_url;
 
         self.$el = $el;
         self.el_id = $el.attr("id");
@@ -29,6 +28,8 @@ $(function(){
                         self.updateProgress(resp);
                         if (!self.isDone(resp)) {
                             setTimeout(self.pollDownloadStatus, self.POLL_FREQUENCY);
+                        } else {
+                            self.download_in_progress = false;
                         }
                     },
                     error: function (resp) {
@@ -51,16 +52,16 @@ $(function(){
             return progress_response &&
                 progress_response.trim().length &&
                 _.any([ready_id, error_id], function(el_id) {
-                    return progress_response.indexOf(el_id) > 0;
+                    return progress_response.indexOf(el_id) >= 0;
                 });
         };
 
-        self.generateDownload = function(){
+        self.generateDownload = function(download_url){
             // prevent multiple calls
             if (!self.download_in_progress) {
                 self.download_in_progress = true;
                 $.ajax({
-                    url: self.download_url,
+                    url: download_url,
                     type: "GET",
                     dataType: "json",
                     success: function (data) {
@@ -80,10 +81,10 @@ $(function(){
             self.$download_progress.html(text);
         };
 
-        self.$el.on("show show.bs.modal", self.generateDownload);
         self.$el.on("hidden hidden.bs.modal", function(){
             self.init();
         });
+
         self.init();
     };
 }());
