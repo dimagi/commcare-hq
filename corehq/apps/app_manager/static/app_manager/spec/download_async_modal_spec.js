@@ -74,7 +74,7 @@ describe('Async Download Modal', function() {
         function verify_download(state) {
             var pollUrl = 'ajax/temp/123',
                 downloadId = '123';
-            ajax_stub.reset()
+            ajax_stub.reset();
             ajax_stub.onFirstCall(0).yieldsTo("success", {
                 download_id: downloadId,
                 download_url: pollUrl
