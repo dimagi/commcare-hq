@@ -4,8 +4,8 @@
 
     Usage:
 
-    <a href="#{ID_OF_MODAL}" data-toggle="modal">Click me!</a>
-    {% include 'app_manager/partials/download_async_modal.html' with element_id={ID_OF_MODAL} download_url={URL_TO_DOWNLOAD} %}
+    <a href="#{ID_OF_MODAL}" data-toggle="modal" onclick="download_application_zip()">Click me!</a>
+    {% include 'app_manager/partials/download_async_modal.html' with element_id={ID_OF_MODAL} %}
 
     Also need to include associated JavaScript:
     {% include 'app_manager/partials/download_async_modal_inline.html' with element_id={ID_OF_MODAL} download_url={URL_TO_DOWNLOAD} %}
