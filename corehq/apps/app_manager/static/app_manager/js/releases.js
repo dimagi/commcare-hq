@@ -108,15 +108,8 @@ function SavedApp(o, r) {
         });
     };
 
-    self.modal = $('#download-zip-modal');
-    self.async_downloader = new AsyncDownloader(self.modal);
-    self.download_application_zip = function (url) {
-        url = $root.url('download_zip', self.id());
-        self.async_downloader.init(url);
-        // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
-        // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
-        $('.modal.fade.in').modal('hide');
-        self.modal.modal({show: true});
+    self.download_application_zip = function () {
+        $root.download_application_zip(self.id());
     };
 
     self.clickDeploy = function () {
@@ -144,6 +137,19 @@ function ReleasesMain(o) {
     self.currentAppVersion = ko.observable(self.options.currentAppVersion);
     self.lastAppVersion = ko.observable();
     self.selectingVersion = ko.observable("");
+
+    self.download_modal = $(self.options.download_modal_id);
+    self.async_downloader = new AsyncDownloader(self.download_modal);
+
+    self.download_application_zip = function(appId) {
+        var url = self.url('download_zip', appId);
+        self.async_downloader.init(url);
+        // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
+        // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
+        $('.modal.fade.in').modal('hide');
+        self.download_modal.modal({show: true});
+    };
+
     self.buildButtonEnabled = ko.computed(function () {
         if (self.buildState() === 'pending' || self.fetchState() === 'pending') {
             return false;

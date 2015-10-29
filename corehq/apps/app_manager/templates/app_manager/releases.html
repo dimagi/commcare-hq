@@ -44,7 +44,8 @@
         var o = {
             urls: urls,
             currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }}
+            recipient_contacts: {{ sms_contacts|JSON }},
+            download_modal_id: '#download-zip-modal'
         };
         var el = $('#releases-table');
         var releasesMain = new ReleasesMain(o);
