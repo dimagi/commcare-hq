@@ -3,7 +3,13 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter, CustomFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
+from corehq.apps.userreports.indicators import (
+    BooleanIndicator,
+    Column,
+    CompoundIndicator,
+    LedgerBalancesIndicator,
+    RawIndicator,
+)
 from corehq.apps.userreports.indicators.specs import (
     BooleanIndicatorSpec,
     ChoiceListIndicatorSpec,
@@ -89,38 +95,7 @@ def _build_choice_list_indicator(spec, context):
 
 def _build_ledger_balances_indicator(spec, context):
     wrapped_spec = LedgerBalancesIndicatorSpec.wrap(spec)
-    base_display_name = wrapped_spec.display_name
-
-    def _construct_display(product_code):
-        return '{base} ({product_code})'.format(base=base_display_name,
-                                                product_code=product_code)
-
-    def _construct_column(product):
-        return '{col}_{product}'.format(col=spec['column_id'], product=product)
-
-    def _make_get_stock_state(product_code):
-        def get_stock_state(doc, context):
-            try:
-                return StockState.objects.get(
-                    section_id=wrapped_spec.ledger_section,
-                    case_id=doc['_id'],
-                    sql_product__code=product_code,
-                ).stock_on_hand
-            except StockState.DoesNotExist:
-                return 0
-        return get_stock_state
-
-    product_indicators = [
-        RawIndicator(
-            display_name=_construct_display(product_code),
-            column=Column(
-                id=_construct_column(product_code),
-                datatype="decimal",
-            ),
-            getter=_make_get_stock_state(product_code),
-        ) for product_code in wrapped_spec.product_codes
-    ]
-    return CompoundIndicator(base_display_name, product_indicators)
+    return LedgerBalancesIndicator(wrapped_spec)
 
 
 def _build_repeat_iteration_indicator(spec, context):

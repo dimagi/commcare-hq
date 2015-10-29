@@ -1,5 +1,6 @@
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.sql import truncate_value
-from fluff import TYPE_INTEGER
+from fluff import TYPE_INTEGER, TYPE_DECIMAL
 
 
 class Column(object):
@@ -95,3 +96,34 @@ class CompoundIndicator(ConfigurableIndicator):
 
     def get_values(self, item, context=None):
         return [val for ind in self.indicators for val in ind.get_values(item, context)]
+
+
+class LedgerBalancesIndicator(ConfigurableIndicator):
+    def __init__(self, spec):
+        self.product_codes = spec.product_codes
+        self.column_id = spec.column_id
+        self.ledger_section = spec.ledger_section
+        super(LedgerBalancesIndicator, self).__init__(spec.display_name)
+
+    def _make_column(self, product_code):
+        column_id = '{}_{}'.format(self.column_id, product_code)
+        return Column(column_id, TYPE_DECIMAL)
+
+    def _get_value(self, case_id, product_code):
+        try:
+            return StockState.objects.get(
+                section_id=self.ledger_section,
+                case_id=case_id,
+                sql_product__code=product_code,
+            ).stock_on_hand
+        except StockState.DoesNotExist:
+            return 0
+
+    def get_columns(self):
+        return map(self._make_column, self.product_codes)
+
+    def get_values(self, item, context=None):
+        case_id = item['_id']
+        return [ColumnValue(self._make_column(product_code),
+                            self._get_value(case_id, product_code))
+                for product_code in self.product_codes]
