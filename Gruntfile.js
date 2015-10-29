@@ -28,7 +28,7 @@ module.exports = function(grunt) {
                 run: true,
                 log: true,
                 logErrors: true,
-                reporter: 'Nyan'
+                reporter: 'Spec'
             }
         };
         watchConfig[app] = {
