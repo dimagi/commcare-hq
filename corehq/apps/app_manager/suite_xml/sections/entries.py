@@ -197,7 +197,7 @@ class EntriesHelper(object):
         # Collect any extra connectors specified for details with nodesets
         connectors = {}
         detail_ids = [datum.detail_confirm for datum in entry.datums]
-        if module.requires_case_details():
+        if hasattr(module, 'case_details'):
             if self.details_helper.get_detail_id_safe(module, 'case_long') in detail_ids:
                 for tab in module.case_details.long.tabs:
                     for c in tab.connectors:
