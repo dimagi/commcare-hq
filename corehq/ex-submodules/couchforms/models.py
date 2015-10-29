@@ -165,6 +165,22 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return self.form.get(const.TAG_UIVERSION, "")
 
     @property
+    def is_error(self):
+        return False
+
+    @property
+    def is_duplicate(self):
+        return False
+
+    @property
+    def is_archived(self):
+        return False
+
+    @property
+    def is_deprecated(self):
+        return False
+
+    @property
     def metadata(self):
         def get_text(node):
             if node is None:
@@ -429,6 +445,10 @@ class XFormError(XFormInstance):
         self["doc_type"] = "XFormError" 
         super(XFormError, self).save(*args, **kwargs)
 
+    @property
+    def is_error(self):
+        return True
+
     def to_generic(self):
         generic = super(XFormError, self).to_generic()
         generic.is_error = True
@@ -446,6 +466,10 @@ class XFormDuplicate(XFormError):
         self["doc_type"] = "XFormDuplicate" 
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
+
+    @property
+    def is_duplicate(self):
+        return True
 
     def to_generic(self):
         generic = super(XFormDuplicate, self).to_generic()
@@ -468,6 +492,10 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
+    @property
+    def is_deprecated(self):
+        return True
+
     def to_generic(self):
         generic = super(XFormDeprecated, self).to_generic()
         generic.is_deprecated = True
@@ -488,6 +516,10 @@ class XFormArchived(XFormError):
         generic = super(XFormArchived, self).to_generic()
         generic.is_archived = True
         return generic
+
+    @property
+    def is_archived(self):
+        return True
 
 
 class SubmissionErrorLog(XFormError):
@@ -544,3 +576,12 @@ class UnfinishedSubmissionStub(models.Model):
 
     class Meta:
         app_label = 'couchforms'
+
+    @classmethod
+    def form_has_saved(cls, stub):
+        stub.saved = True
+        stub.save()
+
+    @classmethod
+    def form_process_completed(cls, stub):
+        stub.delete()

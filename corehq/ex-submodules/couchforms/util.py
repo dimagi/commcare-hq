@@ -458,7 +458,10 @@ class SubmissionPost(object):
                             PhoneDateValueError)
             with lock_manager as xforms:
                 instance = xforms[0]
-                if instance.doc_type == 'XFormInstance':
+                if instance.is_duplicate:
+                    assert len(xforms) == 1
+                    instance.save()
+                elif not instance.is_error:
                     if len(xforms) > 1:
                         assert len(xforms) == 2
                         assert is_deprecation(xforms[1])
@@ -549,9 +552,6 @@ class SubmissionPost(object):
                         # .problems was added to instance
                         instance.save()
                     unfinished_submission_stub.delete()
-                elif instance.doc_type == 'XFormDuplicate':
-                    assert len(xforms) == 1
-                    instance.save()
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
 
