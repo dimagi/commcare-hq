@@ -15,16 +15,7 @@ describe('App Releases', function() {
                 recipient_contacts: [],
                 download_modal_id: '#download-zip-modal-test'
             },
-            ajax_stub,
-            clock;
-
-        before(function() {
-            clock = sinon.useFakeTimers();
-        });
-
-        after(function() {
-           clock.restore();
-        });
+            ajax_stub;
 
         beforeEach(function() {
             ajax_stub = sinon.stub($, 'ajax');
