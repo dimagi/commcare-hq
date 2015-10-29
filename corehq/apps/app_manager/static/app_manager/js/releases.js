@@ -108,14 +108,15 @@ function SavedApp(o, r) {
         });
     };
 
+    self.modal = $('#download-zip-modal');
+    self.async_downloader = new AsyncDownloader(self.modal);
     self.download_application_zip = function (url) {
-        var modal = $('#download-zip-modal');
         url = url.replace('_____', self.id());
-        new AsyncDownloader(modal, url);
+        self.async_downloader.init(url);
         // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
         // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
         $('.modal.fade.in').modal('hide');
-        modal.modal({show: true});
+        self.modal.modal({show: true});
     };
 
     self.clickDeploy = function () {

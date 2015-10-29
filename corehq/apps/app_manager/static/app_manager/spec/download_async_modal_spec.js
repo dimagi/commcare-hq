@@ -9,7 +9,8 @@ describe('Async Download Modal', function() {
             download_poll_id = '12345';
 
         beforeEach(function() {
-            downloader = new AsyncDownloader(modal, url);
+            downloader = new AsyncDownloader(modal);
+            downloader.init(url);
             downloader.download_poll_id = download_poll_id;
         });
 
@@ -47,7 +48,8 @@ describe('Async Download Modal', function() {
             clock;
 
         before(function() {
-           clock = sinon.useFakeTimers();
+            clock = sinon.useFakeTimers();
+            downloader = new AsyncDownloader(modal);
         });
 
         after(function() {
@@ -56,11 +58,11 @@ describe('Async Download Modal', function() {
 
         beforeEach(function() {
             ajax_stub = sinon.stub($, 'ajax');
-            downloader = new AsyncDownloader(modal, url);
+            downloader.init(url);
         });
 
         afterEach(function() {
-          ajax_stub.restore();
+            ajax_stub.restore();
         });
 
         it('should only make one download request', function(done) {
@@ -72,6 +74,7 @@ describe('Async Download Modal', function() {
         function verify_download(state) {
             var pollUrl = 'ajax/temp/123',
                 downloadId = '123';
+            ajax_stub.reset()
             ajax_stub.onFirstCall(0).yieldsTo("success", {
                 download_id: downloadId,
                 download_url: pollUrl
@@ -98,6 +101,13 @@ describe('Async Download Modal', function() {
             it('should poll until ' + test.state, function() {
                 verify_download(test.state);
             });
+        });
+
+        it('should handle multiple downloads correctly', function() {
+            verify_download('ready_');
+            modal.modal('hide');
+            downloader.init(url);
+            verify_download('ready_');
         });
     });
 });
