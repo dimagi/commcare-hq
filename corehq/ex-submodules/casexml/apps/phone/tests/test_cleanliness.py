@@ -547,3 +547,84 @@ class GetCaseFootprintInfoTest(TestCase):
         self.factory.create_or_update_cases([parent, child, extension])
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)
         self.assertEqual(footprint_info.all_ids, set([extension.case_id, parent.case_id, child.case_id]))
+
+
+class GetDependentCasesTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        delete_all_cases()
+
+    def setUp(self):
+        self.domain = 'domain'
+        self.owner_id = uuid.uuid4().hex
+        self.other_owner_id = uuid.uuid4().hex
+        self.factory = CaseFactory(self.domain)
+
+    def test_returns_nothing_with_no_dependencies(self):
+        case = CaseStructure()
+        self.factory.create_or_update_case(case)
+        self.assertEqual(set(), get_dependent_cases(self.domain, case.case_id).all_ids)
+
+    def test_returns_simple_extension(self):
+        host = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id}
+        )
+        extension = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(host, relationship=CASE_INDEX_EXTENSION)]
+        )
+        all_ids = set([host.case_id, extension.case_id])
+
+        self.factory.create_or_update_cases([host, extension])
+        self.assertEqual(all_ids, get_dependent_cases(self.domain, [host.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_cases(self.domain, [extension.case_id]).all_ids)
+        self.assertEqual(set([extension.case_id]), get_dependent_cases(self.domain, [host.case_id]).extension_ids)
+
+    def test_returns_extension_of_extension(self):
+        host = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id}
+        )
+        extension = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(host, relationship=CASE_INDEX_EXTENSION)]
+        )
+        extension_2 = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            indices=[CaseIndex(extension, relationship=CASE_INDEX_EXTENSION)]
+        )
+        all_ids = set([host.case_id, extension.case_id, extension_2.case_id])
+
+        self.factory.create_or_update_cases([extension_2])
+        self.assertEqual(all_ids, get_dependent_cases(self.domain, [host.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_cases(self.domain, [extension.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_cases(self.domain, [extension_2.case_id]).all_ids)
+        self.assertEqual(set([extension.case_id, extension_2.case_id]),
+                         get_dependent_cases(self.domain, [host.case_id]).extension_ids)
+
+    def test_children_and_extensions(self):
+        parent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id, 'close': True}
+        )
+        child = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id},
+            indices=[CaseIndex(parent)]
+        )
+        extension = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(child, relationship=CASE_INDEX_EXTENSION)]
+        )
+        self.factory.create_or_update_cases([parent, child, extension])
+        all_ids = set([parent.case_id, child.case_id, extension.case_id])
+        self.assertEqual(all_ids, get_dependent_cases(self.domain, [child.case_id]).all_ids)
+        self.assertEqual(set([]), get_dependent_cases(self.domain, [parent.case_id]).all_ids)
+        self.assertEqual(set([extension.case_id]),
+                         get_dependent_cases(self.domain, [child.case_id]).extension_ids)
+        self.assertEqual(set([]),
+                         get_dependent_cases(self.domain, [parent.case_id]).extension_ids)
