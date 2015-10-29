@@ -780,7 +780,7 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
     @property
     def initial_rule_form(self):
         conditions = []
-        for criterion in self.rule.automaticupdaterulecriteria_set.all():
+        for criterion in self.rule.automaticupdaterulecriteria_set.order_by('property_name'):
             conditions.append({
                 'property_name': criterion.property_name,
                 'property_match_type': criterion.match_type,
