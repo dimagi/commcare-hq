@@ -15,6 +15,7 @@ describe('Async Download Modal', function() {
 
         var test_done = [
             {input: 'progress ready_' + download_poll_id, expected: true},
+            {input: 'ready_' + download_poll_id, expected: true},
             {input: 'progress error_' + download_poll_id, expected: true}
 
         ];

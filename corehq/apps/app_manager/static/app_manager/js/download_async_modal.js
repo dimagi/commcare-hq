@@ -52,7 +52,7 @@ $(function(){
             return progress_response &&
                 progress_response.trim().length &&
                 _.any([ready_id, error_id], function(el_id) {
-                    return progress_response.indexOf(el_id) > 0;
+                    return progress_response.indexOf(el_id) >= 0;
                 });
         };
 
