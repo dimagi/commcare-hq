@@ -36,7 +36,7 @@ describe('App Releases', function() {
                     build_comment: '',
                     build_broken: false,
                     is_released: false
-                }
+                };
             });
         }
 
