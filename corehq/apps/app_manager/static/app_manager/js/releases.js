@@ -176,6 +176,7 @@ function ReleasesMain(o) {
             }
         }
     });
+
     self.addSavedApp = function (savedApp, toBeginning) {
         if (toBeginning) {
             self.savedApps.unshift(savedApp);
@@ -184,6 +185,23 @@ function ReleasesMain(o) {
         }
         self.deployAnyway[savedApp.id()] = ko.observable(false);
     };
+
+    self.addSavedApps = function (savedApps) {
+        var i, savedApp;
+        for (i = 0; i < savedApps.length; i++) {
+            savedApp = SavedApp(savedApps[i], self);
+            self.addSavedApp(savedApp);
+        }
+        if (i) {
+            self.nextVersionToFetch = savedApps[i - 1].version - 1;
+        }
+        if (savedApps.length < self.fetchLimit) {
+            self.doneFetching(true);
+        } else {
+            self.doneFetching(false);
+        }
+    };
+
     self.getMoreSavedApps = function () {
         self.fetchState('pending');
         $.ajax({
@@ -192,26 +210,17 @@ function ReleasesMain(o) {
             data: {
                 start_build: self.nextVersionToFetch,
                 limit: self.fetchLimit
+            },
+            success: function (savedApps) {
+                self.addSavedApps(savedApps);
+                self.fetchState('');
+            },
+            error: function () {
+                self.fetchState('error');
             }
-        }).success(function (savedApps) {
-            var i, savedApp;
-            for (i = 0; i < savedApps.length; i++) {
-                savedApp = SavedApp(savedApps[i], self);
-                self.addSavedApp(savedApp);
-            }
-            if (i) {
-                self.nextVersionToFetch = savedApps[i-1].version - 1;
-            }
-            if (savedApps.length < self.fetchLimit) {
-                self.doneFetching(true);
-            } else {
-                self.doneFetching(false);
-            }
-            self.fetchState('');
-        }).error(function () {
-            self.fetchState('error');
         });
     };
+
     self.toggleRelease = function (savedApp) {
         var is_released = savedApp.is_released();
         var saved_app_id = savedApp.id();
