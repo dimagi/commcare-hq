@@ -105,7 +105,6 @@ describe('Async Download Modal', function() {
 
         it('should handle multiple downloads correctly', function() {
             verify_download('ready_');
-            modal.modal('hide');
             downloader.init(url);
             verify_download('ready_');
         });

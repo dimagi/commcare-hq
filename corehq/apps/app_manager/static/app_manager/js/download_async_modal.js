@@ -57,7 +57,7 @@ $(function(){
 
         self.generateDownload = function(){
             // prevent multiple calls
-            if (!self.download_in_progress && self.download_url) {
+            if (!self.download_in_progress) {
                 self.download_in_progress = true;
                 $.ajax({
                     url: self.download_url,
