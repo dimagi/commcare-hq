@@ -93,7 +93,7 @@ class ConventureData(BaseSqlData):
         filters = super(ConventureData, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(NOT(IN('location_id', ('archived_locations',))))
         return filters[1:]
 
     @property
@@ -252,7 +252,7 @@ class TauxDeRuptures(BaseSqlData):
         filter = super(TauxDeRuptures, self).filters
         filter.append("total_stock_total = 0")
         if 'archived_locations' in self.config:
-            filter.append(NOT(IN('location_id', 'archived_locations')))
+            filter.append(NOT(IN('location_id', ('archived_locations',))))
         return filter
 
     @property
@@ -305,7 +305,7 @@ class FicheData(BaseSqlData):
     def filters(self):
         filters = super(FicheData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(NOT(IN('location_id', ('archived_locations',))))
         return filters
 
     @property
@@ -337,7 +337,7 @@ class PPSAvecDonnees(BaseSqlData):
         filters = super(PPSAvecDonnees, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(NOT(IN('location_id', ('archived_locations',))))
         return filters[1:]
 
     @property
@@ -473,7 +473,7 @@ class ConsommationData(BaseSqlData):
     def filters(self):
         filters = super(ConsommationData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(NOT(IN('location_id', ('archived_locations',))))
         return filters
 
     @property
@@ -513,7 +513,7 @@ class TauxConsommationData(BaseSqlData):
     def filters(self):
         filters = super(TauxConsommationData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(NOT(IN('location_id', ('archived_locations',))))
         return filters
 
     @property
@@ -578,7 +578,7 @@ class NombreData(BaseSqlData):
     def filters(self):
         filters = super(NombreData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(NOT(IN('location_id', ('archived_locations',))))
         return filters
 
     @property
