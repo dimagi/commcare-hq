@@ -80,7 +80,7 @@ class NumericFilterValue(FilterValue):
         assert filter.type == "numeric"
         assert (isinstance(value, dict) and "operator" in value and "operand" in value) or value is None
         if value:
-            assert value['operator'] in self.operators_to_filters.keys()
+            assert value['operator'] in self.operators_to_filters
             assert isinstance(value['operand'], int) or isinstance(value['operand'], float)
         super(NumericFilterValue, self).__init__(filter, value)
 
