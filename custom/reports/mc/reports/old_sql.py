@@ -373,7 +373,7 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     # way to break out of the inheritance pattern and be DRY
     exportable = True
     emailable = True
-    report_template_path = "mc/reports/sectioned_tabular.html"
+    report_template_path = "mc/reports/sectioned_tabular_old.html"
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
