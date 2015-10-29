@@ -588,11 +588,6 @@ class ScheduleFormXPath(object):
             within_standard,
         )
 
-    def due_first(self):
-        """instance(...)/schedule/visit[before_window][1]/@due"""
-        due = self.fixture.visit().select_raw(self.before_window()).select_raw("1").slash("@due")
-        return u"coalesce({}, {})".format(due, SCHEDULE_MAX_DATE)
-
     def next_visits(self):
         """last_visit_num_{form_unique_id} = '' or @id > last_visit_num_{form_unique_id}"""
         next_visits = XPath(u'@id > {}'.format(self.last_visit))
@@ -618,6 +613,11 @@ class ScheduleFormXPath(object):
             num_upcoming_visits_gt_0
         )
 
+    def due_first(self):
+        """instance(...)/schedule/visit[before_window][1]/@due"""
+        due = self.fixture.visit().select_raw(self.before_window()).select_raw("1").slash("@due")
+        return u"coalesce({}, {} - {})".format(due, SCHEDULE_MAX_DATE, XPath.date(self.anchor))
+
     def due_later(self):
         """coalesce(instance(...)/schedule/visit/[next_visits][before_window][1]/@due, [max_date]"""
         due = (self.fixture.visit().
@@ -626,7 +626,7 @@ class ScheduleFormXPath(object):
                select_raw("1").
                slash("@due"))
 
-        return (u"coalesce({}, {})".format(due, SCHEDULE_MAX_DATE))
+        return (u"coalesce({}, {} - {})".format(due, SCHEDULE_MAX_DATE, XPath.date(self.anchor)))
 
     def next_visit_id(self):
         """{visit}/[next_visits][within_window][1]/@id"""
