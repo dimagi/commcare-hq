@@ -48,7 +48,24 @@
                 "datatype": "string"
             },
             {
-                "column_id": "location",
+                "column_id": "user_name",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "username"
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "hf",
                 "type": "expression",
                 "expression": {
                     "type": "related_doc",
@@ -421,7 +438,7 @@
                             "operator": "eq",
                             "expression": {
                                 "type": "property_path",
-                                "property_path": ["form", "consult", "results_rdt"],
+                                "property_path": ["form", "consult", "rtd_results"],
                                 "datetyoe": "string"
                             },
                             "type": "boolean_expression",
@@ -437,7 +454,7 @@
                                 "operator": "in",
                                 "expression": {
                                     "type": "property_path",
-                                    "property_path": ["form", "consult", "results_rdt"],
+                                    "property_path": ["form", "consult", "rtd_results"],
                                     "datetyoe": "string"
                                 },
                                 "type": "boolean_expression",

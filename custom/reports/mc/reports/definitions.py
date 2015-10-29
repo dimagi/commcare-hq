@@ -84,20 +84,20 @@ DISTRICT_MONTHLY_REPORT = HF_MONTHLY_REPORT + [
         'type': 'form_lookup',
         'xmlns': WEEKLY_SUMMARY_XMLNS,
         'columns': [
-            _('form/stock/stock_amox_pink'),
-            _('form/stock/stock_amox_green'),
-            _('form/stock/stock_ors'),
-            _('form/stock/stock_ra_50'),
-            _('form/stock/stock_ra_200'),
-            _('form/stock/stock_zinc'),
-            _('form/stock/stock_coartem_yellow'),
-            _('form/stock/stock_coartem_blue'),
-            _('form/stock/stock_coartem_green'),
-            _('form/stock/stock_coartem_brown'),
-            _('form/stock/stock_paracetamol_250'),
-            _('form/stock/stock_paracetamol_500'),
-            _('form/stock/stock_rdt'),
-            _('form/stock/stock_gloves'),
+            _('stock_amox_pink'),
+            _('stock_amox_green'),
+            _('stock_ors'),
+            _('stock_ra_50'),
+            _('stock_ra_200'),
+            _('stock_zinc'),
+            _('stock_coartem_yellow'),
+            _('stock_coartem_blue'),
+            _('stock_coartem_green'),
+            _('stock_coartem_brown'),
+            _('stock_paracetamol_250'),
+            _('stock_paracetamol_500'),
+            _('stock_rdt'),
+            _('stock_gloves'),
         ]
     },
 ]
@@ -125,29 +125,17 @@ DISTRICT_WEEKLY_REPORT = [
         'type': 'form_lookup',
         'xmlns': WEEKLY_SUMMARY_XMLNS,
         'columns': [
-            _('form/stock/stock_coartem_yellow'),
-            _('form/stock/stock_coartem_blue'),
+            _('stock_coartem_yellow'),
+            _('stock_coartem_blue'),
         ]
     },
     {
         'section': _('mc_section_validation'),
         'columns': [
-            {
-                'slug': _('patients_given_pneumonia_meds'),
-                'columns': ('patients_given_pneumonia_meds_num', 'patients_given_pneumonia_meds_denom'),
-            },
-            {
-                'slug': _('patients_given_diarrhoea_meds'),
-                'columns': ('patients_given_diarrhoea_meds_num', 'patients_given_diarrhoea_meds_denom'),
-            },
-            {
-                'slug': _('patients_given_malaria_meds'),
-                'columns': ('patients_given_malaria_meds_num', 'patients_given_malaria_meds_denom'),
-            },
-            {
-                'slug': _('patients_correctly_referred'),
-                'columns': ('patients_correctly_referred_num', 'patients_correctly_referred_denom'),
-            },
+            _('patients_given_pneumonia_meds'),
+            _('patients_given_diarrhoea_meds'),
+            _('patients_given_malaria_meds'),
+            _('patients_correctly_referred'),
             _('cases_rdt_not_done'),
             _('cases_danger_signs_not_referred'),
             _('cases_no_malaria_meds'),
@@ -171,22 +159,10 @@ HF_WEEKLY_REPORT = [
         'columns': [
             _('cases_transferred'),
             _('home_visits_followup'),
-            {
-                'slug': _('patients_given_pneumonia_meds'),
-                'columns': ('patients_given_pneumonia_meds_num', 'patients_given_pneumonia_meds_denom'),
-            },
-            {
-                'slug': _('patients_given_diarrhoea_meds'),
-                'columns': ('patients_given_diarrhoea_meds_num', 'patients_given_diarrhoea_meds_denom'),
-            },
-            {
-                'slug': _('patients_given_malaria_meds'),
-                'columns': ('patients_given_malaria_meds_num', 'patients_given_malaria_meds_denom'),
-            },
-            {
-                'slug': _('patients_correctly_referred'),
-                'columns': ('patients_correctly_referred_num', 'patients_correctly_referred_denom'),
-            },
+            _('patients_given_pneumonia_meds'),
+            _('patients_given_diarrhoea_meds'),
+            _('patients_given_malaria_meds'),
+            _('patients_correctly_referred'),
             _('cases_rdt_not_done'),
         ]
     },
