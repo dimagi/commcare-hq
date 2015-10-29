@@ -47,7 +47,11 @@
             recipient_contacts: {{ sms_contacts|JSON }}
         };
         var el = $('#releases-table');
-        ko.applyBindings(new ReleasesMain(o), el.get(0));
+        var releasesMain = new ReleasesMain(o);
+        setTimeout(function () {
+            releasesMain.getMoreSavedApps();
+        }, 0);
+        ko.applyBindings(releasesMain, el.get(0));
         el.show();
     });
 

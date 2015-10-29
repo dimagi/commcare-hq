@@ -314,8 +314,4 @@ function ReleasesMain(o) {
             self.buildState('error');
         });
     };
-    // init
-    setTimeout(function () {
-        self.getMoreSavedApps();
-    }, 0);
 }
