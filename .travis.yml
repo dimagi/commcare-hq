@@ -3,8 +3,6 @@ sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
-matrix:
-  fast_finish: true
 python:
   - "2.7"
 env:
