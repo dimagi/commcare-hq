@@ -14,6 +14,7 @@ def get_demo_case_consumer_pillow():
         'kafka-demo-case-pillow-checkpoint',
     )
     return ConstructedPillow(
+        name='KafkaCaseConsumerPillow',
         document_store=document_store,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topic=topics.CASE, group_id='demo-case-group'),
