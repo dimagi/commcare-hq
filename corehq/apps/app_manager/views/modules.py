@@ -170,6 +170,7 @@ def _get_basic_module_view_context(app, module):
                                  and not parent_module == module
                                  and parent_module.doc_type != "ShadowModule"],
         'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
+                                and module.doc_type != "ShadowModule"
     }
 
 
