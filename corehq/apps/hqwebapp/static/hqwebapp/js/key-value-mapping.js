@@ -42,6 +42,12 @@ function MapList(o) {
         }
         return {lang: null, value: null};
     };
+    self.localizedValue = function(value) {
+        if (!self.localizable) {
+            return value;
+        }
+        return value[self.lang];
+    };
     self.removeItem = function (item) {
         self.items.remove(item);
         if(!self._isItemDuplicated(ko.utils.unwrapObservable(item.key)))

@@ -11,12 +11,12 @@
                 &rarr;
                 <input type="text" class="input-large enum-value" data-bind="
                     attr: {placeholder: $parent.backup(value).value},
-                    value: $parent.localizable ? value[$parent.lang] : value
+                    value: $parent.localizedValue(value)
                 "/>
                 <a href="#" class="btn btn-inverse btn-mini lang-text"
                    style="color:#ffffff; text-decoration: none;"
                    data-bind="
-                    text: $parent.localizable ? $parent.backup(value).lang : value,
+                    text: $parent.localizedValue($parent.backup(value)),
                     visible: $parent.localizable && !_([$parent.lang, null]).contains($parent.backup(value).lang)
                 "></a>
                 <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
@@ -60,9 +60,8 @@
         <div>
             <strong data-bind="text: key"></strong>
             &rarr;
-            <!--span data-bind="visible: $parent.localizable ? value[$parent.lang] : value, text: $parent.localizable ? value[$parent.lang] : value"></span-->
-            <span data-bind="text: $parent.localizable ? value[$parent.lang] : value"></span>
-            <span data-bind="visible: !ko.utils.unwrapObservable($parent.localizable ? value[$parent.lang] : value)"><i class="icon-remove-sign"></i></span>
+            <span data-bind="text: $parent.localizedValue(value)"></span>
+            <span data-bind="visible: !ko.utils.unwrapObservable($parent.localizedValue(value))"><i class="icon-remove-sign"></i></span>
         </div>
     </div>
 </div>
