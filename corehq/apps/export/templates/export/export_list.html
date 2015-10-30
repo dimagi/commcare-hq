@@ -44,6 +44,15 @@
     <div ng-app="listExportsApp">
         <div ng-controller="ListExportsController"
              ng-cloak>
+            {% if is_deid %}
+            <p>
+                {% blocktrans %}
+                    These exports are <strong>De-Identified</strong>, meaning that
+                    the administrator of this domain has removed all personally-identifying
+                    properties from the exported data.
+                {% endblocktrans %}
+            </p>
+            {% endif %}
             <p>
                 {% blocktrans %}
                     Exports are a way to download data from CommCare HQ
@@ -51,6 +60,7 @@
                     third-party data analysis tools.
                 {% endblocktrans %}
             </p>
+            {% if not is_deid %}
             <p ng-show="!_.isEmpty(exports) || !hasLoaded">
                 <a href="#createExportOptionsModal"
                    data-toggle="modal"
@@ -71,6 +81,7 @@
                     {% trans "Create New Export" %}
                 </a></p>
             </div>
+            {% endif %}
             <div class="panel panel-default">
                 <div class="panel-heading">{% trans "Exports" %}</div>
                 <div class="panel-body">
@@ -84,7 +95,11 @@
                     <div class="alert alert-info"
                          ng-show="_.isEmpty(exports) && !!hasLoaded && !exportsListError">
                         <p>
-                            {% trans 'No Exports Created Yet.' %}
+                            {% if is_deid %}
+                                {% trans "No De-Identified Exports are available at this time." %}
+                            {% else %}
+                                {% trans 'No Exports Created Yet.' %}
+                            {% endif %}
                         </p>
                     </div>
                     <div class="alert alert-warning"
@@ -107,7 +122,9 @@
                         <thead>
                             <tr>
                                 <th class="col-sm-6">{% trans 'Name' %}</th>
+                                {% if not is_deid %}
                                 <th class="col-sm-1">{% trans 'Edit' %}</th>
+                                {% endif %}
                                 <th class="col-sm-2">{% trans 'Export' %}</th>
                                 {%  if allow_bulk_export %}
                                 <th class="col-sm-3">
@@ -131,13 +148,14 @@
                             <tr ng-repeat="export in exports">
                                 <td>
                                     <h4>{{ export.name }}
-                                        <label class="label label-default label-info"
+                                        <label class="label label-default label-default"
                                            ng-show="!!export.isDeid">
                                         {% trans 'De-Identified' %}
                                         </label></h4>
                                     <p ng-show="!!export.formname">
                                         <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
                                     </p>
+                                    {% if not is_deid %}
                                     <div class="alert alert-neutral alert-small"
                                          ng-show="!_.isEmpty(export.emailedExports)">
                                         <div ng-repeat="component in export.emailedExports">
@@ -237,12 +255,15 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% endif %}
                                 </td>
+                                {% if not is_deid %}
                                 <td>
                                     <a href="{{ export.editUrl }}"
                                        class="btn btn-default"><i class="fa fa-pencil"></i>
                                         {% trans 'Edit' %}</a>
                                 </td>
+                                {% endif %}
                                 <td>
                                     <a href="{{ export.downloadUrl }}"
                                        class="btn btn-primary">

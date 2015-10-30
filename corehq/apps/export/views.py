@@ -16,6 +16,7 @@ import pytz
 from corehq import toggles, privileges
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.app_manager.models import Application
+from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -44,6 +45,7 @@ from corehq.apps.reports.standard.export import (
 )
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
+from corehq.apps.reports.views import require_can_view_all_reports
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import (
     use_bootstrap3,
@@ -52,7 +54,7 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import require_permission, get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
@@ -76,6 +78,39 @@ require_form_export_permission = require_permission(
 )
 
 
+class ExportsPermissionsMixin(object):
+    """For mixing in with a subclass of BaseDomainView
+    """
+
+    @property
+    def has_edit_permissions(self):
+        return self.request.couch_user.has_permission(self.domain, get_permission_name(Permissions.edit_data))
+
+    @classmethod
+    def has_deid_permissions(cls, request, domain):
+        return (
+            has_privilege(request, privileges.DEIDENTIFIED_DATA)
+            and hasattr(request, 'couch_user')
+            and cls.check_deid_read_permissions(request, domain)
+        )
+
+    @staticmethod
+    def check_deid_read_permissions(request, domain):
+        return request.couch_user.has_permission(
+            domain,
+            get_permission_name(Permissions.view_report),
+            data='corehq.apps.reports.standard.export.DeidExportReport'
+        )
+
+    @property
+    def has_deid_read_permissions(self):
+        return self.check_deid_read_permissions(self.request, self.domain)
+
+    @property
+    def can_view_deid(self):
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+
+
 class BaseExportView(BaseProjectDataView):
     template_name = 'export/customize_export.html'
     export_type = None
@@ -89,10 +124,6 @@ class BaseExportView(BaseProjectDataView):
                       else self.report_class.name),
             'url': self.export_home_url,
         }]
-
-    @method_decorator(require_form_export_permission)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def export_helper(self):
@@ -163,6 +194,10 @@ class BaseCreateCustomExportView(BaseExportView):
     """
     todo: Refactor in v2 of redesign
     """
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseCreateCustomExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -243,6 +278,10 @@ class CreateCustomCaseExportView(BaseCreateCustomExportView):
 
 
 class BaseModifyCustomExportView(BaseExportView):
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseModifyCustomExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -368,7 +407,7 @@ def create_basic_form_checkpoint(index):
     return checkpoint
 
 
-class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
@@ -378,8 +417,10 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
     @use_daterangepicker
     @use_bootstrap3
     @use_select2
-    def dispatch(self, *args, **kwargs):
-        return super(BaseDownloadExportView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if not (self.has_edit_permissions or (self.has_deid_read_permissions and self.can_view_deid)):
+            raise Http404()
+        return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not request.is_ajax():
@@ -470,12 +511,25 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             and not self.request.is_ajax()
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
-            exports = map(lambda e: self.download_export_form.format_export_data(
-                self.get_export_schema(e['id'])
-            ), raw_export_list)
+            exports = map(lambda e: self.get_export_schema(e['id']),
+                          raw_export_list)
         elif self.export_id:
-            exports = [self.download_export_form.format_export_data(
-                self.get_export_schema(self.export_id))]
+            exports = [self.get_export_schema(self.export_id)]
+
+        # check deid if the user has readonly permissions
+        if not self.has_edit_permissions:
+            if not self.can_view_deid:
+                raise Http404()
+            exports = filter(lambda x: x.is_safe, exports)
+
+        # if there are no exports, this page doesn't exist
+        if not exports:
+            raise Http404()
+
+        exports = map(
+            lambda e: self.download_export_form.format_export_data(e),
+            exports
+        )
         return exports
 
     @property
@@ -484,10 +538,6 @@ class BaseDownloadExportView(JSONResponseMixin, BaseProjectDataView):
             return int(self.request.GET.get('max_column_size', 2000))
         except TypeError:
             return 2000
-
-    @property
-    def can_view_deid(self):
-        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
     def get_filters(self, filter_form_data):
         """Should return a SerializableFunction object to be passed to the
@@ -674,6 +724,11 @@ class DownloadFormExportView(BaseDownloadExportView):
 
     @property
     def parent_pages(self):
+        if not self.has_edit_permissions:
+            return [{
+                'title': DeIdFormExportListView.page_title,
+                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
+            }]
         return [{
             'title': FormExportListView.page_title,
             'url': reverse(FormExportListView.urlname, args=(self.domain,)),
@@ -802,27 +857,27 @@ class DownloadCaseExportView(BaseDownloadExportView):
         return CaseExportSchema.get(export_id)
 
 
-class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
+class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
     allow_bulk_export = True
+    is_deid = False
 
     @use_bootstrap3
     @use_select2
-    def dispatch(self, *args, **kwargs):
-        return super(BaseExportListView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if not (self.has_edit_permissions or (self.is_deid and self.has_deid_read_permissions and self.can_view_deid)):
+            raise Http404()
+        return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
         return {
-            'create_export_form': self.create_export_form,
-            'create_export_form_title': self.create_export_form_title,
-            'bulk_download_url': self.bulk_download_url,
-            'allow_bulk_export': self.allow_bulk_export,
+            'create_export_form': self.create_export_form if not self.is_deid else None,
+            'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
+            'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
+            'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
+            'is_deid': self.is_deid,
         }
-
-    @property
-    def can_view_deid(self):
-        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
     @property
     def bulk_download_url(self):
@@ -908,6 +963,8 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
         """
         try:
             saved_exports = self.get_saved_exports()
+            if self.is_deid:
+                saved_exports = filter(lambda x: x.is_safe, saved_exports)
             saved_exports = map(self.fmt_export_data, saved_exports)
         except Exception as e:
             return format_angular_error(
@@ -971,6 +1028,8 @@ class BaseExportListView(JSONResponseMixin, BaseProjectDataView):
 
     @allow_remote_invocation
     def submit_app_data_drilldown_form(self, in_data):
+        if self.is_deid:
+            raise Http404()
         try:
             form_data = in_data['formData']
         except KeyError:
@@ -1041,6 +1100,8 @@ class FormExportListView(BaseExportListView):
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
+        if self.is_deid:
+            raise Http404()
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain)
             response = rmi_helper.get_form_rmi_response()
@@ -1067,10 +1128,22 @@ class FormExportListView(BaseExportListView):
         ))
 
 
+class DeIdFormExportListView(FormExportListView):
+    page_title = ugettext_noop("Export De-Identified Forms")
+    urlname = 'list_form_deid_exports'
+    is_deid = True
+
+
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
     page_title = ugettext_noop("Export Cases")
     allow_bulk_export = False
+
+    @property
+    def page_name(self):
+        if self.is_deid:
+            return _("Export De-Identified Cases")
+        return self.page_title
 
     @property
     @memoized
