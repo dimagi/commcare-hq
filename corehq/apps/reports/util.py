@@ -428,3 +428,11 @@ def is_mobile_worker_with_report_access(couch_user, domain):
         and domain is not None
         and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
     )
+
+
+def get_tuple_element_bindparam(base_name, index):
+    return '%s_%d' % (base_name, index)
+
+
+def get_tuple_bindparams(base_name, values):
+    return tuple(get_tuple_element_bindparam(base_name, i) for i, val in enumerate(values))
