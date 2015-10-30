@@ -748,7 +748,7 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
         sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
                                  group_by=self.group_by + ['month'],
-                                 whereclause=' AND '.join([f.build_expression(table) for f in self.filters]),
+                                 whereclause=AND(self.filters).build_expression(table),
                                  from_obj="\"" + self.table_name + "\""
                                  ), name='s')
 
@@ -764,7 +764,7 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
         count_uniq = alias(select(self.group_by + ["COUNT(DISTINCT(%s)) AS count_unique" % self.key],
                                   group_by=self.group_by + ['month'],
-                                  whereclause=' AND '.join([f.build_expression(table) for f in self.filters]),
+                                  whereclause=AND(self.filters).build_expression(table),
                                   from_obj="\"" + self.table_name + "\""
                                   ), name='cq')
 
