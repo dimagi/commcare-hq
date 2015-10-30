@@ -1,5 +1,5 @@
 from itertools import groupby
-from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
+from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import *
 from sqlalchemy.sql.expression import join, alias
@@ -29,11 +29,15 @@ class CareQueryMeta(QueryMeta):
         self.key = key
         super(CareQueryMeta, self).__init__(table_name, filters, group_by)
 
-
     def execute(self, metadata, connection, filter_values):
-        return connection.execute(self._build_query(filter_values)).fetchall()
+        try:
+            table = metadata.tables[self.table_name]
+        except KeyError:
+            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
 
-    def _build_query(self, filter_values):
+        return connection.execute(self._build_query(table, filter_values)).fetchall()
+
+    def _build_query(self, table, filter_values):
         having = []
         filter_cols = []
         external_cols = _get_grouping(filter_values)
@@ -41,12 +45,12 @@ class CareQueryMeta(QueryMeta):
         for fil in self.filters:
             if isinstance(fil, ANDFilter):
                 filter_cols.append(fil.filters[0].column_name)
-                having.append(fil.build_expression())
+                having.append(fil.build_expression(table))
             elif fil.column_name not in ['group', 'gender', 'group_leadership', 'disaggregate_by',
                                          'table_card_group_by']:
                 if fil.column_name not in external_cols and fil.column_name != 'maxmin':
                     filter_cols.append(fil.column_name)
-                having.append(fil.build_expression())
+                having.append(fil.build_expression(table))
 
         group_having = ''
         having_group_by = []

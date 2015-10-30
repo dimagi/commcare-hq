@@ -1,4 +1,4 @@
-from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn
+from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn, TableNotFoundException
 from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
 from sqlagg.filters import BETWEEN, EQ, LTE
 import sqlalchemy
@@ -54,6 +54,11 @@ class FunctionalityChecklistMeta(QueryMeta):
         return get_indicator_table(config, custom_metadata=metadata)
 
     def execute(self, metadata, connection, filter_values):
+        try:
+            table = metadata.tables[self.table_name]
+        except KeyError:
+            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
+
         asha_table = self.get_asha_table(metadata)
 
         max_date_query = sqlalchemy.select([
@@ -63,7 +68,7 @@ class FunctionalityChecklistMeta(QueryMeta):
 
         if self.filters:
             for filter in self.filters:
-                max_date_query.append_whereclause(filter.build_expression())
+                max_date_query.append_whereclause(filter.build_expression(table))
 
         max_date_query.append_group_by(
             asha_table.c.case_id
