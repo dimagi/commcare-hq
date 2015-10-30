@@ -1,5 +1,12 @@
 (function () {
 
+/**
+ * A MapList is an ordered list of objects, where each object has the keys "key" and "value".
+ * If a lang and/or langs are provided, the MapList will be localizable, and the
+ * "value" in each item will itself be an object, mapping language codes to strings.
+ * If the MapList is not localizable, each item's value will be a string.
+ */
+
 function MapList(o) {
     var self = this;
     self.localizable = o.lang || o.langs;

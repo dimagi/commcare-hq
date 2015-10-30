@@ -534,8 +534,14 @@ var DetailScreenConfig = (function () {
 
                 that.nodeset = uiElement.input().val(that.original.nodeset);
                 var o = {
-                    // TODO: move into key-value-mapping.js
-                    items: _.reduce(_.keys(that.original.connectors), function(memo, key) { return memo.concat({key: key, value: that.original.connectors[key]}); }, []),
+                    // Connectors are a simple string => string object, but key_value_mapping
+                    // expects an array of objects with "key" and "value" keys.
+                    items: _.reduce(_.keys(that.original.connectors), function(memo, key) {
+                        return memo.concat({
+                            key: key,
+                            value: that.original.connectors[key]
+                        });
+                    }, []),
                     modalTitle: 'Editing connectors',
                     buttonText: 'Connectors',
                 };
@@ -709,7 +715,7 @@ var DetailScreenConfig = (function () {
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.nodeset = this.nodeset.val();
-                // TODO: move into key-value-mapping.js
+                // Reduce key_value_mapping's ordered list into the single dict stored on the server.
                 column.connectors = _.reduce(this.connectors.getItems(),
                                              function(memo, value) {
                                                 memo[value.key] = value.value;
