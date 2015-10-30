@@ -2,7 +2,7 @@
 set -ev
 
 if [ "${MATRIX_TYPE}" = "python" ]; then
-    pip install coverage unittest2 mock --use-mirrors
+    pip install coverage unittest2 mock
 
     # kafka install, copied from https://github.com/wvanbergen/kafka/blob/master/.travis.yml
     wget http://www.us.apache.org/dist/kafka/0.8.2.1/kafka_2.10-0.8.2.1.tgz -O kafka.tgz

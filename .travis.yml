@@ -33,7 +33,7 @@ install:
   - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
   - "scripts/uninstall-requirements.sh"
-  - "time (pip install --exists-action w -r requirements/requirements.txt --use-mirrors --timeout 60)"
+  - "time (pip install --exists-action w -r requirements/requirements.txt --timeout 60)"
   - "cp .travis/localsettings.py localsettings.py"
   - ".travis/matrix-installs.sh"
 script: ".travis/matrix-runner.sh"
