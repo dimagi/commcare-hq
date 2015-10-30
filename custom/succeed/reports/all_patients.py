@@ -8,8 +8,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
     TableDataFormat
-from corehq.apps.reports.util import get_tuple_bindparams, \
-    get_tuple_element_bindparam
+from corehq.apps.reports.util import get_tuple_bindparams
 from corehq.util.dates import iso_string_to_datetime
 from custom.succeed.reports.patient_interactions import PatientInteractionsReport
 from custom.succeed.reports.patient_task_list import PatientTaskListReport

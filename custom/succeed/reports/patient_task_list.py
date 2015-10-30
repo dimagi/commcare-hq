@@ -8,8 +8,7 @@ from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, DatabaseColumn, DataFormatter, \
     TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.reports.util import get_tuple_bindparams, \
-    get_tuple_element_bindparam
+from corehq.apps.reports.util import get_tuple_bindparams
 from corehq.apps.userreports.sql import get_table_name
 from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
