@@ -3,6 +3,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
+    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
 python:
   - "2.7"
 env:
@@ -28,9 +29,6 @@ before_install:
   - "curl http://localhost:5984/"  # print couch info
   - "uname -a"
   - "lsb_release -a"
-  - "git clone https://github.com/dimagi/commcarehq-venv.git"
-  - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
-  - "source ~/virtualenv/bin/activate"
 install:
   - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
