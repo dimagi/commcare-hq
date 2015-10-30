@@ -8,11 +8,11 @@
         </td>
     </tr>
 {% endif %}
-    {% for row in report_table.rows %}
+    {% for section in sections %}
         <tr class="header">
             <th class="header" colspan='100%' style="background-color: #39506a; color: #ffffff;">{{ row.title }}</th>
         </tr>
-        {% for row in row.rows %}
+        {% for row in section.rows %}
             <tr>
                 {% for col in row %}
                     {% include 'reports/async/partials/tabular_cell.html' %}
