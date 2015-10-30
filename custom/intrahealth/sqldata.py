@@ -14,8 +14,8 @@ from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
-from corehq.apps.reports.util import get_tuple_bindparams, \
-    get_tuple_element_bindparam
+from corehq.apps.reports.util import get_tuple_bindparams
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.parsing import json_format_date
 
 PRODUCT_NAMES = {
@@ -32,12 +32,8 @@ PRODUCT_NAMES = {
 }
 
 
-def _archived_location_bindparam(index):
-    return get_tuple_element_bindparam('archived_location', index)
-
-
 def _locations_filter(archived_locations):
-    return NOT(IN('location_id', get_tuple_bindparams('archived_location', archived_locations)))
+    return NOT(IN('location_id', get_tuple_bindparams('archived_locations', archived_locations)))
 
 
 class BaseSqlData(SqlData):
@@ -93,13 +89,7 @@ class BaseSqlData(SqlData):
 
     @property
     def filter_values(self):
-        filter_values = copy(super(BaseSqlData, self).filter_values)
-        if 'archived_locations' in filter_values:
-            for i, val in enumerate(filter_values['archived_locations']):
-                filter_values[_archived_location_bindparam(i)] = val
-            del filter_values['archived_locations']
-        return filter_values
-
+        return clean_IN_filter_value(super(BaseSqlData, self), 'archived_locations')
 
 
 class ConventureData(BaseSqlData):
