@@ -6,12 +6,11 @@ from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     MessageMetadata)
 from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.sms import messages
 from corehq.apps.sms import util
 from corehq.apps.sms.models import MessagingEvent
 from corehq.util.translation import localize
 
-OUTGOING = ugettext_noop("Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply '123'%(replyto)s to start using SMS with CommCareHQ.")
-CONFIRM = ugettext_noop("Thank you. This phone has been verified for using SMS with CommCareHQ")
 
 VERIFICATION__ALREADY_IN_USE = 1
 VERIFICATION__ALREADY_VERIFIED = 2
@@ -60,14 +59,23 @@ def send_verification(domain, user, phone_number, logged_event):
         user.get_id
     )
 
-    with localize(user.language):
-        message = _(OUTGOING) % {
-            'name': user.username.split('@')[0],
-            'replyto': ' to %s' % util.clean_phone_number(reply_phone) if reply_phone else '',
-        }
-        send_sms(domain, user, phone_number, message,
-            metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
-        subevent.completed()
+    if reply_phone:
+        message = messages.get_message(
+            messages.MSG_VERIFICATION_START_WITH_REPLY,
+            context=(user.raw_username, reply_phone),
+            domain=domain,
+            language=user.get_language_code()
+        )
+    else:
+        message = messages.get_message(
+            messages.MSG_VERIFICATION_START_WITHOUT_REPLY,
+            context=(user.raw_username,),
+            domain=domain,
+            language=user.get_language_code()
+        )
+    send_sms(domain, user, phone_number, message,
+        metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
+    subevent.completed()
 
 
 def process_verification(v, msg):
@@ -107,10 +115,13 @@ def process_verification(v, msg):
         v.owner_id
     )
 
-    with localize(v.owner.get_language_code()):
-        send_sms_to_verified_number(v, _(CONFIRM),
-            metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
-        subevent.completed()
+    message = messages.get_message(
+        messages.MSG_VERIFICATION_SUCCESSFUL,
+        verified_number=v
+    )
+    send_sms_to_verified_number(v, message,
+        metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
+    subevent.completed()
 
 
 def verification_response_ok(text):
