@@ -5,6 +5,7 @@ from sqlagg.filters import *
 from sqlalchemy.sql.expression import join, alias
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, TableDataFormat
+from corehq.apps.reports.util import get_tuple_bindparams, get_tuple_element_bindparam
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter
 from sqlalchemy import select
 import urllib
@@ -134,20 +135,34 @@ class CareSqlData(SqlData):
                                                                             NOTEQ("case_status", "test")])]
         for k, v in self.geography_config.iteritems():
             if k in self.config and self.config[k]:
-                filters.append(IN(k, (k,)))
+                filters.append(IN(k, get_tuple_bindparams(k, self.config[k])))
         if 'value_chain' in self.config and self.config['value_chain']:
             filters.append(EQ("value_chain", "value_chain"))
-        if 'domains' in self.config and self.config['domains'] and self.config['domains'] != ('0',):
-            filters.append(IN("domains", ("domains",)))
-        if 'practices' in self.config and self.config['practices'] and self.config['practices'] != ('0',):
-            filters.append(IN("practices", ("practices",)))
         if 'group_leadership' in self.config and self.config['group_leadership']:
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
-        if 'schedule' in self.config and self.config['schedule'] and self.config['schedule'] != ('0',):
-            filters.append(IN('schedule', ('schedule',)))
+        for column_name in ['domains', 'practices', 'schedule']:
+            if column_name in self.config and self.config[column_name] and self.config[column_name] != ('0',):
+                filters.append(IN(column_name, get_tuple_bindparams(column_name, self.config[column_name])))
         return filters
+
+    @property
+    def filter_values(self):
+        filter_values = super(CareSqlData, self).filter_values
+
+        for k, v in self.geography_config.iteritems():
+            if k in self.config and self.config[k]:
+                for i, val in enumerate(self.config[k]):
+                    filter_values[get_tuple_element_bindparam(k, i)] = val
+                del filter_values[k]
+
+        for column_name in ['domains', 'practices', 'schedule']:
+            if self.config.get(column_name):
+                for i, val in enumerate(self.config[column_name]):
+                    filter_values[get_tuple_element_bindparam(column_name, i)] = val
+                del filter_values[column_name]
+        return filter_values
 
     def filter_request_params(self, request_params):
         if 'startdate' in request_params:
