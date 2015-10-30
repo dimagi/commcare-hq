@@ -1,31 +1,10 @@
 from abc import abstractmethod, abstractproperty, ABCMeta
-from dimagi.ext.jsonobject import (
-    JsonObject,
-    StringProperty,
-    DictProperty,
-    BooleanProperty,
-    DateTimeProperty,
-    ListProperty,
-    IntegerProperty,
-)
-from jsonobject.base import DefaultProperty
 
 
-class AbstractXFormInstance():
-    accessable_properties = [
-        'domain',
-        'app_id',
-        'xmlns',
-        'received_on',
-        'partial_submission',
-        'submit_ip',
-        'path',
-        'last_sync_token',
-        'build_id',
-    ]
+class AbstractXFormInstance(object):
 
     @abstractproperty
-    def id(self):
+    def form_id(self):
         raise NotImplementedError()
 
     @abstractproperty
@@ -60,7 +39,7 @@ class AbstractXFormInstance():
     def get_xml_element(self):
         raise NotImplementedError()
 
-    @abstractmethod
+    @classmethod
     def get(self, xform_id):
         raise NotImplementedError()
 
@@ -70,6 +49,10 @@ class AbstractXFormInstance():
 
     @abstractmethod
     def set_submission_properties(self, submission_post):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def to_json(self):
         raise NotImplementedError()
 
 

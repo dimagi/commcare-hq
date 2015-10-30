@@ -6,7 +6,7 @@ from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
 
 
 class PostTest(TestCase):
@@ -64,5 +64,6 @@ class PostTest(TestCase):
     def test_namespaces(self):
         self._test('namespaces', any_id_ok=True)
 
+    @run_with_all_backends
     def test_unicode(self):
         self._test('unicode', any_id_ok=True)

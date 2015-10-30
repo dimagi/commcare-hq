@@ -57,8 +57,10 @@ class SubmissionError(Exception, UnicodeMixIn):
 
 
 def acquire_lock_for_xform(xform_id):
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+
     # this is high, but I want to test if MVP conflicts disappear
-    lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
+    lock = FormProcessorInterface().xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
     try:
         lock.acquire()
     except RedisError:
