@@ -48,11 +48,8 @@ def get_default_couch_db_change_feed_pillow():
     try:
         kafka_client = get_kafka_client()
     except KafkaUnavailableError:
-        if settings.UNIT_TESTING:
-            logging.info('Ignoring missing kafka client during unit testing')
-            kafka_client = None
-        else:
-            raise
+        logging.warning('Ignoring missing kafka client during unit testing')
+        kafka_client = None
 
     return ChangeFeedPillow(couch_db=default_couch_db, kafka=kafka_client)
 
