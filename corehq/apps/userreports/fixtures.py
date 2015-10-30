@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from xml.etree import ElementTree
 
 from corehq import toggles
@@ -65,6 +66,8 @@ class ReportFixturesProvider(object):
                 reports_elem.append(self._report_config_to_fixture(report_config, user))
             except UserReportsError:
                 pass
+            except Exception as err:
+                logging.exception('Error generating report fixture: {}'.format(err))
         root.append(reports_elem)
         return [root]
 
