@@ -1,11 +1,14 @@
 import json
+from django.conf import settings
 from kafka import KeyedProducer
+from kafka.common import KafkaUnavailableError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.models import ChangeMeta
 from corehq.apps.change_feed.topics import get_topic
 from couchforms.models import all_known_formlike_doc_types
+import logging
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
 
@@ -42,7 +45,16 @@ class ChangeFeedPillow(PythonPillow):
 
 def get_default_couch_db_change_feed_pillow():
     default_couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
-    return ChangeFeedPillow(couch_db=default_couch_db, kafka=get_kafka_client())
+    try:
+        kafka_client = get_kafka_client()
+    except KafkaUnavailableError:
+        if settings.UNIT_TESTING:
+            logging.info('Ignoring missing kafka client during unit testing')
+            kafka_client = None
+        else:
+            raise
+
+    return ChangeFeedPillow(couch_db=default_couch_db, kafka=kafka_client)
 
 
 def _get_document_type(document_or_none):
