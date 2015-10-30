@@ -29,7 +29,11 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import (
+    get_tuple_bindparams,
+    get_tuple_element_bindparam,
+    make_form_couch_key,
+)
 from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
@@ -833,13 +837,21 @@ class UsersIdsData(SqlData):
 
     @property
     def filters(self):
-        if self.config.get('awc'):
-            return [IN('awc', ('awc',))]
-        elif self.config.get('gp'):
-            return [IN('gp', ('gp',))]
-        elif self.config.get('block'):
-            return [IN('block', ('block',))]
+        for column_name in ['awc', 'gp', 'block']:
+            if self.config.get(column_name):
+                return [IN(column_name, get_tuple_bindparams(column_name, self.config[column_name]))]
         return []
+
+    @property
+    def filter_values(self):
+        filter_values = super(UsersIdsData, self).filter_values
+        for column_name in ['awc', 'gp', 'block']:
+            if self.config.get(column_name):
+                for i, val in enumerate(self.config[column_name]):
+                    filter_values[get_tuple_element_bindparam(column_name, i)] = val
+                del filter_values[column_name]
+                return filter_values
+        return filter_values
 
     @property
     def columns(self):
