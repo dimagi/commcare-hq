@@ -65,6 +65,19 @@ class PropertyPathGetterSpec(JsonObject):
         return self.expression(item, context)
 
 
+class NamedExpressionSpec(JsonObject):
+    type = TypeProperty('named')
+    name = StringProperty(required=True)
+
+    def configure(self, context):
+        if self.name not in context.named_expressions:
+            raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
+        self._context = context
+
+    def __call__(self, item, context=None):
+        return self._context.named_expressions[self.name](item, context)
+
+
 class ConditionalExpressionSpec(JsonObject):
     type = TypeProperty('conditional')
     test = DictProperty(required=True)
