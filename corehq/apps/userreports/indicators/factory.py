@@ -18,7 +18,6 @@ from corehq.apps.userreports.indicators.specs import (
     LedgerBalancesIndicatorSpec,
     RawIndicatorSpec,
 )
-from corehq.apps.commtrack.models import StockState
 
 
 def _build_count_indicator(spec, context):

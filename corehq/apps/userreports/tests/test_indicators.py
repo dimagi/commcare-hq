@@ -456,17 +456,13 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
             "column_id": "soh",
             "display_name": "Stock On Hand",
             "ledger_section": "soh",
-            "product_codes": [
-                "abc",
-                "def",
-                "ghi",
-            ]
+            "product_codes": ["abc", "def", "ghi"],
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            }
         }
-        self.stock_states = {
-            'abc': 32,
-            'def': 85,
-            'ghi': 11,
-        }
+        self.stock_states = {'abc': 32, 'def': 85, 'ghi': 11}
 
     @patch.object(LedgerBalancesIndicator, '_get_values_by_product')
     def test_ledger_balances_indicator(self, get_values_by_product):

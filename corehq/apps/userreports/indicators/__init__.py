@@ -104,6 +104,7 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         self.product_codes = spec.product_codes
         self.column_id = spec.column_id
         self.ledger_section = spec.ledger_section
+        self.case_id_expression = spec.get_case_id_expression()
         super(LedgerBalancesIndicator, self).__init__(spec.display_name)
 
     def _make_column(self, product_code):
@@ -123,7 +124,7 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         return map(self._make_column, self.product_codes)
 
     def get_values(self, item, context=None):
-        case_id = item['_id']
+        case_id = self.case_id_expression(item)
         values = self._get_values_by_product(self.ledger_section, case_id)
         return [ColumnValue(self._make_column(product_code), values[product_code])
                 for product_code in self.product_codes]

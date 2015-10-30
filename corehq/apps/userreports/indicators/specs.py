@@ -103,3 +103,12 @@ class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
     type = TypeProperty('ledger_balances')
     product_codes = ListProperty(required=True)
     ledger_section = StringProperty()
+    case_id_expression = DictProperty()
+
+    def get_case_id_expression(self):
+        from corehq.apps.userreports.expressions.factory import ExpressionFactory
+        expression_spec = self.case_id_expression or {
+            "type": "property_name",
+            "property_name": "_id",
+        }
+        return ExpressionFactory.from_spec(expression_spec)
