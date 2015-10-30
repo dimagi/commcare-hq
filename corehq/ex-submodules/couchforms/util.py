@@ -356,28 +356,27 @@ class SubmissionPost(object):
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
 
-    def _attach_shared_props(self, doc):
+    def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
         # used on forms and errors
-        doc.auth_context = self.auth_context.to_json()
-        doc.submit_ip = self.submit_ip
-        doc.path = self.path
+        xform.auth_context = self.auth_context.to_json()
+        xform.submit_ip = self.submit_ip
+        xform.path = self.path
 
-        doc.openrosa_headers = self.openrosa_headers
-        doc.last_sync_token = self.last_sync_token
+        xform.openrosa_headers = self.openrosa_headers
+        xform.last_sync_token = self.last_sync_token
 
         if self.received_on:
-            doc.received_on = self.received_on
+            xform.received_on = self.received_on
 
         if self.date_header:
-            doc.date_header = self.date_header
+            xform.date_header = self.date_header
 
-        doc.domain = self.domain
-        doc.app_id = self.app_id
-        doc.build_id = self.build_id
-        doc.export_tag = ["domain", "xmlns"]
-
-        return doc
+        xform.domain = self.domain
+        xform.app_id = self.app_id
+        xform.build_id = self.build_id
+        xform.export_tag = ["domain", "xmlns"]
+        return xform
 
     def run(self):
         if timezone_migration_in_progress(self.domain):
@@ -392,10 +391,10 @@ class SubmissionPost(object):
             return HttpResponseBadRequest(self.instance.message), None, []
 
         def process(xform):
-            self._attach_shared_props(xform)
+            self._set_submission_properties(xform)
             if xform.doc_type != 'SubmissionErrorLog':
                 found_old = scrub_meta(xform)
-                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform._id)
+                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform.id)
 
         try:
             lock_manager = process_xform(self.instance,
