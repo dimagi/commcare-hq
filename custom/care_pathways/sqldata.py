@@ -130,19 +130,19 @@ class CareSqlData(SqlData):
                                                                             NOTEQ("case_status", "test")])]
         for k, v in self.geography_config.iteritems():
             if k in self.config and self.config[k]:
-                filters.append(IN(k, k))
+                filters.append(IN(k, (k,)))
         if 'value_chain' in self.config and self.config['value_chain']:
             filters.append(EQ("value_chain", "value_chain"))
         if 'domains' in self.config and self.config['domains'] and self.config['domains'] != ('0',):
-            filters.append(IN("domains", "domains"))
+            filters.append(IN("domains", ("domains",)))
         if 'practices' in self.config and self.config['practices'] and self.config['practices'] != ('0',):
-            filters.append(IN("practices", "practices"))
+            filters.append(IN("practices", ("practices",)))
         if 'group_leadership' in self.config and self.config['group_leadership']:
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
         if 'schedule' in self.config and self.config['schedule'] and self.config['schedule'] != ('0',):
-            filters.append(IN('schedule', 'schedule'))
+            filters.append(IN('schedule', ('schedule',)))
         return filters
 
     def filter_request_params(self, request_params):

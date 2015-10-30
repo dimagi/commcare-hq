@@ -161,7 +161,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
         if 'care_site' in self.config and self.config['care_site']:
             filters.append(EQ('care_site', 'care_site'))
         if 'owner_id' in self.config and self.config['owner_id']:
-            filters.append(IN('owner_id', 'owner_id'))
+            filters.append(IN('owner_id', ('owner_id',)))
         return filters
 
     @property
