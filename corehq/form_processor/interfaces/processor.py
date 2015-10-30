@@ -1,8 +1,15 @@
-from corehq.form_processor.utils import to_generic
+import datetime
+from dimagi.utils.couch import LockManager, ReleaseOnError
+from dimagi.utils.decorators.memoized import memoized
+from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes, extract_meta_instance_id
+from corehq.form_processor.generic import GenericXFormInstance
 from corehq.util.test_utils import unit_testing_only
-from couchforms.util import process_xform
+from couchforms.util import process_xform, acquire_lock_for_xform
 from couchforms.attachments import AttachmentsManager
+from couchforms.exceptions import DuplicateError
 from casexml.apps.case.util import post_case_blocks
+
+from ..utils import should_use_sql_backend
 
 
 class FormProcessorInterface(object):
@@ -14,7 +21,25 @@ class FormProcessorInterface(object):
     def __init__(self, domain=None):
         self.domain = domain
 
-    @to_generic
+    @property
+    @memoized
+    def xform_model(self):
+        from couchforms.models import XFormInstance
+
+        if should_use_sql_backend(self.domain):
+            return None
+        else:
+            return XFormInstance
+
+    @property
+    @memoized
+    def case_model(self):
+        from casexml.apps.case.models import CommCareCase
+        if should_use_sql_backend(self.domain):
+            return None
+        else:
+            return CommCareCase
+
     @unit_testing_only
     def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
         """
@@ -34,11 +59,8 @@ class FormProcessorInterface(object):
 
     def submit_form_locally(self, instance, domain='test-domain', **kwargs):
         from corehq.apps.receiverwrapper.util import submit_form_locally
-        response, xform, cases = submit_form_locally(instance, domain, **kwargs)
-        # response is an iterable so @to_generic doesn't work
-        return response, xform.to_generic(), [case.to_generic() for case in cases]
+        return submit_form_locally(instance, domain, **kwargs)
 
-    @to_generic
     def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
