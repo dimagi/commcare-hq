@@ -179,7 +179,7 @@ class DispDesProducts(BaseSqlData):
             group_by.append('region_id')
         elif 'district_id' in self.config:
             group_by.append('district_id')
-        group_by.append('product_code')
+        group_by.append('product_id')
         return group_by
 
     @property
@@ -226,15 +226,15 @@ class DispDesProducts(BaseSqlData):
 
     @property
     def columns(self):
-        def get_prd_name(code):
+        def get_prd_name(id):
             try:
-                return SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                return SQLProduct.objects.get(product_id=id, domain=self.config['domain'],
                                               is_archived=False).name
             except SQLProduct.DoesNotExist:
                 pass
         return [
-            DatabaseColumn('Product Name', SimpleColumn('product_code'),
-                           format_fn=lambda code: get_prd_name(code)),
+            DatabaseColumn('Product Name', SimpleColumn('product_id'),
+                           format_fn=lambda id: get_prd_name(id)),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
         ]
@@ -250,7 +250,7 @@ class TauxDeRuptures(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['product_code']
+        group_by = ['product_id']
         if 'region_id' in self.config:
             group_by.append('district_name')
         else:
@@ -321,7 +321,7 @@ class FicheData(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['product_code', 'PPS_name']
+        return ['product_id', 'PPS_name']
 
     @property
     def columns(self):
@@ -335,6 +335,7 @@ class FicheData(BaseSqlData):
             AggregateColumn(_("Consommation Non Facturable"), diff,
                             [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]
+
 
 class PPSAvecDonnees(BaseSqlData):
     slug = 'pps_avec_donnees'
@@ -397,7 +398,7 @@ class DateSource(BaseSqlData):
         filters = super(DateSource, self).filters
         if 'location_id' in self.config:
             filters.append(EQ('location_id', 'location_id'))
-        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
+        filters.append(NOT(EQ('product_id', 'empty_prd_code')))
         return filters
 
     @property
@@ -432,12 +433,12 @@ class RecapPassageData(BaseSqlData):
         filters = super(RecapPassageData, self).filters
         if 'location_id' in self.config:
             filters.append(EQ("location_id", "location_id"))
-        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
+        filters.append(NOT(EQ('product_id', 'empty_prd_code')))
         return filters
 
     @property
     def group_by(self):
-        return ['date', 'product_code']
+        return ['date', 'product_id']
 
     @property
     def columns(self):
@@ -445,13 +446,13 @@ class RecapPassageData(BaseSqlData):
 
         def get_prd_name(code):
             try:
-                return SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                return SQLProduct.objects.get(product_id=id, domain=self.config['domain'],
                                               is_archived=False).name
             except SQLProduct.DoesNotExist:
                 pass
         return [
-            DatabaseColumn(_("Designations"), SimpleColumn('product_code'),
-                           format_fn=lambda code: get_prd_name(code)),
+            DatabaseColumn(_("Designations"), SimpleColumn('product_id'),
+                           format_fn=lambda id: get_prd_name(id)),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
@@ -489,7 +490,7 @@ class ConsommationData(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['product_code']
+        group_by = ['product_id']
         if 'region_id' in self.config:
             group_by.append('district_name')
         else:
@@ -534,7 +535,7 @@ class TauxConsommationData(BaseSqlData):
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.append('product_code')
+        group_by.append('product_id')
         return group_by
 
     @property
@@ -599,7 +600,7 @@ class NombreData(BaseSqlData):
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.append('product_code')
+        group_by.append('product_id')
 
         return group_by
 
@@ -780,6 +781,7 @@ class IntraHealthCustomColumn(CustomQueryColumn):
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by
         return self.query_cls(table_name, filters, group_by, self.key)
+
 
 class SumAndAvgGCustomColumn(IntraHealthCustomColumn):
     query_cls = SumAndAvgQueryMeta
