@@ -7,7 +7,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 class TestNamespaces(TestCase):
 
     def _assert_xmlns(self, xmlns, xform, xpath, expect_xmlns_index=False):
-        result = xform.get_data(xpath)
+        result = xform.xpath(xpath)
         self.assertEqual(xmlns, result['@xmlns'] if expect_xmlns_index else result)
 
     def testClosed(self):

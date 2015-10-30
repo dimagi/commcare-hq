@@ -27,22 +27,19 @@ class PostTest(TestCase):
 
         with open(os.path.join(os.path.dirname(__file__), 'data',
                                '{name}.json'.format(name=expected_name))) as f:
-            result = json.load(f)
+            expected = json.load(f)
 
         xform = FormProcessorInterface().post_xform(instance)
         xform_json = json.loads(json.dumps(xform.to_json()))
-        for key in ['is_archived', 'is_deprecated', 'is_duplicate', 'is_error', 'attachments']:
-            del xform_json[key]
 
-        result['received_on'] = xform_json['received_on']
-        result['_rev'] = xform_json['_rev']
-        result['_attachments'] = None
+        expected['received_on'] = xform_json['received_on']
+        expected['_rev'] = xform_json['_rev']
+        expected['_attachments'] = None
         xform_json['_attachments'] = None
         if any_id_ok:
-            result['_id'] = xform_json['_id']
-            result['id'] = xform_json['id']
+            expected['_id'] = xform_json['_id']
 
-        self.assertDictEqual(xform_json, result)
+        self.assertDictEqual(xform_json, expected)
 
     @run_pre_and_post_timezone_migration
     def test_cloudant_template(self):
