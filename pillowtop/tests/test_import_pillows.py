@@ -81,7 +81,7 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
         pillow = pillows[0]
         self.assertFalse(isclass(pillow))
         self.assertEqual(FakeConstructedPillow, type(pillow))
-        self.assertEqual(FakeConstructedPillow.get_name(), 'FakeConstructedPillowName')
+        self.assertEqual(pillow.get_name(), 'FakeConstructedPillowName')
 
     def test_get_pillow_class_by_name(self):
         pillow = get_pillow_by_name('FakeConstructedPillowName', instantiate=False)
@@ -91,6 +91,7 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
         pillow = get_pillow_by_name('FakeConstructedPillowName', instantiate=True)
         self.assertFalse(isclass(pillow))
         self.assertEqual(FakeConstructedPillow, type(pillow))
+        self.assertEqual(pillow.get_name(), 'FakeConstructedPillowName')
 
 
 @override_settings(PILLOWTOPS=PILLOWTOPS_OVERRIDE)
