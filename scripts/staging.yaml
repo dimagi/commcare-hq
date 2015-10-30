@@ -51,8 +51,8 @@ branches:
   - report-builder-b3+exports-ui-changes+b3-tf+10-30 # BB 10/30
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3 # Noah 10/20
-  - two-factor-otp-only # j$ 10/2
   - b3-tf # ben 10/1
+  - two-factor-otp-only # j$ 10/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
