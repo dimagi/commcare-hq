@@ -4,6 +4,8 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.reports.util import get_tuple_bindparams, \
+    get_tuple_element_bindparam
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
@@ -186,7 +188,7 @@ class ChildrenDeaths(BaseSqlData):
         return [
             DatabaseColumn("Total births",
                            CountUniqueColumn('doc_id',
-                                             filters=[AND([IN('mother_id', ('mother_ids',)),
+                                             filters=[AND([IN('mother_id', get_tuple_bindparams('mother_id', self.config['mother_ids'])),
                                                            OR([EQ('gender', 'female'), EQ('gender', 'male')])])],
                                              alias='total_births')),
             DatabaseColumn("Newborn deaths (< 1 m)",
@@ -205,6 +207,10 @@ class ChildrenDeaths(BaseSqlData):
                            CountUniqueColumn('doc_id', filters=self.filters + [EQ('reason_for_child_closure',
                                                                                   'death')], alias='total_deaths'))
         ]
+
+    @property
+    def filter_values(self):
+        filter_values = super(ChildrenDeaths, self).filter_values
 
 
 class ChildrenDeathDetails(BaseSqlData):
@@ -374,7 +380,7 @@ class NutritionBirthWeightDetails(BaseSqlData):
                                              filters=self.filters + [NOTEQ('weight_birth', 'empty')])),
             DatabaseColumn("Total births",
                            CountUniqueColumn('doc_id',
-                                             filters=[AND([IN('mother_id', ('mother_ids',)),
+                                             filters=[AND([IN('mother_id', get_tuple_bindparams('mother_id', self.config['mother_ids'])),
                                                            OR([EQ('gender', 'female'), EQ('gender', 'male')])])],
                                              alias='total_births'))]
 
@@ -393,6 +399,17 @@ class NutritionBirthWeightDetails(BaseSqlData):
             )
         ])
         return columns
+
+    @property
+    def filter_values(self):
+        filter_values = super(NutritionBirthWeightDetails, self).filter_values
+
+        if 'mother_ids' in filter_values and filter_values['mother_ids']:
+            for i, val in enumerate(self.config['mother_ids']):
+                filter_values[get_tuple_element_bindparam('mother_ids', i)] = val
+            del filter_values['mother_ids']
+
+        return filter_values
 
 
 class NutritionFeedingDetails(BaseSqlData):

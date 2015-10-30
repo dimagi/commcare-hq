@@ -3,6 +3,8 @@ from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.reports.util import get_tuple_bindparams, \
+    get_tuple_element_bindparam
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails
 
@@ -349,7 +351,18 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     @property
     def filters(self):
         self.config['mother_ids'] = tuple(DeliveryMothersIds(config=self.config).data.keys()) + ('',)
-        return [IN('mother_id', ('mother_ids',))]
+        return [IN('mother_id', get_tuple_bindparams('mother_id', self.config['mother_ids']))]
+
+    @property
+    def filter_values(self):
+        filter_values = super(DeliveryLiveBirthDetails, self).filter_values
+
+        if 'mother_ids' in filter_values and filter_values['mother_ids']:
+            for i, val in enumerate(self.config['mother_ids']):
+                filter_values[get_tuple_element_bindparam('mother_ids', i)] = val
+            del filter_values['mother_ids']
+
+        return filter_values
 
     @property
     def columns(self):
