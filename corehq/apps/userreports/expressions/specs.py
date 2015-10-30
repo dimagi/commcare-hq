@@ -68,8 +68,8 @@ class PropertyPathGetterSpec(JsonObject):
 class ConditionalExpressionSpec(JsonObject):
     type = TypeProperty('conditional')
     test = DictProperty(required=True)
-    expression_if_true = DictProperty(required=True)
-    expression_if_false = DictProperty(required=True)
+    expression_if_true = DefaultProperty(required=True)
+    expression_if_false = DefaultProperty(required=True)
 
     def configure(self, test_function, true_expression, false_expression):
         self._test_function = test_function
