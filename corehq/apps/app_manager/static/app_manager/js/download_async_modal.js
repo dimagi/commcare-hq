@@ -67,6 +67,9 @@ $(function(){
                     success: function (data) {
                         self.download_poll_url = data.download_url;
                         self.download_poll_id = data.download_id;
+                        if (data.message) {
+                            self.download_poll_url += '?message=' + encodeURIComponent(data.message);
+                        }
                         self.pollDownloadStatus();
                     },
                     error: function () {
