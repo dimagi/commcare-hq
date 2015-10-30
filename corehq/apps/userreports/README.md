@@ -27,6 +27,7 @@ indicators           | List of indicators to save
 table_id             | A unique ID for the table
 display_name         | A display name for the table that shows up in UIs
 base_item_expression | Used for making tables off of repeat or list data
+named_expressions    | A list of named expressions that can be referenced in other filters and indicators
 named_filters        | A list of named filters that can be referenced in other filters and indicators
 
 
@@ -302,6 +303,34 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
     }
 }
 ```
+
+#### Named Expressions
+
+Last, but certainly not least, are named expressions.
+These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
+This allows you to write out a very complicated expression a single time, but restill use it in multiple places with a simple syntax.
+
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+
+```json
+{
+    "type": "named",
+    "name": "my_expression"
+}
+```
+
+This assumes that your named expression section of your data source includes a snippet like the following:
+
+```json
+{
+    "my_expression": {
+        "type": "property_name",
+        "property_name": "test"
+    }
+}
+```
+
+This is just a simple example - the value that `"my_expression"` takes on can be as complicated as you want _as long as it doesn't reference any other named expressions_.
 
 ### Boolean Expression Filters
 
