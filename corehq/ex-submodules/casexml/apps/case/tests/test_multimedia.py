@@ -18,7 +18,6 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.sync_log import SyncLogInterface
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
-from corehq.form_processor.generic import GenericSyncLog
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -272,12 +271,13 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
              if value.get('data')], [])
 
     def test_sync_log_invalidation_bug(self):
-        sync_log = SyncLogInterface.create_from_generic(
-            GenericSyncLog(user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5')
+        sync_log = FormProcessorInterface().sync_log_model(
+            user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5'
         )
+        sync_log.save()
         _, _, [case] = self._doCreateCaseWithMultimedia()
 
         # this used to fail before we fixed http://manage.dimagi.com/default.asp?158373
         self._doSubmitUpdateWithMultimedia(new_attachments=['commcare_logo_file'], removes=[],
-                                           sync_token=sync_log.id)
+                                           sync_token=sync_log._id)
         FormProcessorTestUtils.delete_all_sync_logs()

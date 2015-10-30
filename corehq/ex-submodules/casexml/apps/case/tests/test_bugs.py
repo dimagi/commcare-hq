@@ -11,7 +11,6 @@ from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.generic import GenericCommCareCase, GenericCommCareCaseIndex
 
 
 class SimpleCaseBugTests(SimpleTestCase):

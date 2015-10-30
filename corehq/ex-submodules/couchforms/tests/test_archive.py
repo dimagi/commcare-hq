@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from couchforms.signals import xform_archived, xform_unarchived
 
-from corehq.form_processor.generic import GenericXFormInstance, GenericFormAttachment
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import TestFileMixin
