@@ -493,7 +493,7 @@ var DetailScreenConfig = (function () {
                 isTab: false,
                 hasNodeset: false,
                 nodeset: "",
-                connectors: [],
+                connectors: {},
             };
             _.defaults(this.original, tabDefaults);
             _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
@@ -534,9 +534,8 @@ var DetailScreenConfig = (function () {
 
                 that.nodeset = uiElement.input().val(that.original.nodeset);
                 var o = {
-                    lang: that.lang,
-                    langs: that.screen.langs,
-                    items: that.original.connectors,
+                    // TODO: move into key-value-mapping.js
+                    items: _.reduce(_.keys(that.original.connectors), function(memo, key) { return memo.concat({key: key, value: that.original.connectors[key]}); }, []),
                     modalTitle: 'Editing connectors',
                     buttonText: 'Connectors',
                 };
@@ -710,7 +709,13 @@ var DetailScreenConfig = (function () {
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.nodeset = this.nodeset.val();
-                column.connectors = this.connectors.getItems();
+                // TODO: move into key-value-mapping.js
+                column.connectors = _.reduce(this.connectors.getItems(),
+                                             function(memo, value) {
+                                                memo[value.key] = value.value;
+                                                return memo;
+                                             },
+                                             {});
                 column.format = this.format.val();
                 column.enum = this.enum_extra.getItems();
                 column.graph_configuration =
@@ -836,7 +841,7 @@ var DetailScreenConfig = (function () {
                         isTab: true,
                         hasNodeset: hasNodeset,
                         model: 'tab',
-                        connectors: [],
+                        connectors: {},
                     }, that));
                     that.columns.splice(0, 0, col);
                 };

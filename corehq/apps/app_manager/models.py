@@ -1536,7 +1536,7 @@ class DetailTab(IndexedSchema):
 
     # Any instance connectors necessary for the nodeset,
     # e.g., "reports" => "jr://fixture/reports"
-    connectors = SchemaListProperty(MappingItem)
+    connectors = DictProperty()
 
 
 class DetailColumn(IndexedSchema):
