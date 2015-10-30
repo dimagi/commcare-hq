@@ -48,12 +48,12 @@ class CareQueryMeta(QueryMeta):
         for fil in self.filters:
             if isinstance(fil, ANDFilter):
                 filter_cols.append(fil.filters[0].column_name)
-                having.append(fil.build_expression(table))
+                having.append(fil)
             elif fil.column_name not in ['group', 'gender', 'group_leadership', 'disaggregate_by',
                                          'table_card_group_by']:
                 if fil.column_name not in external_cols and fil.column_name != 'maxmin':
                     filter_cols.append(fil.column_name)
-                having.append(fil.build_expression(table))
+                having.append(fil)
 
         group_having = ''
         having_group_by = []
@@ -77,7 +77,7 @@ class CareQueryMeta(QueryMeta):
                                 group_by=['group_id'] + table_card_group + having_group_by, having=group_having), name='y')
         return select(['COUNT(x.doc_id) as %s' % self.key] + self.group_by,
                group_by=['maxmin'] + filter_cols + self.group_by,
-               having=" and ".join(having),
+               having=AND(having).build_expression(table),
                from_obj=join(s1, s2, s1.c.group_id==s2.c.group_id)).params(filter_values)
 
 
