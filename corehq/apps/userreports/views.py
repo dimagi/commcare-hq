@@ -96,11 +96,14 @@ def swallow_programming_errors(fn):
     def decorated(request, domain, *args, **kwargs):
         try:
             return fn(request, domain, *args, **kwargs)
-        except ProgrammingError:
+        except ProgrammingError as e:
             messages.error(
                 request,
                 _('There was a problem processing your request. '
-                  'If you have recently modified your report data source please try again in a few minutes.'))
+                  'If you have recently modified your report data source please try again in a few minutes.'
+                  '<br><br>Technical details:<br>{}'.format(e)),
+                extra_tags='html',
+            )
             return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
     return decorated
 
