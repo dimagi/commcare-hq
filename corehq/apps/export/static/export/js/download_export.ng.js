@@ -46,13 +46,9 @@
         if (checkForMultimedia) {
             djangoRMI.has_multimedia({})
                 .success(function (data) {
-                        console.log(data);
                     if (data.success) {
                         $scope.hasMultimedia = data.hasMultimedia;
                     }
-                })
-                .error(function () {
-                    // silent error for now
                 });
         }
 
