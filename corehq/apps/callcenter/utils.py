@@ -126,10 +126,10 @@ def call_center_case_owner(user, domain):
     """
     Return the appropriate owner id for the given users call center case.
     """
-    case = get_case_by_domain_hq_user_id(user.project, user._id, domain.call_center_config.case_type)
-    if case.owner_id:
+    case = get_case_by_domain_hq_user_id(user.project.name, user._id, domain.call_center_config.case_type)
+    if case and case.owner_id:
         return case.owner_id
-    elif domain.call_center_config.use_user_location_as_owner:
+    if domain.call_center_config.use_user_location_as_owner:
         return call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
     else:
         return domain.call_center_config.case_owner_id
