@@ -60,7 +60,7 @@ class BaseSqlData(SqlData):
 
         for k, v in LOCATION_HIERARCHY.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:
-                filters.append(IN(k, v['prop']))
+                filters.append(IN(k, (v['prop'],)))
         return filters
 
     @property

@@ -127,7 +127,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
             filters.append(EQ('closed', 'closed'))
         or_filter = []
         if self.config['owner_ids']:
-            or_filter.append(IN('owner_id', 'owner_ids'))
+            or_filter.append(IN('owner_id', ('owner_ids',)))
         if or_filter:
             or_filter.append(EQ('user_id', 'user_id'))
             filters.append(OR(filters=or_filter))
