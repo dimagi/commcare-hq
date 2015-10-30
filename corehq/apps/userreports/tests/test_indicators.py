@@ -4,6 +4,7 @@ from mock import patch
 from django.test import SimpleTestCase
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.specs import EvaluationContext
 
@@ -456,35 +457,16 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
                 "ghi",
             ]
         }
-        self.stock_states = {}
-        for val, case_id, product_code in [
-            (32, 'case1', 'abc'),
-            (85, 'case1', 'def'),
-            (11, 'case1', 'ghi'),
-        ]:
-            stock_state = self._make_stock_state(val, case_id, product_code)
-            self.stock_states[(case_id, product_code)] = stock_state
+        self.stock_states = {
+            'abc': 32,
+            'def': 85,
+            'ghi': 11,
+        }
 
-    @staticmethod
-    def _make_stock_state(value, case_id, product_code, section_id='soh'):
-        # if this gets switched to a db test, we'll also need to make products
-        return StockState(
-            stock_on_hand=value,
-            case_id=case_id,
-            product_id=product_code,
-            section_id=section_id,
-        )
-
-    def mock_getter(self, section_id, case_id, sql_product__code):
-        if (case_id, sql_product__code) in self.stock_states:
-            return self.stock_states[(case_id, sql_product__code)]
-        else:
-            raise StockState.DoesNotExist()
-
-    @patch('corehq.apps.userreports.indicators.factory.StockState.objects')
-    def test_ledger_balances_indicator(self, stock_states):
+    @patch.object(LedgerBalancesIndicator, '_get_values_by_product')
+    def test_ledger_balances_indicator(self, get_values_by_product):
+        get_values_by_product.return_value = self.stock_states
         indicator = IndicatorFactory.from_spec(self.spec)
-        stock_states.get = self.mock_getter
 
         doc = {'_id': 'case1'}
         values = indicator.get_values(doc, EvaluationContext(doc, 0))

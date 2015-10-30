@@ -1,3 +1,4 @@
+from collections import defaultdict
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.sql import truncate_value
 from fluff import TYPE_INTEGER, TYPE_DECIMAL
@@ -109,21 +110,20 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         column_id = '{}_{}'.format(self.column_id, product_code)
         return Column(column_id, TYPE_DECIMAL)
 
-    def _get_value(self, case_id, product_code):
-        try:
-            return StockState.objects.get(
-                section_id=self.ledger_section,
-                case_id=case_id,
-                sql_product__code=product_code,
-            ).stock_on_hand
-        except StockState.DoesNotExist:
-            return 0
+    @staticmethod
+    def _get_values_by_product(ledger_section, case_id):
+        """returns a defaultdict mapping product codes to their values"""
+        values_by_product = StockState.objects.filter(
+            section_id=ledger_section,
+            case_id=case_id,
+        ).values_list('sql_product__code', 'stock_on_hand')
+        return defaultdict(lambda: 0, values_by_product)
 
     def get_columns(self):
         return map(self._make_column, self.product_codes)
 
     def get_values(self, item, context=None):
         case_id = item['_id']
-        return [ColumnValue(self._make_column(product_code),
-                            self._get_value(case_id, product_code))
+        values = self._get_values_by_product(self.ledger_section, case_id)
+        return [ColumnValue(self._make_column(product_code), values[product_code])
                 for product_code in self.product_codes]
