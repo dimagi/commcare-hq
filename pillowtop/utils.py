@@ -128,7 +128,7 @@ def get_pillow_json(pillow_config):
         time_since_last = ''
         hours_since_last = None
     return {
-        'name': pillow.__class__.__name__,
+        'name': pillow_config.name,
         'seq': force_seq_int(checkpoint.get('seq')),
         'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
         'db_seq': force_seq_int(_get_current_seq_for_pillow(pillow)),
