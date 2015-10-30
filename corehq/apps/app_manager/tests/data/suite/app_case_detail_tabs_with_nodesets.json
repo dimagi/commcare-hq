@@ -579,9 +579,9 @@
                                 "fra":"",
                                 "en":"Name"
                             },
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "case_tile_field":"",
                             "calc_xpath":".",
                             "field":"name",
@@ -610,9 +610,9 @@
                             "header":{  
                                 "en":"Basics"
                             },
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "starting_index":0
                         },
                         {  
@@ -623,9 +623,9 @@
                             "header":{  
                                 "en":"Data"
                             },
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "starting_index":3
                         },
                         {  
@@ -636,15 +636,9 @@
                             "header":{  
                                 "en":"External Data"
                             },
-                            "connectors":[  
-                                {  
-                                    "doc_type":"MappingItem",
-                                    "value":{  
-                                        "en":"jr://blahblah"
-                                    },
-                                    "key":"external"
-                                }
-                            ],
+                            "connectors":{  
+                                "external": "jr://blahblah"
+                            },
                             "starting_index":4
                         }
                     ],
@@ -677,9 +671,9 @@
                             "header":{  
                                 "en":"Name"
                             },
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "case_tile_field":"",
                             "isTab":false,
                             "field":"name",
@@ -715,9 +709,9 @@
                             "header":{  
                                 "en":"Artist"
                             },
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "case_tile_field":"",
                             "isTab":false,
                             "field":"artist",
@@ -741,9 +735,9 @@
                             "header":{  
                                 "en":"Plays"
                             },
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "case_tile_field":"",
                             "isTab":false,
                             "field":"plays",
@@ -763,9 +757,9 @@
                             "enum":[  
 
                             ],
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "hasNodeset":false,
                             "header":{  
                                 "en":"Column"
@@ -789,9 +783,9 @@
                             "enum":[  
 
                             ],
-                            "connectors":[  
+                            "connectors":{  
 
-                            ],
+                            },
                             "hasNodeset":false,
                             "header":{  
                                 "en":"Column"
