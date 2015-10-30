@@ -1,0 +1,23 @@
+{% extends "reports/async/tabular.html" %}
+{% load i18n %}
+{% block tabular-body %}
+{% if report_table.pagination.is_on %}
+    <tr>
+        <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+            {% trans "Fetching additional data, please wait..." %}
+        </td>
+    </tr>
+{% endif %}
+    {% for section in sections %}
+        <tr class="header">
+            <th class="header" colspan='100%' style="background-color: #39506a; color: #ffffff;">{{ row.title }}</th>
+        </tr>
+        {% for row in section.rows %}
+            <tr>
+                {% for col in row %}
+                    {% include 'reports/async/partials/tabular_cell.html' %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

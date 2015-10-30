@@ -489,8 +489,16 @@ class OPMCaseRow(object):
             return True
 
     @property
+    def child_has_diarhea_in_this_month(self):
+        for form in self.filtered_forms(CHILDREN_FORMS, 1):
+            xpath = self.child_xpath('form/child_{num}/child{num}_suffer_diarrhea')
+            if form.xpath(xpath) == '1':
+                return True
+        return False
+
+    @property
     def child_with_diarhea_received_ors(self):
-        for form in self.filtered_forms(CHILDREN_FORMS):
+        for form in self.filtered_forms(CHILDREN_FORMS, 1):
             xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
             if form.xpath(xpath) and form.xpath(xpath) == '1':
                 return True

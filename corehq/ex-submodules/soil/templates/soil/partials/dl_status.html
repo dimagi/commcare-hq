@@ -1,7 +1,7 @@
 {% load i18n %}
 {% if error %}
     <h4>{% trans "There was an error processing your request" %}</h4>
-    <div class="alert alert-error">
+    <div id="error_{{ download_id }}" class="alert alert-error">
         {{ error|unordered_list}}
     </div>
 {% elif is_ready %}

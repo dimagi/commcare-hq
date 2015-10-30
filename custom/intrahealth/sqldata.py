@@ -1,5 +1,5 @@
 # coding=utf-8
-from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
+from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import alias
 from corehq.apps.locations.models import SQLLocation
@@ -327,7 +327,7 @@ class FicheData(BaseSqlData):
 
 class PPSAvecDonnees(BaseSqlData):
     slug = 'pps_avec_donnees'
-    title = 'PPS Avec Données'
+    title = u'PPS Avec Données'
     table_name = 'fluff_CouvertureFluff'
     col_names = ['location_id']
     have_groups = False
@@ -720,16 +720,23 @@ class IntraHealthQueryMeta(QueryMeta):
         super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by)
 
     def execute(self, metadata, connection, filter_values):
-        return connection.execute(self._build_query(filter_values)).fetchall()
+        try:
+            table = metadata.tables[self.table_name]
+        except KeyError:
+            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
+        return connection.execute(self._build_query(table, filter_values)).fetchall()
+
+    def _build_query(self, table, filter_values):
+        raise NotImplementedError()
 
 
 class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, filter_values):
+    def _build_query(self, table, filter_values):
 
         sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
                                  group_by=self.group_by + ['month'],
-                                 whereclause=' AND '.join([f.build_expression() for f in self.filters]),
+                                 whereclause=' AND '.join([f.build_expression(table) for f in self.filters]),
                                  from_obj="\"" + self.table_name + "\""
                                  ), name='s')
 
@@ -741,11 +748,11 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, filter_values):
+    def _build_query(self, table, filter_values):
 
         count_uniq = alias(select(self.group_by + ["COUNT(DISTINCT(%s)) AS count_unique" % self.key],
                                   group_by=self.group_by + ['month'],
-                                  whereclause=' AND '.join([f.build_expression() for f in self.filters]),
+                                  whereclause=' AND '.join([f.build_expression(table) for f in self.filters]),
                                   from_obj="\"" + self.table_name + "\""
                                   ), name='cq')
 

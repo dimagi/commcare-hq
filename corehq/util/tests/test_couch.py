@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.test import TestCase, SimpleTestCase
+from corehq.apps.groups.dbaccessors import refresh_group_views
 from corehq.apps.groups.models import Group
 from jsonobject.exceptions import WrappingAttributeError
 from mock import Mock
@@ -164,6 +165,7 @@ class IterDBTest(TestCase):
             for group in self.groups[4:]:
                 saved_groups.add(group._id)
                 iter_db.save(group)
+        refresh_group_views()
 
         self.assertEqual(deleted_groups, iter_db.deleted_ids)
         self.assertEqual(saved_groups, iter_db.saved_ids)
@@ -190,6 +192,7 @@ class IterDBTest(TestCase):
 
         ids = [g._id for g in self.groups] + ['NOT_REAL_ID']
         res = iter_update(self.db, mark_cool, ids)
+        refresh_group_views()
         self.assertEqual(res.not_found_ids, {'NOT_REAL_ID'})
         for result_ids, action in [
             (res.ignored_ids, 'IGNORE'),
@@ -253,7 +256,7 @@ class DocumentClassLookupTest(SimpleTestCase):
             self.assertEqual(model_class, get_document_class_by_name(model_name))
 
     def test_missing(self):
-        test_cases = [None, '', 'FooDocument']
+        test_cases = [None, 'FooDocument']
         for bad_model in test_cases:
             with self.assertRaises(DocumentClassNotFound):
                 get_document_class_by_name(bad_model)

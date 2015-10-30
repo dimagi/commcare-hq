@@ -32,40 +32,51 @@ class TestPillowTopFiltering(SimpleTestCase):
             'phonelog': [
                 'corehq.pillows.log.PhoneLogPillow',
             ],
+            'newstyle': [
+                {
+                    'name': 'FakeConstructedPillowName',
+                    'class': 'pillowtop.tests.FakeConstructedPillow',
+                    'instance': 'pillowtop.tests.make_fake_constructed_pillow'
+                }
+            ]
         }
 
     def test_no_blacklist_items(self):
-        expected_pillows = {u'corehq.pillows.case.CasePillow',
-                            u'corehq.pillows.xform.XFormPillow',
-                            u'corehq.pillows.domain.DomainPillow',
-                            u'corehq.pillows.user.UserPillow',
-                            u'corehq.pillows.application.AppPillow',
-                            u'corehq.pillows.group.GroupPillow',
-                            u'corehq.pillows.sms.SMSPillow',
-                            u'corehq.pillows.user.GroupToUserPillow',
-                            u'corehq.pillows.user.UnknownUsersPillow',
-                            u'corehq.pillows.sofabed.FormDataPillow',
-                            u'corehq.pillows.sofabed.CaseDataPillow',
-                            u'corehq.pillows.log.PhoneLogPillow'}
+        expected_pillows = {'CasePillow',
+                            'XFormPillow',
+                            'DomainPillow',
+                            'UserPillow',
+                            'AppPillow',
+                            'GroupPillow',
+                            'SMSPillow',
+                            'GroupToUserPillow',
+                            'UnknownUsersPillow',
+                            'FormDataPillow',
+                            'CaseDataPillow',
+                            'PhoneLogPillow',
+                            'FakeConstructedPillowName',
+                            }
 
-        self.assertEqual(expected_pillows, apply_pillow_actions_to_pillows(
-            [], self.pillowtops))
+        configs_back = apply_pillow_actions_to_pillows([], self.pillowtops)
+        self.assertEqual(expected_pillows, set([c.name for c in configs_back]))
 
     def test_with_blacklist_items(self):
-        expected_pillows = {u'corehq.pillows.case.CasePillow',
-                            u'corehq.pillows.xform.XFormPillow',
-                            u'corehq.pillows.domain.DomainPillow',
-                            u'corehq.pillows.user.UserPillow',
-                            u'corehq.pillows.application.AppPillow',
-                            u'corehq.pillows.group.GroupPillow',
-                            u'corehq.pillows.sms.SMSPillow',
-                            u'corehq.pillows.user.GroupToUserPillow',
-                            u'corehq.pillows.user.UnknownUsersPillow',
-                            u'corehq.pillows.sofabed.FormDataPillow',
-                            u'corehq.pillows.sofabed.CaseDataPillow'}
+        expected_pillows = {'CasePillow',
+                            'XFormPillow',
+                            'DomainPillow',
+                            'UserPillow',
+                            'AppPillow',
+                            'GroupPillow',
+                            'SMSPillow',
+                            'GroupToUserPillow',
+                            'UnknownUsersPillow',
+                            'FormDataPillow',
+                            'CaseDataPillow',
+                            'FakeConstructedPillowName',
+                            }
 
-        self.assertEqual(expected_pillows, apply_pillow_actions_to_pillows(
-            [{'exclude_groups': ['phonelog']}], self.pillowtops))
+        configs_back = apply_pillow_actions_to_pillows([{'exclude_groups': ['phonelog']}], self.pillowtops)
+        self.assertEqual(expected_pillows, set([c.name for c in configs_back]))
 
     def test_loading_existing_conf_file(self):
 
@@ -81,11 +92,9 @@ class TestPillowTopFiltering(SimpleTestCase):
     def test_india_server_exclusions(self):
         self.pillowtops['fluff'] = [
             'custom.bihar.models.CareBiharFluffPillow',
-            'custom.opm.models.OpmCaseFluffPillow',
             'custom.opm.models.OpmUserFluffPillow',
         ]
 
-        pillows = get_pillows_for_env('india', self.pillowtops)
-        self.assertNotIn('custom.opm.models.OpmCaseFluffPillow', pillows)
-        self.assertNotIn('custom.opm.models.OpmUserFluffPillow', pillows)
-        self.assertIn('custom.bihar.models.CareBiharFluffPillow', pillows)
+        pillows = [c.name for c in get_pillows_for_env('india', self.pillowtops)]
+        self.assertNotIn('OpmUserFluffPillow', pillows)
+        self.assertIn('CareBiharFluffPillow', pillows)

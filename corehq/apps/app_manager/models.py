@@ -10,7 +10,7 @@ import random
 import json
 import types
 import re
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 from functools import wraps
 from copy import deepcopy
@@ -749,10 +749,6 @@ class FormBase(DocumentSchema):
             return super(FormBase, cls).wrap(data)
 
     @classmethod
-    def generate_id(cls):
-        return hex(random.getrandbits(160))[2:-1]
-
-    @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         try:
             d = Application.get_db().view(
@@ -875,7 +871,7 @@ class FormBase(DocumentSchema):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     def get_app(self):
@@ -1525,14 +1521,18 @@ class GraphConfiguration(DocumentSchema):
 
 class DetailTab(IndexedSchema):
     """
-    Represents a tab in the case detail screen on the phone. Ex:
-        {
-            'name': 'Medical',
-            'starting_index': 3
-        }
+    Represents a tab in the case detail screen on the phone.
+    Each tab is itself a detail, nested inside the app's "main" detail.
     """
     header = DictProperty()
+
+    # The first index, of all fields in the parent detail, that belongs to this tab
     starting_index = IntegerProperty()
+
+    # A tab may be associated with a nodeset, resulting in a detail that
+    # iterates through sub-nodes of an entity rather than a single entity
+    has_nodeset = BooleanProperty(default=False)
+    nodeset = StringProperty()
 
 
 class DetailColumn(IndexedSchema):
@@ -1671,9 +1671,17 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
-    custom_xml = StringProperty()
+
+    # If True, a small tile will display the case name after selection.
+    persist_case_context = BooleanProperty()
+
+    # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
+    # If given, use this string for the case tile markup instead of the default temaplte
+    custom_xml = StringProperty()
+
     persist_tile_on_forms = BooleanProperty()
+    # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
@@ -1764,6 +1772,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     module_filter = StringProperty()
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    auto_select_case = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -1795,7 +1804,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     get_forms = IndexedSchema.Getter('forms')
@@ -3378,6 +3387,35 @@ class ReportModule(ModuleBase):
         # for now no media support for ReportModules
         return False
 
+    def check_report_validity(self):
+        """
+        returns is_valid, valid_report_configs
+
+        If any report doesn't exist, is_value is False, otherwise True
+        valid_report_configs is a list of all report configs that refer to existing reports
+
+        """
+        all_report_ids = [report._id for report in self.reports]
+        valid_report_configs = [report_config for report_config in self.report_configs
+                                if report_config.report_id in all_report_ids]
+
+        is_valid = (len(valid_report_configs) == len(self.report_configs))
+        return namedtuple('ReportConfigValidity', 'is_valid valid_report_configs')(
+            is_valid=is_valid,
+            valid_report_configs=valid_report_configs
+        )
+
+    def validate_for_build(self):
+        # Overrides super without calling it, intentionally,
+        # because I don't think anything in super is relevant to ReportModules
+        errors = []
+        if not self.check_report_validity().is_valid:
+            errors.append({
+                'type': 'report config ref invalid',
+                'module': self.get_module_info()
+            })
+        return errors
+
 
 class ShadowModule(ModuleBase, ModuleDetailsMixin):
     """
@@ -3406,7 +3444,10 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     @property
     def source_module(self):
         if self.source_module_id:
-            return self._parent.get_module_by_unique_id(self.source_module_id)
+            try:
+                return self._parent.get_module_by_unique_id(self.source_module_id)
+            except ModuleNotFoundException:
+                pass
         return None
 
     @property
@@ -3476,7 +3517,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def validate_for_build(self):
         errors = super(ShadowModule, self).validate_for_build()
         errors += self.validate_details_for_build()
-        if not self.source_module_id:
+        if not self.source_module:
             errors.append({
                 'type': 'no source module id',
                 'module': self.get_module_info()
@@ -5152,11 +5193,6 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         del source['build_spec']
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
-
-    for module in app.get_modules():
-        if isinstance(module, ReportModule):
-            for report_config in module.report_configs:
-                report_config.uuid = random_hex()
 
     app.save()
 

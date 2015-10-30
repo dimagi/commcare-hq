@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class TestNamespaces(TestCase):
@@ -13,7 +13,7 @@ class TestNamespaces(TestCase):
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "namespaces.xml")
         xml_data = open(file_path, "rb").read()
-        xform = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
         self._assert_xmlns('no namespace here', xform, 'form/empty')

@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.reminders.models import *
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.users.models import CommCareUser

@@ -2,7 +2,7 @@ from django.test import TestCase
 from couchforms.models import DefaultAuthContext
 import os
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class AuthTest(TestCase):
@@ -14,5 +14,5 @@ class AuthTest(TestCase):
         def process(xform):
             xform['auth_context'] = DefaultAuthContext().to_json()
 
-        xform = FormProcessorInterface.post_xform(xml_data, process=process)
+        xform = FormProcessorInterface().post_xform(xml_data, process=process)
         self.assertEqual(xform.auth_context, {'doc_type': 'DefaultAuthContext'})

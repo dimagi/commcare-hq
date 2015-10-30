@@ -112,19 +112,20 @@ var charts = (function() {
             // initialize records
             for (i = 0; i < config.y_axis_columns.length; i++) {
                 record = {
-                    key: config.y_axis_columns[i],
+                    key: config.y_axis_columns[i].display,
                     values: []
                 };
-                valuesDict[config.y_axis_columns[i]] = record;
+                valuesDict[config.y_axis_columns[i].column_id] = record;
                 chartData.push(record);
             }
+
             for (i = 0; i < data.length; i++) {
                 current = data[i];
                 for (j = 0; j < config.y_axis_columns.length; j++) {
-                    record = valuesDict[config.y_axis_columns[j]];
+                    record = valuesDict[config.y_axis_columns[j].column_id];
                     record.values.push({
                         x: current[config.x_axis_column] || '',
-                        y: current[config.y_axis_columns[j]]
+                        y: current[config.y_axis_columns[j].column_id]
                     });
                 }
             }

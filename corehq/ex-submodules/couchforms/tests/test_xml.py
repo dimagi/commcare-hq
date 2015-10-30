@@ -3,8 +3,10 @@
 
 import uuid
 import os
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from django.test import TestCase
+from corehq.form_processor.interfaces.xform import XFormInterface
+from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 
 
 class XMLElementTest(TestCase):
@@ -25,7 +27,7 @@ class XMLElementTest(TestCase):
                 form_id=uuid.uuid4().hex,
                 sample_value=value.encode(encoding),
             )
-            xform = FormProcessorInterface.post_xform(xml_data)
+            xform = FormProcessorInterface().post_xform(xml_data)
             self.assertEqual(value, xform.form['test'])
-            elem = FormProcessorInterface.get_xml_element(xform)
+            elem = XFormInterface(TEST_DOMAIN_NAME).get_xml_element(xform)
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)

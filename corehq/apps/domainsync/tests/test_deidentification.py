@@ -2,7 +2,7 @@ from django.test import TestCase
 from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 import os
 import json
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from ..config import DocumentTransform
@@ -21,7 +21,7 @@ class FormDeidentificationTestCase(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        instance = FormProcessorInterface.post_xform(xml_data)
+        instance = FormProcessorInterface().post_xform(xml_data)
         instance = XFormInstance.get(instance.id)
         transform = DocumentTransform(instance._doc, get_db())
         self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))
@@ -36,7 +36,7 @@ class FormDeidentificationTestCase(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        instance = FormProcessorInterface.post_xform(xml_data)
+        instance = FormProcessorInterface().post_xform(xml_data)
         instance = XFormInstance.get(instance.id)
         transform = DocumentTransform(instance._doc, get_db())
         self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))

@@ -189,6 +189,13 @@ CASE_LIST_TILE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
+    'show_persist_case_context_setting',
+    'Allow toggling the persistent case context tile',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the caselist',
@@ -222,6 +229,14 @@ DETAIL_LIST_TABS = StaticToggle(
     'Tabs in the case detail list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+DETAIL_LIST_TAB_NODESETS = StaticToggle(
+    'detail-list-tab-nodesets',
+    'Associate a nodeset with a case detail tab',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -472,15 +487,6 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
-OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
-    'enable_owner_cleanliness_restore',
-    'Enable restoring with updated owner cleanliness logic.',
-    TAG_PRODUCT_CORE,
-    namespaces=[NAMESPACE_DOMAIN],
-    randomness=.5,
-    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
-)
-
 MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
@@ -677,6 +683,13 @@ VIEW_BUILD_SOURCE = StaticToggle(
     'Allow users to view and diff build source files',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+USE_SQL_BACKEND = StaticToggle(
+    'sql_backend',
+    'Uses a sql backend instead of a couch backend for form processing',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
 )
 
 EWS_WEB_USER_EXTENSION = StaticToggle(

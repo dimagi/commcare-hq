@@ -27,6 +27,7 @@ indicators           | List of indicators to save
 table_id             | A unique ID for the table
 display_name         | A display name for the table that shows up in UIs
 base_item_expression | Used for making tables off of repeat or list data
+named_expressions    | A list of named expressions that can be referenced in other filters and indicators
 named_filters        | A list of named filters that can be referenced in other filters and indicators
 
 
@@ -302,6 +303,34 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
     }
 }
 ```
+
+#### Named Expressions
+
+Last, but certainly not least, are named expressions.
+These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
+This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
+
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+
+```json
+{
+    "type": "named",
+    "name": "my_expression"
+}
+```
+
+This assumes that your named expression section of your data source includes a snippet like the following:
+
+```json
+{
+    "my_expression": {
+        "type": "property_name",
+        "property_name": "test"
+    }
+}
+```
+
+This is just a simple example - the value that `"my_expression"` takes on can be as complicated as you want _as long as it doesn't reference any other named expressions_.
 
 ### Boolean Expression Filters
 
@@ -607,9 +636,11 @@ There are also additional examples in the [examples](https://github.com/dimagi/c
 
 A report configuration takes data from a data source and renders it in the UI. A report configuration consists of a few different sections:
 
-1. A list of filter fields. These map to filters that show up in the UI, and should translate to queries that can be made to limit the returned data.
-2. A list of aggregation fields. These defines how indicator data will be aggregated into rows in the report. The complete list of aggregations fields forms the *primary key* of each row in the report.
-3. A list of columns. Columns define the report columns that show up from the data source, as well as any aggregation information needed.
+1. [Report Filters](#report-filters) - These map to filters that show up in the UI, and should translate to queries that can be made to limit the returned data.
+2. [Aggregation](#aggregation) - This defines what each row of the report will be. It is a list of columns forming the *primary key* of each row.
+3. [Report Columns](#report-columns) - Columns define the report columns that show up from the data source, as well as any aggregation information needed.
+4. [Charts](#charts) - Definition of charts to display on the report.
+5. [Sort Expression](#sort-expression) - How the rows in the report are ordered.
 
 ## Samples
 
@@ -682,7 +713,7 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
   "slug": "role",
   "field": "role",
   "choices": [
-    {"value": "doctor", display:"Doctor"},
+    {"value": "doctor", "display": "Doctor"},
     {"value": "nurse"}
   ]
 }
@@ -702,7 +733,12 @@ Report builders may specify translations for the filter display value. See the s
 
 ## Report Columns
 
-Reports are made up of columns. There are currently three supported types of columns: _fields_ (which represent a single value), _percentages_ which combine two values in to a percent, and _expanded_ which expand a select question into multiple columns.
+Reports are made up of columns. The currently supported column types ares:
+
+* [_field_](#field-columns) which represents a single value
+* [_percent_](#percent-columns) which combines two values in to a percent
+* [_aggregate_date_](#aggregatedatecolumn) which aggregates data by month
+* [_expanded_](#expanded-columns) which expands a select question into multiple columns
 
 ### Field columns
 
@@ -748,23 +784,6 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 }
 ```
 
-### AggregateDateColumn
-
-AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`.
-Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
-
-Here's an example of an aggregate date column that aggregates the `received_on`  property for each month (allowing you to count/sum things that happened in that month).
-
-```json
- {
-    "column_id": "received_on",
-    "field": "received_on",
-    "type": "aggregate_date",
-    "display": "Month"
-  }
-```
-
-
 #### Formats
 
 The following percentage formats are supported.
@@ -778,26 +797,20 @@ numeric_percent | Percentage as a number                         | 33
 decimal         | Fraction as a decimal number                   | .333
 
 
-### The "aggregation" column property
+### AggregateDateColumn
 
-The aggregation column property defines how the column should be aggregated.
-If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
+AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`. Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
 
-The following table documents the other aggregation options, which can be used in aggregate reports.
+Here's an example of an aggregate date column that aggregates the `received_on` property for each month (allowing you to count/sum things that happened in that month).
 
-Format          | Description
---------------- | -----------------------------------------------
-simple          | No aggregation
-avg             | Average (statistical mean) of the values
-count_unique    | Count the unique values found
-count           | Count all rows
-min             | Choose the minimum value
-max             | Choose the maximum value
-sum             | Sum the values
-
-#### Column IDs
-
-Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+```json
+ {
+    "column_id": "received_on",
+    "field": "received_on",
+    "type": "aggregate_date",
+    "display": "Month"
+  }
+```
 
 
 ### Expanded Columns
@@ -848,6 +861,28 @@ Then you will get a report like this:
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
+
+### The "aggregation" column property
+
+The aggregation column property defines how the column should be aggregated. If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
+
+The following table documents the other aggregation options, which can be used in aggregate reports.
+
+Format          | Description
+--------------- | -----------------------------------------------
+simple          | No aggregation
+avg             | Average (statistical mean) of the values
+count_unique    | Count the unique values found
+count           | Count all rows
+min             | Choose the minimum value
+max             | Choose the maximum value
+sum             | Sum the values
+
+#### Column IDs
+
+Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+
+
 ### Calculating Column Totals
 
 To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
@@ -885,6 +920,7 @@ Valid `display` languages are any of the two or three letter language codes avai
 ## Aggregation
 
 Aggregation in reports is done using a list of columns to aggregate on.
+This defines how indicator data will be aggregated into rows in the report.
 The columns represent what will be grouped in the report, and should be the `column_id`s of valid report columns.
 In most simple reports you will only have one level of aggregation. See examples below.
 
@@ -1021,7 +1057,7 @@ A multibar chart takes a single x-axis column (typically a user, date, or select
 Field          | Description
 ---------------| -----------------------------------------------
 x_axis_column  | This will be the x-axis on the chart.
-y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format)
+y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format).
 
 Here's a sample spec:
 
@@ -1031,8 +1067,14 @@ Here's a sample spec:
     "title": "HIV Mismatch by Clinic",
     "x_axis_column": "clinic",
     "y_axis_columns": [
-        "diagnoses_match_no",
-        "diagnoses_match_yes"
+        {
+            "column_id": "diagnoses_match_no",
+            "display": "No match"
+        },
+        {
+            "column_id": "diagnoses_match_yes",
+            "display": "Match"
+        }
     ]
 }
 ```

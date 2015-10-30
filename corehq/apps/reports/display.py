@@ -66,91 +66,52 @@ class FormDisplay(object):
         return [self.form["form"].get(field) for field in self.report.other_fields]
 
 
-class FormType(object):
+class _FormType(object):
     def __init__(self, domain, xmlns, app_id=None):
         self.domain = domain
         self.xmlns = xmlns
         if app_id:
             self.app_id = app_id
         else:
+            form = get_form_analytics_metadata(domain, app_id, xmlns)
             try:
-                form = FormType.forms_by_xmlns(domain, xmlns, app_id)
-                self.app_id = form['app']['id']
-            except Exception:
-                self.app_id = {}
+                self.app_id = form['app']['id'] if form else None
+            except KeyError:
+                self.app_id = None
 
-    def get_id_tuple(self):
-        return self.domain, self.xmlns, self.app_id or None
-
-
-    @property
-    @memoized
-    def metadata(self):
-        try:
-            return FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
-        except Exception, e:
-            _assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'), notify_admins=True)
-            _assert(False, 'Failed on domain: {} | xmlns: {} | app_id: {} | error: {}'.format(
-                self.domain,
-                self.xmlns,
-                self.app_id,
-                e,
-            ))
-            return None
-
-    def get_label(self, html=False, lang=None):
-        if self.metadata:
-            form = self.metadata
-            if form.get('app'):
-                langs = form['app']['langs']
-                if lang:
-                    langs = [lang] + langs
-                app_name = form['app']['name']
-                module_name = form_name = None
-                if form.get('is_user_registration'):
-                    form_name = "User Registration"
-                    title = "%s > %s" % (app_name, form_name)
-                else:
-                    for lang in langs + form['module']['name'].keys():
-                        module_name = form['module']['name'].get(lang)
-                        if module_name is not None:
-                            break
-                    for lang in langs + form['form']['name'].keys():
-                        form_name = form['form']['name'].get(lang)
-                        if form_name is not None:
-                            break
-                    if module_name is None:
-                        module_name = "?"
-                    if form_name is None:
-                        form_name = "?"
-                    title = "%s > %s > %s" % (app_name, module_name, form_name)
-
-                if form.get('app_deleted'):
-                    title += ' [Deleted]'
-                if form.get('duplicate'):
-                    title += " [Multiple Forms]"
-
-                if html:
-                    name = u"<span>{title}</span>".format(title=title)
-                else:
-                    name = title
+    def get_label(self):
+        form = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
+        if form and form.get('app'):
+            langs = form['app']['langs']
+            app_name = form['app']['name']
+            module_name = form_name = None
+            if form.get('is_user_registration'):
+                form_name = "User Registration"
+                title = "%s > %s" % (app_name, form_name)
             else:
-                name = self.xmlns
+                for lang in langs + form['module']['name'].keys():
+                    module_name = form['module']['name'].get(lang)
+                    if module_name is not None:
+                        break
+                for lang in langs + form['form']['name'].keys():
+                    form_name = form['form']['name'].get(lang)
+                    if form_name is not None:
+                        break
+                if module_name is None:
+                    module_name = "?"
+                if form_name is None:
+                    form_name = "?"
+                title = "%s > %s > %s" % (app_name, module_name, form_name)
+
+            if form.get('app_deleted'):
+                title += ' [Deleted]'
+            if form.get('duplicate'):
+                title += " [Multiple Forms]"
+            name = title
         else:
             name = self.xmlns
         return name
 
-    @classmethod
-    def forms_by_xmlns(cls, domain, xmlns, app_id):
-        cache_key = 'corehq.apps.reports.display.FormType.forms_by_xmlns|{0}|{1}|{2}'.format(domain, xmlns, app_id)
-        form_json = cache.get(cache_key)
-        if form_json:
-            form = json.loads(form_json)
-        else:
-            form = get_form_analytics_metadata(domain, app_id, xmlns)
-            cache.set(cache_key, json.dumps(form), 30)
-        return form
 
-
-def xmlns_to_name(domain, xmlns, app_id, html=False):
-    return FormType(domain, xmlns, app_id).get_label(html=html)
+def xmlns_to_name(domain, xmlns, app_id):
+    return _FormType(domain, xmlns, app_id).get_label()

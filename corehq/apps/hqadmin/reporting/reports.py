@@ -696,14 +696,13 @@ def get_users_all_stats(domains, datespan, interval,
 
 def get_other_stats(histo_type, domains, datespan, interval,
         individual_domain_limit=16, is_cumulative="True",
-        user_type_mobile=None, require_submissions=True, supply_points=False):
+        user_type_mobile=None, supply_points=False):
     """
     A catch all for graphs that are not complex.
 
     individual_domain_limit: after limit make graph apply to all domains instead
                              graphing each individually
     user_type_mobile: mobile or web users
-    require_submissions: real users that have submitted something
     supply_points: used for cases that are supply points
     """
     if len(domains) <= individual_domain_limit:
@@ -727,7 +726,6 @@ def get_other_stats(histo_type, domains, datespan, interval,
         interval=interval,
         user_type_mobile=user_type_mobile,
         is_cumulative=is_cumulative == "True",
-        require_submissions=require_submissions,
         supply_points=supply_points,
     )
     if not stats_data['histo_data']:
@@ -908,8 +906,7 @@ def _total_until_date(histogram_type, datespan, filters=[], domain_list=None):
 
 
 def get_general_stats_data(domains, histo_type, datespan, interval="day",
-        user_type_mobile=None, is_cumulative=True, require_submissions=True,
-        supply_points=False):
+        user_type_mobile=None, is_cumulative=True, supply_points=False):
     additional_filters = []
     if histo_type == 'forms' and user_type_mobile is not None:
         additional_filters.append({

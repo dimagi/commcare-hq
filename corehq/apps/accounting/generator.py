@@ -101,9 +101,9 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def arbitrary_subscribable_plan():
+def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
     return DefaultProductPlan.objects.get(
-        edition=random.choice(SUBSCRIBABLE_EDITIONS),
+        edition=edition,
         product_type=SoftwareProductType.COMMCARE,
         is_trial=False
     ).plan.get_version()
@@ -128,7 +128,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain, organization=None)
     subscription = Subscription(
         account=billing_account,
-        plan_version=plan_version or arbitrary_subscribable_plan(),
+        plan_version=plan_version or subscribable_plan(),
         subscriber=subscriber,
         salesforce_contract_id=data_gen.arbitrary_unique_name("SFC")[:80],
         date_start=date_start,
@@ -201,10 +201,9 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
 
 def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, num_sms):
     from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
-    from corehq.apps.smsbillables import generator as sms_gen
 
-    gateway_fee = SmsGatewayFee.create_new('MACH', direction, sms_gen.arbitrary_fee())
-    usage_fee = SmsUsageFee.create_new(direction, sms_gen.arbitrary_fee())
+    gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
+    usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
 
     _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
 

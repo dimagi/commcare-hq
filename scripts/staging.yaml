@@ -45,15 +45,17 @@
 trunk: master
 name: autostaging
 branches:
-  - flip-fixtures-db  # danny 10/13
+  - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
+  - b3-tf+exports-ui-changes+report-builder-b3.2 # Ben 10/28
   - exports-ui-changes  # biyeun 9/28
-  - b3-tf # ben 10/1
-  - sync-history-email # Cal 9/22
+  - requirements-update # Simon 10/21
+  - report-builder-b3+requirements-update  # Simon 10/23
+  - report-builder-b3 # Noah 10/20
+  - two-factor-otp-only+requirements-update # Nick P 10/21
   - two-factor-otp-only # j$ 10/2
-  - shadow-modules # Jenny 10/6
-  - include-media-default # Ben 10/15
+  - b3-tf # ben 10/1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -77,4 +79,3 @@ submodules:
     branches: []
   submodules/fluff-src:
     branches: []
-

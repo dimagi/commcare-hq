@@ -1,6 +1,6 @@
 from datetime import date
 from ..constants import InvalidRow
-from . import OPMCaseReportTestBase, OPMCase, MockCaseRow
+from .case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow
 
 
 class TestPregnancyStatus(OPMCaseReportTestBase):

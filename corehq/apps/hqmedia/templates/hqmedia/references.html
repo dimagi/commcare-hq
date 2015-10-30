@@ -1,6 +1,5 @@
 {% extends "hqmedia/uploader_base.html" %}
 {% load hq_shared_tags %}
-{% load multimedia_tags %}
 {% load i18n %}
 
 {% block title %}{% trans 'Multimedia Map' %}{% endblock title %}
@@ -24,7 +23,7 @@
         $('.preview-media').tooltip();
     </script>
     {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' download_url=media_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
     {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=media_url%}
 {% endblock %}
 

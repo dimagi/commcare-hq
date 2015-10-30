@@ -1,3 +1,4 @@
+from collections import namedtuple
 from dimagi.ext.jsonobject import StringProperty
 from datetime import datetime
 
@@ -9,6 +10,13 @@ def TypeProperty(value):
     according to the type.
     """
     return StringProperty(required=True, choices=[value])
+
+
+class FactoryContext(namedtuple('FactoryContext', ('named_expressions', 'named_filters'))):
+
+    @staticmethod
+    def empty():
+        return FactoryContext({}, {})
 
 
 class EvaluationContext(object):

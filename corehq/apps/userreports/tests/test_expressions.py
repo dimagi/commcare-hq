@@ -177,7 +177,7 @@ class ConditionalExpressionTest(SimpleTestCase):
     def setUp(self):
         # this expression is the equivalent to:
         #   doc.true_value if doc.test == 'match' else doc.false_value
-        spec = {
+        self.spec = {
             'type': 'conditional',
             'test': {
                 # any valid filter can go here
@@ -198,7 +198,7 @@ class ConditionalExpressionTest(SimpleTestCase):
                 'property_name': 'false_value',
             },
         }
-        self.expression = ExpressionFactory.from_spec(spec)
+        self.expression = ExpressionFactory.from_spec(self.spec)
 
     def testConditionIsTrue(self):
         self.assertEqual('correct', self.expression({
@@ -224,6 +224,18 @@ class ConditionalExpressionTest(SimpleTestCase):
         self.assertEqual(None, self.expression({
             'test': 'match',
             'false_value': 'incorrect',
+        }))
+
+    def test_literals(self):
+        spec = copy.copy(self.spec)
+        spec['expression_if_true'] = 'true literal'
+        spec['expression_if_false'] = 'false literal'
+        expression_with_literals = ExpressionFactory.from_spec(spec)
+        self.assertEqual('true literal', expression_with_literals({
+            'test': 'match',
+        }))
+        self.assertEqual('false literal', expression_with_literals({
+            'test': 'non-match',
         }))
 
 
