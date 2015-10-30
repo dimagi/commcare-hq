@@ -13,6 +13,10 @@ from sqlagg.filters import (
     LTFilter,
     NOTEQFilter,
 )
+from corehq.apps.reports.util import (
+    get_INFilter_bindparams,
+    get_INFilter_element_bindparam,
+)
 
 from dimagi.utils.dates import DateSpan
 
@@ -126,14 +130,14 @@ class ChoiceListFilterValue(FilterValue):
             return ISNULLFilter(self.filter.field)
         return INFilter(
             self.filter.field,
-            tuple("%s_%d" % (self.filter.slug, i) for i, val in enumerate(self.value))
+            get_INFilter_bindparams(self.filter.slug, self.value)
         )
 
     def to_sql_values(self):
         if self.show_all or self.is_null:
             return {}
         return {
-            "%s_%d" % (self.filter.slug, i): val.value
+            get_INFilter_element_bindparam(self.filter.slug, i): val.value
             for i, val in enumerate(self.value)
         }
 

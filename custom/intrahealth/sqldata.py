@@ -12,6 +12,8 @@ from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
+from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.parsing import json_format_date
 
 PRODUCT_NAMES = {
@@ -26,6 +28,11 @@ PRODUCT_NAMES = {
     u'cu': [u"cu"],
     u'collier': [u"collier"]
 }
+
+
+def _locations_filter(archived_locations):
+    return NOT(IN('location_id', get_INFilter_bindparams('archived_locations', archived_locations)))
+
 
 class BaseSqlData(SqlData):
     datatables = False
@@ -78,6 +85,10 @@ class BaseSqlData(SqlData):
                     total_row.append('')
         return total_row
 
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(BaseSqlData, self), 'archived_locations')
+
 
 class ConventureData(BaseSqlData):
     slug = 'conventure'
@@ -93,7 +104,7 @@ class ConventureData(BaseSqlData):
         filters = super(ConventureData, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters[1:]
 
     @property
@@ -252,7 +263,7 @@ class TauxDeRuptures(BaseSqlData):
         filter = super(TauxDeRuptures, self).filters
         filter.append("total_stock_total = 0")
         if 'archived_locations' in self.config:
-            filter.append(NOT(IN('location_id', 'archived_locations')))
+            filter.append(_locations_filter(self.config['archived_locations']))
         return filter
 
     @property
@@ -305,7 +316,7 @@ class FicheData(BaseSqlData):
     def filters(self):
         filters = super(FicheData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
@@ -337,7 +348,7 @@ class PPSAvecDonnees(BaseSqlData):
         filters = super(PPSAvecDonnees, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters[1:]
 
     @property
@@ -473,7 +484,7 @@ class ConsommationData(BaseSqlData):
     def filters(self):
         filters = super(ConsommationData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
@@ -513,7 +524,7 @@ class TauxConsommationData(BaseSqlData):
     def filters(self):
         filters = super(TauxConsommationData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
@@ -578,7 +589,7 @@ class NombreData(BaseSqlData):
     def filters(self):
         filters = super(NombreData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
