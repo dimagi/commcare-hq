@@ -15,6 +15,7 @@ from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -137,13 +138,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     @property
     def filter_values(self):
-        filter_values = super(PatientTaskListReport, self).filter_values
-
-        if 'owner_ids' in filter_values and filter_values['owner_ids']:
-            for i, val in enumerate(self.config['owner_ids']):
-                filter_values[get_tuple_element_bindparam('owner_ids', i)] = val
-                del filter_values['owner_ids']
-        return filter_values
+        return clean_IN_filter_value(super(PatientTaskListReport, self).filter_values, 'owner_ids')
 
     @property
     def columns(self):

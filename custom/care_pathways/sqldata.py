@@ -11,6 +11,8 @@ from sqlalchemy import select
 import urllib
 import re
 from django.utils import html
+from custom.utils.utils import clean_IN_filter_value
+
 
 def _get_grouping(prop_dict):
         group = prop_dict['group']
@@ -151,17 +153,8 @@ class CareSqlData(SqlData):
     def filter_values(self):
         filter_values = super(CareSqlData, self).filter_values
 
-        for k, v in self.geography_config.iteritems():
-            if k in self.config and self.config[k]:
-                for i, val in enumerate(self.config[k]):
-                    filter_values[get_tuple_element_bindparam(k, i)] = val
-                del filter_values[k]
-
-        for column_name in ['domains', 'practices', 'schedule']:
-            if self.config.get(column_name):
-                for i, val in enumerate(self.config[column_name]):
-                    filter_values[get_tuple_element_bindparam(column_name, i)] = val
-                del filter_values[column_name]
+        for column_name in self.geography_config.keys() + ['domains', 'practices', 'schedule']:
+            clean_IN_filter_value(filter_values, column_name)
         return filter_values
 
     def filter_request_params(self, request_params):

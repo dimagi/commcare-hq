@@ -6,6 +6,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports.util import get_tuple_bindparams, \
     get_tuple_element_bindparam
+from custom.utils.utils import clean_IN_filter_value
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
@@ -210,7 +211,8 @@ class ChildrenDeaths(BaseSqlData):
 
     @property
     def filter_values(self):
-        filter_values = super(ChildrenDeaths, self).filter_values
+        return clean_IN_filter_value(super(ChildrenDeaths, self).filter_values, 'mother_ids')
+
 
 
 class ChildrenDeathDetails(BaseSqlData):
@@ -402,14 +404,7 @@ class NutritionBirthWeightDetails(BaseSqlData):
 
     @property
     def filter_values(self):
-        filter_values = super(NutritionBirthWeightDetails, self).filter_values
-
-        if 'mother_ids' in filter_values and filter_values['mother_ids']:
-            for i, val in enumerate(self.config['mother_ids']):
-                filter_values[get_tuple_element_bindparam('mother_ids', i)] = val
-            del filter_values['mother_ids']
-
-        return filter_values
+        return clean_IN_filter_value(super(ChildrenDeaths, self).filter_values, 'mother_ids')
 
 
 class NutritionFeedingDetails(BaseSqlData):

@@ -16,6 +16,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from couchforms.models import XFormInstance
 from custom.opm.utils import numeric_fn
+from custom.utils.utils import clean_IN_filter_value
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -846,11 +847,8 @@ class UsersIdsData(SqlData):
     def filter_values(self):
         filter_values = super(UsersIdsData, self).filter_values
         for column_name in ['awc', 'gp', 'block']:
-            if self.config.get(column_name):
-                for i, val in enumerate(self.config[column_name]):
-                    filter_values[get_tuple_element_bindparam(column_name, i)] = val
-                del filter_values[column_name]
-                return filter_values
+            if filter_values.get(column_name):
+                return clean_IN_filter_value(filter_values, column_name)
         return filter_values
 
     @property

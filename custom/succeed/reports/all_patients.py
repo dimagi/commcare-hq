@@ -13,6 +13,7 @@ from corehq.apps.reports.util import get_tuple_bindparams, \
 from corehq.util.dates import iso_string_to_datetime
 from custom.succeed.reports.patient_interactions import PatientInteractionsReport
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
@@ -168,13 +169,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
 
     @property
     def filter_values(self):
-        filter_values = super(PatientListReport, self).filter_values
-
-        if 'owner_id' in filter_values and filter_values['owner_id']:
-            for i, val in enumerate(self.config['owner_id']):
-                filter_values[get_tuple_element_bindparam('owner_id', i)] = val
-                del filter_values['owner_id']
-        return filter_values
+        return clean_IN_filter_value(super(PatientListReport, self).filter_values, 'owner_id')
 
     @property
     def columns(self):
