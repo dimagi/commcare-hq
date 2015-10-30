@@ -46,6 +46,7 @@ class FakeConstructedPillow(ConstructedPillow):
 def make_fake_constructed_pillow():
     fake_dao = MockDocumentStore()
     pillow = FakeConstructedPillow(
+        name='FakeConstructedPillowName',
         document_store=fake_dao,
         checkpoint=PillowCheckpoint(fake_dao, 'fake-constructed-pillow'),
         change_feed=RandomChangeFeed(10),
@@ -80,6 +81,7 @@ class PillowFactoryFunctionTestCase(SimpleTestCase):
         pillow = pillows[0]
         self.assertFalse(isclass(pillow))
         self.assertEqual(FakeConstructedPillow, type(pillow))
+        self.assertEqual(FakeConstructedPillow.get_name(), 'FakeConstructedPillowName')
 
     def test_get_pillow_class_by_name(self):
         pillow = get_pillow_by_name('FakeConstructedPillowName', instantiate=False)
