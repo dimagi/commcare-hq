@@ -9,6 +9,7 @@ from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, gen
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces.case import CaseInterface
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
@@ -666,6 +667,35 @@ class SyncTokenUpdateTest(SyncBaseTest):
             {parent.case_id: [grandparent.case_id],
              grandparent.case_id: []}
         )
+
+
+class SyncDeletedCasesTest(SyncBaseTest):
+
+    def test_deleted_case_doesnt_sync(self):
+        case = self.factory.create_case()
+        CaseInterface.soft_delete(case.id)
+        assert_user_doesnt_have_case(self, self.user, case._id)
+
+    def test_deleted_parent_doesnt_sync(self):
+        parent_id = uuid.uuid4().hex
+        child_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=child_id,
+                attrs={
+                    'create': True,
+                },
+                indices=[CaseIndex(
+                    CaseStructure(case_id=parent_id),
+                    relationship=CHILD_RELATIONSHIP,
+                    related_type=PARENT_TYPE,
+                )],
+            )
+        ])
+        CaseInterface.soft_delete(parent_id)
+        assert_user_doesnt_have_case(self, self.user, parent_id)
+        # todo: in the future we may also want to purge the child
+        assert_user_has_case(self, self.user, child_id)
 
 
 class ChangingOwnershipTest(SyncBaseTest):
