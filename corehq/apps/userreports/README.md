@@ -308,7 +308,7 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
 
 Last, but certainly not least, are named expressions.
 These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
-This allows you to write out a very complicated expression a single time, but restill use it in multiple places with a simple syntax.
+This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
 
 Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
 
