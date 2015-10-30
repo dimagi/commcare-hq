@@ -122,3 +122,26 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def _extract_meta_instance_id(form):
+    """Takes form json (as returned by xml2json)"""
+    if form.get('Meta'):
+        # bhoma, 0.9 commcare
+        meta = form['Meta']
+    elif form.get('meta'):
+        # commcare 1.0
+        meta = form['meta']
+    else:
+        return None
+
+    if meta.get('uid'):
+        # bhoma
+        return meta['uid']
+    elif meta.get('instanceID'):
+        # commcare 0.9, commcare 1.0
+        return meta['instanceID']
+    else:
+        return None
+
+

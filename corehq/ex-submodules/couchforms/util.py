@@ -57,27 +57,6 @@ class SubmissionError(Exception, UnicodeMixIn):
         return str(self.error_log)
 
 
-def _extract_meta_instance_id(form):
-    """Takes form json (as returned by xml2json)"""
-    if form.get('Meta'):
-        # bhoma, 0.9 commcare
-        meta = form['Meta']
-    elif form.get('meta'):
-        # commcare 1.0
-        meta = form['meta']
-    else:
-        return None
-
-    if meta.get('uid'):
-        # bhoma
-        return meta['uid']
-    elif meta.get('instanceID'):
-        # commcare 0.9, commcare 1.0
-        return meta['instanceID']
-    else:
-        return None
-
-
 def acquire_lock_for_xform(xform_id):
     # this is high, but I want to test if MVP conflicts disappear
     lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
