@@ -2,7 +2,7 @@
     "domains": ["mc-inscale"],
     "config": {
         "referenced_doc_type": "XFormInstance",
-        "engine_id": "default",
+        "engine_id": "ucr",
         "table_id": "weekly_forms",
         "display_name": "Weekly Forms",
         "configured_filter": {

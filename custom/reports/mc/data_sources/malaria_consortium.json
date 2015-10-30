@@ -2,7 +2,7 @@
     "domains": ["mc-inscale"],
     "config": {
         "referenced_doc_type": "XFormInstance",
-        "engine_id": "default",
+        "engine_id": "ucr",
         "table_id": "malaria_consortium",
         "display_name": "Malaria Consortium",
         "configured_filter": {
