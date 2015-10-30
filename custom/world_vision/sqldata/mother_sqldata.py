@@ -349,7 +349,7 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     @property
     def filters(self):
         self.config['mother_ids'] = tuple(DeliveryMothersIds(config=self.config).data.keys()) + ('',)
-        return [IN('mother_id', 'mother_ids')]
+        return [IN('mother_id', ('mother_ids',))]
 
     @property
     def columns(self):

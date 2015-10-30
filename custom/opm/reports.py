@@ -834,11 +834,11 @@ class UsersIdsData(SqlData):
     @property
     def filters(self):
         if self.config.get('awc'):
-            return [IN('awc', 'awc')]
+            return [IN('awc', ('awc',))]
         elif self.config.get('gp'):
-            return [IN('gp', 'gp')]
+            return [IN('gp', ('gp',))]
         elif self.config.get('block'):
-            return [IN('block', 'block')]
+            return [IN('block', ('block',))]
         return []
 
     @property
