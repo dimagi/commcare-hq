@@ -4,8 +4,7 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from corehq.apps.reports.util import get_tuple_bindparams, \
-    get_tuple_element_bindparam
+from corehq.apps.reports.util import get_tuple_bindparams
 from custom.utils.utils import clean_IN_filter_value
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData

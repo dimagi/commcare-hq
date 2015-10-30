@@ -32,7 +32,6 @@ from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import (
     get_tuple_bindparams,
-    get_tuple_element_bindparam,
     make_form_couch_key,
 )
 from corehq.apps.users.models import CommCareCase, CouchUser

@@ -5,6 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
 from corehq.apps.reports.util import get_tuple_bindparams, \
     get_tuple_element_bindparam
+from custom.utils.utils import clean_IN_filter_value
 
 LOCATION_HIERARCHY = {
     "lvl_1": {
@@ -69,10 +70,7 @@ class BaseSqlData(SqlData):
         filter_values = super(BaseSqlData, self).filter_values
 
         for k, v in LOCATION_HIERARCHY.iteritems():
-            if v['prop'] in self.config and self.config[v['prop']]:
-                for i, val in enumerate(self.config[v['prop']]):
-                    filter_values[get_tuple_element_bindparam(v['prop'], i)] = val
-                del filter_values[v['prop']]
+            clean_IN_filter_value(filter_values, v['prop'])
 
         return filter_values
 
