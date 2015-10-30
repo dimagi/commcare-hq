@@ -8,6 +8,8 @@ from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, DatabaseColumn, DataFormatter, \
     TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.util import get_tuple_bindparams, \
+    get_tuple_element_bindparam
 from corehq.apps.userreports.sql import get_table_name
 from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
@@ -127,11 +129,21 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
             filters.append(EQ('closed', 'closed'))
         or_filter = []
         if self.config['owner_ids']:
-            or_filter.append(IN('owner_id', ('owner_ids',)))
+            or_filter.append(IN('owner_id', get_tuple_bindparams('owner_ids', self.config['owner_ids'])))
         if or_filter:
             or_filter.append(EQ('user_id', 'user_id'))
             filters.append(OR(filters=or_filter))
         return filters
+
+    @property
+    def filter_values(self):
+        filter_values = super(PatientTaskListReport, self).filter_values
+
+        if 'owner_ids' in filter_values and filter_values['owner_ids']:
+            for i, val in enumerate(self.config['owner_ids']):
+                filter_values[get_tuple_element_bindparam('owner_ids', i)] = val
+                del filter_values['owner_ids']
+        return filter_values
 
     @property
     def columns(self):
