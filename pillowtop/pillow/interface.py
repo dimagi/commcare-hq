@@ -35,6 +35,10 @@ class PillowBase(object):
         """
         pass
 
+    @abstractmethod
+    def get_name(self):
+        pass
+
     def get_last_checkpoint_sequence(self):
         return self.checkpoint.get_or_create()['seq']
 
@@ -67,7 +71,9 @@ class PillowBase(object):
                     try:
                         self.processor(change)
                     except Exception as e:
-                        notify_exception(None, u'processor error {}'.format(e))
+                        notify_exception(None, u'processor error in pillow {} {}'.format(
+                            self.get_name(), e,
+                        ))
                         raise
                 else:
                     self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
@@ -86,7 +92,8 @@ class ConstructedPillow(PillowBase):
     arguments it needs.
     """
 
-    def __init__(self, document_store, checkpoint, change_feed, processor):
+    def __init__(self, name, document_store, checkpoint, change_feed, processor):
+        self._name = name
         self._document_store = document_store
         self._checkpoint = checkpoint
         self._change_feed = change_feed
@@ -104,3 +111,6 @@ class ConstructedPillow(PillowBase):
 
     def processor(self, change, do_set_checkpoint=True):
         self._processor.process_change(self, change, do_set_checkpoint)
+
+    def get_name(self):
+        return self._name
