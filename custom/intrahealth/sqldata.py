@@ -87,7 +87,7 @@ class BaseSqlData(SqlData):
 
     @property
     def filter_values(self):
-        return clean_IN_filter_value(super(BaseSqlData, self), 'archived_locations')
+        return clean_IN_filter_value(super(BaseSqlData, self).filter_values, 'archived_locations')
 
 
 class ConventureData(BaseSqlData):
