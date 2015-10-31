@@ -18,3 +18,4 @@ from .test_urgent_alerts import *
 from .handlers.undo import *
 from .test_notifications import *
 from .ews_test_reminders import *
+from .handlers.stop import *

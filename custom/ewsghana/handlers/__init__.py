@@ -12,3 +12,5 @@ MS_STOCKOUT = _('The %(ms_type)s has reported a stockout of %(products_names)s. 
 
 MS_RESOLVED_STOCKOUTS = _('The following commodities %(products_names)s are now available at the %(ms_type)s. '
                           'Please place your order now.')
+
+STOP_MESSAGE = _('You have requested to stop reminders to this number.')
