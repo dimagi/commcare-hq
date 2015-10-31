@@ -294,6 +294,7 @@ class AlertsHandler(KeywordHandler):
             text = self.msg.text
 
         if not domain.commtrack_enabled:
+            print "tutaj?"
             return False
         try:
             parser = EWSStockAndReceiptParser(domain, verified_contact)
@@ -312,7 +313,7 @@ class AlertsHandler(KeywordHandler):
 
         except NotAUserClassError:
             return False
-        except SMSError:
+        except (SMSError, NoDefaultLocationException):
             send_sms_to_verified_number(verified_contact, unicode(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
