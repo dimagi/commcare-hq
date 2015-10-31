@@ -25,7 +25,7 @@ class OnGoingNonReporting(WeeklyAlert):
         if program_id:
             for location_name, programs_dict in data.iteritems():
                 if program_id in programs_dict and \
-                        (programs_dict[program_id] < date_until or not programs_dict[program_id]):
+                        (not programs_dict[program_id] or programs_dict[program_id] < date_until):
                     locations.append(location_name)
         else:
             for location_name, programs_dict in data.iteritems():

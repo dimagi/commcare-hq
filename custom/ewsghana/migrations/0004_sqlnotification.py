@@ -18,8 +18,8 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(max_length=128)),
                 ('user_id', models.CharField(max_length=128)),
                 ('type', models.CharField(max_length=128)),
-                ('week', models.CharField(max_length=128)),
-                ('year', models.CharField(max_length=128)),
+                ('week', models.IntegerField()),
+                ('year', models.IntegerField()),
             ],
             options={
             },

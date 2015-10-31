@@ -149,8 +149,8 @@ class SQLNotification(models.Model):
     domain = models.CharField(max_length=128)
     user_id = models.CharField(max_length=128)
     type = models.CharField(max_length=128)
-    week = models.CharField(max_length=128)
-    year = models.CharField(max_length=128)
+    week = models.IntegerField()
+    year = models.IntegerField()
 
 
 @receiver(commcare_domain_pre_delete)
