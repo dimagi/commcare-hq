@@ -4,10 +4,10 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.alerts import ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
-from custom.ewsghana.alerts.alert import Alert
+from custom.ewsghana.alerts.alert import WeeklyAlert
 
 
-class OnGoingStockouts(Alert):
+class OnGoingStockouts(WeeklyAlert):
 
     message = ONGOING_STOCKOUT_AT_SDP
     filters = {}

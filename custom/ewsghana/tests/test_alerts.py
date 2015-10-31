@@ -92,36 +92,24 @@ class TestAlerts(TestCase):
         StockState.objects.all().delete()
 
     def test_ongoing_non_reporting(self):
+        now = datetime.utcnow()
         OnGoingNonReporting(TEST_DOMAIN).send()
         self.assertEqual(SMS.objects.count(), 1)
 
         smses = SMS.objects.all()
         self.assertEqual(smses[0].text, ONGOING_NON_REPORTING % 'Test Facility, Test Facility 2')
 
-        create_stock_report(self.loc1, {'tp': 1})
-        now = datetime.utcnow()
-
         OnGoingNonReporting(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses[0].text, ONGOING_NON_REPORTING % 'Test Facility 2')
-
-        create_stock_report(self.loc2, {'tp2': 1})
-
-        now = datetime.utcnow()
-
-        OnGoingNonReporting(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 0)
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 1)
 
     def test_ongoing_stockouts(self):
         OnGoingStockouts(TEST_DOMAIN).send()
 
         self.assertEqual(SMS.objects.count(), 0)
 
-        create_stock_report(self.loc1, {'tp': 0})
-
         now = datetime.utcnow()
+        create_stock_report(self.loc1, {'tp': 0})
 
         OnGoingStockouts(TEST_DOMAIN).send()
         smses = SMS.objects.filter(date__gte=now)
@@ -129,24 +117,9 @@ class TestAlerts(TestCase):
         self.assertEqual(smses.count(), 1)
         self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_SDP % 'Test Facility')
 
-        create_stock_report(self.loc2, {'tp': 0})
-
-        now = datetime.utcnow()
-
         OnGoingStockouts(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_SDP % 'Test Facility, Test Facility 2')
-
-        create_stock_report(self.loc1, {'tp': 10})
-        create_stock_report(self.loc2, {'tp': 10})
-
-        now = datetime.utcnow()
-
-        OnGoingStockouts(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 0)
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 1)
 
     def test_ongoing_stockouts_rms(self):
         OnGoingStockoutsRMS(TEST_DOMAIN).send()
@@ -163,17 +136,6 @@ class TestAlerts(TestCase):
         self.assertEqual(smses.count(), 2)
         self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_RMS % 'Test Medical Store, Test Medical Store 2')
 
-        create_stock_report(self.rms2, {'tp': 15})
-        now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 2)
-        self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_RMS % 'Test Medical Store')
-
-        create_stock_report(self.rms, {'tp': 15})
-        now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 0)
+        OnGoingStockouts(TEST_DOMAIN).send()
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 2)

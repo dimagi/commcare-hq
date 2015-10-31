@@ -59,7 +59,8 @@ def migration_task():
 
 
 # Alert when facilities have not been reported continuously for 3 weeks
-@periodic_task(run_every=crontab(hour=10, minute=00),
+# TODO change to trigger everyday
+@periodic_task(run_every=crontab(day_of_week="1-6", hour=10, minute=00),
                queue='logistics_reminder_queue')
 def on_going_non_reporting():
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -68,7 +69,8 @@ def on_going_non_reporting():
 
 
 # Ongoing STOCKOUTS at SDP and RMS
-@periodic_task(run_every=crontab(hour=10, minute=25),
+# TODO change to trigger everyday
+@periodic_task(run_every=crontab(day_of_week="1-6", hour=10, minute=25),
                queue='logistics_reminder_queue')
 def on_going_stockout():
     domains = EWSGhanaConfig.get_all_enabled_domains()
