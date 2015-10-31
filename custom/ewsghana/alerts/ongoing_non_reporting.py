@@ -2,10 +2,10 @@ from datetime import datetime, timedelta
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING
-from custom.ewsghana.alerts.alert import Alert
+from custom.ewsghana.alerts.alert import WeeklyAlert
 
 
-class OnGoingNonReporting(Alert):
+class OnGoingNonReporting(WeeklyAlert):
 
     message = ONGOING_NON_REPORTING
 
