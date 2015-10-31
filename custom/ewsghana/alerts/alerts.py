@@ -29,7 +29,8 @@ def report_completion_check(user):
 
 
 # sends overstock, understock, or SOH without receipts alerts
-def stock_alerts(transactions, user):
+def stock_alerts(transactions, verified_number):
+    user = verified_number.owner
     sql_location = user.sql_location
     report_helper = ProductsReportHelper(sql_location, transactions)
     products_below = report_helper.low_supply()
@@ -89,7 +90,7 @@ def stock_alerts(transactions, user):
         stripped_message = super_message.strip().strip(';')
         super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
         send_message_to_admins(user, super_message.rstrip())
-    send_sms_to_verified_number(user.get_verified_number(), message.rstrip())
+    send_sms_to_verified_number(verified_number, message.rstrip())
 
 
 def send_message_to_admins(user, message):
