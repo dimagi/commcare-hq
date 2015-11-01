@@ -106,8 +106,8 @@ def first_soh_reminder():
         FirstSOHReminder(domain).send()
 
 
-# Wednesday 13:57
-@periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=57),
+# Monday 13:57
+@periodic_task(run_every=crontab(day_of_week=1, hour=13, minute=57),
                queue='logistics_reminder_queue')
 def second_soh_reminder():
     domains = EWSGhanaConfig.get_all_enabled_domains()
