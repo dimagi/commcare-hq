@@ -124,7 +124,7 @@ BASE_ADDRESS = 'localhost:8000'
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '*******',
     'PINGDOM_API_ID': '*****',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
     'HUBSPOT_API_KEY': '*****',
 }

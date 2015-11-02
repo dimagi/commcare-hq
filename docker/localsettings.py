@@ -115,7 +115,7 @@ BASE_ADDRESS = '{}:8000'.format(os.environ.get('BASE_HOST', 'localhost'))
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '*******',
     'PINGDOM_API_ID': '*****',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
 }
 
