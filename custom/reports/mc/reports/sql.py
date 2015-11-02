@@ -130,6 +130,10 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
     section = None
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         return get_table_name(self.config['domain'], "malaria_consortium")
 
@@ -238,7 +242,7 @@ class DistrictWeekly(BaseReport):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.DistrictField',
     ]
-    slug = 'district_weekly'
+    slug = 'district_weekly_ucr'
     name = "UCR Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_WEEKLY_REPORT
 
@@ -350,7 +354,7 @@ class DistrictMonthly(BaseReport):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.DistrictField',
     ]
-    slug = 'district_monthly'
+    slug = 'district_monthly_ucr'
     name = "UCR Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
     section = DISTRICT_MONTHLY_REPORT
 
@@ -519,6 +523,10 @@ class WeeklyForms(SqlData):
         return get_table_name(self.config['domain'], "weekly_forms")
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def group_by(self):
         return [
             'date',
@@ -580,7 +588,7 @@ class WeeklyForms(SqlData):
 
 
 class HeathFacilityMonthly(DistrictMonthly):
-    slug = 'hf_monthly'
+    slug = 'hf_monthly_ucr'
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
@@ -596,7 +604,7 @@ class HealthFacilityWeekly(DistrictWeekly):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    slug = 'hf_weekly'
+    slug = 'hf_weekly_ucr'
     #TODO change to ugettext when old reports remove
     name = "UCR Relatorio Semanal aos Supervisores dos APEs"
     section = HF_WEEKLY_REPORT
