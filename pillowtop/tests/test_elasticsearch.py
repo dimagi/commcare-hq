@@ -2,6 +2,7 @@ import uuid
 from django.test import SimpleTestCase
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
+from pillowtop.pillow.interface import PillowRuntimeContext
 from .utils import require_explicit_elasticsearch_testing, get_doc_count
 
 
@@ -90,7 +91,7 @@ class ElasticPillowTest(SimpleTestCase):
             sequence_id=0,
             document=doc
         )
-        pillow.processor(change, False)
+        pillow.processor(change, PillowRuntimeContext(do_set_checkpoint=False))
         self.assertEqual(1, get_doc_count(self.es, self.index))
         es_doc = self.es.get_source(self.index, doc_id)
         for prop in doc:

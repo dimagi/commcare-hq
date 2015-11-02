@@ -76,6 +76,7 @@ class BasicPillow(PillowBase):
     """
     BasicPillow is actually a CouchPillow. PillowBase defines the actual interface.
     """
+    checkpoint_frequency = CHECKPOINT_FREQUENCY
     couch_filter = None  # string for filter if needed
     extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
@@ -145,13 +146,12 @@ class BasicPillow(PillowBase):
         # todo: see if we can remove this. It is hard to search for.
         return self.get_last_checkpoint_sequence()
 
-    def processor(self, change, do_set_checkpoint=True):
+    def processor(self, change, context):
         """
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
-        self.changes_seen += 1
-        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
+        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             self.set_checkpoint(change)
 
         self.process_change(change)
@@ -320,15 +320,14 @@ class PythonPillow(BasicPillow):
         wait_time = datetime.utcnow() - self.last_processed_time
         return wait_time > timedelta(seconds=self.max_processing_wait)
 
-    def processor(self, change, do_set_checkpoint=True):
-        self.changes_seen += 1
+    def processor(self, change, context):
         if self.use_chunking:
             self.change_queue.append(change)
             if self.queue_full or self.wait_expired:
                 self.process_chunk()
         elif self.python_filter(change['doc']) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
-        if self.changes_seen % self.checkpoint_frequency == 0 and do_set_checkpoint:
+        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
             # front of the chunks
             if self.use_chunking:

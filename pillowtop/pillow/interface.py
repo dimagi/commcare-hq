@@ -5,14 +5,22 @@ from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 
 
+class PillowRuntimeContext(object):
+    """
+    Runtime context for a pillow. Gets passed around during the processing methods
+    so that other functions can use it without maintaining global state on the class.
+    """
+    def __init__(self, changes_seen=0, do_set_checkpoint=True):
+        self.changes_seen = changes_seen
+        self.do_set_checkpoint = do_set_checkpoint
+
+
 class PillowBase(object):
     """
     This defines the external pillowtop API. Everything else should be considered a specialization
     on top of it.
     """
     __metaclass__ = ABCMeta
-
-    changes_seen = 0  # a rolling count of how many changes have been seen by the pillow
 
     @abstractproperty
     def document_store(self):
@@ -65,11 +73,13 @@ class PillowBase(object):
         """
         Process changes from the changes stream.
         """
+        context = PillowRuntimeContext(changes_seen=0, do_set_checkpoint=True)
         try:
             for change in self.get_change_feed().iter_changes(since=since, forever=forever):
                 if change:
                     try:
-                        self.processor(change)
+                        context.changes_seen += 1
+                        self.processor(change, context)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
@@ -78,7 +88,6 @@ class PillowBase(object):
                 else:
                     self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         except PillowtopCheckpointReset:
-            self.changes_seen = 0
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     @abstractmethod
