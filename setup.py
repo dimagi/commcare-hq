@@ -19,7 +19,7 @@ setup(
         "requests",
         "gevent",
         "greenlet",
-        "rawes==0.4.0",
+        "rawes==0.5.5",
         "elasticsearch==0.4.4",
         'django==1.7.10',
         'dimagi-utils>=1.2.3',
