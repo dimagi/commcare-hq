@@ -4,6 +4,7 @@ import pytz
 from pillowtop.checkpoints.util import get_formatted_current_timestamp
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.exceptions import PillowtopCheckpointReset
+from pillowtop.logger import pillow_logging
 
 
 class PillowCheckpointManager(object):
@@ -48,6 +49,9 @@ class PillowCheckpoint(object):
         return checkpoint
 
     def update_to(self, seq):
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
+        )
         checkpoint = self.get_or_create(verify_unchanged=True)
         checkpoint['seq'] = seq
         checkpoint['timestamp'] = get_formatted_current_timestamp()

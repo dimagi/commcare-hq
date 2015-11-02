@@ -66,9 +66,6 @@ class PillowBase(object):
         return self.checkpoint.get_or_create(verify_unchanged=verify_unchanged)
 
     def set_checkpoint(self, change):
-        pillow_logging.info(
-            "(%s) setting checkpoint: %s" % (self.checkpoint.checkpoint_id, change['seq'])
-        )
         self.checkpoint.update_to(change['seq'])
 
     def reset_checkpoint(self):
