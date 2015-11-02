@@ -9,7 +9,7 @@
 ├── bootstrap-better-typeahead#26036ce250 extraneous
 ├── chai#3.0.0 (3.4.0 available)
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#1.2.2
+├── fuse.js#1.2.2 extraneous
 ├── jquery#1.11.3 (latest is 3.0.0-alpha1+compat)
 ├─┬ jquery-ui#1.11.4 extraneous
 │ └── jquery#1.11.3 (3.0.0-alpha1+compat available)
