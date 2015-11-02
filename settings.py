@@ -533,9 +533,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-SMS_GATEWAY_URL = "http://localhost:8001/"
-SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
-
 # celery
 BROKER_URL = 'django://'  # default django db based
 
@@ -593,17 +590,6 @@ COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_de
 
 # couchlog/case search
 LUCENE_ENABLED = False
-
-
-# unicel sms config
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "changeme",
-                 "sender": "Promo"}
-
-# mach sms config
-MACH_CONFIG = {"username": "Dimagi",
-               "password": "changeme",
-               "service_profile": "changeme"}
 
 ####### SMS Queue Settings #######
 
