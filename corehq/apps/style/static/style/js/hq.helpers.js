@@ -48,11 +48,11 @@ $.fn.popover.Constructor.prototype.hide = function() {
     if (this.options.trigger === "hover" && this.tip().is(":hover")) {
         var that = this;
         setTimeout(function() {
-            return that.hide.call(that, arguments);
+            return that.hide.apply(that, arguments);
         }, that.options.delay.hide);
         return;
     }
-    oldHide.call(this, arguments);
+    oldHide.apply(this, arguments);
 };
 
 $.fn.hqHelp = function () {
@@ -94,7 +94,7 @@ $.showMessage = function (message, level) {
 
 
 $.fn.addSpinnerToButton = function () {
-    $(this).prepend('<i class="icon-refresh icon-spin"></i> ');
+    $(this).prepend('<i class="fa fa-refresh fa-spin icon-refresh icon-spin"></i> ');
 };
 
 
