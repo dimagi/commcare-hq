@@ -12,7 +12,7 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     xmlns = models.CharField(max_length=255)
     form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     form_data = models.TextField(null=True)
-    received_on = models.DateTimeField(auto_now_add=True)
+    received_on = models.DateTimeField()
 
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally

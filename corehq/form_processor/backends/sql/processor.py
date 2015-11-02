@@ -53,6 +53,7 @@ class FormProcessorSQL(object):
             # other properties can be set post-wrap
             form_uuid=form_id,
             xmlns=json_form.get('@xmlns'),
+            received_on=datetime.datetime.now()
         )
         #attachment_manager = AttachmentsManager(xform)
 
