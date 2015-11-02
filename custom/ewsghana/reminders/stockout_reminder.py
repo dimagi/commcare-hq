@@ -1,5 +1,7 @@
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
+from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.reminders import STOCKOUT_REPORT
 from custom.ewsghana.reminders.web_user_reminder import WebUserReminder
 from custom.ewsghana.utils import has_notifications_enabled
@@ -20,7 +22,15 @@ class StockoutReminder(WebUserReminder):
 
     def get_message(self, recipient):
         web_user = recipient
-        sql_location = web_user.get_sql_location(self.domain)
+        try:
+            extension = EWSExtension.objects.get(user_id=web_user.get_id, domain=self.domain)
+        except EWSExtension.DoesNotExist:
+            return
+
+        if not extension.location_id:
+            return
+
+        sql_location = SQLLocation.objects.get(location_id=extension.location_id, domain=self.domain)
         products_names = self._get_stockouts(sql_location.supply_point_id)
         if not products_names:
             return

@@ -61,8 +61,7 @@ def migration_task():
 
 
 # Alert when facilities have not been reported continuously for 3 weeks
-# TODO change to trigger everyday
-@periodic_task(run_every=crontab(day_of_week="1-6", hour=10, minute=00),
+@periodic_task(run_every=crontab(hour=10, minute=00),
                queue='logistics_reminder_queue')
 def on_going_non_reporting():
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -71,8 +70,7 @@ def on_going_non_reporting():
 
 
 # Ongoing STOCKOUTS at SDP and RMS
-# TODO change to trigger everyday
-@periodic_task(run_every=crontab(day_of_week="1-6", hour=10, minute=25),
+@periodic_task(run_every=crontab(hour=10, minute=25),
                queue='logistics_reminder_queue')
 def on_going_stockout():
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -82,21 +80,23 @@ def on_going_stockout():
 
 
 # Urgent Non-Reporting
-@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
+# First monday of month
+@periodic_task(run_every=crontab(day_of_week=1, day_of_month="1-7", hour=8, minute=20),
                queue='logistics_reminder_queue')
 def urgent_non_reporting():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
-        UrgentNonReporting(domain)
+        UrgentNonReporting(domain).send()
 
 
 # Urgent Stockout
-@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
+# First monday of month
+@periodic_task(run_every=crontab(day_of_week=1, day_of_month="1-7", hour=8, minute=20),
                queue='logistics_reminder_queue')
 def urgent_stockout():
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
-        UrgentStockoutAlert(domain)
+        UrgentStockoutAlert(domain).send()
 
 
 # Thursday 13:54
@@ -126,7 +126,8 @@ def third_soh_to_super():
         ThirdSOHReminder(domain).send()
 
 
-@periodic_task(run_every=crontab(day_of_month="2", hour=14, minute=6),
+# Wednesday 14:06
+@periodic_task(run_every=crontab(day_of_week=3, hour=14, minute=6),
                queue='logistics_reminder_queue')
 def stockout_notification_to_web_supers():
     domains = EWSGhanaConfig.get_all_enabled_domains()

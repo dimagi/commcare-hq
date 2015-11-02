@@ -8,15 +8,17 @@ from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
-from custom.ewsghana.models import FacilityInCharge
+from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
-    SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT
+    SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT, visit_website_reminder
 from custom.ewsghana.reminders.first_soh_reminder import FirstSOHReminder
 from custom.ewsghana.reminders.rrirv_reminder import RRIRVReminder
 from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 from custom.ewsghana.reminders.stockout_reminder import StockoutReminder
 from custom.ewsghana.reminders.third_soh_reminder import ThirdSOHReminder
 from custom.ewsghana.reminders.visit_website_reminder import VisitWebsiteReminder
+from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third_soh_to_super, \
+    stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, create_backend, \
     set_sms_notifications
 from corehq.apps.sms.backend import test
@@ -95,7 +97,12 @@ class TestReminders(TestCase):
             phone_number='5555'
         )
 
-        set_sms_notifications(TEST_DOMAIN, cls.web_user, True)
+        EWSExtension.objects.create(
+            domain=TEST_DOMAIN,
+            user_id=cls.web_user.get_id,
+            sms_notifications=True,
+            location_id=cls.loc2.get_id
+        )
 
         cls.web_user2 = bootstrap_web_user(
             domain=TEST_DOMAIN,
@@ -160,7 +167,7 @@ class TestReminders(TestCase):
         cls.backend.delete()
 
     def test_first_soh_reminder(self):
-        FirstSOHReminder(TEST_DOMAIN).send()
+        first_soh_reminder()
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 2)
 
@@ -175,7 +182,7 @@ class TestReminders(TestCase):
         )
 
     def test_second_soh_reminder(self):
-        SecondSOHReminder(TEST_DOMAIN).send()
+        second_soh_reminder()
         smses = SMS.objects.all().order_by('-date')
         self.assertEqual(smses.count(), 2)
 
@@ -194,7 +201,7 @@ class TestReminders(TestCase):
         })
 
         now = datetime.utcnow()
-        SecondSOHReminder(TEST_DOMAIN).send()
+        second_soh_reminder()
         smses = smses.filter(date__gte=now)
         self.assertEqual(smses.count(), 1)
 
@@ -207,7 +214,7 @@ class TestReminders(TestCase):
             'tp': 100
         })
         now = datetime.utcnow()
-        SecondSOHReminder(TEST_DOMAIN).send()
+        second_soh_reminder()
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 1)
         self.assertEqual(
@@ -224,7 +231,7 @@ class TestReminders(TestCase):
         self.assertEqual(smses.count(), 0)
 
     def test_third_soh_reminder(self):
-        ThirdSOHReminder(TEST_DOMAIN).send()
+        third_soh_to_super()
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 2)
 
@@ -235,7 +242,7 @@ class TestReminders(TestCase):
             'tp': 100
         })
         now = datetime.utcnow()
-        ThirdSOHReminder(TEST_DOMAIN).send()
+        third_soh_to_super()
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 2)
         self.assertEqual(
@@ -251,12 +258,12 @@ class TestReminders(TestCase):
             'tp2': 100
         })
         now = datetime.utcnow()
-        ThirdSOHReminder(TEST_DOMAIN).send()
+        third_soh_to_super()
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 0)
 
     def test_stockout_reminder(self):
-        StockoutReminder(TEST_DOMAIN).send()
+        stockout_notification_to_web_supers()
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 0)
 
@@ -266,7 +273,7 @@ class TestReminders(TestCase):
             }
         )
 
-        StockoutReminder(TEST_DOMAIN).send()
+        stockout_notification_to_web_supers()
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 1)
 
@@ -286,26 +293,25 @@ class TestReminders(TestCase):
         self.web_user.save()
 
         now = datetime.utcnow()
-        StockoutReminder(TEST_DOMAIN).send()
+        stockout_notification_to_web_supers()
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 0)
 
     def test_rrirv_reminder(self):
-        RRIRVReminder(TEST_DOMAIN).send()
+        reminder_to_submit_rrirv()
 
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 2)
 
     def test_visit_reminder(self):
-        VisitWebsiteReminder(TEST_DOMAIN).send()
-
+        reminder_to_visit_website()
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 0)
         now = datetime.utcnow()
         self.web_user2.last_login = now - timedelta(weeks=14)
         self.web_user2.save()
 
-        VisitWebsiteReminder(TEST_DOMAIN).send()
+        reminder_to_visit_website()
 
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 1)
@@ -314,7 +320,7 @@ class TestReminders(TestCase):
         self.web_user2.save()
 
         now = datetime.utcnow()
-        VisitWebsiteReminder(TEST_DOMAIN).send()
+        reminder_to_visit_website()
 
         smses = SMS.objects.filter(date__gte=now)
         self.assertEqual(smses.count(), 0)
