@@ -9,6 +9,7 @@ import hashlib
 import traceback
 import math
 import time
+from rawes.elastic_exception import ElasticException
 
 from requests import ConnectionError
 import simplejson
@@ -453,7 +454,13 @@ class AliasedElasticPillow(BasicPillow):
             return True
 
         es = self.get_es()
-        res = es.head(self.es_index)
+        try:
+            res = es.head(self.es_index)
+        except ElasticException as e:
+            if e.status_code == 404:
+                return False
+            else:
+                raise
         return res
 
     def get_doc_path(self, doc_id):
@@ -503,7 +510,7 @@ class AliasedElasticPillow(BasicPillow):
         Coarse way of deleting an index - a todo is to set aliases where need be
         """
         es = self.get_es()
-        if es.head(self.es_index):
+        if self.index_exists():
             es.delete(self.es_index)
 
     def create_index(self):
@@ -520,7 +527,7 @@ class AliasedElasticPillow(BasicPillow):
         id = changes_dict['id']
         if changes_dict.get('deleted', False):
             try:
-                if self.get_es().head(path=self.get_doc_path(id)):
+                if self.doc_exists(id):
                     self.get_es().delete(path=self.get_doc_path(id))
             except Exception, ex:
                 pillow_logging.error(
