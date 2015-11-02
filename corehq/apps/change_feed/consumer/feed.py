@@ -24,13 +24,14 @@ class KafkaChangeFeed(ChangeFeed):
     def iter_changes(self, since, forever):
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else 100
+
         consumer = KafkaConsumer(
             self._topic,
             group_id=self._group_id,
             bootstrap_servers=[settings.KAFKA_URL],
             consumer_timeout_ms=timeout,
+            auto_offset_reset='smallest',
         )
-
         offset = int(since)  # coerce sequence IDs to ints
         # this is how you tell the consumer to start from a certain point in the sequence
         consumer.set_topic_partitions((self._topic, self._partition, offset))
@@ -46,7 +47,7 @@ def change_from_kafka_message(message):
     change_meta = change_meta_from_kafka_message(message.value)
     return Change(
         id=change_meta.document_id,
-        sequence_id=None,
+        sequence_id=message.offset,
         document=None,
         deleted=change_meta.is_deletion,
         metadata=change_meta,
