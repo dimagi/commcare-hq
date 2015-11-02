@@ -25,6 +25,8 @@ from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain,
     bootstrap_domain
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
+from custom.logistics.utils import iterate_over_api_objects
+from dimagi.utils.couch.database import iter_docs
 
 
 EXTENSIONS = {
@@ -198,18 +200,30 @@ def migrate_email_settings(domain):
 
 
 @task(queue='logistics_background_queue', ignore_result=True)
-def fix_users_with_more_than_one_phone_number(domain):
+def migrate_needs_reminders_field_task(domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
-    ews_api = EWSApi(domain, endpoint)
+    domain_part = "%s.commcarehq.org" % domain
 
-    offset = 0
-    _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True})
-    while smsusers:
-        for sms_user in smsusers:
-            ews_api.sms_user_sync(sms_user)
-        offset += 100
-        _, smsusers = endpoint.get_smsusers(filters={'with_more_than_one_number': True}, offset=offset)
+    for sms_user in iterate_over_api_objects(endpoint.get_smsusers, filters={'needs_reminders': False}):
+        username_part = "%s%d" % (sms_user.name.strip().replace(' ', '.').lower(), sms_user.id)
+        username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
+        couch_user = CommCareUser.get_by_username(username)
+        if couch_user and 'needs_reminders' not in couch_user.user_data:
+            couch_user['user_data']['needs_reminders'] = "False"
+            couch_user.save()
+
+    ids = CommCareUser.ids_by_domain(domain)
+
+    to_save = []
+    for user in iter_docs(CommCareUser.get_db(), ids):
+        if 'needs_reminders' not in user['user_data']:
+            user['user_data']['needs_reminders'] = "True"
+            to_save.append(user)
+
+            if len(to_save) > 500:
+                CommCareUser.get_db().bulk_save(to_save)
+                to_save = []
 
 
 @task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
