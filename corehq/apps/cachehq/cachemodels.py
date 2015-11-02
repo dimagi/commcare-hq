@@ -59,22 +59,6 @@ class UserRoleGenerationCache(GenerationCache):
     ]
 
 
-class OrganizationGenerationCache(GenerationCache):
-    generation_key = '#gen#org#'
-    doc_types = ['Organization']
-    views = [
-        'orgs/by_name'
-    ]
-
-
-class TeamGenerationCache(GenerationCache):
-    generation_key = '#gen#team#'
-    doc_types = ['Team']
-    views = [
-        'orgs/team_by_domain',
-        'orgs/team_by_org_and_name'
-    ]
-
 class ReportGenerationCache(GenerationCache):
     generation_key = '#gen#reports#'
     doc_types = ['ReportConfig', 'HQGroupExportConfiguration', 'ReportNotification']
