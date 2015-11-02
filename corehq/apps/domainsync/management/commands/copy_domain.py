@@ -82,7 +82,13 @@ class Command(BaseCommand):
                     dest='postgres_password',
                     default='',
                     help="Password for postgres database to pull additional data from. If not specified will "
-                         "default to the value in settings.DATABASES")
+                         "default to the value in settings.DATABASES"),
+        make_option('--dont-run-multi-process',
+                    action='store_false',
+                    dest='run_multi_process',
+                    default=True,
+                    help="If set to true this spawn multiple processes which should speed up the time taken to "
+                         "copy. This must be false if running in a supervised process")
     )
 
     def handle(self, *args, **options):
@@ -93,6 +99,7 @@ class Command(BaseCommand):
         domain = args[1].strip()
         simulate = options['simulate']
         exclude_attachments = options['exclude_attachments']
+        self.run_multi_process = options['run_multi_process']
 
         since = json_format_date(iso_string_to_date(options['since'])) if options['since'] else None
 
@@ -121,7 +128,7 @@ class Command(BaseCommand):
             for type in doc_types:
                 startkey = [x for x in [domain, type, since] if x is not None]
                 endkey = [x for x in [domain, type, {}] if x is not None]
-                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, type=type, since=since,
+                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, doc_type=type, since=since,
                                postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
         elif options['id_file']:
             path = options['id_file']
@@ -161,7 +168,7 @@ class Command(BaseCommand):
                 print "{0:<30}- {1}".format(doc_type, doc_count[doc_type])
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
-                  type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
+                  doc_type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
 
         if not doc_ids:
             doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
@@ -169,23 +176,28 @@ class Command(BaseCommand):
         total = len(doc_ids)
         count = 0
         msg = "Found %s matching documents in domain: %s" % (total, domain)
-        msg += " of type: %s" % (type) if type else ""
+        msg += " of type: %s" % (doc_type) if doc_type else ""
         msg += " since: %s" % (since) if since else ""
         print msg
 
         err_log = self._get_err_log()
 
-        queue = Queue(150)
-        for i in range(NUM_PROCESSES):
-            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log, exclude_attachments).start()
+        if self.run_multi_process:
+            queue = Queue(150)
+            for i in range(NUM_PROCESSES):
+                Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log, exclude_attachments).start()
 
-        for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
-            count += 1
-            queue.put((doc, count))
+            for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
+                count += 1
+                queue.put((doc, count))
 
-        # shutdown workers
-        for i in range(NUM_PROCESSES):
-            queue.put(None)
+            # shutdown workers
+            for i in range(NUM_PROCESSES):
+                queue.put(None)
+        else:
+            for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
+                count += 1
+                copy_doc(doc, count, sourcedb, self.targetdb, exclude_types, total, simulate, exclude_attachments)
 
         err_log.close()
         if os.stat(err_log.name)[6] == 0:
@@ -236,28 +248,33 @@ class Worker(Process):
     def run(self):
         for doc, count in iter(self.queue.get, None):
             try:
-                if self.exclude_types and doc["doc_type"] in self.exclude_types:
-                    print "     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
-                          (doc["doc_type"], count, self.total, doc["doc_type"], doc["_id"])
-                else:
-                    if not self.simulate:
-                        for i in reversed(range(5)):
-                            try:
-                                dt = DocumentTransform(doc, self.sourcedb, self.exclude_attachments)
-                                break
-                            except RequestError as r:
-                                if i == 0:
-                                    _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(r))
-                                    raise
-                        for i in reversed(range(5)):
-                            try:
-                                save(dt, self.targetdb)
-                                break
-                            except (ResourceConflict, ParserError, TypeError) as e:
-                                if i == 0:
-                                    _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(e))
-                                    raise
-                    print "     Synced %s/%s docs (%s: %s)" % (count, self.total, doc["doc_type"], doc["_id"])
+                copy_doc(doc, count, self.sourcedb, self.targetdb, self.exclude_types, self.total, self.simulate,
+                         self.exclude_attachments)
             except Exception, e:
                 self.err_log.write('%s\n' % doc["_id"])
                 print "     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e)
+
+
+def copy_doc(doc, count, sourcedb, targetdb, exclude_types, total, simulate, exclude_attachments):
+    if exclude_types and doc["doc_type"] in exclude_types:
+        print "     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
+              (doc["doc_type"], count, total, doc["doc_type"], doc["_id"])
+    else:
+        if not simulate:
+            for i in reversed(range(5)):
+                try:
+                    dt = DocumentTransform(doc, sourcedb, exclude_attachments)
+                    break
+                except RequestError as r:
+                    if i == 0:
+                        _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(r))
+                        raise
+            for i in reversed(range(5)):
+                try:
+                    save(dt, targetdb)
+                    break
+                except (ResourceConflict, ParserError, TypeError) as e:
+                    if i == 0:
+                        _soft_assert(False, 'Copy domain failed after 5 tries with {}'.format(e))
+                        raise
+    print "     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"])
