@@ -30,8 +30,8 @@ class WorkflowHelper(PostProcessor):
         the Entry objects in place.
         """
         for module in self.modules:
-            for form in module.get_forms():
-                form_command = id_strings.form_command(form)
+            for form in module.get_suite_forms():
+                form_command = id_strings.form_command(form, module)
                 if_prefix = None
                 stack_frames = []
                 case_list_form_frames = CaseListFormWorkflow(self).case_list_forms_frames(form)
