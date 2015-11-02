@@ -130,6 +130,10 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
     section = None
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         return get_table_name(self.config['domain'], "malaria_consortium")
 
@@ -517,6 +521,10 @@ class WeeklyForms(SqlData):
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], "weekly_forms")
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def group_by(self):
