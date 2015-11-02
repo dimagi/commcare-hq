@@ -151,10 +151,11 @@ class BasicPillow(PillowBase):
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
+        self.process_change(change)
+
+    def fire_change_processed_event(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             self.set_checkpoint(change)
-
-        self.process_change(change)
 
     def process_change(self, change, is_retry_attempt=False):
         try:
