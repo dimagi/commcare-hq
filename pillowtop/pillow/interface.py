@@ -15,18 +15,6 @@ class PillowRuntimeContext(object):
         self.do_set_checkpoint = do_set_checkpoint
 
 
-class ChangeEventHandler(object):
-    """
-    Runtime context for a pillow. Gets passed around during the processing methods
-    so that other functions can use it without maintaining global state on the class.
-    """
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def fire_change_processed(self, change, context):
-        pass
-
-
 class PillowBase(object):
     """
     This defines the external pillowtop API. Everything else should be considered a specialization
@@ -107,6 +95,17 @@ class PillowBase(object):
 
     @abstractmethod
     def fire_change_processed_event(self, change, context):
+        pass
+
+
+class ChangeEventHandler(object):
+    """
+    A change-event-handler object used in constructed pillows.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def fire_change_processed(self, change, context):
         pass
 
 
