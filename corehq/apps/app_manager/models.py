@@ -1534,6 +1534,10 @@ class DetailTab(IndexedSchema):
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
 
+    # Any instance connectors necessary for the nodeset,
+    # e.g., "reports" => "jr://fixture/reports"
+    connectors = DictProperty()
+
 
 class DetailColumn(IndexedSchema):
     """

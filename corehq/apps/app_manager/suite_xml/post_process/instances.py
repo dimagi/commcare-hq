@@ -29,8 +29,7 @@ class EntryInstances(PostProcessor):
 
         return relevance_by_menu, menu_by_command
 
-    @staticmethod
-    def add_referenced_instances(entry, details_by_id, relevance_by_menu, menu_by_command):
+    def add_referenced_instances(self, entry, details_by_id, relevance_by_menu, menu_by_command):
         detail_ids = set()
         xpaths = set()
 
