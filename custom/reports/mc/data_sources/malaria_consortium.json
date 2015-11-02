@@ -28,6 +28,78 @@
                 }
             ]
         },
+        "named_filters": {
+            "newborn_reg": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016",
+                "property_name": "xmlns"
+            },
+            "newborn_follup": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/A4BCDED3-5D58-4312-AF6A-76A97C9530DB",
+                "property_name": "xmlns"
+            },
+            "child_reg": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199",
+                "property_name": "xmlns"
+            },
+            "child_follup": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/d2401a55c30432c0881f8a2f7eaa179338253051",
+                "property_name": "xmlns"
+            },
+            "adult_reg": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2",
+                "property_name": "xmlns"
+            },
+            "adult_follup": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/af5f05c6c5389959335491450381219523e4eaff",
+                "property_name": "xmlns"
+            },
+            "weekly_summary": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8",
+                "property_name": "xmlns"
+            }
+
+        },
+        "named_expressions": {
+            "results_rdt": {
+                "type": "property_path",
+                "property_path": ["form", "consult", "results_rdt"]
+            },
+            "rdt_result": {
+                "type": "property_path",
+                "property_path": ["form", "consult", "rdt_result"]
+            },
+            "diagnosis_given": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "diagnosis_given"]
+            },
+            "treatment_given": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "treatment_given"]
+            },
+            "referral_given_reason": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "referral_given_reason"]
+            },
+            "referral_needed": {
+                "type": "property_path",
+                "property_path": ["form", "referral_needed"]
+            },
+            "referral_reported": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "referral_reported"]
+            },
+            "referral_not_given": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "referral_given"]
+            }
+        },
         "configured_indicators": [
             {
                 "column_id": "date",
@@ -104,14 +176,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -147,14 +213,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -190,14 +250,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -233,14 +287,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "constant",
@@ -259,14 +307,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/A4BCDED3-5D58-4312-AF6A-76A97C9530DB"
+                        "type": "named",
+                        "name": "newborn_follup"
                     },
                     "expression_if_true": {
                         "type": "constant",
@@ -285,14 +327,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "constant",
@@ -311,14 +347,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/d2401a55c30432c0881f8a2f7eaa179338253051"
+                        "type": "named",
+                        "name": "child_follup"
                     },
                     "expression_if_true": {
                         "type": "constant",
@@ -337,14 +367,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/af5f05c6c5389959335491450381219523e4eaff"
+                        "type": "named",
+                        "name": "adult_follup"
                     },
                     "expression_if_true": {
                         "type": "constant",
@@ -363,23 +387,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "consult", "results_rdt"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "results_rdt"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -393,9 +410,8 @@
                             "test": {
                                 "operator": "in",
                                 "expression": {
-                                    "type": "property_path",
-                                    "property_path": ["form", "consult", "results_rdt"],
-                                    "datetyoe": "string"
+                                    "type": "named",
+                                    "name": "results_rdt"
                                 },
                                 "type": "boolean_expression",
                                 "property_value": ["2", "3"]
@@ -423,23 +439,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "consult", "rtd_results"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                    "name": "rdt_result"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -453,9 +462,8 @@
                             "test": {
                                 "operator": "in",
                                 "expression": {
-                                    "type": "property_path",
-                                    "property_path": ["form", "consult", "rtd_results"],
-                                    "datetyoe": "string"
+                                    "type": "named",
+                                    "name": "rdt_result"
                                 },
                                 "type": "boolean_expression",
                                 "property_value": ["2", "3"]
@@ -483,23 +491,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "diagnosis_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "diagnosis_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -526,23 +527,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "diagnosis_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "diagnosis_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -569,23 +563,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "diagnosis_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "diagnosis_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "2"
@@ -612,23 +599,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "diagnosis_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "diagnosis_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "2"
@@ -655,23 +635,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "diagnosis_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "diagnosis_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "3"
@@ -698,23 +671,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                       "type": "named",
+                       "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "diagnosis_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "diagnosis_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "3"
@@ -741,23 +707,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "any_in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "treatment_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "treatment_given"
                             },
                             "type": "boolean_expression",
                             "property_value": ["4", "5", "7", "8", "9", "10", "11"]
@@ -784,23 +743,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "any_in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "treatment_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "treatment_given"
                             },
                             "type": "boolean_expression",
                             "property_value": ["4", "5", "7", "8", "9", "10", "11"]
@@ -827,23 +779,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "treatment_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "treatment_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "3"
@@ -870,23 +815,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "any_in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "treatment_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "treatment_given"
                             },
                             "type": "boolean_expression",
                             "property_value": ["3", "6"]
@@ -913,23 +851,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "any_in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "treatment_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "treatment_given"
                             },
                             "type": "boolean_expression",
                             "property_value": ["1", "2"]
@@ -956,23 +887,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "any_in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "treatment_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "treatment_given"
                             },
                             "type": "boolean_expression",
                             "property_value": ["1", "2"]
@@ -999,23 +923,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "5"
@@ -1042,23 +959,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "5"
@@ -1085,23 +995,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "3"
@@ -1128,23 +1031,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "3"
@@ -1171,23 +1067,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "3"
@@ -1214,23 +1103,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -1257,23 +1139,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -1300,23 +1175,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -1343,23 +1211,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "6"
@@ -1386,23 +1247,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "7"
@@ -1429,23 +1283,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "7"
@@ -1472,23 +1319,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "any_in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": ["0", "6"]
@@ -1515,23 +1355,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "any_in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": ["0", "2", "4"]
@@ -1558,23 +1391,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": 0
@@ -1602,14 +1428,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8"
+                        "type": "named",
+                        "name": "weekly_summary"
                     },
                     "expression_if_true": {
                         "type": "property_path",
@@ -1628,14 +1448,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8"
+                        "type": "named",
+                        "name": "weekly_summary"
                     },
                     "expression_if_true": {
                         "type": "property_path",
@@ -1654,14 +1468,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8"
+                        "type": "named",
+                        "name": "weekly_summary"
                     },
                     "expression_if_true": {
                         "type": "property_path",
@@ -1680,14 +1488,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8"
+                        "type": "named",
+                        "name": "weekly_summary"
                     },
                     "expression_if_true": {
                         "type": "property_path",
@@ -1706,14 +1508,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8"
+                        "type": "named",
+                        "name": "weekly_summary"
                     },
                     "expression_if_true": {
                         "type": "property_path",
@@ -1732,14 +1528,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8"
+                        "type": "named",
+                        "name": "weekly_summary"
                     },
                     "expression_if_true": {
                         "type": "property_path",
@@ -1757,14 +1547,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -1800,14 +1584,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -1843,14 +1621,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -1886,14 +1658,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -1929,14 +1695,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -1972,23 +1732,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "referral_needed"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_needed"
                             },
                             "type": "boolean_expression",
                             "property_value": "yes"
@@ -2015,14 +1768,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -2058,23 +1805,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "referral_needed"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_needed"
                             },
                             "type": "boolean_expression",
                             "property_value": "yes"
@@ -2101,14 +1841,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -2120,7 +1854,7 @@
                                 "datetyoe": "string"
                             },
                             "type": "boolean_expression",
-                            "property_value": "yes"
+                            "property_value": "1"
                         },
                         "expression_if_true": {
                             "type": "constant",
@@ -2144,14 +1878,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -2159,8 +1887,7 @@
                             "operator": "eq",
                             "expression": {
                                 "type": "property_path",
-                                "property_path": ["form", "referral_needed"],
-                                "datetyoe": "string"
+                                "property_path": ["form", "preg_danger_signs", "treatment_preg_ds"]
                             },
                             "type": "boolean_expression",
                             "property_value": "OK"
@@ -2187,14 +1914,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -2230,23 +1951,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "consult", "results_rdt"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "results_rdt"
                             },
                             "type": "boolean_expression",
                             "property_value": "0"
@@ -2273,14 +1987,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -2316,23 +2024,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016"
+                        "type": "named",
+                        "name": "newborn_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_reported"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_reported"
                             },
                             "type": "boolean_expression",
                             "property_value": "1"
@@ -2359,14 +2060,8 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
@@ -2402,23 +2097,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_not_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "0"
@@ -2445,23 +2133,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "eq",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_not_given"
                             },
                             "type": "boolean_expression",
                             "property_value": "0"
@@ -2488,23 +2169,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199"
+                        "type": "named",
+                        "name": "child_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "7"
@@ -2531,23 +2205,16 @@
                 "expression": {
                     "type": "conditional",
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "xmlns",
-                            "datetyoe": "string"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2"
+                        "type": "named",
+                        "name": "adult_reg"
                     },
                     "expression_if_true": {
                         "type": "conditional",
                         "test": {
                             "operator": "in_multi",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "self_report", "referral_given_reason"],
-                                "datetyoe": "string"
+                                "type": "named",
+                                "name": "referral_given_reason"
                             },
                             "type": "boolean_expression",
                             "property_value": "7"
