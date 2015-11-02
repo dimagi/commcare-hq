@@ -3,9 +3,9 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}{% trans "Configure Report Settings" %}{% endblock page_title %}
