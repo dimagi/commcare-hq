@@ -144,9 +144,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% angularjs %}
                             <tr ng-repeat="export in exports">
                                 <td>
+                                    {% angularjs %}
                                     <h4>{{ export.name }}
                                         <label class="label label-default label-default"
                                            ng-show="!!export.isDeid">
@@ -155,7 +155,9 @@
                                     <p ng-show="!!export.formname">
                                         <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
                                     </p>
+                                    {% endangularjs %}
                                     {% if not is_deid %}
+                                    {% angularjs %}
                                     <div class="alert alert-neutral alert-small"
                                          ng-show="!_.isEmpty(export.emailedExports)">
                                         <div ng-repeat="component in export.emailedExports">
@@ -255,21 +257,27 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% endangularjs %}
                                     {% endif %}
                                 </td>
                                 {% if not is_deid %}
+                                {% angularjs %}
                                 <td>
                                     <a href="{{ export.editUrl }}"
                                        class="btn btn-default"><i class="fa fa-pencil"></i>
                                         {% trans 'Edit' %}</a>
                                 </td>
+                                {% endangularjs %}
                                 {% endif %}
+                                {% angularjs %}
                                 <td>
                                     <a href="{{ export.downloadUrl }}"
                                        class="btn btn-primary">
                                         {% trans 'Export' %}</a>
                                 </td>
+                                {% endangularjs %}
                                 {% if allow_bulk_export %}
+                                {% angularjs %}
                                 <td>
                                     <div class="checkbox checkbox-table-cell">
                                         <label>
@@ -281,9 +289,9 @@
                                         </label>
                                     </div>
                                 </td>
+                                {% endangularjs %}
                                 {% endif %}
                             </tr>
-                            {% endangularjs %}
                         </tbody>
                     </table>
                     <div ng-show="exports.length > 6">
