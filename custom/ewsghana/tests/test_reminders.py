@@ -8,7 +8,7 @@ from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
-from custom.ewsghana.models import FacilityInCharge
+from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
     SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT, visit_website_reminder
 from custom.ewsghana.reminders.first_soh_reminder import FirstSOHReminder
@@ -97,7 +97,12 @@ class TestReminders(TestCase):
             phone_number='5555'
         )
 
-        set_sms_notifications(TEST_DOMAIN, cls.web_user, True)
+        EWSExtension.objects.create(
+            domain=TEST_DOMAIN,
+            user_id=cls.web_user.get_id,
+            sms_notifications=True,
+            location_id=cls.loc2.get_id
+        )
 
         cls.web_user2 = bootstrap_web_user(
             domain=TEST_DOMAIN,
