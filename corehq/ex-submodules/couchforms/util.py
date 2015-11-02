@@ -292,6 +292,8 @@ def scrub_meta(xform):
 
 
 def bulk_save_docs(docs, instance):
+    from casexml.apps.case.models import CommCareCase
+    assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
     try:
         XFormInstance.get_db().bulk_save(docs)
     except BulkSaveError as e:
