@@ -19,7 +19,7 @@ class UrgentAlert(object):
         raise NotImplemented()
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(domain=self.domain, location_type__administrative=True)
+        return SQLLocation.active_objects.filter(domain=self.domain, location_type__administrative=True)
 
     def get_users(self, sql_location):
         return [

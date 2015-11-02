@@ -13,7 +13,7 @@ class OnGoingStockouts(WeeklyAlert):
     filters = {}
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(
+        return SQLLocation.active_objects.filter(
             domain=self.domain, location_type__name__in=['region', 'district']
         )
 
@@ -22,7 +22,7 @@ class OnGoingStockouts(WeeklyAlert):
 
     def get_descendants(self, sql_location):
         return sql_location.get_descendants().filter(location_type__administrative=False)\
-            .exclude(location_type__name='Regional Medical Store')
+            .exclude(location_type__name='Regional Medical Store').exclude(is_archived=True)
 
     def get_data(self, sql_location):
         data = {}
@@ -59,6 +59,6 @@ class OnGoingStockoutsRMS(OnGoingStockouts):
         return sql_location.get_descendants().filter(location_type__name='Regional Medical Store')
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(
+        return SQLLocation.active_objects.filter(
             domain=self.domain, location_type__name__in=['country', 'region']
         )
