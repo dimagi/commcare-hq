@@ -8,9 +8,11 @@ import xml2json
 from django.conf import settings
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.couch import LockManager
 
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from corehq.toggles import USE_SQL_BACKEND
+from couchforms.exceptions import DuplicateError
 
 
 class ToFromGeneric(object):
@@ -72,6 +74,47 @@ def extract_meta_instance_id(form):
         return meta['instanceID']
     else:
         return None
+
+
+def new_xform(instance_xml, attachments=None, process=None):
+    """
+    create but do not save an XFormInstance from an xform payload (xml_string)
+    optionally set the doc _id to a predefined value (_id)
+    return doc _id of the created doc
+
+    `process` is transformation to apply to the form right before saving
+    This is to avoid having to save multiple times
+
+    If xml_string is bad xml
+      - raise couchforms.XMLSyntaxError
+
+    """
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+
+    assert attachments is not None
+    form_data = convert_xform_to_json(instance_xml)
+    adjust_datetimes(form_data)
+
+    xform = FormProcessorInterface().new_form(form_data)
+
+    # Maps all attachments to uniform format and adds form.xml to list before storing
+    attachments = map(
+        lambda name, filestream:
+        {'name': name, 'content': filestream, 'content_type': filestream.content_type}, attachments
+    )
+    attachments.append({'name': 'form.xml', 'content': instance_xml, 'content_type': 'text/xml'})
+    FormProcessorInterface().store_attachments(xform, attachments)
+
+    # this had better not fail, don't think it ever has
+    # if it does, nothing's saved and we get a 500
+    if process:
+        process(xform)
+
+    lock = acquire_lock_for_xform(xform.form_id)
+    if FormProcessorInterface().is_duplicate(xform, lock):
+        raise DuplicateError(xform)
+
+    return LockManager(xform, lock)
 
 
 def convert_xform_to_json(xml_string):
@@ -145,3 +188,13 @@ def _extract_meta_instance_id(form):
         return None
 
 
+def acquire_lock_for_xform(xform_id):
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+
+    # this is high, but I want to test if MVP conflicts disappear
+    lock = FormProcessorInterface().xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
+    try:
+        lock.acquire()
+    except RedisError:
+        lock = None
+    return lock

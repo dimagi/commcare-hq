@@ -13,14 +13,13 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
-from redis import RedisError
 from corehq.apps.tzmigration import timezone_migration_in_progress
-from corehq.form_processor.utils import adjust_datetimes, convert_xform_to_json
+from corehq.form_processor.utils import new_xform, acquire_lock_for_xform
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch import LockManager, ReleaseOnError
+from dimagi.utils.couch import LockManager
 import couchforms
 from .const import BadRequest
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
@@ -56,18 +55,6 @@ class SubmissionError(Exception, UnicodeMixIn):
         return str(self.error_log)
 
 
-def acquire_lock_for_xform(xform_id):
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
-
-    # this is high, but I want to test if MVP conflicts disappear
-    lock = FormProcessorInterface().xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
-    try:
-        lock.acquire()
-    except RedisError:
-        lock = None
-    return lock
-
-
 class MultiLockManager(list):
     def __enter__(self):
         return [lock_manager.__enter__() for lock_manager in self]
@@ -78,7 +65,6 @@ class MultiLockManager(list):
 
 
 def process_xform(instance, attachments=None, process=None, domain=None):
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -91,7 +77,7 @@ def process_xform(instance, attachments=None, process=None, domain=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = FormProcessorInterface().create_xform(instance, process=process, attachments=attachments)
+        xform_lock = new_xform(instance, process=process, attachments=attachments)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)

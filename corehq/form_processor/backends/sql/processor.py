@@ -28,51 +28,20 @@ class FormProcessorSQL(object):
             return xforms[0]
 
     @classmethod
-    def create_xform(cls, xml_string, attachments=None, process=None):
-        """
-        create but do not save an XFormInstance from an xform payload (xml_string)
-        optionally set the doc _id to a predefined value (_id)
-        return doc _id of the created doc
+    def store_attachments(cls, xform, attachments):
+        pass
 
-        `process` is transformation to apply to the form right before saving
-        This is to avoid having to save multiple times
+    @classmethod
+    def new_form(cls, form_data):
+        form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
 
-        If xml_string is bad xml
-          - raise couchforms.XMLSyntaxError
-
-        """
-        assert attachments is not None
-        json_form = convert_xform_to_json(xml_string)
-        adjust_datetimes(json_form)
-
-        form_id = extract_meta_instance_id(json_form) or unicode(uuid.uuid4())
-
-        xform = XFormInstanceSQL(
-            # form has to be wrapped
-            form=json_form,
+        return XFormInstanceSQL(
             # other properties can be set post-wrap
             form_uuid=form_id,
-            xmlns=json_form.get('@xmlns'),
+            xmlns=form_data.get('@xmlns'),
             received_on=datetime.datetime.now()
         )
-        #attachment_manager = AttachmentsManager(xform)
 
-        ## Always save the Form XML as an attachment
-        #attachment_manager.store_attachment('form.xml', xml_string, 'text/xml')
-
-        #for name, filestream in attachments.items():
-        #    attachment_manager.store_attachment(name, filestream, filestream.content_type)
-
-        #attachment_manager.commit()
-
-        # this had better not fail, don't think it ever has
-        # if it does, nothing's saved and we get a 500
-        if process:
-            process(xform)
-
-        lock = acquire_lock_for_xform(form_id)
-        #with ReleaseOnError(lock):
-        #    if _id in XFormInstance.get_db():
-        #        raise DuplicateError(xform)
-
-        return LockManager(xform, lock)
+    @classmethod
+    def is_duplicate(cls, xform, lock):
+        return False

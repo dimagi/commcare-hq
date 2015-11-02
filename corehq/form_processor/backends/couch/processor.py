@@ -1,6 +1,7 @@
 import datetime
 
 from dimagi.utils.couch import LockManager, ReleaseOnError
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.util import process_xform, acquire_lock_for_xform
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes, extract_meta_instance_id
 from couchforms.attachments import AttachmentsManager
@@ -27,53 +28,36 @@ class FormProcessorCouch(object):
             return xforms[0]
 
     @classmethod
-    def create_xform(cls, xml_string, attachments=None, process=None):
+    def store_attachments(cls, xform, attachments):
+        builder = CouchAttachmentsBuilder()
+        for attachment in attachments:
+            builder.add(
+                content=attachment['content'],
+                name=attachment['name'],
+                content_type=attachment['content_type'],
+            )
+
+        xform._attachments = builder.to_json()
+
+    @classmethod
+    def new_form(cls, form_data):
         from couchforms.models import XFormInstance
-        """
-        create but do not save an XFormInstance from an xform payload (xml_string)
-        optionally set the doc _id to a predefined value (_id)
-        return doc _id of the created doc
 
-        `process` is transformation to apply to the form right before saving
-        This is to avoid having to save multiple times
-
-        If xml_string is bad xml
-          - raise couchforms.XMLSyntaxError
-
-        """
-        assert attachments is not None
-        json_form = convert_xform_to_json(xml_string)
-        adjust_datetimes(json_form)
-
-        _id = extract_meta_instance_id(json_form) or XFormInstance.get_db().server.next_uuid()
+        _id = extract_meta_instance_id(form_data) or XFormInstance.get_db().server.next_uuid()
         assert _id
-
         xform = XFormInstance(
             # form has to be wrapped
-            {'form': json_form},
+            {'form': form_data},
             # other properties can be set post-wrap
             _id=_id,
-            xmlns=json_form.get('@xmlns'),
+            xmlns=form_data.get('@xmlns'),
             received_on=datetime.datetime.utcnow(),
         )
-        attachment_manager = AttachmentsManager(xform)
+        return xform
 
-        # Always save the Form XML as an attachment
-        attachment_manager.store_attachment('form.xml', xml_string, 'text/xml')
-
-        for name, filestream in attachments.items():
-            attachment_manager.store_attachment(name, filestream, filestream.content_type)
-
-        attachment_manager.commit()
-
-        # this had better not fail, don't think it ever has
-        # if it does, nothing's saved and we get a 500
-        if process:
-            process(xform)
-
-        lock = acquire_lock_for_xform(_id)
+    @classmethod
+    def is_duplicate(cls, xform, lock):
+        from couchforms.models import XFormInstance
         with ReleaseOnError(lock):
-            if _id in XFormInstance.get_db():
+            if xform.form_id in XFormInstance.get_db():
                 raise DuplicateError(xform)
-
-        return LockManager(xform, lock)

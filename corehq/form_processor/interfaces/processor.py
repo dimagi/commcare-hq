@@ -68,3 +68,15 @@ class FormProcessorInterface(object):
 
     def create_xform(self, xml_string, attachments=None, process=None):
         return self.processor.create_xform(xml_string, attachments=attachments, process=process)
+
+    def store_attachments(self, xform, attachments):
+        """
+        Takes a list of dicts with content, name, and content_type and stores them to the XForm
+        """
+        return self.processor.store_attachments(xform, attachments)
+
+    def is_duplicate(self, xform, lock):
+        return self.processor.is_duplicate(xform, lock)
+
+    def new_form(self, instance_xml):
+        return self.processor.new_form(instance_xml)
