@@ -47,7 +47,7 @@ def change_from_kafka_message(message):
     change_meta = change_meta_from_kafka_message(message.value)
     return Change(
         id=change_meta.document_id,
-        sequence_id=None,
+        sequence_id=message.offset,
         document=None,
         deleted=change_meta.is_deletion,
         metadata=change_meta,
