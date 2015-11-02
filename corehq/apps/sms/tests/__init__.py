@@ -4,6 +4,7 @@ from .migration import *
 from .test_dbaccessors import *
 from .test_all_backends import *
 from .update_location_keyword_test import *
+from .test_verified_number import *
 
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain

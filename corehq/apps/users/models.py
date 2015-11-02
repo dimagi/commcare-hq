@@ -56,7 +56,7 @@ from corehq.apps.sms.mixin import (
     InvalidFormatException,
     PhoneNumberInUseException,
     VerifiedNumber,
-)
+    apply_leniency)
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -2030,6 +2030,28 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
         usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
         return usercase.case_id if usercase else None
+
+    def get_verified_number(self, phone=None):
+        """
+        Retrieves this contact's verified number entry by (self.doc_type, self._id).
+
+        return  the VerifiedNumber entry
+        """
+        from corehq.apps.sms.util import strip_plus
+        verified = self.get_verified_numbers(True)
+        if not phone:
+            # for backwards compatibility with code that assumes only one verified phone #
+            if len(verified) > 0:
+                default_phone_number = filter(
+                    lambda x: apply_leniency(x) == self.default_phone_number, verified.keys()
+                )
+                if default_phone_number:
+                    return verified[default_phone_number[0]]
+                return sorted(verified.iteritems())[0][1]
+            else:
+                return None
+
+        return verified.get(strip_plus(phone))
 
 
 class OrgMembershipMixin(DocumentSchema):

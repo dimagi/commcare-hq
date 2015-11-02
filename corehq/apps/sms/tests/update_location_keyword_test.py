@@ -8,16 +8,10 @@ from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import get_message
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import create_mobile_worker
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.smsbackends.test.api import TestSMSBackend
 import corehq.apps.sms.messages as messages
-
-
-def create_mobile_worker(domain, username, password, phone_number, save_vn=True):
-    user = CommCareUser.create(domain, username, password, phone_number=phone_number)
-    if save_vn:
-        user.save_verified_number(domain, phone_number, True, None)
-    return user
 
 
 class UpdateLocationKeywordTest(TestCase):
@@ -59,7 +53,7 @@ class UpdateLocationKeywordTest(TestCase):
         )
         cls.backend_mapping.save()
 
-        cls.user = create_mobile_worker(cls.domain, 'test', '*****', '4444')
+        cls.user = create_mobile_worker(cls.domain, 'test', '*****', ['4444'])
 
         cls.location_type = LocationType.objects.create(
             domain=cls.domain,
