@@ -12,10 +12,6 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     @abstractproperty
-    def doc_type(self):
-        raise NotImplementedError()
-
-    @abstractproperty
     def form_data(self):
         raise NotImplementedError()
 
