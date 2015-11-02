@@ -15,6 +15,18 @@ class PillowRuntimeContext(object):
         self.do_set_checkpoint = do_set_checkpoint
 
 
+class ChangeEventHandler(object):
+    """
+    Runtime context for a pillow. Gets passed around during the processing methods
+    so that other functions can use it without maintaining global state on the class.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def fire_change_processed(self, change, context):
+        pass
+
+
 class PillowBase(object):
     """
     This defines the external pillowtop API. Everything else should be considered a specialization
@@ -85,13 +97,19 @@ class PillowBase(object):
                             self.get_name(), e,
                         ))
                         raise
+                    else:
+                        self.fire_change_processed_event(change, context)
                 else:
                     self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     @abstractmethod
-    def processor(self, change, do_set_checkpoint=True):
+    def processor(self, change, context):
+        pass
+
+    @abstractmethod
+    def fire_change_processed_event(self, change, context):
         pass
 
 
@@ -101,12 +119,17 @@ class ConstructedPillow(PillowBase):
     arguments it needs.
     """
 
-    def __init__(self, name, document_store, checkpoint, change_feed, processor):
+    def __init__(self, name, document_store, checkpoint, change_feed, processor,
+                 change_processed_event_handler=None):
         self._name = name
         self._document_store = document_store
         self._checkpoint = checkpoint
         self._change_feed = change_feed
         self._processor = processor
+        self._change_processed_event_handler = change_processed_event_handler
+
+    def get_name(self):
+        return self._name
 
     def document_store(self):
         return self._document_store
@@ -121,5 +144,6 @@ class ConstructedPillow(PillowBase):
     def processor(self, change, do_set_checkpoint=True):
         self._processor.process_change(self, change, do_set_checkpoint)
 
-    def get_name(self):
-        return self._name
+    def fire_change_processed_event(self, change, context):
+        if self._change_processed_event_handler is not None:
+            self._change_processed_event_handler.fire_change_processed(change, context)
