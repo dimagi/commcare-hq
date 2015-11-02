@@ -260,10 +260,6 @@ class InputStock(EWSData):
     @property
     def rows(self):
         link = reverse('input_stock', args=[self.domain, self.location.site_code])
-        transactions = StockTransaction.objects.filter(
-            case_id=self.location.supply_point_id,
-            report__date__lte=self.config['enddate']
-        ).order_by('-report__date', 'pk')
         rows = []
 
         if has_input_stock_permissions(self.config['user'],
@@ -271,15 +267,19 @@ class InputStock(EWSData):
                                        self.domain):
             rows.append([u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
 
-        if transactions:
+        try:
             rows.append(
                 [
                     u'The last report received was at <b>{}.</b>'.format(
-                        transactions[0].report.date.strftime("%X on %b %d, %Y")
+                        StockState.objects.filter(case_id=self.location.supply_point_id)
+                        .values('last_modified_date')
+                        .latest('last_modified_date')['last_modified_date']
+                        .strftime("%X on %b %d, %Y")
                     )
                 ]
             )
-
+        except StockState.DoesNotExist:
+            pass
         return rows
 
 
