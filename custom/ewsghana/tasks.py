@@ -124,7 +124,8 @@ def third_soh_to_super():
         ThirdSOHReminder(domain).send()
 
 
-@periodic_task(run_every=crontab(day_of_week=2, hour=14, minute=6),
+# Wednesday 14:06
+@periodic_task(run_every=crontab(day_of_week=3, hour=14, minute=6),
                queue='logistics_reminder_queue')
 def stockout_notification_to_web_supers():
     domains = EWSGhanaConfig.get_all_enabled_domains()
