@@ -694,7 +694,7 @@ AUDIT_MODULES = [
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '',
+    'GOOGLE_ANALYTICS_API_ID': '',
     'PINGDOM_ID': '',
     'ANALYTICS_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
