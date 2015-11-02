@@ -6,6 +6,21 @@ from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
 
 
+class PillowCheckpointTest(SimpleTestCase):
+    def test_get_machine_id(self):
+        # since this is machine dependent just ensure that this returns something
+        # and doesn't crash
+        self.assertTrue(bool(get_machine_id()))
+
+    @override_settings(PILLOWTOP_MACHINE_ID='test-ptop')
+    def test_get_machine_id_settings(self):
+        self.assertEqual('test-ptop', get_machine_id())
+
+    def test_checkpoint_id(self):
+        checkpoint_id = 'test-checkpoint-id'
+        self.assertEqual(checkpoint_id, PillowCheckpoint(MockDocumentStore(), checkpoint_id).checkpoint_id)
+
+
 class PillowCheckpointDaoTest(SimpleTestCase):
 
     def setUp(self):
@@ -13,23 +28,11 @@ class PillowCheckpointDaoTest(SimpleTestCase):
         self._dao = MockDocumentStore()
         self._checkpoint = PillowCheckpoint(self._dao, self._checkpoint_id)
 
-    @override_settings(PILLOWTOP_MACHINE_ID='test-ptop')
-    def test_get_machine_id_settings(self):
-        self.assertEqual('test-ptop', get_machine_id())
-
-    def test_get_machine_id(self):
-        # since this is machine dependent just ensure that this returns something
-        # and doesn't crash
-        self.assertTrue(bool(get_machine_id()))
-
     def test_get_or_create_empty(self):
         checkpoint_manager = PillowCheckpointManager(MockDocumentStore())
         checkpoint = checkpoint_manager.get_or_create_checkpoint('some-id')
         self.assertEqual('0', checkpoint['seq'])
         self.assertTrue(bool(checkpoint['timestamp']))
-
-    def test_checkpoint_id(self):
-        self.assertEqual(self._checkpoint_id, self._checkpoint.checkpoint_id)
 
     def test_create_initial_checkpoint(self):
         checkpoint = self._checkpoint.get_or_create()
