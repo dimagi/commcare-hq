@@ -7,11 +7,10 @@ from .exceptions import XFormNotFound
 
 class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     """An XForms SQL instance."""
+    form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
-    form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
-    form_data = models.TextField(null=True)
     received_on = models.DateTimeField()
 
     # Used to tag forms that were forcefully submitted
