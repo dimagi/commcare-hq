@@ -37,6 +37,15 @@ def time_parser(value):
     return parse(value).time()
 
 
+def create_mobile_worker(domain, username, password, phone_numbers, save_vn=True):
+    user = CommCareUser.create(domain, username, password)
+    user.phone_numbers = phone_numbers
+    if save_vn:
+        for phone_number in phone_numbers:
+            user.save_verified_number(domain, phone_number, True, None)
+    return user
+
+
 class BaseSMSTest(BaseAccountingTest):
     def setUp(self):
         super(BaseSMSTest, self).setUp()
