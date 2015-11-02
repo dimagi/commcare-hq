@@ -444,7 +444,7 @@ class RecapPassageData(BaseSqlData):
     def columns(self):
         diff = lambda x, y: (x or 0) - (y or 0)
 
-        def get_prd_name(code):
+        def get_prd_name(id):
             try:
                 return SQLProduct.objects.get(product_id=id, domain=self.config['domain'],
                                               is_archived=False).name
@@ -749,7 +749,6 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
         sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
                                  group_by=self.group_by + ['month'],
                                  whereclause=AND(self.filters).build_expression(table),
-                                 from_obj="\"" + self.table_name + "\""
                                  ), name='s')
 
         return select(self.group_by + ['AVG(s.sum_col) AS %s' % self.key],
@@ -765,7 +764,6 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
         count_uniq = alias(select(self.group_by + ["COUNT(DISTINCT(%s)) AS count_unique" % self.key],
                                   group_by=self.group_by + ['month'],
                                   whereclause=AND(self.filters).build_expression(table),
-                                  from_obj="\"" + self.table_name + "\""
                                   ), name='cq')
 
         return select(self.group_by + ['SUM(cq.count_unique) AS %s' % self.key],
