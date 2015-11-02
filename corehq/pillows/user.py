@@ -71,6 +71,7 @@ class UnknownUsersPillow(PythonPillow):
     """
     document_class = XFormInstance
     include_docs_when_preindexing = False
+    es_path = USER_INDEX + "/user/"
 
     def __init__(self, **kwargs):
         super(UnknownUsersPillow, self).__init__(**kwargs)
@@ -93,6 +94,9 @@ class UnknownUsersPillow(PythonPillow):
     def _user_exists(self, user_id):
         return self.user_db.doc_exist(user_id)
 
+    def _user_indexed(self, user_id):
+        return doc_exists_in_es('users', user_id)
+
     def change_transport(self, doc_dict):
         doc = doc_dict
         user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
@@ -100,9 +104,8 @@ class UnknownUsersPillow(PythonPillow):
         if user_id in WEIRD_USER_IDS:
             user_id = None
 
-        es_path = USER_INDEX + "/user/"
         if (user_id and not self._user_exists(user_id)
-                and not self.es.head(es_path + user_id)):
+                and not self._user_indexed(user_id)):
             doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
                 "_id": user_id,
@@ -113,7 +116,7 @@ class UnknownUsersPillow(PythonPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            self.es.put(es_path + user_id, data=doc)
+            self.es.put(self.es_path + user_id, data=doc)
 
 
 def add_demo_user_to_user_index():
