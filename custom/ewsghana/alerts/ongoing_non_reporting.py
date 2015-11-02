@@ -12,7 +12,7 @@ class OnGoingNonReporting(WeeklyAlert):
     message = ONGOING_NON_REPORTING
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(domain=self.domain, location_type__name='district')
+        return SQLLocation.active_objects.filter(domain=self.domain, location_type__name='district')
 
     def program_clause(self, user_program, not_reported_programs):
         return not_reported_programs and (not user_program or user_program in not_reported_programs)
