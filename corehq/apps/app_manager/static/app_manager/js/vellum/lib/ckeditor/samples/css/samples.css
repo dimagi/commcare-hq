@@ -394,6 +394,17 @@ html {
 .content h5:hover a.content-heading-anchor {
   opacity: 1;
 }
+.content h1:target lesshat-selector,
+.content h2:target lesshat-selector,
+.content h3:target lesshat-selector,
+.content h4:target lesshat-selector,
+.content h5:target lesshat-selector {
+  -lh-property: 0; }
+@-webkit-keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 }}
+@-moz-keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 }}
+@-o-keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 }}
+@keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 };
+}
 .content h1:target a,
 .content h2:target a,
 .content h3:target a,
