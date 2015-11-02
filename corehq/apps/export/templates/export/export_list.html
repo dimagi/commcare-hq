@@ -203,12 +203,10 @@
                                                 <strong>{% trans "Size:" %}</strong> {{ component.fileData.size }}&nbsp;&nbsp;&nbsp;
                                                 <strong>{% trans "Last Updated:" %}</strong> {{ component.fileData.lastUpdated }}
                                             </p>
-                                            <p ng-if="!component.hasFile && !component.updatingData">
+                                            <p ng-if="!component.hasFile && !component.updatedDataTriggered">
                                                 {% blocktrans %}
                                                 <strong>No data is available yet.</strong><br />
-                                                    Please check back later once the automatic scheduler
-                                                    has finished the update. If nothing changes in a while,
-                                                    you may Force Refresh the data.
+                                                    Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.
                                                 {% endblocktrans %}
                                             </p>
                                             <div class="modal fade"
@@ -217,7 +215,7 @@
                                                     <div class="modal-content">
                                                         <div class="modal-header">
                                                             <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
-                                                            <h4 class="modal-title">{% trans "Are you sure you want to refresh?" %}</h4>
+                                                            <h4 class="modal-title">{% trans "Confirm data updates." %}</h4>
                                                         </div>
                                                         <div class="modal-body" ng-if="component.hasFile && component.fileData.showExpiredWarning">
                                                             {% blocktrans %}
@@ -228,12 +226,7 @@
                                                         <div class="modal-body" ng-if="!(component.hasFile && component.fileData.showExpiredWarning)">
                                                             <p class="lead">
                                                                 {% blocktrans %}
-                                                                    <strong>Note: A data refresh should occur automatically on a daily basis.</strong>
-                                                                {% endblocktrans %}
-                                                            </p>
-                                                            <p>
-                                                                {% blocktrans %}
-                                                                    Please check back periodically and refresh to see if the data has been updated.
+                                                                    <strong>Once the data is updated, a data refresh should occur automatically on a daily basis.</strong>
                                                                 {% endblocktrans %}
                                                             </p>
                                                             <p>
