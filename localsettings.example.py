@@ -91,18 +91,6 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #     'key_pass': "*******",
 # }
 
-####### SMS Config ########
-
-# Mach
-
-SMS_GATEWAY_URL = "http://gw1.promessaging.com/sms.php"
-SMS_GATEWAY_PARAMS = "id=******&pw=******&dnr=%(phone_number)s&msg=%(message)s&snr=DIMAGI"
-
-# Unicel
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "******",
-                 "sender": "Promo" }
-
 ####### Domain sync / de-id ########
 
 DOMAIN_SYNCS = { 
