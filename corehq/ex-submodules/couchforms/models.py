@@ -177,18 +177,22 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     @property
     def is_error(self):
+        assert self.doc_type == 'XFormInstance'
         return False
 
     @property
     def is_duplicate(self):
+        assert self.doc_type == 'XFormInstance'
         return False
 
     @property
     def is_archived(self):
+        assert self.doc_type == 'XFormInstance'
         return False
 
     @property
     def is_deprecated(self):
+        assert self.doc_type == 'XFormInstance'
         return False
 
     @property
