@@ -29,8 +29,6 @@ urlpatterns = patterns(
         name='dropbox_upload'),
 )
 
-urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))
-
 domain_specific = patterns('corehq.apps.hqwebapp.views',
     url(r'^$', 'redirect_to_default', name='domain_homepage'),
     url(r'^login/$', 'domain_login', name='domain_login'),
