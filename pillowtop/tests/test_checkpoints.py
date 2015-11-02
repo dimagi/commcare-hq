@@ -6,7 +6,7 @@ from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
 
 
-class PillowCheckpointTest(SimpleTestCase):
+class PillowCheckpointDaoTest(SimpleTestCase):
 
     def setUp(self):
         self._checkpoint_id = 'test-checkpoint-id'
