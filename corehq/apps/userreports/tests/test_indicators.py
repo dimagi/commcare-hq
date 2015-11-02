@@ -517,13 +517,17 @@ class TestGetValuesByProduct(TestCase):
         )
 
     def test_get_soh_values_by_product(self):
-        values = LedgerBalancesIndicator._get_values_by_product('soh', 'case1')
+        values = LedgerBalancesIndicator._get_values_by_product(
+            'soh', 'case1', ['coke', 'surge', 'new_coke']
+        )
         self.assertEqual(values['coke'], 32)
         self.assertEqual(values['surge'], 85)
         self.assertEqual(values['new_coke'], 0)
 
     def test_get_consumption_by_product(self):
-        values = LedgerBalancesIndicator._get_values_by_product('consumption', 'case1')
+        values = LedgerBalancesIndicator._get_values_by_product(
+            'consumption', 'case1', ['coke', 'surge', 'new_coke']
+        )
         self.assertEqual(values['coke'], 63)
         self.assertEqual(values['surge'], 0)
         self.assertEqual(values['new_coke'], 0)

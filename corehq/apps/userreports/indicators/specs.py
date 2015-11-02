@@ -102,7 +102,7 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
     type = TypeProperty('ledger_balances')
     product_codes = ListProperty(required=True)
-    ledger_section = StringProperty()
+    ledger_section = StringProperty(required=True)
     case_id_expression = DictProperty()
 
     def get_case_id_expression(self):

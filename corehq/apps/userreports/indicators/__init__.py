@@ -112,11 +112,12 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         return Column(column_id, TYPE_DECIMAL)
 
     @staticmethod
-    def _get_values_by_product(ledger_section, case_id):
+    def _get_values_by_product(ledger_section, case_id, product_codes):
         """returns a defaultdict mapping product codes to their values"""
         values_by_product = StockState.objects.filter(
             section_id=ledger_section,
             case_id=case_id,
+            sql_product__code__in=product_codes,
         ).values_list('sql_product__code', 'stock_on_hand')
         return defaultdict(lambda: 0, values_by_product)
 
@@ -125,6 +126,6 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
 
     def get_values(self, item, context=None):
         case_id = self.case_id_expression(item)
-        values = self._get_values_by_product(self.ledger_section, case_id)
+        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes)
         return [ColumnValue(self._make_column(product_code), values[product_code])
                 for product_code in self.product_codes]
