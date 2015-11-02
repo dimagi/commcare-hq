@@ -1,6 +1,6 @@
 from Queue import Queue
 import threading
-from couchdbkit import Server
+from couchdbkit import Database
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.util.couch_helpers import OverrideDB, _override_db
@@ -10,9 +10,8 @@ from django.conf import settings
 class OverrideDBTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.server = Server(settings.COUCH_SERVER)
-        cls.other_db_1 = cls.server.create_db('foo-boo-test')
-        cls.other_db_2 = cls.server.create_db('foo-boo-boo-test')
+        cls.other_db_1 = Database(settings.COUCH_DATABASE + '_foo-test', create=True)
+        cls.other_db_2 = Database(settings.COUCH_DATABASE + '_foo-boo-test', create=True)
         cls.normal_db = CommCareCase.get_db()
         cls.normal_get_db = CommCareCase.get_db
 
@@ -21,8 +20,8 @@ class OverrideDBTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.server.delete_db(cls.other_db_1.dbname)
-        cls.server.delete_db(cls.other_db_2.dbname)
+        cls.other_db_1.server.delete_db(cls.other_db_1.dbname)
+        cls.other_db_2.server.delete_db(cls.other_db_2.dbname)
 
     def test_nested(self):
         self.assertEqual(CommCareCase.get_db(), self.normal_db)
