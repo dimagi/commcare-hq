@@ -52,49 +52,56 @@ class MenuContributor(SuiteContributorByModule):
             for menu in module.get_menus():
                 menus.append(menu)
         elif module.module_type != 'careplan':
-            root = None
+            id_modules = [module]
+            root_modules = []
+
+            shadow_modules = [m for m in self.app.get_modules()
+                              if m.doc_type == "ShadowModule" and m.source_module_id]
             put_in_root = getattr(module, 'put_in_root', False)
             if not put_in_root and getattr(module, 'root_module', False):
-                roots = [module.root_module]
-                shadow_modules = [m for m in self.app.get_modules() if m.doc_type == "ShadowModule"]
+                root_modules.append(module.root_module)
                 for shadow in shadow_modules:
-                    if shadow.source_module_id:
-                        if roots[0].unique_id == shadow.source_module_id:
-                            roots.append(shadow)
+                    if module.root_module.unique_id == shadow.source_module_id:
+                        root_modules.append(shadow)
             else:
-                roots = [None]
+                root_modules.append(None)
+                if put_in_root and getattr(module, 'root_module', False):
+                    for shadow in shadow_modules:
+                        if module.root_module.unique_id == shadow.source_module_id:
+                            id_modules.append(shadow)
 
-            for root in roots:
-                menu_kwargs = {
-                    'id': id_strings.menu_id(module),
-                    'root': id_strings.menu_id(root) if root else None,
-                }
-
-                if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
-                        self.app.enable_module_filtering and
-                        getattr(module, 'module_filter', None)):
-                    menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
+            for id_module in id_modules:
+                for root_module in root_modules:
+                    menu_kwargs = {
+                        'id': id_strings.menu_id(id_module),
+                        'root': id_strings.menu_id(root_module) if root_module else None,
+                    }
     
-                if self.app.enable_localized_menu_media:
-                    menu_kwargs.update({
-                        'menu_locale_id': id_strings.module_locale(module),
-                        'media_image': bool(len(module.all_image_paths())),
-                        'media_audio': bool(len(module.all_audio_paths())),
-                        'image_locale_id': id_strings.module_icon_locale(module),
-                        'audio_locale_id': id_strings.module_audio_locale(module),
-                    })
-                    menu = LocalizedMenu(**menu_kwargs)
-                else:
-                    menu_kwargs.update({
-                        'locale_id': id_strings.module_locale(module),
-                        'media_image': module.default_media_image,
-                        'media_audio': module.default_media_audio,
-                    })
-                    menu = Menu(**menu_kwargs)
-
-                menu.commands.extend(get_commands())
-
-                menus.append(menu)
+                    if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
+                            self.app.enable_module_filtering and
+                            getattr(module, 'module_filter', None)):
+                        menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
+        
+                    if self.app.enable_localized_menu_media:
+                        menu_kwargs.update({
+                            'menu_locale_id': id_strings.module_locale(module),
+                            'media_image': bool(len(module.all_image_paths())),
+                            'media_audio': bool(len(module.all_audio_paths())),
+                            'image_locale_id': id_strings.module_icon_locale(module),
+                            'audio_locale_id': id_strings.module_audio_locale(module),
+                        })
+                        menu = LocalizedMenu(**menu_kwargs)
+                    else:
+                        menu_kwargs.update({
+                            'locale_id': id_strings.module_locale(module),
+                            'media_image': module.default_media_image,
+                            'media_audio': module.default_media_audio,
+                        })
+                        menu = Menu(**menu_kwargs)
+    
+                    menu.commands.extend(get_commands())
+    
+                    menus.append(menu)
 
         if self.app.use_grid_menus:
             self._give_root_menus_grid_style(menus)
