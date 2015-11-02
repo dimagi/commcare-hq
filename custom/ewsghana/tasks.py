@@ -78,7 +78,8 @@ def on_going_stockout():
 
 
 # Urgent Non-Reporting
-@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
+# First monday of month
+@periodic_task(run_every=crontab(day_of_week=1, day_of_month="1-7", hour=8, minute=20),
                queue='logistics_reminder_queue')
 def urgent_non_reporting():
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -87,7 +88,8 @@ def urgent_non_reporting():
 
 
 # Urgent Stockout
-@periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
+# First monday of month
+@periodic_task(run_every=crontab(day_of_week=1, day_of_month="1-7", hour=8, minute=20),
                queue='logistics_reminder_queue')
 def urgent_stockout():
     domains = EWSGhanaConfig.get_all_enabled_domains()
