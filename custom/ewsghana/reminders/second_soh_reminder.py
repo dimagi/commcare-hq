@@ -1,4 +1,5 @@
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.reminders.util import get_verified_number_for_recipient
 from custom.ewsghana.reminders import SECOND_STOCK_ON_HAND_REMINDER, SECOND_INCOMPLETE_SOH_REMINDER
 from custom.ewsghana.reminders.const import IN_CHARGE_ROLE, DAYS_UNTIL_LATE
 from custom.ewsghana.reminders.reminder import Reminder
@@ -35,7 +36,7 @@ class SecondSOHReminder(Reminder):
 
     def get_message(self, recipient):
         user = recipient.owner
-        if not user_has_reporting_location(user) or not user.get_verified_number():
+        if not user_has_reporting_location(user) or not get_verified_number_for_recipient(user):
             return
 
         message, kwargs = self.get_message_for_location(user.location)
