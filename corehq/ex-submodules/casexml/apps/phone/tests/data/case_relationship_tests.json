@@ -515,5 +515,33 @@
             ]
         ],
         "outcome": []
+    },
+    {
+        "name": "chain_with_owned_closed",
+        "owned": ["b"],
+        "extensions": [["d", "c"], ["c", "b"], ["b", "a"]],
+        "closed": ["b"],
+        "outcome": ["a", "b", "c", "d"]
+    },
+    {
+        "name": "owned_closed",
+        "owned": ["b"],
+        "extensions": [["d", "c"], ["c", "b"], ["b", "a"]],
+        "closed":["a", "b", "c", "d"],
+        "outcome": []
+    },
+    {
+        "name": "owned_closed_host",
+        "owned": ["b"],
+        "extensions": [["d", "c"], ["c", "b"], ["b", "a"]],
+        "closed":["a"],
+        "outcome": []
+    },
+    {
+        "name": "owned_closed_open_extension",
+        "owned": ["a"],
+        "extensions": [["a", "b"]],
+        "closed":["b"],
+        "outcome": []
     }
 ]
