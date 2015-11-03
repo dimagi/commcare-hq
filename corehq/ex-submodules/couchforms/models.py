@@ -26,6 +26,7 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
+from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
 
