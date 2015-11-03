@@ -7,6 +7,7 @@ import os
 from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
+from toggle.shortcuts import clear_toggle_cache, update_toggle_cache
 
 
 class UnitTestingRequired(Exception):
@@ -61,16 +62,16 @@ class TestFileMixin(object):
         return cls.get_file(name, 'xml', override_path)
 
 
-def flag_enabled(toggle_class):
+def flag_enabled(toggle_class_string):
     """
     Decorate test methods with this to mock the lookup
 
-        @flag_enabled(toggles.MULTIPLE_LOCATIONS_PER_USER)
+        @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
         def test_something_fancy(self):
             something.which_depends(on.MULTIPLE_LOCATIONS_PER_USER)
     """
     return mock.patch(
-        '.'.join([toggle_class.__module__, toggle_class.__class__.__name__, 'enabled']),
+        '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
         new=lambda *args: True,
     )
 
