@@ -70,7 +70,7 @@ class FacilityReportData(EWSData):
         def get_months_until_stockout_icon(value, loc):
             if float(value) == 0.0:
                 return '%s <span class="icon-remove" style="color:red"/>' % value
-            elif float(value) < loc.location_type.understock_threshold:
+            elif float(value) <= loc.location_type.understock_threshold:
                 return '%s <span class="icon-warning-sign" style="color:orange"/>' % value
             elif loc.location_type.understock_threshold < float(value) < loc.location_type.overstock_threshold:
                 return '%s <span class="icon-ok" style="color:green"/>' % value
