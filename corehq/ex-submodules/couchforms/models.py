@@ -285,7 +285,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     def xpath(self, path):
         """
-        Evaluates an xpath expression like: path/to/node and returns the value 
+        Evaluates an xpath expression like: path/to/node and returns the value
         of that element, or None if there is no value.
         """
         _soft_assert = soft_assert(to='{}@{}'.format('brudolph', 'dimagi.com'))
@@ -294,7 +294,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     def get_data(self, path):
         """
-        Evaluates an xpath expression like: path/to/node and returns the value 
+        Evaluates an xpath expression like: path/to/node and returns the value
         of that element, or None if there is no value.
         """
         return safe_index(self, path.split("/"))
