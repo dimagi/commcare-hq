@@ -4,6 +4,8 @@ import pytz
 from pillowtop.checkpoints.util import get_formatted_current_timestamp
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.exceptions import PillowtopCheckpointReset
+from pillowtop.logger import pillow_logging
+from pillowtop.pillow.interface import ChangeEventHandler
 
 
 class PillowCheckpointManager(object):
@@ -48,6 +50,9 @@ class PillowCheckpoint(object):
         return checkpoint
 
     def update_to(self, seq):
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
+        )
         checkpoint = self.get_or_create(verify_unchanged=True)
         checkpoint['seq'] = seq
         checkpoint['timestamp'] = get_formatted_current_timestamp()
@@ -72,3 +77,14 @@ class PillowCheckpoint(object):
         if do_update:
             checkpoint['timestamp'] = now.isoformat()
             self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
+
+
+class PillowCheckpointEventHandler(ChangeEventHandler):
+
+    def __init__(self, checkpoint, checkpoint_frequency):
+        self.checkpoint = checkpoint
+        self.checkpoint_frequency = checkpoint_frequency
+
+    def fire_change_processed(self, change, context):
+        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
+            self.checkpoint.update_to(change['seq'])
