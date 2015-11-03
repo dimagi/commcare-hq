@@ -45,10 +45,10 @@ Otherwise, install the following software from your OS package manager or the
 individual project sites when necessary.
 
 + Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
-+ pip
-+ CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
++ pip  (If you use virtualenv (see below) this will be installed automatically)
++ CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
   - Mac users: note that when installing erlang, you do NOT need to check out an older version of erlang.rb
-+ PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
++ PostgreSQL >= 8.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
 + [elasticsearch][elasticsearch] (including Java 7).
   - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
   - `brew install homebrew/versions/elasticsearch090` works well on mac
@@ -91,17 +91,40 @@ Add the required user:
     createdb -U postgres commcarehq
     createdb -U postgres commcarehq_reporting
 
+In Ubuntu, you may find it easier to log in as the postgres user:
+
+    $ sudo su - postgres
+    postgres $ createuser -P commcarehq  # When prompted, enter password "commcarehq"
+    postgres $ createdb commcarehq
+    postgres $ createdb commcarehq_reporting
+
 If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default postgres role has been created. If not, `createuser -s -r postgres` will create it.
 
 
 ### Setting up a virtualenv
 
 A virtualenv is not required, but it may make your life easier. If you're on Windows see the section `Alternate steps
-for Windows` below.
+for Windows` below. Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching 
+between environments easy:
 
-    sudo pip install virtualenv
-    mkdir ~/.virtualenvs/
-    virtualenv ~/.virtualenvs/commcare-hq --no-site-packages
+    $ sudo apt-get install virtualenvwrapper
+    $ mkvirtualenv cchq
+
+
+### Installing required dev packages
+
+The Python libraries you will be installing in the next step require the following packages:
+
+    $ sudo apt-get install rabbitmq-server \
+          libpq-dev \
+          libfreetype6-dev \
+          libjpeg-dev \
+          libtiff-dev \
+          libwebp-dev \
+          libxml2-dev \
+          libxslt-dev \
+          python-dev
+
 
 ### Downloading and configuring CommCare HQ
 
@@ -110,9 +133,8 @@ Once all the dependencies are in order, please do the following:
     git clone git@github.com:dimagi/commcare-hq.git
     cd commcare-hq
     git submodule update --init --recursive
-    source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
-    mkdir pip_cache
-    pip install --download-cache pip_cache -r requirements/requirements.txt -r requirements/prod-requirements.txt
+    workon cchq  # if your "cchq" virtualenv is not already activated
+    pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
 
 There is also a separate collection of Dimagi dev oriented tools that you can install:
@@ -186,10 +208,15 @@ that you have a 32bit version of Python installed.
 We use bower to manage our javascript dependencies. In order to download the required javascript packages, 
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
-    1. Install [npm](https://www.npmjs.com/)
-    2. Install bower `npm -g install bower`
-    3. Add `BOWER_PATH` to `localsettings.py`. Find your local bower path by using `which bower`
-    4. Run bower with `./manage.py bower install`
+1. Install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled with NodeJS. An up-to-date version is 
+   available on the NodeSource repository.
+
+        $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+        $ sudo apt-get install -y nodejs
+
+2. Install bower `sudo npm -g install bower`
+3. Add `BOWER_PATH` to `localsettings.py`. Find your local bower path by using `which bower`
+4. Run bower with `./manage.py bower install`
 
 
 ### Using LESS: 3 Options
