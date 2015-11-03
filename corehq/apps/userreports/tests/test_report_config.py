@@ -73,6 +73,23 @@ class ReportConfigurationTest(SimpleTestCase):
         data_source = ReportFactory.from_spec(report_config)
         self.assertEqual(['doc_id'], data_source.group_by)
 
+    def test_fall_back_display_to_column_id(self):
+        config = ReportConfiguration(
+            domain='somedomain',
+            config_id='someconfig',
+            aggregation_columns=['doc_id'],
+            columns=[{
+                "type": "field",
+                "column_id": "my_column",
+                "field": "somefield",
+                "format": "default",
+                "aggregation": "sum"
+            }],
+            filters=[],
+            configured_charts=[]
+        )
+        self.assertEqual(config.report_columns[0].display, 'my_column')
+
 
 class ReportConfigurationTotalRowTest(SimpleTestCase):
 
