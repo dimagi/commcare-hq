@@ -5,6 +5,7 @@ function HQReportDataTables(options) {
     self.dataTableElem = options.dataTableElem || '.datatable';
     self.paginationType = options.paginationType || 'bootstrap';
     self.useBootstrap3 = options.useBootstrap3 || false;
+    self.useDataTables110 = options.useDataTables110 || false;
     self.defaultRows = options.defaultRows || 10;
     self.startAtRowNum = options.startAtRowNum || 0;
     self.showAllRowsOption = options.showAllRowsOption || false;
@@ -49,7 +50,11 @@ function HQReportDataTables(options) {
     this.render = function () {
         if (self.rendered) {
             $(self.dataTableElem).each(function () {
-                $(this).dataTable().fnReloadAjax();
+                if (self.useDataTables110){
+                    $(this).DataTable().ajax.reload();
+                } else {
+                    $(this).dataTable().fnReloadAjax();
+                }
             });
             return;
         }
