@@ -1,5 +1,5 @@
     <script>
-    {% if GOOGLE_ANALYTICS_ID %}
+    {% if GOOGLE_ANALYTICS_API_ID %}
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -18,10 +18,10 @@
             }
         }
         // The following line is required to make sure ga is called in ga_track_event
-        // when no GOOGLE_ANALYTICS_ID is specified (useful for debugging)
+        // when no GOOGLE_ANALYTICS_API_ID is specified (useful for debugging)
         ga.create = true;
     {% endif %}
-        ga('create', '{{ GOOGLE_ANALYTICS_ID }}', {
+        ga('create', '{{ GOOGLE_ANALYTICS_API_ID }}', {
             'userId': '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}',
         });
         ga('set', 'dimension1', '{% if request.couch_user and request.couch_user.is_dimagi %}yes{% else %}no{% endif %}');

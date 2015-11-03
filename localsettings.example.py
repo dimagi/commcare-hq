@@ -91,18 +91,6 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #     'key_pass': "*******",
 # }
 
-####### SMS Config ########
-
-# Mach
-
-SMS_GATEWAY_URL = "http://gw1.promessaging.com/sms.php"
-SMS_GATEWAY_PARAMS = "id=******&pw=******&dnr=%(phone_number)s&msg=%(message)s&snr=DIMAGI"
-
-# Unicel
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "******",
-                 "sender": "Promo" }
-
 ####### Domain sync / de-id ########
 
 DOMAIN_SYNCS = { 
@@ -134,9 +122,9 @@ BASE_ADDRESS = 'localhost:8000'
 
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '*******',
-    'PINGDOM_ID': '*****',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'GOOGLE_ANALYTICS_API_ID': '*******',
+    'PINGDOM_API_ID': '*****',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
     'HUBSPOT_API_KEY': '*****',
 }
