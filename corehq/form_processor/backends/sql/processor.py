@@ -31,7 +31,7 @@ class FormProcessorSQL(object):
         pass
 
     @classmethod
-    def new_form(cls, form_data):
+    def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
 
         return XFormInstanceSQL(

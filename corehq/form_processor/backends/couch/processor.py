@@ -39,7 +39,7 @@ class FormProcessorCouch(object):
         xform._attachments = builder.to_json()
 
     @classmethod
-    def new_form(cls, form_data):
+    def new_xform(cls, form_data):
         from couchforms.models import XFormInstance
 
         _id = extract_meta_instance_id(form_data) or XFormInstance.get_db().server.next_uuid()

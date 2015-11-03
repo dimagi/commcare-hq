@@ -63,7 +63,7 @@ def new_xform(instance_xml, attachments=None, process=None):
     form_data = convert_xform_to_json(instance_xml)
     adjust_datetimes(form_data)
 
-    xform = FormProcessorInterface().new_form(form_data)
+    xform = FormProcessorInterface().new_xform(form_data)
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = map(

@@ -66,9 +66,6 @@ class FormProcessorInterface(object):
     def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
-    def create_xform(self, xml_string, attachments=None, process=None):
-        return self.processor.create_xform(xml_string, attachments=attachments, process=process)
-
     def store_attachments(self, xform, attachments):
         """
         Takes a list of Attachment namedtuples with content, name, and content_type and stores them to the XForm
@@ -78,5 +75,5 @@ class FormProcessorInterface(object):
     def is_duplicate(self, xform, lock):
         return self.processor.is_duplicate(xform, lock)
 
-    def new_form(self, instance_xml):
-        return self.processor.new_form(instance_xml)
+    def new_xform(self, instance_xml):
+        return self.processor.new_xform(instance_xml)
