@@ -14,6 +14,8 @@ from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from corehq.toggles import USE_SQL_BACKEND
 from couchforms.exceptions import DuplicateError
 
+from .models import Attachment
+
 
 def should_use_sql_backend(domain):
     if settings.UNIT_TESTING:
@@ -67,10 +69,10 @@ def new_xform(instance_xml, attachments=None, process=None):
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = map(
-        lambda name, filestream:
-        {'name': name, 'content': filestream, 'content_type': filestream.content_type}, attachments
+        lambda a: Attachment(name=a[0], content=a[1], content_type=a[1].content_type),
+        attachments.items()
     )
-    attachments.append({'name': 'form.xml', 'content': instance_xml, 'content_type': 'text/xml'})
+    attachments.append(Attachment(name='form.xml', content=instance_xml, content_type='text/xml'))
     FormProcessorInterface().store_attachments(xform, attachments)
 
     # this had better not fail, don't think it ever has

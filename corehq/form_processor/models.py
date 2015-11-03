@@ -1,3 +1,5 @@
+import collections
+
 from django.db import models
 from dimagi.utils.couch import RedisLockableMixIn
 
@@ -38,3 +40,6 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     @property
     def form_id(self):
         return self.form_uuid
+
+
+Attachment = collections.namedtuple('Attachment', 'name content content_type')

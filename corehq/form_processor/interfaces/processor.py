@@ -71,7 +71,7 @@ class FormProcessorInterface(object):
 
     def store_attachments(self, xform, attachments):
         """
-        Takes a list of dicts with content, name, and content_type and stores them to the XForm
+        Takes a list of Attachment namedtuples with content, name, and content_type and stores them to the XForm
         """
         return self.processor.store_attachments(xform, attachments)
 

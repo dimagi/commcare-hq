@@ -4,7 +4,6 @@ from dimagi.utils.couch import LockManager, ReleaseOnError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.util import process_xform, acquire_lock_for_xform
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes, extract_meta_instance_id
-from couchforms.attachments import AttachmentsManager
 from couchforms.exceptions import DuplicateError
 
 
@@ -32,9 +31,9 @@ class FormProcessorCouch(object):
         builder = CouchAttachmentsBuilder()
         for attachment in attachments:
             builder.add(
-                content=attachment['content'],
-                name=attachment['name'],
-                content_type=attachment['content_type'],
+                content=attachment.content,
+                name=attachment.name,
+                content_type=attachment.content_type,
             )
 
         xform._attachments = builder.to_json()
