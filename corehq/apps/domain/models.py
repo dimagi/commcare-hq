@@ -1002,10 +1002,10 @@ class Domain(Document, SnapshotMixin):
 
         SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
         BillingRecord.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
-        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
         CreditAdjustment.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
         CreditAdjustment.objects.filter(credit_line__subscription__subscriber__domain=self.name).delete()
         CreditAdjustment.objects.filter(related_credit__subscription__subscriber__domain=self.name).delete()
+        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
 
         CreditLine.objects.filter(subscription__subscriber__domain=self.name).delete()
         Invoice.objects.filter(subscription__subscriber__domain=self.name).delete()
