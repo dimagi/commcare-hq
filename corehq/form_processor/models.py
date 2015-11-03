@@ -21,14 +21,12 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     # history = SchemaListProperty(XFormOperation)
     # auth_context = DictProperty()
     submit_ip = models.CharField(max_length=255, null=True)
-    #openrosa_headers = DictProperty()
+    # openrosa_headers = DictProperty()
     last_sync_token = models.CharField(max_length=255, null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
-    #date_header = DefaultProperty()
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
-    #export_tag = DefaultProperty(name='#export_tag')
-
+    # export_tag = DefaultProperty(name='#export_tag')
 
     @classmethod
     def get(cls, id):
