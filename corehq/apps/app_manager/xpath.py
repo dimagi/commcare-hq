@@ -625,8 +625,8 @@ class ScheduleFormXPath(object):
         return u"coalesce({}, {} - {})".format(due, SCHEDULE_MAX_DATE, XPath.date(self.anchor))
 
     def due_later(self):
-        """if(visit/[next_visits][before_window][1]/@increment = '', @increment + last_visit_date_{form_id},
-              visit/[next_visits][before_window][1]/@due = '', @due + anchor_date, MAX_DATE)
+        """if(visit/[next_visits][before_window][1]/@increment != '', @increment + last_visit_date_{form_id},
+              visit/[next_visits][before_window][1]/@due != '', @due + anchor_date, MAX_DATE)
         """
         due_visit = (self.fixture.visit().
                      select_raw(self.next_visits()).
