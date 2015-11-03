@@ -18,7 +18,7 @@ class HelpHandler(KeywordHandler):
         elif topic == 'start':
             self.respond("Text 'start' to get text message reminders every week to submit your stock reports.")
         elif 'code' in topic:
-            codes = [c.code for c in SQLProduct.by_domain(self.domain).order_by('code')]
+            codes = SQLProduct.by_domain(self.domain).order_by('code').values_list('code', flat=True)
             self.respond("Available commodity codes: %(codes)s", codes=", ".join(codes))
         else:
             try:
