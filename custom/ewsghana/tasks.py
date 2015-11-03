@@ -25,7 +25,6 @@ from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain,
     bootstrap_domain
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
-from custom.logistics.utils import iterate_over_api_objects, get_username_for_user
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -201,26 +200,12 @@ def migrate_email_settings(domain):
 
 
 @task(queue='logistics_background_queue', ignore_result=True)
-def migrate_needs_reminders_field_task(domain):
-    config = EWSGhanaConfig.for_domain(domain)
-    endpoint = GhanaEndpoint.from_config(config)
-
-    for sms_user in iterate_over_api_objects(endpoint.get_smsusers, filters={'needs_reminders': False}):
-        username = get_username_for_user(domain, sms_user)[0]
-        couch_user = CommCareUser.get_by_username(username)
-
-        if couch_user and couch_user.user_data.get('needs_reminders') != 'False':
-            couch_user['user_data']['needs_reminders'] = "False"
-            couch_user.save()
-
-    ids = CommCareUser.ids_by_domain(domain)
-
+def delete_connections_field_task(domain):
     to_save = []
-    for user in iter_docs(CommCareUser.get_db(), ids):
-        if 'needs_reminders' not in user['user_data']:
-            user['user_data']['needs_reminders'] = "True"
+    for user in iter_docs(CommCareUser.get_db(), CommCareUser.ids_by_domain(domain)):
+        if 'connections' in user['user_data']:
+            del user['user_data']['connections']
             to_save.append(user)
-
             if len(to_save) > 500:
                 CommCareUser.get_db().bulk_save(to_save)
                 to_save = []
