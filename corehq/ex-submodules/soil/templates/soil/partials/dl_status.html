@@ -8,7 +8,11 @@
     <div id="ready_{{ download_id }}">
     {% if has_file %}
         <p class="lead">
-        <i class="icon icon-ok"></i>&nbsp;{% trans 'Your export is ready.' %}
+        {% if custom_message %}
+            <i class="icon icon-ok"></i>&nbsp;{{ custom_message }}
+        {% else %}
+            <i class="icon icon-ok"></i>&nbsp;{% trans 'Your export is ready.' %}
+        {% endif %}
         </p>
         {% if allow_dropbox_sync %}
             <p class="alert alert-info">
