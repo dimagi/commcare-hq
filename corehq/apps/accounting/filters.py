@@ -109,14 +109,13 @@ class EntryPointFilter(BaseSingleOptionFilter):
     options = EntryPoint.CHOICES
 
 
-INVOICE = "SEND_INVOICE"
-DO_NOT_INVOICE = "DO_NOT_INVOICE"
-
-
 class DoNotInvoiceFilter(BaseSingleOptionFilter):
     slug = 'do_not_invoice'
     label = _('Invoicing Status')
     default_text = _('Any')
+
+    INVOICE = "SEND_INVOICE"
+    DO_NOT_INVOICE = "DO_NOT_INVOICE"
     options = [
         (INVOICE, _('Send invoice')),
         (DO_NOT_INVOICE, _('Do not invoice')),
