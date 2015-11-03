@@ -26,6 +26,8 @@ from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
+from django.db import models
+
 
 class IllegalModelStateException(Exception):
     pass
@@ -1613,6 +1615,43 @@ class SurveyKeyword(Document):
             reduce=False,
             **extra_kwargs
         ).all()
+
+
+class EmailUsage(models.Model):
+    domain = models.CharField(max_length=126, db_index=True)
+    year = models.IntegerField()
+    month = models.IntegerField()
+    count = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('domain', 'year', 'month')
+
+    @classmethod
+    def get_or_create_usage_record(cls, domain):
+        now = datetime.utcnow()
+        domain_year_month = '%s-%d-%d' % (
+            domain,
+            now.year,
+            now.month
+        )
+        email_usage_get_or_create_key = 'get-or-create-email-usage-%s' % domain_year_month
+
+        with CriticalSection([email_usage_get_or_create_key]):
+            return cls.objects.get_or_create(
+                domain=domain,
+                year=now.year,
+                month=now.month
+            )[0]
+
+    @classmethod
+    def get_total_count(cls, domain):
+        qs = cls.objects.filter(domain=domain)
+        result = qs.aggregate(total=models.Sum('count'))
+        return result['total'] or 0
+
+    def update_count(self, increase_by=1):
+        # This operation is thread safe, no need to use CriticalSection
+        EmailUsage.objects.filter(pk=self.pk).update(count=models.F('count') + increase_by)
 
 
 from .signals import *

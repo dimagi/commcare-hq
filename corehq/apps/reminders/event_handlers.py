@@ -1,6 +1,7 @@
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
-    METHOD_EMAIL, CaseReminderHandler)
+    METHOD_EMAIL, CaseReminderHandler, EmailUsage)
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
@@ -29,6 +30,7 @@ from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
 
+TRIAL_MAX_EMAILS = 50
 ERROR_RENDERING_MESSAGE = ugettext_noop("Error rendering templated message for language '%s'. Please check message syntax.")
 ERROR_NO_VERIFIED_NUMBER = ugettext_noop("Recipient has no phone number.")
 ERROR_NO_OTHER_NUMBERS = ugettext_noop("Recipient has no phone number.")
@@ -406,6 +408,8 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
     current_event = reminder.current_event
     case = reminder.case
     template_params = get_message_template_params(case)
+    email_usage = EmailUsage.get_or_create_usage_record(reminder.domain)
+    is_trial = domain_is_on_trial(reminder.domain)
 
     uses_custom_content_handler, content_handler = get_custom_content_handler(handler, logged_event)
     if uses_custom_content_handler and not content_handler:
@@ -439,7 +443,11 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
                 email_address = None
 
             if email_address:
+                if is_trial and EmailUsage.get_total_count(reminder.domain) >= TRIAL_MAX_EMAILS:
+                    logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
+                    continue
                 send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+                email_usage.update_count()
             else:
                 logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
                 continue
