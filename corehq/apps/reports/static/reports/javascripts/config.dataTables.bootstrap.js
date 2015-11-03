@@ -49,7 +49,12 @@ function HQReportDataTables(options) {
     this.render = function () {
         if (self.rendered) {
             $(self.dataTableElem).each(function () {
-                $(this).dataTable().fnReloadAjax();
+                if (jQuery.fn.dataTable.versionCheck) {
+                    // jQuery.fn.dataTable.versionCheck does not exist prior to 1.10
+                    $(this).DataTable().ajax.reload();
+                } else {
+                    $(this).dataTable().fnReloadAjax();
+                }
             });
             return;
         }
