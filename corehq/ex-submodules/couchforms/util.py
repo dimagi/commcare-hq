@@ -410,8 +410,10 @@ class SubmissionPost(object):
             from corehq.apps.commtrack.exceptions import MissingProductId
 
             cases = []
+            responses = []
             errors = []
-            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId, PhoneDateValueError)
+            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
+                            PhoneDateValueError)
             with lock_manager as xforms:
                 instance = xforms[0]
                 if instance.is_duplicate:
@@ -448,12 +450,13 @@ class SubmissionPost(object):
                             instance.save()
                             raise
                         now = datetime.datetime.utcnow()
-                        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+                        unfinished_submission_stub = UnfinishedSubmissionStub(
                             xform_id=instance.get_id,
                             timestamp=now,
                             saved=False,
                             domain=domain,
                         )
+                        unfinished_submission_stub.save()
                         # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
 
@@ -462,10 +465,9 @@ class SubmissionPost(object):
                         cases = prepare_cases(case_db, now)
 
                         docs = xforms + cases
+                        unfinished_submission_stub.saved = True
+                        unfinished_submission_stub.save()
                         bulk_save_docs(docs, instance)
-
-                        UnfinishedSubmissionStub.form_has_saved(unfinished_submission_stub)
-
                         case_result.commit_dirtiness_flags()
                         stock_result.commit()
                         for case in cases:
@@ -475,7 +477,7 @@ class SubmissionPost(object):
                     if errors:
                         # .problems was added to instance
                         instance.save()
-                    UnfinishedSubmissionStub.form_process_completed(unfinished_submission_stub)
+                    unfinished_submission_stub.delete()
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
 
