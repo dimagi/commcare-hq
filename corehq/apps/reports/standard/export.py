@@ -1,5 +1,4 @@
 from collections import defaultdict
-import json
 import logging
 from datetime import timedelta, datetime
 from django.conf import settings
@@ -7,7 +6,6 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from corehq.apps.reports.dbaccessors import stale_get_export_count
 from dimagi.utils.decorators.memoized import memoized
