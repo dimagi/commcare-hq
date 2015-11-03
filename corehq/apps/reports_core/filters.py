@@ -115,8 +115,8 @@ class DatespanFilter(BaseFilter):
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
 
     def default_value(self):
-        # default to a week's worth of data.
-        return DateSpan.since(7)
+        # default to "Show All Dates"
+        return None
 
     def filter_context(self):
         return {
