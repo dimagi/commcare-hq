@@ -2,6 +2,7 @@ import iso8601
 import pytz
 import xml2json
 
+from redis.exceptions import RedisError
 from django.conf import settings
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.parsing import json_format_datetime
