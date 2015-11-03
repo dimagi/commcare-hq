@@ -21493,16 +21493,22 @@ msgstr ""
 msgid "Invalid phone number format."
 msgstr ""
 
-#: corehq/apps/sms/verify.py:13
-#, python-format
+#, python-brace-format
 msgid ""
-"Welcome to CommCareHQ! Is this phone used by %(name)s? If yes, reply "
-"'123'%(replyto)s to start using SMS with CommCareHQ."
+"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
+"{1} to start using SMS with CommCareHQ."
 msgstr ""
-"Bem-vindo ao CommCareHQ! Sera que este telefone e usado por %(name)s? Se "
-"sim, responde '123'%(replyto)s para comecar a usar o SMS com CommCareHQ."
+"Bem-vindo ao CommCareHQ! Sera que este telefone e usado por {0}? Se sim, "
+"responde '123' a {1} para comecar a usar o SMS com CommCareHQ."
 
-#: corehq/apps/sms/verify.py:14
+#, python-brace-format
+msgid ""
+"Welcome to CommCareHQ! Is this phone used by {0}? If yes, reply '123' to "
+"start using SMS with CommCareHQ."
+msgstr ""
+"Bem-vindo ao CommCareHQ! Sera que este telefone e usado por {0}? Se sim, "
+"responde '123' para comecar a usar o SMS com CommCareHQ."
+
 msgid "Thank you. This phone has been verified for using SMS with CommCareHQ"
 msgstr ""
 "Obrigado. Este telefone esta verificado para utilizar o SMS com CommCareHQ"

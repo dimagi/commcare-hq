@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.specs import FactoryContext
 
 
 class BasicFilterTest(SimpleTestCase):
@@ -359,7 +360,7 @@ class ConfigurableNamedFilterTest(SimpleTestCase):
     def setUp(self):
         self.filter = FilterFactory.from_spec(
             {'type': 'named', 'name': 'foo'},
-            {
+            FactoryContext({}, {
                 'foo': FilterFactory.from_spec({
                     "type": "not",
                     "filter": {
@@ -368,11 +369,11 @@ class ConfigurableNamedFilterTest(SimpleTestCase):
                         "property_value": "bar"
                     }
                 })
-            }
+            })
         )
         self.assertTrue(isinstance(self.filter, NOTFilter))
 
-    def test_filter_atch(self):
+    def test_filter_match(self):
         self.assertTrue(self.filter(dict(foo='not bar')))
 
     def test_filter_no_match(self):

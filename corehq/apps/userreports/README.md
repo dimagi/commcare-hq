@@ -27,6 +27,7 @@ indicators           | List of indicators to save
 table_id             | A unique ID for the table
 display_name         | A display name for the table that shows up in UIs
 base_item_expression | Used for making tables off of repeat or list data
+named_expressions    | A list of named expressions that can be referenced in other filters and indicators
 named_filters        | A list of named filters that can be referenced in other filters and indicators
 
 
@@ -303,6 +304,34 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
 }
 ```
 
+#### Named Expressions
+
+Last, but certainly not least, are named expressions.
+These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
+This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
+
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+
+```json
+{
+    "type": "named",
+    "name": "my_expression"
+}
+```
+
+This assumes that your named expression section of your data source includes a snippet like the following:
+
+```json
+{
+    "my_expression": {
+        "type": "property_name",
+        "property_name": "test"
+    }
+}
+```
+
+This is just a simple example - the value that `"my_expression"` takes on can be as complicated as you want _as long as it doesn't reference any other named expressions_.
+
 ### Boolean Expression Filters
 
 A `boolean_expression` filter combines an *expression*, an *operator*, and a *property value* (a constant), to produce a statement that is either `True` or `False`. *Note: in the future the constant value may be replaced with a second expression to be more general, however currently only constant property values are supported.*
@@ -449,11 +478,12 @@ Additionally, specific indicator types have other type-specific properties. Thes
 
 The following primary indicator types are supported:
 
-Indicator Type | Description
--------------- | -----------
-boolean        | Save `1` if a filter is true, otherwise `0`.
-expression     | Save the output of an expression.
-choice_list    | Save multiple columns, one for each of a predefined set of choices
+Indicator Type  | Description
+--------------  | -----------
+boolean         | Save `1` if a filter is true, otherwise `0`.
+expression      | Save the output of an expression.
+choice_list     | Save multiple columns, one for each of a predefined set of choices
+ledger_balances | Save a column for each product specified, containing ledger data
 
 *Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
@@ -525,6 +555,40 @@ A sample spec is below:
     "select_style": "single"
 }
 ```
+
+#### Ledger Balance Indicators
+
+Ledger Balance indicators take a list of product codes and a ledger section,
+and produce a column for each product code, saving the value found in the
+corresponding ledger.
+
+Property            | Description
+--------------------|------------
+ledger_section      | The ledger section to use for this indicator, for example, "stock"
+product_codes       | A list of the products to include in the indicator.  This will be used in conjunction with the `column_id` to produce each column name.
+case_id_expression  | (optional) An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
+
+```
+{
+    "type": "ledger_balances",
+    "column_id": "soh",
+    "display_name": "Stock On Hand",
+    "ledger_section": "stock",
+    "product_codes": ["aspirin", "bandaids", "gauze"],
+    "case_id_expression": {
+        "type": "property_name",
+        "property_name": "_id"
+    }
+}
+```
+
+This spec would produce the following columns in the data source:
+
+soh_aspirin | soh_bandaids | soh_gauze
+------------|--------------|----------
+ 20         |  11          |  5
+ 67         |  32          |  9
+
 
 ### Practical notes for creating indicators
 

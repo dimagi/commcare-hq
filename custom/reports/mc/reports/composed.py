@@ -24,4 +24,3 @@ class ComposedTabularReport(GenericTabularReport):
     @property
     def rows(self):
         return self.data_provider.rows()
-

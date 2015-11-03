@@ -1,9 +1,12 @@
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ewsghana.handlers import INVALID_MESSAGE
+from custom.ewsghana.handlers.help import HelpHandler
 from custom.ewsghana.handlers.receipts import ReceiptsHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
 from custom.ewsghana.handlers.alerts import AlertsHandler
+from custom.ewsghana.handlers.start import StartHandler
+from custom.ewsghana.handlers.stop import StopHandler
 from custom.ewsghana.handlers.undo import UndoHandler
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
@@ -42,6 +45,9 @@ def handle(verified_contact, text, msg=None):
         return None
 
     handlers = {
+        ('help', ): HelpHandler,
+        ('stop', ): StopHandler,
+        ('start', ): StartHandler,
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('yes', 'no', 'y', 'n'): RequisitionHandler,
         ('undo', 'replace', 'revoke'): UndoHandler,

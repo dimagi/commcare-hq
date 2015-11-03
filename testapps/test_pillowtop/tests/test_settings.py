@@ -51,6 +51,7 @@ def _pillow_meta_from_config(pillow_config):
         pillow_instance = pillow_config.get_instance()
     props = {
         'name': pillow_config.name,
+        'advertised_name': pillow_instance.get_name(),
         'full_class_name': pillow_config.class_name,
         'checkpoint_id': pillow_instance.checkpoint.checkpoint_id,
     }

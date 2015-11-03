@@ -139,8 +139,8 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="fix_sms_users">
-                        {% trans "Fix sms users" %}
+                    <button class="btn" id="delete_connections_field">
+                        {% trans "Delete connections field" %}
                     </button>
                 </div>
             </div>
@@ -218,8 +218,8 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#fix_sms_users").click(function() {
-            var url = '{% url 'fix_sms_users' domain %}';
+        $("#delete_connections_field").click(function() {
+            var url = '{% url 'delete_connections_field' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

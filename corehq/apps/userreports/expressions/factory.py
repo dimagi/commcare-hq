@@ -6,7 +6,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec, DictExpressionSpec
+    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec
 
 
 def _make_filter(spec, context):
@@ -24,6 +24,12 @@ _identity_expression = functools.partial(_simple_expression_generator, IdentityE
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
+
+
+def _named_expression(spec, context):
+    expression = NamedExpressionSpec.wrap(spec)
+    expression.configure(context=context)
+    return expression
 
 
 def _conditional_expression(spec, context):
@@ -103,6 +109,7 @@ class ExpressionFactory(object):
         'constant': _constant_expression,
         'property_name': _property_name_expression,
         'property_path': _property_path_expression,
+        'named': _named_expression,
         'conditional': _conditional_expression,
         'array_index': _array_index_expression,
         'root_doc': _root_doc_expression,

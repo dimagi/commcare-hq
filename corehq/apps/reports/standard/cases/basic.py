@@ -7,6 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery
+from corehq.apps.locations.dbaccessors import get_users_location_ids
 from corehq.apps.locations.util import get_locations_and_children
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -122,10 +123,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_reporting_group_ids = EMWF.selected_reporting_group_ids(self.request)
         selected_sharing_group_ids = EMWF.selected_sharing_group_ids(self.request)
 
-        # Show cases owned by any selected locations or their children
-        location_owner_ids = get_locations_and_children(
-            EMWF.selected_location_ids(self.request)
-        ).location_ids()
+        # Show cases owned by any selected locations, user locations, or their children
+        loc_ids = set(EMWF.selected_location_ids(self.request) +
+                      get_users_location_ids(self.domain, selected_user_ids))
+        location_owner_ids = get_locations_and_children(loc_ids).location_ids()
 
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\

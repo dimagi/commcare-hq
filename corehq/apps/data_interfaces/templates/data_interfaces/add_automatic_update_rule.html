@@ -1,0 +1,131 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% load crispy_forms_tags %}
+
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+(function (angular, initial) {
+    'use strict';
+    var autoUpdateRuleApp = angular.module('addUpdateRuleApp', []);
+    autoUpdateRuleApp.controller('UpdateRuleController', function($scope) {
+        $scope.name = initial.name;
+        $scope.case_type = initial.case_type;
+        $scope.action = initial.action;
+        $scope.update_property_name = initial.update_property_name;
+        $scope.update_property_value = initial.update_property_value;
+        $scope.server_modified_boundary = initial.server_modified_boundary;
+        $scope.conditions_objs = initial.conditions;
+        $scope.conditions = JSON.stringify(initial.conditions);
+
+        $scope.$watch('conditions_objs', function(newValue, oldValue) {
+            $scope.conditions = JSON.stringify(newValue);
+        }, true);
+
+        $scope.addCondition = function() {
+            $scope.conditions_objs.push({});
+        };
+        $scope.removeCondition = function(index) {
+            $scope.conditions_objs.splice(index, 1);
+        };
+        $scope.matchesDaysSince = function(condition) {
+            return condition.property_match_type == 'DAYS';
+        };
+        $scope.matchesExists = function(condition) {
+            return condition.property_match_type == 'EXISTS';
+        };
+        $scope.showUpdateProperty = function() {
+            return $scope.action == 'UPDATE_AND_CLOSE';
+        };
+    });
+}(window.angular, {{ form.current_values|JSON }}));
+</script>
+{% endblock %}
+
+{% block page_content %}
+<div ng-app="addUpdateRuleApp" ng-controller="UpdateRuleController" ng-cloak>
+    <div id="add-rule-form">
+        {% crispy form %}
+    </div>
+    <script type="text/ng-template" id="conditions.tpl">
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th class="col-xs-2">{% trans "Property Name" %}</th>
+                    <th class="col-xs-2">{% trans "Match Type" %}</th>
+                    <th class="col-xs-1">{% trans "Value" %}</th>
+                    <th class="col-xs-1"></th>
+                    <th class="col-xs-3">{% trans "Action" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>server_modified_on</div>
+                    <td>{% trans "after date by" %}</td>
+                    <td>
+                        <input class="textinput textInput form-control"
+                               type="text"
+                               name="server_modified_boundary"
+                               ng-model="server_modified_boundary" />
+                        {% if form.server_modified_boundary.errors %}
+                        <span class="help-block">
+                            <strong>{{ form.server_modified_boundary.errors.0 }}</strong>
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{% trans "days" %}</td>
+                </tr>
+                <tr ng-repeat="condition in conditions_objs">
+                    {% angularjs %}
+                    <td>
+                        <input class="textinput textInput form-control"
+                               type="text"
+                               ng-model="condition.property_name" />
+                    </td>
+                    <td>
+                        <select class="select form-control"
+                                ng-model="condition.property_match_type">
+                            <option value="DAYS">{% trans "after date by" %}</option>
+                            <option value="EXISTS">{% trans "exists" %}</option>
+                            <option value="EQUAL">{% trans "equals" %}</option>
+                            <option value="NOT_EQUAL">{% trans "does not equal" %}</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input class="textinput textInput form-control"
+                               type="text"
+                               ng-model="condition.property_value"
+                               ng-hide="matchesExists(condition)" />
+                    </td>
+                    <td>
+                        <span ng-show="matchesDaysSince(condition)">{% trans "days" %}</span>
+                    </td>
+                    <td>
+                        <button type="button"
+                                class="btn btn-danger"
+                                ng-click="removeCondition($index);">
+                            <i class="fa fa-times"></i> {% trans "Remove" %}
+                        </button>
+                    </td>
+                    {% endangularjs %}
+                </tr>
+            </tbody>
+        </table>
+        {% if form.conditions.errors %}
+        <div>
+            <span class="help-block">
+                <strong>{{ form.conditions.errors.0 }}</strong>
+            </span>
+        </div>
+        {% endif %}
+        <div class="btn-toolbar" style="margin-bottom: 20px;">
+            <button type="button"
+                    class="btn btn-success"
+                    ng-click="addCondition();">
+                <i class="fa fa-plus"></i> {% trans "Add Condition" %}
+            </button>
+        </div>
+    </script>
+</div>
+{% endblock %}

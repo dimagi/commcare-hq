@@ -57,6 +57,7 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
 )
 from corehq.util.couch import get_document_or_404
+from corehq.apps.analytics.tasks import track_workflow
 
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
@@ -740,6 +741,9 @@ class InviteWebUserView(BaseManageWebUserView):
                                          program_id=data.get("program", None))
                 messages.success(request, "%s added." % data["email"])
             else:
+                track_workflow(request.couch_user.get_email(),
+                               "Sent a project invitation",
+                               {"Sent a project invitation": "yes"})
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:

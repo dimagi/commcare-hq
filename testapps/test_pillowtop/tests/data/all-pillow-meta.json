@@ -1,5 +1,6 @@
 {
     "AllHmisCaseFluffPillow": {
+        "advertised_name": "fluff.AllHmisCaseFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.AllHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -12,6 +13,7 @@
         "name": "AllHmisCaseFluffPillow"
     }, 
     "AncHmisCaseFluffPillow": {
+        "advertised_name": "fluff.AncHmisCaseFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.AncHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -24,6 +26,7 @@
         "name": "AncHmisCaseFluffPillow"
     }, 
     "AppPillow": {
+        "advertised_name": "corehq.pillows.application.AppPillow.93d8007a66254463abc4f8938811eea9.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.application.AppPillow.93d8007a66254463abc4f8938811eea9.testhq", 
         "couch_filter": "app_manager/all_apps", 
         "document_class": "ApplicationBase", 
@@ -37,6 +40,7 @@
         "unique_id": "93d8007a66254463abc4f8938811eea9"
     }, 
     "CacheInvalidatePillow": {
+        "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq", 
         "couch_filter": "hqadmin/not_case_form", 
         "document_class": null, 
@@ -46,6 +50,7 @@
         "name": "CacheInvalidatePillow"
     }, 
     "CareBiharFluffPillow": {
+        "advertised_name": "fluff.CareBiharFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.CareBiharFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
@@ -58,6 +63,7 @@
         "name": "CareBiharFluffPillow"
     }, 
     "CaseDataPillow": {
+        "advertised_name": "corehq.pillows.sofabed.CaseDataPillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.sofabed.CaseDataPillow.testhq", 
         "couch_filter": "case/casedocs", 
         "document_class": "CommCareCase", 
@@ -67,6 +73,7 @@
         "name": "CaseDataPillow"
     }, 
     "CasePillow": {
+        "advertised_name": "corehq.pillows.case.CasePillow.d94ad23a98ddd2e9c36a9dc73bb58bac.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.case.CasePillow.d94ad23a98ddd2e9c36a9dc73bb58bac.testhq", 
         "couch_filter": "case/casedocs", 
         "document_class": "CommCareCase", 
@@ -80,6 +87,7 @@
         "unique_id": "d94ad23a98ddd2e9c36a9dc73bb58bac"
     }, 
     "ConfigurableIndicatorPillow": {
+        "advertised_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq", 
         "couch_filter": null, 
         "document_class": null, 
@@ -89,6 +97,7 @@
         "name": "ConfigurableIndicatorPillow"
     }, 
     "CouvertureFluffPillow": {
+        "advertised_name": "fluff.CouvertureFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.CouvertureFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -101,6 +110,7 @@
         "name": "CouvertureFluffPillow"
     }, 
     "DefaultChangeFeedPillow": {
+        "advertised_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq", 
         "couch_filter": null, 
         "document_class": null, 
@@ -110,6 +120,7 @@
         "name": "DefaultChangeFeedPillow"
     }, 
     "DomainPillow": {
+        "advertised_name": "corehq.pillows.domain.DomainPillow.hqdomains_20150909_1150.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.domain.DomainPillow.hqdomains_20150909_1150.testhq", 
         "couch_filter": "domain/domains_inclusive", 
         "document_class": "Domain", 
@@ -123,6 +134,7 @@
         "unique_id": "hqdomains_20150909_1150"
     }, 
     "FarmerRecordFluffPillow": {
+        "advertised_name": "fluff.FarmerRecordFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.FarmerRecordFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
@@ -135,6 +147,7 @@
         "name": "FarmerRecordFluffPillow"
     }, 
     "FormDataPillow": {
+        "advertised_name": "corehq.pillows.sofabed.FormDataPillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.sofabed.FormDataPillow.testhq", 
         "couch_filter": "couchforms/xforms", 
         "document_class": "XFormInstance", 
@@ -144,6 +157,7 @@
         "name": "FormDataPillow"
     }, 
     "GeographyFluffPillow": {
+        "advertised_name": "fluff.GeographyFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.GeographyFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
@@ -156,6 +170,7 @@
         "name": "GeographyFluffPillow"
     }, 
     "GroupPillow": {
+        "advertised_name": "corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
         "couch_filter": "groups/all_groups", 
         "document_class": "Group", 
@@ -169,6 +184,7 @@
         "unique_id": "hqgroups_20150403_1501"
     }, 
     "GroupToUserPillow": {
+        "advertised_name": "corehq.pillows.user.GroupToUserPillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.user.GroupToUserPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareUser", 
@@ -178,6 +194,7 @@
         "name": "GroupToUserPillow"
     }, 
     "ImmunizationHmisCaseFluffPillow": {
+        "advertised_name": "fluff.ImmunizationHmisCaseFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.ImmunizationHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -190,6 +207,7 @@
         "name": "ImmunizationHmisCaseFluffPillow"
     }, 
     "IntraHealthFluffPillow": {
+        "advertised_name": "fluff.IntraHealthFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.IntraHealthFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -202,11 +220,13 @@
         "name": "IntraHealthFluffPillow"
     }, 
     "KafkaCaseConsumerPillow": {
+        "advertised_name": "KafkaCaseConsumerPillow", 
         "checkpoint_id": "kafka-demo-case-pillow-checkpoint", 
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow", 
         "name": "KafkaCaseConsumerPillow"
     }, 
     "LdHmisCaseFluffPillow": {
+        "advertised_name": "fluff.LdHmisCaseFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.LdHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -219,6 +239,7 @@
         "name": "LdHmisCaseFluffPillow"
     }, 
     "LivraisonFluffPillow": {
+        "advertised_name": "fluff.LivraisonFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.LivraisonFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -231,6 +252,7 @@
         "name": "LivraisonFluffPillow"
     }, 
     "MVPCaseIndicatorPillow": {
+        "advertised_name": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
         "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "document_class": "CommCareCase", 
@@ -243,6 +265,7 @@
         "name": "MVPCaseIndicatorPillow"
     }, 
     "MVPFormIndicatorPillow": {
+        "advertised_name": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
         "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "document_class": "XFormInstance", 
@@ -255,6 +278,7 @@
         "name": "MVPFormIndicatorPillow"
     }, 
     "MalariaConsortiumFluffPillow": {
+        "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.MalariaConsortiumFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -267,6 +291,7 @@
         "name": "MalariaConsortiumFluffPillow"
     }, 
     "McctMonthlyAggregateFormFluffPillow": {
+        "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.McctMonthlyAggregateFormFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -279,6 +304,7 @@
         "name": "McctMonthlyAggregateFormFluffPillow"
     }, 
     "OpmUserFluffPillow": {
+        "advertised_name": "fluff.OpmUserFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.OpmUserFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareUser", 
@@ -291,6 +317,7 @@
         "name": "OpmUserFluffPillow"
     }, 
     "PhoneLogPillow": {
+        "advertised_name": "corehq.pillows.log.PhoneLogPillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.log.PhoneLogPillow.testhq", 
         "couch_filter": "phonelog/all_logs", 
         "document_class": "XFormInstance", 
@@ -300,6 +327,7 @@
         "name": "PhoneLogPillow"
     }, 
     "ProjectIndicatorsCaseFluffPillow": {
+        "advertised_name": "fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -312,6 +340,7 @@
         "name": "ProjectIndicatorsCaseFluffPillow"
     }, 
     "RecapPassageFluffPillow": {
+        "advertised_name": "fluff.RecapPassageFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.RecapPassageFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -324,6 +353,7 @@
         "name": "RecapPassageFluffPillow"
     }, 
     "RecouvrementFluffPillow": {
+        "advertised_name": "fluff.RecouvrementFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.RecouvrementFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
@@ -336,6 +366,7 @@
         "name": "RecouvrementFluffPillow"
     }, 
     "ReportCasePillow": {
+        "advertised_name": "corehq.pillows.reportcase.ReportCasePillow.8c10a7564b6af5052f8b86693bf6ac07.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.reportcase.ReportCasePillow.8c10a7564b6af5052f8b86693bf6ac07.testhq", 
         "couch_filter": "case/casedocs", 
         "document_class": "CommCareCase", 
@@ -349,6 +380,7 @@
         "unique_id": "8c10a7564b6af5052f8b86693bf6ac07"
     }, 
     "ReportXFormPillow": {
+        "advertised_name": "corehq.pillows.reportxform.ReportXFormPillow.report_xforms_20150406_1136.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.reportxform.ReportXFormPillow.report_xforms_20150406_1136.testhq", 
         "couch_filter": "couchforms/xforms", 
         "document_class": "XFormInstance", 
@@ -362,6 +394,7 @@
         "unique_id": "report_xforms_20150406_1136"
     }, 
     "SMSPillow": {
+        "advertised_name": "corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq", 
         "couch_filter": "sms/all_logs", 
         "document_class": "SMSLog", 
@@ -375,6 +408,7 @@
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     }, 
     "StaticDataSourcePillow": {
+        "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq", 
         "couch_filter": null, 
         "document_class": null, 
@@ -384,6 +418,7 @@
         "name": "StaticDataSourcePillow"
     }, 
     "TauxDeRuptureFluffPillow": {
+        "advertised_name": "fluff.TauxDeRuptureFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.TauxDeRuptureFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -396,6 +431,7 @@
         "name": "TauxDeRuptureFluffPillow"
     }, 
     "TauxDeSatisfactionFluffPillow": {
+        "advertised_name": "fluff.TauxDeSatisfactionFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.TauxDeSatisfactionFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -408,6 +444,7 @@
         "name": "TauxDeSatisfactionFluffPillow"
     }, 
     "UCLAPatientFluffPillow": {
+        "advertised_name": "fluff.UCLAPatientFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.UCLAPatientFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
@@ -420,6 +457,7 @@
         "name": "UCLAPatientFluffPillow"
     }, 
     "UnicefMalawiFluffPillow": {
+        "advertised_name": "fluff.UnicefMalawiFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.UnicefMalawiFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -432,6 +470,7 @@
         "name": "UnicefMalawiFluffPillow"
     }, 
     "UnknownUsersPillow": {
+        "advertised_name": "corehq.pillows.user.UnknownUsersPillow.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.user.UnknownUsersPillow.testhq", 
         "couch_filter": null, 
         "document_class": "XFormInstance", 
@@ -441,6 +480,7 @@
         "name": "UnknownUsersPillow"
     }, 
     "UserPillow": {
+        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_20150430_1821.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_20150430_1821.testhq", 
         "couch_filter": "users/all_users", 
         "document_class": "CommCareUser", 
@@ -454,6 +494,7 @@
         "unique_id": "hqusers_20150430_1821"
     }, 
     "WorldVisionChildFluffPillow": {
+        "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.WorldVisionChildFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
@@ -466,6 +507,7 @@
         "name": "WorldVisionChildFluffPillow"
     }, 
     "WorldVisionHierarchyFluffPillow": {
+        "advertised_name": "fluff.WorldVisionHierarchyFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.WorldVisionHierarchyFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareUser", 
@@ -478,6 +520,7 @@
         "name": "WorldVisionHierarchyFluffPillow"
     }, 
     "WorldVisionMotherFluffPillow": {
+        "advertised_name": "fluff.WorldVisionMotherFluffPillow.testhq", 
         "checkpoint_id": "pillowtop_fluff.WorldVisionMotherFluffPillow.testhq", 
         "couch_filter": null, 
         "document_class": "CommCareCase", 
@@ -490,6 +533,7 @@
         "name": "WorldVisionMotherFluffPillow"
     }, 
     "XFormPillow": {
+        "advertised_name": "corehq.pillows.xform.XFormPillow.xforms_20150403-1728.testhq", 
         "checkpoint_id": "pillowtop_corehq.pillows.xform.XFormPillow.xforms_20150403-1728.testhq", 
         "couch_filter": "couchforms/xforms", 
         "document_class": "XFormInstance", 

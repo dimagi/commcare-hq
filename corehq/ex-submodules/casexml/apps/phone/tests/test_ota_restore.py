@@ -123,7 +123,6 @@ class OtaRestoreTest(TestCase):
 
         # implicit length assertion
         _, _, [newcase] = FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
-        user = dummy_user()
 
         expected_case_block = """
         <case>

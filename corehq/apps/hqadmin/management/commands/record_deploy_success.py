@@ -59,9 +59,9 @@ class Command(BaseCommand):
                 options['user'],
             )
         )
-        if hasattr(settings, 'MIA_THE_DEPLOY_BOT'):
+        if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, git_snapshot['diff_url'])
-            requests.post(settings.MIA_THE_DEPLOY_BOT, data=json.dumps({
+            requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
                 "channel": "#dev",
                 "username": "Mia the Deploy Bot",
                 "text": deploy_notification_text.format(diff_link=link),

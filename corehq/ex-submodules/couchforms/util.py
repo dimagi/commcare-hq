@@ -183,6 +183,8 @@ def _handle_duplicate(new_doc, instance):
         #    but a different ID and a doc_type of XFormDeprecated
         #  - Save the new instance to the previous document to preserve the ID
         existing_doc, new_doc = deprecate_xform(existing_doc, new_doc)
+        
+        # Lock docs with their original ID's (before they got switched during deprecation)
         return MultiLockManager([
             LockManager(new_doc, acquire_lock_for_xform(existing_doc._id)),
             LockManager(existing_doc, acquire_lock_for_xform(existing_doc.orig_id)),
