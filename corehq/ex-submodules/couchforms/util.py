@@ -450,13 +450,13 @@ class SubmissionPost(object):
                             instance.save()
                             raise
                         now = datetime.datetime.utcnow()
-                        unfinished_submission_stub = UnfinishedSubmissionStub(
+                        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
                             xform_id=instance.get_id,
                             timestamp=now,
                             saved=False,
                             domain=domain,
                         )
-                        unfinished_submission_stub.save()
+
                         # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
 
@@ -464,10 +464,10 @@ class SubmissionPost(object):
                         # done in CommCareCase.save()
                         cases = prepare_cases(case_db, now)
 
-                        docs = xforms + cases
+                        bulk_save_docs(xforms + cases, instance)
+
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
-                        bulk_save_docs(docs, instance)
                         case_result.commit_dirtiness_flags()
                         stock_result.commit()
                         for case in cases:
