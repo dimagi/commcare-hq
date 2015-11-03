@@ -7,7 +7,6 @@ import os
 from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
-from toggle.shortcuts import clear_toggle_cache, update_toggle_cache
 
 
 class UnitTestingRequired(Exception):
