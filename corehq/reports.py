@@ -43,6 +43,7 @@ from corehq.apps.accounting.interface import (
     InvoiceInterface,
     WireInvoiceInterface,
     PaymentRecordInterface,
+    SubscriptionAdjustmentInterface,
 )
 from corehq.apps.reports.standard.domains import OrgDomainStatsReport
 from corehq.apps.smsbillables.interface import (
@@ -267,6 +268,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         InvoiceInterface,
         WireInvoiceInterface,
         PaymentRecordInterface,
+        SubscriptionAdjustmentInterface,
     )),
 )
 

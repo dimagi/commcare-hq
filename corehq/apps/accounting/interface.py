@@ -24,6 +24,7 @@ from .filters import (
     BillingContactFilter,
     CreatedSubAdjMethodFilter,
     DateCreatedFilter,
+    DateFilter,
     DimagiContactFilter,
     DomainFilter,
     DoNotInvoiceFilter,
@@ -1011,3 +1012,76 @@ class PaymentRecordInterface(GenericTabularReport):
                 quantize_accounting_decimal(record.amount),
             ])
         return rows
+
+
+class SubscriptionAdjustmentInterface(GenericTabularReport):
+    section_name = 'Accounting'
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = 'Subscription Adjustments'
+    description = 'A log of all subscription changes.'
+    slug = 'subscription_adjustments'
+    base_template = 'accounting/report_filter_actions.html'
+    asynchronous = True
+    exportable = True
+
+    fields = [
+        'corehq.apps.accounting.interface.DomainFilter',
+        'corehq.apps.accounting.interface.DateFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Date"),
+            DataTablesColumn("Subscription"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Reason"),
+            DataTablesColumn("Method"),
+            DataTablesColumn("Note"),
+            DataTablesColumn("By User"),
+        )
+
+    @property
+    def rows(self):
+        from corehq.apps.accounting.views import EditSubscriptionView
+
+        def get_choice(choice, choices):
+            for slug, user_text in choices:
+                if choice == slug:
+                    return user_text
+            return None
+
+        return [
+            map(lambda x: x or '', [
+                sub_adj.date_created,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(
+                        reverse(EditSubscriptionView.urlname, args=(sub_adj.subscription.id,)),
+                        sub_adj.subscription
+                    )),
+                    sub_adj.subscription.id,
+                ),
+                sub_adj.subscription.subscriber.domain,
+                get_choice(sub_adj.reason, SubscriptionAdjustmentReason.CHOICES),
+                get_choice(sub_adj.method, SubscriptionAdjustmentMethod.CHOICES),
+                sub_adj.note,
+                sub_adj.web_user,
+            ])
+            for sub_adj in self.subscription_adjustments
+        ]
+
+    @property
+    def subscription_adjustments(self):
+        query = SubscriptionAdjustment.objects.all()
+
+        domain = DomainFilter.get_value(self.request, self.domain)
+        if domain is not None:
+            query = query.filter(subscription__subscriber__domain=domain)
+
+        if DateFilter.use_filter(self.request):
+            query = query.filter(
+                date_created__gte=DateFilter.get_start_date(self.request),
+                date_created__lte=DateFilter.get_end_date(self.request),
+            )
+
+        return query

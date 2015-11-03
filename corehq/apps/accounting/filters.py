@@ -279,6 +279,10 @@ class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
                 and super(OptionalDateRangeFilter, cls).get_end_date(request).date() >= date))
 
 
+class DateFilter(OptionalDateRangeFilter):
+    slug = 'date'
+    label = "Date"
+
 class DateCreatedFilter(OptionalDateRangeFilter):
     slug = 'date_created'
     label = _("Date Created")
