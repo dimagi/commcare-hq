@@ -94,11 +94,11 @@
     </form>
 
     <h2>{% trans "Project Spaces" %}</h2>
-    {% include "orgs/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
+    {% include "hqadmin/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
     <h2>{% trans "Forms" %}</h2>
-    {% include "orgs/partials/visualizations.html" with chart_name="forms" %}
+    {% include "hqadmin/partials/visualizations.html" with chart_name="forms" %}
     <h2>{% trans "Cases" %}</h2>
-    {% include "orgs/partials/visualizations.html" with chart_name="cases" %}
+    {% include "hqadmin/partials/visualizations.html" with chart_name="cases" %}
     <h2>{% trans "Users" %}</h2>
-    {% include "orgs/partials/visualizations.html" with chart_name="users" %}
+    {% include "hqadmin/partials/visualizations.html" with chart_name="users" %}
 {% endblock %}
