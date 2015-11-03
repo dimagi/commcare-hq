@@ -122,7 +122,9 @@ def sync_call_center_user_case(user):
         case, owner_id = _get_call_center_case_and_owner(user, domain)
         sync_user_case(user, domain.call_center_config.case_type, owner_id, case)
 
+
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
+
 
 def _get_call_center_case_and_owner(user, domain):
     """
