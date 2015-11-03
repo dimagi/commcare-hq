@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.const import APP_V2
+from corehq.apps.app_manager.models import Application, Module, ShadowModule
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
 
 class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
@@ -24,10 +25,16 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_shadow_module_source_parent(self):
-        app = Application.wrap(self.get_json('shadow_module_families'))
-        (shadow, parent, child) = self._get_family_modules(app)
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        parent = app.add_module(Module.new_module('module', None))
+        app.new_form(parent.id, "Untitled Form", None)
+        child = app.add_module(Module.new_module('module', None))
+        child.root_module_id = parent.unique_id
+        app.new_form(child.id, "Untitled Form", None)
+        shadow = app.add_module(ShadowModule.new_module('module', None))
+
         shadow.source_module_id = parent.unique_id
-        self.assertXmlEqual(self.get_xml('shadow_module_families_source_parent'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent'), app.create_suite(), "./menu")
 
     def test_shadow_module_source_parent_forms_only(self):
         app = Application.wrap(self.get_json('shadow_module_families'))
