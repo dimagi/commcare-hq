@@ -131,10 +131,9 @@ def hint_still_valid(domain, hint):
     except ResourceNotFound:
         # hint was deleted
         return False
-    indexed_cases = set(get_indexed_cases(domain, [hint]))
-    extension_cases = set(get_extension_cases(domain, [hint]))
-    relevant_cases = indexed_cases | extension_cases
-    return any([c.owner_id != hint_owner for c in relevant_cases])
+    dependent_case_ids = set(get_dependent_case_info(domain, [hint]).all_ids) 
+    return any([c['owner_id'] != hint_owner and c['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
+                for c in iter_docs(CommCareCase.get_db(), dependent_case_ids)])
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
@@ -147,7 +146,7 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
         extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - owned_cases  # unowned or owned by others
         while extension_cases_to_check:
             extension_case = extension_cases_to_check.pop()
-            dependent_cases = set(get_dependent_cases(domain, [extension_case]).all_ids)
+            dependent_cases = set(get_dependent_case_info(domain, [extension_case]).all_ids)
             unowned_dependent_cases = dependent_cases - owned_cases
             extension_cases_to_check = extension_cases_to_check - dependent_cases
             dependent_cases_owned_by_other_owners = {
@@ -200,7 +199,7 @@ def _get_info_by_case_id(index_infos, case_id):
 DependentCaseInfo = namedtuple("DependentCaseInfo", ["all_ids", "extension_ids"])
 
 
-def get_dependent_cases(domain, cases):
+def get_dependent_case_info(domain, cases):
     """ Fetches all dependent cases of cases passed in"""
     all_dependencies = set()
     extension_cases = set(get_extension_case_ids(domain, cases))
@@ -226,7 +225,7 @@ def get_case_footprint_info(domain, owner_id):
       3) differentiates between the base set and the complete list
     """
     open_case_ids = set(get_open_case_ids(domain, owner_id))
-    dependent_cases = get_dependent_cases(domain, open_case_ids)
+    dependent_cases = get_dependent_case_info(domain, open_case_ids)
     return FootprintInfo(base_ids=set(open_case_ids),  # open cases with this owner
                          all_ids=dependent_cases.all_ids | open_case_ids,
                          extension_ids=dependent_cases.extension_ids)

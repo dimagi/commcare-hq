@@ -5,7 +5,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_valid, \
-    get_cleanliness_flag_from_scratch, get_case_footprint_info, get_dependent_cases
+    get_cleanliness_flag_from_scratch, get_case_footprint_info, get_dependent_case_info
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
@@ -193,6 +193,55 @@ class OwnerCleanlinessTest(SyncBaseTest):
         set_cleanliness_flags(self.domain, self.owner_id)
         self.assert_owner_clean()
         self.assertEqual(None, self.owner_cleanliness.hint)
+
+    def test_hint_invalidation_extensions(self):
+        other_owner_id = uuid.uuid4().hex
+        [extension, host] = self.factory.create_or_update_case(
+            CaseStructure(
+                case_id='extension',
+                attrs={'owner_id': other_owner_id},
+                indices=[
+                    CaseIndex(
+                        CaseStructure(case_id="host"),
+                        relationship=CASE_INDEX_EXTENSION
+                    )
+                ]
+            )
+        )
+        self.assert_owner_dirty()
+        self.assertTrue(hint_still_valid(self.domain, self.owner_cleanliness.hint))
+
+        self._set_owner(extension.case_id, UNOWNED_EXTENSION_OWNER_ID)
+        self.assertFalse(hint_still_valid(self.domain, self.owner_cleanliness.hint))
+
+    def test_hint_invalidation_extension_chain(self):
+        other_owner_id = uuid.uuid4().hex
+        self._owner_cleanliness_for_id(other_owner_id)
+        host = CaseStructure(case_id=self.sample_case.case_id, attrs={'create': False})
+        extension_1 = CaseStructure(
+            case_id="extension1",
+            attrs={'owner_id': UNOWNED_EXTENSION_OWNER_ID},
+            indices=[
+                CaseIndex(
+                    host,
+                    relationship=CASE_INDEX_EXTENSION,
+                )
+            ]
+        )
+        extension_2 = CaseStructure(
+            case_id="extension2",
+            attrs={'owner_id': other_owner_id},
+            indices=[
+                CaseIndex(
+                    extension_1,
+                    relationship=CASE_INDEX_EXTENSION,
+                )
+            ]
+        )
+        self.factory.create_or_update_case(extension_2)
+
+        self.assert_owner_dirty()
+        self._set_owner(extension_2.case_id, UNOWNED_EXTENSION_OWNER_ID)
 
     def test_cross_domain_on_submission(self):
         """create a form that makes a dirty owner with the same ID but in a different domain
@@ -573,7 +622,7 @@ class GetDependentCasesTest(TestCase):
     def test_returns_nothing_with_no_dependencies(self):
         case = CaseStructure()
         self.factory.create_or_update_case(case)
-        self.assertEqual(set(), get_dependent_cases(self.domain, case.case_id).all_ids)
+        self.assertEqual(set(), get_dependent_case_info(self.domain, case.case_id).all_ids)
 
     def test_returns_simple_extension(self):
         host = CaseStructure(
@@ -588,9 +637,9 @@ class GetDependentCasesTest(TestCase):
         all_ids = set([host.case_id, extension.case_id])
 
         self.factory.create_or_update_cases([host, extension])
-        self.assertEqual(all_ids, get_dependent_cases(self.domain, [host.case_id]).all_ids)
-        self.assertEqual(all_ids, get_dependent_cases(self.domain, [extension.case_id]).all_ids)
-        self.assertEqual(set([extension.case_id]), get_dependent_cases(self.domain, [host.case_id]).extension_ids)
+        self.assertEqual(all_ids, get_dependent_case_info(self.domain, [host.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_case_info(self.domain, [extension.case_id]).all_ids)
+        self.assertEqual(set([extension.case_id]), get_dependent_case_info(self.domain, [host.case_id]).extension_ids)
 
     def test_returns_extension_of_extension(self):
         host = CaseStructure(
@@ -609,11 +658,11 @@ class GetDependentCasesTest(TestCase):
         all_ids = set([host.case_id, extension.case_id, extension_2.case_id])
 
         self.factory.create_or_update_cases([extension_2])
-        self.assertEqual(all_ids, get_dependent_cases(self.domain, [host.case_id]).all_ids)
-        self.assertEqual(all_ids, get_dependent_cases(self.domain, [extension.case_id]).all_ids)
-        self.assertEqual(all_ids, get_dependent_cases(self.domain, [extension_2.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_case_info(self.domain, [host.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_case_info(self.domain, [extension.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_case_info(self.domain, [extension_2.case_id]).all_ids)
         self.assertEqual(set([extension.case_id, extension_2.case_id]),
-                         get_dependent_cases(self.domain, [host.case_id]).extension_ids)
+                         get_dependent_case_info(self.domain, [host.case_id]).extension_ids)
 
     def test_children_and_extensions(self):
         parent = CaseStructure(
@@ -632,9 +681,9 @@ class GetDependentCasesTest(TestCase):
         )
         self.factory.create_or_update_cases([parent, child, extension])
         all_ids = set([parent.case_id, child.case_id, extension.case_id])
-        self.assertEqual(all_ids, get_dependent_cases(self.domain, [child.case_id]).all_ids)
-        self.assertEqual(set([]), get_dependent_cases(self.domain, [parent.case_id]).all_ids)
+        self.assertEqual(all_ids, get_dependent_case_info(self.domain, [child.case_id]).all_ids)
+        self.assertEqual(set([]), get_dependent_case_info(self.domain, [parent.case_id]).all_ids)
         self.assertEqual(set([extension.case_id]),
-                         get_dependent_cases(self.domain, [child.case_id]).extension_ids)
+                         get_dependent_case_info(self.domain, [child.case_id]).extension_ids)
         self.assertEqual(set([]),
-                         get_dependent_cases(self.domain, [parent.case_id]).extension_ids)
+                         get_dependent_case_info(self.domain, [parent.case_id]).extension_ids)
