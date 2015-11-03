@@ -3,13 +3,20 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter, CustomFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
+from corehq.apps.userreports.indicators import (
+    BooleanIndicator,
+    Column,
+    CompoundIndicator,
+    LedgerBalancesIndicator,
+    RawIndicator,
+)
 from corehq.apps.userreports.indicators.specs import (
-    RawIndicatorSpec,
-    ChoiceListIndicatorSpec,
     BooleanIndicatorSpec,
-    IndicatorSpecBase,
+    ChoiceListIndicatorSpec,
     ExpressionIndicatorSpec,
+    IndicatorSpecBase,
+    LedgerBalancesIndicatorSpec,
+    RawIndicatorSpec,
 )
 
 
@@ -85,6 +92,11 @@ def _build_choice_list_indicator(spec, context):
     return CompoundIndicator(base_display_name, choice_indicators)
 
 
+def _build_ledger_balances_indicator(spec, context):
+    wrapped_spec = LedgerBalancesIndicatorSpec.wrap(spec)
+    return LedgerBalancesIndicator(wrapped_spec)
+
+
 def _build_repeat_iteration_indicator(spec, context):
     return RawIndicator(
         "base document iteration",
@@ -117,9 +129,10 @@ class IndicatorFactory(object):
         'choice_list': _build_choice_list_indicator,
         'count': _build_count_indicator,
         'expression': _build_expression_indicator,
+        'inserted_at': _build_inserted_at,
+        'ledger_balances': _build_ledger_balances_indicator,
         'raw': _build_raw_indicator,
         'repeat_iteration': _build_repeat_iteration_indicator,
-        'inserted_at': _build_inserted_at,
     }
 
     @classmethod
