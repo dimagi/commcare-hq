@@ -15,7 +15,6 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
-from corehq.form_processor.interfaces.sync_log import SyncLogInterface
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import TestFileMixin
