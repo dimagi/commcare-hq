@@ -16,8 +16,7 @@
         <tr>
         {% block email_td %}
             <td>
-                {% if not user.from_team %}<a href="{% url "user_account" domain user.couch_id %}">
-                    {% else %}<a href="{% url "domain_org_settings" domain %}">{% endif %}
+                <a href="{% url "user_account" domain user.couch_id %}">
                 {{ user.html_username|safe }}
                 </a>
             </td>
