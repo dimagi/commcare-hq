@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from corehq.apps.reports.dbaccessors import stale_get_export_count
+from corehq.couchapps.dbaccessors import get_attachment_size_by_domain
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -92,13 +93,6 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         ]
 
 
-def sizeof_fmt(num):
-    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
-        if num < 1024.0:
-            return "%3.1f %s" % (num, x)
-        num /= 1024.0
-
-
 class ExcelExportReport(FormExportReportBase):
     name = ugettext_noop("Export Forms")
     slug = "excel_export_data"
@@ -108,16 +102,6 @@ class ExcelExportReport(FormExportReportBase):
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
         return True
-
-    def _get_domain_attachments_size(self):
-        # hash of app_id, xmlns to size of attachments
-        startkey = [self.domain]
-
-        db = Application.get_db()
-        view = db.view('attachments/attachments', startkey=startkey,
-                       endkey=startkey + [{}], group_level=3, reduce=True,
-                       group=True)
-        return {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
 
     def properties(self, size_hash):
         properties = dict()
@@ -142,7 +126,7 @@ class ExcelExportReport(FormExportReportBase):
         startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
 
-        size_hash = self._get_domain_attachments_size()
+        size_hash = get_attachment_size_by_domain(self.domain)
 
         for f in db.view('exports_forms/by_xmlns',
                          startkey=startkey, endkey=startkey + [{}], group=True,
