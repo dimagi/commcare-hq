@@ -11,6 +11,7 @@ try:
     from corehq.apps.app_manager.tests.test_advanced_suite import *
     from corehq.apps.app_manager.tests.test_suite_formats import *
     from corehq.apps.app_manager.tests.test_suite_regex import *
+    from corehq.apps.app_manager.tests.test_suite_shadow_module import *
     from corehq.apps.app_manager.tests.test_suite_form_filter_errors import *
     from corehq.apps.app_manager.tests.test_media_suite import *
     from corehq.apps.app_manager.tests.test_profile import *
