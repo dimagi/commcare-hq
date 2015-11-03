@@ -28,6 +28,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
 from corehq.form_processor.abstract_models import AbstractXFormInstance
+from corehq.form_processor.exceptions import XFormNotFound
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
@@ -148,7 +149,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         try:
             return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
         except ResourceNotFound:
-            from corehq.form_processor.exceptions import XFormNotFound
             raise XFormNotFound
 
     @property

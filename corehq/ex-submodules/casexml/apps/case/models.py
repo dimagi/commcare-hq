@@ -42,6 +42,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchforms.models import XFormInstance
+from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch import (
@@ -311,7 +312,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 return cls.get_lite(id)
             return super(CommCareCase, cls).get(id, **kwargs)
         except ResourceNotFound:
-            from corehq.form_processor.exceptions import CaseNotFound
             raise CaseNotFound
 
     @classmethod
