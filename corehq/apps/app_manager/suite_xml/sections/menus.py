@@ -76,12 +76,12 @@ class MenuContributor(SuiteContributorByModule):
                         'id': id_strings.menu_id(id_module),
                         'root': id_strings.menu_id(root_module) if root_module else None,
                     }
-    
+
                     if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
                             self.app.enable_module_filtering and
                             getattr(module, 'module_filter', None)):
                         menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
-        
+
                     if self.app.enable_localized_menu_media:
                         menu_kwargs.update({
                             'menu_locale_id': id_strings.module_locale(module),
@@ -98,9 +98,9 @@ class MenuContributor(SuiteContributorByModule):
                             'media_audio': module.default_media_audio,
                         })
                         menu = Menu(**menu_kwargs)
-    
+
                     menu.commands.extend(get_commands())
-    
+
                     menus.append(menu)
 
         if self.app.use_grid_menus:

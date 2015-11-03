@@ -4,6 +4,7 @@ from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, ShadowModule
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
 
+
 class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
@@ -34,7 +35,8 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         (app, shadow) = self._get_family_app()
         parent = [m for m in app.get_modules() if m.doc_type == 'Module' and m.root_module_id is None][0]
         shadow.source_module_id = parent.unique_id
-        self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent'), app.create_suite(), "./menu")
+        self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent'),
+                                   app.create_suite(), "./menu")
 
     def test_shadow_module_source_parent_forms_only(self):
         (app, shadow) = self._get_family_app()
@@ -42,10 +44,12 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         shadow.source_module_id = parent.unique_id
         for m in app.get_modules():
             m.put_in_root = True
-        self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent_forms_only'), app.create_suite(), "./menu")
+        self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent_forms_only'),
+                                   app.create_suite(), "./menu")
 
     def test_shadow_module_source_child(self):
         (app, shadow) = self._get_family_app()
         child = [m for m in app.get_modules() if m.doc_type == 'Module' and m.root_module_id is not None][0]
         shadow.source_module_id = child.unique_id
-        self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_child'), app.create_suite(), "./menu")
+        self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_child'),
+                                   app.create_suite(), "./menu")
