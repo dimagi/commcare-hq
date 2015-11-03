@@ -288,15 +288,23 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         Evaluates an xpath expression like: path/to/node and returns the value 
         of that element, or None if there is no value.
         """
+        _soft_assert = soft_assert(to='{}@{}'.format('brudolph', 'dimagi.com'))
+        _soft_assert(False, "Reference to xpath instead of get_data")
         return safe_index(self, path.split("/"))
-    
-        
+
+    def get_data(self, path):
+        """
+        Evaluates an xpath expression like: path/to/node and returns the value 
+        of that element, or None if there is no value.
+        """
+        return safe_index(self, path.split("/"))
+
     def found_in_multiselect_node(self, xpath, option):
         """
         Whether a particular value was found in a multiselect node, referenced
         by path.
         """
-        node = self.xpath(xpath)
+        node = self.get_data(xpath)
         return node and option in node.split(" ")
 
     @memoized
@@ -386,7 +394,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
             if key == "Meta":
                 key = "meta"
-            to_return[key] = self.xpath('form/' + key)
+            to_return[key] = self.get_data('form/' + key)
         return to_return
 
     def archive(self, user=None):
