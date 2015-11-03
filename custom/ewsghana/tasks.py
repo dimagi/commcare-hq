@@ -190,13 +190,13 @@ def migrate_email_settings(domain):
     endpoint = GhanaEndpoint.from_config(config)
     migrate_email = EmailSettingsSync(domain)
 
-    for report in endpoint.get_daily_reports()[1]:
+    for report in endpoint.get_daily_reports(limit=1000)[1]:
         migrate_email.daily_report_sync(report)
 
-    for report in endpoint.get_weekly_reports()[1]:
+    for report in endpoint.get_weekly_reports(limit=1000)[1]:
         migrate_email.weekly_report_sync(report)
 
-    for report in endpoint.get_monthly_reports()[1]:
+    for report in endpoint.get_monthly_reports(limit=1000)[1]:
         migrate_email.monthly_report_sync(report)
 
 
