@@ -52,9 +52,12 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from corehq.apps.domain.models import Domain
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
+
+IN_PROGRESS_FLAG = 'deploy_in_progress'
 
 
 def pg_check():
@@ -83,6 +86,11 @@ def couch_check():
         return isinstance(results, list), None
 
 
+def is_deploy_in_progress():
+    cache = get_redis_default_cache()
+    return cache.get(IN_PROGRESS_FLAG) is not None
+
+
 def celery_check():
     try:
         from celery import Celery
@@ -96,9 +104,14 @@ def celery_check():
         else:
             chk = (True, None)
     except IOError as e:
+        if is_deploy_in_progress():
+            return (True, 'Currently down, but deploy is in progress')
         chk = (False, "Error connecting to the backend: " + str(e))
     except ImportError as e:
         chk = (False, str(e))
+    except:
+        if is_deploy_in_progress():
+            return (True, 'Currently down, but deploy is in progress')
 
     return chk
 
