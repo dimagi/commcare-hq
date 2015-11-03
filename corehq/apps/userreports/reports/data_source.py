@@ -66,10 +66,7 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def filters(self):
-        return filter(
-            lambda sql_filter: sql_filter is not None,
-            [fv.to_sql_filter() for fv in self._filter_values.values()]
-        )
+        return filter(None, [fv.to_sql_filter() for fv in self._filter_values.values()])
 
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
