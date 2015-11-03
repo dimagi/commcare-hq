@@ -21,12 +21,12 @@ class DuplicateFormTest(TestCase, TestFileMixin):
     def test_basic_duplicate(self):
         xml_data = self.get_xml('duplicate')
         xform = self.interface.post_xform(xml_data)
-        self.assertEqual(self.ID, xform.id)
+        self.assertEqual(self.ID, xform.form_id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("test-domain", xform.domain)
 
         xform = self.interface.post_xform(xml_data, domain='test-domain')
-        self.assertNotEqual(self.ID, xform.id)
+        self.assertNotEqual(self.ID, xform.form_id)
         self.assertEqual("XFormDuplicate", xform.doc_type)
         self.assertTrue(self.ID in xform.problem)
 
@@ -42,7 +42,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
 
         # Change the doc_type of the form by archiving it
         self.interface.xform_model.archive(xform1)
-        xform1 = self.interface.xform_model.get(xform1.id)
+        xform1 = self.interface.xform_model.get(xform1.form_id)
         self.assertTrue(xform1.is_archived)
 
         # Post an xform with that has different doc_type but same id
@@ -51,7 +51,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
             domain=domain,
         )
 
-        self.assertNotEqual(xform1.id, xform2.id)
+        self.assertNotEqual(xform1.form_id, xform2.form_id)
 
     def test_wrong_domain(self):
         domain = 'test-domain'
@@ -65,4 +65,4 @@ class DuplicateFormTest(TestCase, TestFileMixin):
             instance,
             domain=domain,
         )
-        self.assertNotEqual(xform1.id, xform2.id)
+        self.assertNotEqual(xform1.form_id, xform2.form_id)

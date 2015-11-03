@@ -34,7 +34,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.archive(user='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = self.interface.xform_model.get(xform.id)
+        xform = self.interface.xform_model.get(xform.form_id)
         self.assertEqual('XFormArchived', xform.doc_type)
 
         [archival] = xform.history
@@ -46,7 +46,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.unarchive(user='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = self.interface.xform_model.get(xform.id)
+        xform = self.interface.xform_model.get(xform.form_id)
         self.assertEqual('XFormInstance', xform.doc_type)
 
         [archival, restoration] = xform.history

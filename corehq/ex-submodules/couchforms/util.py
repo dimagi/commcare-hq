@@ -384,7 +384,7 @@ class SubmissionPost(object):
             self._set_submission_properties(xform)
             if xform.doc_type != 'SubmissionErrorLog':
                 found_old = scrub_meta(xform)
-                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform.id)
+                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
         try:
             lock_manager = process_xform(self.instance,

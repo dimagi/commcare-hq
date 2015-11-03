@@ -116,7 +116,7 @@ class CaseBugTest(TestCase, TestFileMixin):
 
         ids = case.xform_ids
         self.assertEqual(1, len(ids))
-        self.assertEqual(form.id, ids[0])
+        self.assertEqual(form.form_id, ids[0])
 
     def testLotsOfSubcases(self):
         """

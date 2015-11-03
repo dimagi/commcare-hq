@@ -41,13 +41,13 @@ class EditFormTest(TestCase, TestFileMixin):
             form.received_on = yesterday
 
         xform = self.interface.post_xform(original_xml, process=process)
-        self.assertEqual(self.ID, xform.id)
+        self.assertEqual(self.ID, xform.form_id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("", xform.form['vitals']['height'])
         self.assertEqual("other", xform.form['assessment']['categories'])
 
         xform = self.interface.post_xform(edit_xml, domain=self.domain)
-        self.assertEqual(self.ID, xform.id)
+        self.assertEqual(self.ID, xform.form_id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual("100", xform.form['vitals']['height'])
         self.assertEqual("Edited Baby!", xform.form['assessment']['categories'])
@@ -55,13 +55,13 @@ class EditFormTest(TestCase, TestFileMixin):
         deprecated_xform = self.interface.xform_model.get(xform.deprecated_form_id)
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
-        self.assertNotEqual(self.ID, deprecated_xform.id)
+        self.assertNotEqual(self.ID, deprecated_xform.form_id)
         self.assertEqual('XFormDeprecated', deprecated_xform.doc_type)
         self.assertEqual("", deprecated_xform.form['vitals']['height'])
         self.assertEqual("other", deprecated_xform.form['assessment']['categories'])
 
         self.assertEqual(xform.received_on, deprecated_xform.received_on)
-        self.assertEqual(xform.deprecated_form_id, deprecated_xform.id)
+        self.assertEqual(xform.deprecated_form_id, deprecated_xform.form_id)
         self.assertTrue(xform.edited_on > deprecated_xform.received_on)
 
         self.assertEqual(
@@ -95,7 +95,7 @@ class EditFormTest(TestCase, TestFileMixin):
         edit_xml = self.get_xml('edit')
 
         _, xform, _ = self.interface.submit_form_locally(original_xml, self.domain)
-        self.assertEqual(self.ID, xform.id)
+        self.assertEqual(self.ID, xform.form_id)
         self.assertEqual("XFormInstance", xform.doc_type)
         self.assertEqual(self.domain, xform.domain)
 
