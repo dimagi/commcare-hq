@@ -10,13 +10,9 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
-    SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT, visit_website_reminder
-from custom.ewsghana.reminders.first_soh_reminder import FirstSOHReminder
-from custom.ewsghana.reminders.rrirv_reminder import RRIRVReminder
+    SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT
 from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
-from custom.ewsghana.reminders.stockout_reminder import StockoutReminder
-from custom.ewsghana.reminders.third_soh_reminder import ThirdSOHReminder
-from custom.ewsghana.reminders.visit_website_reminder import VisitWebsiteReminder
+
 from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third_soh_to_super, \
     stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, create_backend, \
@@ -68,7 +64,8 @@ class TestReminders(TestCase):
             username='test2', phone_number='2222', home_loc=cls.loc1, domain=TEST_DOMAIN,
             first_name='test', last_name='test2',
             user_data={
-                'role': ['Other']
+                'role': ['Other'],
+                'needs_reminders': "False"
             }
         )
 
@@ -76,7 +73,8 @@ class TestReminders(TestCase):
             username='test3', phone_number='3333', home_loc=cls.loc2, domain=TEST_DOMAIN,
             first_name='test', last_name='test3',
             user_data={
-                'role': ['Nurse']
+                'role': ['Nurse'],
+                'needs_reminders': "True"
             }
         )
 
@@ -169,15 +167,10 @@ class TestReminders(TestCase):
     def test_first_soh_reminder(self):
         first_soh_reminder()
         smses = SMS.objects.all()
-        self.assertEqual(smses.count(), 2)
+        self.assertEqual(smses.count(), 1)
 
         self.assertEqual(
             smses[0].text,
-            STOCK_ON_HAND_REMINDER % {'name': self.user2.full_name}
-        )
-
-        self.assertEqual(
-            smses[1].text,
             STOCK_ON_HAND_REMINDER % {'name': self.user3.full_name}
         )
 
