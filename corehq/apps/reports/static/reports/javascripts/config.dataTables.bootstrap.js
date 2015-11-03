@@ -5,7 +5,6 @@ function HQReportDataTables(options) {
     self.dataTableElem = options.dataTableElem || '.datatable';
     self.paginationType = options.paginationType || 'bootstrap';
     self.useBootstrap3 = options.useBootstrap3 || false;
-    self.useDataTables110 = options.useDataTables110 || false;
     self.defaultRows = options.defaultRows || 10;
     self.startAtRowNum = options.startAtRowNum || 0;
     self.showAllRowsOption = options.showAllRowsOption || false;
@@ -50,7 +49,8 @@ function HQReportDataTables(options) {
     this.render = function () {
         if (self.rendered) {
             $(self.dataTableElem).each(function () {
-                if (self.useDataTables110){
+                if (jQuery.fn.dataTable.versionCheck) {
+                    // jQuery.fn.dataTable.versionCheck does not exist prior to 1.10
                     $(this).DataTable().ajax.reload();
                 } else {
                     $(this).dataTable().fnReloadAjax();
