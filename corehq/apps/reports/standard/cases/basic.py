@@ -124,8 +124,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_sharing_group_ids = EMWF.selected_sharing_group_ids(self.request)
 
         # Show cases owned by any selected locations, user locations, or their children
-        loc_ids = (EMWF.selected_location_ids(self.request) +
-                   get_users_location_ids(self.domain, selected_user_ids))
+        loc_ids = set(EMWF.selected_location_ids(self.request) +
+                      get_users_location_ids(self.domain, selected_user_ids))
         location_owner_ids = get_locations_and_children(loc_ids).location_ids()
 
         # Get user ids for each user in specified reporting groups
