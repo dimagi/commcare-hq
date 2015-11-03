@@ -1,5 +1,3 @@
-
-
 class AbstractXFormInstance(object):
 
     def form_id(self):

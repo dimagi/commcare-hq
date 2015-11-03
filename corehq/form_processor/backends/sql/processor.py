@@ -1,11 +1,10 @@
 import datetime
 import uuid
 
-from dimagi.utils.couch import LockManager
-from couchforms.util import process_xform, acquire_lock_for_xform
+from couchforms.util import process_xform
 
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes, extract_meta_instance_id
+from corehq.form_processor.utils import extract_meta_instance_id
 
 
 class FormProcessorSQL(object):

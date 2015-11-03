@@ -1,7 +1,4 @@
-import functools
 import iso8601
-import types
-import collections
 import pytz
 import xml2json
 

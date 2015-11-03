@@ -1,9 +1,9 @@
 import datetime
 
-from dimagi.utils.couch import LockManager, ReleaseOnError
+from dimagi.utils.couch import ReleaseOnError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from couchforms.util import process_xform, acquire_lock_for_xform
-from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes, extract_meta_instance_id
+from couchforms.util import process_xform
+from corehq.form_processor.utils import extract_meta_instance_id
 from couchforms.exceptions import DuplicateError
 
 
