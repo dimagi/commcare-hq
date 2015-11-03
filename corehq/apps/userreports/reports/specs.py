@@ -67,7 +67,7 @@ class ReportColumn(JsonObject):
 
     @classmethod
     def wrap(cls, obj):
-        if 'display' not in obj:
+        if 'display' not in obj and 'column_id' in obj:
             obj['display'] = obj['column_id']
         return super(ReportColumn, cls).wrap(obj)
 
