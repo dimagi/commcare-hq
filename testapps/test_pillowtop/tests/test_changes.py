@@ -58,6 +58,6 @@ class ChangeFeedDbTest(TestCase):
 
     def _extract_change_from_call_args(self, call_args):
         ordered_args, keyword_args = call_args
-        self.assertEqual(1, len(ordered_args))
+        self.assertEqual(2, len(ordered_args))
         self.assertEqual(0, len(keyword_args))
         return ordered_args[0]
