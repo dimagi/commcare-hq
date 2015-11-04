@@ -406,8 +406,8 @@ class SubmissionPost(object):
             known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError)
             with lock_manager as xforms:
+                instance = xforms[0]
                 if self.validate_xforms_for_case_processing(xforms):
-                    instance = xforms[0]
                     domain = get_and_check_xform_domain(instance)
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
