@@ -384,12 +384,16 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         return headers
 
     @property
+    @memoized
+    def selected_users(self):
+        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
+        return users_data.combined_users
+
+    @property
     def rows(self):
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
-        for user in users_data.combined_users:
+        for user in self.selected_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
