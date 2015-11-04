@@ -430,6 +430,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
             enddate=self.datespan.enddate_utc.replace(tzinfo=pytz.UTC),
             user_ids=user_ids,
+            xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
             by_submission_time=self.by_submission_time,
         )
 
