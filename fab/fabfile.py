@@ -68,9 +68,6 @@ RSYNC_EXCLUDE = (
     '*.db',
     )
 RELEASE_RECORD = 'RELEASES.txt'
-# Django redis seems to uses this to prefix their keys
-KEY_PREFIX = ':1:'
-IN_PROGRESS_FLAG = '{}deploy_in_progress'.format(KEY_PREFIX)
 env.linewise = True
 env.colorize_errors = True
 env['sudo_prefix'] += '-H '
@@ -489,16 +486,8 @@ def record_successful_deploy(url):
 @task
 @roles(ROLES_DB_ONLY)
 def set_in_progress_flag():
-    sudo('redis-cli SET {} true'.format(IN_PROGRESS_FLAG))
-
-    # Set deploy flag to expire in 30 minutes
-    sudo('redis-cli EXPIRE {} {}'.format(IN_PROGRESS_FLAG, 60 * 30))
-
-
-@task
-@roles(ROLES_DB_ONLY)
-def unset_in_progress_flag():
-    sudo('redis-cli DEL {}'.format(IN_PROGRESS_FLAG))
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py celery_deploy_in_progress' % env)
 
 
 @roles(ROLES_ALL_SRC)
@@ -557,7 +546,6 @@ def setup_release():
 
 def _deploy_without_asking():
     try:
-        execute(set_in_progress_flag)
         setup_release()
 
         _execute_with_timing(_preindex_views)
@@ -600,6 +588,7 @@ def _deploy_without_asking():
 
             if execute(_migrations_exist):
                 _execute_with_timing(stop_pillows)
+                execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
@@ -619,17 +608,14 @@ def _deploy_without_asking():
              "and wait for an email saying it's done. "
              "Thank you for using AWESOME DEPLOY.")
         )
-        execute(unset_in_progress_flag)
     except Exception:
         _execute_with_timing(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
         _execute_with_timing(services_restart)
-        execute(unset_in_progress_flag)
         raise
     else:
         _execute_with_timing(update_current)
         _execute_with_timing(services_restart)
-        execute(unset_in_progress_flag)
         _execute_with_timing(record_successful_release)
         url = _tag_commit()
         _execute_with_timing(record_successful_deploy, url)
