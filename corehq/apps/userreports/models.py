@@ -23,9 +23,10 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, \
     ReportColumnFactory, ReportOrderByFactory
-from corehq.apps.userreports.reports.specs import FilterSpec
+from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.pillows.utils import get_deleted_doc_types
@@ -226,7 +227,15 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         # these two properties implicitly call other validation
         self._get_main_filter()
         self._get_deleted_filter()
-        self.indicators
+
+        # validate indicators and column uniqueness
+        columns = [c.id for c in self.indicators.get_columns()]
+        unique_columns = set(columns)
+        if len(columns) != len(unique_columns):
+            for column in set(columns):
+                columns.remove(column)
+            raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+
         self.parsed_expression
 
 

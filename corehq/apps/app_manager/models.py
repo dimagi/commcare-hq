@@ -3395,7 +3395,7 @@ class ReportModule(ModuleBase):
         """
         returns is_valid, valid_report_configs
 
-        If any report doesn't exist, is_value is False, otherwise True
+        If any report doesn't exist, is_valid is False, otherwise True
         valid_report_configs is a list of all report configs that refer to existing reports
 
         """
