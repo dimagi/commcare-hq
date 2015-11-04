@@ -2,22 +2,13 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block head %}
-    {{ block.super }}
-    {% block reports-css %}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    {% endblock %}
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-
     <script type="text/javascript">
         $(function(){
             var $editReportButton = $("#edit-report-link");
@@ -38,8 +29,6 @@
             {% endif %}
         });
     </script>
-
-
     <script type="text/javascript">
         $(function(){
             // Poll the status of the data source
@@ -66,7 +55,6 @@
             })();
         });
     </script>
-
     <script type="text/javascript">
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
@@ -122,48 +110,48 @@
         });
     </script>
 {% endblock %}
+
 {% block report_alerts %}
     {{ block.super }}
-    <div id="built-warning" class="alert alert-info hide">
+    <div id="built-warning" class="alert alert-warning hide">
+        <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
         {% blocktrans %}
-        Warning! Your report is still being populated.
         What you are seeing now is just a preview, and contains some or none of your data.
         The report will refresh automatically when the data is finished being populated.
         {% endblocktrans %}
     </div>
 {% endblock %}
-{% block main_column_content %}
+
+{% block page_actions %}
     {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" and not report.spec.report_meta.created_by_builder or request|toggle_enabled:"REPORT_BUILDER" and report.spec.report_meta.created_by_builder %}
-    <div class="clearfix">
-        <div class="pull-right">
-            <a id="edit-report-link" class="btn btn-primary" href="
-                {% if report.spec.report_meta.created_by_builder %}
-                    {% url 'edit_report_in_builder' domain report.report_config_id %}
-                {% else %}
-                    {% url 'edit_configurable_report' domain report.report_config_id %}
-                {% endif %}
-            ">
-                {% trans "Edit Report" %}
-            </a>
-        </div>
-    </div>
+    <a id="edit-report-link" class="btn btn-primary" href="
+        {% if report.spec.report_meta.created_by_builder %}
+            {% url 'edit_report_in_builder' domain report.report_config_id %}
+        {% else %}
+            {% url 'edit_configurable_report' domain report.report_config_id %}
+        {% endif %}
+    ">
+        <i class="fa fa-pencil"></i>&nbsp;
+        {% trans "Edit Report" %}
+    </a>
     {% endif %}
-    {{ block.super }}
 {% endblock %}
 
 {% block report_filter_actions %}
 <div id="savedReports">
     <div class="btn-toolbar">
         <div class="btn-group">
-            <button id="apply-filters" type="submit" class="filters btn btn-primary"
+            <button id="apply-filters"
+                    type="submit"
+                    class="filters btn btn-primary"
                 data-loading-text="{% trans 'Generating Report...' %}"
                 data-standard-text="{% trans 'Apply' %}">
                 {% trans 'Apply' %}
             </button>
         </div>
         <div class="btn-group">
-            <a class="btn dropdown-toggle" data-toggle="dropdown">
-                {% trans 'Favorites' %}<span class="caret"></span>
+            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                {% trans 'Favorites' %} <span class="caret"></span>
             </a>
 
             <ul class="dropdown-menu">
@@ -180,17 +168,121 @@
             </ul>
         </div>
 
-        <a class="btn" data-bind="click: setConfigBeingEdited"
+        <a class="btn btn-default"
+           data-toggle="#report-config-modal"
+           data-bind="click: setConfigBeingEdited"
                 onclick="ga_track_event('Scheduled Reports', 'Configure a saved report', '-');">
             {% trans "Save" %}...
         </a>
 
         {% if report.is_emailable %}
             <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">
-                <i class="icon-white icon-info-sign"></i> {% trans "Email Supported" %}
+                <i class="fa fa-info-circle"></i> {% trans "Email Supported" %}
             </div>
         {% endif %}
     </div>
-    {% include "reports/partials/save_reports_modal.html" %}
+
+    <div class="modal fade" id="report-config-modal" data-bind="modal: configBeingEdited">
+        <div class="modal-dialog">
+            <div class="modal-content" data-bind="with: configBeingEdited">
+                <div class="modal-header">
+                    <button type="button" class="close" data-bind="click: $root.unsetConfigBeingEdited"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                    <h3 class="modal-title" data-bind="text: modalTitle"></h3>
+                </div>
+                <form class="form-horizontal">
+                    <div class="modal-body">
+                        <div class="alert alert-error" data-bind="visible: error">
+                            {% trans "Some required fields are missing. Please complete them before saving." %}
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-3" for="name">{% trans "Name" %}</label>
+                            <div class="controls col-sm-9">
+                                <input type="text" id="name" data-bind="value: name" class="form-control"/>
+                                <span class="help-inline">
+                                    <small class="label label-default">{% trans "Required" %}</small>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-3" for="description">{% trans "Description" %}</label>
+                            <div class="controls col-sm-9">
+                                <textarea rows="3" class="form-control" name="description" data-bind="value: description"></textarea>
+                            </div>
+                        </div>
+                        <div data-bind="visible: has_ucr_datespan">
+                            <div class="form-group">
+                                <label class="control-label col-sm-3">{% trans "Date Filter" %}</label>
+                                <div class="controls col-sm-4">
+                                    <select class="form-control" data-bind="
+                                        options: datespan_filters,
+                                        optionsText: 'display',
+                                        optionsValue: 'slug',
+                                        value: datespan_slug
+                                    "></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())">
+                            <div class="form-group">
+                                <label class="control-label col-sm-3" for="date_range">{% trans "Default Date Range" %}</label>
+                                <div class="controls col-sm-9">
+                                    <select class="form-control" name="date_range" data-bind="value: date_range">
+                                        <option value="last7">{% trans "Last 7 days" %}</option>
+                                        <option value="last30">{% trans "Last 30 days" %}</option>
+                                        <option value="lastmonth">{% trans "Last month" %}</option>
+                                        {% if not hide_lastyear %}<option value="lastyear">{% trans "Last year" %}</option>{% endif %}
+                                        <option value="lastn">{% trans "Days ago" %}</option>
+                                        <option value="since">{% trans "Since a date" %}</option>
+                                        <option value="range">{% trans "From a date to a date" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" data-bind="visible: date_range() === 'lastn'">
+                                <label class="control-label col-sm-3" for="days">{% trans "Number of Days" %}</label>
+                                <div class="controls col-sm-9">
+                                    <input class="form-control" type="number" name="days" min="1" step="1" data-bind="value: days"/>
+                                    <span class="help-inline">
+                                        <small class="label label-default">{% trans "Required" %}</small>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
+                                <label class="control-label col-sm-3" for="start_date">{% trans "Begin Date" %}</label>
+                                <div class="controls col-sm-9">
+                                    <input type="text" class="date-picker form-control" name="start_date" data-bind="value: start_date"/>
+                                    <span class="help-inline">
+                                        <small class="label label-default">{% trans "YYYY-MM-DD" %}</small>
+                                        <small class="label label-default">{% trans "Required" %}</small>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group" data-bind="visible: date_range() == 'range'">
+                                <label class="control-label col-sm-3" for="end_date">{% trans "End Date" %}</label>
+                                <div class="controls col-sm-9">
+                                    <input type="text" id="save-end" class="date-picker form-control" name="end_date" data-bind="value: end_date"/>
+                                    <span class="help-inline">
+                                        <small class="label label-default">{% trans "YYYY-MM-DD" %}</small>
+                                        <small class="label label-default">{% trans "Required" %}</small>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</button>
+                        <div class="btn-group"
+                             onclick="
+                                ga_track_event('Scheduled Reports', 'Create a saved report', '-');
+                                {% if report.spec.report_meta.created_by_builder %}
+                                ga_track_event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
+                                {% endif %}
+                        ">
+                            <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
