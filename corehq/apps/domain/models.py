@@ -886,18 +886,6 @@ class Domain(Document, SnapshotMixin):
         )
         return map(cls.get, [r['id'] for r in results]), results.total_rows
 
-    @memoized
-    def get_organization(self):
-        from corehq.apps.orgs.models import Organization
-        return Organization.get_by_name(self.organization)
-
-    @memoized
-    def organization_title(self):
-        if self.organization:
-            return self.get_organization().title
-        else:
-            return ''
-
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
         self.save()
@@ -913,19 +901,8 @@ class Domain(Document, SnapshotMixin):
 
     def long_display_name(self):
         if self.is_snapshot:
-            return format_html(
-                "Snapshot of {0} &gt; {1}",
-                self.organization_title(),
-                self.copied_from.display_name()
-            )
-        if self.organization:
-            return format_html(
-                '{0} &gt; {1}',
-                self.organization_title(),
-                self.hr_name or self.name
-            )
-        else:
-            return self.hr_name or self.name
+            return format_html("Snapshot of {}", self.copied_from.display_name())
+        return self.hr_name or self.name
 
     __str__ = long_display_name
 
@@ -1002,10 +979,10 @@ class Domain(Document, SnapshotMixin):
 
         SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
         BillingRecord.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
-        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
         CreditAdjustment.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
         CreditAdjustment.objects.filter(credit_line__subscription__subscriber__domain=self.name).delete()
         CreditAdjustment.objects.filter(related_credit__subscription__subscriber__domain=self.name).delete()
+        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
 
         CreditLine.objects.filter(subscription__subscriber__domain=self.name).delete()
         Invoice.objects.filter(subscription__subscriber__domain=self.name).delete()

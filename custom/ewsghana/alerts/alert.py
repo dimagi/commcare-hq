@@ -1,5 +1,7 @@
+from datetime import datetime
 from corehq.apps.locations.dbaccessors import get_web_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
+from custom.ewsghana.models import SQLNotification
 from custom.ewsghana.utils import send_sms, has_notifications_enabled
 
 
@@ -65,3 +67,19 @@ class Alert(object):
     def send(self):
         for notification in self.get_notifications():
             notification.send()
+
+
+class WeeklyAlert(Alert):
+
+    def send(self):
+        for notification in self.get_notifications():
+            year, week, _ = datetime.utcnow().isocalendar()
+            sql_notification, created = SQLNotification.objects.get_or_create(
+                domain=self.domain,
+                user_id=notification.user.get_id,
+                type=self.__class__.__name__,
+                week=week,
+                year=year
+            )
+            if created:
+                notification.send()

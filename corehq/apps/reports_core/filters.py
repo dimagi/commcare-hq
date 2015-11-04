@@ -1,8 +1,8 @@
 from collections import namedtuple
 from datetime import datetime, time
-from corehq.apps.reports_core.exceptions import MissingParamException, FilterValueException
+from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, CHOICE_DELIMITER
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
 from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date
 
@@ -115,8 +115,8 @@ class DatespanFilter(BaseFilter):
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
 
     def default_value(self):
-        # default to a week's worth of data.
-        return DateSpan.since(7)
+        # default to "Show All Dates"
+        return None
 
     def filter_context(self):
         return {

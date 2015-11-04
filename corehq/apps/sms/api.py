@@ -3,7 +3,7 @@ import random
 import string
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from django.forms import forms
 from corehq.apps.users.util import format_username
 
@@ -72,6 +72,19 @@ def log_sms_exception(msg):
     })
 
 
+def get_location_id_by_contact(domain, contact):
+    if isinstance(contact, CommCareUser):
+        return contact.location_id
+    elif isinstance(contact, WebUser):
+        return contact.get_location_id(domain)
+    else:
+        return None
+
+
+def get_location_id_by_verified_number(v):
+    return get_location_id_by_contact(v.domain, v.owner)
+
+
 def send_sms(domain, contact, phone_number, text, metadata=None):
     """
     Sends an outbound SMS. Returns false if it fails.
@@ -88,6 +101,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         direction=OUTGOING,
         date = datetime.utcnow(),
         backend_id=None,
+        location_id=get_location_id_by_contact(domain, contact),
         text = text
     )
     if contact:
@@ -125,6 +139,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         date = datetime.utcnow(),
         domain = verified_number.domain,
         backend_id = backend._id,
+        location_id=get_location_id_by_verified_number(verified_number),
         text = text
     )
     add_msg_tags(msg, metadata)
@@ -473,9 +488,7 @@ def process_incoming(msg, delay=True):
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
-        contact = v.owner
-        if isinstance(contact, CommCareUser) and hasattr(contact, 'location_id'):
-            msg.location_id = contact.location_id
+        msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
 
     if msg.domain_scope:

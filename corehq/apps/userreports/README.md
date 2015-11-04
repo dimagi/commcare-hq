@@ -478,11 +478,12 @@ Additionally, specific indicator types have other type-specific properties. Thes
 
 The following primary indicator types are supported:
 
-Indicator Type | Description
--------------- | -----------
-boolean        | Save `1` if a filter is true, otherwise `0`.
-expression     | Save the output of an expression.
-choice_list    | Save multiple columns, one for each of a predefined set of choices
+Indicator Type  | Description
+--------------  | -----------
+boolean         | Save `1` if a filter is true, otherwise `0`.
+expression      | Save the output of an expression.
+choice_list     | Save multiple columns, one for each of a predefined set of choices
+ledger_balances | Save a column for each product specified, containing ledger data
 
 *Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
@@ -554,6 +555,40 @@ A sample spec is below:
     "select_style": "single"
 }
 ```
+
+#### Ledger Balance Indicators
+
+Ledger Balance indicators take a list of product codes and a ledger section,
+and produce a column for each product code, saving the value found in the
+corresponding ledger.
+
+Property            | Description
+--------------------|------------
+ledger_section      | The ledger section to use for this indicator, for example, "stock"
+product_codes       | A list of the products to include in the indicator.  This will be used in conjunction with the `column_id` to produce each column name.
+case_id_expression  | (optional) An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
+
+```
+{
+    "type": "ledger_balances",
+    "column_id": "soh",
+    "display_name": "Stock On Hand",
+    "ledger_section": "stock",
+    "product_codes": ["aspirin", "bandaids", "gauze"],
+    "case_id_expression": {
+        "type": "property_name",
+        "property_name": "_id"
+    }
+}
+```
+
+This spec would produce the following columns in the data source:
+
+soh_aspirin | soh_bandaids | soh_gauze
+------------|--------------|----------
+ 20         |  11          |  5
+ 67         |  32          |  9
+
 
 ### Practical notes for creating indicators
 

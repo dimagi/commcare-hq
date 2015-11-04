@@ -48,14 +48,14 @@ branches:
   - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
-  - b3-tf+exports-ui-changes+report-builder-b3.2 # Ben 10/28
+  - report-builder-b3+exports-ui-changes+b3-tf+10-30 # BB 10/30
   - exports-ui-changes  # biyeun 9/28
-  - requirements-update # Simon 10/21
-  - report-builder-b3+requirements-update  # Simon 10/23
   - report-builder-b3 # Noah 10/20
-  - two-factor-otp-only+requirements-update # Nick P 10/21
-  - two-factor-otp-only # j$ 10/2
   - b3-tf # ben 10/1
+  - two-factor-otp-only # j$ 10/2
+  - refactor-copy-domain #ts 11/2
+  - fab-bower-conflicts #ts 11/2
+  - requests #Simon 11/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

@@ -9,9 +9,7 @@ from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, gen
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces.case import CaseInterface
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.interfaces.xform import XFormInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.tests.util import (check_user_has_case,
@@ -380,7 +378,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         form, _ = self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
-        XFormInterface(TEST_DOMAIN_NAME).archive(form)
+        form.archive()
         assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id, purge_restore_cache=True)
 
     def testUserLoggedIntoMultipleDevices(self):
@@ -673,7 +671,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
 
     def test_deleted_case_doesnt_sync(self):
         case = self.factory.create_case()
-        CaseInterface.soft_delete(case.id)
+        case.soft_delete()
         assert_user_doesnt_have_case(self, self.user, case._id)
 
     def test_deleted_parent_doesnt_sync(self):
@@ -692,7 +690,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
                 )],
             )
         ])
-        CaseInterface.soft_delete(parent_id)
+        FormProcessorInterface().case_model.get(parent_id).soft_delete()
         assert_user_doesnt_have_case(self, self.user, parent_id)
         # todo: in the future we may also want to purge the child
         assert_user_has_case(self, self.user, child_id)
@@ -1322,7 +1320,6 @@ class MultiUserSyncTest(SyncBaseTest):
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
-            form = XFormInterface(TEST_DOMAIN_NAME).get_xform(form.id)
             self.assertFalse(hasattr(form, "problem"))
             synclog_from_restore_payload(
                 generate_restore_payload(self.project, self.user, version="2.0")

@@ -1534,6 +1534,10 @@ class DetailTab(IndexedSchema):
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
 
+    # Any instance connectors necessary for the nodeset,
+    # e.g., "reports" => "jr://fixture/reports"
+    connectors = DictProperty()
+
 
 class DetailColumn(IndexedSchema):
     """
@@ -3391,7 +3395,7 @@ class ReportModule(ModuleBase):
         """
         returns is_valid, valid_report_configs
 
-        If any report doesn't exist, is_value is False, otherwise True
+        If any report doesn't exist, is_valid is False, otherwise True
         valid_report_configs is a list of all report configs that refer to existing reports
 
         """
@@ -3461,6 +3465,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return 'none'
         return self.source_module.requires
+
+    @property
+    def root_module_id(self):
+        if not self.source_module:
+            return None
+        return self.source_module.root_module_id
 
     def get_suite_forms(self):
         if not self.source_module:

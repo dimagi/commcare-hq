@@ -13,17 +13,15 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
-from redis import RedisError
 from corehq.apps.tzmigration import timezone_migration_in_progress
-from corehq.form_processor.utils import adjust_datetimes, convert_xform_to_json
+from corehq.form_processor.utils import new_xform, acquire_lock_for_xform
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch import LockManager, ReleaseOnError
+from dimagi.utils.couch import LockManager
 import couchforms
 from .const import BadRequest
-from .attachments import AttachmentsManager
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -57,37 +55,6 @@ class SubmissionError(Exception, UnicodeMixIn):
         return str(self.error_log)
 
 
-def _extract_meta_instance_id(form):
-    """Takes form json (as returned by xml2json)"""
-    if form.get('Meta'):
-        # bhoma, 0.9 commcare
-        meta = form['Meta']
-    elif form.get('meta'):
-        # commcare 1.0
-        meta = form['meta']
-    else:
-        return None
-
-    if meta.get('uid'):
-        # bhoma
-        return meta['uid']
-    elif meta.get('instanceID'):
-        # commcare 0.9, commcare 1.0
-        return meta['instanceID']
-    else:
-        return None
-
-
-def acquire_lock_for_xform(xform_id):
-    # this is high, but I want to test if MVP conflicts disappear
-    lock = XFormInstance.get_obj_lock_by_id(xform_id, timeout_seconds=2*60)
-    try:
-        lock.acquire()
-    except RedisError:
-        lock = None
-    return lock
-
-
 class MultiLockManager(list):
     def __enter__(self):
         return [lock_manager.__enter__() for lock_manager in self]
@@ -95,57 +62,6 @@ class MultiLockManager(list):
     def __exit__(self, exc_type, exc_val, exc_tb):
         for lock_manager in self:
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
-
-
-def create_xform(xml_string, attachments=None, process=None):
-    """
-    create but do not save an XFormInstance from an xform payload (xml_string)
-    optionally set the doc _id to a predefined value (_id)
-    return doc _id of the created doc
-
-    `process` is transformation to apply to the form right before saving
-    This is to avoid having to save multiple times
-
-    If xml_string is bad xml
-      - raise couchforms.XMLSyntaxError
-
-    """
-    assert attachments is not None
-    json_form = convert_xform_to_json(xml_string)
-    adjust_datetimes(json_form)
-
-    _id = _extract_meta_instance_id(json_form) or XFormInstance.get_db().server.next_uuid()
-    assert _id
-
-    xform = XFormInstance(
-        # form has to be wrapped
-        {'form': json_form},
-        # other properties can be set post-wrap
-        _id=_id,
-        xmlns=json_form.get('@xmlns'),
-        received_on=datetime.datetime.utcnow(),
-    )
-    attachment_manager = AttachmentsManager(xform)
-
-    # Always save the Form XML as an attachment
-    attachment_manager.store_attachment('form.xml', xml_string, 'text/xml')
-
-    for name, filestream in attachments.items():
-        attachment_manager.store_attachment(name, filestream, filestream.content_type)
-
-    attachment_manager.commit()
-
-    # this had better not fail, don't think it ever has
-    # if it does, nothing's saved and we get a 500
-    if process:
-        process(xform)
-
-    lock = acquire_lock_for_xform(_id)
-    with ReleaseOnError(lock):
-        if _id in XFormInstance.get_db():
-            raise DuplicateError(xform)
-
-    return LockManager(xform, lock)
 
 
 def process_xform(instance, attachments=None, process=None, domain=None):
@@ -161,7 +77,7 @@ def process_xform(instance, attachments=None, process=None, domain=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = create_xform(instance, process=process, attachments=attachments)
+        xform_lock = new_xform(instance, process=process, attachments=attachments)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)
@@ -363,6 +279,49 @@ def scrub_meta(xform):
     return found_old
 
 
+def bulk_save_docs(docs, instance):
+    from casexml.apps.case.models import CommCareCase
+    assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
+    try:
+        XFormInstance.get_db().bulk_save(docs)
+    except BulkSaveError as e:
+        logging.error('BulkSaveError saving forms', exc_info=1,
+                      extra={'details': {'errors': e.errors}})
+        raise
+    except Exception as e:
+        docs_being_saved = [doc['_id'] for doc in docs]
+        error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+            type(e).__name__,
+            unicode(e),
+            ', '.join(docs_being_saved)
+        )
+        instance = _handle_unexpected_error(instance, error_message)
+        instance.save()
+        raise
+
+
+def prepare_cases(case_db, now):
+    from casexml.apps.case.models import CommCareCase
+    cases = case_db.get_changed()
+
+    for case in cases:
+        legacy_soft_assert(case.version == "2.0", "v1.0 case updated", case.case_id)
+        case.initial_processing_complete = True
+        case.server_modified_on = now
+        try:
+            rev = CommCareCase.get_db().get_rev(case.case_id)
+        except ResourceNotFound:
+            pass
+        else:
+            assert rev == case.get_rev, (
+                "Aborting because there would have been "
+                "a document update conflict. {} {} {}".format(
+                    case.get_id, case.get_rev, rev
+                )
+            )
+    return cases
+
+
 class SubmissionPost(object):
 
     failed_auth_response = HttpResponseForbidden('Bad auth')
@@ -389,28 +348,27 @@ class SubmissionPost(object):
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
 
-    def _attach_shared_props(self, doc):
+    def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
         # used on forms and errors
-        doc.auth_context = self.auth_context.to_json()
-        doc.submit_ip = self.submit_ip
-        doc.path = self.path
+        xform.auth_context = self.auth_context.to_json()
+        xform.submit_ip = self.submit_ip
+        xform.path = self.path
 
-        doc.openrosa_headers = self.openrosa_headers
-        doc.last_sync_token = self.last_sync_token
+        xform.openrosa_headers = self.openrosa_headers
+        xform.last_sync_token = self.last_sync_token
 
         if self.received_on:
-            doc.received_on = self.received_on
+            xform.received_on = self.received_on
 
         if self.date_header:
-            doc.date_header = self.date_header
+            xform.date_header = self.date_header
 
-        doc.domain = self.domain
-        doc.app_id = self.app_id
-        doc.build_id = self.build_id
-        doc.export_tag = ["domain", "xmlns"]
-
-        return doc
+        xform.domain = self.domain
+        xform.app_id = self.app_id
+        xform.build_id = self.build_id
+        xform.export_tag = ["domain", "xmlns"]
+        return xform
 
     def run(self):
         if timezone_migration_in_progress(self.domain):
@@ -425,10 +383,10 @@ class SubmissionPost(object):
             return HttpResponseBadRequest(self.instance.message), None, []
 
         def process(xform):
-            self._attach_shared_props(xform)
+            self._set_submission_properties(xform)
             if xform.doc_type != 'SubmissionErrorLog':
                 found_old = scrub_meta(xform)
-                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform._id)
+                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
         try:
             lock_manager = process_xform(self.instance,
@@ -460,7 +418,10 @@ class SubmissionPost(object):
                             PhoneDateValueError)
             with lock_manager as xforms:
                 instance = xforms[0]
-                if instance.doc_type == 'XFormInstance':
+                if instance.is_duplicate:
+                    assert len(xforms) == 1
+                    instance.save()
+                elif not instance.is_error:
                     if len(xforms) > 1:
                         assert len(xforms) == 2
                         assert is_deprecation(xforms[1])
@@ -477,7 +438,7 @@ class SubmissionPost(object):
                             xforms[0] = instance
                             # this is usually just one document, but if an edit errored we want
                             # to save the deprecated form as well
-                            XFormInstance.get_db().bulk_save(xforms)
+                            bulk_save_docs(xforms, instance)
                             response = self._get_open_rosa_response(
                                 instance, None)
                             return response, instance, cases
@@ -491,54 +452,22 @@ class SubmissionPost(object):
                             instance.save()
                             raise
                         now = datetime.datetime.utcnow()
-                        unfinished_submission_stub = UnfinishedSubmissionStub(
+                        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
                             xform_id=instance.get_id,
                             timestamp=now,
                             saved=False,
                             domain=domain,
                         )
-                        unfinished_submission_stub.save()
-                        cases = case_db.get_changed()
+
                         # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
 
                         # in saving the cases, we have to do all the things
                         # done in CommCareCase.save()
-                        for case in cases:
-                            legacy_soft_assert(case.version == "2.0", "v1.0 case updated", case.case_id)
-                            case.initial_processing_complete = True
-                            case.server_modified_on = now
-                            try:
-                                rev = CommCareCase.get_db().get_rev(case.case_id)
-                            except ResourceNotFound:
-                                pass
-                            else:
-                                assert rev == case.get_rev, (
-                                    "Aborting because there would have been "
-                                    "a document update conflict. {} {} {}".format(
-                                        case.get_id, case.get_rev, rev
-                                    )
-                                )
+                        cases = prepare_cases(case_db, now)
 
-                        # verify that these DB's are the same so that we can save them with one call to bulk_save
-                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-                        docs = xforms + cases
-                        try:
-                            XFormInstance.get_db().bulk_save(docs)
-                        except BulkSaveError as e:
-                            logging.error('BulkSaveError saving forms', exc_info=1,
-                                          extra={'details': {'errors': e.errors}})
-                            raise
-                        except Exception as e:
-                            docs_being_saved = [doc['_id'] for doc in docs]
-                            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
-                                type(e).__name__,
-                                unicode(e),
-                                ', '.join(docs_being_saved)
-                            )
-                            instance = _handle_unexpected_error(instance, error_message)
-                            instance.save()
-                            raise
+                        bulk_save_docs(xforms + cases, instance)
+
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
                         case_result.commit_dirtiness_flags()
@@ -551,9 +480,6 @@ class SubmissionPost(object):
                         # .problems was added to instance
                         instance.save()
                     unfinished_submission_stub.delete()
-                elif instance.doc_type == 'XFormDuplicate':
-                    assert len(xforms) == 1
-                    instance.save()
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
 

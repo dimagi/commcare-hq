@@ -9,10 +9,8 @@ from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.interfaces.case import CaseInterface
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.generic import GenericCommCareCase, GenericCommCareCaseIndex
 
 
 class SimpleCaseBugTests(SimpleTestCase):
@@ -32,6 +30,7 @@ class CaseBugTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        self.interface = FormProcessorInterface()
         delete_all_cases()
 
     def test_conflicting_ids(self):
@@ -40,14 +39,14 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         xml_data = self.get_xml('id_conflicts')
         with self.assertRaises(BulkSaveError):
-            FormProcessorInterface().submit_form_locally(xml_data)
+            self.interface.submit_form_locally(xml_data)
 
     def test_empty_case_id(self):
         """
         Ensure that form processor fails on empty id
         """
         xml_data = self.get_xml('empty_id')
-        response, form, cases = FormProcessorInterface().submit_form_locally(xml_data)
+        response, form, cases = self.interface.submit_form_locally(xml_data)
         self.assertIn('IllegalCaseId', response.content)
 
     def _testCornerCaseDatatypeBugs(self, value):
@@ -64,7 +63,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             format_args.update(custom_format_args)
             for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
                 xml_data = self.get_xml(filename).format(**format_args)
-                response, form, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+                response, form, [case] = self.interface.submit_form_locally(xml_data)
 
                 self.assertEqual(format_args['user_id'], case.user_id)
                 self.assertEqual(format_args['case_name'], case.name)
@@ -97,11 +96,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         Submit multiple values for the same property in an update block
         """
         xml_data = self.get_xml('duplicate_case_properties')
-        response, form, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        response, form, [case] = self.interface.submit_form_locally(xml_data)
         self.assertEqual("", case.foo)
 
         xml_data = self.get_xml('duplicate_case_properties_2')
-        response, form, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        response, form, [case] = self.interface.submit_form_locally(xml_data)
         self.assertEqual("2", case.bar)
 
     def testMultipleCaseBlocks(self):
@@ -109,7 +108,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('multiple_case_blocks')
-        response, form, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        response, form, [case] = self.interface.submit_form_locally(xml_data)
 
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
@@ -117,29 +116,29 @@ class CaseBugTest(TestCase, TestFileMixin):
 
         ids = case.xform_ids
         self.assertEqual(1, len(ids))
-        self.assertEqual(form.id, ids[0])
+        self.assertEqual(form.form_id, ids[0])
 
     def testLotsOfSubcases(self):
         """
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('lots_of_subcases')
-        response, form, cases = FormProcessorInterface().submit_form_locally(xml_data)
+        response, form, cases = self.interface.submit_form_locally(xml_data)
         self.assertEqual(11, len(cases))
 
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
         case_id = 'immagetdeleted'
-        [xform, [case]] = FormProcessorInterface().post_case_blocks([
+        [xform, [case]] = self.interface.post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
         ])
-        case = CaseInterface.soft_delete(case.id)
+        case.soft_delete()
 
         self.assertEqual('bar', case.foo)
         self.assertTrue(case.is_deleted)
 
-        [xform, [case]] = FormProcessorInterface().post_case_blocks([
+        [xform, [case]] = self.interface.post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
                       update={'foo': 'not_bar'}).as_xml()
         ])

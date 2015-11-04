@@ -1,48 +1,18 @@
-import functools
 import iso8601
-import types
-import collections
 import pytz
 import xml2json
 
+from redis.exceptions import RedisError
 from django.conf import settings
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.couch import LockManager
 
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from corehq.toggles import USE_SQL_BACKEND
+from couchforms.exceptions import DuplicateError
 
-
-class ToFromGeneric(object):
-    def to_generic(self):
-        raise NotImplementedError()
-
-    @classmethod
-    def from_generic(cls, obj_dict):
-        raise NotImplementedError()
-
-
-def to_generic(fn):
-    """
-    Helper decorator to convert from a DB type to a generic type by calling 'to_generic'
-    on the db type. e.g. FormData to XFormInstance
-    """
-    def _wrap(obj):
-        if hasattr(obj, 'to_generic'):
-            return obj.to_generic()
-        elif isinstance(obj, (list, tuple)):
-            return [_wrap(ob) for ob in obj]
-        elif isinstance(obj, (types.GeneratorType, collections.Iterable)):
-            return (_wrap(ob) for ob in obj)
-        else:
-            return obj
-
-    @functools.wraps(fn)
-    def _inner(*args, **kwargs):
-        obj = fn(*args, **kwargs)
-        return _wrap(obj)
-
-    return _inner
+from .models import Attachment
 
 
 def should_use_sql_backend(domain):
@@ -72,6 +42,47 @@ def extract_meta_instance_id(form):
         return meta['instanceID']
     else:
         return None
+
+
+def new_xform(instance_xml, attachments=None, process=None):
+    """
+    create but do not save an XFormInstance from an xform payload (xml_string)
+    optionally set the doc _id to a predefined value (_id)
+    return doc _id of the created doc
+
+    `process` is transformation to apply to the form right before saving
+    This is to avoid having to save multiple times
+
+    If xml_string is bad xml
+      - raise couchforms.XMLSyntaxError
+
+    """
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+
+    assert attachments is not None
+    form_data = convert_xform_to_json(instance_xml)
+    adjust_datetimes(form_data)
+
+    xform = FormProcessorInterface().new_xform(form_data)
+
+    # Maps all attachments to uniform format and adds form.xml to list before storing
+    attachments = map(
+        lambda a: Attachment(name=a[0], content=a[1], content_type=a[1].content_type),
+        attachments.items()
+    )
+    attachments.append(Attachment(name='form.xml', content=instance_xml, content_type='text/xml'))
+    FormProcessorInterface().store_attachments(xform, attachments)
+
+    # this had better not fail, don't think it ever has
+    # if it does, nothing's saved and we get a 500
+    if process:
+        process(xform)
+
+    lock = acquire_lock_for_xform(xform.form_id)
+    if FormProcessorInterface().is_duplicate(xform, lock):
+        raise DuplicateError(xform)
+
+    return LockManager(xform, lock)
 
 
 def convert_xform_to_json(xml_string):
@@ -122,3 +133,36 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def _extract_meta_instance_id(form):
+    """Takes form json (as returned by xml2json)"""
+    if form.get('Meta'):
+        # bhoma, 0.9 commcare
+        meta = form['Meta']
+    elif form.get('meta'):
+        # commcare 1.0
+        meta = form['meta']
+    else:
+        return None
+
+    if meta.get('uid'):
+        # bhoma
+        return meta['uid']
+    elif meta.get('instanceID'):
+        # commcare 0.9, commcare 1.0
+        return meta['instanceID']
+    else:
+        return None
+
+
+def acquire_lock_for_xform(xform_id):
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+
+    # this is high, but I want to test if MVP conflicts disappear
+    lock = FormProcessorInterface().xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
+    try:
+        lock.acquire()
+    except RedisError:
+        lock = None
+    return lock

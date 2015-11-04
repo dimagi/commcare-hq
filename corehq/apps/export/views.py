@@ -41,7 +41,6 @@ from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
 from corehq.apps.reports.standard.export import (
     CaseExportReport,
     ExcelExportReport,
-    sizeof_fmt,
 )
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
@@ -56,6 +55,7 @@ from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
 from corehq.apps.users.decorators import require_permission, get_permission_name
 from corehq.apps.users.models import Permissions
+from corehq.couchapps.dbaccessors import sizeof_fmt
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
@@ -754,7 +754,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         view = db.view('attachments/attachments', startkey=startkey,
                        endkey=startkey + [{}], group_level=3, reduce=True,
                        group=True)
-        available_attachments =  {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
+        available_attachments = {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
         return available_attachments
 
     @allow_remote_invocation

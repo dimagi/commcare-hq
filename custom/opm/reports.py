@@ -525,10 +525,13 @@ class MetReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/met_report.html"
     slug = "met_report"
     model = ConditionsMet
-    exportable = False
     default_rows = 5
     cache_key = 'opm-report'
     show_total = True
+
+    @property
+    def exportable(self):
+        return self.request.couch_user.is_dimagi
 
     @property
     def row_objects(self):

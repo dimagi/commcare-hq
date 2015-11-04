@@ -3,11 +3,14 @@ from django.test.utils import override_settings
 from casexml.apps.case import const
 from casexml.apps.case.tests.test_const import *
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
-from corehq.form_processor.generic import GenericCommCareCase
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseFromXFormTest(TestCase):
+
+    def setUp(self):
+        self.interface = FormProcessorInterface()
     
     def testCreate(self):
         case = bootstrap_case_from_xml(self, "create.xml")
@@ -29,6 +32,8 @@ class CaseFromXFormTest(TestCase):
         # the exact same workflow as above.
         
         case = bootstrap_case_from_xml(self, "update.xml", original_case.id)
+        # fetch the case from the DB to ensure it is property wrapped
+        case = self.interface.case_model.get(case.case_id)
         self.assertEqual(False, case.closed)
         
         self.assertEqual(3, len(case.actions))
@@ -92,7 +97,7 @@ class CaseFromXFormTest(TestCase):
         pass
     
     def _check_static_properties(self, case):
-        self.assertEqual(GenericCommCareCase, type(case))
+        self.assertEqual(self.interface.case_model, type(case))
         self.assertEqual('CommCareCase', case.doc_type)
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)

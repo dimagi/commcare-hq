@@ -994,6 +994,10 @@ class Subscription(models.Model):
             pass
 
     @property
+    def is_trial_or_internal_trial(self):
+        return self.is_trial or self.plan_version.plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL
+
+    @property
     def allowed_attr_changes(self):
         """
         These are the attributes of a Subscription that can always be
