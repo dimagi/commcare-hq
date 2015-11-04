@@ -23,7 +23,8 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, \
     ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from django.utils.translation import ugettext as _

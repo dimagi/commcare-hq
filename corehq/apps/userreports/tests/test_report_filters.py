@@ -4,9 +4,9 @@ from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.reports.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, \
     CHOICE_DELIMITER, NumericFilterValue
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
 
 
