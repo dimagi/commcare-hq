@@ -45,7 +45,6 @@ from corehq.apps.accounting.interface import (
     PaymentRecordInterface,
     SubscriptionAdjustmentInterface,
 )
-from corehq.apps.reports.standard.domains import OrgDomainStatsReport
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -282,9 +281,7 @@ SMS_ADMIN_INTERFACES = (
 
 
 BASIC_REPORTS = (
-    (_('Project Stats'), (
-        OrgDomainStatsReport,
-    )),
+    (_('Project Stats'), ()),
 )
 
 ADMIN_REPORTS = (

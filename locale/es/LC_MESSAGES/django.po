@@ -2017,7 +2017,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html:11
 #: corehq/apps/appstore/templates/appstore/partials/sidebar.html:15
 #: corehq/apps/fixtures/templates/fixtures/view_table.html:43
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:31
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:31
 #: corehq/apps/reports/templates/reports/base_template.html:61
 #: corehq/apps/reports/templates/reports/base_template.html:62
 #: corehq/apps/reports/templates/reports/standard/base_template.html:109
@@ -11397,13 +11397,13 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:81
 #: corehq/apps/hqadmin/templates/hqadmin/indicator_report.html:95
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:20
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:20
 msgid "Interval"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:83
 #: corehq/apps/hqadmin/templates/hqadmin/indicator_report.html:97
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:22
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:22
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:5
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:8
 msgid "Day"
@@ -11411,27 +11411,27 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:84
 #: corehq/apps/hqadmin/templates/hqadmin/indicator_report.html:98
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:23
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:23
 msgid "Week"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:85
 #: corehq/apps/hqadmin/templates/hqadmin/indicator_report.html:99
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:24
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:24
 #: corehq/apps/reports/filters/select.py:48
 msgid "Month"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:86
 #: corehq/apps/hqadmin/templates/hqadmin/indicator_report.html:100
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:25
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:25
 #: corehq/apps/reports/filters/select.py:35
 msgid "Year"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:88
 #: corehq/apps/hqadmin/templates/hqadmin/indicator_report.html:102
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:27
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:27
 #: corehq/apps/reports/templates/reports/filters/daterange.html:14
 #: custom/apps/gsid/templates/relative_date.html:5
 #: custom/world_vision/templates/world_vision/datespan.html:5
@@ -11440,7 +11440,7 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/domain_faceted_report.html:90
 #: corehq/apps/hqadmin/templates/hqadmin/indicator_report.html:104
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:29
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:29
 #: corehq/apps/reports/templates/reports/filters/daterange.html:21
 #: custom/apps/gsid/templates/relative_date.html:12
 #: custom/world_vision/templates/world_vision/datespan.html:16
@@ -13783,43 +13783,43 @@ msgstr ""
 msgid "Add Team"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:5
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:5
 msgid "Bar Chart"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:7
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:7
 msgid "Cumulative Chart"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:8
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:8
 msgid "Stacked Cumulative Chart"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:13
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:13
 msgid "Date Field"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:40
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:40
 msgid "Loading Bar Chart"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:45
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:63
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:80
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:45
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:63
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:80
 msgid "Your query returned no data"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:48
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:66
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:83
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:48
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:66
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:83
 msgid "There was an error retrieving the data"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:58
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:58
 msgid "Loading Cumulative Chart"
 msgstr ""
 
-#: corehq/apps/orgs/templates/orgs/partials/visualizations.html:75
+#: corehq/apps/orgs/templates/hqadmin/partials/visualizations.html:75
 msgid "Loading Stacked Cumulative Chart"
 msgstr ""
 
