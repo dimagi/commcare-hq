@@ -296,30 +296,7 @@ def bulk_save_docs(docs, instance):
             ', '.join(docs_being_saved)
         )
         instance = _handle_unexpected_error(instance, error_message)
-        instance.save()
         raise
-
-
-def prepare_cases(case_db, now):
-    from casexml.apps.case.models import CommCareCase
-    cases = case_db.get_changed()
-
-    for case in cases:
-        legacy_soft_assert(case.version == "2.0", "v1.0 case updated", case.case_id)
-        case.initial_processing_complete = True
-        case.server_modified_on = now
-        try:
-            rev = CommCareCase.get_db().get_rev(case.case_id)
-        except ResourceNotFound:
-            pass
-        else:
-            assert rev == case.get_rev, (
-                "Aborting because there would have been "
-                "a document update conflict. {} {} {}".format(
-                    case.get_id, case.get_rev, rev
-                )
-            )
-    return cases
 
 
 class SubmissionPost(object):
@@ -370,7 +347,18 @@ class SubmissionPost(object):
         xform.export_tag = ["domain", "xmlns"]
         return xform
 
-    def run(self):
+    def _handle_known_error(self, error, instance, xforms):
+        # errors we know about related to the content of the form
+        # log the error and respond with a success code so that the phone doesn't
+        # keep trying to send the form
+        instance = _transform_instance_to_error(error, instance)
+        xforms[0] = instance
+        # this is usually just one document, but if an edit errored we want
+        # to save the deprecated form as well
+        bulk_save_docs(xforms, instance)
+        return instance, [], []
+
+    def _handle_basic_failure_modes(self):
         if timezone_migration_in_progress(self.domain):
             # keep submissions on the phone
             # until ready to start accepting again
@@ -381,6 +369,11 @@ class SubmissionPost(object):
 
         if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message), None, []
+
+    def run(self):
+        failure_result = self._handle_basic_failure_modes()
+        if failure_result:
+            return failure_result
 
         def process(xform):
             self._set_submission_properties(xform)
@@ -394,94 +387,70 @@ class SubmissionPost(object):
                                          process=process,
                                          domain=self.domain)
         except SubmissionError as e:
-            logging.exception(
-                u"Problem receiving submission to %s. %s" % (
-                    self.path,
-                    unicode(e),
-                )
-            )
-            return self.get_exception_response(e.error_log), None, []
+            return self.get_exception_response_and_log(e, self.path), None, []
         else:
-            from casexml.apps.case.models import CommCareCase
-            from casexml.apps.case.xform import (
-                get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
-            )
-            from casexml.apps.case.signals import case_post_save
-            from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
-            from corehq.apps.commtrack.processing import process_stock
-            from corehq.apps.commtrack.exceptions import MissingProductId
-
-            cases = []
-            responses = []
-            errors = []
-            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
-                            PhoneDateValueError)
-            with lock_manager as xforms:
-                instance = xforms[0]
-                if instance.is_duplicate:
-                    assert len(xforms) == 1
-                    instance.save()
-                elif not instance.is_error:
-                    if len(xforms) > 1:
-                        assert len(xforms) == 2
-                        assert is_deprecation(xforms[1])
-                    domain = get_and_check_xform_domain(instance)
-                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
-                        try:
-                            case_result = process_cases_with_casedb(xforms, case_db)
-                            stock_result = process_stock(xforms, case_db)
-                        except known_errors as e:
-                            # errors we know about related to the content of the form
-                            # log the error and respond with a success code so that the phone doesn't
-                            # keep trying to send the form
-                            instance = _handle_known_error(e, instance)
-                            xforms[0] = instance
-                            # this is usually just one document, but if an edit errored we want
-                            # to save the deprecated form as well
-                            bulk_save_docs(xforms, instance)
-                            response = self._get_open_rosa_response(
-                                instance, None)
-                            return response, instance, cases
-                        except Exception as e:
-                            # handle / log the error and reraise so the phone knows to resubmit
-                            # note that in the case of edit submissions this won't flag the previous
-                            # submission as having been edited. this is intentional, since we should treat
-                            # this use case as if the edit "failed"
-                            error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
-                            instance = _handle_unexpected_error(instance, error_message)
-                            instance.save()
-                            raise
-                        now = datetime.datetime.utcnow()
-                        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-                            xform_id=instance.get_id,
-                            timestamp=now,
-                            saved=False,
-                            domain=domain,
-                        )
-
-                        # todo: this property is only used by the MVPFormIndicatorPillow
-                        instance.initial_processing_complete = True
-
-                        # in saving the cases, we have to do all the things
-                        # done in CommCareCase.save()
-                        cases = prepare_cases(case_db, now)
-
-                        bulk_save_docs(xforms + cases, instance)
-
-                        unfinished_submission_stub.saved = True
-                        unfinished_submission_stub.save()
-                        case_result.commit_dirtiness_flags()
-                        stock_result.commit()
-                        for case in cases:
-                            case_post_save.send(CommCareCase, case=case)
-
-                    errors = self.process_signals(instance)
-                    if errors:
-                        # .problems was added to instance
-                        instance.save()
-                    unfinished_submission_stub.delete()
+            instance, cases, errors = self.process_xforms_for_cases(lock_manager)
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
+
+    def process_xforms_for_cases(self, xform_lock_manager):
+        from casexml.apps.case.models import CommCareCase
+        from casexml.apps.case.xform import (
+            get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
+        )
+        from casexml.apps.case.signals import case_post_save
+        from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
+        from corehq.apps.commtrack.processing import process_stock
+        from corehq.apps.commtrack.exceptions import MissingProductId
+
+        cases = []
+        errors = []
+        known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
+                        PhoneDateValueError)
+        with xform_lock_manager as xforms:
+            instance = xforms[0]
+            if self.validate_xforms_for_case_processing(xforms):
+                domain = get_and_check_xform_domain(instance)
+                with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
+                    try:
+                        case_result = process_cases_with_casedb(xforms, case_db)
+                        stock_result = process_stock(xforms, case_db)
+                    except known_errors as e:
+                        return self._handle_known_error(e, instance, xforms)
+                    except Exception as e:
+                        # handle / log the error and reraise so the phone knows to resubmit
+                        # note that in the case of edit submissions this won't flag the previous
+                        # submission as having been edited. this is intentional, since we should treat
+                        # this use case as if the edit "failed"
+                        _handle_unexpected_error(instance, e)
+                        raise
+
+                    now = datetime.datetime.utcnow()
+                    unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+                        xform_id=instance.get_id,
+                        timestamp=now,
+                        saved=False,
+                        domain=domain,
+                    )
+
+                    # todo: this property is only used by the MVPFormIndicatorPillow
+                    instance.initial_processing_complete = True
+
+                    cases = case_db.get_cases_for_saving(now)
+
+                    bulk_save_docs(xforms + cases, instance)
+
+                    unfinished_submission_stub.saved = True
+                    unfinished_submission_stub.save()
+                    case_result.commit_dirtiness_flags()
+                    stock_result.commit()
+                    for case in cases:
+                        case_post_save.send(CommCareCase, case=case)
+
+                errors = self.process_signals(instance)
+                unfinished_submission_stub.delete()
+
+        return instance, cases, errors
 
     def get_response(self):
         response, _, _ = self.run()
@@ -501,7 +470,21 @@ class SubmissionPost(object):
                 errors.append(error_message)
         if errors:
             instance.problem = ", ".join(errors)
+            instance.save()
         return errors
+
+    @staticmethod
+    def validate_xforms_for_case_processing(xforms):
+        instance = xforms[0]
+        if instance.is_duplicate:
+            assert len(xforms) == 1
+            instance.save()
+            return False
+        elif not instance.is_error:
+            if len(xforms) > 1:
+                assert len(xforms) == 2
+                assert is_deprecation(xforms[1])
+            return True
 
     @staticmethod
     def get_failed_auth_response():
@@ -547,16 +530,22 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_exception_response(error_log):
+    def get_exception_response_and_log(error, path):
+        logging.exception(
+            u"Problem receiving submission to %s. %s" % (
+                path,
+                unicode(error),
+            )
+        )
         return OpenRosaResponse(
             message=("The sever got itself into big trouble! "
-                     "Details: %s" % error_log.problem),
+                     "Details: %s" % error.error_log.problem),
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()
 
 
-def _handle_known_error(e, instance):
+def _transform_instance_to_error(e, instance):
     error_message = '{}: {}'.format(
         type(e).__name__, unicode(e))
     logging.exception((
@@ -565,20 +554,22 @@ def _handle_known_error(e, instance):
     ).format(instance._id, error_message))
     return XFormError.from_xform_instance(instance, error_message)
 
-def _handle_unexpected_error(instance, error_message):
+
+def _handle_unexpected_error(instance, e):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
+    error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
     instance = XFormError.from_xform_instance(instance, error_message, with_new_id=True)
     notify_exception(None, (
         u"Error in case or stock processing "
         u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance.orig_id, error_message, instance._id))
-    return instance
+    instance.save()
 
 
 def fetch_and_wrap_form(doc_id):
