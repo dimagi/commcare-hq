@@ -579,7 +579,7 @@ def _deploy_without_asking():
         do_migrate = env.should_migrate
         if do_migrate:
 
-            if execute(_migrations_exist):
+            if all(execute(_migrations_exist).values()):
                 _execute_with_timing(stop_pillows)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
