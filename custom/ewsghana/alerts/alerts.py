@@ -3,6 +3,7 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.reminders.util import get_verified_number_for_recipient
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ewsghana.alerts import COMPLETE_REPORT, INCOMPLETE_REPORT, \
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
@@ -22,14 +23,15 @@ def report_completion_check(user):
 
     if not missing_products:
         message = COMPLETE_REPORT
-        send_sms_to_verified_number(user.get_verified_number(), message % user.username)
+        send_sms_to_verified_number(get_verified_number_for_recipient(user), message % user.username)
     elif missing_products:
         message = INCOMPLETE_REPORT % (user.name, user.location.name, ", ".join(sorted(missing_products)))
-        send_sms_to_verified_number(user.get_verified_number(), message)
+        send_sms_to_verified_number(get_verified_number_for_recipient(user), message)
 
 
 # sends overstock, understock, or SOH without receipts alerts
-def stock_alerts(transactions, user):
+def stock_alerts(transactions, verified_number):
+    user = verified_number.owner
     sql_location = user.sql_location
     report_helper = ProductsReportHelper(sql_location, transactions)
     products_below = report_helper.low_supply()
@@ -89,7 +91,7 @@ def stock_alerts(transactions, user):
         stripped_message = super_message.strip().strip(';')
         super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
         send_message_to_admins(user, super_message.rstrip())
-    send_sms_to_verified_number(user.get_verified_number(), message.rstrip())
+    send_sms_to_verified_number(verified_number, message.rstrip())
 
 
 def send_message_to_admins(user, message):
@@ -97,8 +99,8 @@ def send_message_to_admins(user, message):
     in_charge_users = [
         u
         for u in users
-        if u.get_verified_number() and "In Charge" in u.user_data.get('role', [])
+        if get_verified_number_for_recipient(u) and "In Charge" in u.user_data.get('role', [])
     ]
     for in_charge_user in in_charge_users:
-        send_sms_to_verified_number(in_charge_user.get_verified_number(),
+        send_sms_to_verified_number(get_verified_number_for_recipient(in_charge_user),
                                     message % (in_charge_user.full_name, in_charge_user.location.name))

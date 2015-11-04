@@ -156,5 +156,5 @@ class CaseAssignmentTest(TestCase):
             owner_id=self.original_owner._id,
             index=index,
         ).as_xml()
-        _, [case] = FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
+        _, [case] = FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
         return case

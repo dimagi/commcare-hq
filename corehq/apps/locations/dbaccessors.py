@@ -1,5 +1,6 @@
 from itertools import imap
 from dimagi.utils.couch.database import iter_docs
+from corehq.apps.es import UserES
 
 
 def _cc_users_by_location(domain, location_id, include_docs=True, wrap=True, user_class=None):
@@ -62,3 +63,14 @@ def get_users_assigned_to_locations(domain):
 def get_web_users_by_location(domain, location_id):
     from corehq.apps.users.models import WebUser
     return _cc_users_by_location(domain, location_id, user_class=WebUser)
+
+
+def get_users_location_ids(domain, user_ids):
+    """Get the ids of the locations the users are assigned to"""
+    result = (UserES()
+              .domain(domain)
+              .user_ids(user_ids)
+              .non_null('location_id')
+              .fields(['location_id'])
+              .run())
+    return [r['location_id'] for r in result.hits if 'location_id' in r]

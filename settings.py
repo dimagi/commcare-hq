@@ -191,7 +191,6 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djangobower',
-    'djkombu',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -209,7 +208,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 
 HQ_APPS = (
     'django_digest',
-    'rosetta',
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
@@ -248,6 +246,7 @@ HQ_APPS = (
     'langcodes',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
+    'corehq.apps.change_feed',
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
@@ -382,11 +381,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_prbac',
     'djcelery',
     'djtables',
-    'djkombu',
     'gunicorn',
     'langcodes',
     'luna',
-    'rosetta',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -536,9 +533,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-SMS_GATEWAY_URL = "http://localhost:8001/"
-SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
-
 # celery
 BROKER_URL = 'django://'  # default django db based
 
@@ -596,17 +590,6 @@ COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_de
 
 # couchlog/case search
 LUCENE_ENABLED = False
-
-
-# unicel sms config
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "changeme",
-                 "sender": "Promo"}
-
-# mach sms config
-MACH_CONFIG = {"username": "Dimagi",
-               "password": "changeme",
-               "service_profile": "changeme"}
 
 ####### SMS Queue Settings #######
 
@@ -711,19 +694,19 @@ AUDIT_MODULES = [
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': '',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'GOOGLE_ANALYTICS_API_ID': '',
+    'PINGDOM_API_ID': '',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
-    'HUBSPOT_ID': '',
+    'HUBSPOT_API_ID': '',
 }
 
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-OPEN_EXCHANGE_RATES_ID = ''
+OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
@@ -972,6 +955,9 @@ DATADOG_APP_KEY = None
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+
+KAFKA_URL = 'localhost:9092'
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -1062,7 +1048,6 @@ _dynamic_db_settings = get_dynamic_db_settings(
 )
 
 # create local server and database configs
-COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
 NEW_USERS_GROUPS_DB = 'users'
@@ -1350,10 +1335,7 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.models.OpmCaseFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.opm.models.OpmFormFluffPillow',
-        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
@@ -1380,6 +1362,18 @@ PILLOWTOPS = {
         'mvp_docs.pillows.MVPFormIndicatorPillow',
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
+    'experimental': [
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'KafkaCaseConsumerPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
+        }
+    ]
 }
 
 
@@ -1405,6 +1399,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
+    os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
+    os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
 ]
 
 

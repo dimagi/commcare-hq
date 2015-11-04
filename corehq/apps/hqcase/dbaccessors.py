@@ -154,23 +154,6 @@ def get_number_of_cases_in_domain_by_owner(domain, owner_id):
     return res['value'] if res else 0
 
 
-def get_n_case_ids_in_domain_by_owner(domain, owner_id, n,
-                                      start_after_case_id=None):
-    view_kwargs = {}
-    if start_after_case_id:
-        view_kwargs['startkey_docid'] = start_after_case_id
-        view_kwargs['skip'] = 1
-
-    return [row['id'] for row in CommCareCase.get_db().view(
-        "hqcase/by_owner",
-        reduce=False,
-        startkey=[domain, owner_id, False],
-        endkey=[domain, owner_id, False],
-        limit=n,
-        **view_kwargs
-    )]
-
-
 def iter_lite_cases_json(case_ids, chunksize=100):
     for case_id_chunk in chunked(case_ids, chunksize):
         rows = CommCareCase.get_db().view(

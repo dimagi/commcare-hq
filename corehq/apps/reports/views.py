@@ -963,14 +963,16 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
                 'file_obj': excel_file,
                 'mimetype': format.mimetype
             })
+        date_range = config.get_date_range()
         report_outputs.append({
             'title': config.full_name,
             'url': config.url,
             'content': content,
             'description': config.description,
+            "startdate": date_range.get("startdate") if date_range else "",
+            "enddate": date_range.get("enddate") if date_range else "",
         })
 
-    date_range = config.get_date_range()
     return render(request, "reports/report_email.html", {
         "reports": report_outputs,
         "domain": domain,
@@ -979,8 +981,6 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "startdate": date_range.get("startdate") if date_range else "",
-        "enddate": date_range.get("enddate") if date_range else "",
         "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
 

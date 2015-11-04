@@ -28,7 +28,7 @@
             </tr>
 
             {% if file.source %}
-                <tr>
+                <tr class="hide">
                     <td colspan="2">
                     {% block file_source %}{% endblock %}
                     </td>
@@ -46,8 +46,8 @@
     $(function(){
         $('.toggle-next').click(function(e){
             e.preventDefault();
-            $(this).parents('tr').next('tr').toggle();
-        }).trigger('click');
+            $(this).parents('tr').next('tr').toggleClass("hide");
+        });
     });
 </script>
 {% endblock js-inline %}

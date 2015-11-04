@@ -74,11 +74,11 @@ EVE_DOMAIN = 'domain2'
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=True)
 class DomainTest(TestCase):
     def test_cant_own_case(self):
-        _, _, [case] = FormProcessorInterface.submit_form_locally(ALICE_XML, ALICE_DOMAIN)
-        response, form, cases = FormProcessorInterface.submit_form_locally(EVE_XML, EVE_DOMAIN)
+        _, _, [case] = FormProcessorInterface().submit_form_locally(ALICE_XML, ALICE_DOMAIN)
+        response, form, cases = FormProcessorInterface().submit_form_locally(EVE_XML, EVE_DOMAIN)
 
         self.assertIn('IllegalCaseId', response.content)
         self.assertFalse(hasattr(CaseInterface.get_case(case.id), 'plan_to_buy_gun'))
 
-        FormProcessorInterface.submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
+        FormProcessorInterface().submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
         self.assertEqual(CaseInterface.get_case(case.id).plan_to_buy_gun, 'no')

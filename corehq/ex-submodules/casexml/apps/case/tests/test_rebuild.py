@@ -32,7 +32,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       date_modified=date_modified,
                       update=kwargs,
                       close=close).as_xml()
-    FormProcessorInterface.post_case_blocks([block], form_extras)
+    FormProcessorInterface().post_case_blocks([block], form_extras)
     return case_id
 
 
@@ -380,9 +380,13 @@ class CaseRebuildTest(TestCase):
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
         create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
-        FormProcessorInterface.post_case_blocks([create_block.as_xml()], form_extras={'received_on': way_earlier})
+        FormProcessorInterface().post_case_blocks(
+            [create_block.as_xml()], form_extras={'received_on': way_earlier}
+        )
         update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
-        FormProcessorInterface.post_case_blocks([update_block.as_xml()], form_extras={'received_on': earlier})
+        FormProcessorInterface().post_case_blocks(
+            [update_block.as_xml()], form_extras={'received_on': earlier}
+        )
 
         case = CommCareCase.get(case_id)
         self.assertEqual(earlier, case.modified_on)

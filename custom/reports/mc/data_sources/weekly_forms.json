@@ -1,0 +1,198 @@
+{
+    "domains": ["mc-inscale"],
+    "config": {
+        "referenced_doc_type": "XFormInstance",
+        "engine_id": "ucr",
+        "table_id": "weekly_forms",
+        "display_name": "Weekly Forms",
+        "configured_filter": {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8",
+            "operator": "eq"
+        },
+        "configured_indicators": [
+            {
+                "column_id": "date",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["received_on"]
+                },
+                "datatype": "datetime"
+            },
+            {
+                "column_id": "user_id",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "meta", "userID"]
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "hf",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": ["user_data", "health_facility"]
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "district",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": ["user_data", "district"]
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "stock_amox_pink",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_amox_pink"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_amox_green",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_amox_green"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_ors",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_ors"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_ra_50",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_ra_50"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_ra_200",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_ra_200"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_zinc",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_zinc"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_coartem_yellow",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_coartem_yellow"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_coartem_blue",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_coartem_blue"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_coartem_green",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_coartem_green"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_coartem_brown",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_coartem_brown"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_paracetamol_250",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_paracetamol_250"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_paracetamol_500",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_paracetamol_500"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_rdt",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_rdt"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "stock_gloves",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "stock", "stock_gloves"]
+                },
+                "datatype": "integer"
+            }
+        ]
+    }
+}

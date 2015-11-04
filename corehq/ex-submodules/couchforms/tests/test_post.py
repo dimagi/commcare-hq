@@ -29,9 +29,9 @@ class PostTest(TestCase):
                                '{name}.json'.format(name=expected_name))) as f:
             result = json.load(f)
 
-        xform = FormProcessorInterface.post_xform(instance)
+        xform = FormProcessorInterface().post_xform(instance)
         xform_json = json.loads(json.dumps(xform.to_json()))
-        for key in ['is_archived', 'is_deprecated', 'is_duplicate', 'is_error']:
+        for key in ['is_archived', 'is_deprecated', 'is_duplicate', 'is_error', 'attachments']:
             del xform_json[key]
 
         result['received_on'] = xform_json['received_on']

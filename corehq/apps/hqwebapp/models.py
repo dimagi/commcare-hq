@@ -583,6 +583,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_use_data_cleanup(self):
+        return domain_has_privilege(self.domain, privileges.DATA_CLEANUP)
+
+    @property
+    @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_export_data())
@@ -616,7 +621,14 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
             from corehq.apps.data_interfaces.views \
-                import CaseGroupCaseManagementView, ArchiveFormView
+                import ArchiveFormView, AutomaticUpdateRuleListView
+
+            if self.can_use_data_cleanup and toggles.AUTOMATIC_CASE_CLOSURE.enabled(self.domain):
+                edit_section[0][1].append({
+                    'title': AutomaticUpdateRuleListView.page_title,
+                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                })
+
             if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
                 edit_section[0][1].append({
                     'title': ArchiveFormView.page_title,

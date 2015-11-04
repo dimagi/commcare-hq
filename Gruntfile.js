@@ -25,7 +25,10 @@ module.exports = function(grunt) {
         mochaConfig[app] = {
             options: {
                 urls: [BASE_URL + appName + '/' + (config ? config : '')],
-                run: true
+                run: true,
+                log: true,
+                logErrors: true,
+                reporter: 'Spec'
             }
         };
         watchConfig[app] = {

@@ -10,10 +10,12 @@ class FormProcessorInterface(object):
     backends can implement this class in order to make common interface.
     """
 
-    @staticmethod
+    def __init__(self, domain=None):
+        self.domain = domain
+
     @to_generic
     @unit_testing_only
-    def post_xform(instance_xml, attachments=None, process=None, domain='test-domain'):
+    def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
         """
         create a new xform and releases the lock
 
@@ -29,14 +31,12 @@ class FormProcessorInterface(object):
                 xform.save()
             return xforms[0]
 
-    @staticmethod
-    def submit_form_locally(instance, domain='test-domain', **kwargs):
+    def submit_form_locally(self, instance, domain='test-domain', **kwargs):
         from corehq.apps.receiverwrapper.util import submit_form_locally
         response, xform, cases = submit_form_locally(instance, domain, **kwargs)
         # response is an iterable so @to_generic doesn't work
         return response, xform.to_generic(), [case.to_generic() for case in cases]
 
-    @staticmethod
     @to_generic
-    def post_case_blocks(case_blocks, form_extras=None, domain=None):
+    def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)

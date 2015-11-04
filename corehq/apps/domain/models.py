@@ -662,7 +662,7 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
         from corehq.apps.fixtures.models import FixtureDataType
         from corehq.apps.users.models import UserRole
 
@@ -720,7 +720,7 @@ class Domain(Document, SnapshotMixin):
                 if component:
                     new_app_components[original_doc_id] = component
 
-            for doc_id in get_doc_ids_in_domain_by_type(self.name, FixtureDataType):
+            for doc_id in get_doc_ids_in_domain_by_class(self.name, FixtureDataType):
                 if copy_by_id and doc_id not in copy_by_id:
                     continue
                 component = self.copy_component(
@@ -728,11 +728,11 @@ class Domain(Document, SnapshotMixin):
                 copy_data_items(doc_id, component._id)
 
             if share_reminders:
-                for doc_id in get_doc_ids_in_domain_by_type(self.name, CaseReminderHandler):
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
                     self.copy_component(
                         'CaseReminderHandler', doc_id, new_domain_name, user=user)
             if share_user_roles:
-                for doc_id in get_doc_ids_in_domain_by_type(self.name, UserRole):
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
 
             new_domain.save()
@@ -960,8 +960,9 @@ class Domain(Document, SnapshotMixin):
 
     def _delete_web_users_from_domain(self):
         from corehq.apps.users.models import WebUser
-        web_users = WebUser.by_domain(self.name)
-        for web_user in web_users:
+        active_web_users = WebUser.by_domain(self.name)
+        inactive_web_users = WebUser.by_domain(self.name, is_active=False)
+        for web_user in list(active_web_users) + list(inactive_web_users):
             web_user.delete_domain_membership(self.name)
             web_user.save()
 
@@ -995,6 +996,21 @@ class Domain(Document, SnapshotMixin):
         SQLLocation.objects.filter(domain=self.name).delete()
         LocationType.objects.filter(domain=self.name).delete()
         DocDomainMapping.objects.filter(domain_name=self.name).delete()
+
+        from corehq.apps.accounting.models import Subscription, Subscriber, SubscriptionAdjustment, Invoice, \
+            BillingRecord, LineItem, CreditAdjustment, CreditLine
+
+        SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
+        BillingRecord.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(credit_line__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(related_credit__subscription__subscriber__domain=self.name).delete()
+
+        CreditLine.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Invoice.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Subscription.objects.filter(subscriber__domain=self.name).delete()
+        Subscriber.objects.filter(domain=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia

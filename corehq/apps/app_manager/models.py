@@ -1521,14 +1521,22 @@ class GraphConfiguration(DocumentSchema):
 
 class DetailTab(IndexedSchema):
     """
-    Represents a tab in the case detail screen on the phone. Ex:
-        {
-            'name': 'Medical',
-            'starting_index': 3
-        }
+    Represents a tab in the case detail screen on the phone.
+    Each tab is itself a detail, nested inside the app's "main" detail.
     """
     header = DictProperty()
+
+    # The first index, of all fields in the parent detail, that belongs to this tab
     starting_index = IntegerProperty()
+
+    # A tab may be associated with a nodeset, resulting in a detail that
+    # iterates through sub-nodes of an entity rather than a single entity
+    has_nodeset = BooleanProperty(default=False)
+    nodeset = StringProperty()
+
+    # Any instance connectors necessary for the nodeset,
+    # e.g., "reports" => "jr://fixture/reports"
+    connectors = DictProperty()
 
 
 class DetailColumn(IndexedSchema):

@@ -25,7 +25,7 @@ class OtaV3RestoreTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        FormProcessorInterface.submit_form_locally(xml_data, self.domain)
+        FormProcessorInterface().submit_form_locally(xml_data, self.domain)
 
         expected_case_block = """
         <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo"

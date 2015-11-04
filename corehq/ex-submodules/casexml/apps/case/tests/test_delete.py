@@ -1,9 +1,10 @@
 from django.test import TestCase
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-from corehq.form_processor.interfaces.case import CaseInterface
+from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.xform import XFormInterface
+from corehq.form_processor.interfaces.case import CaseInterface
 
 
 class TestHardDelete(TestCase):
@@ -15,7 +16,7 @@ class TestHardDelete(TestCase):
         self.assertIsNotNone(CaseInterface.get_case(case.id))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
-            self.assertIsNotNone(XFormInterface.get_xform(form_id))
+            self.assertIsNotNone(XFormInterface(TEST_DOMAIN_NAME).get_xform(form_id))
         CaseInterface.hard_delete(case)
 
         with self.assertRaises(CaseNotFound):
@@ -23,7 +24,7 @@ class TestHardDelete(TestCase):
 
         for form_id in case.xform_ids:
             with self.assertRaises(XFormNotFound):
-                XFormInterface.get_xform(form_id)
+                XFormInterface(TEST_DOMAIN_NAME).get_xform(form_id)
 
     def test_delete_with_related(self):
         factory = CaseFactory()
