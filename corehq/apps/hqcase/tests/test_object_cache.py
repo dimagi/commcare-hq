@@ -7,6 +7,7 @@ from django.test.client import Client
 from corehq.apps.domain.models import Domain
 
 from corehq.apps.users.models import WebUser
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.test_multimedia import BaseCaseMultimediaTest, TEST_CASE_ID
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -46,6 +47,7 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         self.user = WebUser.create(TEST_DOMAIN_NAME, TEST_USER, TEST_PASSWORD)
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
+        self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
         delete_all_cases()
         delete_all_xforms()
         time.sleep(1)
@@ -54,22 +56,13 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
         self.user.delete()
         self.domain.delete()
 
-    def testGenericObjectCache(self):
-        """
-        Generic caching framework for assets that need downloads, like jad/jars
-        """
-        #API url not implemented yet, leaving this stub in as placeholder todo for full implementation
-        pass
-
     def testCreateMultimediaCase(self):
         """
         Verify that URL for case attachment api uses the right view and returns at least the original attachments correclty.
         """
         attachments = ['dimagi_logo_file', 'commcare_logo_file']
 
-        self._doCreateCaseWithMultimedia(attachments=attachments)
-        case = CommCareCase.get(TEST_CASE_ID)
-        case.domain = TEST_DOMAIN_NAME
+        _, _, [case] = self._doCreateCaseWithMultimedia(attachments=attachments)
         self.assertEqual(2, len(case.case_attachments))
         client = Client()
         client.login(username=TEST_USER, password=TEST_PASSWORD)
