@@ -6,6 +6,10 @@ from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
 from dimagi.ext.couchdbkit import StringProperty
 
 
+GHANA_COUNTRY_CODE = '233'
+GHANA_PHONE_LENGTH = 12
+
+
 class SMSGHException(Exception):
     pass
 
@@ -42,7 +46,7 @@ class SMSGHBackend(SMSBackend):
 
     def handle_error(self, response, msg):
         phone = strip_plus(msg.phone_number)
-        if not (phone.startswith('233') and len(phone) == 12):
+        if not (phone.startswith(GHANA_COUNTRY_CODE) and len(phone) == GHANA_PHONE_LENGTH):
             msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             return
         data = self.get_additional_data(response)
