@@ -657,6 +657,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         available = {case for case in relevant
                      if case not in self.closed_cases
                      and not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case)}
+
         new_available = set() | available
         while new_available:
             case_to_check = new_available.pop()
@@ -665,8 +666,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     new_available.add(incoming_extension)
             available = available | new_available
         logger.debug("Available cases: {}".format(available))
+
         live = {case for case in available if case in self.primary_case_ids}
-        logger.debug("Live cases: {}".format(live))
         new_live = set() | live
         while new_live:
             case_to_check = new_live.pop()
@@ -674,7 +675,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
             new_live = new_live | IndexTree.traverse_incoming_extensions(case_to_check, self.extension_index_tree, self.closed_cases, cached_map=incoming_extensions)
             new_live = new_live - live
             live = live | new_live
-        logger.debug("Touched cases from live: {}".format(new_live))
+
+        logger.debug("live cases: {}".format(live))
+
         to_remove = relevant - live
         for remove in to_remove:
             self._remove_case(remove)
@@ -781,8 +784,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
             if index.referenced_id not in self.case_ids_on_phone:
                 self.case_ids_on_phone.add(index.referenced_id)
-                if not live:
-                    self.dependent_case_ids_on_phone.add(index.referenced_id)
+                self.dependent_case_ids_on_phone.add(index.referenced_id)
 
             if not [idx for idx in case_update.indices_to_add
                     if idx.relationship == const.CASE_INDEX_CHILD and idx.referenced_id == index.referenced_id]:
@@ -794,8 +796,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
             if index.referenced_id not in self.case_ids_on_phone:
                 self.case_ids_on_phone.add(index.referenced_id)
-                if not live:
-                    self.dependent_case_ids_on_phone.add(index.referenced_id)
+                self.dependent_case_ids_on_phone.add(index.referenced_id)
                 # If the indexing case is dependent (e.g. because it also has an
                 # extension index) make it a primary again (child index trumps
                 # extension index)
