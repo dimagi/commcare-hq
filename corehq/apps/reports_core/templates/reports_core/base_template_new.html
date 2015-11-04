@@ -114,13 +114,13 @@
 
 {% block page_content %}
     {% block report_alerts %}
-    <div id="report-error" class="alert alert-error hide">
+    <div id="report-error" class="alert alert-danger hide">
         {% blocktrans %}
         There was an error rendering your report.
         {% endblocktrans %}
         <div id="error-message"></div>
     </div>
-    <div id="report-warning" class="alert alert-warn hide">
+    <div id="report-warning" class="alert alert-warning hide">
         {% blocktrans %}
         Warning:
         {% endblocktrans %}
