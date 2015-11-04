@@ -277,6 +277,27 @@ class CaseDbCache(object):
         """
         return {xform._id: xform for xform in self.xforms}
 
+    def get_cases_for_saving(self, now):
+        cases = self.get_changed()
+
+        for case in cases:
+            # in saving the cases, we have to do all the things
+            # done in CommCareCase.save()
+            case.initial_processing_complete = True
+            case.server_modified_on = now
+            try:
+                rev = CommCareCase.get_db().get_rev(case.case_id)
+            except ResourceNotFound:
+                pass
+            else:
+                assert rev == case.get_rev, (
+                    "Aborting because there would have been "
+                    "a document update conflict. {} {} {}".format(
+                        case.get_id, case.get_rev, rev
+                    )
+                )
+        return cases
+
 
 def get_and_check_xform_domain(xform):
     try:

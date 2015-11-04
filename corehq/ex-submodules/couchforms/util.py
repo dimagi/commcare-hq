@@ -300,28 +300,6 @@ def bulk_save_docs(docs, instance):
         raise
 
 
-def prepare_cases(case_db, now):
-    from casexml.apps.case.models import CommCareCase
-    cases = case_db.get_changed()
-
-    for case in cases:
-        legacy_soft_assert(case.version == "2.0", "v1.0 case updated", case.case_id)
-        case.initial_processing_complete = True
-        case.server_modified_on = now
-        try:
-            rev = CommCareCase.get_db().get_rev(case.case_id)
-        except ResourceNotFound:
-            pass
-        else:
-            assert rev == case.get_rev, (
-                "Aborting because there would have been "
-                "a document update conflict. {} {} {}".format(
-                    case.get_id, case.get_rev, rev
-                )
-            )
-    return cases
-
-
 class SubmissionPost(object):
 
     failed_auth_response = HttpResponseForbidden('Bad auth')
@@ -456,9 +434,7 @@ class SubmissionPost(object):
                         # todo: this property is only used by the MVPFormIndicatorPillow
                         instance.initial_processing_complete = True
 
-                        # in saving the cases, we have to do all the things
-                        # done in CommCareCase.save()
-                        cases = prepare_cases(case_db, now)
+                        cases = case_db.get_cases_for_saving(now)
 
                         bulk_save_docs(xforms + cases, instance)
 
