@@ -416,14 +416,8 @@ class SubmissionPost(object):
             known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError)
             with lock_manager as xforms:
-                instance = xforms[0]
-                if instance.is_duplicate:
-                    assert len(xforms) == 1
-                    instance.save()
-                elif not instance.is_error:
-                    if len(xforms) > 1:
-                        assert len(xforms) == 2
-                        assert is_deprecation(xforms[1])
+                if self.validate_xforms_for_case_processing(xforms):
+                    instance = xforms[0]
                     domain = get_and_check_xform_domain(instance)
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                         try:
@@ -501,6 +495,19 @@ class SubmissionPost(object):
         if errors:
             instance.problem = ", ".join(errors)
         return errors
+
+    @staticmethod
+    def validate_xforms_for_case_processing(xforms):
+        instance = xforms[0]
+        if instance.is_duplicate:
+            assert len(xforms) == 1
+            instance.save()
+            return False
+        elif not instance.is_error:
+            if len(xforms) > 1:
+                assert len(xforms) == 2
+                assert is_deprecation(xforms[1])
+            return True
 
     @staticmethod
     def get_failed_auth_response():
