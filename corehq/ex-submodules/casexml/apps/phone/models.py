@@ -805,10 +805,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if index.referenced_id not in self.case_ids_on_phone:
                 self.case_ids_on_phone.add(index.referenced_id)
                 self.dependent_case_ids_on_phone.add(index.referenced_id)
-                # If the indexing case is dependent (e.g. because it also has an
-                # extension index) make it a primary again (child index trumps
-                # extension index)
-                self._add_primary_case(index.case_id)
 
     def _delete_index(self, index):
         self.index_tree.delete_index(index.case_id, index.identifier)
