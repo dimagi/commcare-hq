@@ -7,8 +7,6 @@ from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
-from casexml.apps.phone.tests.restore_test_utils import \
-    run_with_cleanliness_restore
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 
 
@@ -23,7 +21,6 @@ def get_test_file_json(filename):
 
 
 def test_generator(test_name, skip=False):
-    @run_with_cleanliness_restore
     def test(self):
         if skip:
             self.skipTest(skip)
