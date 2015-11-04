@@ -70,6 +70,7 @@ class CleanOwnerCaseSyncOperation(object):
         child_indices = defaultdict(set)
         extension_indices = defaultdict(set)
         all_dependencies_syncing = set()
+        closed_cases = set()
         potential_updates_to_sync = []
         while case_ids_to_sync:
             ids = pop_ids(case_ids_to_sync, chunk_size)
@@ -98,9 +99,10 @@ class CleanOwnerCaseSyncOperation(object):
                         if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
-                if (not _is_live(case, self.restore_state) or
-                        (extension_indices.get(case._id, []) and not child_indices.get(case._id, []))):
+                if not _is_live(case, self.restore_state):
                     all_dependencies_syncing.add(case._id)
+                    if case.closed:
+                        closed_cases.add(case._id)
 
             # commtrack ledger sections for this batch
             commtrack_elements = get_stock_payload(
@@ -134,6 +136,7 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
         self.restore_state.current_sync_log.index_tree = index_tree
         self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
+        self.restore_state.current_sync_log.closed_cases = closed_cases
 
         _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state)
         self.restore_state.current_sync_log.prune_dependent_cases()
