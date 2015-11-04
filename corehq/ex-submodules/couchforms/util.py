@@ -360,7 +360,7 @@ class SubmissionPost(object):
         response = self._get_open_rosa_response(instance, None)
         return response, instance, []
 
-    def run(self):
+    def _handle_basic_failure_modes(self):
         if timezone_migration_in_progress(self.domain):
             # keep submissions on the phone
             # until ready to start accepting again
@@ -371,6 +371,11 @@ class SubmissionPost(object):
 
         if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message), None, []
+
+    def run(self):
+        failure_result = self._handle_basic_failure_modes()
+        if failure_result:
+            return failure_result
 
         def process(xform):
             self._set_submission_properties(xform)
