@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from corehq.apps.hqcase.utils import assign_cases
 
@@ -26,6 +27,7 @@ def get_wrapped_owner(owner_id):
             'CommCareUser': CommCareUser,
             'WebUser': WebUser,
             'Group': Group,
+            'Location': Location,
         }.get(doc_type)
 
     try:
