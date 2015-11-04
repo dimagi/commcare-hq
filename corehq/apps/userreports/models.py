@@ -226,7 +226,15 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         # these two properties implicitly call other validation
         self._get_main_filter()
         self._get_deleted_filter()
-        self.indicators
+
+        # validate indicators and column uniqueness
+        columns = [c.id for c in self.indicators.get_columns()]
+        unique_columns = set(columns)
+        if len(columns) != len(unique_columns):
+            for column in set(columns):
+                columns.remove(column)
+            raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+
         self.parsed_expression
 
 
