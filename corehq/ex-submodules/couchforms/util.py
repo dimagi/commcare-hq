@@ -6,7 +6,7 @@ import logging
 from StringIO import StringIO
 
 from django.test.client import Client
-from couchdbkit import ResourceNotFound, BulkSaveError
+from couchdbkit import ResourceNotFound
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -15,6 +15,7 @@ from django.http import (
 )
 from corehq.apps.tzmigration import timezone_migration_in_progress
 from corehq.form_processor.utils import new_xform, acquire_lock_for_xform
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
@@ -279,26 +280,6 @@ def scrub_meta(xform):
     return found_old
 
 
-def bulk_save_docs(docs, instance):
-    from casexml.apps.case.models import CommCareCase
-    assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-    try:
-        XFormInstance.get_db().bulk_save(docs)
-    except BulkSaveError as e:
-        logging.error('BulkSaveError saving forms', exc_info=1,
-                      extra={'details': {'errors': e.errors}})
-        raise
-    except Exception as e:
-        docs_being_saved = [doc['_id'] for doc in docs]
-        error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
-            type(e).__name__,
-            unicode(e),
-            ', '.join(docs_being_saved)
-        )
-        instance = _handle_unexpected_error(instance, error_message)
-        raise
-
-
 class SubmissionPost(object):
 
     failed_auth_response = HttpResponseForbidden('Bad auth')
@@ -324,6 +305,7 @@ class SubmissionPost(object):
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
+        self.interface = FormProcessorInterface(domain)
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -355,7 +337,7 @@ class SubmissionPost(object):
         xforms[0] = instance
         # this is usually just one document, but if an edit errored we want
         # to save the deprecated form as well
-        bulk_save_docs(xforms, instance)
+        self.interface.bulk_save(instance, xforms)
         return instance, [], []
 
     def _handle_basic_failure_modes(self):
@@ -438,7 +420,7 @@ class SubmissionPost(object):
 
                     cases = case_db.get_cases_for_saving(now)
 
-                    bulk_save_docs(xforms + cases, instance)
+                    self.interface.bulk_save(instance, xforms, cases)
 
                     unfinished_submission_stub.saved = True
                     unfinished_submission_stub.save()

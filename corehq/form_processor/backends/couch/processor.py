@@ -1,10 +1,15 @@
+import logging
 import datetime
 
+from couchdbkit import BulkSaveError
+
 from dimagi.utils.couch import ReleaseOnError
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from couchforms.util import process_xform
-from corehq.form_processor.utils import extract_meta_instance_id
+from casexml.apps.case.models import CommCareCase
+from couchforms.util import process_xform, _handle_unexpected_error
+from couchforms.models import XFormInstance
 from couchforms.exceptions import DuplicateError
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
+from corehq.form_processor.utils import extract_meta_instance_id
 
 
 class FormProcessorCouch(object):
@@ -40,8 +45,6 @@ class FormProcessorCouch(object):
 
     @classmethod
     def new_xform(cls, form_data):
-        from couchforms.models import XFormInstance
-
         _id = extract_meta_instance_id(form_data) or XFormInstance.get_db().server.next_uuid()
         assert _id
         xform = XFormInstance(
@@ -56,7 +59,26 @@ class FormProcessorCouch(object):
 
     @classmethod
     def is_duplicate(cls, xform, lock):
-        from couchforms.models import XFormInstance
         with ReleaseOnError(lock):
             if xform.form_id in XFormInstance.get_db():
                 raise DuplicateError(xform)
+
+    @classmethod
+    def bulk_save(cls, instance, xforms, cases=None):
+        docs = xforms + (cases or [])
+        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
+        try:
+            XFormInstance.get_db().bulk_save(docs)
+        except BulkSaveError as e:
+            logging.error('BulkSaveError saving forms', exc_info=1,
+                          extra={'details': {'errors': e.errors}})
+            raise
+        except Exception as e:
+            docs_being_saved = [doc['_id'] for doc in docs]
+            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+                type(e).__name__,
+                unicode(e),
+                ', '.join(docs_being_saved)
+            )
+            instance = _handle_unexpected_error(instance, error_message)
+            raise
