@@ -521,7 +521,7 @@ class IndexTree(DocumentSchema):
             parent_cases = set(child_index_tree.indices.get(case_to_check, {}).values())
             host_cases = set(extension_index_tree.indices.get(case_to_check, {}).values())
             all_cases = all_cases | parent_cases | host_cases
-            new_cases = new_cases | parent_cases | host_cases
+            new_cases = (new_cases | parent_cases | host_cases) - all_cases
         return all_cases
 
     @staticmethod
