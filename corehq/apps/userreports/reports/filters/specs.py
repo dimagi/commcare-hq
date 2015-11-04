@@ -14,6 +14,12 @@ from corehq.apps.userreports.specs import TypeProperty
 
 
 class ReportFilter(JsonObject):
+    """
+    This is a spec class that is just used for validation on a ReportConfiguration object.
+
+    These get converted to FilterSpecs (below) by the FilterFactory.
+    """
+    # todo: this class is silly and can likely be removed.
     type = StringProperty(required=True)
     slug = StringProperty(required=True)
     field = StringProperty(required=True)
