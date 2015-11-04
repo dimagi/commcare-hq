@@ -446,9 +446,6 @@ class SubmissionPost(object):
                             case_post_save.send(CommCareCase, case=case)
 
                     errors = self.process_signals(instance)
-                    if errors:
-                        # .problems was added to instance
-                        instance.save()
                     unfinished_submission_stub.delete()
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
@@ -471,6 +468,7 @@ class SubmissionPost(object):
                 errors.append(error_message)
         if errors:
             instance.problem = ", ".join(errors)
+            instance.save()
         return errors
 
     @staticmethod
