@@ -389,13 +389,7 @@ class SubmissionPost(object):
                                          process=process,
                                          domain=self.domain)
         except SubmissionError as e:
-            logging.exception(
-                u"Problem receiving submission to %s. %s" % (
-                    self.path,
-                    unicode(e),
-                )
-            )
-            return self.get_exception_response(e.error_log), None, []
+            return self.get_exception_response_and_log(e, self.path), None, []
         else:
             instance, cases, errors = self.process_xforms_for_cases(lock_manager)
             response = self._get_open_rosa_response(instance, errors)
@@ -538,10 +532,16 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_exception_response(error_log):
+    def get_exception_response_and_log(error, path):
+        logging.exception(
+            u"Problem receiving submission to %s. %s" % (
+                path,
+                unicode(error),
+            )
+        )
         return OpenRosaResponse(
             message=("The sever got itself into big trouble! "
-                     "Details: %s" % error_log.problem),
+                     "Details: %s" % error.error_log.problem),
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()
