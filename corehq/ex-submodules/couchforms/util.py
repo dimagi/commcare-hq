@@ -296,7 +296,6 @@ def bulk_save_docs(docs, instance):
             ', '.join(docs_being_saved)
         )
         instance = _handle_unexpected_error(instance, error_message)
-        instance.save()
         raise
 
 
@@ -423,7 +422,7 @@ class SubmissionPost(object):
                         # note that in the case of edit submissions this won't flag the previous
                         # submission as having been edited. this is intentional, since we should treat
                         # this use case as if the edit "failed"
-                        _handle_unexpected_error(e, instance)
+                        _handle_unexpected_error(instance, e)
                         raise
 
                     now = datetime.datetime.utcnow()
@@ -556,7 +555,7 @@ def _transform_instance_to_error(e, instance):
     return XFormError.from_xform_instance(instance, error_message)
 
 
-def _handle_unexpected_error(e, instance):
+def _handle_unexpected_error(instance, e):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
