@@ -163,7 +163,7 @@ def _get_basic_module_view_context(app, module):
                                                case_type),
         'case_list_form_options': form_options,
         'case_list_form_not_allowed_reason': allow_case_list_form,
-        'valid_parent_modules': _get_valid_parent_modules(app),
+        'valid_parent_modules': _get_valid_parent_modules(app, module),
         'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
                                  and module.doc_type != "ShadowModule"
     }
@@ -226,7 +226,7 @@ def _get_parent_modules(app, module, case_property_builder, case_type_):
         } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
 
 
-def _get_valid_parent_modules(app):
+def _get_valid_parent_modules(app, module):
     return [parent_module for parent_module in app.modules
             if not getattr(parent_module, 'root_module_id', None)
             and not parent_module == module and parent_module.doc_type != "ShadowModule"]
