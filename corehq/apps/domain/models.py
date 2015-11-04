@@ -1027,10 +1027,6 @@ class Domain(Document, SnapshotMixin):
         return domains
 
     @classmethod
-    def public_deployments(cls):
-        return Domain.view('domain/with_deployment', include_docs=True).all()
-
-    @classmethod
     def get_module_by_name(cls, domain_name):
         """
         import and return the python module corresponding to domain_name, or
