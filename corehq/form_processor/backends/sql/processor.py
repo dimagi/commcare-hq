@@ -59,8 +59,7 @@ class FormProcessorSQL(object):
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
         try:
-            for xform in xforms:
-                xform.save()
+            XFormInstanceSQL.objects.bulk_create(xforms)
         except Exception as e:
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(

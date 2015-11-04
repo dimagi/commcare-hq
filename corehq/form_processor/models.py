@@ -68,7 +68,7 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
 class XFormAttachmentSQL(models.Model):
     attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
 
-    xform = models.ForeignKey(XFormInstanceSQL)
+    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
