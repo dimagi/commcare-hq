@@ -29,9 +29,9 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
              .where(startdate <= date_field)
              .where(date_field < enddate)
              .group_by(col.xmlns, col.user_id, col.app_id))
-    if user_ids is not None:
+    if user_ids:
         query = query.where(col.user_id.in_(user_ids))
-    if xmlnss is not None:
+    if xmlnss:
         query = query.where(col.xmlns.in_(xmlnss))
     return defaultdict(lambda: 0, {
         (user_id, xmlns, app_id): count
