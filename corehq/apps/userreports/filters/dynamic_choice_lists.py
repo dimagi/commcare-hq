@@ -22,5 +22,3 @@ def get_choices_from_data_source_column(data_source, report_filter, search_term=
                 for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
     except ProgrammingError:
         return []
-
-

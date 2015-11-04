@@ -59,7 +59,8 @@ class FilterSpec(JsonObject):
     in a report (like a date picker or a select list).
     """
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
-    slug = StringProperty(required=True, validators=_validate_filter_slug)  # this shows up as the ID in the filter HTML.
+    # this shows up as the ID in the filter HTML.
+    slug = StringProperty(required=True, validators=_validate_filter_slug)
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     datatype = DataTypeProperty(default='string')
@@ -91,4 +92,3 @@ class DynamicChoiceListFilterSpec(FilterSpec):
 
 class NumericFilterSpec(FilterSpec):
     type = TypeProperty('numeric')
-
