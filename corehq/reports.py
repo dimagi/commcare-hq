@@ -44,6 +44,7 @@ from corehq.apps.accounting.interface import (
     WireInvoiceInterface,
     PaymentRecordInterface,
     SubscriptionAdjustmentInterface,
+    CreditAdjustmentInterface,
 )
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
@@ -268,6 +269,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         WireInvoiceInterface,
         PaymentRecordInterface,
         SubscriptionAdjustmentInterface,
+        CreditAdjustmentInterface,
     )),
 )
 
