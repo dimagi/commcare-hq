@@ -1,3 +1,4 @@
+from collections import defaultdict
 from sqlalchemy import Table, MetaData, Column, types, func, sql
 from corehq.db import Session
 from .models import FormData
@@ -27,7 +28,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, by_submission_time
              .where(startdate <= date_field)
              .where(date_field < enddate)
              .group_by(col.xmlns, col.user_id, col.app_id))
-    return {
+    return defaultdict(lambda: 0, {
         (user_id, xmlns, app_id): count
         for count, xmlns, user_id, app_id in Session.execute(query)
-    }
+    })

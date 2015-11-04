@@ -15,6 +15,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -397,10 +398,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
-                    row.append(
-                        self._get_num_submissions(
-                            user.user_id, form['xmlns'], form['app_id'])
-                    )
+                    row.append(self._form_counts[
+                        (user.user_id, form['xmlns'], form['app_id'])
+                    ])
                 row_sum = sum(row)
                 row = (
                     [self.get_user_link(user)] +
@@ -416,27 +416,15 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             self.total_row = [_("All Users")] + totals
         return rows
 
-    def _get_num_submissions(self, user_id, xmlns, app_id):
-        return get_number_of_submissions(
-            self.domain, user_id=user_id, xmlns=xmlns,
-            by_submission_time=self.by_submission_time, app_id=app_id,
-            start=self.datespan.startdate_utc, end=self.datespan.enddate_utc)
-
+    @property
     @memoized
-    def forms_per_user(self, app_id, xmlns):
-        # todo: this seems to not work properly
-        # needs extensive QA before being used
-        query = (FormES()
-                 .domain(self.domain)
-                 .xmlns(xmlns)
-                 .submitted(gt=self.datespan.startdate_utc,
-                            lte=self.datespan.enddate_utc)
-                 .size(0)
-                 .user_facet())
-        if app_id and app_id != MISSING_APP_ID:
-            query = query.app(app_id)
-        res = query.run()
-        return res.facets.user.counts_by_term()
+    def _form_counts(self):
+        return get_form_counts_by_user_xmlns(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc,
+            enddate=self.datespan.enddate_utc,
+            by_submission_time=self.by_submission_time,
+        )
 
 
 class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
