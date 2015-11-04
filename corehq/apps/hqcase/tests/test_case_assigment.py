@@ -9,7 +9,6 @@ from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.hqcase.utils import assign_case
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces.case import CaseInterface
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
@@ -103,7 +102,7 @@ class CaseAssignmentTest(TestCase):
         # shouldn't fail
         case = self._new_case()
         case_with_bad_ref = self._new_case(index={'parent': ('person', case._id)})
-        CaseInterface.soft_delete(case._id)
+        case.soft_delete()
         # this call previously failed
         res = assign_case(case_with_bad_ref.id, self.primary_user._id,
                           include_subcases=True, include_parent_cases=True)
@@ -137,13 +136,13 @@ class CaseAssignmentTest(TestCase):
     def _check_state(self, new_owner_id, expected_changed, update=None):
         expected_ids = set(c._id for c in expected_changed)
         for case in expected_changed:
-            expected = CaseInterface.get_case(case._id)
+            expected = FormProcessorInterface().case_model.get(case._id)
             self.assertEqual(new_owner_id, expected.owner_id)
             if update:
                 for prop, value in update.items():
                     self.assertEqual(getattr(expected, prop), value)
         for case in (c for c in self.all if c._id not in expected_ids):
-            remaining = CaseInterface.get_case(case._id)
+            remaining = FormProcessorInterface().case_model.get(case._id)
             self.assertEqual(self.original_owner._id, remaining.owner_id)
 
     def _new_case(self, index=None):

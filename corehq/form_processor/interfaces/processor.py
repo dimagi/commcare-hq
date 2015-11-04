@@ -1,7 +1,8 @@
-from corehq.form_processor.utils import to_generic
+from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
-from couchforms.util import process_xform
 from casexml.apps.case.util import post_case_blocks
+
+from ..utils import should_use_sql_backend
 
 
 class FormProcessorInterface(object):
@@ -13,30 +14,66 @@ class FormProcessorInterface(object):
     def __init__(self, domain=None):
         self.domain = domain
 
-    @to_generic
+    @property
+    @memoized
+    def xform_model(self):
+        from couchforms.models import XFormInstance
+        from corehq.form_processor.models import XFormInstanceSQL
+
+        if should_use_sql_backend(self.domain):
+            return XFormInstanceSQL
+        else:
+            return XFormInstance
+
+    @property
+    @memoized
+    def case_model(self):
+        from casexml.apps.case.models import CommCareCase
+        if should_use_sql_backend(self.domain):
+            return CommCareCase
+        else:
+            return CommCareCase
+
+    @property
+    @memoized
+    def sync_log_model(self):
+        from casexml.apps.phone.models import SyncLog
+
+        if should_use_sql_backend(self.domain):
+            return SyncLog
+        else:
+            return SyncLog
+
+    @property
+    @memoized
+    def processor(self):
+        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+
+        if should_use_sql_backend(self.domain):
+            return FormProcessorSQL
+        else:
+            return FormProcessorCouch
+
     @unit_testing_only
     def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
-        """
-        create a new xform and releases the lock
-
-        this is a testing entry point only and is not to be used in real code
-
-        """
-        if not process:
-            def process(xform):
-                xform.domain = domain
-        xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
-        with xform_lock as xforms:
-            for xform in xforms:
-                xform.save()
-            return xforms[0]
+        return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
 
     def submit_form_locally(self, instance, domain='test-domain', **kwargs):
         from corehq.apps.receiverwrapper.util import submit_form_locally
-        response, xform, cases = submit_form_locally(instance, domain, **kwargs)
-        # response is an iterable so @to_generic doesn't work
-        return response, xform.to_generic(), [case.to_generic() for case in cases]
+        return submit_form_locally(instance, domain, **kwargs)
 
-    @to_generic
     def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
+
+    def store_attachments(self, xform, attachments):
+        """
+        Takes a list of Attachment namedtuples with content, name, and content_type and stores them to the XForm
+        """
+        return self.processor.store_attachments(xform, attachments)
+
+    def is_duplicate(self, xform, lock):
+        return self.processor.is_duplicate(xform, lock)
+
+    def new_xform(self, instance_xml):
+        return self.processor.new_xform(instance_xml)
