@@ -474,7 +474,6 @@
             ]
         ],
         "outcome": [
-            "a",
             "b",
             "e"
         ]
@@ -538,12 +537,7 @@
         "closed": [
             "b"
         ],
-        "outcome": [
-            "a",
-            "b",
-            "c",
-            "d"
-        ]
+        "outcome": []
     },
     {
         "name": "owned_closed",
@@ -626,6 +620,6 @@
         "closed": [
             "e"
         ],
-        "outcome": []
+        "outcome": ["a"]
     }
 ]
