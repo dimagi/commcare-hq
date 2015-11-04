@@ -166,10 +166,11 @@ def _get_basic_module_view_context(app, module):
         'valid_parent_modules': [parent_module
                                  for parent_module in app.modules
                                  if
-                                 not getattr(parent_module, 'root_module_id',
-                                             None) and
-                                 not parent_module == module],
+                                 not getattr(parent_module, 'root_module_id', None)
+                                 and not parent_module == module
+                                 and parent_module.doc_type != "ShadowModule"],
         'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
+                                 and module.doc_type != "ShadowModule"
     }
 
 
