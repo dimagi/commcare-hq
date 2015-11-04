@@ -688,7 +688,8 @@ def choice_list_api(request, domain, report_id, filter_id):
 
         offset = page * limit
         try:
-            return [v[0] for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
+            return [{'value': v[0], 'display': v[0]}
+                    for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
         except ProgrammingError:
             return []
 
