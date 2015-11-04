@@ -357,8 +357,7 @@ class SubmissionPost(object):
         # this is usually just one document, but if an edit errored we want
         # to save the deprecated form as well
         bulk_save_docs(xforms, instance)
-        response = self._get_open_rosa_response(instance, None)
-        return response, instance, []
+        return instance, [], []
 
     def _handle_basic_failure_modes(self):
         if timezone_migration_in_progress(self.domain):
