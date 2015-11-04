@@ -9,10 +9,13 @@ from corehq.apps.userreports.reports.filters import(
     NONE_CHOICE,
     SHOW_ALL_CHOICE,
 )
-from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
-    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, DynamicChoiceListFilterSpec, \
-    NumericFilterSpec, FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec, DateFilterSpec
+from corehq.apps.userreports.reports.filters.specs import (
+    ChoiceListFilterSpec, ReportFilter, DynamicChoiceListFilterSpec, NumericFilterSpec, DateFilterSpec
+)
+from corehq.apps.userreports.reports.specs import PieChartSpec, \
+    MultibarAggregateChartSpec, MultibarChartSpec, \
+    FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
+    OrderBySpec
 
 
 def _build_date_filter(spec):

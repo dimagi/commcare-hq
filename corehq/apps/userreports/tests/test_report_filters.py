@@ -7,7 +7,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, \
     CHOICE_DELIMITER, NumericFilterValue
-from corehq.apps.userreports.reports.specs import ReportFilter
+from corehq.apps.userreports.reports.filters.specs import ReportFilter
 
 
 class FilterTestCase(SimpleTestCase):
