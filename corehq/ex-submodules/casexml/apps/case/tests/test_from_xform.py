@@ -32,6 +32,8 @@ class CaseFromXFormTest(TestCase):
         # the exact same workflow as above.
         
         case = bootstrap_case_from_xml(self, "update.xml", original_case.id)
+        # fetch the case from the DB to ensure it is property wrapped
+        case = self.interface.case_model.get(case.case_id)
         self.assertEqual(False, case.closed)
         
         self.assertEqual(3, len(case.actions))
