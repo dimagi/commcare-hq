@@ -607,7 +607,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                         # unblocking http://manage.dimagi.com/default.asp?185850#1039475
                         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True)
                         _assert(index in candidates_to_remove,
-                            "expected {} in {} but wasn't".format(index, candidates_to_remove)
+                            "expected {} in {} but wasn't".format(index, candidates_to_remove))
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:
