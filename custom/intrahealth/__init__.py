@@ -65,7 +65,8 @@ PRODUCT_MAPPING = {
     "microlut": "Microlut/Ovrette",
     "preservatif_feminin": "Preservatif Feminin",
     "preservatif_masculin": "Preservatif Masculin",
-    "sayana_press": "Sayana Press"
+    "sayana_press": "Sayana Press",
+    "implanon": "IMPLANON"
 }
 
 

@@ -1,6 +1,6 @@
 {% load reports_core_tags %}
+// note: this depends on choice-list-api.js
 var filter_id = "#{{ filter.css_id }}-input";
-var pageSize = 20;
 // TODO: Ideally the separator would be defined in one place. Right now it is
 //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
 var separator = "\u001F";
@@ -16,21 +16,8 @@ $(filter_id).select2({
         url: "{% ajax_filter_url domain report filter %}",
         dataType: 'json',
         quietMillis: 250,
-        data: function (term, page) {
-            return {
-                q: term, // search term
-                page: page,
-                limit: pageSize
-            };
-        },
-        results: function (data, page) {
-            // parse the results into the format expected by Select2.
-            var formattedData = _.map(data, function (val) { return {'id': val, 'text': val}});
-            return {
-                results: formattedData,
-                more: data.length === pageSize
-            };
-        },
+        data: choiceListUtils.getApiQueryParams,
+        results: choiceListUtils.formatPageForSelect2,
         cache: true
     }
 });

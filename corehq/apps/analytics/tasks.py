@@ -120,7 +120,7 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_ID')
+    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
         url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(

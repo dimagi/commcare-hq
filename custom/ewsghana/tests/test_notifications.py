@@ -26,6 +26,9 @@ class MissingReportNotificationTestCase(TestCase):
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
+        cls.program2 = Program(domain=cls.TEST_DOMAIN, name='Test Program2')
+        cls.program2.save()
+
     def setUp(self):
         self.district = make_loc('test-district', 'Test District', self.TEST_DOMAIN, 'district')
         self.facility = make_loc('test-faciity', 'Test Facility', self.TEST_DOMAIN, 'Polyclinic', self.district)
@@ -131,6 +134,32 @@ class MissingReportNotificationTestCase(TestCase):
 
         self.assertEqual(len(generated), 1)
         self.assertEqual(generated[0].user.get_id, self.user.get_id)
+
+    def test_incomplete_report(self):
+        create_stock_report(self.facility, {'tp': 100}, date=datetime.utcnow())
+        self.product.program_id = self.program.get_id
+        self.product.save()
+        other_product = Product(
+            domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each', program_id=self.program.get_id
+        )
+        other_product.save()
+        assign_products_to_location(self.facility, [self.product, other_product])
+        generated = list(OnGoingNonReporting(self.TEST_DOMAIN).get_notifications())
+
+        self.assertEqual(len(generated), 0)
+
+    def test_incomplete_report2(self):
+        create_stock_report(self.facility, {'tp': 100}, date=datetime.utcnow())
+        self.product.program_id = self.program2.get_id
+        self.product.save()
+        other_product = Product(
+            domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each', program_id=self.program.get_id
+        )
+        other_product.save()
+        assign_products_to_location(self.facility, [self.product, other_product])
+        generated = list(OnGoingNonReporting(self.TEST_DOMAIN).get_notifications())
+
+        self.assertEqual(len(generated), 0)
 
 
 class StockoutReportNotificationTestCase(TestCase):

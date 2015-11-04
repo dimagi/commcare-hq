@@ -24,6 +24,7 @@ $(function(){
             if (self.download_in_progress) {
                 $.ajax({
                     url: self.download_poll_url,
+                    data: {'message': self.ready_message},
                     success: function (resp) {
                         self.updateProgress(resp);
                         if (!self.isDone(resp)) {
@@ -56,17 +57,21 @@ $(function(){
                 });
         };
 
-        self.generateDownload = function(download_url){
+        self.generateDownload = function(download_url, message){
             // prevent multiple calls
             if (!self.download_in_progress) {
                 self.download_in_progress = true;
                 $.ajax({
                     url: download_url,
                     type: "GET",
+                    data: {'message': message},
                     dataType: "json",
                     success: function (data) {
                         self.download_poll_url = data.download_url;
                         self.download_poll_id = data.download_id;
+                        if (data.message) {
+                            self.ready_message = data.message;
+                        }
                         self.pollDownloadStatus();
                     },
                     error: function () {

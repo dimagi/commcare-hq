@@ -157,6 +157,7 @@ class ESQuery(object):
             filters.missing,
             filters.exists,
             filters.empty,
+            filters.non_null,
             filters.doc_id,
             filters.nested,
         ]

@@ -285,7 +285,6 @@ HQ_APPS = (
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
-    'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
@@ -532,9 +531,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-SMS_GATEWAY_URL = "http://localhost:8001/"
-SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
-
 # celery
 BROKER_URL = 'django://'  # default django db based
 
@@ -592,17 +588,6 @@ COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_de
 
 # couchlog/case search
 LUCENE_ENABLED = False
-
-
-# unicel sms config
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "changeme",
-                 "sender": "Promo"}
-
-# mach sms config
-MACH_CONFIG = {"username": "Dimagi",
-               "password": "changeme",
-               "service_profile": "changeme"}
 
 ####### SMS Queue Settings #######
 
@@ -707,19 +692,19 @@ AUDIT_MODULES = [
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': '',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'GOOGLE_ANALYTICS_API_ID': '',
+    'PINGDOM_API_ID': '',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
-    'HUBSPOT_ID': '',
+    'HUBSPOT_API_ID': '',
 }
 
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-OPEN_EXCHANGE_RATES_ID = ''
+OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
@@ -1061,7 +1046,6 @@ _dynamic_db_settings = get_dynamic_db_settings(
 )
 
 # create local server and database configs
-COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
 NEW_USERS_GROUPS_DB = 'users'
@@ -1074,7 +1058,6 @@ COUCHDB_APPS = [
     'api',
     'app_manager',
     'appstore',
-    'orgs',
     'builds',
     'case',
     'casegroups',
@@ -1430,11 +1413,9 @@ for k, v in LOCAL_PILLOWTOPS.items():
 
 COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserGenerationCache',
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
-    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',

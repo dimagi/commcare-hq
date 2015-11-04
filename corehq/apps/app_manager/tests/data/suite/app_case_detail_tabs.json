@@ -334,9 +334,7 @@
                         "en":""
                      },
                      "starting_index":1,
-                     "doc_type":"DetailTab",
-                     "has_nodeset":true,
-                     "nodeset":"some/expression"
+                     "doc_type":"DetailTab"
                   }
                ],
                "filter":null,

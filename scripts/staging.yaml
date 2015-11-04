@@ -53,6 +53,9 @@ branches:
   - report-builder-b3 # Noah 10/20
   - b3-tf # ben 10/1
   - two-factor-otp-only # j$ 10/2
+  - refactor-copy-domain #ts 11/2
+  - fab-bower-conflicts #ts 11/2
+  - requests #Simon 11/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

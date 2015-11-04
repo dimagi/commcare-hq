@@ -48,7 +48,7 @@ class DateFilterValue(FilterValue):
 
     def to_sql_filter(self):
         if self.value is None:
-            return ""
+            return None
         return BetweenFilter(
             self.filter.field,
             '%s_startdate' % self.filter.slug,
@@ -94,7 +94,7 @@ class NumericFilterValue(FilterValue):
 
     def to_sql_filter(self):
         if self.value is None:
-            return ""
+            return None
         filter_class = self.operators_to_filters[self.value['operator']]
         return filter_class(self.filter.field, self.filter.slug)
 
@@ -125,7 +125,7 @@ class ChoiceListFilterValue(FilterValue):
 
     def to_sql_filter(self):
         if self.show_all:
-            return ''
+            return None
         if self.is_null:
             return ISNULLFilter(self.filter.field)
         return INFilter(
