@@ -89,7 +89,11 @@ class IndexTreeTest(SyncBaseTest):
         for i, subcase in enumerate(test.get('subcases', [])):
             indices[subcase[0]].append(CaseIndex(
                 related_structure=CaseStructure(
-                    attrs={'create': False},
+                    attrs={
+                        'create': False,
+                        'owner_id': self.user.user_id if subcase[1] in test.get('owned', []) else uuid.uuid4().hex,
+                        'close': subcase[1] in test.get('closed', []),
+                    },
                     case_id=subcase[1],
                 ),
                 relationship='child',
@@ -99,7 +103,11 @@ class IndexTreeTest(SyncBaseTest):
         for i, extension in enumerate(test.get('extensions', [])):
             indices[extension[0]].append(CaseIndex(
                 related_structure=CaseStructure(
-                    attrs={'create': False},
+                    attrs={
+                        'create': False,
+                        'owner_id': self.user.user_id if extension[1] in test.get('owned', []) else uuid.uuid4().hex,
+                        'close': extension[1] in test.get('closed', []),
+                    },
                     case_id=extension[1],
                 ),
                 relationship='extension',
