@@ -733,53 +733,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
 
-    def prune_case(self, case_id):
-        """
-        Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
-        """
-        logger.debug('pruning: {}'.format(case_id))
-        self.dependent_case_ids_on_phone.add(case_id)
-        reverse_index_map = _reverse_index_map(self.index_tree.indices)
-        reverse_extension_index_map = _reverse_index_map(self.extension_index_tree.indices)
-
-        dependencies = IndexTree.get_all_dependencies(
-            case_id,
-            closed_cases=self.closed_cases,
-            child_index_tree=self.index_tree,
-            extension_index_tree=self.extension_index_tree,
-            cached_child_map=reverse_index_map,
-            cached_extension_map=reverse_extension_index_map,
-        )
-        # we can only potentially remove a case if it's already in dependent case ids
-        # and therefore not directly owned
-        candidates_to_remove = dependencies & self.dependent_case_ids_on_phone
-        dependencies_not_to_remove = dependencies - self.dependent_case_ids_on_phone
-
-        if not dependencies_not_to_remove:
-            # this case's entire relevancy chain is in dependent cases
-            # this means they can all now be removed.
-            this_case_indices = self.index_tree.indices.get(case_id, {})
-            for to_remove in candidates_to_remove:
-                self._remove_case(to_remove)
-
-            for this_case_index in this_case_indices.values():
-                if (this_case_index in self.dependent_case_ids_on_phone and
-                        this_case_index not in candidates_to_remove):
-                    self.prune_case(this_case_index)
-        else:
-            # we have some possible candidates for removal. we should check each of them.
-            candidates_to_remove.remove(case_id)  # except ourself
-            for candidate in candidates_to_remove:
-                candidate_dependencies = IndexTree.get_all_dependencies(
-                    candidate,
-                    child_index_tree=self.index_tree,
-                    extension_index_tree=self.extension_index_tree,
-                    cached_child_map=reverse_index_map,
-                    cached_extension_map=reverse_extension_index_map,)
-
-                if not candidate_dependencies - self.dependent_case_ids_on_phone:
-                    self._remove_case(candidate)
-
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)
         if case_id in self.dependent_case_ids_on_phone:
@@ -922,7 +875,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if update.case_id in self.case_ids_on_phone:
                 # try pruning the case
                 self.purge(update.case_id)
-                # self.prune_case(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
                     for index in update.indices_to_add:
@@ -966,7 +918,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             # as a result of pruning the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be pruned due to dependencies
-                # self.prune_case(dependent_case_id)
                 self.purge(dependent_case_id)
 
     @classmethod

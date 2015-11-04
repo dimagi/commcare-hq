@@ -109,14 +109,14 @@ class PruningTest(SimpleTestCase):
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
         # this has no effect
-        sync_log.prune_case(parent_id)
+        sync_log.purge(parent_id)
         self.assertTrue(child_id in sync_log.case_ids_on_phone)
         self.assertTrue(parent_id in sync_log.case_ids_on_phone)
         self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
         self.assertTrue(parent_id in sync_log.dependent_case_ids_on_phone)
 
         # this should prune it entirely
-        sync_log.prune_case(child_id)
+        sync_log.purge(child_id)
         self.assertFalse(child_id in sync_log.case_ids_on_phone)
         self.assertFalse(parent_id in sync_log.case_ids_on_phone)
 
@@ -128,14 +128,14 @@ class PruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
         # this should prune the child but not the parent
-        sync_log.prune_case(child_id)
+        sync_log.purge(child_id)
         self.assertFalse(child_id in sync_log.case_ids_on_phone)
         self.assertTrue(parent_id in sync_log.case_ids_on_phone)
         self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
         self.assertFalse(parent_id in sync_log.dependent_case_ids_on_phone)
 
         # then pruning the parent should prune it
-        sync_log.prune_case(parent_id)
+        sync_log.purge(parent_id)
         self.assertFalse(parent_id in sync_log.case_ids_on_phone)
         self.assertFalse(parent_id in sync_log.dependent_case_ids_on_phone)
 
@@ -148,7 +148,7 @@ class PruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
         # this has no effect other than to move the grandparent to dependent
-        sync_log.prune_case(grandparent_id)
+        sync_log.purge(grandparent_id)
         for id in all_ids:
             self.assertTrue(id in sync_log.case_ids_on_phone)
 
@@ -157,7 +157,7 @@ class PruningTest(SimpleTestCase):
         self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
 
         # likewise, this should have no effect other than to move the parent to dependent
-        sync_log.prune_case(parent_id)
+        sync_log.purge(parent_id)
         for id in all_ids:
             self.assertTrue(id in sync_log.case_ids_on_phone)
 
@@ -166,7 +166,7 @@ class PruningTest(SimpleTestCase):
         self.assertFalse(child_id in sync_log.dependent_case_ids_on_phone)
 
         # this should now prune everything
-        sync_log.prune_case(child_id)
+        sync_log.purge(child_id)
         for id in all_ids:
             self.assertFalse(id in sync_log.case_ids_on_phone)
             self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
@@ -180,18 +180,18 @@ class PruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
         # just pruning the child should prune just the child
-        sync_log.prune_case(child_id)
+        sync_log.purge(child_id)
         self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
         self.assertTrue(parent_id in sync_log.case_ids_on_phone)
         self.assertFalse(child_id in sync_log.case_ids_on_phone)
 
         # same for the parent
-        sync_log.prune_case(parent_id)
+        sync_log.purge(parent_id)
         self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
         self.assertFalse(parent_id in sync_log.case_ids_on_phone)
 
         # same for the grandparentparent
-        sync_log.prune_case(grandparent_id)
+        sync_log.purge(grandparent_id)
         self.assertFalse(grandparent_id in sync_log.case_ids_on_phone)
 
     def test_prune_multiple_children(self):
@@ -204,15 +204,15 @@ class PruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
         # first prune the parent and grandparent
-        sync_log.prune_case(grandparent_id)
-        sync_log.prune_case(parent_id)
+        sync_log.purge(grandparent_id)
+        sync_log.purge(parent_id)
         self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
         self.assertTrue(grandparent_id in sync_log.dependent_case_ids_on_phone)
         self.assertTrue(parent_id in sync_log.case_ids_on_phone)
         self.assertTrue(parent_id in sync_log.dependent_case_ids_on_phone)
 
         # just pruning one child should preserve the parent index
-        sync_log.prune_case(child_id_1)
+        sync_log.purge(child_id_1)
         self.assertTrue(grandparent_id in sync_log.case_ids_on_phone)
         self.assertTrue(grandparent_id in sync_log.dependent_case_ids_on_phone)
         self.assertTrue(parent_id in sync_log.case_ids_on_phone)
@@ -220,7 +220,7 @@ class PruningTest(SimpleTestCase):
         self.assertFalse(child_id_1 in sync_log.case_ids_on_phone)
 
         # pruning the other one should wipe it
-        sync_log.prune_case(child_id_2)
+        sync_log.purge(child_id_2)
         for id in all_ids:
             self.assertFalse(id in sync_log.case_ids_on_phone)
             self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
@@ -235,16 +235,16 @@ class PruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
         # first prune everything but the child
-        sync_log.prune_case(grandparent_id)
-        sync_log.prune_case(mother_id)
-        sync_log.prune_case(father_id)
+        sync_log.purge(grandparent_id)
+        sync_log.purge(mother_id)
+        sync_log.purge(father_id)
 
         # everything should still be relevant because of the child
         for id in all_ids:
             self.assertTrue(id in sync_log.case_ids_on_phone)
 
         # pruning the child should wipe everything else
-        sync_log.prune_case(child_id)
+        sync_log.purge(child_id)
         for id in all_ids:
             self.assertFalse(id in sync_log.case_ids_on_phone)
             self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
@@ -258,12 +258,12 @@ class PruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
         # pruning one peer should keep everything around
-        sync_log.prune_case(peer_id_1)
+        sync_log.purge(peer_id_1)
         for id in all_ids:
             self.assertTrue(id in sync_log.case_ids_on_phone)
 
         # pruning the second peer should remove everything
-        sync_log.prune_case(peer_id_2)
+        sync_log.purge(peer_id_2)
         for id in all_ids:
             self.assertFalse(id in sync_log.case_ids_on_phone)
 
@@ -277,12 +277,12 @@ class PruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set(all_ids))
 
         # pruning the first two, should still keep everything around
-        sync_log.prune_case(peer_id_1)
-        sync_log.prune_case(peer_id_2)
+        sync_log.purge(peer_id_1)
+        sync_log.purge(peer_id_2)
         for id in all_ids:
             self.assertTrue(id in sync_log.case_ids_on_phone)
 
-        sync_log.prune_case(peer_id_3)
+        sync_log.purge(peer_id_3)
         for id in all_ids:
             self.assertFalse(id in sync_log.case_ids_on_phone)
 
@@ -292,7 +292,7 @@ class PruningTest(SimpleTestCase):
             id: convert_list_to_dict([id]),
         })
         sync_log = SimplifiedSyncLog(index_tree=tree, case_ids_on_phone=set([id]))
-        sync_log.prune_case(id)
+        sync_log.purge(id)
         self.assertFalse(id in sync_log.case_ids_on_phone)
         self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
 
@@ -310,7 +310,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
                                      dependent_case_ids_on_phone=set([extension_id]),
                                      case_ids_on_phone=set(all_ids))
 
-        sync_log.prune_case(host_id)
+        sync_log.purge(host_id)
         self.assertFalse(extension_id in sync_log.case_ids_on_phone)
         self.assertFalse(host_id in sync_log.case_ids_on_phone)
 
@@ -325,7 +325,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
                                      dependent_case_ids_on_phone=set([host_id]),
                                      case_ids_on_phone=set(all_ids))
 
-        sync_log.prune_case(extension_id)
+        sync_log.purge(extension_id)
         self.assertFalse(extension_id in sync_log.case_ids_on_phone)
         self.assertFalse(host_id in sync_log.case_ids_on_phone)
 
@@ -340,7 +340,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(extension_index_tree=extension_tree,
                                      dependent_case_ids_on_phone=set([extension_id, extension_extension_id]),
                                      case_ids_on_phone=set(all_ids))
-        sync_log.prune_case(host_id)
+        sync_log.purge(host_id)
         self.assertFalse(extension_id in sync_log.case_ids_on_phone)
         self.assertFalse(extension_extension_id in sync_log.case_ids_on_phone)
         self.assertFalse(host_id in sync_log.case_ids_on_phone)
@@ -356,7 +356,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(extension_index_tree=extension_tree,
                                      dependent_case_ids_on_phone=set([extension_id, extension_id_2]),
                                      case_ids_on_phone=set(all_ids))
-        sync_log.prune_case(host_id)
+        sync_log.purge(host_id)
         self.assertFalse(extension_id in sync_log.case_ids_on_phone)
         self.assertFalse(extension_id_2 in sync_log.case_ids_on_phone)
         self.assertFalse(host_id in sync_log.case_ids_on_phone)
@@ -372,7 +372,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
         sync_log = SimplifiedSyncLog(extension_index_tree=extension_tree,
                                      dependent_case_ids_on_phone=set([host_id, extension_id_2]),
                                      case_ids_on_phone=set(all_ids))
-        sync_log.prune_case(extension_id)
+        sync_log.purge(extension_id)
         self.assertFalse(extension_id in sync_log.case_ids_on_phone)
         self.assertFalse(extension_id_2 in sync_log.case_ids_on_phone)
         self.assertFalse(host_id in sync_log.case_ids_on_phone)
@@ -386,7 +386,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
         })
         sync_log = SimplifiedSyncLog(extension_index_tree=extension_tree,
                                      case_ids_on_phone=set(all_ids))
-        sync_log.prune_case(extension_id)
+        sync_log.purge(extension_id)
         self.assertTrue(extension_id in sync_log.case_ids_on_phone)
         self.assertTrue(host_id in sync_log.case_ids_on_phone)
 
@@ -405,7 +405,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
                                      dependent_case_ids_on_phone=set([host_id, extension_id]),
                                      case_ids_on_phone=set(all_ids))
 
-        sync_log.prune_case(child_id)
+        sync_log.purge(child_id)
         self.assertFalse(extension_id in sync_log.case_ids_on_phone)
         self.assertFalse(child_id in sync_log.case_ids_on_phone)
         self.assertFalse(host_id in sync_log.case_ids_on_phone)
@@ -425,7 +425,7 @@ class ExtensionCasesPruningTest(SimpleTestCase):
                                      dependent_case_ids_on_phone=set([host_id]),
                                      case_ids_on_phone=set(all_ids))
 
-        sync_log.prune_case(extension_id)
+        sync_log.purge(extension_id)
         self.assertTrue(extension_id in sync_log.case_ids_on_phone)
         self.assertTrue(child_id in sync_log.case_ids_on_phone)
         self.assertTrue(host_id in sync_log.case_ids_on_phone)
