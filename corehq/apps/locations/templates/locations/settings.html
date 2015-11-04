@@ -1,4 +1,4 @@
-{% extends "settings/base_template.html" %}
+{% extends "settings/bootstrap2/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -12,8 +12,6 @@
 
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
-
-    var settings = {{ settings|JSON }};
 
     var _post = function (elem, url, options) {
         var options = options || {};
@@ -32,13 +30,33 @@
         });
     };
 
+    $(function() {
+        var loc_types = {{ location_types|JSON }};
+        var commtrack_enabled = {{ commtrack_enabled|JSON }};
+
+        var model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
+        $('#settings').submit(function() {
+            return model.presubmit();
+        });
+
+        ko.applyBindings(model, $('#settings').get(0));
+
+        $("form#settings").on("change input", function() {
+            $(this).find(":submit").enable();
+        });
+
+        $("form#settings button").on("click", function() {
+            $("form#settings").find(":submit").enable();
+        });
+    });
+
 </script>
 {% endblock %}
 
 {% block main_column %}
     <div class="row-fluid">
         <div class="span8">
-            <h2>{% trans "Location Types" %}</h2>
+            <h2>{% trans "Organization Levels" %}</h2>
             <p>
                 {% blocktrans %}
                     Organization Levels allow you to configure the different types of 
@@ -56,7 +74,7 @@
         <fieldset>
             <div class="control-group">
                 <button type="button" class="btn btn-success" data-bind="click: new_loctype">
-                    <i class="icon-plus"></i> {% trans "New Location Type" %}
+                    <i class="icon-plus"></i> {% trans "New Organization Level" %}
                 </button>
                 <hr />
                 <div class="alert alert-error" style="display: none"

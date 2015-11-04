@@ -6,6 +6,7 @@ import hashlib
 import logging
 import time
 from copy import copy
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from dimagi.utils.parsing import json_format_datetime
 from jsonobject.api import re_date
 from jsonobject.base import DefaultProperty
@@ -25,10 +26,14 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
+from corehq.util.soft_assert import soft_assert
+from corehq.form_processor.abstract_models import AbstractXFormInstance
+from corehq.form_processor.exceptions import XFormNotFound
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
 from couchforms import const
+
 
 
 def doc_types():
@@ -106,7 +111,7 @@ class XFormOperation(DocumentSchema):
 
 
 class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
-                    CouchDocLockableMixIn):
+                    CouchDocLockableMixIn, AbstractXFormInstance):
     """An XForms instance."""
     domain = StringProperty()
     app_id = StringProperty()
@@ -139,12 +144,23 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         # on cloudant don't get the doc back until all nodes agree
         # on the copy, to avoid race conditions
         extras = get_safe_read_kwargs()
-        return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
+        try:
+            return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
+        except ResourceNotFound:
+            raise XFormNotFound
 
     @property
     def type(self):
         return self.form.get(const.TAG_TYPE, "")
         
+    @property
+    def form_id(self):
+        return self._id
+
+    @property
+    def form_data(self):
+        return self.form
+
     @property
     def name(self):
         return self.form.get(const.TAG_NAME, "")
@@ -156,6 +172,26 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     @property
     def uiversion(self):
         return self.form.get(const.TAG_UIVERSION, "")
+
+    @property
+    def is_error(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
+
+    @property
+    def is_duplicate(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
+
+    @property
+    def is_archived(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
+
+    @property
+    def is_deprecated(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
 
     @property
     def metadata(self):
@@ -247,18 +283,26 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     def xpath(self, path):
         """
-        Evaluates an xpath expression like: path/to/node and returns the value 
+        Evaluates an xpath expression like: path/to/node and returns the value
+        of that element, or None if there is no value.
+        """
+        _soft_assert = soft_assert(to='{}@{}'.format('brudolph', 'dimagi.com'))
+        _soft_assert(False, "Reference to xpath instead of get_data")
+        return safe_index(self, path.split("/"))
+
+    def get_data(self, path):
+        """
+        Evaluates an xpath expression like: path/to/node and returns the value
         of that element, or None if there is no value.
         """
         return safe_index(self, path.split("/"))
-    
-        
+
     def found_in_multiselect_node(self, xpath, option):
         """
         Whether a particular value was found in a multiselect node, referenced
         by path.
         """
-        node = self.xpath(xpath)
+        node = self.get_data(xpath)
         return node and option in node.split(" ")
 
     @memoized
@@ -287,6 +331,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             except AttributeError:
                 return None
 
+    def get_attachment(self, attachment_name):
+        return self.fetch_attachment(attachment_name)
+
     def get_xml_element(self):
         xml_string = self.get_xml()
         if not xml_string:
@@ -309,6 +356,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             element = _to_xml_element(decoded_payload)
 
             # in this scenario resave the attachment properly in case future calls circumvent this method
+            self.save()
             self.put_attachment(decoded_payload, ATTACHMENT_NAME)
             return element
 
@@ -342,7 +390,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
             if key == "Meta":
                 key = "meta"
-            to_return[key] = self.xpath('form/' + key)
+            to_return[key] = self.get_data('form/' + key)
         return to_return
 
     def archive(self, user=None):
@@ -379,11 +427,31 @@ class XFormError(XFormInstance):
     problem = StringProperty()
     orig_id = StringProperty()
 
+    @classmethod
+    def from_xform_instance(cls, instance, error_message, with_new_id=False):
+        instance.__class__ = XFormError
+        instance.doc_type = 'XFormError'
+        instance.problem = error_message
+
+        if with_new_id:
+            new_id = XFormError.get_db().server.next_uuid()
+            instance.orig_id = instance._id
+            instance._id = new_id
+            if '_rev' in instance:
+                # clear the rev since we want to make a new doc
+                del instance['_rev']
+
+        return instance
+
     def save(self, *args, **kwargs):
         # we put this here, in case the doc hasn't been modified from an original 
         # XFormInstance we'll force the doc_type to change. 
         self["doc_type"] = "XFormError" 
         super(XFormError, self).save(*args, **kwargs)
+
+    @property
+    def is_error(self):
+        return True
 
         
 class XFormDuplicate(XFormError):
@@ -397,6 +465,10 @@ class XFormDuplicate(XFormError):
         self["doc_type"] = "XFormDuplicate" 
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
+
+    @property
+    def is_duplicate(self):
+        return True
 
 
 class XFormDeprecated(XFormError):
@@ -414,6 +486,10 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
+    @property
+    def is_deprecated(self):
+        return True
+
 
 class XFormArchived(XFormError):
     """
@@ -424,6 +500,10 @@ class XFormArchived(XFormError):
         # force set the doc type and call the right superclass
         self["doc_type"] = "XFormArchived"
         XFormInstance.save(self, *args, **kwargs)
+
+    @property
+    def is_archived(self):
+        return True
 
 
 class SubmissionErrorLog(XFormError):
@@ -450,13 +530,18 @@ class SubmissionErrorLog(XFormError):
         """
         Create an instance of this record from a submission body
         """
-        error = SubmissionErrorLog(received_on=datetime.datetime.utcnow(),
-                                   md5=hashlib.md5(instance).hexdigest(),
-                                   problem=message)
-        error.save()
-        error.put_attachment(instance, ATTACHMENT_NAME)
-        error.save()
-        return error
+        attachments_builder = CouchAttachmentsBuilder()
+        attachments_builder.add(
+            content=instance,
+            name=ATTACHMENT_NAME,
+            content_type='text/xml',
+        )
+        return SubmissionErrorLog(
+            received_on=datetime.datetime.utcnow(),
+            md5=hashlib.md5(instance).hexdigest(),
+            problem=message,
+            _attachments=attachments_builder.to_json(),
+        )
 
 
 class DefaultAuthContext(DocumentSchema):
@@ -475,3 +560,12 @@ class UnfinishedSubmissionStub(models.Model):
 
     class Meta:
         app_label = 'couchforms'
+
+    @classmethod
+    def form_has_saved(cls, stub):
+        stub.saved = True
+        stub.save()
+
+    @classmethod
+    def form_process_completed(cls, stub):
+        stub.delete()

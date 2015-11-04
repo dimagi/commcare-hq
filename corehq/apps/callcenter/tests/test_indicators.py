@@ -41,7 +41,6 @@ def create_cases_for_types(domain, case_types):
                 case_id='person%s' % i,
                 case_type=case_type,
                 user_id='user%s' % i,
-                version=V2,
             ).as_string(), domain)
 
 
@@ -216,10 +215,28 @@ class CallCenterTests(BaseCCTests):
                 include_totals=True,
                 case_types=[])
         )
+
+    def test_standard_indicators_load_config_from_db(self):
+        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config.save()
+
+        self.addCleanup(config.delete)
+
+        indicator_set = CallCenterIndicators(
+            self.cc_domain.name,
+            self.cc_domain.default_timezone,
+            self.cc_domain.call_center_config.case_type,
+            self.cc_user,
+            custom_cache=locmem_cache,
+        )
+        self._test_indicators(
+            self.cc_user,
+            indicator_set.get_data(),
+            expected_standard_indicators(include_legacy=False))
         
     def test_standard_indicators_case_dog_only(self):
         config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_updated.active = False
+        config.forms_submitted.active = False
 
         def dog_only(conf):
             conf.total.active = False
@@ -251,7 +268,7 @@ class CallCenterTests(BaseCCTests):
 
     def test_standard_indicators_case_week1_only(self):
         config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_updated.date_ranges = [WEEK1]
+        config.forms_submitted.date_ranges = [WEEK1]
         config.cases_total.total.date_ranges = [WEEK1]
         config.cases_opened.total.date_ranges = [WEEK1]
         config.cases_closed.total.date_ranges = [WEEK1]

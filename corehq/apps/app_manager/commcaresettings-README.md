@@ -34,6 +34,7 @@ with each element containing the following properties:
 * `group` - Presentational; defines how the properties get grouped on HQ 
 * `disabled` - Set to `true` for deprecated values we don't want to show up in the UI anymore
 * `force` - Set to `true` to have the `force` attribute of the setting set when building the profile. Only applies when type='properties' (default).
+* `toggle` - If specified, the property will only be shown if the given toggle is enabled. The value should be an identifier for a toggle in `corehq/toggles.py`, e.g. "GRID_MENUS"
 
 ## Example
 ```yaml

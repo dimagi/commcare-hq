@@ -79,7 +79,7 @@ class Translation(object):
     def get_translations(cls, lang, key=None, one=False):
         if key:
             translations = []
-            r = get_db().view('translations/popularity',
+            r = TranslationDoc.get_db().view('translations/popularity',
                 startkey=[lang, key],
                 endkey=[lang, key, {}],
                 group=True

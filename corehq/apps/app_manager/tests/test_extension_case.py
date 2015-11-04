@@ -12,15 +12,15 @@ from corehq.apps.app_manager.models import (
     LoadUpdateAction,
     PreloadAction,
 )
-from corehq.apps.app_manager.tests import TestFileMixin
-from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem, autoset_owner_id_for_advanced_action
 from corehq.apps.app_manager.xpath import session_var
 from couchdbkit import BadValueError
 from django.test import SimpleTestCase
 from mock import patch
 
 
-class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
+class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
@@ -82,7 +82,7 @@ class ExtCasePropertiesTests(SimpleTestCase, TestFileMixin):
         self.skipTest('TODO: Write this test')
 
 
-class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestFileMixin):
+class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
@@ -133,7 +133,7 @@ class ExtCasePropertiesAdvancedTests(SimpleTestCase, TestFileMixin):
         self.skipTest('TODO: Write this test')
 
 
-class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
+class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'extension_case'
 
     def setUp(self):
@@ -142,36 +142,39 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
         self.is_usercase_in_use_mock.return_value = True
 
         self.app = Application.new_app('domain', 'New App', APP_V2)
-        self.module = self.app.add_module(Module.new_module('Fish Module', None))
+        self.module = self.app.add_module(AdvancedModule.new_module('Fish Module', None))
         self.module.case_type = 'fish'
         self.form = self.module.new_form('New Form', None)
-        self.subcase = OpenSubCaseAction(
-            case_type='freshwater',
-            case_name='Wanda',
-            condition=FormActionCondition(type='always'),
-            case_properties={'name': '/data/question1'},
+        self.case_index = CaseIndex(
+            reference_id='host',
             relationship='extension',
         )
-        self.form.actions.subcases.append(self.subcase)
+        self.subcase = AdvancedOpenCaseAction(
+            case_type='freshwater',
+            case_name='Wanda',
+            open_condition=FormActionCondition(type='always'),
+            case_properties={'name': '/data/question1'},
+            case_indices=[self.case_index],
+        )
+        self.form.actions.open_cases.append(self.subcase)
         self.xform = XForm(self.get_xml('original'))
-        self.add_subcase_block()
-
-    def add_subcase_block(self):
-        ### messy messy messy
-        parent_node = self.xform.data_node
-        case_id = session_var(self.form.session_var_for_action(self.subcase))
-        #name = 'subcase_0'
-        subcase_node = _make_elem('{x}subcase_0')
-        parent_node.append(subcase_node)
         path = 'subcase_0/'
         self.subcase_block = CaseBlock(self.xform, path)
+
+    def add_subcase_block(self):
+
+        parent_node = self.xform.data_node
+        action = next(self.form.actions.get_open_actions())
+        case_id = session_var(action.case_session_var)
+        subcase_node = _make_elem('{x}subcase_0')
+        parent_node.append(subcase_node)
         subcase_node.insert(0, self.subcase_block.elem)
         self.subcase_block.add_create_block(
-            relevance=self.xform.action_relevance(self.subcase.condition),
+            relevance=self.xform.action_relevance(action.open_condition),
             case_name=self.subcase.case_name,
             case_type=self.subcase.case_type,
             delay_case_id=bool(self.subcase.repeat_context),
-            autoset_owner_id=True,
+            autoset_owner_id=autoset_owner_id_for_advanced_action(action),
             has_case_sharing=self.form.get_app().case_sharing,
             case_id=case_id
         )
@@ -181,11 +184,12 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
         """
         CaseBlock index should allow the relationship to be set
         """
+        self.add_subcase_block()
         self.subcase_block.add_index_ref(
             'host',
             self.form.get_case_type(),
             self.xform.resolve_path("case/@case_id"),
-            self.subcase.relationship,
+            self.subcase.case_indices[0].relationship,
         )
         self.assertXmlEqual(self.get_xml('open_subcase'), str(self.xform))
 
@@ -193,10 +197,16 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
         """
         CaseBlock index relationship should default to "child"
         """
+        child = CaseIndex(
+            reference_id='host',
+            relationship='child',
+        )
+        self.subcase.case_indices = [child]
+        self.add_subcase_block()
         self.subcase_block.add_index_ref(
             'host',
             self.form.get_case_type(),
-            self.xform.resolve_path("case/@case_id")
+            self.xform.resolve_path("case/@case_id"),
         )
         self.assertXmlEqual(self.get_xml('open_subcase_child'), str(self.xform))
 
@@ -212,6 +222,83 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestFileMixin):
                 self.xform.resolve_path("case/@case_id"),
                 'cousin',
             )
+
+
+class ExtensionCasesCreateOwnerID(SimpleTestCase):
+    def test_advanced_xform_create_owner_id_with_without_extensions(self):
+        """ Owner id should be automatically set if there are any non-extension indices"""
+
+        # Only extensions
+        advanced_open_action = AdvancedOpenCaseAction.wrap({
+            'case_indices': [
+                {
+                    'tag': 'mother',
+                    'reference_id': 'case',
+                    'relationship': 'extension',
+                },
+                {
+                    'tag': 'father',
+                    'reference_id': 'case',
+                    'relationship': 'extension',
+                }
+            ]
+        })
+        self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
+
+        # Extension and children
+        advanced_open_action = AdvancedOpenCaseAction.wrap({
+            'case_indices': [
+                {
+                    'tag': 'mother',
+                    'reference_id': 'case',
+                    'relationship': 'extension',
+                },
+                {
+                    'tag': 'father',
+                    'reference_id': 'case',
+                    'relationship': 'child',
+                }
+            ]
+        })
+        self.assertTrue(autoset_owner_id_for_advanced_action(advanced_open_action))
+
+        # No indices
+        advanced_open_action = AdvancedOpenCaseAction()
+        self.assertTrue(autoset_owner_id_for_advanced_action(advanced_open_action))
+
+    def test_advanced_xform_create_owner_id_explicitly_set(self):
+        """When owner_id is explicitly set, don't autoset"""
+        advanced_open_action = AdvancedOpenCaseAction.wrap({
+            'case_properties': {'owner_id': 'owner'},
+            'case_indices': [
+                {
+                    'tag': 'mother',
+                    'reference_id': 'case',
+                    'relationship': 'child'
+                },
+            ]
+        })
+        self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
+
+        advanced_open_action = AdvancedOpenCaseAction.wrap({
+            'case_properties': {'owner_id': 'owner'},
+            'case_indices': [
+                {
+                    'tag': 'mother',
+                    'reference_id': 'case',
+                    'relationship': 'extension'
+                },
+            ]
+        })
+        self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
+
+        advanced_open_action = AdvancedOpenCaseAction.wrap({
+            'case_properties': {'owner_id': 'owner'},
+        })
+        self.assertFalse(autoset_owner_id_for_advanced_action(advanced_open_action))
+
+        advanced_open_action = AdvancedOpenCaseAction()
+        self.assertTrue(autoset_owner_id_for_advanced_action(advanced_open_action))
 
 
 class OpenSubCaseActionTests(SimpleTestCase):

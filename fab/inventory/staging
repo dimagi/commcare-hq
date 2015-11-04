@@ -1,6 +1,5 @@
 [proxy]
 hqproxy4.internal.commcarehq.org
-hqproxy5.internal.commcarehq.org
 
 [webworkers]
 hqdjango0-staging.internal.commcarehq.org
@@ -14,6 +13,12 @@ hqdb0-staging.internal.commcarehq.org
 
 [rabbitmq]
 hqdb0-staging.internal.commcarehq.org
+
+[zookeeper]
+hqdjango1-staging.internal.commcarehq.org
+
+[kafka]
+hqdjango1-staging.internal.commcarehq.org kafka_broker_id=0
 
 [celery]
 hqdb0-staging.internal.commcarehq.org

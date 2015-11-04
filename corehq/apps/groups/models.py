@@ -7,6 +7,11 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
+from corehq.apps.groups.dbaccessors import (
+    refresh_group_views,
+    stale_group_by_domain,
+    stale_group_by_name,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
 
@@ -43,7 +48,8 @@ class Group(UndoableDocument):
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
-        return super(Group, self).save(*args, **kwargs)
+        super(Group, self).save(*args, **kwargs)
+        refresh_group_views()
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
@@ -51,9 +57,20 @@ class Group(UndoableDocument):
         for doc in docs:
             doc['last_modified'] = utcnow
         super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
+        refresh_group_views()
 
     bulk_save = save_docs
 
+    def delete(self):
+        super(Group, self).delete()
+        refresh_group_views()
+
+    @classmethod
+    def delete_docs(cls, docs, **params):
+        super(Group, cls).delete_docs(docs, **params)
+        refresh_group_views()
+
+    bulk_delete = delete_docs
 
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
@@ -122,7 +139,7 @@ class Group(UndoableDocument):
         self.save()
 
     def get_user_ids(self, is_active=True):
-        return [user.user_id for user in self.get_users(is_active)]
+        return [user.user_id for user in self.get_users(is_active=is_active)]
 
     @memoized
     def get_users(self, is_active=True, only_commcare=False):
@@ -145,14 +162,9 @@ class Group(UndoableDocument):
     def get_static_users(self, is_active=True):
         return self.get_users(is_active)
 
-
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('groups/by_domain',
-            key=domain,
-            include_docs=True,
-            #stale=settings.COUCH_STALE_QUERY,
-        ).all()
+        return stale_group_by_domain(domain)
 
     @classmethod
     def choices_by_domain(cls, domain):
@@ -164,20 +176,13 @@ class Group(UndoableDocument):
 
     @classmethod
     def ids_by_domain(cls, domain):
-        return [r['id'] for r in cls.get_db().view('groups/by_domain',
-            key=domain,
-            include_docs=False,
-        )]
+        return [r['id'] for r in stale_group_by_domain(domain, include_docs=False)]
 
     @classmethod
     def by_name(cls, domain, name, one=True):
-        result = cls.view('groups/by_name',
-            key=[domain, name],
-            include_docs=True,
-            #stale=settings.COUCH_STALE_QUERY,
-        )
-        if one:
-            return result.one()
+        result = stale_group_by_name(domain, name)
+        if one and result:
+            return result[0]
         else:
             return result
 

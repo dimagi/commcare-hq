@@ -35,6 +35,16 @@
 {% endblock %}
 
 {% block main_column %}
+{% if needs_to_downgrade_locations %}
+    <div>
+        <p>
+            {% trans "This project no longer has access to the Organization feature." %}
+            <a href="{% url "downgrade_locations" domain %}">
+                {% trans "Click here to fix this." %}
+            </a>
+        </p>
+    </div>
+{% else %}
     {% block group-info %}
         {% if all_groups %}
             <h2>{% trans "Select a group:" %}</h2>
@@ -71,5 +81,6 @@
         <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" />
         <button class="btn btn-success" type="submit">{% trans "Create Group" %}</button>
     </form>
+{% endif %}
 {% endblock %}
 

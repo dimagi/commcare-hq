@@ -25,25 +25,33 @@
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
+            compare: '{% url "diff" domain '___' '___' %}',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
             ccz: '{% url "download_ccz" domain '___' %}',
             odk: '{% url "odk_install" domain '___' %}',
             odk_media: '{% url "odk_media_install" domain '___' %}',
             source: '{% url "download_index" domain '___' %}',
+            summary: '{% url "app_summary" domain '___' %}',
             release: '{% url "release_build" domain app.id '___' %}',
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
             update_build_comment: '{% url "update_build_comment" domain app.id %}',
+            hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
+            download_zip: '{% url "download_ccz" app.domain '___' %}',
+            download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}'
         };
         var o = {
             urls: urls,
             currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }}
+            recipient_contacts: {{ sms_contacts|JSON }},
+            download_modal_id: '#download-zip-modal'
         };
         var el = $('#releases-table');
-        ko.applyBindings(new ReleasesMain(o), el.get(0));
+        var releasesMain = new ReleasesMain(o);
+        _.defer(function(){ releasesMain.getMoreSavedApps(); });
+        ko.applyBindings(releasesMain, el.get(0));
         el.show();
     });
 
@@ -69,13 +77,19 @@
     .build.build-unreleased {
         color: #888;
     }
-    .build.build-released {
-    }
     .build.build-latest-release {
         background-color: #EFEFFF;
     }
     .build.build-latest-release .build-is-released:after{
         content: "Latest";
+    }
+    .build .edit-comment-pencil {
+        display: none;
+        margin-left: 5px;
+        position: absolute;
+    }
+    .build:hover .edit-comment-pencil {
+        display: inline;
     }
     .nowrap {
         white-space: nowrap;
@@ -96,14 +110,6 @@
     .released {
         color: #ffff00;
         text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
-    }
-    .build .edit-comment-pencil {
-        display: none;
-        margin-left: 5px;
-        position: absolute;
-    }
-    .build:hover .edit-comment-pencil {
-        display: inline;
     }
 </style>
 {% endblock %}
@@ -142,7 +148,7 @@
                 <th>{% trans "CommCare Version" %}</th>
                 <th></th>
                 <th></th>
-                <th>{% trans "Comment" %}</th>
+                <th>{% trans "Comments" %}</th>
                 <th>
                     {% trans "Released" %}
                     <span class="hq-help-template"
@@ -198,7 +204,6 @@
                     <td class="nowrap" data-bind="text: built_on_time"></td>
                     <td class="nowrap">
                         <span data-bind="if: build_label(), text: build_label()"></span>
-                        <p data-bind="text: jar_path"></p>
                         <h6 data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</h6>
                     </td>
                     <td class="nowrap">
@@ -206,11 +211,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() {
-                                    generate_short_url('short_odk_url');
-                                    ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}');
-                                    analytics.workflow('Clicked Deploy');
-                                }
+                                click: clickDeploy
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -251,6 +252,32 @@
                         <div data-bind="visible: comment_update_error()" class="alert alert-error">
                             {% trans "Error updating comment.  Please try again" %}
                         </div>
+                        {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+                            <h6>
+                                {% blocktrans %}
+                                    View
+                                    <a data-bind="attr: {href: $root.url('summary', id)}">app summary</a>
+                                    or
+                                    <a data-bind="attr: {href: $root.url('source', id)}" class="view-source-files-link">source files</a>
+                                    <br />
+                                    <a href="#" data-bind="click: function() {
+                                            $root.selectingVersion(id());
+                                        }, visible: !$root.selectingVersion()">
+                                        Compare with another version
+                                    </a>
+                                    <a href="#"
+                                       data-bind="visible: $root.selectingVersion() === id(), click: function() {$root.selectingVersion('')}">
+                                        Cancel
+                                    </a>
+                                    <a href="#" class="btn btn-mini btn-success"
+                                       data-bind="
+                                            attr: {href: $root.url('compare', $root.selectingVersion(), id())},
+                                            visible: $root.selectingVersion() && $root.selectingVersion() != id()">
+                                        Compare
+                                    </a>
+                                {% endblocktrans %}
+                            </h6>
+                        {% endif %}
                     </td>
                     <td class="build-is-released">
                         <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
@@ -335,6 +362,14 @@
                                         </ul>
                                         <div class="tab-content">
                                             <div class="tab-pane">
+                                                <p>
+                                                    {% trans "Download" %}
+                                                    <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
+                                                        {% trans "CommCare from Google Play" %}
+                                                    </a>
+                                                    {% trans "to your Android device." %}
+                                                </p>
+                                                {% if multimedia_state.has_media %}
                                                 <label class="checkbox" data-bind="visible: allow_media_install">
                                                     <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                                     {% trans "Include Multimedia" %}
@@ -342,11 +377,12 @@
                                                         {% trans "Only supported for versions made after 2013-10-15" %}
                                                     </span>
                                                 </label>
+                                                {% endif %}
                                                 <p>
                                                     <span data-bind="visible: get_short_odk_url()">
                                                         {% blocktrans %}
                                                             Install by typing the following URL
-                                                            into the application install screen:
+                                                            into the CommCare application install screen:
                                                         {% endblocktrans %}
                                                         <code class="bitly"><a data-bind="
                                                             attr: {
@@ -370,6 +406,7 @@
                                                     ">
                                                     {% trans "scan the bar code" %}
                                                     </a>
+                                                    {% trans "using the Barcode Scanner option within CommCare" %}
                                                 </p>
                                             </div>
                                             <div class="tab-pane">
@@ -384,7 +421,7 @@
                                                         <li>
                                                             {% trans "Download" %}
                                                             <a href="#" data-bind="click: function () {
-                                                                download_application_zip('{% url "download_ccz" app.domain '_____' %}');
+                                                                download_application_zip(false);
                                                             }">
                                                                 CommCare.ccz
                                                             </a>
@@ -404,10 +441,12 @@
                                                             {% trans "You'll be prompted to select this file from your phone's file system and install will begin" %}
                                                         </li>
                                                     </ol>
+                                                    {% if multimedia_state.has_media %}
                                                     <div>
                                                         {% trans "Note: Offline install automatically installs all multimedia included in your form. All subsequent remote updates will also include multimedia which could require a lot of data." %}
                                                         {% trans "See the <a href='https://confluence.dimagi.com/display/commcarepublic/Install+CommCareODK+for+Android+Smartphones'>Help Site</a> for more info." %}
                                                     </div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -503,7 +542,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    {% if multimedia %}
+                    {% if multimedia_state.has_media %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
                                 <a class="accordion-toggle" data-toggle="collapse" data-bind="
@@ -520,17 +559,6 @@
                             </div>
                         </div>
                     {% endif %}
-                    {% if request.user.is_superuser %}
-                        <div class="accordion-group">
-                            <div class="accordion-heading">
-                                <a class="accordion-toggle view-source-files-link" data-bind="
-                                    attr: {href: $root.url('source', id)},
-                                ">
-                                    {% trans "View Source Files" %}
-                                </a>
-                            </div>
-                        </div>
-                    {% endif %}
                 </div>
             </div>
             <div class="modal-footer">
@@ -541,5 +569,5 @@
 
 <!-- Async Download Modals -->
 <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' include_js=False%}
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
 {% endblock %}

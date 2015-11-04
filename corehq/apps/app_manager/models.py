@@ -10,7 +10,7 @@ import random
 import json
 import types
 import re
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 from functools import wraps
 from copy import deepcopy
@@ -53,6 +53,7 @@ from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from dimagi.utils.couch.database import get_db
 import commcare_translations
@@ -75,7 +76,9 @@ from corehq.apps.app_manager.util import (
     ParentCasePropertyBuilder,
     is_usercase_in_use,
     actions_use_usercase,
-    update_unique_ids)
+    update_unique_ids,
+    app_callout_templates,
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -125,8 +128,6 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
 }
-
-_soft_assert_uuid = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
 
 
 def jsonpath_update(datum_context, value):
@@ -748,13 +749,9 @@ class FormBase(DocumentSchema):
             return super(FormBase, cls).wrap(data)
 
     @classmethod
-    def generate_id(cls):
-        return hex(random.getrandbits(160))[2:-1]
-
-    @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         try:
-            d = get_db().view(
+            d = Application.get_db().view(
                 'app_manager/xforms_index',
                 key=form_unique_id
             ).one()
@@ -874,7 +871,7 @@ class FormBase(DocumentSchema):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     def get_app(self):
@@ -1524,14 +1521,22 @@ class GraphConfiguration(DocumentSchema):
 
 class DetailTab(IndexedSchema):
     """
-    Represents a tab in the case detail screen on the phone. Ex:
-        {
-            'name': 'Medical',
-            'starting_index': 3
-        }
+    Represents a tab in the case detail screen on the phone.
+    Each tab is itself a detail, nested inside the app's "main" detail.
     """
     header = DictProperty()
+
+    # The first index, of all fields in the parent detail, that belongs to this tab
     starting_index = IntegerProperty()
+
+    # A tab may be associated with a nodeset, resulting in a detail that
+    # iterates through sub-nodes of an entity rather than a single entity
+    has_nodeset = BooleanProperty(default=False)
+    nodeset = StringProperty()
+
+    # Any instance connectors necessary for the nodeset,
+    # e.g., "reports" => "jr://fixture/reports"
+    connectors = DictProperty()
 
 
 class DetailColumn(IndexedSchema):
@@ -1670,9 +1675,17 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
-    custom_xml = StringProperty()
+
+    # If True, a small tile will display the case name after selection.
+    persist_case_context = BooleanProperty()
+
+    # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
+    # If given, use this string for the case tile markup instead of the default temaplte
+    custom_xml = StringProperty()
+
     persist_tile_on_forms = BooleanProperty()
+    # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
@@ -1763,6 +1776,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     module_filter = StringProperty()
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    auto_select_case = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -1776,6 +1790,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 return AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
                 return ReportModule.wrap(data)
+            elif doc_type == 'ShadowModule':
+                return ShadowModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
@@ -1792,10 +1808,12 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
 
         """
         if not self.unique_id:
-            self.unique_id = FormBase.generate_id()
+            self.unique_id = random_hex()
         return self.unique_id
 
     get_forms = IndexedSchema.Getter('forms')
+
+    get_suite_forms = IndexedSchema.Getter('forms')
 
     @parse_int([1])
     def get_form(self, i):
@@ -1938,26 +1956,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
         return False
 
 
-class Module(ModuleBase):
-    """
-    A group of related forms, and configuration that applies to them all.
-    Translates to a top-level menu on the phone.
-
-    """
-    module_type = 'basic'
-    case_label = DictProperty()
-    referral_label = DictProperty()
-    forms = SchemaListProperty(Form)
-    case_details = SchemaProperty(DetailPair)
-    ref_details = SchemaProperty(DetailPair)
-    put_in_root = BooleanProperty(default=False)
-    case_list = SchemaProperty(CaseList)
-    referral_list = SchemaProperty(CaseList)
-    task_list = SchemaProperty(CaseList)
-    parent_select = SchemaProperty(ParentSelect)
-
+class ModuleDetailsMixin():
     @classmethod
-    def wrap(cls, data):
+    def wrap_details(cls, data):
         if 'details' in data:
             try:
                 case_short, case_long, ref_short, ref_long = data['details']
@@ -1975,6 +1976,129 @@ class Module(ModuleBase):
                 }
             finally:
                 del data['details']
+        return data
+
+    @property
+    def case_list_filter(self):
+        try:
+            return self.case_details.short.filter
+        except AttributeError:
+            return None
+
+    @property
+    def detail_sort_elements(self):
+        try:
+            return self.case_details.short.sort_elements
+        except Exception:
+            return []
+
+    def rename_lang(self, old_lang, new_lang):
+        super(Module, self).rename_lang(old_lang, new_lang)
+        for case_list in (self.case_list, self.referral_list):
+            case_list.rename_lang(old_lang, new_lang)
+
+    def export_json(self, dump_json=True, keep_unique_id=False):
+        source = self.to_json()
+        if not keep_unique_id:
+            for form in source['forms']:
+                del form['unique_id']
+        return json.dumps(source) if dump_json else source
+
+    def get_details(self):
+        return (
+            ('case_short', self.case_details.short, True),
+            ('case_long', self.case_details.long, True),
+            ('ref_short', self.ref_details.short, False),
+            ('ref_long', self.ref_details.long, False),
+        )
+
+    def validate_details_for_build(self):
+        errors = []
+        for sort_element in self.detail_sort_elements:
+            try:
+                validate_detail_screen_field(sort_element.field)
+            except ValueError:
+                errors.append({
+                    'type': 'invalid sort field',
+                    'field': sort_element.field,
+                    'module': self.get_module_info(),
+                })
+        if self.case_list_filter:
+            try:
+                etree.XPath(self.case_list_filter)
+            except etree.XPathSyntaxError:
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.get_module_info(),
+                    'filter': self.case_list_filter,
+                })
+        for detail in [self.case_details.short, self.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
+        return errors
+
+    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
+        module_info = self.get_module_info()
+
+        if needs_case_type and not self.case_type:
+            yield {
+                'type': 'no case type',
+                'module': module_info,
+            }
+
+        if needs_case_detail:
+            if not self.case_details.short.columns:
+                yield {
+                    'type': 'no case detail',
+                    'module': module_info,
+                }
+            columns = self.case_details.short.columns + self.case_details.long.columns
+            errors = self.validate_detail_columns(columns)
+            for error in errors:
+                yield error
+
+        if needs_referral_detail and not self.ref_details.short.columns:
+            yield {
+                'type': 'no ref detail',
+                'module': module_info,
+            }
+
+
+class Module(ModuleBase, ModuleDetailsMixin):
+    """
+    A group of related forms, and configuration that applies to them all.
+    Translates to a top-level menu on the phone.
+
+    """
+    module_type = 'basic'
+    case_label = DictProperty()
+    referral_label = DictProperty()
+    forms = SchemaListProperty(Form)
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+
+
+    @classmethod
+    def wrap(cls, data):
+        data = cls.wrap_details(data)
         return super(Module, cls).wrap(data)
 
     @classmethod
@@ -2032,91 +2156,9 @@ class Module(ModuleBase):
             self.forms.append(new_form)
         return self.get_form(index or -1)
 
-    def rename_lang(self, old_lang, new_lang):
-        super(Module, self).rename_lang(old_lang, new_lang)
-        for case_list in (self.case_list, self.referral_list):
-            case_list.rename_lang(old_lang, new_lang)
-
-    def get_details(self):
-        return (
-            ('case_short', self.case_details.short, True),
-            ('case_long', self.case_details.long, True),
-            ('ref_short', self.ref_details.short, False),
-            ('ref_long', self.ref_details.long, False),
-        )
-
-    @property
-    def detail_sort_elements(self):
-        try:
-            return self.case_details.short.sort_elements
-        except Exception:
-            return []
-
-    @property
-    def case_list_filter(self):
-        try:
-            return self.case_details.short.filter
-        except AttributeError:
-            return None
-
     def validate_for_build(self):
-        errors = super(Module, self).validate_for_build()
-        if not self.forms and not self.case_list.show:
-            errors.append({
-                'type': 'no forms or case list',
-                'module': self.get_module_info(),
-            })
-        for sort_element in self.detail_sort_elements:
-            try:
-                validate_detail_screen_field(sort_element.field)
-            except ValueError:
-                errors.append({
-                    'type': 'invalid sort field',
-                    'field': sort_element.field,
-                    'module': self.get_module_info(),
-                })
-        if self.case_list_filter:
-            try:
-                etree.XPath(self.case_list_filter)
-            except etree.XPathSyntaxError:
-                errors.append({
-                    'type': 'invalid filter xpath',
-                    'module': self.get_module_info(),
-                    'filter': self.case_list_filter,
-                })
-        if self.parent_select.active and not self.parent_select.module_id:
-            errors.append({
-                'type': 'no parent select id',
-                'module': self.get_module_info()
-            })
-        for detail in [self.case_details.short, self.case_details.long]:
-            if detail.use_case_tiles:
-                if not detail.display == "short":
-                    errors.append({
-                        'type': "invalid tile configuration",
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles may only be used for the case list (not the case details).')
-                    })
-                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
-                    if field not in col_by_tile_field:
-                        errors.append({
-                            'type': "invalid tile configuration",
-                            'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
-                        })
-        return errors
+        return super(Module, self).validate_for_build() + self.validate_details_for_build()
 
-    def export_json(self, dump_json=True, keep_unique_id=False):
-        source = self.to_json()
-        if not keep_unique_id:
-            for form in source['forms']:
-                del form['unique_id']
-        return json.dumps(source) if dump_json else source
-
-    def export_jvalue(self):
-        return self.export_json(dump_json=False, keep_unique_id=True)
-    
     def requires(self):
         r = set(["none"])
         for form in self.get_forms():
@@ -2128,13 +2170,6 @@ class Module(ModuleBase):
         for val in ("referral", "case", "none"):
             if val in r:
                 return val
-
-    def detail_types(self):
-        return {
-            "referral": ["case_short", "case_long", "ref_short", "ref_long"],
-            "case": ["case_short", "case_long"],
-            "none": []
-        }[self.requires()]
 
     def requires_case_details(self):
         ret = False
@@ -2149,33 +2184,6 @@ class Module(ModuleBase):
     @memoized
     def all_forms_require_a_case(self):
         return all([form.requires == 'case' for form in self.get_forms()])
-
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.case_details.short.columns:
-                yield {
-                    'type': 'no case detail',
-                    'module': module_info,
-                }
-            columns = self.case_details.short.columns + self.case_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
-
-        if needs_referral_detail and not self.ref_details.short.columns:
-            yield {
-                'type': 'no ref detail',
-                'module': module_info,
-            }
 
     def uses_usercase(self):
         """Return True if this module has any forms that use the usercase.
@@ -2764,10 +2772,21 @@ class AdvancedModule(ModuleBase):
             forms = self.forms
 
             case_tag = None
+            loaded_case_types = None
             for form in forms:
                 info = self.get_module_info()
                 form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
                 non_auto_select_actions = [a for a in form.actions.load_update_cases if not a.auto_select]
+                this_forms_loaded_case_types = {action.case_type for action in non_auto_select_actions}
+                if loaded_case_types is None:
+                    loaded_case_types = this_forms_loaded_case_types
+                elif loaded_case_types != this_forms_loaded_case_types:
+                    errors.append({
+                        'type': 'all forms in case list module must load the same cases',
+                        'module': info,
+                        'form': form_info,
+                    })
+
                 if not non_auto_select_actions:
                     errors.append({
                         'type': 'case list module form must require case',
@@ -3299,17 +3318,17 @@ class ReportAppConfig(DocumentSchema):
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
+    description = DictProperty()
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
-    uuid = StringProperty(default='')
+    uuid = StringProperty(required=True)
 
     _report = None
 
-    @classmethod
-    def wrap(cls, obj):
-        # todo: can remove once existing ReportAppConfig have been migrated
-        _soft_assert_uuid(obj.get('uuid'), 'Check uuids for apps containing UCR %s' % obj.get('report_id'))
-        return super(ReportAppConfig, cls).wrap(obj)
+    def __init__(self, *args, **kwargs):
+        super(ReportAppConfig, self).__init__(*args, **kwargs)
+        if not self.uuid:
+            self.uuid = random_hex()
 
     @property
     def report(self):
@@ -3317,177 +3336,6 @@ class ReportAppConfig(DocumentSchema):
         if self._report is None:
             self._report = ReportConfiguration.get(self.report_id)
         return self._report
-
-    @property
-    def select_detail_id(self):
-        return 'reports.{}.select'.format(self.uuid)
-
-    @property
-    def summary_detail_id(self):
-        return 'reports.{}.summary'.format(self.uuid)
-
-    @property
-    def data_detail_id(self):
-        return 'reports.{}.data'.format(self.uuid)
-
-    def get_details(self):
-        yield (self.select_detail_id, self.select_details(), True)
-        yield (self.summary_detail_id, self.summary_details(), True)
-
-    def select_details(self):
-        return Detail(custom_xml=suite_models.Detail(
-            id='reports.{}.select'.format(self.uuid),
-            title=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.report_menu()),
-            ),
-            fields=[
-                suite_models.Field(
-                    header=suite_models.Header(
-                        text=suite_models.Text(
-                            locale=suite_models.Locale(id=id_strings.report_name_header()),
-                        )
-                    ),
-                    template=suite_models.Template(
-                        text=suite_models.Text(
-                            locale=suite_models.Locale(id=id_strings.report_name(self.uuid))
-                        )
-                    ),
-                )
-            ]
-        ).serialize())
-
-    def summary_details(self):
-        def _get_graph_fields():
-            from corehq.apps.userreports.reports.specs import MultibarChartSpec
-            # todo: make this less hard-coded
-            for chart_config in self.report.charts:
-                if isinstance(chart_config, MultibarChartSpec):
-                    graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
-
-                    def _column_to_series(column):
-                        return suite_models.Series(
-                            nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(self.uuid),
-                            x_function="column[@id='{}']".format(chart_config.x_axis_column),
-                            y_function="column[@id='{}']".format(column),
-                            configuration=suite_models.ConfigurationGroup(configs=[
-                                suite_models.ConfigurationItem(id=key, xpath_function=value)
-                                for key, value in graph_config.series_configs.get(column, {}).items()
-                            ])
-                        )
-                    yield suite_models.Field(
-                        header=suite_models.Header(text=suite_models.Text()),
-                        template=suite_models.GraphTemplate(
-                            form='graph',
-                            graph=suite_models.Graph(
-                                type=graph_config.graph_type,
-                                series=[_column_to_series(c) for c in chart_config.y_axis_columns],
-                                configuration=suite_models.ConfigurationGroup(configs=[
-                                    suite_models.ConfigurationItem(id=key, xpath_function=value)
-                                    for key, value in graph_config.config.items()
-                                ]),
-                            ),
-                        )
-                    )
-
-        return Detail(custom_xml=suite_models.Detail(
-            id='reports.{}.summary'.format(self.uuid),
-            title=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.report_menu()),
-            ),
-            details=[
-                suite_models.Detail(
-                    title=suite_models.Text(
-                        locale=suite_models.Locale(id=id_strings.report_menu()),
-                    ),
-                    fields=[
-                        suite_models.Field(
-                            header=suite_models.Header(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_name_header())
-                                )
-                            ),
-                            template=suite_models.Template(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_name(self.uuid))
-                                )
-                            ),
-                        ),
-                        suite_models.Field(
-                            header=suite_models.Header(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_description_header()),
-                                )
-                            ),
-                            template=suite_models.Template(
-                                text=suite_models.Text(
-                                    xpath=suite_models.Xpath(function='description')
-                                )
-                            ),
-                        ),
-                    ] + list(_get_graph_fields()) + [
-                        suite_models.Field(
-                            header=suite_models.Header(
-                                text=suite_models.Text(
-                                    locale=suite_models.Locale(id=id_strings.report_last_sync())
-                                )
-                            ),
-                            template=suite_models.Template(
-                                text=suite_models.Text(
-                                    xpath=suite_models.Xpath(
-                                        function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
-                                    )
-                                )
-                            )
-                        ),
-                    ],
-                ),
-                self.data_detail(),
-            ],
-        ).serialize())
-
-    def data_detail(self):
-        def _column_to_field(column):
-            return suite_models.Field(
-                header=suite_models.Header(
-                    text=suite_models.Text(
-                        locale=suite_models.Locale(
-                            id=id_strings.report_column_header(self.uuid, column.column_id)
-                        ),
-                    )
-                ),
-                template=suite_models.Template(
-                    text=suite_models.Text(
-                        xpath=suite_models.Xpath(function="column[@id='{}']".format(column.column_id)))
-                ),
-            )
-
-        return suite_models.Detail(
-            id='reports.{}.data'.format(self.uuid),
-            nodeset='rows/row',
-            title=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.report_data_table()),
-            ),
-            fields=[_column_to_field(c) for c in self.report.report_columns]
-        )
-
-    def get_entry(self):
-        return suite_models.Entry(
-            command=suite_models.Command(
-                id='reports.{}'.format(self.uuid),
-                text=suite_models.Text(
-                    locale=suite_models.Locale(id=id_strings.report_name(self.uuid)),
-                ),
-            ),
-            datums=[
-                suite_models.SessionDatum(
-                    detail_confirm=self.summary_detail_id,
-                    detail_select=self.select_detail_id,
-                    id='report_id_{}'.format(self.uuid),
-                    nodeset="instance('reports')/reports/report[@id='{}']".format(self.uuid),
-                    value='./@id',
-                ),
-            ]
-        )
 
 
 class ReportModule(ModuleBase):
@@ -3519,23 +3367,13 @@ class ReportModule(ModuleBase):
         module.get_or_create_unique_id()
         return module
 
-    def _load_reports(self):
-        if not self._loaded:
-            # load reports in bulk to avoid hitting the database for each one
-            for i, report in enumerate(self.reports):
-                self.report_configs[i]._report = report
-        self._loaded = True
-
     def get_details(self):
-        self._load_reports()
-        for config in self.report_configs:
-            for details in config.get_details():
-                yield details
+        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        return ReportModuleSuiteHelper(self).get_details()
 
     def get_custom_entries(self):
-        self._load_reports()
-        for config in self.report_configs:
-            yield config.get_entry()
+        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self):
         yield suite_models.Menu(
@@ -3552,6 +3390,143 @@ class ReportModule(ModuleBase):
     def uses_media(self):
         # for now no media support for ReportModules
         return False
+
+    def check_report_validity(self):
+        """
+        returns is_valid, valid_report_configs
+
+        If any report doesn't exist, is_valid is False, otherwise True
+        valid_report_configs is a list of all report configs that refer to existing reports
+
+        """
+        all_report_ids = [report._id for report in self.reports]
+        valid_report_configs = [report_config for report_config in self.report_configs
+                                if report_config.report_id in all_report_ids]
+
+        is_valid = (len(valid_report_configs) == len(self.report_configs))
+        return namedtuple('ReportConfigValidity', 'is_valid valid_report_configs')(
+            is_valid=is_valid,
+            valid_report_configs=valid_report_configs
+        )
+
+    def validate_for_build(self):
+        # Overrides super without calling it, intentionally,
+        # because I don't think anything in super is relevant to ReportModules
+        errors = []
+        if not self.check_report_validity().is_valid:
+            errors.append({
+                'type': 'report config ref invalid',
+                'module': self.get_module_info()
+            })
+        return errors
+
+
+class ShadowModule(ModuleBase, ModuleDetailsMixin):
+    """
+    A module that acts as a shortcut to another module. This module has its own
+    settings (name, icon/audio, filter, etc.) and its own case list/detail, but
+    inherits case type and forms from its source module.
+    """
+    module_type = 'shadow'
+    source_module_id = StringProperty()
+    forms = []
+    case_details = SchemaProperty(DetailPair)
+    ref_details = SchemaProperty(DetailPair)
+    put_in_root = BooleanProperty(default=False)
+    case_list = SchemaProperty(CaseList)
+    referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
+    parent_select = SchemaProperty(ParentSelect)
+
+    get_forms = IndexedSchema.Getter('forms')
+
+    @classmethod
+    def wrap(cls, data):
+        data = cls.wrap_details(data)
+        return super(ShadowModule, cls).wrap(data)
+
+    @property
+    def source_module(self):
+        if self.source_module_id:
+            try:
+                return self._parent.get_module_by_unique_id(self.source_module_id)
+            except ModuleNotFoundException:
+                pass
+        return None
+
+    @property
+    def case_type(self):
+        if not self.source_module:
+            return None
+        return self.source_module.case_type
+
+    @property
+    def requires(self):
+        if not self.source_module:
+            return 'none'
+        return self.source_module.requires
+
+    def get_suite_forms(self):
+        if not self.source_module:
+            return []
+        return self.source_module.get_forms()
+
+    @parse_int([1])
+    def get_form(self, i):
+        return None
+
+    def requires_case_details(self):
+        if not self.source_module:
+            return False
+        return self.source_module.requires_case_details()
+
+    def get_case_types(self):
+        if not self.source_module:
+            return []
+        return self.source_module.get_case_types()
+
+    @memoized
+    def get_subcase_types(self):
+        if not self.source_module:
+            return []
+        return self.source_module.get_subcase_types()
+
+    @memoized
+    def all_forms_require_a_case(self):
+        if not self.source_module:
+            return []
+        return self.source_module.all_forms_require_a_case()
+
+    @classmethod
+    def new_module(cls, name, lang):
+        lang = lang or 'en'
+        detail = Detail(
+            columns=[DetailColumn(
+                format='plain',
+                header={(lang or 'en'): ugettext("Name")},
+                field='name',
+                model='case',
+            )]
+        )
+        module = ShadowModule(
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            case_details=DetailPair(
+                short=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
+            ),
+        )
+        module.get_or_create_unique_id()
+        return module
+
+    def validate_for_build(self):
+        errors = super(ShadowModule, self).validate_for_build()
+        errors += self.validate_details_for_build()
+        if not self.source_module:
+            errors.append({
+                'type': 'no source module id',
+                'module': self.get_module_info()
+            })
+        return errors
 
 
 class VersionedDoc(LazyAttachmentDoc):
@@ -3724,7 +3699,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         choices=['roman', 'native', 'custom-keys', 'qwerty'],
         default="roman"
     )
-    success_message = DictProperty()
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
@@ -4013,6 +3987,29 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                             "subscription before using this feature."
                         ))
 
+    def validate_intents(self):
+        if domain_has_privilege(self.domain, privileges.CUSTOM_INTENTS):
+            return
+
+        if hasattr(self, 'get_forms'):
+            for form in self.get_forms():
+                intents = form.wrapped_xform().odk_intents
+                if intents:
+                    if not domain_has_privilege(self.domain, privileges.TEMPLATED_INTENTS):
+                        raise PermissionDenied(_(
+                            "Usage of integrations is not supported by your "
+                            "current subscription. Please upgrade your "
+                            "subscription before using this feature."
+                        ))
+                    else:
+                        templates = next(app_callout_templates)
+                        if len(set(intents) - set(t['id'] for t in templates)):
+                            raise PermissionDenied(_(
+                                "Usage of external integration is not supported by your "
+                                "current subscription. Please upgrade your "
+                                "subscription before using this feature."
+                            ))
+
     def validate_jar_path(self):
         build = self.get_build()
         setting = commcare_settings.get_commcare_settings_lookup()['hq']['text_input']
@@ -4086,6 +4083,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         try:
             self.validate_fixtures()
+            self.validate_intents()
             self.validate_jar_path()
             self.create_all_files()
         except (AppEditingError, XFormValidationError, XFormException,
@@ -4308,6 +4306,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     created_from_template = StringProperty()
+    use_grid_menus = BooleanProperty(default=False)
 
     @property
     @memoized
@@ -4965,15 +4964,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             module_errors.append({'type': 'unknown root'})
         return module_errors
 
-    @classmethod
-    def get_by_xmlns(cls, domain, xmlns):
-        r = cls.get_db().view('exports_forms/by_xmlns',
-            key=[domain, {}, xmlns],
-            group=True,
-            stale=settings.COUCH_STALE_QUERY,
-        ).one()
-        return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
-
     def get_profile_setting(self, s_type, s_id):
         setting = self.profile.get(s_type, {}).get(s_id)
         if setting is not None:
@@ -5207,6 +5197,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         del source['build_spec']
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+
     app.save()
 
     if not app.is_remote_app():

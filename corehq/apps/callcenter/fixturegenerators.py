@@ -51,7 +51,7 @@ class IndicatorsFixturesProvider(object):
         domain = user.project
         fixtures = []
 
-        if not domain or not domain.call_center_config.is_active_and_valid() or not should_sync(domain, last_sync):
+        if self._should_return_no_fixtures(domain, last_sync):
             return fixtures
 
         try:
@@ -68,6 +68,15 @@ class IndicatorsFixturesProvider(object):
             })
 
         return fixtures
+
+    @staticmethod
+    def _should_return_no_fixtures(domain, last_sync):
+        config = domain.call_center_config
+        return (
+            not domain or
+            not (config.fixtures_are_active() and config.config_is_valid()) or
+            not should_sync(domain, last_sync)
+        )
 
 indicators_fixture_generator = IndicatorsFixturesProvider()
 

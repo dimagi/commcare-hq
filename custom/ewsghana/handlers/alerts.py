@@ -1,5 +1,6 @@
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.dbaccessors import get_users_by_location_id
+from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE,\
     MS_STOCKOUT, MS_RESOLVED_STOCKOUTS
 from collections import defaultdict
@@ -9,7 +10,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import EWS_INVALID_REPORT_RESPONSE
 from custom.ewsghana.reminders import ERROR_MESSAGE
-from custom.ewsghana.utils import ProductsReportHelper
+from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ewsghana.alerts.alerts import stock_alerts
 from corehq.apps.commtrack.sms import *
@@ -262,36 +263,26 @@ class AlertsHandler(KeywordHandler):
 
         resolved_stockouts = previous_stockouts.intersection(with_stock)
 
-        if ms_type == 'RMS':
-            locations = self.sql_location.parent.get_descendants().filter(location_type__administrative=False)
-        elif ms_type == 'CMS':
-            locations = self.sql_location.parent.get_descendants().filter(location_type__administrative=True)
-        else:
-            return
-
+        locations = self.sql_location.parent.get_descendants(include_self=True)\
+            .filter(location_type__administrative=True)
         for sql_location in locations:
-            for user in get_users_by_location_id(self.domain, sql_location.location_id):
-                verified_number = user.get_verified_number()
-                if not verified_number:
+            for user in get_all_users_by_location(self.domain, sql_location.location_id):
+                phone_number = get_preferred_phone_number_for_recipient(user)
+                if not phone_number:
                     continue
 
-                if stockouts:
-                    send_sms_to_verified_number(
-                        verified_number,
-                        MS_STOCKOUT % {'products_names': ', '.join(stockouts), 'ms_type': ms_type}
-                    )
+                stockouts_and_resolved = [
+                    (MS_RESOLVED_STOCKOUTS, resolved_stockouts),
+                    (MS_STOCKOUT, stockouts)
+                ]
 
-                if resolved_stockouts:
-                    send_sms_to_verified_number(
-                        verified_number,
-                        MS_RESOLVED_STOCKOUTS % {
-                            'products_names': '. '.join(resolved_stockouts), 'ms_type': ms_type
-                        }
-                    )
+                for message, data in stockouts_and_resolved:
+                    if data:
+                        message = message % {'products_names': ', '.join(data), 'ms_type': ms_type}
+                        send_sms(self.domain, user, phone_number, message)
 
     def handle(self):
         verified_contact = self.verified_contact
-        user = verified_contact.owner
         domain = Domain.get_by_name(verified_contact.domain)
         split_text = self.msg.text.split(' ', 1)
         if split_text[0].lower() == 'soh':
@@ -302,6 +293,7 @@ class AlertsHandler(KeywordHandler):
             text = self.msg.text
 
         if not domain.commtrack_enabled:
+            print "tutaj?"
             return False
         try:
             parser = EWSStockAndReceiptParser(domain, verified_contact)
@@ -320,7 +312,7 @@ class AlertsHandler(KeywordHandler):
 
         except NotAUserClassError:
             return False
-        except SMSError:
+        except (SMSError, NoDefaultLocationException):
             send_sms_to_verified_number(verified_contact, unicode(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
@@ -346,7 +338,7 @@ class AlertsHandler(KeywordHandler):
                 self.send_ms_alert(stockouts, transactions, 'RMS')
             elif self.sql_location.location_type.name == 'Central Medical Store':
                 self.send_ms_alert(stockouts, transactions, 'CMS')
-            stock_alerts(transactions, user)
+            stock_alerts(transactions, verified_contact)
         else:
             self.send_errors(transactions, parser.bad_codes)
 

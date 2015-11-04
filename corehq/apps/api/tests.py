@@ -24,6 +24,7 @@ from corehq.apps.api.resources import v0_1, v0_4, v0_5
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api import es
 from corehq.apps.api.es import ESQuerySet, ESUserError
+from corehq.apps.users.analytics import update_analytics_indexes
 from django.conf import settings
 from custom.hope.models import CC_BIHAR_PREGNANCY
 
@@ -329,6 +330,7 @@ class TestCommCareUserResource(APIResourceTest):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
         backend_id = commcare_user.get_id
+        update_analytics_indexes()
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 200)

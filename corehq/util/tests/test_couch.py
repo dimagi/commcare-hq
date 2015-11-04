@@ -2,12 +2,14 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.test import TestCase, SimpleTestCase
+from corehq.apps.groups.dbaccessors import refresh_group_views
 from corehq.apps.groups.models import Group
 from jsonobject.exceptions import WrappingAttributeError
 from mock import Mock
+from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
-        DocUpdate)
+        DocUpdate, get_document_class_by_name)
 
 
 class MockDb(object):
@@ -81,12 +83,14 @@ class GetDocMockTestCase(TestCase):
         self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
 
 
-class LoggingDB(object):
+class TestLoggingDB(object):
     def __init__(self):
         self.docs_saved = []
         self.num_writes = 0
 
-    def bulk_save(self, docs):
+    def bulk_save(self, docs, use_uuids=True, all_or_nothing=False, new_edits=None, **params):
+        """Method signature matches coucdbkit.client.Database.bulk_save
+        """
         self.docs_saved.extend(docs)
         self.num_writes += 1
         return [{'id': 'unique_id'} for doc in docs]
@@ -94,7 +98,7 @@ class LoggingDB(object):
 
 class IterDBSimpleTest(SimpleTestCase):
     def test_number_of_calls(self):
-        db = LoggingDB()
+        db = TestLoggingDB()
         with IterDB(db, chunksize=50) as iter_db:
             all_docs = range(105)
             for doc in all_docs:
@@ -161,6 +165,7 @@ class IterDBTest(TestCase):
             for group in self.groups[4:]:
                 saved_groups.add(group._id)
                 iter_db.save(group)
+        refresh_group_views()
 
         self.assertEqual(deleted_groups, iter_db.deleted_ids)
         self.assertEqual(saved_groups, iter_db.saved_ids)
@@ -187,6 +192,7 @@ class IterDBTest(TestCase):
 
         ids = [g._id for g in self.groups] + ['NOT_REAL_ID']
         res = iter_update(self.db, mark_cool, ids)
+        refresh_group_views()
         self.assertEqual(res.not_found_ids, {'NOT_REAL_ID'})
         for result_ids, action in [
             (res.ignored_ids, 'IGNORE'),
@@ -228,3 +234,29 @@ class IterDBTest(TestCase):
             self.assertEqual(e.results.error_ids, error_ids)
         else:
             assert False, "iter_update did now throw an IterUpdateError"
+
+
+class DocumentClassLookupTest(SimpleTestCase):
+
+    def test_a_few_important_ones(self):
+        from casexml.apps.case.models import CommCareCase
+        from corehq.apps.locations.models import Location
+        from corehq.apps.users.models import CommCareUser, WebUser
+        from couchforms.models import XFormInstance
+        from corehq.apps.fixtures.models import FixtureDataType
+        test_cases = [
+            ('CommCareCase', CommCareCase),
+            ('XFormInstance', XFormInstance),
+            ('CommCareUser', CommCareUser),
+            ('WebUser', WebUser),
+            ('Location', Location),
+            ('FixtureDataType', FixtureDataType),
+        ]
+        for model_name, model_class in test_cases:
+            self.assertEqual(model_class, get_document_class_by_name(model_name))
+
+    def test_missing(self):
+        test_cases = [None, 'FooDocument']
+        for bad_model in test_cases:
+            with self.assertRaises(DocumentClassNotFound):
+                get_document_class_by_name(bad_model)

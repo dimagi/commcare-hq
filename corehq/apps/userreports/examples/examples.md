@@ -3,8 +3,6 @@ UCR Examples
 
 This page lists some common examples/design patterns for user configurable reports and CommCare HQ data models.
 
-Arguments listed inside `"[brackets]"` are meant to be replaced.
-
 # Data source filters
 
 The following are example filter expressions that are common in data sources.
@@ -23,7 +21,7 @@ The following filters apply to data sources built on top of forms.
         "property_name": "xmlns"
     },
     "operator": "eq",
-    "property_value": "[http://openrosa.org/formdesigner/my-registration-form]"
+    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
 }
 ```
 ### Filter by a set of form types using the XMLNS
@@ -37,9 +35,9 @@ The following filters apply to data sources built on top of forms.
     },
     "operator": "in",
     "property_value": [
-        "[http://openrosa.org/formdesigner/my-registration-form]",
-        "[http://openrosa.org/formdesigner/my-follow-up-form]",
-        "[http://openrosa.org/formdesigner/my-close-form]"
+        "http://openrosa.org/formdesigner/my-registration-form",
+        "http://openrosa.org/formdesigner/my-follow-up-form",
+        "http://openrosa.org/formdesigner/my-close-form"
     ]
 }
 ```
@@ -58,7 +56,7 @@ The following filters apply to data sources built on top of cases.
         "property_name": "type"
     },
     "operator": "eq",
-    "property_value": "[child]"
+    "property_value": "child"
 }
 ```
 ## Filter by multiple case types
@@ -71,7 +69,7 @@ The following filters apply to data sources built on top of cases.
         "property_name": "type"
     },
     "operator": "in",
-    "property_value": ["[child]", "[mother]"]
+    "property_value": ["child", "mother"]
 }
 ```
 
@@ -105,7 +103,7 @@ NOTE: this should be changed to use boolean datatypes once those exist.
     },
     "column_id": "count",
     "datatype": "integer",
-    "display_name": "[count of forms]"
+    "display_name": "count of forms"
 }
 ```
 
@@ -291,6 +289,66 @@ In the example below, the indicator is inside a form group question called "impa
 }
 ```
 
+## Getting the parent case ID from a case
+
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "array_index",
+        "array_expression": {
+            "type": "property_name",
+            "property_name": "indices"
+        },
+        "index_expression": {
+            "type": "constant",
+            "constant": 0
+        }
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "referenced_id"
+    }
+}
+```
+
+## Getting the location type from a location doc id
+
+`location_id_expression` can be any expression that evaluates to a valid location id.
+
+```json
+{
+    "datatype":"string",
+    "type":"expression",
+    "expression": {
+        "type": "location_type_name",
+        "location_id_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+        }
+    },
+    "column_id": "district",
+}
+```
+
+## Getting a location's parent ID
+
+`location_id_expression` can be any expression that evaluates to a valid location id.
+
+```json
+{
+    "type":"expression",
+    "expression": {
+        "type": "location_parent_id",
+        "location_id_expression": {
+            "type": "property_name",
+            "property_name": "location_id"
+        }
+    },
+    "column_id": "parent_location",
+}
+```
+
 # Base Item Expressions
 
 ## Emit multiple rows (one per non-empty case property)
@@ -328,7 +386,61 @@ In this example we take 3 case properties and save one row per property if it ex
 }
 ```
 
+## Emit multiple rows of complex data
 
+In this example we take 3 case properties and emit the property name along with the value (only if non-empty).
+Note that the test must also change in this scenario.
+
+
+```json
+{
+    "type": "iterator",
+    "expressions": [
+        {
+            "type": "dict",
+            "properties": {
+                "name": "p1",
+                "value": {
+                    "type": "property_name",
+                    "property_name": "p1"
+                }
+            }
+        },
+        {
+            "type": "dict",
+            "properties": {
+                "name": "p2",
+                "value": {
+                    "type": "property_name",
+                    "property_name": "p2"
+                }
+            }
+        },
+        {
+            "type": "dict",
+            "properties": {
+                "name": "p3",
+                "value": {
+                    "type": "property_name",
+                    "property_name": "p3"
+                }
+            }
+        }
+    ],
+    "test": {
+        "type": "not",
+        "filter": {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "value"
+            },
+            "operator": "in",
+            "property_value": ["", null],
+        }
+    }
+}
+```
 
 # Report examples
 

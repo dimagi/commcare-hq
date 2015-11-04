@@ -2,11 +2,9 @@ from django.test import TestCase
 import os
 from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
-from couchforms.tests.testutils import post_xform_to_couch
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
-from casexml.apps.case.xform import process_cases
 from datetime import datetime
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.case import const
 from casexml.apps.phone import xml
@@ -29,10 +27,8 @@ class Version2CaseParsingTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_create.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+
+        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual("bar-user-id", case.opened_by)
@@ -51,10 +47,8 @@ class Version2CaseParsingTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_update.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+
+        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 42, 50), case.modified_on)
@@ -71,9 +65,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 44, 50), case.modified_on)
@@ -89,9 +81,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
         self.assertTrue(case.closed)
         self.assertEqual("bar-user-id", case.closed_by)
         
@@ -100,9 +90,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
-        case = CommCareCase.get("14cc2770-2d1c-49c2-b252-22d6ecce385a")
+        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
         self.assertFalse(case.closed)
         self.assertEqual("d5ce3a980b5b69e793445ec0e3b2138e", case.user_id)
         self.assertEqual(datetime(2011, 12, 27), case.modified_on)
@@ -115,10 +103,10 @@ class Version2CaseParsingTest(TestCase):
 
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
-            post_case_blocks([
+            FormProcessorInterface().post_case_blocks([
                 CaseBlock(
                     create=True, case_id=prereq,
-                    user_id=user_id, version=V2
+                    user_id=user_id
                 ).as_xml()
             ])
 
@@ -126,9 +114,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
-        case = CommCareCase.get("foo-case-id")
+        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
         self.assertEqual(2, len(case.indices))
         self.assertTrue(case.has_index("foo_ref"))
         self.assertTrue(case.has_index("baz_ref"))

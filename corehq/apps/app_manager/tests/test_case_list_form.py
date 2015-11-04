@@ -3,11 +3,11 @@ from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, PreloadAction, \
     WORKFLOW_MODULE, AdvancedModule, AdvancedOpenCaseAction, LoadUpdateAction, AutoSelectCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from mock import patch
 
 
-class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
+class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_list_form')
 
     def _prep_case_list_form_app(self):
@@ -313,8 +313,50 @@ class CaseListFormSuiteTests(SimpleTestCase, TestFileMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-mixed'), factory.app.create_suite())
 
+    def test_target_module_different_datums(self):
+        """
+        * Registration
+          * Register patient form
+            * open case (patient), update user_case
+        * Visits (case type = patient, case list form = 'Register patient')
+          * Visit form
+            * update case, open child case (visit), load from user_case
+          * Record notes
+            * update case, open child case (visit)
+          * Update patient
+            * update case
+        """
 
-class CaseListFormFormTests(SimpleTestCase, TestFileMixin):
+        factory = AppFactory(build_version='2.9')
+        registration_module, registration_form = factory.new_basic_module('registration', 'patient')
+
+        factory.form_opens_case(registration_form)
+        factory.form_uses_usercase(registration_form, preload={'username': '/data/username'})
+
+        visit_module, visit_form = factory.new_basic_module(
+            'visits',
+            'patient',
+            case_list_form=registration_form
+        )
+
+        factory.form_requires_case(visit_form)
+        factory.form_opens_case(visit_form, 'visit', is_subcase=True)
+        factory.form_uses_usercase(visit_form, preload={'username': '/data/username'})
+
+        notes_form = factory.new_form(visit_module)
+        factory.form_requires_case(notes_form)
+        factory.form_opens_case(notes_form, 'visit', is_subcase=True)
+
+        update_patient_form = factory.new_form(visit_module)
+        factory.form_requires_case(update_patient_form)
+
+        self.assertXmlPartialEqual(
+            self.get_xml('target_module_different_datums'),
+            factory.app.create_suite(),
+            './entry')
+
+
+class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'case_list_form'
 
     def setUp(self):

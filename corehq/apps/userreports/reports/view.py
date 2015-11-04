@@ -181,12 +181,6 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         saved_report_config = get_document_or_404(ReportConfig, self.domain, saved_report_config_id) \
             if saved_report_config_id else None
 
-        datespan_filters = []
-        for f in self.datespan_filters:
-            copy = dict(f)
-            copy['display'] = localize(copy['display'], self.lang)
-            datespan_filters.append(copy)
-
         return {
             'report_configs': [
                 _get_context_for_saved_report(saved_report)
@@ -195,10 +189,7 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
                 )
             ],
             'default_config': _get_context_for_saved_report(saved_report_config),
-            'datespan_filters': [{
-                'display': _('Choose a date filter...'),
-                'slug': None,
-            }] + datespan_filters,
+            'datespan_filters': ReportConfig.datespan_filter_choices(self.datespan_filters, self.lang),
         }
 
     @property
@@ -222,7 +213,18 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             if len(data_source.columns) > 50:
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
-            data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
+
+            sort_column = request.GET.get('iSortCol_0')
+            sort_order = request.GET.get('sSortDir_0', 'ASC')
+            echo = int(request.GET.get('sEcho', 1))
+            if sort_column and echo != 1:
+                data_source.set_order_by(
+                    [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
+                )
+            else:
+                # Use defined sort expression initially
+                data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
+
             total_records = data_source.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:

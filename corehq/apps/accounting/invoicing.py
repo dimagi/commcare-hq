@@ -194,7 +194,10 @@ class DomainInvoiceFactory(object):
             is_hidden=False,
             subscription__subscriber__domain=invoice.get_domain(),
         ))
-        if total_balance > SMALL_INVOICE_THRESHOLD:
+
+        should_set_date_due = ((total_balance > SMALL_INVOICE_THRESHOLD) or
+                               (invoice.account.auto_pay_enabled and total_balance > Decimal(0)))
+        if should_set_date_due:
             days_until_due = DEFAULT_DAYS_UNTIL_DUE
             if subscription.date_delay_invoicing is not None:
                 td = subscription.date_delay_invoicing - self.date_end

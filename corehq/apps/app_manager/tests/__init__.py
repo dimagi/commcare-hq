@@ -5,10 +5,13 @@ try:
     from corehq.apps.app_manager.tests.test_xml_parsing import *
     from corehq.apps.app_manager.tests.test_xform_parsing import *
     from corehq.apps.app_manager.tests.test_form_versioning import *
-    from corehq.apps.app_manager.tests.test_success_message import *
     from corehq.apps.app_manager.tests.test_form_preparation_v2 import *
     from corehq.apps.app_manager.tests.test_days_ago_migration import *
     from corehq.apps.app_manager.tests.test_suite import *
+    from corehq.apps.app_manager.tests.test_advanced_suite import *
+    from corehq.apps.app_manager.tests.test_suite_formats import *
+    from corehq.apps.app_manager.tests.test_suite_regex import *
+    from corehq.apps.app_manager.tests.test_suite_form_filter_errors import *
     from corehq.apps.app_manager.tests.test_media_suite import *
     from corehq.apps.app_manager.tests.test_profile import *
     from corehq.apps.app_manager.tests.test_build_errors import *
@@ -32,6 +35,8 @@ try:
     from corehq.apps.app_manager.tests.test_form_workflow import *
     from corehq.apps.app_manager.tests.test_case_list_lookup import *
     from corehq.apps.app_manager.tests.test_child_module import *
+    from corehq.apps.app_manager.tests.test_report_config import *
+    from corehq.apps.app_manager.tests.test_grid_menus import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

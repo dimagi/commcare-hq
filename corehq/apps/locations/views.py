@@ -24,6 +24,7 @@ from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -32,6 +33,8 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
+from .analytics import users_have_locations
+from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -120,29 +123,20 @@ class LocationTypesView(BaseLocationView):
     @property
     def page_context(self):
         return {
-            'settings': self.settings_context,
+            'location_types': self._get_loc_types(),
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
 
-    @property
-    def settings_context(self):
-        return {
-            'loc_types': map(
-                self._get_loctype_info,
-                LocationType.objects.by_domain(self.domain)
-            )
-        }
-
-    def _get_loctype_info(self, loctype):
-        return {
-            'pk': loctype.pk,
-            'name': loctype.name,
-            'parent_type': (loctype.parent_type.pk
-                            if loctype.parent_type else None),
-            'administrative': loctype.administrative,
-            'shares_cases': loctype.shares_cases,
-            'view_descendants': loctype.view_descendants
-        }
+    def _get_loc_types(self):
+        return [{
+            'pk': loc_type.pk,
+            'name': loc_type.name,
+            'parent_type': (loc_type.parent_type.pk
+                            if loc_type.parent_type else None),
+            'administrative': loc_type.administrative,
+            'shares_cases': loc_type.shares_cases,
+            'view_descendants': loc_type.view_descendants
+        } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
@@ -803,7 +797,7 @@ def child_locations_for_select2(request, domain):
         user_loc = user.get_sql_location(domain)
 
         if user_can_edit_any_location(user, request.project):
-            locs = SQLLocation.objects.filter(domain=domain)
+            locs = SQLLocation.objects.filter(domain=domain, is_archived=False)
         elif user_loc:
             locs = user_loc.get_descendants(include_self=True)
 
@@ -811,3 +805,39 @@ def child_locations_for_select2(request, domain):
             locs = locs.filter(name__icontains=query)
 
         return json_response(map(loc_to_payload, locs[:10]))
+
+
+class DowngradeLocationsView(BaseDomainView):
+    """
+    This page takes the place of the location pages if a domain gets
+    downgraded, but still has users assigned to locations.
+    """
+    template_name = 'locations/downgrade_locations.html'
+    urlname = 'downgrade_locations'
+
+    def dispatch(self, *args, **kwargs):
+        if not users_have_locations(self.domain):  # irrelevant, redirect
+            redirect_url = reverse('users_default', args=[self.domain])
+            return HttpResponseRedirect(redirect_url)
+        return super(DowngradeLocationsView, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_url(self):
+        return self.page_url
+
+
+@domain_admin_required
+def unassign_users(request, domain):
+    """
+    Unassign all users from their locations.  This is for downgraded domains.
+    """
+    for user in get_users_assigned_to_locations(domain):
+        if user.is_web_user():
+            user.unset_location(domain)
+        elif user.is_commcare_user():
+            user.unset_location()
+
+    messages.success(request,
+                     _("All users have been unassigned from their locations"))
+    fallback_url = reverse('users_default', args=[domain])
+    return HttpResponseRedirect(request.POST.get('redirect', fallback_url))

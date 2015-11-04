@@ -1,7 +1,7 @@
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import SUBMITTED_REMINDER_DISTRICT, SUBMITTED_NOTIFICATION_MSD, \
     SUBMITTED_CONFIRM, NOT_SUBMITTED_CONFIRM
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSRandRTest(ILSTestScript):

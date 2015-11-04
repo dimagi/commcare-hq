@@ -47,7 +47,6 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRe
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
-from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
@@ -57,6 +56,7 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
 )
 from corehq.util.couch import get_document_or_404
+from corehq.apps.analytics.tasks import track_workflow
 
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
@@ -64,12 +64,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 def _users_context(request, domain):
     couch_user = request.couch_user
     web_users = WebUser.by_domain(domain)
-    teams = Team.get_by_domain(domain)
-    for team in teams:
-        for user in team.get_members():
-            if user.get_id not in [web_user.get_id for web_user in web_users]:
-                user.from_team = True
-                web_users.append(user)
 
     for user in [couch_user] + list(web_users):
         user.current_domain = domain
@@ -119,7 +113,8 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
             user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
             if user:
                 if user.has_permission(self.domain, 'edit_commcare_users'):
-                    redirect = reverse("commcare_users", args=[self.domain])
+                    from corehq.apps.users.views.mobile import MobileWorkerListView
+                    redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
                     redirect = reverse(
                         ListWebUsersView.urlname,
@@ -389,8 +384,8 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @method_decorator(use_bootstrap3())
-    @method_decorator(use_knockout_js())
+    @use_bootstrap3
+    @use_knockout_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
@@ -412,16 +407,6 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             size=limit, start_at=skip,
         )
 
-    def apply_teams_to_users(self, web_users):
-        teams = Team.get_by_domain(self.domain)
-        for team in teams:
-            for user in team.get_members():
-                if user.get_id not in [web_user.get_id for web_user in web_users]:
-                    user.from_team = True
-                    web_users.append(user)
-        for user in web_users:
-            user.current_domain = self.domain
-
     @allow_remote_invocation
     def get_users(self, in_data):
         if not isinstance(in_data, dict):
@@ -440,7 +425,6 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             results = web_users_query.get('hits', {}).get('hits', [])
 
             web_users = [WebUser.wrap(w['_source']) for w in results]
-            self.apply_teams_to_users(web_users)  # for roles
 
             def _fmt_result(domain, u):
                 return {
@@ -519,7 +503,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
-            'requests': DomainRequest.by_domain(self.domain),
+            'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
@@ -739,6 +723,9 @@ class InviteWebUserView(BaseManageWebUserView):
                                          program_id=data.get("program", None))
                 messages.success(request, "%s added." % data["email"])
             else:
+                track_workflow(request.couch_user.get_email(),
+                               "Sent a project invitation",
+                               {"Sent a project invitation": "yes"})
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:
@@ -811,7 +798,7 @@ def make_phone_number_default(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.set_default_phone_number(phone_number)
     from corehq.apps.users.views.mobile import EditCommCareUserView
@@ -828,7 +815,7 @@ def delete_phone_number(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
     from corehq.apps.users.views.mobile import EditCommCareUserView
@@ -843,7 +830,7 @@ def verify_phone_number(request, domain, couch_user_id):
     but it can be passed as %-encoded GET parameters
     """
     if 'phone_number' not in request.GET:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
@@ -916,27 +903,6 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
 @login_and_domain_required
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
-
-
-@require_superuser
-def audit_logs(request, domain):
-    usernames = [user.username for user in WebUser.by_domain(domain)]
-    data = {}
-    for username in usernames:
-        data[username] = []
-        for doc in get_db().view('auditcare/urlpath_by_user_date',
-            startkey=[username],
-            endkey=[username, {}],
-            include_docs=True,
-            wrapper=lambda r: r['doc']
-        ).all():
-            try:
-                (d,) = re.search(r'^/a/([\w\-_\.]+)/', doc['request_path']).groups()
-                if d == domain:
-                    data[username].append(doc)
-            except Exception:
-                pass
-    return json_response(data)
 
 
 @domain_admin_required

@@ -1,0 +1,14 @@
+{% extends 'settings/bootstrap2/base_template.html' %}
+{% load i18n %}
+{% block main_column %}
+    <a class="btn btn-primary" href="{% url 'user_account' domain=domain couch_user_id=couch_user.get_id %}">Back to user account settings</a>
+    <form id="commtrack_form" class="form form-horizontal" name="" method="post">
+        <fieldset>
+            <legend>{{ couch_user.username }} - {% trans 'EWS Settings' %}</legend>
+            {% include 'hqstyle/forms/basic_fieldset.html' with form=form %}
+        </fieldset>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">{% trans 'Update EWS Settings' %}</button>
+        </div>
+    </form>
+{% endblock %}

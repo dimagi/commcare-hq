@@ -4,6 +4,7 @@ from decimal import Decimal
 import random
 import datetime
 import uuid
+import mock
 
 from django.conf import settings
 from django.core.management import call_command
@@ -100,9 +101,9 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def arbitrary_subscribable_plan():
+def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
     return DefaultProductPlan.objects.get(
-        edition=random.choice(SUBSCRIBABLE_EDITIONS),
+        edition=edition,
         product_type=SoftwareProductType.COMMCARE,
         is_trial=False
     ).plan.get_version()
@@ -111,11 +112,13 @@ def arbitrary_subscribable_plan():
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
                                            min_num_months=None, is_immediately_active=False,
                                            delay_invoicing_until=None, save=True,
-                                           service_type=SubscriptionType.NOT_SET):
+                                           service_type=SubscriptionType.NOT_SET,
+                                           subscription_length=None,
+                                           plan_version=None,):
     # make sure the first month is never a full month (for testing)
     date_start = date_start.replace(day=max(2, date_start.day))
 
-    subscription_length = random.randint(min_num_months or 3, 25)
+    subscription_length = subscription_length or random.randint(min_num_months or 3, 25)
     date_end_year, date_end_month = add_months(date_start.year, date_start.month, subscription_length)
     date_end_last_day = calendar.monthrange(date_end_year, date_end_month)[1]
 
@@ -125,7 +128,7 @@ def generate_domain_subscription_from_date(date_start, billing_account, domain,
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain, organization=None)
     subscription = Subscription(
         account=billing_account,
-        plan_version=arbitrary_subscribable_plan(),
+        plan_version=plan_version or subscribable_plan(),
         subscriber=subscriber,
         salesforce_contract_id=data_gen.arbitrary_unique_name("SFC")[:80],
         date_start=date_start,
@@ -198,10 +201,9 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
 
 def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, num_sms):
     from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
-    from corehq.apps.smsbillables import generator as sms_gen
 
-    gateway_fee = SmsGatewayFee.create_new('MACH', direction, sms_gen.arbitrary_fee())
-    usage_fee = SmsUsageFee.create_new(direction, sms_gen.arbitrary_fee())
+    gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
+    usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
 
     _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
 
@@ -228,3 +230,30 @@ def create_excess_community_users(domain):
                                       community_plan.user_limit + 4)
     arbitrary_commcare_users_for_domain(domain.name, num_active_users)
     return num_active_users
+
+
+class FakeStripeCard(mock.MagicMock):
+    def __init__(self):
+        super(FakeStripeCard, self).__init__()
+        self._metadata = {}
+        self.last4 = '1234'
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, value):
+        """Stripe returns everything as JSON. This will do for testing"""
+        self._metadata = {k: str(v) for k, v in value.iteritems()}
+
+    def save(self):
+        pass
+
+
+class FakeStripeCustomer(mock.MagicMock):
+    def __init__(self, cards):
+        super(FakeStripeCustomer, self).__init__()
+        self.id = uuid.uuid4().hex.lower()[:25]
+        self.cards = mock.MagicMock()
+        self.cards.data = cards

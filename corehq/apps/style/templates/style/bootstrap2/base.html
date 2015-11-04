@@ -23,16 +23,7 @@
         {% endcompress %}
         {% block stylesheets %}{% endblock %}
 
-        {# this should eventually be moved to the end of the page #}
-        {% if formdesigner %}
-        <script src="{% static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
-        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-        {% else %}
-        <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-        {% endif %}
-        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/ko/global_handlers.ko.js' %}"></script>
+        {% include "style/includes/bootstrap2/core_libraries.html" %}
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
@@ -66,7 +57,9 @@
                             {% block tabs %}
                                 {% format_main_menu %}
                             {% endblock %}
-                            {% include 'style/includes/global_navigation_bar.html' %}
+                            <div class="btn-toolbar pull-right">
+                                {% include 'style/includes/global_navigation_bar.html' %}
+                            </div>
                         </nav>
                     {% else %}
                         <nav>
@@ -83,9 +76,6 @@
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
-                    {% if request.project.copied_from.organization %}
-                        by <a href="{% url "orgs_landing" request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
-                    {% endif %}
                 </div>
             {% endif %}
 
@@ -134,15 +124,6 @@
                     </div>
                     {% if request.user.is_authenticated %}
                     <div class="btn-toolbar pull-right">
-                        <a id="uvSubmitIdea"
-                            data-user-email="{{ user.email }}"
-                            data-user-name="{{ user.name }}"
-                            data-domain="{{ domain }}"
-                            data-uv-locale="{{ LANGUAGE_CODE }}"
-                            class="btn btn-footer-highlight">
-                            <i class="icon-lightbulb"></i>
-                            {% trans 'Submit an Idea' %}
-                        </a>
                         <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
                         <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
                         <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'Mailing List' %}</a>
@@ -377,11 +358,10 @@
         {% block js %}
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
         <script src="{% static 'style/js/hq.helpers.js' %}"></script>
-        <script src="{% static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
+        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
+        <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
 
         <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
-        <script src="{% new_static 'style/js/uv.widget.js' %}"></script>
         <script>
             var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
                                          // and to avoid conflicts in other places where "key" is used as variable name

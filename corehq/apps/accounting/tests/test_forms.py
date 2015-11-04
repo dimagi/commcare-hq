@@ -8,7 +8,7 @@ from corehq.apps.accounting.models import (
     CreditLine,
     Invoice,
 )
-from corehq.apps.accounting.tests import BaseInvoiceTestCase
+from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
 class TestAdjustBalanceForm(BaseInvoiceTestCase):

@@ -76,7 +76,6 @@ class CaseReconciliationTestCase(TestCase):
             case_type='rectest',
             user_id=user_id,
             owner_id=owner_id,
-            version=V2,
             **kwargs
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})

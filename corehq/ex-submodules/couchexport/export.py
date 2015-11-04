@@ -116,6 +116,7 @@ def get_writer(format):
             Format.XLS: writers.Excel2003ExportWriter,
             Format.XLS_2007: writers.Excel2007ExportWriter,
             Format.UNZIPPED_CSV: writers.UnzippedCsvExportWriter,
+            Format.CDISC_ODM: writers.CdiscOdmExportWriter,
         }[format]()
     except KeyError:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
@@ -355,6 +356,10 @@ class FormattedRow(object):
         self.separator = separator
         self.id_index = id_index
         self.is_header_row = is_header_row
+
+    def __iter__(self):
+        for i in self.get_data():
+            yield i
 
     def has_id(self):
         return self.id is not None

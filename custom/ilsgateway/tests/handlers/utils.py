@@ -106,7 +106,7 @@ class ILSTestScript(TestScript):
 
 
 def prepare_domain(domain_name):
-    from corehq.apps.commtrack.tests import bootstrap_domain
+    from corehq.apps.commtrack.tests.util import bootstrap_domain
     domain = bootstrap_domain(domain_name)
     previous = None
     for name, administrative in [
@@ -145,7 +145,7 @@ def prepare_domain(domain_name):
     )
     subscription.is_active = True
     subscription.save()
-    ils_config = ILSGatewayConfig(enabled=True, domain=domain.name)
+    ils_config = ILSGatewayConfig(enabled=True, domain=domain.name, all_stock_data=True)
     ils_config.save()
     return domain
 

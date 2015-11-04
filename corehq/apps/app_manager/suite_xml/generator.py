@@ -3,6 +3,7 @@ import urllib
 from django.core.urlresolvers import reverse
 
 from corehq.apps.app_manager.exceptions import MediaResourceError
+from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
 from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
 from corehq.apps.app_manager.suite_xml.features.careplan import CareplanMenuContributor
@@ -65,6 +66,8 @@ class SuiteGenerator(object):
         # post process
         if self.app.enable_post_form_workflow:
             WorkflowHelper(self.suite, self.app, self.modules).update_suite()
+        if self.app.use_grid_menus:
+            GridMenuHelper(self.suite, self.app, self.modules).update_suite()
 
         EntryInstances(self.suite, self.app, self.modules).update_suite()
         return self.suite.serializeDocument(pretty=True)

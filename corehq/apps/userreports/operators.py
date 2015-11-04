@@ -6,6 +6,7 @@ EQUAL = lambda input, reference: input == reference
 NOT_EQUAL = lambda input, reference: input != reference
 IN = lambda input, reference_list: input in reference_list
 IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
+ANY_IN_MULTISELECT = lambda input, reference: any([subval in (input or '').split(' ') for subval in reference])
 LESS_THAN = lambda input, reference: input < reference
 LESS_THAN_EQUAL = lambda input, reference: input <= reference
 GREATER_THAN = lambda input, reference: input > reference
@@ -16,6 +17,7 @@ OPERATORS = {
     'not_eq': NOT_EQUAL,
     'in': IN,
     'in_multi': IN_MULTISELECT,
+    'any_in_multi': ANY_IN_MULTISELECT,
     'lt': LESS_THAN,
     'lte': LESS_THAN_EQUAL,
     'gt': GREATER_THAN,

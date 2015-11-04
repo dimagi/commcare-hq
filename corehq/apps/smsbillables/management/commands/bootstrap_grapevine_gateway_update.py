@@ -3,7 +3,7 @@ import logging
 from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
 
-from corehq.apps.grapevine.api import GrapevineBackend
+from corehq.messaging.smsbackends.grapevine.api import GrapevineBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 

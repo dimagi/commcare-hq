@@ -33,7 +33,7 @@ COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 LOCATIONS = 'locations'
 
 USER_CASE = 'user_case'
-DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, etc.
+DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, auto update cases, etc.
 
 TEMPLATED_INTENTS = 'templated_intents'
 CUSTOM_INTENTS = 'custom_intents'
@@ -97,7 +97,7 @@ class Titles(object):
             COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
             LOCATIONS: _("Locations"),
             REPORT_BUILDER: _('User Configurable Report Builder'),
-            TEMPLATED_INTENTS: _('Templated Intents'),
-            CUSTOM_INTENTS: _('Custom Intents'),
+            TEMPLATED_INTENTS: _('Built-in Integration'),
+            CUSTOM_INTENTS: _('External Integration Framework'),
             DATA_CLEANUP: _('Data Management'),
         }.get(privilege, privilege)

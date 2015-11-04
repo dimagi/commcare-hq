@@ -3,12 +3,13 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
+from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -17,9 +18,8 @@ from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
-from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
 
@@ -35,6 +35,43 @@ import re
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
 mark_safe_lazy = lazy(mark_safe, six.text_type)
+
+UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
+
+
+def get_mobile_worker_max_username_length(domain):
+    """
+    The auth_user table only allows for usernames up to 128 characters long.
+    The code used to allow for usernames up to 80 characters, but that
+    didn't properly take into consideration the fact that the domain and
+    site name vary.
+    """
+    return min(128 - len(cc_user_domain(domain)) - 1, 80)
+
+
+def clean_mobile_worker_username(domain, username, name_too_long_message=None,
+        name_reserved_message=None, name_exists_message=None):
+
+    max_username_length = get_mobile_worker_max_username_length(domain)
+
+    if len(username) > max_username_length:
+        raise forms.ValidationError(name_too_long_message or
+            _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
+            % {'username': username, 'max_length': max_username_length})
+
+    if username in UNALLOWED_MOBILE_WORKER_NAMES:
+        raise forms.ValidationError(name_reserved_message or
+            _('The username "%(username)s" is reserved for CommCare.')
+            % {'username': username})
+
+    username = format_username(username, domain)
+    validate_username(username)
+
+    if CouchUser.username_exists(username):
+        raise forms.ValidationError(name_exists_message or
+            _('This Mobile Worker already exists.'))
+
+    return username
 
 
 def wrapped_language_validation(value):
@@ -79,12 +116,6 @@ class BaseUpdateUserForm(forms.Form):
             existing_user = CouchUser.from_django_user(django_user)
             existing_user.save()
             is_update_successful = True
-
-        if 'email' in self.cleaned_data:
-            old_email = existing_user.email
-            new_email = self.cleaned_data['email']
-            if old_email != new_email:
-                handle_changed_mailchimp_email(existing_user, old_email, new_email)
 
         for prop in self.direct_properties:
             setattr(existing_user, prop, self.cleaned_data[prop])
@@ -278,19 +309,15 @@ class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
     """
-    # 128 is max length in DB
-    # 25 is domain max length
-    # @{domain}.commcarehq.org adds 16
-    # left over is 87 and 80 just sounds better
-    max_len_username = 80
-
-    username = forms.CharField(max_length=max_len_username, required=True)
+    username = forms.CharField(required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
-    domain = forms.CharField(widget=HiddenInput())
     phone_number = forms.CharField(max_length=80, required=False)
 
     def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain', None)
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -309,6 +336,12 @@ class CommCareAccountForm(forms.Form):
             )
         )
 
+    def clean_username(self):
+        return clean_mobile_worker_username(
+            self.domain,
+            self.cleaned_data.get('username')
+        )
+
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
         phone_number = re.sub('\s|\+|\-', '', phone_number)
@@ -317,12 +350,6 @@ class CommCareAccountForm(forms.Form):
         elif not re.match(r'\d+$', phone_number):
             raise forms.ValidationError(_("%s is an invalid phone number." % phone_number))
         return phone_number
-
-    def clean_username(self):
-        username = self.cleaned_data['username']
-        if username == 'admin' or username == 'demo_user':
-            raise forms.ValidationError("The username %s is reserved for CommCare." % username)
-        return username
 
     def clean(self):
         try:
@@ -334,26 +361,6 @@ class CommCareAccountForm(forms.Form):
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
 
-        try:
-            username = self.cleaned_data['username']
-        except KeyError:
-            pass
-        else:
-            if len(username) > CommCareAccountForm.max_len_username:
-                raise forms.ValidationError(
-                    "Username %s is too long.  Must be under %d characters."
-                    % (username, CommCareAccountForm.max_len_username))
-            validate_username('%s@commcarehq.org' % username)
-            domain = self.cleaned_data['domain']
-            username = format_username(username, domain)
-            num_couch_users = len(CouchUser.view("users/by_username",
-                                                 key=username,
-                                                 reduce=False))
-            if num_couch_users > 0:
-                raise forms.ValidationError("CommCare user already exists")
-
-            # set the cleaned username to user@domain.commcarehq.org
-            self.cleaned_data['username'] = username
         return self.cleaned_data
 
 import django
@@ -363,6 +370,110 @@ if django.VERSION < (1, 6):
             ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
 else:
     validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
+
+
+_username_help = """
+<span ng-if="usernameAvailabilityStatus === 'pending'">
+    <i class="fa fa-circle-o-notch fa-spin"></i>
+    %(checking)s
+</span>
+<span ng-if="usernameAvailabilityStatus === 'taken'"
+      style="word-wrap:break-word;">
+    <i class="fa fa-remove"></i>
+    {{ usernameStatusMessage }}
+</span>
+<span ng-if="usernameAvailabilityStatus === 'available'"
+      style="word-wrap:break-word;">
+    <i class="fa fa-check"></i>
+    {{ usernameStatusMessage }}
+</span>
+<span ng-if="usernameAvailabilityStatus === 'error'">
+    <i class="fa fa-exclamation-triangle"></i>
+    %(server_error)s
+</span>
+""" % {
+    'checking': ugettext_noop('Checking Availability...'),
+    'server_error': ugettext_noop('Issue connecting to server. Check Internet connection.')
+}
+
+
+class NewMobileWorkerForm(forms.Form):
+    username = forms.CharField(
+        max_length=50,
+        required=True,
+        help_text=_username_help,
+        label=ugettext_noop("Username"),
+    )
+    first_name = forms.CharField(
+        max_length=50,
+        required=False,
+        label=ugettext_noop("First Name")
+    )
+    last_name = forms.CharField(
+        max_length=50,
+        required=False,
+        label=ugettext_noop("Last Name")
+    )
+    password = forms.CharField(
+        widget=PasswordInput(),
+        required=True,
+        min_length=1,
+        label=ugettext_noop("Password")
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
+        email_string = u"@{}.commcarehq.org".format(domain)
+        max_chars_username = 80 - len(email_string)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
+        self.helper.layout = Layout(
+            Fieldset(
+                _('Basic Information'),
+                crispy.Field(
+                    'username',
+                    ng_required="true",
+                    validate_username="",
+                    # What this says is, update as normal or when the element
+                    # loses focus. If the update is normal, wait 300 ms to
+                    # send the request again. If the update is on blur,
+                    # send the request.
+                    ng_model_options="{ "
+                                      " updateOn: 'default blur', "
+                                      " debounce: {'default': 300, 'blur': 0} "
+                                      "}",
+                    ng_model='mobileWorker.username',
+                    ng_maxlength=max_chars_username,
+                    maxlength=max_chars_username,
+                ),
+                crispy.Field(
+                    'first_name',
+                    ng_required="false",
+                    ng_model='mobileWorker.first_name',
+                    ng_maxlength="50",
+                ),
+                crispy.Field(
+                    'last_name',
+                    ng_required="false",
+                    ng_model='mobileWorker.last_name',
+                    ng_maxlength="50",
+                ),
+                crispy.Field(
+                    'password',
+                    ng_required="true",
+                    ng_model='mobileWorker.password'
+                ),
+            )
+        )
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if username == 'admin' or username == 'demo_user':
+            raise forms.ValidationError("The username %s is reserved for CommCare." % username)
+        return username
 
 
 class MultipleSelectionForm(forms.Form):
@@ -514,7 +625,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
             'Software Product Subscription Agreement</a>.'
         ) % {'pa_url': reverse('product_agreement')}
 
-        from corehq.apps.users.views.mobile import ListCommCareUsersView
+        from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -538,7 +649,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
             FormActions(
                 crispy.HTML(
                     '<a href="%(user_list_url)s" class="btn">%(text)s</a>' % {
-                        'user_list_url': reverse(ListCommCareUsersView.urlname, args=[self.domain]),
+                        'user_list_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                         'text': _("Back to Mobile Workers List")
                     }
                 ),
@@ -564,3 +675,57 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         self.account.date_confirmed_extra_charges = datetime.datetime.today()
         self.account.save()
         return True
+
+
+class SelfRegistrationForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain')
+
+        super(SelfRegistrationForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+
+        layout_fields = [
+            crispy.Fieldset(
+                _('Register'),
+                crispy.Field('username'),
+                crispy.Field('password'),
+                crispy.Field('password2'),
+            ),
+            FormActions(
+                StrictButton(
+                    _('Register'),
+                    css_class='btn-primary',
+                    type='submit',
+                )
+            ),
+        ]
+        self.helper.layout = crispy.Layout(*layout_fields)
+
+    username = TrimmedCharField(
+        required=True,
+        label=ugettext_lazy('Username (create a username)'),
+    )
+    password = forms.CharField(
+        required=True,
+        label=ugettext_lazy('Password (create a password)'),
+        widget=PasswordInput(),
+    )
+    password2 = forms.CharField(
+        required=True,
+        label=ugettext_lazy('Re-enter Password'),
+        widget=PasswordInput(),
+    )
+
+    def clean_username(self):
+        return clean_mobile_worker_username(
+            self.domain,
+            self.cleaned_data.get('username')
+        )
+
+    def clean_password2(self):
+        if self.cleaned_data.get('password') != self.cleaned_data.get('password2'):
+            raise forms.ValidationError(_('Passwords do not match.'))

@@ -464,7 +464,6 @@ class SupplyPointCase(CommCareCase):
         caseblock = CaseBlock(
             case_id=id,
             create=True,
-            version=V2,
             case_name=location.name,
             user_id=user_id,
             owner_id=owner_id,
@@ -488,7 +487,6 @@ class SupplyPointCase(CommCareCase):
             caseblock = CaseBlock(
                 case_id=self._id,
                 create=False,
-                version=V2,
                 case_name=location.name,
                 user_id=const.get_commtrack_user_id(location.domain),
                 update={

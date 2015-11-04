@@ -1,5 +1,5 @@
 from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSArrivedTest(ILSTestScript):

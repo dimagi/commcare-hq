@@ -12,11 +12,11 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException,
 )
 from corehq.s3 import ObjectStore
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE, OBJECT_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OBJECT_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
-    LOG_FORMAT_LEGACY, get_sync_log_class_by_format
+    get_sync_log_class_by_format
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -376,7 +376,7 @@ class RestoreState(object):
                     )
                     if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
                         from corehq.apps.reports.standard.deployments import SyncHistoryReport
-                        last_bugfix_date = datetime(2015, 9, 21)
+                        last_bugfix_date = datetime(2015, 10, 20)
                         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
                         sync_history_url = '{}?individual={}'.format(
                             SyncHistoryReport.get_url(self.domain),
@@ -421,24 +421,6 @@ class RestoreState(object):
         return self.params.version
 
     @property
-    def use_clean_restore(self):
-        def should_use_clean_restore(domain):
-            if settings.UNIT_TESTING:
-                override = getattr(
-                    settings, 'TESTS_SHOULD_USE_CLEAN_RESTORE', None)
-                if override is not None:
-                    return override
-            return OWNERSHIP_CLEANLINESS_RESTORE.enabled(domain)
-
-        # this can be overridden explicitly in the params but will default to the domain setting
-        if self.params.force_restore_mode == 'clean':
-            return True
-        elif self.params.force_restore_mode == 'legacy':
-            return False
-
-        return should_use_clean_restore(self.domain)
-
-    @property
     @memoized
     def owner_ids(self):
         return set(self.user.get_owner_ids())
@@ -462,21 +444,22 @@ class RestoreState(object):
 
     def create_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
+        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
             user_id=self.user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
             date=datetime.utcnow(),
-            previous_log_id=previous_log_id
+            previous_log_id=previous_log_id,
+            previous_log_rev=previous_log_rev,
         )
         new_synclog.save(**get_safe_write_kwargs())
         return new_synclog
 
     @property
     def sync_log_class(self):
-        format = LOG_FORMAT_SIMPLIFIED if self.use_clean_restore else LOG_FORMAT_LEGACY
-        return get_sync_log_class_by_format(format)
+        return get_sync_log_class_by_format(LOG_FORMAT_SIMPLIFIED)
 
     @property
     @memoized

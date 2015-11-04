@@ -2,24 +2,18 @@ import os
 import uuid
 from datetime import datetime
 from xml.etree import ElementTree
-from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
 
-from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.dates import utcnow_sans_milliseconds
 from lxml import etree
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
-from couchforms.tests.testutils import post_xform_to_couch
-from couchforms.models import XFormInstance
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from casexml.apps.case.util import post_case_blocks
-from django.conf import settings
 
 
 TEST_DOMAIN_NAME = 'test-domain'
@@ -55,31 +49,29 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
     with open(file_path, "rb") as f:
         xml_data = f.read()
-    doc, uid, case_id = _replace_ids_and_post(
+    updated_xml, uid, case_id = _replace_ids_in_xform_xml(
         xml_data,
         case_id_override=case_id_override,
     )
-    if domain:
-        doc.domain = domain
-    process_cases(doc)
-    case = CommCareCase.get(case_id)
+
+    domain = domain or 'test-domain'
+    _, _, [case] = FormProcessorInterface().submit_form_locally(updated_xml, domain=domain)
     test_class.assertLessEqual(starttime, case.server_modified_on)
     test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
-    test_class.assertEqual(case_id, case.case_id)
+    test_class.assertEqual(case_id, case.id)
     return case
 
 
-def _replace_ids_and_post(xml_data, case_id_override=None):
+def _replace_ids_in_xform_xml(xml_data, case_id_override=None):
     # from our test forms, replace the UIDs so we don't get id conflicts
     uid, case_id = (uuid.uuid4().hex for i in range(2))
-    
+
     if case_id_override:
         case_id = case_id_override
 
     xml_data = xml_data.replace("REPLACE_UID", uid)
     xml_data = xml_data.replace("REPLACE_CASEID", case_id)
-    doc = post_xform_to_couch(xml_data)
-    return (doc, uid, case_id)
+    return xml_data, uid, case_id
 
 
 def check_xml_line_by_line(test_case, expected, actual):
@@ -116,9 +108,9 @@ def assert_user_has_case(testcase, user, case_id, **kwargs):
 
 
 def assert_user_has_cases(testcase, user, case_ids, **kwargs):
-    case_blocks = [CaseBlock(case_id=case_id, version=V2).as_xml() for case_id in case_ids]
+    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
     return check_user_has_case(testcase, user, case_blocks,
-                               should_have=True, line_by_line=False, version=V2, **kwargs)
+                               should_have=True, line_by_line=False, **kwargs)
 
 
 def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
@@ -128,7 +120,7 @@ def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
 def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
     case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
     return check_user_has_case(testcase, user, case_blocks,
-                               should_have=False, version=V2, **kwargs)
+                               should_have=False, **kwargs)
 
 
 def get_case_xmlns(version):
@@ -142,7 +134,7 @@ def extract_caseblocks_from_xml(payload_string, version=V2):
 
 
 def check_user_has_case(testcase, user, case_blocks, should_have=True,
-                        line_by_line=True, restore_id="", version=V1,
+                        line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
 
     if not isinstance(case_blocks, list):
@@ -201,48 +193,16 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
     return restore_config, matches[0] if return_single else matches
 
 
-def post_util(create=False, case_id=None, user_id=None, owner_id=None,
-              case_type=None, version=V2, form_extras=None, close=False, date_modified=None,
-              **kwargs):
-
-    uid = lambda: uuid.uuid4().hex
-    case_id = case_id or uid()
-    block = CaseBlock(create=create,
-                      case_id=case_id,
-                      user_id=user_id or uid(),
-                      owner_id=owner_id or uid(),
-                      case_type=case_type or 'test',
-                      version=version,
-                      date_modified=date_modified,
-                      update=kwargs,
-                      close=close).as_xml()
-    form_extras = form_extras or {}
-    post_case_blocks([block], form_extras)
-    return case_id
-
-
-def _delete_all(db, viewname):
-    deleted = set()
-    for row in db.view(viewname, reduce=False):
-        doc_id = row['id']
-        if id not in deleted:
-            try:
-                safe_delete(db, doc_id)
-                deleted.add(doc_id)
-            except ResourceNotFound:
-                pass
-
-
 @unit_testing_only
 def delete_all_cases():
-    _delete_all(CommCareCase.get_db(), 'case/get_lite')
+    FormProcessorTestUtils.delete_all_cases()
 
 
 @unit_testing_only
 def delete_all_xforms():
-    _delete_all(XFormInstance.get_db(), 'couchforms/all_submissions_by_domain')
+    FormProcessorTestUtils.delete_all_xforms()
 
 
 @unit_testing_only
 def delete_all_sync_logs():
-    _delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
+    FormProcessorTestUtils.delete_all_sync_logs()

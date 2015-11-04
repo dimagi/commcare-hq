@@ -107,3 +107,10 @@ class CommCareFeatureSupportMixin(object):
         Image resize only supported > 2.23
         """
         return self._require_minimum_version('2.23')
+
+    @property
+    def enable_markdown_in_groups(self):
+        """
+        Markdown in groups only supported > 2.23
+        """
+        return self._require_minimum_version('2.23')

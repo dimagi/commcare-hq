@@ -1,5 +1,6 @@
 import datetime
 import copy
+from couchforms.models import XFormInstance
 from dimagi.ext.couchdbkit import IntegerProperty, BooleanProperty, StringProperty
 import dateutil
 import logging
@@ -53,7 +54,7 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
         days = []
         for user_id in user_ids:
             key = make_form_couch_key(self.domain, user_id=user_id)
-            results = get_db().view("reports_forms/all_forms",
+            results = XFormInstance.get_db().view("reports_forms/all_forms",
                 reduce=False,
                 include_docs=False,
                 descending=True,

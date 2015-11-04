@@ -6,7 +6,6 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 from corehq.apps.domain.views import ProBonoStaticView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.utils import PRICING_LINK
 
@@ -54,7 +53,6 @@ domain_specific = patterns('',
     (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
     (r'^case/', include('corehq.apps.hqcase.urls')),
-    (r'^cleanup/', include('corehq.apps.cleanup.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
@@ -76,10 +74,9 @@ urlpatterns = patterns('',
         url=static('hqwebapp/img/favicon2.png'))),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
+    (r'^analytics/', include('corehq.apps.analytics.urls')),
     (r'^register/', include('corehq.apps.registration.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
-    (r'^o/', include('corehq.apps.orgs.urls')),
-    (r'^organizations/', include(organizations_urls)),
     (r'^account/', include('corehq.apps.settings.urls')),
     (r'^project_store(.*)$', 'corehq.apps.appstore.views.rewrite_url'),
     (r'^exchange/', include('corehq.apps.appstore.urls')),
@@ -95,16 +92,17 @@ urlpatterns = patterns('',
     (r'^hq/pillow_errors/', include('corehq.apps.hqpillow_retry.urls')),
     (r'^couchlog/', include('couchlog.urls')),
     (r'^formtranslate/', include('formtranslate.urls')),
-    (r'^unicel/', include('corehq.apps.unicel.urls')),
-    (r'^tropo/', include('corehq.apps.tropo.urls')),
-    (r'^twilio/', include('corehq.apps.twilio.urls')),
+    (r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
+    (r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
+    (r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
+    (r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     (r'^dropbox/', include('corehq.apps.dropbox.urls')),
-    (r'^megamobile/', include('corehq.apps.megamobile.urls')),
-    (r'^telerivet/', include('corehq.apps.telerivet.urls')),
-    (r'^kookoo/', include('corehq.apps.kookoo.urls')),
-    (r'^yo/', include('corehq.apps.yo.urls')),
-    (r'^gvi/', include('corehq.apps.grapevine.urls')),
-    (r'^sislog/', include('corehq.apps.sislog.urls')),
+    (r'^megamobile/', include('corehq.messaging.smsbackends.megamobile.urls')),
+    (r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
+    (r'^kookoo/', include('corehq.messaging.ivrbackends.kookoo.urls')),
+    (r'^yo/', include('corehq.messaging.smsbackends.yo.urls')),
+    (r'^gvi/', include('corehq.messaging.smsbackends.grapevine.urls')),
+    (r'^sislog/', include('corehq.messaging.smsbackends.sislog.urls')),
     (r'^langcodes/', include('langcodes.urls')),
     (r'^builds/', include('corehq.apps.builds.urls')),
     (r'^downloads/temp/', include('soil.urls')),
@@ -137,15 +135,11 @@ urlpatterns = patterns('',
 if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
-# django rosetta support if configured
-if 'rosetta' in settings.INSTALLED_APPS:
-    urlpatterns += patterns('',
-        url(r'^rosetta/', include('rosetta.urls')),
-    )
-
 #django-staticfiles static/ url mapper
 if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^mocha/', include('corehq.apps.mocha.urls')),
+    )
     urlpatterns += patterns('django.contrib.staticfiles.views',
         url(r'^static/(?P<path>.*)$', 'serve'),
     )
-

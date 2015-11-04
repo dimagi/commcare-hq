@@ -43,11 +43,11 @@ class MenuContributor(SuiteContributorByModule):
                 menu = Menu(**menu_kwargs)
 
             def get_commands():
-                for form in module.get_forms():
-                    command = Command(id=id_strings.form_command(form))
+                for form in module.get_suite_forms():
+                    command = Command(id=id_strings.form_command(form, module))
 
                     if form.requires_case():
-                        form_datums = self.entries_helper.get_datums_meta_for_form_generic(form)
+                        form_datums = self.entries_helper.get_datums_meta_for_form_generic(form, module)
                         var_name = next(
                             meta.datum.id for meta in reversed(form_datums)
                             if meta.action and meta.requires_selection
@@ -61,7 +61,11 @@ class MenuContributor(SuiteContributorByModule):
                         not module.put_in_root and
                         (module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain))
                     ):
-                        command.relevant = interpolate_xpath(form.form_filter, case)
+                        fixture_xpath = (
+                            session_var(id_strings.fixture_session_var(module)) if module.fixture_select.active
+                            else None
+                        )
+                        command.relevant = interpolate_xpath(form.form_filter, case, fixture_xpath)
 
                     if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
                         # If there is a schedule and another filter condition, disregard it...
@@ -80,6 +84,9 @@ class MenuContributor(SuiteContributorByModule):
 
             menus.append(menu)
 
+        if self.app.use_grid_menus:
+            self._give_root_menus_grid_style(menus)
+
         return menus
 
     @staticmethod
@@ -91,3 +98,9 @@ class MenuContributor(SuiteContributorByModule):
         except ScheduleError:
             relevant = None
         return relevant
+
+    @staticmethod
+    def _give_root_menus_grid_style(menus):
+        for menu in menus:
+            if menu.id == id_strings.ROOT:
+                menu.style = "grid"

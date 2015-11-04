@@ -6,51 +6,6 @@ IMAGE_MIMETYPES = ["image/jpeg", "image/gif", "image/png"]
 AUDIO_MIMETYPES = ["audio/mpeg", "audio/mpeg3", "audio/wav", "audio/x-wav"]
 ZIP_MIMETYPES = ["application/zip"]
 
-def get_application_media(app):
-    """
-        DEPRECATED.
-    """
-    from corehq.apps.app_manager.models import Application
-    if not isinstance(app, Application):
-        raise ValueError("You must pass in an Application object.")
-
-    form_media = {
-        'images': set(),
-        'audio': set(),
-    }
-    form_errors = False
-    menu_media = {
-        'icons': set(),
-        'audio': set(),
-    }
-
-    def _add_menu_media(item):
-        menu_media['icons'].update(set(image.strip() for image in item.all_image_paths() if image))
-        menu_media['audio'].update(set(audio.strip() for audio in item.all_audio_paths() if audio))
-
-    for m in app.get_modules():
-        _add_menu_media(m)
-        for f in m.get_forms():
-            _add_menu_media(f)
-            try:
-                parsed = f.wrapped_xform()
-                if not parsed.exists():
-                    continue
-                f.validate_form()
-                for image in parsed.image_references:
-                    if image:
-                        form_media['images'].add(image.strip())
-                for audio in parsed.audio_references:
-                    if audio:
-                        form_media['audio'].add(audio.strip())
-            except (XFormValidationError, XFormException):
-                form_errors = True
-
-    return {
-        'form_media': form_media,
-        'menu_media': menu_media,
-    }, form_errors
-
 
 def most_restrictive(licenses):
     """

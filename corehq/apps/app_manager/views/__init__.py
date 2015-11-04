@@ -101,6 +101,7 @@ from corehq.apps.app_manager.views.multimedia import (
     multimedia_list_download,
 )
 from corehq.apps.app_manager.views.releases import (
+    AppDiffView,
     current_app_version,
     delete_copy,
     odk_install,
@@ -130,7 +131,7 @@ from corehq.apps.app_manager.views.translations import (
     upload_bulk_app_translations,
     upload_bulk_ui_translations,
 )
-from corehq.apps.app_manager.views.form_designer import (
+from corehq.apps.app_manager.views.formdesigner import (
     form_designer,
     get_data_schema,
     user_registration_source,

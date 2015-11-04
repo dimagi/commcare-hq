@@ -1,5 +1,5 @@
 import logging
-import mailchimp
+from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
 from django.contrib.auth.models import User
@@ -16,123 +16,10 @@ from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CouchUser
+from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
-
-
-DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
-
-
-class MailChimpNotConfiguredError(Exception):
-    pass
-
-
-class MailChimpListNotSetError(MailChimpNotConfiguredError):
-    pass
-
-
-def get_mailchimp_api():
-    if settings.MAILCHIMP_APIKEY:
-        return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
-    raise MailChimpNotConfiguredError('Mailchimp is not configured')
-
-
-def subscribe_user_to_mailchimp_list(user, list_id, email=None):
-    if not list_id:
-        raise MailChimpListNotSetError()
-
-    api = get_mailchimp_api()
-    api.lists.subscribe(
-        list_id,
-        {'email': email or user.email},
-        double_optin=False,
-        merge_vars={
-            'FNAME': user.first_name.title(),
-            'LNAME': user.last_name.title() if user.last_name else "",
-        } if user.first_name else {
-            'FNAME': (user.last_name.title()
-                      if user.last_name else DEFAULT_MAILCHIMP_FIRST_NAME),
-        },
-    )
-
-
-def safe_subscribe_user_to_mailchimp_list(user, list_id, email=None):
-    try:
-        subscribe_user_to_mailchimp_list(user, list_id, email)
-    except (
-        mailchimp.ListAlreadySubscribedError,
-        mailchimp.ListInvalidImportError,
-        mailchimp.ValidationError,
-        MailChimpNotConfiguredError,
-    ):
-        pass
-    except mailchimp.Error as e:
-        logging.error(e.message)
-
-
-def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
-    if not list_id:
-        raise MailChimpListNotSetError()
-
-    get_mailchimp_api().lists.unsubscribe(
-        list_id,
-        {'email': email or user.email},
-        send_goodbye=False,
-        send_notify=False,
-    )
-
-
-def safe_unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
-    try:
-        unsubscribe_user_from_mailchimp_list(user, list_id, email)
-    except (
-        mailchimp.ListNotSubscribedError,
-        MailChimpNotConfiguredError,
-    ):
-        pass
-    except mailchimp.Error as e:
-        logging.error(e.message)
-
-
-def handle_changed_mailchimp_email(user, old_email, new_email):
-    """
-    Checks whether there are other users with old_email who are also subscribed to any mailchimp lists.
-    If not, it safely unsubscribes that email from mailchimp. Then, adds new_email to mailchimp.
-    """
-
-    @memoized
-    def get_users_who_have_email(email):
-        if email:
-            users_with_old_email = User.objects.filter(email=email).values_list('username', flat=True)
-            return CouchUser.view(
-                'users/by_username',
-                 keys=list(users_with_old_email),
-                 include_docs=True,
-                 reduce=False,
-                 limit=100,  # if more than 100 people had this email then we are out of luck
-             ).all()
-        else:
-            return []
-
-    if user.subscribed_to_commcare_users:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in get_users_who_have_email(old_email)
-                                           if couch_user.subscribed_to_commcare_users]
-        if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
-            safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=old_email)
-
-    if not user.email_opt_out:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in get_users_who_have_email(old_email)
-                                           if not couch_user.email_opt_out]
-        if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
-            safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=old_email)
-
-    # subscribe new_email to lists
-    if user.subscribed_to_commcare_users:
-        safe_subscribe_user_to_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=new_email)
-    if not user.email_opt_out:
-        safe_subscribe_user_to_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=new_email)
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -146,30 +33,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
-
-    def _log_mailchimp_error(e):
-        logging.exception(
-            'unable to subscribe {0} to mailchimp. Is your configuration broken? {1}'.format(
-                username, e
-            ))
-    try:
-        safe_subscribe_user_to_mailchimp_list(
-            new_user,
-            settings.MAILCHIMP_MASS_EMAIL_ID
-        )
-    except Exception as e:
-        _log_mailchimp_error(e)
-
     new_user.subscribed_to_commcare_users = False
-    try:
-        safe_subscribe_user_to_mailchimp_list(
-            new_user,
-            settings.MAILCHIMP_COMMCARE_USERS_ID
-        )
-        new_user.subscribed_to_commcare_users = True
-    except Exception as e:
-        _log_mailchimp_error(e)
-
     new_user.eula.signed = True
     new_user.eula.date = now
     new_user.eula.type = 'End User License Agreement'
@@ -185,7 +49,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     return new_user
 
 
-def request_new_domain(request, form, org, domain_type=None, new_user=True):
+def request_new_domain(request, form, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
@@ -210,10 +74,6 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         if form.cleaned_data.get('domain_timezone'):
             new_domain.default_timezone = form.cleaned_data['domain_timezone']
 
-        if org:
-            new_domain.organization = org
-            new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
-
         if not new_user:
             new_domain.is_active = True
 
@@ -228,6 +88,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         new_domain.save() # we need to get the name from the _id
 
     create_30_day_trial(new_domain)
+    UserRole.init_domain_with_presets(new_domain.name)
 
     dom_req.domain = new_domain.name
 
@@ -300,7 +161,7 @@ USERS_LINK = 'http://groups.google.com/group/commcare-users'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-def send_domain_registration_email(recipient, domain_name, guid, username):
+def send_domain_registration_email(recipient, domain_name, guid, full_name):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
 
@@ -308,14 +169,15 @@ def send_domain_registration_email(recipient, domain_name, guid, username):
         "domain": domain_name,
         "pricing_link": PRICING_LINK,
         "registration_link": registration_link,
-        "username": username,
+        "full_name": full_name,
         "users_link": USERS_LINK,
         "wiki_link": WIKI_LINK,
+        'url_prefix': 'http://' + DNS_name,
     }
     message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
     message_html = render_to_string('registration/email/confirm_account.html', params)
 
-    subject = 'Welcome to CommCare HQ!'.format(**locals())
+    subject = ugettext('Please Confirm your CommCare HQ Account')
 
     try:
         send_html_email_async.delay(subject, recipient, message_html,

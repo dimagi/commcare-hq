@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.groups.tests import WrapGroupTestMixin
+from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
 from corehq.apps.products.models import Product
 
 

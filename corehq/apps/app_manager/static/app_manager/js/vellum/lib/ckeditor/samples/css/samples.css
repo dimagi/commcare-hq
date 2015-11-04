@@ -394,17 +394,6 @@ html {
 .content h5:hover a.content-heading-anchor {
   opacity: 1;
 }
-.content h1:target lesshat-selector,
-.content h2:target lesshat-selector,
-.content h3:target lesshat-selector,
-.content h4:target lesshat-selector,
-.content h5:target lesshat-selector {
-  -lh-property: 0; }
-@-webkit-keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 }}
-@-moz-keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 }}
-@-o-keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 }}
-@keyframes targetLinkOpacity{ 0%{ opacity: 0 } 100%{ opacity: 1 };
-}
 .content h1:target a,
 .content h2:target a,
 .content h3:target a,
@@ -1290,7 +1279,7 @@ header .balloon-a {
 }
 .toolbarModifier :focus,
 .toolbar button:focus,
-.configContainer > textarea:focus {
+.configContainer textarea.configCode:focus {
   outline: none;
 }
 div.toolbarModifier {
@@ -1549,7 +1538,7 @@ div.toolbarModifier-hints dl dd:after {
   width: 0;
 }
 .toolbarModifier-hints,
-.configContainer > textarea,
+.configContainer textarea.configCode,
 .CodeMirror {
   -webkit-border-radius: 3px;
   -webkit-background-clip: padding-box;
@@ -1563,7 +1552,7 @@ div.toolbarModifier-hints dl dd:after {
   line-height: 23.42px;
   line-height: 1.46rem;
 }
-.configContainer > textarea,
+.configContainer textarea.configCode,
 .CodeMirror pre,
 .CodeMirror-linenumber {
   font-size: 13.01px;
@@ -1577,7 +1566,7 @@ div.toolbarModifier-hints dl dd:after {
   padding: 0;
   margin: 0;
 }
-.configContainer > textarea {
+.configContainer textarea.configCode {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;

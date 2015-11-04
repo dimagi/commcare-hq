@@ -1,7 +1,6 @@
 from datetime import date, datetime, timedelta
 from couchforms.models import XFormInstance
-from . import (OPMCaseReportTestBase, OPMCase, MockCaseRow, Report,
-               offset_date, MockDataProvider, AggressiveDefaultDict)
+from .case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow
 
 
 class TestCaseProperties(OPMCaseReportTestBase):

@@ -105,7 +105,8 @@ def django_user_from_couch_id(id):
     From a couch id of a profile object, get the django user
     """
     # get the couch doc
-    couch_rep = get_db().get(id)
+    from corehq.apps.users.models import CouchUser
+    couch_rep = CouchUser.get_db().get(id)
     django_id = couch_rep["django_user"]["id"]
     return User.objects.get(id=django_id)
 

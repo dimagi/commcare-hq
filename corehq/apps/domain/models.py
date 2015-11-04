@@ -1,15 +1,16 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from itertools import imap
 import json
-import logging
 import uuid
-from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
+from corehq.dbaccessors.couchapps.all_docs import \
+    get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
+from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
     Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
     DocumentSchema, SchemaProperty, DictProperty,
@@ -20,7 +21,6 @@ from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
-from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
@@ -63,24 +63,6 @@ for lang in all_langs:
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
 
-
-class DomainMigrations(DocumentSchema):
-    has_migrated_permissions = BooleanProperty(default=False)
-
-    def apply(self, domain):
-        if not self.has_migrated_permissions:
-            logging.info("Applying permissions migration to domain %s" % domain.name)
-            from corehq.apps.users.models import UserRole, WebUser
-            UserRole.init_domain_with_presets(domain.name)
-            for web_user in WebUser.by_domain(domain.name):
-                try:
-                    web_user.save()
-                except ResourceConflict:
-                    # web_user has already been saved by another thread in the last few seconds
-                    pass
-
-            self.has_migrated_permissions = True
-            domain.save()
 
 LICENSES = {
     'cc': 'Creative Commons Attribution (CC BY)',
@@ -127,11 +109,19 @@ class Deployment(DocumentSchema, UpdatableSchema):
 
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
+    use_fixtures = BooleanProperty(default=True)
+
     case_owner_id = StringProperty()
+    use_user_location_as_owner = BooleanProperty(default=False)
+    user_location_ancestor_level = IntegerProperty(default=0)
+
     case_type = StringProperty()
 
-    def is_active_and_valid(self):
-        return self.enabled and self.case_owner_id and self.case_type
+    def fixtures_are_active(self):
+        return self.enabled and self.use_fixtures
+
+    def config_is_valid(self):
+        return self.case_owner_id and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
@@ -295,6 +285,8 @@ class Domain(Document, SnapshotMixin):
     # Set to True to allow sending sms and all-label surveys to cases whose
     # phone number is duplicated with another contact
     send_to_duplicated_case_numbers = BooleanProperty(default=True)
+    enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
+    enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -317,8 +309,6 @@ class Domain(Document, SnapshotMixin):
 
     image_path = StringProperty()
     image_type = StringProperty()
-
-    migrations = SchemaProperty(DomainMigrations)
 
     cached_properties = DictProperty()
 
@@ -386,8 +376,6 @@ class Domain(Document, SnapshotMixin):
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
-        if self.get_id:
-            self.apply_migrations()
         if should_save:
             self.save()
         return self
@@ -429,9 +417,9 @@ class Domain(Document, SnapshotMixin):
     def field_by_prefix(cls, field, prefix='', is_approved=True):
         # unichr(0xfff8) is something close to the highest character available
         res = cls.view("domain/fields_by_prefix",
-                                    group=True,
-                                    startkey=[field, is_approved, prefix],
-                                    endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
+                       group=True,
+                       startkey=[field, is_approved, prefix],
+                       endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]
@@ -439,9 +427,6 @@ class Domain(Document, SnapshotMixin):
     @classmethod
     def get_by_field(cls, field, value, is_approved=True):
         return cls.view('domain/fields_by_prefix', key=[field, is_approved, value], reduce=False, include_docs=True).all()
-
-    def apply_migrations(self):
-        self.migrations.apply(self)
 
     def add(self, model_instance, is_active=True):
         """
@@ -472,7 +457,7 @@ class Domain(Document, SnapshotMixin):
             startkey = [self.name, None]
             endkey = [self.name, None, {}]
 
-        return get_db().view('app_manager/applications',
+        return Application.get_db().view('app_manager/applications',
             startkey=startkey,
             endkey=endkey,
             include_docs=True,
@@ -510,23 +495,7 @@ class Domain(Document, SnapshotMixin):
         return False
 
     def recent_submissions(self):
-        from corehq.apps.reports.util import make_form_couch_key
-        key = make_form_couch_key(self.name)
-        res = get_db().view(
-            'reports_forms/all_forms',
-            startkey=key + [{}],
-            endkey=key,
-            descending=True,
-            reduce=False,
-            include_docs=False,
-            limit=1
-        ).all()
-        # if there have been any submissions in the past 30 days
-        if len(res) > 0:
-            received_on = iso_string_to_datetime(res[0]['key'][2])
-            return datetime.utcnow() <= received_on + timedelta(days=30)
-        else:
-            return False
+        return domain_has_submission_in_last_30_days(self.name)
 
     @cached_property
     def languages(self):
@@ -614,7 +583,6 @@ class Domain(Document, SnapshotMixin):
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
             )
-            new_domain.migrations = DomainMigrations(has_migrated_permissions=True)
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
@@ -688,12 +656,15 @@ class Domain(Document, SnapshotMixin):
                 )
 
     def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
-                  ignore=None, copy_by_id=None):
+                  copy_by_id=None, share_reminders=True,
+                  share_user_roles=True):
         from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
-
-        ignore = ignore if ignore is not None else []
+        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
+        from corehq.apps.fixtures.models import FixtureDataType
+        from corehq.apps.users.models import UserRole
 
         db = Domain.get_db()
         new_id = db.copy_doc(self.get_id)['id']
@@ -724,38 +695,45 @@ class Domain(Document, SnapshotMixin):
                 if hasattr(new_domain, field):
                     delattr(new_domain, field)
 
-            new_comps = {}  # a mapping of component's id to it's copy
+            new_app_components = {}  # a mapping of component's id to its copy
 
             def copy_data_items(old_type_id, new_type_id):
                 for item in FixtureDataItem.by_data_type(self.name, old_type_id):
-                    comp = self.copy_component(item.doc_type, item._id,
-                                               new_domain_name, user=user)
+                    comp = self.copy_component(
+                        item.doc_type, item._id, new_domain_name, user=user)
                     comp.data_type_id = new_type_id
                     comp.save()
 
-            for res in db.view('domain/related_to_domain', key=[self.name, True]):
-                if (copy_by_id and res['value']['_id'] not in copy_by_id and
-                    res['value']['doc_type'] in ('Application', 'RemoteApp',
-                                                 'FixtureDataType')):
-                    continue
-                if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
-                    app = get_app(self.name, res['value']['_id']).get_latest_saved()
-                    if app:
-                        comp = self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
-                    else:
-                        comp = self.copy_component(res['value']['doc_type'],
-                                                   res['value']['_id'],
-                                                   new_domain_name,
-                                                   user=user)
-                elif res['value']['doc_type'] not in ignore:
-                    comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-                    if res['value']['doc_type'] == 'FixtureDataType':
-                        copy_data_items(res['value']['_id'], comp._id)
-                else:
-                    comp = None
+            def get_latest_app_id(doc_id):
+                app = get_app(self.name, doc_id).get_latest_saved()
+                if app:
+                    return app._id, app.doc_type
 
-                if comp:
-                    new_comps[res['value']['_id']] = comp
+            for app in get_apps_in_domain(self.name):
+                doc_id, doc_type = app.get_id, app.doc_type
+                original_doc_id = doc_id
+                if copy_by_id and doc_id not in copy_by_id:
+                    continue
+                if not self.is_snapshot:
+                    doc_id, doc_type = get_latest_app_id(doc_id) or (doc_id, doc_type)
+                component = self.copy_component(doc_type, doc_id, new_domain_name, user=user)
+                if component:
+                    new_app_components[original_doc_id] = component
+
+            for doc_id in get_doc_ids_in_domain_by_class(self.name, FixtureDataType):
+                if copy_by_id and doc_id not in copy_by_id:
+                    continue
+                component = self.copy_component(
+                    'FixtureDataType', doc_id, new_domain_name, user=user)
+                copy_data_items(doc_id, component._id)
+
+            if share_reminders:
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
+                    self.copy_component(
+                        'CaseReminderHandler', doc_id, new_domain_name, user=user)
+            if share_user_roles:
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
+                    self.copy_component('UserRole', doc_id, new_domain_name, user=user)
 
             new_domain.save()
 
@@ -775,14 +753,14 @@ class Domain(Document, SnapshotMixin):
                 form = FormBase.get_form(event.form_unique_id)
                 form_app = form.get_app()
                 m_index, f_index = form_app.get_form_location(form.unique_id)
-                form_copy = new_comps[form_app._id].get_module(m_index).get_form(f_index)
+                form_copy = new_app_components[form_app._id].get_module(m_index).get_form(f_index)
                 event.form_unique_id = form_copy.unique_id
 
         def update_for_copy(handler):
             handler.active = False
             update_events(handler)
 
-        if 'CaseReminderHandler' not in ignore:
+        if share_reminders:
             for handler in CaseReminderHandler.get_handlers(new_domain_name):
                 apply_update(handler, update_for_copy)
 
@@ -805,7 +783,6 @@ class Domain(Document, SnapshotMixin):
             'FixtureDataType': FixtureDataType,
             'FixtureDataItem': FixtureDataItem,
         }
-        db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
             new_doc = import_app(id, new_domain_name)
             new_doc.copy_history.append(id)
@@ -815,7 +792,7 @@ class Domain(Document, SnapshotMixin):
             new_doc.ensure_module_unique_ids(should_save=False)
         else:
             cls = str_to_cls[doc_type]
-
+            db = cls.get_db()
             if doc_type == 'CaseReminderHandler':
                 cur_doc = cls.get(id)
                 if not self.reminder_should_be_copied(cur_doc):
@@ -846,12 +823,14 @@ class Domain(Document, SnapshotMixin):
         new_doc.save()
         return new_doc
 
-    def save_snapshot(self, ignore=None, copy_by_id=None):
+    def save_snapshot(self, share_reminders, copy_by_id=None):
         if self.is_snapshot:
             return self
         else:
             try:
-                copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
+                copy = self.save_copy(
+                    copy_by_id=copy_by_id, share_reminders=share_reminders,
+                    share_user_roles=False)
             except NameUnavailableException:
                 return None
             copy.is_snapshot = True
@@ -907,18 +886,6 @@ class Domain(Document, SnapshotMixin):
         )
         return map(cls.get, [r['id'] for r in results]), results.total_rows
 
-    @memoized
-    def get_organization(self):
-        from corehq.apps.orgs.models import Organization
-        return Organization.get_by_name(self.organization)
-
-    @memoized
-    def organization_title(self):
-        if self.organization:
-            return self.get_organization().title
-        else:
-            return ''
-
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
         self.save()
@@ -934,19 +901,8 @@ class Domain(Document, SnapshotMixin):
 
     def long_display_name(self):
         if self.is_snapshot:
-            return format_html(
-                "Snapshot of {0} &gt; {1}",
-                self.organization_title(),
-                self.copied_from.display_name()
-            )
-        if self.organization:
-            return format_html(
-                '{0} &gt; {1}',
-                self.organization_title(),
-                self.hr_name or self.name
-            )
-        else:
-            return self.hr_name or self.name
+            return format_html("Snapshot of {}", self.copied_from.display_name())
+        return self.hr_name or self.name
 
     __str__ = long_display_name
 
@@ -972,13 +928,8 @@ class Domain(Document, SnapshotMixin):
                     u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
                 )
         # delete all associated objects
-        db = self.get_db()
-        related_doc_ids = [row['id'] for row in db.view('domain/related_to_domain',
-            startkey=[self.name],
-            endkey=[self.name, {}],
-            include_docs=False,
-        )]
-        iter_bulk_delete(db, related_doc_ids, chunksize=500)
+        for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
+            iter_bulk_delete(db, related_doc_ids, chunksize=500)
         self._delete_web_users_from_domain()
         self._delete_sql_objects()
         super(Domain, self).delete()
@@ -986,40 +937,57 @@ class Domain(Document, SnapshotMixin):
 
     def _delete_web_users_from_domain(self):
         from corehq.apps.users.models import WebUser
-        web_users = WebUser.by_domain(self.name)
-        for web_user in web_users:
+        active_web_users = WebUser.by_domain(self.name)
+        inactive_web_users = WebUser.by_domain(self.name, is_active=False)
+        for web_user in list(active_web_users) + list(inactive_web_users):
             web_user.delete_domain_membership(self.name)
+            web_user.save()
 
     def _delete_sql_objects(self):
         from casexml.apps.stock.models import DocDomainMapping
         from corehq.apps.locations.models import SQLLocation, LocationType
         from corehq.apps.products.models import SQLProduct
 
-        cursor = connection.cursor()
+        with connection.cursor() as cursor:
 
-        """
-            We use raw queries instead of ORM because Django queryset delete needs to
-            fetch objects into memory to send signals and handle cascades. It makes deletion very slow
-            if we have a millions of rows in stock data tables.
-        """
-        cursor.execute(
-            "DELETE FROM stock_stocktransaction "
-            "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
-        )
+            """
+                We use raw queries instead of ORM because Django queryset delete needs to
+                fetch objects into memory to send signals and handle cascades. It makes deletion very slow
+                if we have a millions of rows in stock data tables.
+            """
+            cursor.execute(
+                "DELETE FROM stock_stocktransaction "
+                "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
+            )
 
-        cursor.execute(
-            "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
-        )
+            cursor.execute(
+                "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
+            )
 
-        cursor.execute(
-            "DELETE FROM commtrack_stockstate"
-            " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
-        )
+            cursor.execute(
+                "DELETE FROM commtrack_stockstate"
+                " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
+            )
 
         SQLProduct.objects.filter(domain=self.name).delete()
         SQLLocation.objects.filter(domain=self.name).delete()
         LocationType.objects.filter(domain=self.name).delete()
         DocDomainMapping.objects.filter(domain_name=self.name).delete()
+
+        from corehq.apps.accounting.models import Subscription, Subscriber, SubscriptionAdjustment, Invoice, \
+            BillingRecord, LineItem, CreditAdjustment, CreditLine
+
+        SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
+        BillingRecord.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(credit_line__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(related_credit__subscription__subscriber__domain=self.name).delete()
+        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+
+        CreditLine.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Invoice.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Subscription.objects.filter(subscriber__domain=self.name).delete()
+        Subscriber.objects.filter(domain=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
@@ -1113,7 +1081,8 @@ class Domain(Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        return get_db().view("domain/snapshots",
+        from corehq.apps.app_manager.models import Application
+        return Application.get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],
             reduce=True,
@@ -1177,45 +1146,6 @@ class Domain(Document, SnapshotMixin):
         """
         from corehq.apps.commtrack.util import make_domain_commtrack
         make_domain_commtrack(self)
-
-
-class DomainCounter(Document):
-    domain = StringProperty()
-    name = StringProperty()
-    count = IntegerProperty()
-
-    @classmethod
-    def get_or_create(cls, domain, name):
-        #TODO: Need to make this atomic
-        counter = cls.view("domain/counter",
-            key = [domain, name],
-            include_docs=True
-        ).one()
-        if counter is None:
-            counter = DomainCounter (
-                domain = domain,
-                name = name,
-                count = 0
-            )
-            counter.save()
-        return counter
-
-    @classmethod
-    def increment(cls, domain, name, amount=1):
-        num_tries = 0
-        while True:
-            try:
-                counter = cls.get_or_create(domain, name)
-                range_start = counter.count + 1
-                counter.count += amount
-                counter.save()
-                range_end = counter.count
-                break
-            except ResourceConflict:
-                num_tries += 1
-                if num_tries >= 500:
-                    raise
-        return (range_start, range_end)
 
 
 class TransferDomainRequest(models.Model):

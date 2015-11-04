@@ -1,16 +1,16 @@
-import uuid
 from django.test import TestCase
-from django.conf import settings
 from django.test.utils import override_settings
 from casexml.apps.case import const
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.test_const import *
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
-from dimagi.utils.post import post_data
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseFromXFormTest(TestCase):
+
+    def setUp(self):
+        self.interface = FormProcessorInterface()
     
     def testCreate(self):
         case = bootstrap_case_from_xml(self, "create.xml")
@@ -26,13 +26,14 @@ class CaseFromXFormTest(TestCase):
     def testCreateThenUpdateInSeparateForms(self):
         # recycle our previous test's form
         original_case = bootstrap_case_from_xml(self, "create_update.xml")
-        original_case.save()
         self.assertEqual(original_case.type, "test_case_type")
         self.assertEqual(original_case.name, "test case name")
         # we don't need to bother checking all the properties because this is
         # the exact same workflow as above.
         
-        case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
+        case = bootstrap_case_from_xml(self, "update.xml", original_case.id)
+        # fetch the case from the DB to ensure it is property wrapped
+        case = self.interface.case_model.get(case.case_id)
         self.assertEqual(False, case.closed)
         
         self.assertEqual(3, len(case.actions))
@@ -66,10 +67,9 @@ class CaseFromXFormTest(TestCase):
 
     def testCreateThenClose(self):
         case = bootstrap_case_from_xml(self, "create.xml")
-        case.save()
-                
+
         # now close it
-        case = bootstrap_case_from_xml(self, "close.xml", case.case_id)
+        case = bootstrap_case_from_xml(self, "close.xml", case.id)
         self.assertEqual(True, case.closed)
         
         self.assertEqual(3, len(case.actions))
@@ -97,7 +97,7 @@ class CaseFromXFormTest(TestCase):
         pass
     
     def _check_static_properties(self, case):
-        self.assertEqual(CommCareCase, type(case))
+        self.assertEqual(self.interface.case_model, type(case))
         self.assertEqual('CommCareCase', case.doc_type)
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)

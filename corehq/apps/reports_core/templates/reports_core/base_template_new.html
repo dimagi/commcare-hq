@@ -16,8 +16,9 @@
     <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -40,7 +41,7 @@
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
             showAllRowsOption: {{ report_table.show_all_rows|JSON }},
-
+            aaSorting: [],
             {% if headers.render_aoColumns %}aoColumns: {{ headers.render_aoColumns|JSON }},{% endif %}
             autoWidth: {{ headers.auto_width|JSON }},
             {% if headers.custom_sort %}customSort: {{ headers.custom_sort|JSON }},{% endif %}
@@ -57,6 +58,8 @@
             extraCallbacks: [updateCharts]
         });
         $('#report-filters').submit(function(event) {
+            $('#reportHint').remove();
+            $('#reportContent').removeClass('hide');
             var postData = $(this).serialize();
             $.ajax({
                 url: $(this).attr("action"),
@@ -181,20 +184,27 @@
         {% endif %}
     </div>
 </div>
-{% block reportcharts %}
-<section id="chart-container" style="display: none;">
-</section>
-{% endblock %}
-{% block reporttable %}
-<div>
-    <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
-        <thead>
-        {{ headers.render_html|safe }}
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+<div id="reportHint" class="well">
+    <h4>{% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>
+    <p>{% blocktrans %}Please choose your filters above and click <strong>Apply</strong> to see report data.{% endblocktrans %}</p>
 </div>
-{% endblock reporttable %}
+<div id="reportContent" class="hide">
+    {% block reportcharts %}
+    <section id="chart-container" style="display: none;">
+    </section>
+    {% endblock %}
+    {% block reporttable %}
+    <div>
+        <table id="report_table_{{ report.slug }}" class="table table-striped datatable">
+            <thead>
+            {{ headers.render_html|safe }}
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    {% endblock reporttable %}
+</div>
+
 {% endblock main_column_content %}
 {% endblock main_column %}

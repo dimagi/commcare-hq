@@ -1,0 +1,57 @@
+{% load i18n %}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>{% trans 'Filter Name' %}</th>
+            <th>{% trans 'Type' %}</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: { data: filterConfig.selectedFilterStructure, as: 'filter' }">
+        <tr>
+            <th data-bind="text: filter.display"></th>
+            <th>
+                <select data-bind="
+                    options: report.filterConfig.filterDocTypes,
+                    value: selectedValue.doc_type
+                ">
+                </select>
+            </th>
+            <th>
+                <div data-bind="visible: filter.selectedValue.doc_type() === 'AutoFilter'">
+                    <select data-bind="
+                        options: report.filterConfig.autoFilterTypes,
+                        value: filter.selectedValue.filter_type
+                    "></select>
+                </div>
+                <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticDatespanFilter'">
+                    <select data-bind="
+                        options: report.filterConfig.date_range_options,
+                        value: filter.selectedValue.date_range
+                    "></select>
+                </div>
+                <div data-bind="visible: filter.selectedValue.doc_type() === 'CustomDataAutoFilter'">
+                    <input type="text" data-bind="value: filter.selectedValue.custom_data_property"/>
+                </div>
+                <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceListFilter'">
+                    <input type="text"
+                           class="choice_filter"
+                           style="width:300px"
+                           data-bind="value: filter.selectedValue.value"/>
+                    <input type="hidden" data-bind="value: dynamicFilterName">
+                </div>
+                <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticChoiceFilter'">
+                    <select data-bind="
+                        options: filter.choices,
+                        optionsText: 'display',
+                        optionsValue: 'value',
+                        value: filter.selectedValue.select_value
+                    "></select>
+                </div>
+            </th>
+        </tr>
+    </tbody>
+</table>
+
+<div data-bind="subscribeFilters: filterConfig.addSubscribersToSaveButton()"></div>

@@ -12,6 +12,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.db import Session
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class ConfigurableReportViewTest(TestCase):
@@ -25,10 +26,9 @@ class ConfigurableReportViewTest(TestCase):
             create=True,
             case_id=id,
             case_type=cls.case_type,
-            version=V2,
             update=properties,
         ).as_xml()
-        post_case_blocks([case_block], {'domain': cls.domain})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': cls.domain})
         return CommCareCase.get(id)
 
     @classmethod

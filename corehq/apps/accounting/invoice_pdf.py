@@ -1,4 +1,7 @@
 import os
+
+from django.conf import settings
+
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
@@ -6,7 +9,6 @@ from reportlab.platypus import Paragraph
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
 from corehq.const import USER_DATE_FORMAT
-import settings
 
 
 LOGO_FILENAME = \

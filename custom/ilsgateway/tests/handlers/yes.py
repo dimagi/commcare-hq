@@ -1,5 +1,5 @@
 from custom.ilsgateway.tanzania.reminders import YES_HELP
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class TestYes(ILSTestScript):

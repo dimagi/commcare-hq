@@ -6,12 +6,13 @@ import datetime
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import send_HTML_email
-from settings import DATA_EMAIL
+from django.conf import settings
 
 logger = get_task_logger(__name__)
 
 
-@periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'))
+@periodic_task(queue='background_queue', run_every=crontab(hour=1, minute=0, day_of_month='2'),
+               acks_late=True, ignore_result=True)
 def build_last_month_MALT():
     def _last_month_datespan():
         today = datetime.date.today()
@@ -29,7 +30,7 @@ def build_last_month_MALT():
               )
     send_HTML_email(
         'MALT is ready',
-        DATA_EMAIL,
+        settings.DATA_EMAIL,
         message,
         text_content=message
     )

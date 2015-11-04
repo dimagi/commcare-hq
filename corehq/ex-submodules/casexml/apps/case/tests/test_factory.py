@@ -1,21 +1,21 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
-from casexml.apps.case.mock import CaseStructure, CaseRelationship, CaseFactory
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from couchforms.models import XFormInstance
 
 
 class CaseRelationshipTest(SimpleTestCase):
 
     def test_defaults(self):
-        relationship = CaseRelationship()
+        relationship = CaseIndex()
         self.assertIsNotNone(relationship.related_structure.case_id)
         self.assertEqual(relationship.DEFAULT_RELATIONSHIP, relationship.relationship)
         self.assertEqual(relationship.DEFAULT_RELATED_CASE_TYPE, relationship.related_type)
 
     def test_default_type_from_relationship(self):
-        relationship = CaseRelationship(CaseStructure(attrs={'case_type': 'custom_type'}))
+        relationship = CaseIndex(CaseStructure(attrs={'case_type': 'custom_type'}))
         self.assertEqual('custom_type', relationship.related_type)
 
 
@@ -24,29 +24,32 @@ class CaseStructureTest(SimpleTestCase):
     def test_index(self):
         parent_case_id = uuid.uuid4().hex
         structure = CaseStructure(
-            relationships=[
-                CaseRelationship(CaseStructure(case_id=parent_case_id))
+            indices=[
+                CaseIndex(CaseStructure(case_id=parent_case_id))
             ]
         )
         self.assertEqual(
-            {CaseRelationship.DEFAULT_RELATIONSHIP: (CaseRelationship.DEFAULT_RELATED_CASE_TYPE, parent_case_id)},
+            {DEFAULT_CASE_INDEX_IDENTIFIERS[CaseIndex.DEFAULT_RELATIONSHIP]:
+             (CaseIndex.DEFAULT_RELATED_CASE_TYPE, parent_case_id,
+              CaseIndex.DEFAULT_RELATIONSHIP)},
             structure.index,
         )
 
     def test_multiple_indices(self):
         indices = [
-            ('mother_case_id', 'mother', 'mother_type'),
-            ('father_case_id', 'father', 'father_type'),
+            ('mother_case_id', 'parent', 'mother_type', 'mother'),
+            ('father_case_id', 'parent', 'father_type', 'father'),
         ]
         structure = CaseStructure(
-            relationships=[
-                CaseRelationship(CaseStructure(case_id=i[0]), relationship=i[1], related_type=i[2])
+            indices=[
+                CaseIndex(CaseStructure(case_id=i[0]), relationship=i[1], related_type=i[2],
+                          identifier=i[3])
                 for i in indices
             ]
         )
         self.assertEqual(
-            {i[1]: (i[2], i[0]) for i in indices},
-            structure.index
+            {i[3]: (i[2], i[0], i[1]) for i in indices},
+            structure.index,
         )
 
     def test_walk_ids(self):
@@ -55,11 +58,11 @@ class CaseStructureTest(SimpleTestCase):
         grandparent_case_id = uuid.uuid4().hex
         structure = CaseStructure(
             case_id=case_id,
-            relationships=[
-                CaseRelationship(CaseStructure(
+            indices=[
+                CaseIndex(CaseStructure(
                     case_id=parent_case_id,
-                    relationships=[
-                        CaseRelationship(CaseStructure(case_id=grandparent_case_id))
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=grandparent_case_id))
                     ]))
             ]
         )
@@ -74,11 +77,11 @@ class CaseStructureTest(SimpleTestCase):
         grandparent_case_id = uuid.uuid4().hex
         structure = CaseStructure(
             case_id=case_id,
-            relationships=[
-                CaseRelationship(CaseStructure(
+            indices=[
+                CaseIndex(CaseStructure(
                     case_id=parent_case_id,
-                    relationships=[
-                        CaseRelationship(CaseStructure(case_id=grandparent_case_id))
+                    indices=[
+                        CaseIndex(CaseStructure(case_id=grandparent_case_id))
                     ]))
             ]
         )
@@ -88,7 +91,7 @@ class CaseStructureTest(SimpleTestCase):
             list(structure.walk_ids())
         )
         structure.walk_related = True
-        structure.relationships[0].related_structure.walk_related = False
+        structure.indices[0].related_structure.walk_related = False
         self.assertEqual(
             [case_id, parent_case_id],
             list(structure.walk_ids())
@@ -100,7 +103,7 @@ class CaseFactoryTest(TestCase):
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
-        self.assertTrue(CommCareCase.get_db().doc_exist(case._id))
+        self.assertIsNotNone(FormProcessorInterface().case_model.get(case.id))
 
     def test_create_overrides(self):
         factory = CaseFactory()
@@ -140,8 +143,8 @@ class CaseFactoryTest(TestCase):
             CaseStructure(case_id=case_id),
             CaseStructure(
                 case_id=child_case_id,
-                relationships=[
-                    CaseRelationship(CaseStructure(case_id=parent_case_id))
+                indices=[
+                    CaseIndex(CaseStructure(case_id=parent_case_id))
                 ]
             )
         ]
@@ -161,8 +164,8 @@ class CaseFactoryTest(TestCase):
         factory = CaseFactory()
         parent = factory.create_case()
         child_updates = factory.create_or_update_case(
-            CaseStructure(attrs={'create': True}, walk_related=False, relationships=[
-                CaseRelationship(CaseStructure(case_id=parent._id))
+            CaseStructure(attrs={'create': True}, walk_related=False, indices=[
+                CaseIndex(CaseStructure(case_id=parent._id))
             ]),
         )
         self.assertEqual(1, len(child_updates))
@@ -174,7 +177,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': token_id})
-        form = XFormInstance.get(case.xform_ids[0])
+        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_default(self):
@@ -185,7 +188,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         case = factory.create_case()
-        form = XFormInstance.get(case.xform_ids[0])
+        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_override_defaults(self):
@@ -194,5 +197,5 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': 'differenttoken'})
-        form = XFormInstance.get(case.xform_ids[0])
+        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
         self.assertEqual('differenttoken', form.last_sync_token)

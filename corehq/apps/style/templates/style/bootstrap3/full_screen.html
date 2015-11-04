@@ -1,0 +1,14 @@
+{% extends 'style/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+{% load menu_tags %}
+
+{% block content %}
+    {% block page_breadcrumbs %}{% endblock %}
+    <div class="container-fluid">
+        <div id="hq-content">
+            <div class="page-header" style="margin-top: 0;">
+                <h1 style="font-size: 1.8em;">{% block page_title %}{% endblock %}</h1>
+            </div>
+            {% block page_content %}{% endblock page_content %}
+    </div>
+{% endblock content %}

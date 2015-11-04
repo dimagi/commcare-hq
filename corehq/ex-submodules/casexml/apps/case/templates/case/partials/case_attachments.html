@@ -14,7 +14,7 @@
         <dd>{{ attachment.attachment_size }} bytes</dd>
     {% if attachment.is_image %}
         <dt>{% trans "Image" %}</dt>
-        <dd><img src="{% url "api_case_attachment" domain=case.domain case_id=case.get_id attachment_id=attach_key %}?img&size=large_square"></dd>
+        <dd><img src="{% url "api_case_attachment" domain=case.domain case_id=case.get_id attachment_id=attach_key %}"></dd>
     {% else %}
         <dt>{% trans "Link" %}</dt>
         <dd><a href="{% url "api_case_attachment" domain=case.domain case_id=case.get_id attachment_id=attach_key %}">Download</a></dd>

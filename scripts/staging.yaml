@@ -45,18 +45,24 @@
 trunk: master
 name: autostaging
 branches:
+  - kill-orgs  # danny 10/21
+  - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
-  - update-submodules # TS 5/6
-  - new-mobile-workers # Biyeun 8/25
-  - billing/post-pay # Farid 9/3
-  - update-signup # Jenny 9/9
-  - dummy-ben
+  - report-builder-b3+exports-ui-changes+b3-tf+10-30 # BB 10/30
+  - exports-ui-changes  # biyeun 9/28
+  - report-builder-b3 # Noah 10/20
+  - b3-tf # ben 10/1
+  - two-factor-otp-only # j$ 10/2
+  - refactor-copy-domain #ts 11/2
+  - fab-bower-conflicts #ts 11/2
+  - requests #Simon 11/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
       - new-libs # Ben 9/3
+      - b3-tf # ben 10/1
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -71,4 +77,5 @@ submodules:
     branches: []
   submodules/django-prbac-src:
     branches: []
-
+  submodules/fluff-src:
+    branches: []

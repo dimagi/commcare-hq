@@ -32,8 +32,7 @@ class Worker(object):
         ('owner_id', 'Owner ID', False, None),
     ]
 
-    # remove form_data parameter when all data will correct on HQ
-    def __init__(self, worker, report, case_data=None, form_data=None):
+    def __init__(self, worker, report, case_data=None):
         self.debug = report.debug
         self.case_data = case_data or []
         self.name = worker.get('name')

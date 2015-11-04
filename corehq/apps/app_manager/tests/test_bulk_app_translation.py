@@ -9,13 +9,13 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.translations import \
     process_bulk_app_translation_upload, expected_bulk_app_sheet_rows, \
     expected_bulk_app_sheet_headers
 
 
-class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
+class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         """
@@ -156,7 +156,11 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("question3-label", "question3", "question3&#39;s label", "", "", "", "", "", ""),
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
-          ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", "")
+          ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", ""),
+          ('add_markdown-label', 'add_markdown: ~~new \u0939\u093f markdown~~', 'add_markdown: ~~new \u0939\u093f markdown~~', '', '', '', '', '', ''),
+          ('remove_markdown-label', 'remove_markdown', 'remove_markdown', '', '', '', '', '', ''),
+          ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
+          ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*', '', '', '', '', '', ''),
         ))
     )
 
@@ -184,7 +188,12 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('question3-label', 'question3', 'question3', '', '', '', '', '', ''),
           ('question3/question4-label', 'question4', 'question4', '', '', '', '', '', ''),
           ('question3/question5-label', 'question5', 'question5', '', '', '', '', '', ''),
-          ('question7-label', 'question7', 'question7', '', '', '', '', '', '')))
+          ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
+          ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
+          ('remove_markdown-label', 'remove_markdown: ~~remove this~~', 'remove_markdown: ~~remove this~~', '', '', '', '', '', ''),
+          ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
+          ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
+        ))
      )
     def test_set_up(self):
         self._shared_test_initial_set_up()
@@ -224,6 +233,14 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         self.assert_question_label("question3's label", 0, 0, "fra", "/data/question3")
         self.assert_question_label("question6: ____", 0, 0, "en", "/data/question3/question4")
         self.assert_question_label("question1: ____ < 5", 0, 0, "en", "/data/question7")
+
+        # Test markdown
+        self.assert_question_label("add_markdown: ~~new \u0939\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
+        self.assert_question_label("remove_markdown", 0, 0, "en", "/data/remove_markdown")
+        self.assert_question_label("## smaller_markdown", 0, 0, "en", "/data/update_markdown")
+        self.assert_question_label("*i just happen to like stars a lot*", 0, 0, "en", "/data/vetoed_markdown")
+        form = self.app.get_module(0).get_form(0)
+        self.assertXmlEqual(self.get_xml("change_upload_form"), form.render_xform())
 
     def test_missing_itext(self):
         self.app = Application.wrap(self.get_json("app_no_itext"))
@@ -272,7 +289,7 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBase):
         self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
 
 
-class BulkAppTranslationDownloadTest(SimpleTestCase, TestFileMixin):
+class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     file_path = ('data', 'bulk_app_translation', 'download')
     maxDiff = None
@@ -297,7 +314,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestFileMixin):
         ('module1_form1',
          (('What_does_this_look_like-label', 'What does this look like?', '', 'jr://file/commcare/image/data/What_does_this_look_like.png', ''),
           ('no_media-label', 'No media', '', '', ''),
-          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and bad &lt; xml.', '', '', '')))
+          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')))
     )
 
 

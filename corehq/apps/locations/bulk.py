@@ -110,7 +110,7 @@ class LocationImporter(object):
                 if 'site_code' in loc:
                     # overwrite this value in the dict so we don't
                     # ever accidentally use a randomly capitalized veersion
-                    loc['site_code'] = loc['site_code'].lower()
+                    loc['site_code'] = str(loc['site_code']).lower()
 
                 if 'site_code' in loc and loc['site_code'] in self.seen_site_codes:
                     self.results.append(_(

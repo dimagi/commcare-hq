@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from StringIO import StringIO
@@ -5,7 +6,7 @@ from StringIO import StringIO
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
 from django.core.urlresolvers import RegexURLResolver, Resolver404
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
@@ -199,6 +200,9 @@ class DownloadCCZ(DownloadMultimediaZip):
 
 @safe_download
 def download_file(request, domain, app_id, path):
+    if path == "app.json":
+        return JsonResponse(request.app.to_json())
+
     content_type_map = {
         'ccpr': 'commcare/profile',
         'jad': 'text/vnd.sun.j2me.app-descriptor',
@@ -311,9 +315,9 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     all the resource files that will end up zipped into the jar.
 
     """
-    files = None
+    files = []
     try:
-        files = download_index_files(request.app)
+        files = source_files(request.app)
     except Exception:
         messages.error(
             request,
@@ -328,7 +332,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
         )
     return render(request, template, {
         'app': request.app,
-        'files': files,
+        'files': [{'name': f[0], 'source': f[1]} for f in files],
     })
 
 
@@ -372,4 +376,21 @@ def download_index_files(app):
     else:
         files = app.create_all_files().items()
 
+    return sorted(files)
+
+
+def source_files(app):
+    """
+    Return the app's source files, including the app json.
+    Return format is a list of tuples where the first item in the tuple is a
+    file name and the second is the file contents.
+    """
+    if not app.copy_of:
+        app.set_media_versions(None)
+    files = download_index_files(app)
+    files.append(
+        ("app.json", json.dumps(
+            app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
+        ))
+    )
     return sorted(files)

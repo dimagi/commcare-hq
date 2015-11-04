@@ -49,31 +49,6 @@
                         <br/>
                     </section>
                 {% endif %}
-                <section id="success-message">
-                    <form class="save-button-form form-horizontal" method="post" action="{% url "edit_app_attr" domain app.id 'success_message' %}"
-                            data-bind="visible: COMMCAREHQ.appView.settings.enableSuccessMessage()">
-                        {% if app.get_doc_type == 'Application'%}
-                        <hr/>
-                        {% endif %}
-                        <div class="save-button-holder clearfix"></div>
-                        <fieldset>
-                            <div class="control-group">
-                                <label class="control-label">
-                                    {% trans "Success Message" %}
-                                        <span class="hq-help-template"
-                                              data-title="{% trans "Success Message" %}"
-                                              data-content="{% trans "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form. In the template, you have access to the following variables gathered real-time from the server: $first_name, $name, $week, $today. Example: Thanks $first_name! You have submitted $today forms today and $week forms since Monday." %}"
-                                                ></span>
-                                </label>
-                                <div class="controls">
-                                    <textarea class="span3" name="success_message">{{ app.success_message|clean_trans:langs }}</textarea>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </form>
-                    <!-- hack for success message popover -->
-                    <div style="height: 85px"></div>
-                </section>
             </div>
             {% endif %}
             <div id="bulk-app-translations-tab" class="tab-pane">

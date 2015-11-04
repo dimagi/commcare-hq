@@ -11,7 +11,9 @@ import uuid
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
 from dimagi.utils.decorators.memoized import memoized
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from corehq import privileges
@@ -19,7 +21,6 @@ from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
-import settings
 
 from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
@@ -411,7 +412,18 @@ class SubAreaMixin():
 
 
 class DomainGlobalSettingsForm(forms.Form):
-    hr_name = forms.CharField(label=ugettext_lazy("Project Name"))
+    USE_LOCATION_CHOICE = "user_location"
+    USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
+    LOCATION_CHOICES = [USE_LOCATION_CHOICE, USE_PARENT_LOCATION_CHOICE]
+    CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
+    CASES_ONLY_CHOICE = "cases_only"
+
+    hr_name = forms.CharField(
+        label=ugettext_lazy("Project Name"),
+        help_text=ugettext_lazy("This name will appear in the upper right corner "
+                                "when you are in this project. Changing this name "
+                                "will not change the URL of the project.")
+    )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -433,6 +445,22 @@ class DomainGlobalSettingsForm(forms.Form):
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
                     "you're actively piloting it.")
+    )
+    call_center_type = ChoiceField(
+        label=ugettext_lazy("Call Center Type"),
+        initial=CASES_AND_FIXTURES_CHOICE,
+        choices=[
+            (CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"),
+            (CASES_ONLY_CHOICE, "Create just cases"),
+        ],
+        help_text=ugettext_lazy(
+            """
+            If "Create cases and indicators" is selected, each user will have a case associated with it,
+            and fixtures will be synced containing indicators about each user. If "Create just cases"
+            is selected, the fixtures will not be created.
+            """
+        ),
+        required=False,
     )
     call_center_case_owner = ChoiceField(
         label=ugettext_lazy("Call Center Case Owner"),
@@ -458,6 +486,7 @@ class DomainGlobalSettingsForm(forms.Form):
         if domain:
             if not CALLCENTER.enabled(domain):
                 self.fields['call_center_enabled'].widget = forms.HiddenInput()
+                self.fields['call_center_type'].widget = forms.HiddenInput()
                 self.fields['call_center_case_owner'].widget = forms.HiddenInput()
                 self.fields['call_center_case_type'].widget = forms.HiddenInput()
             else:
@@ -470,9 +499,16 @@ class DomainGlobalSettingsForm(forms.Form):
                 call_center_group_choices = [
                     (group._id, group.name + ' [group]') for group in groups
                 ]
+                call_center_location_choices = []
+                if CALL_CENTER_LOCATION_OWNERS.enabled(domain):
+                    call_center_location_choices = [
+                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
+                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
+                    ]
 
                 self.fields["call_center_case_owner"].choices = \
                     [('', '')] + \
+                    call_center_location_choices + \
                     call_center_user_choices + \
                     call_center_group_choices
 
@@ -486,17 +522,16 @@ class DomainGlobalSettingsForm(forms.Form):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
         if (cleaned_data.get('call_center_enabled') and
                 (not cleaned_data.get('call_center_case_type') or
-                 not cleaned_data.get('call_center_case_owner'))):
+                 not cleaned_data.get('call_center_case_owner') or
+                 not cleaned_data.get('call_center_type'))):
             raise forms.ValidationError(_(
-                'You must choose an Owner and Case Type to use the call center application. '
+                'You must choose a Call Center Type, Owner, and Case Type to use the call center application. '
                 'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
             ))
 
         return cleaned_data
 
-    def save(self, request, domain):
-        domain.hr_name = self.cleaned_data['hr_name']
-
+    def _save_logo_configuration(self, domain):
         if self.can_use_custom_logo:
             logo = self.cleaned_data['logo']
             if logo:
@@ -513,12 +548,26 @@ class DomainGlobalSettingsForm(forms.Form):
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
-        domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
-        if domain.call_center_config.enabled:
-            domain.internal.using_call_center = True
-            domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-            domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+    def _save_call_center_configuration(self, domain):
+        cc_config = domain.call_center_config
+        cc_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+        if cc_config.enabled:
 
+            domain.internal.using_call_center = True
+            cc_config.use_fixtures = self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
+
+            owner = self.cleaned_data.get('call_center_case_owner', None)
+            if owner in self.LOCATION_CHOICES:
+                cc_config.call_center_case_owner = None
+                cc_config.use_user_location_as_owner = True
+                cc_config.user_location_ancestor_level = 1 if owner == self.USE_PARENT_LOCATION_CHOICE else 0
+            else:
+                cc_config.case_owner_id = owner
+                cc_config.use_user_location_as_owner = False
+
+            cc_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+
+    def _save_timezone_configuration(self, domain):
         global_tz = self.cleaned_data['default_timezone']
         if domain.default_timezone != global_tz:
             domain.default_timezone = global_tz
@@ -531,6 +580,12 @@ class DomainGlobalSettingsForm(forms.Form):
                     users_to_save.append(user)
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
+
+    def save(self, request, domain):
+        domain.hr_name = self.cleaned_data['hr_name']
+        self._save_logo_configuration(domain)
+        self._save_call_center_configuration(domain)
+        self._save_timezone_configuration(domain)
         domain.save()
         return True
 

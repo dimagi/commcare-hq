@@ -17,6 +17,29 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+
+    <script type="text/javascript">
+        $(function(){
+            var $editReportButton = $("#edit-report-link");
+
+            {% if report.spec.report_meta.created_by_builder %}
+
+            var $applyFiltersButton = $("#apply-filters");
+            $applyFiltersButton.click(function(){
+                window.analytics.usage("Report Viewer", "Apply Filters", '{{ report.spec.report_meta.builder_report_type }}');
+            });
+
+            gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', '{{ report.spec.report_meta.builder_report_type }}');
+            window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
+            window.analytics.usage("Report Viewer", "View Report", '{{ report.spec.report_meta.builder_report_type }}');
+
+            {% else %}
+            gaTrackLink($editReportButton, 'Edit UCR', 'Edit UCR');
+            {% endif %}
+        });
+    </script>
+
+
     <script type="text/javascript">
         $(function(){
             // Poll the status of the data source
@@ -30,7 +53,7 @@
                             $('#built-warning').addClass('hide');
                             if (retrying){
                                 location.reload();
-                            } else {
+                            } else if ($('#report-filters').find('.control-label').length === 0) {
                                 $('#report-filters').submit();
                             }
                         } else {
@@ -113,7 +136,7 @@
     {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" and not report.spec.report_meta.created_by_builder or request|toggle_enabled:"REPORT_BUILDER" and report.spec.report_meta.created_by_builder %}
     <div class="clearfix">
         <div class="pull-right">
-            <a class="btn btn-primary" href="
+            <a id="edit-report-link" class="btn btn-primary" href="
                 {% if report.spec.report_meta.created_by_builder %}
                     {% url 'edit_report_in_builder' domain report.report_config_id %}
                 {% else %}

@@ -55,6 +55,7 @@ class Format(object):
     ZIPPED_HTML = "zipped-html"
     JSON = "json"
     UNZIPPED_CSV = 'unzipped-csv'
+    CDISC_ODM = 'cdisc-odm'
 
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip",
@@ -80,6 +81,9 @@ class Format(object):
                    UNZIPPED_CSV: {"mimetype": "text/csv",
                                   "extension": "csv",
                                   "download": True},
+                   CDISC_ODM: {'mimetype': 'application/cdisc-odm+xml',
+                               'extension': 'xml',
+                               'download': True},
 
     }
 

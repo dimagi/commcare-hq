@@ -1,11 +1,11 @@
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.sofabed.models import CaseData, CASE_NAME_LEN
 from datetime import date, datetime, timedelta
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 TEST_DOMAIN = 'test'
 TEST_NAME_LEN = CASE_NAME_LEN-8
@@ -17,19 +17,18 @@ class CaseDataTests(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
-        post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id='mother_case_id',
                 case_type='mother-case',
-                version=V2,
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         self.case_id = 'test_case_1'
         self.date_modified = datetime.utcnow() - timedelta(hours=1)
         self.date_modified = self.date_modified.replace(microsecond=0)
-        post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=self.case_id,
@@ -39,7 +38,6 @@ class CaseDataTests(TestCase):
                 case_name=('a' * TEST_NAME_LEN) + '123456789',
                 external_id='external_id',
                 date_modified=self.date_modified,
-                version=V2,
                 update={'foo': 'bar'},
                 index={'mom': ('mother-case', 'mother_case_id')}
             ).as_xml()
@@ -82,24 +80,22 @@ class CaseDataTests(TestCase):
         self.assertEqual('mother_case_id', indices[0].referenced_id)
 
     def test_update(self):
-        post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id='grand_mother_case_id',
                 case_type='mother-case',
                 owner_id='owner',
-                version=V2,
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         date_modified = datetime.utcnow()
-        post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 close=True,
                 case_id=self.case_id,
                 user_id='user2',
                 date_modified=date_modified,
-                version=V2,
                 index={'gmom': ('mother-case', 'grand_mother_case_id')}
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
@@ -133,12 +129,11 @@ class CaseDataTests(TestCase):
 
     def test_empty_name(self):
         case_id = 'case_with_no_name'
-        post_case_blocks([
+        FormProcessorInterface(TEST_DOMAIN).post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=case_id,
                 case_type='nameless',
-                version=V2,
             ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
@@ -149,7 +144,7 @@ class CaseDataTests(TestCase):
 
     def test_empty_owner_id(self):
         case_id = 'case_with_no_owner'
-        post_case_blocks([
+        FormProcessorInterface().post_case_blocks([
             CaseBlock(
                 create=True,
                 case_id=case_id,
@@ -157,7 +152,6 @@ class CaseDataTests(TestCase):
                 case_type='c_type',
                 case_name='bob',
                 date_modified=self.date_modified,
-                version=V2,
                 update={'foo': 'bar'},
             ).as_xml()
         ], {'domain': TEST_DOMAIN})

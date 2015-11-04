@@ -1,6 +1,12 @@
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
-from corehq.apps.analytics.tasks import track_user_sign_in_on_hubspot, HUBSPOT_COOKIE
+from corehq.apps.analytics.tasks import (
+    track_user_sign_in_on_hubspot,
+    HUBSPOT_COOKIE,
+    track_user_subscriptions_on_hubspot,
+)
+from corehq.apps.analytics.utils import get_meta
+from corehq.util.decorators import handle_uncaught_exceptions
 from .tasks import identify
 
 from django.dispatch import receiver
@@ -54,6 +60,7 @@ def update_subscription_properties_by_user(couch_user):
             properties[edition] = "yes"
 
     identify.delay(couch_user.username, properties)
+    track_user_subscriptions_on_hubspot.delay(couch_user, properties)
 
 
 def update_subscription_properties_by_domain(domain):
@@ -66,6 +73,7 @@ def update_subscription_properties_by_domain(domain):
 
 
 @receiver(user_logged_in)
+@handle_uncaught_exceptions(mail_admins=True)
 def track_user_login(sender, request, user, **kwargs):
     couch_user = CouchUser.from_django_user(user)
     if couch_user and couch_user.is_web_user():
@@ -73,8 +81,5 @@ def track_user_login(sender, request, user, **kwargs):
             # API calls, form submissions etc.
             return
 
-        meta = {
-            'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
-            'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
-        }
+        meta = get_meta(request)
         track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES, meta)

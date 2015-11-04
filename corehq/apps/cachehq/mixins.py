@@ -11,8 +11,10 @@ class _InvalidateCacheMixin(object):
         invalidate_document(self)
 
     def save(self, **params):
-        super(_InvalidateCacheMixin, self).save(**params)
-        self.clear_caches()
+        try:
+            super(_InvalidateCacheMixin, self).save(**params)
+        finally:
+            self.clear_caches()
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):

@@ -6,7 +6,6 @@ import os
 import re
 import sys
 import traceback
-import uuid
 
 from django.conf import settings
 from django.contrib import messages
@@ -33,6 +32,7 @@ from django.template.context import RequestContext
 from restkit import Resource
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
@@ -53,7 +53,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
-from couchforms.models import XFormInstance
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
@@ -77,10 +76,11 @@ def couch_check():
     # work, and if other error handling allows the request to get this far.
 
     try:
-        xforms = XFormInstance.view('reports_forms/all_forms', limit=1).all()
-    except:
-        xforms = None
-    return (isinstance(xforms, list), None)
+        results = Application.view('app_manager/builds_by_date', limit=1).all()
+    except Exception:
+        return False, None
+    else:
+        return isinstance(results, list), None
 
 
 def celery_check():
@@ -108,22 +108,22 @@ def hb_check():
     if celery_monitoring:
         try:
             cresource = Resource(celery_monitoring, timeout=3)
-            t = cresource.get("api/workers").body_string()
+            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
             all_workers = json.loads(t)
             bad_workers = []
-            for hostname, w in all_workers.items():
-                if not w['status']:
+            for hostname, status in all_workers.items():
+                if not status:
                     bad_workers.append('* {} celery worker down'.format(hostname))
             if bad_workers:
                 return (False, '\n'.join(bad_workers))
             else:
                 hb = heartbeat.is_alive()
-        except:
+        except Exception:
             hb = False
     else:
         try:
             hb = heartbeat.is_alive()
-        except:
+        except Exception:
             hb = False
     return (hb, None)
 
@@ -260,7 +260,7 @@ def server_up(req):
             "check_func": hb_check
         },
         "celery": {
-            "always_check": False,
+            "always_check": True,
             "message": "* celery is down",
             "check_func": celery_check
         },
@@ -405,7 +405,7 @@ def retrieve_download(req, domain, download_id, template="style/includes/file_do
 
 
 def dropbox_next_url(request, download_id):
-    return request.META.get('HTTP_REFERER', '/')
+    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
 
 
 @login_required
@@ -984,25 +984,19 @@ def quick_find(request):
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
         elif request.couch_user.is_superuser:
-            return HttpResponseRedirect('{}?id={}'.format(reverse('doc_in_es'), doc.get('_id')))
+            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
             return json_response(doc_info)
 
-    try:
-        doc = get_db().get(query)
-    except ResourceNotFound:
-        pass
+    for db_name in (None, 'users', 'receiverwrapper', 'meta'):
+        try:
+            doc = get_db(db_name).get(query)
+        except ResourceNotFound:
+            pass
+        else:
+            return deal_with_couch_doc(doc)
     else:
-        return deal_with_couch_doc(doc)
-
-    try:
-        doc = Repeater.get_db().get(query)
-    except ResourceNotFound:
-        pass
-    else:
-        return deal_with_couch_doc(doc)
-
-    raise Http404()
+        raise Http404()
 
 
 def osdd(request, template='osdd.xml'):

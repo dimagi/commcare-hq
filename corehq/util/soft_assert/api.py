@@ -1,7 +1,8 @@
+from django.conf import settings
 from django.core.mail import mail_admins, send_mail
+
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
-import settings
 
 
 def _send_message(info, backend):
@@ -67,14 +68,16 @@ def soft_assert(to=None, notify_admins=False,
 
     if to and notify_admins:
         def send(info):
-            _send_message(info, backend=mail_admins)
+            if not settings.DEBUG:
+                _send_message(info, backend=mail_admins)
             _send_message(info, backend=send_to_recipients)
     elif to:
         def send(info):
             _send_message(info, backend=send_to_recipients)
     elif notify_admins:
         def send(info):
-            _send_message(info, backend=mail_admins)
+            if not settings.DEBUG:
+                _send_message(info, backend=mail_admins)
     else:
         raise ValueError('You must call soft assert with either a '
                          'list of recipients or notify_admins=True')

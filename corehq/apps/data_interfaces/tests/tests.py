@@ -50,6 +50,7 @@ class BulkArchiveForms(TestCase):
 
         self.bulk_role = Role.objects.filter(slug=privileges.BULK_CASE_MANAGEMENT)[0]
         Grant.objects.create(from_role=self.user_role.role, to_role=self.bulk_role)
+        Role.get_cache().clear()
 
         self.client.login(username=self.user.username, password=self.password)
 
@@ -71,6 +72,7 @@ class BulkArchiveForms(TestCase):
             to_role=self.bulk_role
         )
         grant.delete()
+        Role.get_cache().clear()
 
         # Revoked privileges should not render form
         response = self.client.get(self.url)

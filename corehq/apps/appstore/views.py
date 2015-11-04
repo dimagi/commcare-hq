@@ -179,12 +179,6 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
     return es_query(params, facets, terms, q)
 
 
-def appstore_default(request):
-    from corehq.apps.appstore.dispatcher import AppstoreDispatcher
-
-    return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
-
-
 @require_superuser
 def approve_app(request, domain):
     domain = Domain.get(domain)

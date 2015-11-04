@@ -6,6 +6,7 @@ from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.products.models import Product
 from custom.ilsgateway.models import ILSGatewayConfig
+from custom.logistics.mixin import UserMigrationMixin
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -115,7 +116,7 @@ class ApiSyncObject(object):
             self.filters[self.date_filter_name + '__lte'] = end_date
 
 
-class APISynchronization(object):
+class APISynchronization(UserMigrationMixin):
 
     LOCATION_CUSTOM_FIELDS = []
     SMS_USER_CUSTOM_FIELDS = []
@@ -253,13 +254,30 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def get_username(self, ilsgateway_smsuser, username_part=None):
-        domain_part = "%s.commcarehq.org" % self.domain
+    def edit_phone_numbers(self, ilsgateway_smsuser, user):
+        verified_number = user.get_verified_number()
+        phone_number = verified_number.phone_number if verified_number else None
+        if ilsgateway_smsuser.phone_numbers:
+            new_phone_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
+            if new_phone_number != phone_number:
+                if phone_number:
+                    user.delete_verified_number(phone_number)
+                    user.phone_numbers = []
+                self._save_verified_number(user, new_phone_number)
+                user.set_default_phone_number(new_phone_number)
+        elif phone_number:
+            user.phone_numbers = []
+            user.delete_verified_number(phone_number)
+        user.save()
 
-        if not username_part:
-            username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(),
-                                      ilsgateway_smsuser.id)
-        return "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part), username_part
+    def add_phone_numbers(self, ilsgateway_smsuser, user):
+        if ilsgateway_smsuser.phone_numbers:
+            cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
+            if cleaned_number:
+                user.phone_numbers = [cleaned_number]
+                user.user_data['backend'] = ilsgateway_smsuser.backend
+                user.save()
+                self._save_verified_number(user, cleaned_number)
 
     def sms_user_sync(self, ilsgateway_smsuser, username_part=None, password=None,
                       first_name='', last_name=''):
@@ -287,12 +305,6 @@ class APISynchronization(object):
         if ilsgateway_smsuser.role:
             user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
-        if ilsgateway_smsuser.phone_numbers:
-            cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
-            if cleaned_number:
-                user_dict['phone_numbers'] = [cleaned_number]
-                user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
-
         if user is None and username_part:
             try:
                 user_password = password or User.objects.make_random_password()
@@ -304,35 +316,19 @@ class APISynchronization(object):
                 user.language = language
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
-                if "phone_numbers" in user_dict:
-                    user.set_default_phone_number(user_dict["phone_numbers"][0])
-                    try:
-                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
-                    except PhoneNumberInUseException as e:
-                        self._reassign_number(user, user_dict["phone_numbers"][0])
-                    except InvalidFormatException:
-                        pass
+                self.add_phone_numbers(ilsgateway_smsuser, user)
             except Exception as e:
                 logging.error(e)
         else:
-            verified_number = user.get_verified_number()
-            phone_number = verified_number.phone_number if verified_number else None
-            if apply_updates(user, user_dict):
-                if user_dict.get('phone_numbers'):
-                    new_phone_number = user_dict['phone_numbers'][0]
-                    if new_phone_number != phone_number:
-                        if phone_number:
-                            user.delete_verified_number(phone_number)
-                        self._save_verified_number(user, new_phone_number)
-                elif phone_number:
-                    user.phone_numbers = []
-                    user.delete_verified_number(phone_number)
-                user.save()
+            self.edit_phone_numbers(ilsgateway_smsuser, user)
         return user
+
+    def save_verified_number(self, user, phone_number):
+        user.save_verified_number(self.domain, phone_number, True)
 
     def _save_verified_number(self, user, phone_number):
         try:
-            user.save_verified_number(self.domain, phone_number, True)
+            self.save_verified_number(user, phone_number)
         except PhoneNumberInUseException:
             self._reassign_number(user, phone_number)
         except InvalidFormatException:
@@ -342,7 +338,7 @@ class APISynchronization(object):
         v = VerifiedNumber.by_phone(phone_number, include_pending=True)
         if v.domain in self._get_logistics_domains():
             v.delete()
-            user.save_verified_number(self.domain, phone_number, True)
+            self.save_verified_number(user, phone_number)
 
     def add_language_to_user(self, logistics_sms_user):
         domain_part = "%s.commcarehq.org" % self.domain
@@ -370,3 +366,6 @@ class APISynchronization(object):
                 return
             user.set_default_phone_number(phone_number)
             self._save_verified_number(user, phone_number)
+
+    def balance_migration(self, date=None):
+        pass

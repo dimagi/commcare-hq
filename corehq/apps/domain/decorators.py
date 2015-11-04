@@ -1,8 +1,6 @@
 # Standard Library imports
-import base64
 from functools import wraps
 import logging
-import re
 
 # Django imports
 from django.conf import settings
@@ -16,10 +14,8 @@ from django.utils.translation import ugettext as _
 
 # External imports
 from django_digest.decorators import httpdigest
+from corehq.apps.domain.auth import determine_authtype_from_request, basicauth
 from django_prbac.utils import has_privilege
-
-from django.http import HttpResponse
-from django.contrib.auth import authenticate, login
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -122,31 +118,6 @@ def api_key():
     return real_decorator
 
 
-def basicauth(realm=''):
-    # stolen and modified from: https://djangosnippets.org/snippets/243/
-    def real_decorator(view):
-        def wrapper(request, *args, **kwargs):
-            if 'HTTP_AUTHORIZATION' in request.META:
-                auth = request.META['HTTP_AUTHORIZATION'].split()
-                if len(auth) == 2:
-                    if auth[0].lower() == "basic":
-                        uname, passwd = base64.b64decode(auth[1]).split(':', 1)
-                        user = authenticate(username=uname, password=passwd)
-                        if user is not None and user.is_active:
-                            login(request, user)
-                            request.user = user
-                            return view(request, *args, **kwargs)
-
-            # Either they did not provide an authorization header or
-            # something in the authorization attempt failed. Send a 401
-            # back to them to ask them to authenticate.
-            response = HttpResponse(status=401)
-            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
-            return response
-        return wrapper
-    return real_decorator
-
-
 def _login_or_challenge(challenge_fn, allow_cc_users=False):
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
@@ -185,42 +156,24 @@ def login_or_basic_ex(allow_cc_users=False):
 login_or_basic = login_or_basic_ex()
 
 
-J2ME = 'j2me'
-ANDROID = 'android'
-
-
-def guess_phone_type_from_user_agent(user_agent):
-    """
-    A really dumb utility that guesses the phone type based on the user-agent header.
-    """
-    j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    return J2ME if user_agent and re.search(j2me_pattern, user_agent) else ANDROID
-
-
-def determine_authtype_from_user_agent(request):
-    user_agent = request.META.get('HTTP_USER_AGENT')
-    type_to_auth_map = {
-        J2ME: 'digest',
-        ANDROID: 'basic',
-    }
-    return type_to_auth_map[guess_phone_type_from_user_agent(user_agent)]
-
-
-def login_or_digest_or_basic(fn):
-    @wraps(fn)
-    def _inner(request, *args, **kwargs):
-        function_wrapper = {
-            'basic': login_or_basic_ex(allow_cc_users=True),
-            'digest': login_or_digest_ex(allow_cc_users=True),
-        }[determine_authtype_from_user_agent(request)]
-        if not function_wrapper:
-            return HttpResponseForbidden()
-        return function_wrapper(fn)(request, *args, **kwargs)
-    return _inner
+def login_or_digest_or_basic(default='basic'):
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(request, *args, **kwargs):
+            function_wrapper = {
+                'basic': login_or_basic_ex(allow_cc_users=True),
+                'digest': login_or_digest_ex(allow_cc_users=True),
+            }[determine_authtype_from_request(request, default=default)]
+            if not function_wrapper:
+                return HttpResponseForbidden()
+            return function_wrapper(fn)(request, *args, **kwargs)
+        return _inner
+    return decorator
 
 
 def login_or_api_key_ex(allow_cc_users=False):
     return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users)
+
 
 login_or_api_key = login_or_api_key_ex()
 
@@ -274,7 +227,7 @@ def login_required(view_func):
 ########################################################################################################
 #
 # Have to write this to be sure this decorator still works if DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME
-# is not defined - people may forget to do this, because it's not a standard, defined Django 
+# is not defined - people may forget to do this, because it's not a standard, defined Django
 # config setting
 
 def domain_admin_required_ex(redirect_page_name=None):
@@ -333,4 +286,3 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
-

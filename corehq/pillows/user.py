@@ -1,8 +1,7 @@
 from casexml.apps.case.xform import is_device_report
-from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import ES_URLS, stream_es_query, get_es
+from corehq.elastic import ES_URLS, stream_es_query, get_es, doc_exists_in_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
@@ -39,17 +38,6 @@ class UserPillow(AliasedElasticPillow):
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
-    @memoized
-    def calc_meta(self):
-        #todo: actually do this correctly
-
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return self.calc_mapping_hash({"es_meta": self.es_meta,
-                                       "mapping": self.default_mapping})
-
     def get_unique_id(self):
         return USER_INDEX
 
@@ -83,6 +71,7 @@ class UnknownUsersPillow(PythonPillow):
     """
     document_class = XFormInstance
     include_docs_when_preindexing = False
+    es_path = USER_INDEX + "/user/"
 
     def __init__(self, **kwargs):
         super(UnknownUsersPillow, self).__init__(**kwargs)
@@ -105,6 +94,9 @@ class UnknownUsersPillow(PythonPillow):
     def _user_exists(self, user_id):
         return self.user_db.doc_exist(user_id)
 
+    def _user_indexed(self, user_id):
+        return doc_exists_in_es('users', user_id)
+
     def change_transport(self, doc_dict):
         doc = doc_dict
         user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
@@ -112,9 +104,8 @@ class UnknownUsersPillow(PythonPillow):
         if user_id in WEIRD_USER_IDS:
             user_id = None
 
-        es_path = USER_INDEX + "/user/"
         if (user_id and not self._user_exists(user_id)
-                and not self.es.head(es_path + user_id)):
+                and not self._user_indexed(user_id)):
             doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
                 "_id": user_id,
@@ -125,7 +116,7 @@ class UnknownUsersPillow(PythonPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            self.es.put(es_path + user_id, data=doc)
+            self.es.put(self.es_path + user_id, data=doc)
 
 
 def add_demo_user_to_user_index():

@@ -41,6 +41,7 @@ var CreditItem = function (category, data, paymentHandler, can_purchase_credits)
     var self = this;
     self.category = ko.observable(category);
     self.name = ko.observable(data.name);
+    self.recurringInterval = ko.observable(data.recurring_interval);
     self.creditType = ko.observable(data.type);
     self.usage = ko.observable(data.usage);
     self.remaining = ko.observable(data.remaining);
@@ -66,5 +67,12 @@ var CreditItem = function (category, data, paymentHandler, can_purchase_credits)
             category: self.category(),
             creditItem: self
         }));
+    };
+
+    /*
+     * Return the name with the recurring interval if it exists
+     */
+    self.getUsageName = function() {
+        return self.recurringInterval() ? self.recurringInterval() + ' ' + self.name() : self.name();
     };
 };

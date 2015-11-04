@@ -31,7 +31,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
-from corehq.apps.reminders.util import can_use_survey_reminders
+from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
@@ -583,6 +583,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_use_data_cleanup(self):
+        return domain_has_privilege(self.domain, privileges.DATA_CLEANUP)
+
+    @property
+    @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_export_data())
@@ -616,17 +621,13 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
             from corehq.apps.data_interfaces.views \
-                import CaseGroupListView, CaseGroupCaseManagementView, ArchiveFormView
-            edit_section[0][1].append({
-                'title': CaseGroupListView.page_title,
-                'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
-                'subpages': [
-                    {
-                        'title': CaseGroupCaseManagementView.page_title,
-                        'urlname': CaseGroupCaseManagementView.urlname,
-                    }
-                ]
-            })
+                import ArchiveFormView, AutomaticUpdateRuleListView
+
+            if self.can_use_data_cleanup and toggles.AUTOMATIC_CASE_CLOSURE.enabled(self.domain):
+                edit_section[0][1].append({
+                    'title': AutomaticUpdateRuleListView.page_title,
+                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                })
 
             if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
                 edit_section[0][1].append({
@@ -664,8 +665,9 @@ class ApplicationsTab(UITab):
     def dropdown_items(self):
         # todo async refresh submenu when on the applications page and
         # you change the application name
+        from corehq.apps.app_manager.models import Application
         key = [self.domain]
-        apps = get_db().view('app_manager/applications_brief',
+        apps = Application.get_db().view('app_manager/applications_brief',
                              reduce=False,
                              startkey=key,
                              endkey=key + [{}],).all()
@@ -731,15 +733,20 @@ class MessagingTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.can_access_reminders or self.can_access_sms) and (
+        return (self.can_access_reminders or self.can_use_outbound_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
         ) and self.couch_user.can_edit_data()
 
     @property
     @memoized
-    def can_access_sms(self):
+    def can_use_outbound_sms(self):
         return has_privilege(self._request, privileges.OUTBOUND_SMS)
+
+    @property
+    @memoized
+    def can_use_inbound_sms(self):
+        return has_privilege(self._request, privileges.INBOUND_SMS)
 
     @property
     @memoized
@@ -747,42 +754,33 @@ class MessagingTab(UITab):
         return has_privilege(self._request, privileges.REMINDERS_FRAMEWORK)
 
     @property
-    def sidebar_items(self):
-        from corehq.apps.reports.standard.sms import MessageLogReport
-
-        def reminder_subtitle(form=None, **context):
-            return form['nickname'].value
-
+    @memoized
+    def reminders_urls(self):
         reminders_urls = []
+
         if self.can_access_reminders:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
+                CreateComplexScheduledReminderView,
                 RemindersListView,
-                BroadcastListView,
-                CreateBroadcastView,
-                EditBroadcastView,
-                CopyBroadcastView,
             )
-            reminders_list_url = reverse(RemindersListView.urlname, args=[self.domain])
-            edit_reminder_urlname = EditScheduledReminderView.urlname
-            new_reminder_urlname = CreateScheduledReminderView.urlname
             reminders_urls.extend([
                 {
                     'title': _("Reminders"),
-                    'url': reminders_list_url,
+                    'url': reverse(RemindersListView.urlname, args=[self.domain]),
                     'subpages': [
                         {
-                            'title': reminder_subtitle,
-                            'urlname': edit_reminder_urlname
+                            'title': _("Edit Reminder"),
+                            'urlname': EditScheduledReminderView.urlname,
                         },
                         {
                             'title': _("Schedule Reminder"),
-                            'urlname': new_reminder_urlname,
+                            'urlname': CreateScheduledReminderView.urlname,
                         },
                         {
                             'title': _("Schedule Multi Event Reminder"),
-                            'urlname': 'create_complex_reminder_schedule',
+                            'urlname': CreateComplexScheduledReminderView.urlname,
                         },
                     ],
                     'show_in_dropdown': True,
@@ -794,17 +792,15 @@ class MessagingTab(UITab):
                 },
             ])
 
-        can_use_survey = can_use_survey_reminders(self._request)
-        if can_use_survey:
+        if self.can_use_inbound_sms:
             from corehq.apps.reminders.views import (
                 KeywordsListView, AddNormalKeywordView,
                 AddStructuredKeywordView, EditNormalKeywordView,
                 EditStructuredKeywordView,
             )
-            keyword_list_url = reverse(KeywordsListView.urlname, args=[self.domain])
             reminders_urls.append({
                 'title': _("Keywords"),
-                'url': keyword_list_url,
+                'url': reverse(KeywordsListView.urlname, args=[self.domain]),
                 'subpages': [
                     {
                         'title': AddNormalKeywordView.page_title,
@@ -826,22 +822,34 @@ class MessagingTab(UITab):
             })
 
         if self.can_access_reminders:
-
             reminders_urls.append({
                 'title': _("Reminders in Error"),
                 'url': reverse('reminders_in_error', args=[self.domain]),
                 'show_in_dropdown': True,
             })
-        items = []
+
+        return reminders_urls
+
+    @property
+    @memoized
+    def messages_urls(self):
         messages_urls = []
-        if self.can_access_sms:
+
+        if self.can_use_outbound_sms:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
                     'url': reverse('sms_compose_message', args=[self.domain])
                 },
             ])
+
         if self.can_access_reminders:
+            from corehq.apps.reminders.views import (
+                BroadcastListView,
+                CreateBroadcastView,
+                EditBroadcastView,
+                CopyBroadcastView,
+            )
             messages_urls.extend([
                 {
                     'title': _("Broadcast Messages"),
@@ -863,7 +871,9 @@ class MessagingTab(UITab):
                     'show_in_dropdown': True,
                 },
             ])
-        if self.can_access_sms:
+
+        if self.can_use_outbound_sms:
+            from corehq.apps.reports.standard.sms import MessageLogReport
             messages_urls.extend([
                 {
                     'title': _('Message Log'),
@@ -871,75 +881,84 @@ class MessagingTab(UITab):
                     'show_in_dropdown': True,
                 },
             ])
-        if messages_urls:
-            items.append((_("Messages"), messages_urls))
-        if reminders_urls:
-            items.append((_("Data Collection and Reminders"), reminders_urls))
+
+        return messages_urls
+
+    @property
+    @memoized
+    def performance_urls(self):
+        performance_urls = []
         if self.can_access_reminders and toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
-            # add performance URLs
-            items.append((_("Performance Messaging"), [
+            performance_urls.append(
                 {
                     'title': _('Configure Performance Messages'),
                     'url': reverse('performance_sms.list_performance_configs', args=[self.domain]),
                     'show_in_dropdown': True,
-                },
-            ]))
+                }
+            )
+        return performance_urls
+
+    @property
+    @memoized
+    def supply_urls(self):
+        supply_urls = []
 
         if self.project.commtrack_enabled:
             from corehq.apps.sms.views import SubscribeSMSView
-            items.append(
-                (_("CommCare Supply"), [
-                    {'title': ugettext_lazy("Subscribe to SMS Reports"),
-                     'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},
-                ])
+            supply_urls.append(
+                {'title': ugettext_lazy("Subscribe to SMS Reports"),
+                 'url': reverse(SubscribeSMSView.urlname, args=[self.domain])}
             )
 
-        if self.couch_user.is_previewer():
-            items[0][1].append(
+        return supply_urls
+
+    @property
+    @memoized
+    def contacts_urls(self):
+        contacts_urls = []
+
+        if toggles.MOBILE_WORKER_SELF_REGISTRATION.enabled(self.domain):
+            from corehq.apps.sms.views import ManageRegistrationInvitationsView
+            contacts_urls.append(
+                {'title': _("Mobile Worker Registration"),
+                 'url': reverse(ManageRegistrationInvitationsView.urlname, args=[self.domain])}
+            )
+
+        if self.couch_user.can_edit_data():
+            contacts_urls.append(
                 {'title': _('Chat'),
                  'url': reverse('chat_contacts', args=[self.domain])}
             )
 
-        if self.project.survey_management_enabled and can_use_survey:
-            def sample_title(form=None, **context):
-                return form['name'].value
+        if self.couch_user.can_edit_data():
+            from corehq.apps.data_interfaces.views import CaseGroupListView, CaseGroupCaseManagementView
+            contacts_urls.append({
+                'title': CaseGroupListView.page_title,
+                'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
+                'subpages': [
+                    {
+                        'title': CaseGroupCaseManagementView.page_title,
+                        'urlname': CaseGroupCaseManagementView.urlname,
+                    }
+                ]
+            })
 
-            def survey_title(form=None, **context):
-                return form['name'].value
 
-            items.append(
-                (_("Survey Management"), [
-                    {'title': _("Samples"),
-                     'url': reverse('sample_list', args=[self.domain]),
-                     'subpages': [
-                         {'title': sample_title,
-                          'urlname': 'edit_sample'},
-                         {'title': _("New Sample"),
-                          'urlname': 'add_sample'},
-                    ]},
-                    {'title': _("Surveys"),
-                     'url': reverse('survey_list', args=[self.domain]),
-                     'subpages': [
-                         {'title': survey_title,
-                          'urlname': 'edit_survey'},
-                         {'title': _("New Survey"),
-                          'urlname': 'add_survey'},
-                    ]},
-                ])
-            )
+        return contacts_urls
 
-        settings_pages = []
-        if self.can_access_sms:
+    @property
+    @memoized
+    def settings_urls(self):
+        settings_urls = []
+
+        if self.can_use_outbound_sms:
             from corehq.apps.sms.views import (
                 DomainSmsGatewayListView, AddDomainGatewayView,
                 EditDomainGatewayView,
             )
-            sms_connectivity_url = reverse(
-                DomainSmsGatewayListView.urlname, args=[self.domain]
-            )
-            settings_pages.append({
+            settings_urls.append({
                 'title': _('SMS Connectivity'),
-                'url': sms_connectivity_url,
+                'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
                 'subpages': [
                     {
                         'title': _("Add Connection"),
@@ -951,17 +970,31 @@ class MessagingTab(UITab):
                     },
                 ],
             })
+
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
-            settings_pages.append(
+            settings_urls.extend([
                 {'title': ugettext_lazy("General Settings"),
                  'url': reverse('sms_settings', args=[self.domain])},
-            )
-            settings_pages.append(
                 {'title': ugettext_lazy("Languages"),
-                 'url': reverse('sms_languages', args=[self.domain])}
-            )
-        if settings_pages:
-            items.append((_("Settings"), settings_pages))
+                 'url': reverse('sms_languages', args=[self.domain])},
+            ])
+
+        return settings_urls
+
+    @property
+    def sidebar_items(self):
+        items = []
+
+        for title, urls in (
+            (_("Messages"), self.messages_urls),
+            (_("Data Collection and Reminders"), self.reminders_urls),
+            (_("Performance Messaging"), self.performance_urls),
+            (_("CommCare Supply"), self.supply_urls),
+            (_("Contacts"), self.contacts_urls),
+            (_("Settings"), self.settings_urls)
+        ):
+            if urls:
+                items.append((title, urls))
 
         return items
 
@@ -1013,21 +1046,21 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views.mobile import \
-                EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
+            from corehq.apps.users.views.mobile import (
+                EditCommCareUserView,
+                ConfirmBillingAccountForExtraUsersView,
+                MobileWorkerListView,
+            )
+
             mobile_users_menu = [
                 {
-                    'title': _('Mobile Workers'),
-                    'url': reverse('commcare_users', args=[self.domain]),
+                    'title': MobileWorkerListView.page_title,
+                    'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                     'description': _(
                         "Create and manage users for CommCare and CloudCare."),
                     'subpages': [
                         {'title': commcare_username,
                          'urlname': EditCommCareUserView.urlname},
-                        {'title': _('New Mobile Worker'),
-                         'urlname': 'add_commcare_account',
-                         'show_in_dropdown': True,
-                         'show_in_first_level': True},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
                         {'title': ConfirmBillingAccountForExtraUsersView.page_title,
@@ -1095,8 +1128,7 @@ class ProjectUsersTab(UITab):
                 }
             ]))
 
-        if (feature_previews.LOCATIONS.enabled(self.domain) and
-                has_privilege(self._request, privileges.LOCATIONS)):
+        if has_privilege(self._request, privileges.LOCATIONS):
             from corehq.apps.locations.views import (
                 LocationsListView,
                 NewLocationView,
@@ -1146,6 +1178,13 @@ class ProjectUsersTab(UITab):
                 })
             items.append((_('Organization'), locations_config))
 
+        elif users_have_locations(self.domain):  # This domain was downgraded
+            items.append((_('Organization'), [{
+                'title': _("No longer available"),
+                'url': reverse('downgrade_locations', args=[self.domain]),
+                'show_in_dropdown': True,
+            }]))
+
         return items
 
 
@@ -1194,17 +1233,6 @@ class ProjectSettingsTab(UITab):
             project_info.append({
                 'title': _(EditDhis2SettingsView.page_title),
                 'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
-            })
-
-        can_view_orgs = (user_is_admin
-                         and self.project and self.project.organization
-                         and has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS))
-
-        if can_view_orgs:
-            from corehq.apps.domain.views import OrgSettingsView
-            project_info.append({
-                'title': _(OrgSettingsView.page_title),
-                'url': reverse(OrgSettingsView.urlname, args=[self.domain])
             })
 
         items.append((_('Project Information'), project_info))
@@ -1411,10 +1439,6 @@ class AdminReportsTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('Message Logs Across All Domains'),
-                 'url': reverse('message_log_report')},
-                {'title': _('CommCare Versions'),
-                 'url': reverse('commcare_version_report')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
                 {'title': _('Loadtest Report'),
@@ -1603,55 +1627,6 @@ class ExchangeTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and couch_user.can_edit_apps() and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
-
-
-class OrgTab(UITab):
-    @property
-    def is_viewable(self):
-        return (self.org and self.couch_user and
-                (self.couch_user.is_member_of_org(self.org) or
-                    self.couch_user.is_superuser))
-
-
-class OrgReportTab(OrgTab):
-    title = ugettext_noop("Reports")
-    view = "corehq.apps.orgs.views.base_report"
-
-    @property
-    def dropdown_items(self):
-        return [
-            dropdown_dict(
-                _("Projects Table"),
-                url=reverse("orgs_report", args=(self.org.name,))),
-            dropdown_dict(
-                _("Form Data"),
-                url=reverse("orgs_stats", args=(self.org.name, "forms"))),
-            dropdown_dict(
-                _("Case Data"),
-                url=reverse("orgs_stats", args=(self.org.name, "cases"))),
-            dropdown_dict(
-                _("User Data"),
-                url=reverse("orgs_stats", args=(self.org.name, "users"))),
-        ]
-
-
-class OrgSettingsTab(OrgTab):
-    title = ugettext_noop("Settings")
-    view = "corehq.apps.orgs.views.orgs_landing"
-
-    @property
-    def dropdown_items(self):
-        return [
-            dropdown_dict(
-                _("Projects"),
-                url=reverse("orgs_landing", args=(self.org.name,))),
-            dropdown_dict(
-                _("Teams"),
-                url=reverse("orgs_teams", args=(self.org.name,))),
-            dropdown_dict(
-                _("Members"),
-                url=reverse("orgs_members", args=(self.org.name,))),
-        ]
 
 
 class MaintenanceAlert(models.Model):

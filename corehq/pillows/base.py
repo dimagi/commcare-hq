@@ -57,7 +57,6 @@ def restore_property_dict(report_dict_item):
     return restored
 
 
-
 class HQPillow(AliasedElasticPillow):
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
@@ -93,5 +92,4 @@ class HQPillow(AliasedElasticPillow):
         """
         A cache/buffer for the _changes feed situation for xforms.
         """
-
         return doc_dict.get('domain', None)

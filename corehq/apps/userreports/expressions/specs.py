@@ -1,5 +1,7 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import (
@@ -10,7 +12,6 @@ from corehq.apps.userreports.expressions.getters import (
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.database import get_db
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -22,7 +23,13 @@ class IdentityExpressionSpec(JsonObject):
 
 class ConstantGetterSpec(JsonObject):
     type = TypeProperty('constant')
-    constant = DefaultProperty(required=True)
+    constant = DefaultProperty()
+
+    @classmethod
+    def wrap(self, obj):
+        if 'constant' not in obj:
+            raise BadSpecError('"constant" property is required!')
+        return super(ConstantGetterSpec, self).wrap(obj)
 
     def __call__(self, item, context=None):
         return self.constant
@@ -58,11 +65,24 @@ class PropertyPathGetterSpec(JsonObject):
         return self.expression(item, context)
 
 
+class NamedExpressionSpec(JsonObject):
+    type = TypeProperty('named')
+    name = StringProperty(required=True)
+
+    def configure(self, context):
+        if self.name not in context.named_expressions:
+            raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
+        self._context = context
+
+    def __call__(self, item, context=None):
+        return self._context.named_expressions[self.name](item, context)
+
+
 class ConditionalExpressionSpec(JsonObject):
     type = TypeProperty('conditional')
     test = DictProperty(required=True)
-    expression_if_true = DictProperty(required=True)
-    expression_if_false = DictProperty(required=True)
+    expression_if_true = DefaultProperty(required=True)
+    expression_if_false = DefaultProperty(required=True)
 
     def configure(self, test_function, true_expression, false_expression):
         self._test_function = test_function
@@ -79,7 +99,7 @@ class ConditionalExpressionSpec(JsonObject):
 class ArrayIndexExpressionSpec(JsonObject):
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
-    index_expression = DictProperty(required=True)
+    index_expression = DefaultProperty(required=True)
 
     def configure(self, array_expression, index_expression):
         self._array_expression = array_expression
@@ -161,13 +181,12 @@ class RelatedDocExpressionSpec(JsonObject):
     doc_id_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
 
-    db_lookup = lambda self, type: get_db()
+    def configure(self, doc_id_expression, value_expression):
+        if get_db_by_doc_type(self.related_doc_type) is None:
+            raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
 
-    def configure(self, related_doc_type, doc_id_expression, value_expression):
-        self._related_doc_type = related_doc_type
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
-
         # used in caching
         self._vary_on = json.dumps(self.value_expression, sort_keys=True)
 
@@ -179,7 +198,7 @@ class RelatedDocExpressionSpec(JsonObject):
     @quickcache(['self._vary_on', 'doc_id'])
     def get_value(self, doc_id, context):
         try:
-            doc = self.db_lookup(self.related_doc_type).get(doc_id)
+            doc = get_db_by_doc_type(self.related_doc_type).get(doc_id)
             # ensure no cross-domain lookups of different documents
             assert context.root_doc['domain']
             if context.root_doc['domain'] != doc.get('domain'):
@@ -188,3 +207,34 @@ class RelatedDocExpressionSpec(JsonObject):
             return self._value_expression(doc, EvaluationContext(doc, 0))
         except ResourceNotFound:
             return None
+
+
+class NestedExpressionSpec(JsonObject):
+    type = TypeProperty('nested')
+    argument_expression = DictProperty(required=True)
+    value_expression = DictProperty(required=True)
+
+    def configure(self, argument_expression, value_expression):
+        self._argument_expression = argument_expression
+        self._value_expression = value_expression
+
+    def __call__(self, item, context=None):
+        argument = self._argument_expression(item, context)
+        return self._value_expression(argument, context)
+
+
+class DictExpressionSpec(JsonObject):
+    type = TypeProperty('dict')
+    properties = DictProperty(required=True)
+
+    def configure(self, compiled_properties):
+        for key in compiled_properties:
+            if not isinstance(key, basestring):
+                raise BadSpecError("Properties in a dict expression must be strings!")
+        self._compiled_properties = compiled_properties
+
+    def __call__(self, item, context=None):
+        ret = {}
+        for property_name, expression in self._compiled_properties.items():
+            ret[property_name] = expression(item, context)
+        return ret

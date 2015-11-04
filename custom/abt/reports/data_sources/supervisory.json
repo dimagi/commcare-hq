@@ -1,10 +1,12 @@
 {
     "domains": [
-        "airs",
         "abtmali",
+        "airs",
+        "airsethiopia",
         "airsmadagascar",
         "airsrwanda",
-        "airsethiopia"
+        "airszambia",
+        "airszimbabwe"
     ],
     "config": {
         "engine_id": "default",
@@ -315,6 +317,6 @@
         "display_name": "Supervisory Indicators",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "supervisory"
+        "table_id": "supervisory-002"
     }
 }

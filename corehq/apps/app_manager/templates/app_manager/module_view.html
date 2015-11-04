@@ -4,7 +4,6 @@
 {% load i18n %}
 {% block js %}{{ block.super }}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
@@ -192,7 +191,9 @@
 <ul class="nav nav-tabs" id="module-view-tabs">
     {% block tab-headers %}
     <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+    {% if module.module_type != 'shadow' %}
     <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
+    {% endif %}
     {% for detail in details %}
     <li>
         <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -222,6 +223,25 @@
                     </div>
                 </div>
                 {% block settings_fields %}
+                {% if module.module_type == 'shadow' %}
+                <div class="control-group">
+                    <label class="control-label">
+                        {% trans "Source Module" %}
+                    </label>
+                    <div class="controls">
+                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}">
+                        <option value="">{% trans "None" %}</option>
+                        {% for mod in app.modules %}
+                            {% if mod.module_type == 'basic' %}
+                                {% if mod.id != module.id %}
+                                    <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
                  <div class="control-group">
                     <label class="control-label">
                         {% trans "Menu Mode" %}
@@ -299,11 +319,13 @@
             </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
+                {% block case_management_advanced_fields %}
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
                 {% include 'app_manager/partials/case_list_form_setting.html' %}
                 {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
+                {% endblock case_management_advanced_fields %}
             </fieldset>
         </form>
     </div>

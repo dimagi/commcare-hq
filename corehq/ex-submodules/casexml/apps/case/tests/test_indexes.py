@@ -2,16 +2,16 @@ from collections import namedtuple
 import re
 from xml.etree import ElementTree
 import datetime
-from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.tests.util import check_user_has_case
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import User
 from django.test import TestCase, SimpleTestCase
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from couchforms.models import XFormError
 
 USER_ID = 'test-index-user'
@@ -64,20 +64,15 @@ class IndexTest(TestCase):
     FATHER_CASE_ID = 'text-index-father-case'
 
     def tearDown(self):
-        for _id in [self.CASE_ID, self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
-            try:
-                CommCareCase.get_db().delete_doc(_id)
-            except ResourceNotFound:
-                pass
+        FormProcessorTestUtils.delete_all_cases()
 
     def testIndexes(self):
         user = User(user_id=USER_ID, username="", password="", date_joined="")
 
         # Step 0. Create mother and father cases
         for prereq in [self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
-            post_case_blocks([
-                CaseBlock(create=True, case_id=prereq, user_id=USER_ID,
-                          version=V2).as_xml()
+            FormProcessorInterface().post_case_blocks([
+                CaseBlock(create=True, case_id=prereq, user_id=USER_ID).as_xml()
             ])
 
         # Step 1. Create a case with index <mom>
@@ -87,11 +82,10 @@ class IndexTest(TestCase):
             user_id=USER_ID,
             owner_id=USER_ID,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
-            version=V2
         ).as_xml()
 
-        post_case_blocks([create_index])
-        check_user_has_case(self, user, create_index, version=V2)
+        FormProcessorInterface().post_case_blocks([create_index])
+        check_user_has_case(self, user, create_index)
 
         # Step 2. Update the case to delete <mom> and create <dad>
 
@@ -100,7 +94,6 @@ class IndexTest(TestCase):
             case_id=self.CASE_ID,
             user_id=USER_ID,
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
-            version=V2,
             date_modified=now,
         ).as_xml()
 
@@ -110,13 +103,12 @@ class IndexTest(TestCase):
             owner_id=USER_ID,
             create=True,
             index={'dad': ('father-case', self.FATHER_CASE_ID)},
-            version=V2,
             date_modified=now,
         ).as_xml()
 
-        post_case_blocks([update_index])
+        FormProcessorInterface().post_case_blocks([update_index])
 
-        check_user_has_case(self, user, update_index_expected, version=V2)
+        check_user_has_case(self, user, update_index_expected)
 
         # Step 3. Put <mom> back
 
@@ -125,7 +117,6 @@ class IndexTest(TestCase):
             case_id=self.CASE_ID,
             user_id=USER_ID,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
-            version=V2,
             date_modified=now,
         ).as_xml()
 
@@ -136,31 +127,29 @@ class IndexTest(TestCase):
             create=True,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID),
                    'dad': ('father-case', self.FATHER_CASE_ID)},
-            version=V2,
             date_modified=now,
         ).as_xml()
 
-        post_case_blocks([update_index])
+        FormProcessorInterface().post_case_blocks([update_index])
 
-        check_user_has_case(self, user, update_index_expected, version=V2)
+        check_user_has_case(self, user, update_index_expected)
 
     def testBadIndexReferenceDomain(self):
         case_in_other_domain = self.MOTHER_CASE_ID
         parent_domain = 'parent'
         child_domain = 'child'
 
-        post_case_blocks([
-            CaseBlock(create=True, case_id=case_in_other_domain, user_id=USER_ID,
-                      version=V2).as_xml()
+        FormProcessorInterface().post_case_blocks([
+            CaseBlock(create=True, case_id=case_in_other_domain, user_id=USER_ID).as_xml()
         ], form_extras={'domain': parent_domain})
 
-        block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
+        block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID,
                           index={'bad': ('bad-case', case_in_other_domain)})
 
-        xform, _ = post_case_blocks([block.as_xml()],
+        xform, _ = FormProcessorInterface().post_case_blocks([block.as_xml()],
                                     form_extras={'domain': child_domain})
 
-        self.assertIsInstance(xform, XFormError)
+        self.assertTrue(xform.is_error)
         self.assertEqual(xform.doc_type, 'XFormError')
         self.assertIn('IllegalCaseId', xform.problem)
         self.assertIn('Bad case id', xform.problem)
@@ -173,11 +162,10 @@ class IndexTest(TestCase):
             user_id=USER_ID,
             owner_id=USER_ID,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')},
-            version=V2
         ).as_xml()
 
-        post_case_blocks([create_index])
-        check_user_has_case(self, user, create_index, version=V2)
+        FormProcessorInterface().post_case_blocks([create_index])
+        check_user_has_case(self, user, create_index)
 
 
 class CaseBlockIndexRelationshipTests(SimpleTestCase):
@@ -195,7 +183,6 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             index={
                 'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='extension')
             },
-            version=V2,
         )
 
         self.assertEqual(
@@ -223,7 +210,6 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             index={
                 'parent': ('mother', '789abc', 'child')
             },
-            version=V2,
         )
 
         self.assertEqual(
@@ -251,7 +237,6 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
             index={
                 'parent': ('mother', '789abc')
             },
-            version=V2,
         )
 
         self.assertEqual(
@@ -281,5 +266,4 @@ class CaseBlockIndexRelationshipTests(SimpleTestCase):
                 index={
                     'host': self.IndexAttrs(case_type='newborn', case_id='123456', relationship='parent')
                 },
-                version=V2,
             )

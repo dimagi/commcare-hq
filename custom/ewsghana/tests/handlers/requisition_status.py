@@ -10,5 +10,5 @@ class RequisitionStatusTest(EWSScriptTest):
         a = """
            5551234 > yes
            5551234 < %s
-        """ % REQ_SUBMITTED
+        """ % unicode(REQ_SUBMITTED)
         self.run_script(a)

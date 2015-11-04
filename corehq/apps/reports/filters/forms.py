@@ -1,8 +1,11 @@
 import copy
 from couchdbkit.exceptions import ResourceNotFound
+from django.conf import settings
 from django.utils.safestring import mark_safe
 import re
+from corehq.apps.app_manager.models import RemoteApp, Application
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseTagsFilter
+from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -10,7 +13,6 @@ from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
-import settings
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 MISSING_APP_ID = "_MISSING_APP_ID"
@@ -154,14 +156,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Here we grab all forms ever submitted to this domain on CommCare HQ or all forms that the Applications
             for this domain know about.
         """
-        key = ["submission xmlns app", self.domain]
-        data = get_db().view('reports_forms/all_forms',
-            startkey=key,
-            endkey=key+[{}],
-            group=True,
-            group_level=4,
-        ).all()
-        all_submitted = set(self.get_xmlns_app_keys(data))
+        form_buckets = get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain)
+        all_submitted = {self.make_xmlns_app_key(xmlns, app_id)
+                         for xmlns, app_id in form_buckets}
         from_apps = set(self.application_forms)
         return list(all_submitted.union(from_apps))
 
@@ -260,7 +257,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         other_forms = list(all_forms.difference(std_app_forms))
 
         key = ["", self.domain]
-        remote_app_data = get_db().view('reports_apps/remote',
+        remote_app_data = RemoteApp.get_db().view('reports_apps/remote',
             reduce=False,
             startkey=key,
             endkey=key+[{}],
@@ -640,7 +637,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if endkey is None:
             endkey = startkey
         kwargs = dict(group=group) if group else dict(reduce=reduce)
-        return get_db().view('reports_forms/by_app_info',
+        return Application.get_db().view('reports_forms/by_app_info',
             startkey=startkey,
             endkey=endkey+[{}],
             **kwargs
@@ -701,21 +698,6 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
     label = ugettext_noop("Choose a Form")
     use_only_last = True
     show_global_hide_fuzzy_checkbox = False
-
-    def get_selected_forms(self, filter_results):
-        xmlns = None
-        app_id = None
-        if self.show_unknown and self.selected_unknown_xmlns:
-            xmlns = self.selected_unknown_xmlns
-        elif filter_results and filter_results[-1]['slug'] == 'xmlns':
-            xmlns = filter_results[-1]['value']
-            if self.fuzzy_forms and self.hide_fuzzy_results:
-                app_id = filter_results[-3]['value']
-            app_id = app_id if app_id != self.unknown_remote_app_id else {}
-        return {
-            'xmlns': xmlns,
-            'app_id': app_id,
-        }
 
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):

@@ -34,7 +34,7 @@ def retry(retry_max):
     return wrap
 
 
-def synchronization(api_sync_object, checkpoint, date, limit, offset, params=None, **kwargs):
+def synchronization(api_sync_object, checkpoint, date, limit, offset, params=None, atomic=False, **kwargs):
     has_next = True
     next_url = ""
     params = params or {}
@@ -50,7 +50,11 @@ def synchronization(api_sync_object, checkpoint, date, limit, offset, params=Non
             save_checkpoint(checkpoint, api_sync_object.name,
                             meta.get('limit') or limit, meta.get('offset') or offset,
                             date)
-        with transaction.atomic():
+        if atomic:
+            with transaction.atomic():
+                for obj in objects:
+                    api_sync_object.sync_function(obj, **params)
+        else:
             for obj in objects:
                 api_sync_object.sync_function(obj, **params)
 
@@ -93,7 +97,6 @@ def check_hashes(webuser, django_user, password):
 
 def bootstrap_domain(api_object, **kwargs):
     domain = api_object.domain
-    endpoint = api_object.endpoint
     start_date = datetime.today()
 
     # get the last saved checkpoint from a prior migration and various config options
@@ -125,16 +128,17 @@ def bootstrap_domain(api_object, **kwargs):
 
     try:
         apis_from_checkpoint = itertools.dropwhile(lambda x: x.name != api, apis)
-        for api_object in apis_from_checkpoint:
-            if date and api_object.migrate_once:
+        for api in apis_from_checkpoint:
+            if date and api.migrate_once:
                 continue
-            api_object.add_date_filter(date)
-            synchronization(api_object, checkpoint, date, limit, offset, **kwargs)
+            api.add_date_filter(date)
+            synchronization(api, checkpoint, date, limit, offset, **kwargs)
             limit = 100
             offset = 0
 
         save_checkpoint(checkpoint, 'product', 100, 0, checkpoint.start_date, False)
         checkpoint.start_date = None
         checkpoint.save()
+        api_object.balance_migration(date)
     except ConnectionError as e:
         logging.error(e)

@@ -1,5 +1,6 @@
 from collections import OrderedDict
-from django.utils.html import escape
+from django.utils.encoding import force_text
+from django.utils.safestring import mark_safe
 from lxml import etree
 import copy
 import re
@@ -182,7 +183,7 @@ def make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
 def expected_bulk_app_sheet_headers(app):
     '''
     Returns lists representing the expected structure of bulk app translation
-    excel file uploads.
+    excel file uploads and downloads.
 
     The list will be in the form:
     [
@@ -230,6 +231,9 @@ def expected_bulk_app_sheet_headers(app):
 
 
 def expected_bulk_app_sheet_rows(app):
+    """
+    Data rows for bulk app translation download
+    """
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = {"Modules_and_forms": []}
@@ -347,7 +351,7 @@ def expected_bulk_app_sheet_rows(app):
                                 if isinstance(part, ItextOutput):
                                     value += "<output value=\"" + part.ref + "\"/>"
                                 else:
-                                    value += escape(part)
+                                    value += mark_safe(force_text(part).replace('<', '&lt;').replace('>', '&gt;'))
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
@@ -496,6 +500,31 @@ def update_form_translations(sheet, rows, missing_cols, app):
                 new_trans_el.set('default', '')
             itext.xml.append(new_trans_el)
 
+    def _update_translation_node(new_translation, value_node, attributes=None):
+        if new_translation:
+            # Create the node if it does not already exist
+            if not value_node.exists():
+                e = etree.Element(
+                    "{f}value".format(**namespaces), attributes
+                )
+                text_node.xml.append(e)
+                value_node = WrappedNode(e)
+            # Update the translation
+            value_node.xml.tail = ''
+            for node in value_node.findall("./*"):
+                node.xml.getparent().remove(node.xml)
+            escaped_trans = escape_output_value(new_translation)
+            value_node.xml.text = escaped_trans.text
+            for n in escaped_trans.getchildren():
+                value_node.xml.append(n)
+        else:
+            # Remove the node if it already exists
+            if value_node.exists():
+                value_node.xml.getparent().remove(value_node.xml)
+
+    def _looks_like_markdown(str):
+        return re.search(r'^\d+\. |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str)
+
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
@@ -514,19 +543,6 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
             # Add or remove translations
             for trans_type in ['default', 'audio', 'image', 'video']:
-
-                if trans_type == 'default':
-                    attributes = None
-                    value_node = next(
-                        n for n in text_node.findall("./{f}value")
-                        if 'form' not in n.attrib
-                    )
-                else:
-                    attributes = {'form': trans_type}
-                    value_node = text_node.find(
-                        "./{f}value[@form='%s']" % trans_type
-                    )
-
                 try:
                     col_key = get_col_key(trans_type, lang)
                     new_translation = row[col_key]
@@ -545,26 +561,27 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             new_translation = fallback
                             break
 
-                if new_translation:
-                    # Create the node if it does not already exist
-                    if not value_node.exists():
-                        e = etree.Element(
-                            "{f}value".format(**namespaces), attributes
-                        )
-                        text_node.xml.append(e)
-                        value_node = WrappedNode(e)
-                    # Update the translation
-                    value_node.xml.tail = ''
-                    for node in value_node.findall("./*"):
-                        node.xml.getparent().remove(node.xml)
-                    escaped_trans = escape_output_value(new_translation)
-                    value_node.xml.text = escaped_trans.text
-                    for n in escaped_trans.getchildren():
-                        value_node.xml.append(n)
+                if trans_type == 'default':
+                    value_node = next(
+                        n for n in text_node.findall("./{f}value")
+                        if 'form' not in n.attrib
+                    )
+                    old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
+                    markdown_node = text_node.find("./{f}value[@form='markdown']")
+                    has_markdown = _looks_like_markdown(new_translation)
+                    had_markdown = markdown_node.exists()
+                    vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
+
+                    _update_translation_node(new_translation, value_node)
+                    if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
+                           or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
+                        _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
+                                                 markdown_node,
+                                                 {'form': 'markdown'})
                 else:
-                    # Remove the node if it already exists
-                    if value_node.exists():
-                        value_node.xml.getparent().remove(value_node.xml)
+                    _update_translation_node(new_translation,
+                                             text_node.find("./{f}value[@form='%s']" % trans_type),
+                                             {'form': trans_type})
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     return msgs
@@ -603,6 +620,9 @@ def update_case_list_translations(sheet, rows, app):
 
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
     module = app.get_module(module_index)
+
+    if isinstance(module, ReportModule):
+        return msgs
 
     # It is easier to process the translations if mapping and graph config
     # rows are nested under their respective DetailColumns.
@@ -739,11 +759,11 @@ def has_at_least_one_translation(row, prefix, langs):
     """
     Returns true if the given row has at least one translation.
 
-    >>> has_at_least_one_translation(
+    >> has_at_least_one_translation(
         {'default_en': 'Name', 'case_property': 'name'}, 'default', ['en', 'fra']
     )
     true
-    >>> has_at_least_one_translation(
+    >> has_at_least_one_translation(
         {'case_property': 'name'}, 'default', ['en', 'fra']
     )
     false

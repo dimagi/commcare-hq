@@ -26,7 +26,7 @@ class Command(BaseCommand):
         make_option('-n', '--to_name',
                     action='store',
                     dest='to_name',
-                    default='',
+                    default=None,
                     help='The name to give to the imported app'),
         make_option('--url',
                     action='store',
@@ -46,8 +46,8 @@ class Command(BaseCommand):
 
         username = self._get_required_option('username', options)
         target_domain = self._get_required_option('to_domain', options)
-        name = self._get_required_option('to_name', options)
 
+        name = options['to_name']
         url_base = options['url']
         password = options['password']
         if not password:
@@ -60,4 +60,6 @@ class Command(BaseCommand):
             return "Command Failed: {}: {}".format(resp.status_code, resp.text)
 
         app_source = resp.json()
+        if not name:
+            name = app_source['name']
         import_app(app_source, target_domain, {'name': name})

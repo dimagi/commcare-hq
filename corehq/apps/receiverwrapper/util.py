@@ -1,10 +1,9 @@
-import json
 import re
 from couchdbkit import ResourceNotFound
-from django.core.cache import cache
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.domain.decorators import determine_authtype_from_user_agent
+from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
 import couchforms
 
@@ -19,17 +18,17 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
-    response = couchforms.SubmissionPost(
+    response, xform, cases = couchforms.SubmissionPost(
         domain=domain,
         instance=instance,
         **kwargs
-    ).get_response()
+    ).run()
     if not 200 <= response.status_code < 300:
         raise LocalSubmissionError('Error submitting (status code %s): %s' % (
             response.status_code,
             response.content,
         ))
-    return response
+    return response, xform, cases
 
 
 def get_meta_appversion_text(xform):
@@ -46,6 +45,7 @@ def get_meta_appversion_text(xform):
         return None
 
 
+@quickcache(['domain', 'build_id'], timeout=24*60*60)
 def get_version_from_build_id(domain, build_id):
     """
     fast lookup of app version number given build_id
@@ -55,17 +55,7 @@ def get_version_from_build_id(domain, build_id):
     """
     if not build_id:
         return None
-    cache_key = 'build_id_to_version/{}/{}'.format(domain, build_id)
-    cache_value = cache.get(cache_key)
-    if not cache_value:
-        # serialize as json to distinguish cache miss (None)
-        # from a None value ('null')
-        cache_value = json.dumps(_get_version_from_build_id(domain, build_id))
-        cache.set(cache_key, cache_value, 24*60*60)
-    return json.loads(cache_value)
 
-
-def _get_version_from_build_id(domain, build_id):
     try:
         build = ApplicationBase.get(build_id)
     except ResourceNotFound:
@@ -143,20 +133,11 @@ def get_build_version(xform):
     return None, BuildVersionSource.NONE
 
 
+@quickcache(['domain', 'build_or_app_id'], timeout=24*60*60)
 def get_app_and_build_ids(domain, build_or_app_id):
-    if build_or_app_id:
-        cache_key = 'build_to_app_id' + build_or_app_id
-        cache_value = cache.get(cache_key)
-        if cache_value is None:
-            cache_value = _get_app_and_build_ids(domain, build_or_app_id)
-            cache.set(cache_key, cache_value, 24*60*60)
-        return cache_value
-    else:
-        app_id, build_id = build_or_app_id, None
-    return app_id, build_id
+    if not build_or_app_id:
+        return build_or_app_id, None
 
-
-def _get_app_and_build_ids(domain, build_or_app_id):
     try:
         app_json = ApplicationBase.get_db().get(build_or_app_id)
     except ResourceNotFound:
@@ -173,4 +154,4 @@ def determine_authtype(request):
     if request.GET.get('authtype'):
         return request.GET['authtype']
 
-    return determine_authtype_from_user_agent(request)
+    return determine_authtype_from_request(request)

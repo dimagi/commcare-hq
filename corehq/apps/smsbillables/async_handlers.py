@@ -135,7 +135,7 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
         rate_table = []
 
-        from corehq.apps.sms.test_backend import TestSMSBackend
+        from corehq.messaging.smsbackends.test.api import TestSMSBackend
 
         for backend_instance in backends:
             backend_instance = backend_instance.wrap_correctly()

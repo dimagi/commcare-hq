@@ -1,4 +1,4 @@
-{% extends "settings/base_template.html" %}
+{% extends "settings/bootstrap2/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
@@ -29,19 +29,22 @@
 
   {# can't go in js-inline, because needs to initialize stuff that the field templates reference #}
   <script>
+    var TEMPLATE_STRINGS = {
+        new_user_success: _.template('{% trans "User <%= name %> added successfully.  A validation message has been sent to the phone number provided." %}')
+    };
     $(function() {
 
       var loc_id = {{ location.get_id|JSON }};
       var hierarchy = {{ hierarchy|JSON }};
       model = new LocationSelectViewModel(hierarchy, '\u2026', false, function(loc) {
           return loc.uuid() != loc_id && loc.can_have_children();
-        });
+      });
 
       model.editing = ko.observable(false);
       model.allowed_child_types = ko.computed(function() {
           var active_loc = (this.selected_location() || this.root());
           return (active_loc ? active_loc.allowed_child_types() : []);
-        }, model);
+      }, model);
       model.loc_type = ko.observable();
       model.loc_type.subscribe(function(val) {
           var subforms = $('.custom_subform');
@@ -207,7 +210,6 @@
   <div class="modal-body">
     <form class="form form-horizontal" method="post" id="add_commcare_account_form"
           action="{% url "new_mobile_worker_modal" domain %}?location_id={{ location.get_id }}">
-      <i class="icon-refresh icon-spin"></i>
     </form>
   </div>
 </div>

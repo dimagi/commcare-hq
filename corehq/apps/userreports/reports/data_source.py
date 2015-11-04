@@ -12,8 +12,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     SortConfigurationError)
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.reports.sorting import get_default_sort_value
-from corehq.apps.userreports.reports.specs import DESCENDING
+from corehq.apps.userreports.reports.sorting import get_default_sort_value, DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.views import get_datasource_config_or_404
@@ -66,7 +65,7 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def filters(self):
-        return [fv.to_sql_filter() for fv in self._filter_values.values()]
+        return filter(None, [fv.to_sql_filter() for fv in self._filter_values.values()])
 
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
@@ -85,7 +84,7 @@ class ConfigurableReportDataSource(SqlData):
             # ask each column for its group_by contribution and combine to a single list
             # if the column isn't found just treat it as a normal field
             if column_id in self._column_configs:
-                return self._column_configs[col_id].get_group_by_columns()
+                return self._column_configs[column_id].get_group_by_columns()
             else:
                 return [column_id]
 

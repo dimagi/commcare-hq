@@ -1,3 +1,10 @@
+if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(searchString, position) {
+        position = position || 0;
+        return this.indexOf(searchString, position) === position;
+    };
+}
+
 var getLocalizedString = function (property, language) {
     // simple utility to localize a string based on a dict of 
     // language mappings.
@@ -87,6 +94,10 @@ var getCaseFilterUrl = function(urlRoot, appId, moduleId, special, parentId) {
 var getSessionContextUrl = function(sessionUrlRoot, session_id) {
     // TODO: make this cleaner
     return sessionUrlRoot + session_id;
+};
+
+var isParentField = function(field) {
+    return field ? field.startsWith('parent/') : false;
 };
 
 var showError = function (message, location, autoHideTime) {

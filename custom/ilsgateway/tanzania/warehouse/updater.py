@@ -261,7 +261,7 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
     update_historical_data(domain)
 
 
-@task(queue='background_queue')
+@task(queue='logistics_background_queue')
 def process_facility_warehouse_data(facility, start_date, end_date, runner):
     """
     process all the facility-level warehouse tables
@@ -458,7 +458,7 @@ def get_non_archived_facilities_below(location):
     return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
 
 
-@task(queue='background_queue')
+@task(queue='logistics_background_queue')
 def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
     runner.location = location.sql_location
     runner.save()

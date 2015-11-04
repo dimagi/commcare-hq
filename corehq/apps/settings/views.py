@@ -1,3 +1,4 @@
+import re
 from django.views.decorators.debug import sensitive_post_parameters
 from corehq.apps.hqwebapp.models import MySettingsTab
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
@@ -127,12 +128,63 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     @property
     def page_context(self):
+        user = self.request.couch_user
         return {
             'form': self.settings_form,
             'api_key': self.get_or_create_api_key(),
+            'phonenumbers': user.phone_numbers_extended(user),
+            'user_type': 'mobile' if user.is_commcare_user() else 'web',
         }
 
+    def phone_number_is_valid(self):
+        return (
+            isinstance(self.phone_number, basestring) and
+            re.compile('^\d+$').match(self.phone_number) is not None
+        )
+
+    def process_add_phone_number(self):
+        if self.phone_number_is_valid():
+            user = self.request.couch_user
+            user.add_phone_number(self.phone_number)
+            user.save()
+            messages.success(self.request, _("Phone number added."))
+        else:
+            messages.error(self.request, _("Invalid phone number format entered. "
+                "Please enter number, including country code, in digits only."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
+
+    def process_delete_phone_number(self):
+        self.request.couch_user.delete_phone_number(self.phone_number)
+        messages.success(self.request, _("Phone number deleted."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
+
+    def process_make_phone_number_default(self):
+        self.request.couch_user.set_default_phone_number(self.phone_number)
+        messages.success(self.request, _("Primary phone number updated."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
+
+    @property
+    @memoized
+    def phone_number(self):
+        return self.request.POST.get('phone_number')
+
+    @property
+    @memoized
+    def form_actions(self):
+        return {
+            'add-phonenumber': self.process_add_phone_number,
+            'delete-phone-number': self.process_delete_phone_number,
+            'make-phone-number-default': self.process_make_phone_number_default,
+        }
+
+    @property
+    @memoized
+    def form_type(self):
+        return self.request.POST.get('form_type')
+
     def post(self, request, *args, **kwargs):
+        if self.form_type and self.form_type in self.form_actions:
+            return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
             old_lang = self.request.couch_user.language
             self.settings_form.update_user(existing_user=self.request.couch_user)

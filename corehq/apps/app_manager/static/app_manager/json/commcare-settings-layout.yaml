@@ -44,7 +44,6 @@
     - properties.extra_key_action  # Extra Key Action
     - properties.cc-entry-mode  # Item Selection Mode
     - properties.cc-send-unsent  # Send Forms Mode
-#    - hq.success_message  # Success Message  # depends on properties.cc-send-unsent
     - hq.text_input  # Text Input
     - properties.ViewStyle  # Form Entry Style
     - properties.cc-user-mode  # User Login Mode
@@ -63,6 +62,8 @@
     - properties.logo_android_login
     - hq.auto_gps_capture
     - properties.cc-login-duration-seconds
+    - properties.cc-log-entity-detail-enabled
+    - hq.use_grid_menus
 
 - title: 'Advanced'
   id: app-settings-advanced

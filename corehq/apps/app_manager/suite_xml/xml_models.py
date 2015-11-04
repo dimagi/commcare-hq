@@ -1,6 +1,7 @@
 from eulxml.xmlmap import (
-    StringField, XmlObject, IntegerField, NodeListField,
-    NodeField, load_xmlobject_from_string
+    IntegerField, NodeField, NodeListField,
+    SimpleBooleanField, StringField, XmlObject,
+    load_xmlobject_from_string,
 )
 from lxml import etree
 
@@ -275,7 +276,8 @@ class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
     ORDER = (
         'id', 'nodeset', 'value', 'function',
-        'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline'
+        'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline',
+        'autoselect',
     )
 
     nodeset = XPathField('@nodeset')
@@ -285,6 +287,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
     detail_inline = StringField('@detail-inline')
+    autoselect = SimpleBooleanField('@autoselect', true="true", false="false")
 
 
 class StackDatum(IdNode):
@@ -400,6 +403,7 @@ class MenuMixin(XmlObject):
 
     root = StringField('@root')
     relevant = XPathField('@relevant')
+    style = StringField('@style')
     commands = NodeListField('command', Command)
 
 
@@ -598,16 +602,14 @@ class Detail(OrderedXmlObject, IdNode):
                     result.add(datum.value)
 
         for field in self.get_all_fields():
-            try:
-                result.add(field.header.text.xpath_function)
-                result.add(field.template.text.xpath_function)
-            except AttributeError:
-                # Its a Graph detail
-                # convert Template to GraphTemplate
+            if field.template.form == 'graph':
                 s = etree.tostring(field.template.node)
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
                 for series in template.graph.series:
                     result.add(series.nodeset)
+            else:
+                result.add(field.header.text.xpath_function)
+                result.add(field.template.text.xpath_function)
 
         result.discard(None)
         return result

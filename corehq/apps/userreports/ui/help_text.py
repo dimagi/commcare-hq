@@ -10,8 +10,8 @@ DESCRIPTION = _(
 BASE_ITEM_EXPRESSION = _(
     'You can leave this blank unless you are '
     '<a target="_blank" href="'
-    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#saving-repeat-data'
-    '">saving repeat data</a>')
+    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#saving-multiple-rows-per-caseform'
+    '">saving multiple rows per case or form</a>')
 CONFIGURED_FILTER = _(
     'Look at '
     '<a target="_blank" href="'
@@ -28,9 +28,10 @@ CONFIGURED_INDICATORS = _(
     '<a target="_blank" href="'
     'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#indicators'
     '">these docs</a>')
-NAMED_FILTER = _(
+NAMED_EXPRESSIONS = _(
     'For this advanced and useful feature, '
     'give a dict where the keys are the variable names you choose '
-    'and the values are filters according to the syntax of '
-    'Configured Filters above. You can then reference these from '
-    'Configured Filters as {"type": "named", "name": "myvarname"}')
+    'and the values are any valid expressions. You can then reference these from filters and indicators '
+    'wherever an expression goes using: <code>{"type": "named", "name": "myvarname"}</code>')
+NAMED_FILTER = _('These behave exactly like named expressions (see above), except the values '
+                 'should be a valid filter, and they can be used wherever filters are used above.')

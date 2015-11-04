@@ -8,6 +8,7 @@
     "is_superuser": false,
     "last_login": "2013-08-22T15:29:46.076977",
     "last_name": "Test1",
+    "program": "hiv",
     "location": null,
     "organization": "TestOrg1",
     "password": "sha1$4b8dd$8acea54703614eea2fbb4bf7fd6ee9465a67ff53",
@@ -28,7 +29,7 @@
     "organization": "TestOrg2",
     "password": "sha1$a2d46$57f1712b2fbe5e129206b45fa3fa5c14d9f879be",
     "sms_notifications": false,
-    "supply_point": 370,
+    "supply_point": 4,
     "username": "test2",
     "groups": [
         {"name": "facility_manager"}
@@ -42,7 +43,9 @@
         "is_active": "True",
         "language": "",
         "name": "test1",
-        "phone_numbers":["+1233232"],
+        "phone_numbers": [
+            {"phone_number": "+1233232", "backend": "message_tester", "default": true}
+        ],
         "role": null,
         "supply_point": null,
         "to": "7000"

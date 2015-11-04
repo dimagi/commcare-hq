@@ -12,6 +12,11 @@ DATABASES = {
     }
 }
 
+# Custom databases can be used to configure a separate database for specific UCR data sources
+# The key is what you will reference in the datasource, e.g. 'custom_ucr_database'
+# The value is the sql connection string "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
+CUSTOM_DATABASES = {}
+
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
@@ -91,18 +96,6 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #     'key_pass': "*******",
 # }
 
-####### SMS Config ########
-
-# Mach
-
-SMS_GATEWAY_URL = "http://gw1.promessaging.com/sms.php"
-SMS_GATEWAY_PARAMS = "id=******&pw=******&dnr=%(phone_number)s&msg=%(message)s&snr=DIMAGI"
-
-# Unicel
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "******",
-                 "sender": "Promo" }
-
 ####### Domain sync / de-id ########
 
 DOMAIN_SYNCS = { 
@@ -134,9 +127,9 @@ BASE_ADDRESS = 'localhost:8000'
 
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '*******',
-    'PINGDOM_ID': '*****',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'GOOGLE_ANALYTICS_API_ID': '*******',
+    'PINGDOM_API_ID': '*****',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
     'HUBSPOT_API_KEY': '*****',
 }
@@ -181,7 +174,6 @@ ADM_ENABLED_PROJECTS = []
 
 # prod settings
 SOIL_DEFAULT_CACHE = "redis"
-SOIL_BACKEND = "soil.CachedDownload"
 
 # reports cache
 REPORT_CACHE = 'default'  # or e.g. 'redis'
@@ -229,7 +221,7 @@ CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
-                           '^south', '^djcelery', '^debug_toolbar', '^rosetta']
+                           '^south', '^djcelery', '^debug_toolbar']
 
 ####### Selenium tests config ########
 

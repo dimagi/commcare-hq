@@ -37,7 +37,7 @@ def convert_media_path_to_hq_url(path, app):
         return None
     else:
         url_base = get_url_base()
-        return url_base + HQMediaMapItem.format_match_map(path, media_type=media.media_type, media_id=media.multimedia_id)["url"] + "foo.wav"
+        return url_base + media.url + "foo.wav"
 
 def validate_answer(answer, question):
     """
@@ -464,8 +464,7 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
 
     try:
         kwargs = backend.get_cleaned_outbound_params()
-        module = __import__(backend.outbound_module,
-            fromlist=['initiate_outbound_call'])
+        module = backend.backend_module
 
         call_log_entry.backend_api = module.API_ID
         call_log_entry.save()

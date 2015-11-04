@@ -1,48 +1,59 @@
+import calendar
 from collections import defaultdict, namedtuple
 from datetime import datetime
 import functools
+import json
 import logging
 from urllib import urlencode
+
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
-from corehq.apps.domain.models import Domain
-from corehq.apps import reports
+from django.conf import settings
+from django.core.validators import validate_email
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+from sqlalchemy.util import immutabledict
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
-from couchforms.filters import instances
-from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import FormQuestionSchema
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.dbaccessors import stale_get_exports_json
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.exceptions import InvalidDaterangeException
-from dimagi.ext.couchdbkit import *
-from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
-    default_case_filter
+from corehq.apps.reports.exceptions import (
+    InvalidDaterangeException,
+    UnsupportedSavedReportError,
+    UnsupportedScheduledReportError,
+)
+from corehq.apps.reports.exportfilters import (
+    default_case_filter,
+    default_form_filter,
+    form_matches_users,
+    is_commconnect_form,
+)
+from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
+
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
-import couchforms
+from couchforms.filters import instances
+from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
-from django.core.validators import validate_email
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
-import json
-import calendar
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 class HQUserType(object):
@@ -248,13 +259,16 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             'filters': {}
         }
 
-    def to_complete_json(self):
+    def to_complete_json(self, lang=None):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
             'report_name': self.report_name,
             'date_description': self.date_description,
-            'datespan_filters': self.datespan_filters,
+            'datespan_filters': self.datespan_filter_choices(
+                self.datespan_filters,
+                lang or ucr_default_language()
+            ),
             'has_ucr_datespan': self.has_ucr_datespan,
         })
         return result
@@ -345,33 +359,41 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
-    def view_kwargs(self):
-        kwargs = {'domain': self.domain,
-                  'report_slug': self.report_slug}
+    def url_kwargs(self):
+        kwargs = {
+            'domain': self.domain,
+            'report_slug': self.report_slug,
+        }
 
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
 
-        if not self.is_configurable_report:
-            kwargs['permissions_check'] = self._dispatcher.permissions_check
+        return immutabledict(kwargs)
 
-        return kwargs
+    @property
+    @memoized
+    def view_kwargs(self):
+        if not self.is_configurable_report:
+            return self.url_kwargs.union({
+                'permissions_check': self._dispatcher.permissions_check,
+            })
+        return self.url_kwargs
 
     @property
     @memoized
     def url(self):
         try:
-            from django.core.urlresolvers import reverse
             from corehq.apps.userreports.reports.view import ConfigurableReport
 
             if self.is_configurable_report:
-                url_base = reverse(self.report_slug, args=[self.domain, self.subreport_slug])
+                url_base = absolute_reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
-                url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
+                url_base = absolute_reverse(self._dispatcher.name(), kwargs=self.url_kwargs)
             return url_base + '?' + self.query_string
         except UnsupportedSavedReportError:
             return "#"
-        except Exception:
+        except Exception as e:
+            logging.exception(e.message)
             return "#"
 
     @property
@@ -453,6 +475,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.domain = self.domain
         mock_request.couch_user.current_domain = self.domain
         mock_request.couch_user.language = lang
+        mock_request.method = 'GET'
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
         if self.is_configurable_report:
@@ -540,8 +563,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def languages(self):
         if self.is_configurable_report:
-            return self.report.spec.get_languages()
-        return set()
+            return frozenset(self.report.spec.get_languages())
+        return frozenset()
 
     @property
     @memoized
@@ -559,6 +582,20 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def has_ucr_datespan(self):
         return self.is_configurable_report and self.datespan_filters
+
+    @staticmethod
+    def datespan_filter_choices(datespan_filters, lang):
+        localized_datespan_filters = []
+        for f in datespan_filters:
+            copy = dict(f)
+            copy['display'] = ucr_localize(copy['display'], lang)
+            localized_datespan_filters.append(copy)
+
+        with localize(lang):
+            return [{
+                'display': _('Choose a date filter...'),
+                'slug': None,
+            }] + localized_datespan_filters
 
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
 
@@ -606,12 +643,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def all_recipient_emails(self):
         # handle old documents
         if not self.owner_id:
-            return [self.owner.get_email()]
+            return frozenset([self.owner.get_email()])
 
-        emails = []
+        emails = frozenset(self.recipient_emails)
         if self.send_to_owner and self.owner_email:
-            emails.append(self.owner_email)
-        emails.extend(self.recipient_emails)
+            emails |= {self.owner_email}
         return emails
 
     @property
@@ -673,7 +709,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             config.owner_id = self.owner_id
             configs = [config]
 
-        return configs
+        return tuple(configs)
 
     @property
     def day_name(self):
@@ -708,7 +744,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         for email in self.all_recipient_emails:
             language = user_languages.get(email, fallback_language)
             recipients[language].append(email)
-        return recipients
+        return immutabledict(recipients)
 
     def send(self):
         # Scenario: user has been removed from the domain that they

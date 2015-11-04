@@ -5,7 +5,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
+from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
     BuildVersionSource
 from couchdbkit import ResourceNotFound
@@ -19,6 +19,7 @@ from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
+from couchforms.analytics import get_last_form_submission_for_user_for_app
 from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -93,22 +94,13 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def rows(self):
         rows = []
-        selected_app = self.request_params.get(SelectApplicationFilter.slug, '')
+        selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
         for user in self.users:
             last_seen = last_sync = app_name = None
 
-            key = make_form_couch_key(self.domain, user_id=user.user_id,
-                                      app_id=selected_app or None)
-            xform = XFormInstance.view(
-                "reports_forms/all_forms",
-                startkey=key+[{}],
-                endkey=key,
-                include_docs=True,
-                descending=True,
-                reduce=False,
-                limit=1,
-            ).first()
+            xform = get_last_form_submission_for_user_for_app(
+                self.domain, user.user_id, selected_app)
 
             if xform:
                 last_seen = xform.received_on
@@ -164,6 +156,7 @@ class SyncHistoryReport(DeploymentsReport):
     MAX_LIMIT = 1000
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
+    emailable = True
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
 
     @property
@@ -248,6 +241,13 @@ class SyncHistoryReport(DeploymentsReport):
                         sync_log.error_hash,
                     )
 
+            def _get_state_hash_display(sync_log):
+                try:
+                    return u'{:.10}...'.format(sync_log.get_state_hash())
+                except SyncLogAssertionError as e:
+                    return _(u'Error computing hash! {}').format(e)
+
+
             num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),
@@ -259,10 +259,10 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(sync_log.log_format)
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
                 columns.append(_fmt_error_info(sync_log))
-                columns.append('{:.10}...'.format(sync_log.get_state_hash()))
+                columns.append(_get_state_hash_display(sync_log))
                 columns.append(_naturaltime_with_hover(sync_log.last_submitted))
                 columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
-                                                     sync_log.hash_at_last_cached))
+                                                      sync_log.hash_at_last_cached))
 
             return columns
 

@@ -2,16 +2,16 @@ from datetime import datetime
 from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
+from custom.ewsghana.tasks import on_going_non_reporting, on_going_stockout
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, bootstrap_user, make_loc, assign_products_to_location
-from corehq.apps.sms.backend import test
+from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location, \
+    create_backend, set_sms_notifications
 
 
 TEST_DOMAIN = 'ewsghana-alerts-test'
@@ -22,7 +22,8 @@ class TestAlerts(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.sms_backend_mapping, cls.backend = create_backend()
+
         cls.national = make_loc(code='national', name='National', type='country', domain=TEST_DOMAIN)
         cls.region = make_loc(code="region", name="Test Region", type="region", domain=TEST_DOMAIN,
                               parent=cls.national)
@@ -36,32 +37,35 @@ class TestAlerts(TestCase):
         cls.loc2 = make_loc(code="tf2", name="Test Facility 2", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)
 
-        cls.user1 = bootstrap_user(
-            username='test1', phone_number='1111', home_loc=cls.district, domain=TEST_DOMAIN,
+        cls.user1 = bootstrap_web_user(
+            username='test1', phone_number='1111', location=cls.district, domain=TEST_DOMAIN,
             first_name='test', last_name='test1',
             user_data={
-                'role': [],
-                'sms_notifications': True
-            }
+                'role': []
+            }, email='test1@example.com', password='dummy'
         )
 
-        cls.national_user = bootstrap_user(
-            username='test2', phone_number='2222', home_loc=cls.national, domain=TEST_DOMAIN,
+        set_sms_notifications(TEST_DOMAIN, cls.user1, True)
+
+        cls.national_user = bootstrap_web_user(
+            username='test2', phone_number='2222', location=cls.national, domain=TEST_DOMAIN,
             first_name='test', last_name='test2',
             user_data={
-                'role': [],
-                'sms_notifications': True
-            }
+                'role': []
+            }, email='test2@example.com', password='dummy'
         )
 
-        cls.regional_user = bootstrap_user(
-            username='test4', phone_number='4444', home_loc=cls.region, domain=TEST_DOMAIN,
+        set_sms_notifications(TEST_DOMAIN, cls.national_user, True)
+
+        cls.regional_user = bootstrap_web_user(
+            username='test4', phone_number='4444', location=cls.region, domain=TEST_DOMAIN,
             first_name='test', last_name='test4',
             user_data={
-                'role': [],
-                'sms_notifications': True
-            }
+                'role': []
+            }, email='test4@example.com', password='dummy'
         )
+
+        set_sms_notifications(TEST_DOMAIN, cls.regional_user, True)
 
         cls.product = Product(domain=TEST_DOMAIN, name='Test Product', code_='tp', unit='each')
         cls.product.save()
@@ -78,6 +82,8 @@ class TestAlerts(TestCase):
         cls.user1.delete()
         cls.national_user.delete()
         cls.regional_user.delete()
+        cls.backend.delete()
+        cls.sms_backend_mapping.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
 
@@ -87,64 +93,36 @@ class TestAlerts(TestCase):
         StockState.objects.all().delete()
 
     def test_ongoing_non_reporting(self):
-        OnGoingNonReporting(TEST_DOMAIN).send()
+        now = datetime.utcnow()
+        on_going_non_reporting()
         self.assertEqual(SMS.objects.count(), 1)
 
         smses = SMS.objects.all()
         self.assertEqual(smses[0].text, ONGOING_NON_REPORTING % 'Test Facility, Test Facility 2')
 
-        create_stock_report(self.loc1, {'tp': 1})
-        now = datetime.utcnow()
-
-        OnGoingNonReporting(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses[0].text, ONGOING_NON_REPORTING % 'Test Facility 2')
-
-        create_stock_report(self.loc2, {'tp2': 1})
-
-        now = datetime.utcnow()
-
-        OnGoingNonReporting(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 0)
+        on_going_non_reporting()
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 1)
 
     def test_ongoing_stockouts(self):
-        OnGoingStockouts(TEST_DOMAIN).send()
-
+        on_going_stockout()
         self.assertEqual(SMS.objects.count(), 0)
 
+        now = datetime.utcnow()
         create_stock_report(self.loc1, {'tp': 0})
 
-        now = datetime.utcnow()
-
-        OnGoingStockouts(TEST_DOMAIN).send()
+        on_going_stockout()
         smses = SMS.objects.filter(date__gte=now)
 
         self.assertEqual(smses.count(), 1)
         self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_SDP % 'Test Facility')
 
-        create_stock_report(self.loc2, {'tp': 0})
-
-        now = datetime.utcnow()
-
-        OnGoingStockouts(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_SDP % 'Test Facility, Test Facility 2')
-
-        create_stock_report(self.loc1, {'tp': 10})
-        create_stock_report(self.loc2, {'tp': 10})
-
-        now = datetime.utcnow()
-
-        OnGoingStockouts(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 0)
+        on_going_stockout()
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 1)
 
     def test_ongoing_stockouts_rms(self):
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
+        on_going_stockout()
 
         self.assertEqual(SMS.objects.count(), 0)
 
@@ -152,23 +130,12 @@ class TestAlerts(TestCase):
         create_stock_report(self.rms2, {'tp': 0})
 
         now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
+        on_going_stockout()
         smses = SMS.objects.filter(date__gte=now)
 
         self.assertEqual(smses.count(), 2)
         self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_RMS % 'Test Medical Store, Test Medical Store 2')
 
-        create_stock_report(self.rms2, {'tp': 15})
-        now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 2)
-        self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_RMS % 'Test Medical Store')
-
-        create_stock_report(self.rms, {'tp': 15})
-        now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 0)
+        on_going_stockout()
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 2)

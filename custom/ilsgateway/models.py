@@ -1,6 +1,8 @@
+from collections import defaultdict
 from datetime import datetime
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
+from corehq.apps.locations.signals import location_edited
 
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from django.db import models, connection
@@ -522,37 +524,66 @@ def domain_pre_delete_receiver(domain, **kwargs):
         DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
         SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
 
-        cursor = connection.cursor()
-        cursor.execute(
-            "DELETE FROM ilsgateway_alert WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
-        cursor.execute(
-            "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
-            "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
-        )
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM ilsgateway_alert WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
+            cursor.execute(
+                "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
+                "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
-            "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
+                "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
     ReportRun.objects.filter(domain=domain_name).delete()
     ILSNotes.objects.filter(domain=domain_name).delete()
     SupervisionDocument.objects.filter(domain=domain_name).delete()
+
+
+@receiver(location_edited)
+def location_edited_receiver(sender, loc, moved, **kwargs):
+    from custom.ilsgateway.tanzania.warehouse.updater import default_start_date, \
+        process_non_facility_warehouse_data
+
+    config = ILSGatewayConfig.for_domain(loc.domain)
+    if not config or not config.enabled or not moved or not loc.previous_parents:
+        return
+
+    last_run = ReportRun.last_success(loc.domain)
+    if not last_run:
+        return
+
+    previous_parent = SQLLocation.objects.get(location_id=loc.previous_parents[-1])
+    type_location_map = defaultdict(set)
+
+    previous_ancestors = list(previous_parent.get_ancestors(include_self=True))
+    actual_ancestors = list(loc.sql_location.get_ancestors())
+
+    for sql_location in previous_ancestors + actual_ancestors:
+        type_location_map[sql_location.location_type.name].add(sql_location)
+
+    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
+        for sql_location in type_location_map[location_type]:
+            process_non_facility_warehouse_data.delay(
+                sql_location.couch_location, default_start_date(), last_run.end, last_run, strict=False
+            )

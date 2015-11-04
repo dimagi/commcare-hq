@@ -13,6 +13,7 @@ xforms/
 /data/
 submissions/
 /export/
+/bower_components
 bad/
 *.log*
 CommCare.ja*
@@ -51,3 +52,5 @@ celerybeat-schedule
 
 # compiled translations
 /locale/*/*/*.mo
+.grunt
+node_modules/

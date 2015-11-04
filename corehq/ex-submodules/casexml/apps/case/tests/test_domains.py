@@ -1,9 +1,6 @@
 from django.test import TestCase
 from django.test.utils import override_settings
-from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import process_cases
-from couchforms.tests.testutils import post_xform_to_couch
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 ALICE_XML = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/D95E58BD-A228-414F-83E6-EEE716F0B3AD">
@@ -22,7 +19,7 @@ ALICE_XML = """<?xml version='1.0' ?>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>A00000245706EE</n1:deviceID>
         <n1:timeStart>2013-04-19T16:51:13.162-04</n1:timeStart>
-        <n1:timeEnd>user-xxx-alice</n1:timeEnd>
+        <n1:timeEnd>2013-04-19T16:52:13.162-04</n1:timeEnd>
         <n1:username>alice</n1:username>
         <n1:userID>da77a254-56dd-11e0-a55d-005056aa7fb5</n1:userID>
         <n1:instanceID>a588a637-cde0-43ad-a046-4c508102009d</n1:instanceID>
@@ -75,17 +72,13 @@ EVE_DOMAIN = 'domain2'
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=True)
 class DomainTest(TestCase):
-    def testCantPwnCase(self):
-        form = post_xform_to_couch(ALICE_XML)
-        form.domain = ALICE_DOMAIN
-        (case,) = process_cases(form)
-        case_id = case.case_id
-        form = post_xform_to_couch(EVE_XML)
-        form.domain = EVE_DOMAIN
-        with self.assertRaises(IllegalCaseId):
-            process_cases(form)
-        self.assertFalse(hasattr(CommCareCase.get(case_id), 'plan_to_buy_gun'))
-        form = post_xform_to_couch(ALICE_UPDATE_XML)
-        form.domain = ALICE_DOMAIN
-        process_cases(form)
-        self.assertEqual(CommCareCase.get(case_id).plan_to_buy_gun, 'no')
+    def test_cant_own_case(self):
+        interface = FormProcessorInterface()
+        _, _, [case] = interface.submit_form_locally(ALICE_XML, ALICE_DOMAIN)
+        response, form, cases = interface.submit_form_locally(EVE_XML, EVE_DOMAIN)
+
+        self.assertIn('IllegalCaseId', response.content)
+        self.assertFalse(hasattr(case, 'plan_to_buy_gun'))
+
+        _, _, [case] = interface.submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
+        self.assertEqual(case.plan_to_buy_gun, 'no')

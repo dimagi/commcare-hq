@@ -32,6 +32,10 @@ def handle(verified_contact, text, msg=None):
     if not args:
         return False
     keyword = args[0]
+
+    if keyword.startswith('#'):
+        return False
+
     args = args[1:]
     params = {
         'user': user,

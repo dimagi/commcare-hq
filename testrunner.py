@@ -1,16 +1,17 @@
+import datetime
 from collections import defaultdict
 from functools import wraps
 from unittest.util import strclass
 from couchdbkit import Database, ResourceNotFound
+
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
-import datetime
 from django.conf import settings
-from django.utils import unittest
-import settingshelper
-
 from django.test import TransactionTestCase
+from django.utils import unittest
 from mock import patch, Mock
+
+import settingshelper
 
 
 def set_db_enabled(is_enabled):
@@ -49,6 +50,8 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         settings.INSTALLED_APPS = (tuple(settings.INSTALLED_APPS) +
                                    tuple(settings.TEST_APPS))
         settings.CELERY_ALWAYS_EAGER = True
+        # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
+        settings._PILLOWTOPS = settings.PILLOWTOPS
         settings.PILLOWTOPS = {}
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 

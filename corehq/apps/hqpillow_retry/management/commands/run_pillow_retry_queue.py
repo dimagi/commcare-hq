@@ -18,21 +18,23 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
     def get_enqueuing_timeout(self):
         return settings.PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 
+    @staticmethod
     @retry_on_connection_failure
-    def _get_items(self, utcnow):
-        errors = PillowError.get_errors_to_process(
-            utcnow=utcnow,
-        )
-        return (dict(id=e['id'], key=e['date_next_attempt']) for e in errors)
+    def _get_items(utcnow):
+        errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
+        error_pks = [error['id'] for error in errors]
+        PillowError.objects.filter(pk__in=error_pks).update(queued=True)
+        return [dict(id=e['id'], key=e['date_next_attempt']) for e in errors]
 
-    def get_items_to_be_processed(self, utcnow):
+    @classmethod
+    def get_items_to_be_processed(cls, utcnow):
         # We're just querying for ids here, so no need to limit
         utcnow = utcnow.replace(tzinfo=pytz.UTC)
         try:
-            return self._get_items(utcnow)
+            return cls._get_items(utcnow)
         except InterfaceError:
             db.connection.close()
-            return self._get_items(utcnow)
+            return cls._get_items(utcnow)
 
     def use_queue(self):
         return settings.PILLOW_RETRY_QUEUE_ENABLED

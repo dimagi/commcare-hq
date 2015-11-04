@@ -1,8 +1,9 @@
 from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
-from casexml.apps.case.dbaccessors import get_reverse_indexed_case_ids, get_indexed_case_ids
+from casexml.apps.case.dbaccessors import get_indexed_case_ids, get_all_reverse_indices_info
 from casexml.apps.case.exceptions import IllegalCaseId
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_indexed_cases
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
@@ -43,9 +44,9 @@ def should_create_flags_on_submission(domain):
     return False
 
 
-def set_cleanliness_flags_for_enabled_domains(force_full=False):
+def set_cleanliness_flags_for_all_domains(force_full=False):
     """
-    Updates cleanliness for all domains that have the toggle enabled
+    Updates cleanliness for all domains
     """
     for domain in Domain.get_all_names():
         try:
@@ -114,9 +115,8 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
                 owner_doc_type, owner_id, domain
             ))
 
-    else:
-        cleanliness_object.last_checked = datetime.utcnow()
-        cleanliness_object.save()
+    cleanliness_object.last_checked = datetime.utcnow()
+    cleanliness_object.save()
 
 
 def hint_still_valid(domain, owner_id, hint):
@@ -135,18 +135,41 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
         cases_to_check = cases_to_check - closed_owned_case_ids
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
-            reverse_index_ids = set(get_reverse_indexed_case_ids(domain, list(cases_to_check)))
+            reverse_index_infos = get_all_reverse_indices_info(domain, list(cases_to_check))
+            reverse_index_ids = set([r.case_id for r in reverse_index_infos])
             indexed_with_right_owner = (reverse_index_ids & (footprint_info.base_ids | closed_owned_case_ids))
-            if indexed_with_right_owner:
-                return CleanlinessFlag(False, indexed_with_right_owner.pop())
+            found_deleted_cases = False
+            while indexed_with_right_owner:
+                hint_id = indexed_with_right_owner.pop()
+                infos_for_this_owner = _get_info_by_case_id(reverse_index_infos, hint_id)
+                for info in infos_for_this_owner:
+                    try:
+                        case = CommCareCase.get(info.referenced_id)
+                        if case.doc_type == 'CommCareCase':
+                            return CleanlinessFlag(False, hint_id)
+                        else:
+                            found_deleted_cases = True
+                    except ResourceNotFound:
+                        # the case doesn't exist - don't use it as a dirty flag
+                        found_deleted_cases = True
 
-            # I'm not sure if this code can ever be hit, but if it is we should fail hard
-            # until we can better understand it.
-            raise IllegalCaseId('Owner {} in domain {} has an invalid index reference chain!!'.format(
-                owner_id, domain
-            ))
+            if found_deleted_cases:
+                # if we made it all the way to the end of the loop without returning anything
+                # then the owner was only flagged as dirty due to missing cases,
+                # This implies the owner is still clean.
+                return CleanlinessFlag(True, None)
+            else:
+                # I don't believe code can ever be hit, but if it is we should fail hard
+                # until we can better understand it.
+                raise IllegalCaseId('Owner {} in domain {} has an invalid index reference chain!!'.format(
+                    owner_id, domain
+                ))
 
     return CleanlinessFlag(True, None)
+
+
+def _get_info_by_case_id(index_infos, case_id):
+    return [i for i in index_infos if i.case_id == case_id]
 
 
 def get_case_footprint_info(domain, owner_id):

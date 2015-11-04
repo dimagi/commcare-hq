@@ -1,8 +1,9 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.locations.dbaccessors import get_web_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.alert import Notification
 
@@ -18,13 +19,13 @@ class UrgentAlert(object):
         raise NotImplemented()
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(domain=self.domain, location_type__administrative=True)
+        return SQLLocation.active_objects.filter(domain=self.domain, location_type__administrative=True)
 
     def get_users(self, sql_location):
         return [
             user
-            for user in get_all_users_by_location(self.domain, sql_location.location_id)
-            if user.get_verified_number()
+            for user in get_web_users_by_location(self.domain, sql_location.location_id)
+            if get_preferred_phone_number_for_recipient(user)
         ]
 
     def send(self):
@@ -73,7 +74,7 @@ class UrgentStockoutAlert(UrgentAlert):
             for user in self.get_users(sql_location):
                 message = self.get_message(sql_location.name, user, products)
                 if message:
-                    yield Notification(user, message)
+                    yield Notification(self.domain, user, message)
 
     def send(self):
         for notification in self.get_notifications():
@@ -100,7 +101,7 @@ class UrgentNonReporting(UrgentAlert):
             if not message:
                 continue
             for user in self.get_users(sql_location):
-                yield Notification(user, message)
+                yield Notification(self.domain, user, message)
 
     def send(self):
         for notification in self.get_notifications():

@@ -58,16 +58,18 @@ class StockSummaryReportData(EmailReportData):
         row_data = {product.name: defaultdict(lambda: 0) for product in products}
 
         for location in locations:
+            location_products = list(location.products)
             stock_states = StockState.objects.filter(
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
-                sql_product__in=products
+                sql_product__in=location_products
             )
+
+            for product in location_products:
+                row_data[product.name]['total_fac'] += 1
 
             for state in stock_states:
                 p_name = state.sql_product.name
-                if location.products.filter(code=state.sql_product.code):
-                    row_data[p_name]['total_fac'] += 1
                 row_data[p_name]['reported_fac'] += 1
                 s = _stock_status(state, location)
                 row_data[p_name][s] += 1

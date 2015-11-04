@@ -68,14 +68,29 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_daterangepicker %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+        {% endcompress %}
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/jquery/plugins/jquery.form-3.51.0.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/underscore/underscore-1.6.0.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
+        {% include "style/includes/bootstrap3/core_libraries.html" %}
         {% endcompress %}
+
+        {# Up here because if daterangepicker is called from within a form widget, #}
+        {# the javascript requiring the config file is run before js-inline #}
+        {% if request.use_daterangepicker %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
 
         {% if formdesigner %}
         <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
@@ -101,7 +116,7 @@
                     relativeUrls: false
                 };
             </script>
-            <script src="{% new_static 'style/lib/lessjs/less-1.7.3.min.js' cache=True %}"></script>
+            <script src="{% new_static 'less/dist/less-1.7.3.min.js' cache=True %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
@@ -119,11 +134,13 @@
                     {% block tabs %}
                         {% format_main_menu %}
                     {% endblock %}
+                    <div class="btn-toolbar pull-right">
                     {% if request.user.is_authenticated %}
                         {% include 'style/includes/global_navigation_bar.html' %}
                     {% else %}
                         <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                     {% endif %}
+                    </div>
                 </nav>
                 {% format_subtab_menu %}
             </div>
@@ -131,9 +148,6 @@
         {% if request.project.is_snapshot %}
             <div class="alert alert-info">
                 {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
-                {% if request.project.copied_from.organization %}
-                    by <a href="{% url "orgs_landing" request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
-                {% endif %}
             </div>
         {% endif %}
 
@@ -200,16 +214,6 @@
                     </p>
                     <div class="btn-toolbar pull-right">
                         <button type="button"
-                                id="uvSubmitIdea"
-                                data-user-email="{{ user.email }}"
-                                data-user-name="{{ user.name }}"
-                                data-domain="{{ domain }}"
-                                data-uv-locale="{{ LANGUAGE_CODE }}"
-                                class="btn btn-footer-highlight">
-                            <i class="fa fa-lightbulb-o"></i>&nbsp;
-                            {% trans 'Submit an Idea' %}
-                        </button>
-                        <button type="button"
                                 class="btn btn-footer-highlight"
                                 data-toggle="modal"
                                 data-target="#modalReportIssue">
@@ -249,23 +253,22 @@
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/uv.widget.js' %}"></script>
         {% endcompress %}
 
         <script type="text/javascript">
             COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
-                SAVE: '{% trans "Save" %}',
-                SAVING: '{% trans "Saving..." %}',
-                SAVED: '{% trans "Saved" %}',
-                RETRY: '{% trans "Try Again" %}',
-                ERROR_SAVING: '{% trans "There was an error saving" %}'
+                SAVE: '{% trans "Save"|escapejs %}',
+                SAVING: '{% trans "Saving..."|escapejs %}',
+                SAVED: '{% trans "Saved"|escapejs %}',
+                RETRY: '{% trans "Try Again"|escapejs %}',
+                ERROR_SAVING: '{% trans "There was an error saving"|escapejs %}'
             }, 'btn btn-success');
             COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
-                SAVE: '{% trans "Delete" %}',
-                SAVING: '{% trans "Deleting..." %}',
-                SAVED: '{% trans "Deleted" %}',
-                RETRY: '{% trans "Try Again" %}',
-                ERROR_SAVING: '{% trans "There was an error deleting" %}'
+                SAVE: '{% trans "Delete"|escapejs %}',
+                SAVING: '{% trans "Deleting..."|escapejs %}',
+                SAVED: '{% trans "Deleted"|escapejs %}',
+                RETRY: '{% trans "Try Again"|escapejs %}',
+                ERROR_SAVING: '{% trans "There was an error deleting"|escapejs %}'
             }, 'btn btn-danger');
         </script>
 
@@ -274,7 +277,7 @@
         {# Use knockout explicitly, opt to move to angular js when possible. #}
         {% if use_knockout_js %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'style/lib/knockout/knockout-3.1.0.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
@@ -283,13 +286,7 @@
 
         {# always use angular js by default, as this will be our core library #}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-route.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-resource.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-messages.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.4.4/angular-cookies.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>
+        {% include "style/includes/bootstrap3/angular.html" %}
         {% endcompress %}
 
         {% if request.use_select2 %}

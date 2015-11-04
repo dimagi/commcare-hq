@@ -36,6 +36,8 @@ EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 BITLY_LOGIN = None
 BITLY_APIKEY = '*******'
 
+####### Bower ########
+BOWER_PATH = '/home/travis/bower'
 
 ####### Jar signing config ########
 
@@ -48,9 +50,8 @@ JAR_SIGN = dict(
     key_pass = "onetwothreefourfive",
 )
 
-# prod settings
+# soil settings
 SOIL_DEFAULT_CACHE = "redis"
-SOIL_BACKEND = "soil.CachedDownload"
 
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
@@ -103,4 +104,11 @@ SOUTH_TESTS_MIGRATE = True
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
+
 ENABLE_PRELOGIN_SITE = True
+
+TESTS_SHOULD_TRACK_CLEANLINESS = True
+
+IS_TRAVIS = True
+
+PILLOWTOP_MACHINE_ID = 'testhq'

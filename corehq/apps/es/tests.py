@@ -1,9 +1,9 @@
 import json
+from datetime import date
 from unittest import TestCase
 
 from corehq.elastic import ESError, SIZE_LIMIT
 from .es_query import HQESQuery, ESQuerySet
-from . import facets
 from . import filters
 from . import forms, users
 
@@ -315,3 +315,38 @@ class TestQueries(TestCase):
                 "fields": None,
             }
         })
+
+
+class TestFilters(ElasticTestMixin, TestCase):
+    def test_nested_filter(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"nested": {
+                                "path": "actions",
+                                "filter": {
+                                    "range": {
+                                        "actions.date": {
+                                            "gte": "2015-01-01",
+                                            "lt": "2015-02-01"
+                                        }
+                                    }
+                                }
+                            }},
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+
+        start, end = date(2015, 1, 1), date(2015, 2, 1)
+        query = (HQESQuery('cases')
+                 .nested("actions",
+                         filters.date_range("actions.date", gte=start, lt=end)))
+
+        self.checkQuery(query, json_output)

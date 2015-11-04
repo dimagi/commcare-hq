@@ -1,9 +1,9 @@
 from django.test import TestCase
 from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
-from couchforms.models import XFormInstance
-from couchforms.tests.testutils import post_xform_to_couch
 import os
 import json
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from ..config import DocumentTransform
 from ..deidentification.forms import deidentify_form
@@ -21,9 +21,9 @@ class FormDeidentificationTestCase(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        self.instance = post_xform_to_couch(xml_data)
-        
-        transform = DocumentTransform(self.instance._doc, get_db())
+        instance = FormProcessorInterface().post_xform(xml_data)
+        instance = XFormInstance.get(instance.form_id)
+        transform = DocumentTransform(instance._doc, get_db())
         self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))
         self.assertTrue("IDENTIFIER" in transform.attachments["form.xml"])
         
@@ -36,9 +36,9 @@ class FormDeidentificationTestCase(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        self.instance = post_xform_to_couch(xml_data)
-        
-        transform = DocumentTransform(self.instance._doc, get_db())
+        instance = FormProcessorInterface().post_xform(xml_data)
+        instance = XFormInstance.get(instance.form_id)
+        transform = DocumentTransform(instance._doc, get_db())
         self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))
         self.assertTrue("IDENTIFIER" in transform.attachments["form.xml"])
         self.assertTrue("YESNO" in json.dumps(transform.doc))

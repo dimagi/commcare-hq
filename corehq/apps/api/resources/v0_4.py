@@ -217,9 +217,10 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         if 'size' in query:
             del query['size']
 
-        return ESQuerySet(payload = query,
-                          model = CommCareCase,
-                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
+        return ESQuerySet(payload=query,
+                          model=CommCareCase,
+                          es_client=self.case_es(domain)).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains

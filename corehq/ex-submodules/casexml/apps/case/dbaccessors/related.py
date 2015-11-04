@@ -58,16 +58,20 @@ def get_all_reverse_indices_info(domain, case_ids):
     ))
 
 
-def get_reverse_indices_json(case):
+def get_reverse_indices_json(domain, case_id):
     from casexml.apps.case.models import CommCareCase
     return CommCareCase.get_db().view(
         "case/related",
-        key=[case['domain'], case['_id'], "reverse_index"],
+        key=[domain, case_id, "reverse_index"],
         reduce=False,
         wrapper=lambda r: r['value']
     ).all()
 
 
 def get_reverse_indices(case):
+    return get_reverse_indices_for_case_id(case['domain'], case['_id'])
+
+
+def get_reverse_indices_for_case_id(domain, case_id):
     return [CommCareCaseIndex.wrap(raw)
-            for raw in get_reverse_indices_json(case)]
+            for raw in get_reverse_indices_json(domain, case_id)]

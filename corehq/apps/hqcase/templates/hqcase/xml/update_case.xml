@@ -1,0 +1,12 @@
+<case case_id="{{ case_id }}" date_modified="{{ date_modified }}" user_id="{{ user_id }}" xmlns="http://commcarehq.org/case/transaction/v2">
+    {% if case_properties %}
+    <update>
+        {% for case_property_name, case_property_value in case_properties.iteritems %}
+        <{{ case_property_name }}>{{ case_property_value }}</{{ case_property_name }}>
+        {% endfor %}
+    </update>
+    {% endif %}
+    {% if close %}
+    <close/>
+    {% endif %}
+</case>

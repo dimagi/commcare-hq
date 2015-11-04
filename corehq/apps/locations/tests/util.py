@@ -37,7 +37,7 @@ def _setup_location_types(domain, location_types):
             domain=domain,
             name=name,
             parent_type=previous,
-            administrative=True,
+            administrative=False,
         )
         location_types_dict[name] = previous = location_type
     return location_types_dict
@@ -80,10 +80,10 @@ class LocationHierarchyTestCase(TestCase):
     """
     location_type_names = []
     location_structure = []
+    domain = 'test-domain'
 
     @classmethod
     def setUpClass(cls):
-        cls.domain = 'test-domain'
         cls.domain_obj = bootstrap_domain(cls.domain)
         cls.location_types, cls.locations = setup_locations_and_types(
             cls.domain, cls.location_type_names, cls.location_structure

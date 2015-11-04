@@ -80,9 +80,6 @@
   },
   "commtrack_requisition_mode": null,
   "build_comment": null,
-  "success_message": {
-    
-  },
   "amplifies_workers": "not_set",
   "comment_from": null,
   "cloudcare_enabled": false,

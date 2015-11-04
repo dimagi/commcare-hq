@@ -527,7 +527,7 @@ FACET_MAPPING = [
     ]),
     ("Eula", False, [
         {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True},
-        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False},
+        {"facet": "internal.custom_eula", "name": "Custom Eula", "expanded": True},
     ]),
 ]
 
@@ -711,6 +711,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 prop_name="cp_n_sms_in_30_d"),
             DataTablesColumn(_("# Outgoing SMS in last 30 days"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_sms_out_30_d"),
+            DataTablesColumn(_("Custom EULA?"), prop_name="internal.custom_eula"),
         )
         return headers
 
@@ -765,6 +766,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         for dom in domains:
             if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
+                first_form_default_message = _("No Forms")
+                if dom.get("cp_last_form", None):
+                    first_form_default_message = _("Unable to parse date")
+
                 yield [
                     self.get_name_or_link(dom, internal_settings=True),
                     format_date((dom.get("date_created")), _('No date')),
@@ -779,7 +784,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get("cp_n_inactive_cases", _("Not yet calculated")),
                     dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
-                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_first_form"), first_form_default_message),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
@@ -800,6 +805,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_ever', _("Not yet calculated")),
                     dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
+                    format_bool(dom.get('internal', {}).get('custom_eula')),
                 ]
 
 

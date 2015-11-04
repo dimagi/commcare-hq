@@ -13,12 +13,17 @@ def register_preindex_plugin(plugin):
     PREINDEX_PLUGINS[plugin.app_label] = plugin
 
 
+def get_preindex_plugin(app_label):
+    return PREINDEX_PLUGINS[app_label]
+
+
 class PreindexPlugin(object):
 
     def __init__(self, app_label, dir, app_db_map=None):
         self.app_label = app_label
         self.dir = dir
         self.app_db_map = app_db_map
+        self.synced = False
 
     @classmethod
     def register(cls, app_label, file, app_db_map=None):
@@ -35,6 +40,12 @@ class PreindexPlugin(object):
         raise NotImplementedError()
 
     def sync_design_docs(self, temp=None):
+        if self.synced:
+            # workaround emit_post_sync_signal called twice
+            # https://code.djangoproject.com/ticket/17977
+            # this is to speed up test initialization
+            return
+        self.synced = True
         synced = set()
         for design in self.get_designs():
             key = (design.db.uri, design.app_label)
@@ -66,13 +77,17 @@ class PreindexPlugin(object):
             self=self,
         )
 
+    def get_dbs(self, app_label):
+        return get_dbs_from_app_label_and_map(app_label, self.app_db_map)
+
 
 def get_dbs_from_app_label_and_map(app_label, app_db_map):
     if app_db_map and app_label in app_db_map:
         db_names = app_db_map[app_label]
-        if not isinstance(db_names, (list, tuple)):
+        if not isinstance(db_names, (list, tuple, set)):
             db_names = [db_names]
-        return [get_db(db_name) for db_name in db_names]
+
+        return [get_db(db_name) for db_name in set(db_names)]
     return [get_db()]
 
 
@@ -94,7 +109,7 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
             DesignInfo(app_label=app_label, db=db,
                        design_path=os.path.join(self.dir, app_label))
             for app_label in self.get_couchapps()
-            for db in get_dbs_from_app_label_and_map(app_label, self.app_db_map)
+            for db in self.get_dbs(app_label)
         ]
 
 
@@ -107,7 +122,7 @@ class ExtraPreindexPlugin(PreindexPlugin):
                 db=db,
                 design_path=os.path.join(self.dir, "_design")
             )
-            for db in get_dbs_from_app_label_and_map(self.app_label, self.app_db_map)
+            for db in self.get_dbs(self.app_label)
         ]
 
     @classmethod

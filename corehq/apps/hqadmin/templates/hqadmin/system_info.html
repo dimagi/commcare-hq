@@ -236,7 +236,7 @@
             });
 
             self.show_progress = function () {
-                return (self.seq * 100) / self.db_seq <= 99;
+                return (self.seq() * 100) / self.db_seq() <= 99;
             };
 
             self.show_pillow_dialog = function (operation) {
@@ -382,6 +382,9 @@
                                 Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
                             </div>
                         </li>
+                        <li>
+                            <a href="{% url "raw_couch" %}">Look for a doc in couch</a>
+                        </li>
                     </ul>
                 </td>
                 <td><strong>{{ current_system }}</strong></td>
@@ -477,14 +480,14 @@
                     <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
                     <td>
                         <div class="progress progress-striped progress-mini active" data-bind="visible: show_progress()">
-                            <div class="bar" data-bind="style: {width: ((seq * 100)/db_seq) + '%'}"></div>
+                            <div class="bar" data-bind="style: {width: ((seq() * 100)/db_seq()) + '%'}"></div>
                         </div>
                         <div data-bind="visible: !show_progress()">
                             <span>All caught up</span>
                         </div>
                     </td>
                     <td>
-                        <span data-bind="text: db_seq - seq"></span>
+                        <span data-bind="text: db_seq() - seq()"></span>
                     </td>
                     <td>
                         <span data-bind="text: seq"></span>

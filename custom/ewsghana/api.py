@@ -3,20 +3,27 @@ from django.core.validators import validate_email
 import requests
 from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
     get_supply_point_case_by_domain_external_id
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
+    VerifiedNumber
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
+from corehq.apps.reports.models import ReportNotification, ReportConfig
 from dimagi.utils.dates import force_to_datetime
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser
 from custom.api.utils import apply_updates
-from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
-from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, \
-    IntegerProperty, ObjectProperty
-from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException, ApiSyncObject
+from custom.ewsghana.extensions import ews_product_extension
+from custom.logistics.api import ApiSyncObject
+from dimagi.ext.jsonobject import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
+from jsonobject import JsonObject
+from custom.logistics.api import LogisticsEndpoint, APISynchronization, MigrationException
 from corehq.apps.locations.models import Location as Loc
 from django.core.exceptions import ValidationError
+from corehq.apps.programs.models import Program as CouchProgram
+from custom.ewsghana.models import EWSExtension
 
 
 class Group(JsonObject):
@@ -40,6 +47,12 @@ class SupplyPoint(JsonObject):
     incharges = ListProperty()
 
 
+class Connection(JsonObject):
+    phone_number = StringProperty()
+    backend = StringProperty()
+    default = BooleanProperty()
+
+
 class SMSUser(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
@@ -47,7 +60,7 @@ class SMSUser(JsonObject):
     is_active = StringProperty()
     supply_point = ObjectProperty(item_type=SupplyPoint)
     email = StringProperty()
-    phone_numbers = ListProperty()
+    phone_numbers = ListProperty(item_type=Connection)
     backend = StringProperty()
     family_name = StringProperty()
     to = StringProperty()
@@ -69,6 +82,7 @@ class EWSUser(JsonObject):
     supply_point = IntegerProperty()
     sms_notifications = BooleanProperty()
     organization = StringProperty()
+    program = StringProperty()
     groups = ListProperty(item_type=Group)
     contact = ObjectProperty(item_type=SMSUser, default=None)
 
@@ -101,6 +115,21 @@ class Product(JsonObject):
     program = ObjectProperty(item_type=Program)
 
 
+class DailyReport(JsonObject):
+    hours = IntegerProperty()
+    report = StringProperty()
+    users = ListProperty()
+    view_args = StringProperty()
+
+
+class WeeklyReport(DailyReport):
+    day_of_week = IntegerProperty()
+
+
+class MonthlyReport(DailyReport):
+    day_of_month = IntegerProperty()
+
+
 class GhanaEndpoint(LogisticsEndpoint):
     from custom.ilsgateway.api import ProductStock, StockTransaction
     models_map = {
@@ -109,12 +138,19 @@ class GhanaEndpoint(LogisticsEndpoint):
         'smsuser': SMSUser,
         'location': Location,
         'product_stock': ProductStock,
-        'stock_transaction': StockTransaction
+        'stock_transaction': StockTransaction,
+        'daily_report': DailyReport,
+        'weekly_report': WeeklyReport,
+        'monthly_report': MonthlyReport,
     }
 
     def __init__(self, base_uri, username, password):
         super(GhanaEndpoint, self).__init__(base_uri, username, password)
+        self.smsusers_url = self._urlcombine(self.base_uri, '/newsmsusers/')
         self.supply_point_url = self._urlcombine(self.base_uri, '/supplypoints/')
+        self.dailyreports_url = self._urlcombine(self.base_uri, '/dailyscheduledreports/')
+        self.weeklyreports_url = self._urlcombine(self.base_uri, '/weeklyscheduledreports/')
+        self.monthlyreports_url = self._urlcombine(self.base_uri, '/monthlyscheduledreports/')
 
     def get_supply_points(self, **kwargs):
         meta, supply_points = self.get_objects(self.supply_point_url, **kwargs)
@@ -128,6 +164,22 @@ class GhanaEndpoint(LogisticsEndpoint):
     def get_smsuser(self, user_id, **kwargs):
         response = requests.get(self.smsusers_url + str(user_id) + "/", auth=self._auth())
         return SMSUser(response.json())
+
+    def get_supply_point(self, supply_point_id):
+        response = requests.get(self.supply_point_url + str(supply_point_id) + "/", auth=self._auth())
+        return SupplyPoint(response.json())
+
+    def get_daily_reports(self, **kwargs):
+        meta, reports = self.get_objects(self.dailyreports_url, **kwargs)
+        return meta, [(self.models_map['daily_report'])(report) for report in reports]
+
+    def get_weekly_reports(self, **kwargs):
+        meta, reports = self.get_objects(self.weeklyreports_url, **kwargs)
+        return meta, [(self.models_map['weekly_report'])(report) for report in reports]
+
+    def get_monthly_reports(self, **kwargs):
+        meta, reports = self.get_objects(self.monthlyreports_url, **kwargs)
+        return meta, [(self.models_map['monthly_report'])(report) for report in reports]
 
 
 class EWSApi(APISynchronization):
@@ -192,6 +244,12 @@ class EWSApi(APISynchronization):
             ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
             ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
         ]
+
+    def set_default_backend(self):
+        domain_object = Domain.get_by_name(self.domain)
+        domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
+        domain_object.send_to_duplicated_case_numbers = True
+        domain_object.save()
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:
@@ -538,6 +596,31 @@ class EWSApi(APISynchronization):
                     self._set_in_charges(in_charge, sql_location)
         return location
 
+    def _set_program(self, web_user, program_code):
+        program = CouchProgram.get_by_code(self.domain, program_code)
+        if program:
+            dm = web_user.get_domain_membership(self.domain)
+            dm.program_id = program.get_id
+
+    def _set_extension(self, web_user, supply_point_id, sms_notifications):
+        extension, _ = EWSExtension.objects.get_or_create(
+            domain=self.domain,
+            user_id=web_user.get_id,
+        )
+        supply_point = None
+        location_id = None
+
+        if supply_point_id:
+            supply_point = get_supply_point_case_by_domain_external_id(self.domain, supply_point_id)
+
+        if supply_point:
+            location_id = supply_point.location_id
+
+        if location_id != extension.location_id or sms_notifications != extension.sms_notifications:
+            extension.location_id = location_id
+            extension.sms_notifications = sms_notifications
+            extension.save()
+
     def web_user_sync(self, ews_webuser):
         username = ews_webuser.email.lower()
         if not username:
@@ -555,7 +638,6 @@ class EWSApi(APISynchronization):
             'date_joined': force_to_datetime(ews_webuser.date_joined),
             'password_hashed': True,
         }
-        sql_location = None
         location_id = None
         if ews_webuser.location:
             try:
@@ -576,17 +658,18 @@ class EWSApi(APISynchronization):
             if self.domain not in user.get_domains():
                 user.add_domain_membership(self.domain, location_id=location_id)
 
-        ews_webuser_extension(user, ews_webuser)
+            # We are migrating only active users
+            user.is_active = True
+
         dm = user.get_domain_membership(self.domain)
 
         if dm.location_id != location_id:
             dm.location_id = location_id
 
-        if ews_webuser.contact:
-            contact = self.sms_user_sync(ews_webuser.contact)
-            if sql_location:
-                contact.set_location(sql_location.couch_location)
-                contact.save()
+        if ews_webuser.program:
+            self._set_program(user, ews_webuser.program)
+
+        self._set_extension(user, ews_webuser.supply_point, ews_webuser.sms_notifications)
 
         if ews_webuser.is_superuser:
             dm.role_id = UserRole.by_domain_and_name(self.domain, 'Administrator')[0].get_id
@@ -596,24 +679,123 @@ class EWSApi(APISynchronization):
             if ews_webuser.supply_point:
                 supply_point = get_supply_point_case_by_domain_external_id(self.domain, ews_webuser.supply_point)
                 if supply_point:
-                    dm.location_id = supply_point.location_id
                     dm.role_id = UserRole.by_domain_and_name(self.domain, 'Web Reporter')[0].get_id
                 else:
                     dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
             else:
                 dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
+
+        if ews_webuser.contact:
+            user.phone_numbers = []
+            connections = []
+
+            for connection in ews_webuser.contact.phone_numbers:
+                phone_number = apply_leniency(connection.phone_number)
+                if connection.default:
+                    user.phone_numbers = [phone_number] + user.phone_numbers
+                else:
+                    user.phone_numbers.append(phone_number)
+
+                connections.append({
+                    'phone_number': connection.phone_number,
+                    'backend': connection.backend,
+                    'default': connection.default
+                })
+
+                if connections != user.user_data.get('connections'):
+                    user.user_data['connections'] = connections
+
         user.save()
         return user
+
+    def _reassign_number(self, user, connection):
+        v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
+        if v.domain in self._get_logistics_domains():
+            v.domain = self.domain
+            v.owner_doc_type = user.doc_type
+            v.owner_id = user.get_id
+            backend_id = None
+            if connection.backend == 'message_tester':
+                backend_id = 'MOBILE_BACKEND_TEST'
+            v.backend_id = backend_id
+            v.verified = True
+            v.save()
+
+    def _save_verified_number(self, user, connection):
+        try:
+            self.save_verified_number(user, connection)
+        except PhoneNumberInUseException:
+            self._reassign_number(user, connection)
+        except InvalidFormatException:
+            pass
+
+    def save_verified_number(self, user, connection):
+        backend_id = None
+        if connection.backend == 'message_tester':
+            backend_id = 'MOBILE_BACKEND_TEST'
+        user.save_verified_number(self.domain, connection.phone_number, True, backend_id=backend_id)
+
+    def add_phone_numbers(self, ewsghana_smsuser, user):
+        phone_numbers = ewsghana_smsuser.phone_numbers
+        if not phone_numbers:
+            return
+
+        saved_numbers = []
+        for connection in phone_numbers:
+            phone_number = apply_leniency(connection.phone_number)
+            if connection.default:
+                saved_numbers = [phone_number] + saved_numbers
+            else:
+                saved_numbers.append(phone_number)
+        user.phone_numbers = saved_numbers
+        user.save()
+
+        for connection in phone_numbers:
+            self._save_verified_number(user, connection)
+
+    def edit_phone_numbers(self, ewsghana_smsuser, user):
+        phone_numbers = {phone_number for phone_number in user.phone_numbers}
+        saved_numbers = []
+
+        for connection in ewsghana_smsuser.phone_numbers:
+            phone_number = apply_leniency(connection.phone_number)
+            if phone_number not in phone_numbers:
+                self._save_verified_number(user, connection)
+            if connection.default:
+                saved_numbers = [phone_number] + saved_numbers
+            else:
+                saved_numbers.append(phone_number)
+
+        for phone_number in phone_numbers - set(saved_numbers):
+            user.delete_verified_number(phone_number)
+
+        user.phone_numbers = saved_numbers
 
     def sms_user_sync(self, ews_smsuser, **kwargs):
         sms_user = super(EWSApi, self).sms_user_sync(ews_smsuser, **kwargs)
         if not sms_user:
-            return None
+            return
 
-        if ews_smsuser.role:
+        changed = False
+        saved = False
+
+        if ews_smsuser.role and sms_user.user_data.get('role') != [ews_smsuser.role]:
             sms_user.user_data['role'] = [ews_smsuser.role]
+            changed = True
 
-        sms_user.save()
+        if ews_smsuser.phone_numbers:
+            connections = []
+            for connection in ews_smsuser.phone_numbers:
+                connections.append({
+                    'phone_number': connection.phone_number,
+                    'backend': connection.backend,
+                    'default': connection.default
+                })
+
+            if connections != sms_user.user_data.get('connections'):
+                sms_user.user_data['connections'] = connections
+                changed = True
+
         if ews_smsuser.supply_point:
             if ews_smsuser.supply_point.id:
                 sp = get_supply_point_case_by_domain_external_id(self.domain, ews_smsuser.supply_point.id)
@@ -631,6 +813,76 @@ class EWSApi(APISynchronization):
                     couch_location = None
             else:
                 couch_location = None
-            if couch_location:
+            if couch_location and couch_location.get_id != sms_user.location_id:
+                if not sms_user.get_id:
+                    sms_user.save()
                 sms_user.set_location(couch_location)
+                saved = True
+
+        if not sms_user.get_id or (changed and not saved):
+            sms_user.save()
         return sms_user
+
+    def balance_migration(self, date=None):
+        from custom.ewsghana.tasks import balance_migration_task
+        balance_migration_task.delay(self.domain, date)
+
+
+class EmailSettingsSync(object):
+    REPORT_MAP = {
+        'SMS Reporting Rates': 'reporting_page',
+        'Stock Summary': 'stock_summary_report',
+        'RMS and CMS Summary': 'cms_rms_summary_report'
+    }
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    def _report_notfication_sync(self, report, interval, day):
+        if not report.users:
+            return
+        user_id = report.users[0]
+        recipients = report.users[1:]
+        location_code = report.view_args.split()[1][1:-2]
+
+        user = WebUser.get_by_username(user_id)
+        if not user:
+            return
+
+        try:
+            location = SQLLocation.objects.get(site_code=location_code, domain=self.domain)
+        except SQLLocation.DoesNotExist:
+            return
+
+        notifications = ReportNotification.by_domain_and_owner(self.domain, user.get_id)
+        reports = []
+        for n in notifications:
+            for config_id in n.config_ids:
+                config = ReportConfig.get(config_id)
+                reports.append((config.filters.get('location_id'), config.report_slug, interval))
+
+        if report.report not in self.REPORT_MAP or (location.location_id, self.REPORT_MAP[report.report],
+                                                    interval) in reports:
+            return
+
+        saved_config = ReportConfig(
+            report_type='custom_project_report', name=report.report, owner_id=user.get_id,
+            report_slug=self.REPORT_MAP[report.report], domain=self.domain,
+            filters={'filter_by_program': 'all', 'location_id': location.location_id}
+        )
+        saved_config.save()
+        saved_notification = ReportNotification(
+            hour=report.hours, day=day, interval=interval, owner_id=user.get_id, domain=self.domain,
+            recipient_emails=recipients, config_ids=[saved_config.get_id]
+        )
+        saved_notification.save()
+        return saved_notification
+
+    def daily_report_sync(self, daily_report):
+        return self._report_notfication_sync(daily_report, 'daily', 1)
+
+    def weekly_report_sync(self, weekly_report):
+        return self._report_notfication_sync(weekly_report, 'weekly', weekly_report.day_of_week)
+
+    def monthly_report_sync(self, monthly_report):
+        return self._report_notfication_sync(monthly_report, 'monthly', monthly_report.day_of_month)

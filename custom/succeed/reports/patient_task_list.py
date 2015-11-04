@@ -8,11 +8,13 @@ from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, DatabaseColumn, DataFormatter, \
     TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.sql import get_table_name
 from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -127,11 +129,15 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
             filters.append(EQ('closed', 'closed'))
         or_filter = []
         if self.config['owner_ids']:
-            or_filter.append(IN('owner_id', 'owner_ids'))
+            or_filter.append(IN('owner_id', get_INFilter_bindparams('owner_ids', self.config['owner_ids'])))
         if or_filter:
             or_filter.append(EQ('user_id', 'user_id'))
             filters.append(OR(filters=or_filter))
         return filters
+
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(PatientTaskListReport, self).filter_values, 'owner_ids')
 
     @property
     def columns(self):

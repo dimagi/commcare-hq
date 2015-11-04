@@ -31,73 +31,22 @@ class EntriesHelper(object):
     def __init__(self, app, modules=None):
         from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
         self.app = app
-        self.modules = modules or app.get_modules()
+        self.modules = modules or list(app.get_modules())
         self.details_helper = DetailsHelper(self.app, self.modules)
 
-    def get_datums_meta_for_form_generic(self, form):
+    def get_datums_meta_for_form_generic(self, form, module=None):
+        if not module:
+            module = form.get_module()
         if form.form_type == 'module_form':
-            datums_meta = self.get_case_datums_basic_module(form.get_module(), form)
+            datums_meta = self.get_case_datums_basic_module(module, form)
         elif form.form_type == 'advanced_form':
-            datums_meta, _ = self.get_datum_meta_assertions_advanced(form.get_module(), form)
+            datums_meta, _ = self.get_datum_meta_assertions_advanced(module, form)
             datums_meta.extend(EntriesHelper.get_new_case_id_datums_meta(form))
         else:
             raise SuiteError("Unexpected form type '{}' with a case list form: {}".format(
                 form.form_type, form.unique_id
             ))
         return datums_meta
-
-    def _add_action_to_detail(self, detail, module):
-        # add form action to detail
-        form = self.app.get_form(module.case_list_form.form_id)
-
-        if self.app.enable_localized_menu_media:
-            case_list_form = module.case_list_form
-            detail.action = LocalizedAction(
-                menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=bool(len(case_list_form.all_image_paths())),
-                media_audio=bool(len(case_list_form.all_audio_paths())),
-                image_locale_id=id_strings.case_list_form_icon_locale(module),
-                audio_locale_id=id_strings.case_list_form_audio_locale(module),
-                stack=Stack(),
-                for_action_menu=True,
-            )
-        else:
-            detail.action = Action(
-                display=Display(
-                    text=Text(locale_id=id_strings.case_list_form_locale(module)),
-                    media_image=module.case_list_form.default_media_image,
-                    media_audio=module.case_list_form.default_media_audio,
-                ),
-                stack=Stack()
-            )
-
-        frame = PushFrame()
-        frame.add_command(XPath.string(id_strings.form_command(form)))
-
-        target_form_dm = self.get_datums_meta_for_form_generic(form)
-        source_form_dm = self.get_datums_meta_for_form_generic(module.get_form(0))
-        for target_meta in target_form_dm:
-            if target_meta.requires_selection:
-                # This is true for registration forms where the case being created is a subcase
-                try:
-                    [source_dm] = [
-                        source_meta for source_meta in source_form_dm
-                        if source_meta.case_type == target_meta.case_type
-                    ]
-                except ValueError:
-                    raise SuiteError("Form selected as case list form requires a case "
-                                     "but no matching case could be found: {}".format(form.unique_id))
-                else:
-                    frame.add_datum(StackDatum(
-                        id=target_meta.datum.id,
-                        value=session_var(source_dm.datum.id))
-                    )
-            else:
-                s_datum = target_meta.datum
-                frame.add_datum(StackDatum(id=s_datum.id, value=s_datum.function))
-
-        frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(id_strings.menu_id(module))))
-        detail.action.stack.add_frame(frame)
 
     @staticmethod
     def get_filter_xpath(module, delegation=False):
@@ -112,10 +61,10 @@ class EntriesHelper(object):
         return xpath
 
     @staticmethod
-    def get_nodeset_xpath(case_type, module, use_filter):
+    def get_nodeset_xpath(case_type, filter_xpath=''):
         return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
             case_type=case_type,
-            filter_xpath=EntriesHelper.get_filter_xpath(module) if use_filter else '',
+            filter_xpath=filter_xpath,
         )
 
     @staticmethod
@@ -153,13 +102,13 @@ class EntriesHelper(object):
         # avoid circular dependency
         from corehq.apps.app_manager.models import Module, AdvancedModule
         results = []
-        for form in module.get_forms():
+        for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
                 e.command = LocalizedCommand(
-                    id=id_strings.form_command(form),
+                    id=id_strings.form_command(form, module),
                     menu_locale_id=id_strings.form_locale(form),
                     media_image=bool(len(form.all_image_paths())),
                     media_audio=bool(len(form.all_audio_paths())),
@@ -168,7 +117,7 @@ class EntriesHelper(object):
                 )
             else:
                 e.command = Command(
-                    id=id_strings.form_command(form),
+                    id=id_strings.form_command(form, module),
                     locale_id=id_strings.form_locale(form),
                     media_image=form.default_media_image,
                     media_audio=form.default_media_audio,
@@ -193,6 +142,7 @@ class EntriesHelper(object):
                 e.datums.append(datum)
                 e.assertions.extend(assertions)
 
+            self._add_extra_entry_connectors(e, module)
             results.append(e)
 
         if hasattr(module, 'case_list') and module.case_list.show:
@@ -219,10 +169,13 @@ class EntriesHelper(object):
             elif isinstance(module, AdvancedModule):
                 e.datums.append(SessionDatum(
                     id='case_id_case_%s' % module.case_type,
-                    nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type, module, False)),
+                    nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long')
+                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
+                    detail_persistent=self.get_detail_persistent_attr(module, module, "case_short"),
+                    detail_inline=self.get_detail_inline_attr(module, module, "case_short"),
+                    autoselect=module.auto_select_case,
                 ))
                 if self.app.commtrack_enabled:
                     e.datums.append(SessionDatum(
@@ -231,12 +184,25 @@ class EntriesHelper(object):
                         value="./@id",
                         detail_select=self.details_helper.get_detail_id_safe(module, 'product_short')
                     ))
+            self._add_extra_entry_connectors(e, module)
             results.append(e)
 
         for entry in module.get_custom_entries():
             results.append(entry)
 
         return results
+
+    def _add_extra_entry_connectors(self, entry, module):
+        # Collect any extra connectors specified for details with nodesets
+        connectors = {}
+        detail_ids = [datum.detail_confirm for datum in entry.datums]
+        if hasattr(module, 'case_details'):
+            if self.details_helper.get_detail_id_safe(module, 'case_long') in detail_ids:
+                for tab in module.case_details.long.tabs:
+                    connectors.update(tab.connectors)
+        for id, src in connectors.iteritems():
+            entry.require_instance(Instance(id=id, src=src))
+
 
     @staticmethod
     def get_assertion(test, locale_id, locale_arguments=None):
@@ -358,7 +324,8 @@ class EntriesHelper(object):
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
-        datums_meta = get_select_chain_meta(self.app, module)
+        datum_module = module.source_module if module.module_type == 'shadow' else module
+        datums_meta = get_select_chain_meta(self.app, datum_module)
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
@@ -369,17 +336,9 @@ class EntriesHelper(object):
             else:
                 parent_filter = ''
 
-            detail_persistent = None
-            detail_inline = False
-            for detail_type, detail, enabled in datum['module'].get_details():
-                if (
-                    detail.persist_tile_on_forms
-                    and (detail.use_case_tiles or detail.custom_xml)
-                    and enabled
-                ):
-                    detail_persistent = id_strings.detail(datum['module'], detail_type)
-                    detail_inline = bool(detail.pull_down_tile)
-                    break
+            detail_module = module if module.module_type == 'shadow' else datum['module']
+            detail_persistent = self.get_detail_persistent_attr(datum['module'], detail_module, "case_short")
+            detail_inline = self.get_detail_inline_attr(datum['module'], detail_module, "case_short")
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
@@ -388,7 +347,7 @@ class EntriesHelper(object):
                         id=id_strings.fixture_session_var(datum['module']),
                         nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
                         value=datum['module'].fixture_select.variable_column,
-                        detail_select=id_strings.fixture_detail(datum['module'])
+                        detail_select=id_strings.fixture_detail(detail_module)
                     ),
                     case_type=None,
                     requires_selection=True,
@@ -400,22 +359,21 @@ class EntriesHelper(object):
                     filter_xpath_template.replace('$fixture_value', fixture_value)
                 )
 
+            filter_xpath = EntriesHelper.get_filter_xpath(module) if use_filter else ''
             datums.append(FormDatumMeta(
                 datum=SessionDatum(
                     id=datum['session_var'],
-                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
+                    nodeset=(EntriesHelper.get_nodeset_xpath(datum['case_type'], filter_xpath=filter_xpath)
                              + parent_filter + fixture_select_filter),
                     value="./@case_id",
-                    detail_select=self.details_helper.get_detail_id_safe(datum['module'], 'case_short'),
+                    detail_select=self.details_helper.get_detail_id_safe(detail_module, 'case_short'),
                     detail_confirm=(
-                        self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
+                        self.details_helper.get_detail_id_safe(detail_module, 'case_long')
                         if datum['index'] == 0 and not detail_inline else None
                     ),
                     detail_persistent=detail_persistent,
-                    detail_inline=(
-                        self.details_helper.get_detail_id_safe(datum['module'], 'case_long')
-                        if detail_inline else None
-                    )
+                    detail_inline=detail_inline,
+                    autoselect=datum['module'].auto_select_case,
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,
@@ -540,16 +498,21 @@ class EntriesHelper(object):
         def get_manual_datum(action_, parent_filter_=''):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
+            filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
+
             return SessionDatum(
                 id=action_.case_session_var,
-                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, target_module_, True) +
-                         parent_filter_),
+                nodeset=(EntriesHelper.get_nodeset_xpath(action_.case_type, filter_xpath=filter_xpath)
+                         + parent_filter_),
                 value="./@case_id",
                 detail_select=self.details_helper.get_detail_id_safe(target_module_, 'case_short'),
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
                     if not referenced_by or referenced_by['type'] != 'load' else None
-                )
+                ),
+                detail_persistent=self.get_detail_persistent_attr(target_module_, target_module_, "case_short"),
+                detail_inline=self.get_detail_inline_attr(target_module_, target_module_, "case_short"),
+                autoselect=target_module_.auto_select_case,
             )
 
         datums = []
@@ -595,7 +558,13 @@ class EntriesHelper(object):
                             id='product_id',
                             nodeset=nodeset,
                             value="./@id",
-                            detail_select=self.details_helper.get_detail_id_safe(target_module, 'product_short')
+                            detail_select=self.details_helper.get_detail_id_safe(target_module, 'product_short'),
+                            detail_persistent=self.get_detail_persistent_attr(
+                                target_module, target_module, "product_short"
+                            ),
+                            detail_inline=self.get_detail_inline_attr(
+                                target_module, target_module, "product_short"
+                            ),
                         ),
                         case_type=None,
                         requires_selection=True,
@@ -749,7 +718,7 @@ class EntriesHelper(object):
         parent_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
         e.datums.append(SessionDatum(
             id='case_id',
-            nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type, parent_module, False),
+            nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type),
             value="./@case_id",
             detail_select=self.details_helper.get_detail_id_safe(parent_module, 'case_short'),
             detail_confirm=self.details_helper.get_detail_id_safe(parent_module, 'case_long')
@@ -813,3 +782,35 @@ class EntriesHelper(object):
             elif form.mode == 'update':
                 e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
+
+    def get_detail_persistent_attr(self, module, detail_module, detail_type="case_short"):
+        detail, detail_enabled = self._get_detail_from_module(module, detail_type)
+        if detail_enabled:
+            if self._has_persistent_tile(detail):
+                return id_strings.detail(detail_module, detail_type)
+            if detail.persist_case_context and detail_type == "case_short":
+                # persistent_case_context will not work on product lists.
+                return id_strings.persistent_case_context_detail(detail_module)
+        return None
+
+    def get_detail_inline_attr(self, module, detail_module, detail_type="case_short"):
+        assert detail_type in ["case_short", "product_short"]
+        detail, detail_enabled = self._get_detail_from_module(module, detail_type)
+        if detail_enabled and self._has_persistent_tile(detail) and detail.pull_down_tile:
+            list_type = "case_long" if detail_type == "case_short" else "product_long"
+            return self.details_helper.get_detail_id_safe(detail_module, list_type)
+        return None
+
+    def _get_detail_from_module(self, module, detail_type):
+        """
+        Return the Detail object of the given type from the given module
+        """
+        details = {d[0]: d for d in module.get_details()}
+        _, detail, detail_enabled = details[detail_type]
+        return detail, detail_enabled
+
+    def _has_persistent_tile(self, detail):
+        """
+        Return True if the given Detail is configured to persist a case tile on forms
+        """
+        return detail.persist_tile_on_forms and (detail.use_case_tiles or detail.custom_xml)

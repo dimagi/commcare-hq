@@ -1,33 +1,124 @@
-<p>
-Hi {{ username }},
-</p>
+{% load i18n %}
+{% load hq_shared_tags %}
+<!doctype html>
+<html bgcolor="#f2f2f2" style="background-color: #f2f2f1; margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
+    <head>
 
-<p>
-Welcome to CommCare!
-</p>
+        <style type="text/css">
+        /*<![CDATA[*/
+            /* iOS automatically adds a link to addresses */
+            /* Style the footer with the same color as the footer text */
+            .footer a {
+                color: #685c53;
+                -webkit-text-size-adjust: none;
+                text-decoration: underline;
+                font-weight: normal
+            }
+            /* Hide preview text on rendering */
+            #preview_text {
+                display: none;
+            }
+            /* Only supported in outlook 2000/2003 hotmail, apple mail, yahoo! mail */
+            .btn:hover {
+                background-color: #002c5f;
+                -webkit-box-shadow: 0px 0px 10px #004ebc;
+                -moz-box-shadow: 0px 0px 10px #004ebc;
+                box-shadow: 0px 0px 10px #004ebc;
+            }
+        /*]]>*/
+        </style>
+        <!-- http://www.emailon@cid.com/blog/details/C13/ensure_that_your_entire_email_is_rendered_by_default_in_the_iphone_ipad -->
+        <!--                                                                                                                     -->
+        <!--                                                                                                                     -->
+        <!--                                _|_|_|    _|                                      _|                                 -->
+        <!--                                _|    _|      _|_|_|  _|_|      _|_|_|    _|_|_|                                     -->
+        <!--                                _|    _|  _|  _|    _|    _|  _|    _|  _|    _|  _|                                 -->
+        <!--                                _|    _|  _|  _|    _|    _|  _|    _|  _|    _|  _|                                 -->
+        <!--                                _|_|_|    _|  _|    _|    _|    _|_|_|    _|_|_|  _|                                 -->
+        <!--                                                                              _|                                     -->
+        <!--                                                                            _|_|                                     -->
+        <!--                                                                                                                     -->
+        <!--                                                 Extra White Space!                                                  -->
+        <!--                                                                                                                     -->
+        <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    </head>
+    <body bgcolor="#f2f2f2" marginheight="0" marginwidth="0" topmargin="0" style="background-color: #f2f2f1; margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
 
-<p>
-As a first step, please confirm your email address and activate your new
-CommCare project titled, {{ domain }}. You will not be able to use your project
-until you have confirmed your email address.
-</p>
+    <!-- Preview text (text which appears right after subject) -->
+        <div id="preview_text"
+             style="display:none!important">
+            {% blocktrans %}
+                Dear {{ full_name }}, please confirm your CommCare HQ Account!
+            {% endblocktrans %}
+        </div>
+        <!-- extra space for preview -->
+        <p>&nbsp;</p>
+        <!-- / extra space -->
+        <div class="container" style="line-height: 1.5em; font-size: 15px; font-weight: 400; color: #181715; width: 600px; background-color: #ffffff; margin: 0 auto; padding: 20px; -webkit-box-shadow: 0px 0px 4px #cccccc; -moz-box-shadow: 0px 0px 4px #cccccc; box-shadow: 0px 0px 4px #cccccc; margin-top: 20px;">
+            <div class="email_header">
+                <img src="{{ url_prefix }}{% new_static 'registration/images/commcarehq_email_header.jpg' %}"
+                     width="240" height="37" />
+            </div>
+            <p>
+                {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
+            </p>
 
-<p>
-<a href="{{ registration_link }}">{{ registration_link }}</a>
-</p>
+            <p>
+                {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
+            </p>
 
-<p>
-Once you have confirmed, our team will be in touch with some helpful tips for
-getting started!
-</p>
+            <p>
+                {% blocktrans %}
+                As a first step, please confirm your email address and activate
+                your new CommCare project titled <strong>{{ domain }}</strong>.
+                {% endblocktrans %}
+            </p>
 
-<p>
-Cheers,
-The CommCare Team
-</p>
+            <p style="text-align: center;">
+                <a class="btn"
+                   href="{{ registration_link }}"
+                   style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+                    {% trans "Confirm CommCare Account" %}
+                </a>
+            </p>
 
-<p>
-Dimagi, Inc.
-585 Massachusetts Ave, Suite 4
-Cambridge,  MA 02139 United States
-</p>
+            <p>
+                {% blocktrans %}
+                You will not be able to use your project until you have
+                confirmed your email address.
+                {% endblocktrans %}
+            </p>
+
+            <p>
+                {% blocktrans %}
+                Once you have confirmed, our team will be in touch with some helpful tips for
+                getting started!
+                {% endblocktrans %}
+            </p>
+
+            <p>
+                {% blocktrans %}
+                Cheers,<br />
+                The CommCare Team
+                {% endblocktrans %}
+            </p>
+            <img src="{{ url_prefix }}{% new_static 'registration/images/field.jpg' %}"
+                 width="600" height="150" />
+        </div>
+        <div class="footer" style="width: 600px; margin: 0 auto; color: #685c53; font-size: 13px; text-align: center">
+            <p>
+                Dimagi, Inc.<span class="spacer">|</span>
+                585 Massachusetts Ave, Suite 4<span class="spacer">|</span>
+                Cambridge, MA 02139 United States
+            </p>
+            <p>
+                {% blocktrans %}
+                    You received this message because we received a New User request<br />
+                    on <a href="http://www.commcarehq.org/" style="color: #685c53; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a> with your
+                    email address.
+                {% endblocktrans %}
+            </p>
+            <p>&nbsp;</p>
+        </div>
+    </body>
+</html>

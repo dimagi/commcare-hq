@@ -23,10 +23,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
 
-from .forms import CommCareAccountForm
+from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
-from .views.mobile.custom_data_fields import UserFieldsView
 
 
 class UserUploadError(Exception):
@@ -317,6 +316,7 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
+    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
@@ -372,7 +372,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             is_active = row.get('is_active')
             if isinstance(is_active, basestring):
                 try:
-                    is_active = string_to_boolean(is_active)
+                    is_active = string_to_boolean(is_active) if is_active else None
                 except ValueError:
                     ret['rows'].append({
                         'username': username,
@@ -416,12 +416,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             user.set_password(password)
                         status_row['flag'] = 'updated'
                     else:
-                        if len(raw_username(username)) > CommCareAccountForm.max_len_username:
+                        max_username_length = get_mobile_worker_max_username_length(domain)
+                        if len(raw_username(username)) > max_username_length:
                             ret['rows'].append({
                                 'username': username,
                                 'row': row,
                                 'flag': _("username cannot contain greater than %d characters" %
-                                          CommCareAccountForm.max_len_username)
+                                          max_username_length)
                             })
                             continue
                         if not is_password(password):
@@ -626,6 +627,7 @@ def parse_groups(groups):
 
 
 def dump_users_and_groups(response, domain):
+    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()

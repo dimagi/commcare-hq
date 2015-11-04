@@ -312,6 +312,7 @@ var GraphViewModel = function(moduleOptions){
         'zoom',
         'zoom-location',
         'bar-orientation',
+        'stack',
     ];
     // Note: I don't like repeating the list of property options in the hints map.
     // I could use configPropertyHints.keys() to generate the options, but that
@@ -337,6 +338,7 @@ var GraphViewModel = function(moduleOptions){
         'zoom': 'true() or false()',
         'zoom-location': 'ex: \'top-right\'',
         'bar-orientation': '\'horizontal\' or \'vertical\'',
+        'stack': 'true() or false()',
     };
     self.childCaseTypes = moduleOptions.childCaseTypes || [];
     self.fixtures = moduleOptions.fixtures || [];

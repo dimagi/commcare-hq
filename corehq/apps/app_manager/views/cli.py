@@ -12,7 +12,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 
 
 @json_error
-@login_or_digest_or_basic
+@login_or_digest_or_basic()
 def list_apps(request, domain):
     def app_to_json(app):
         return {
@@ -33,6 +33,7 @@ def list_apps(request, domain):
 def direct_ccz(request, domain):
     if 'app_id' in request.GET:
         app = get_app(domain, request.GET['app_id'])
+        app.set_media_versions(None)
         download = DownloadBase()
         build_application_zip(
             include_multimedia_files=False,

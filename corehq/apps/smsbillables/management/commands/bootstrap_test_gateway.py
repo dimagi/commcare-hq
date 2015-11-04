@@ -6,7 +6,7 @@ from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
 
@@ -37,6 +37,8 @@ def bootstrap_test_gateway(apps):
     )
 
     logger.info("Updated Test gateway fees.")
+
+bootstrap_test_gateway.__test__ = False
 
 
 class Command(LabelCommand):

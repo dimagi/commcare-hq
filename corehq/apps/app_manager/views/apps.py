@@ -31,7 +31,6 @@ from corehq.apps.app_manager.const import (
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
 )
-from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import (
     get_settings_values,
 )
@@ -40,6 +39,7 @@ from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
     XFormException, XForm)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from couchexport.export import FormattedRow
 from couchexport.models import Format
@@ -68,6 +68,8 @@ from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
+from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
+from corehq.apps.analytics.utils import get_meta
 
 
 @no_conflict_require_POST
@@ -76,10 +78,10 @@ def delete_app(request, domain, app_id):
     "Deletes an app from the database"
     app = get_app(domain, app_id)
     record = app.delete_app()
-    messages.success(request,
-        'You have deleted an application. <a href="%s" class="post-link">Undo</a>' % reverse(
-            'undo_delete_app', args=[domain, record.get_id]
-        ),
+    messages.success(
+        request,
+        _('You have deleted an application. <a href="%s" class="post-link">Undo</a>')
+        % reverse('undo_delete_app', args=[domain, record.get_id]),
         extra_tags='html'
     )
     app.save()
@@ -109,6 +111,8 @@ def default_new_app(request, domain):
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
     """
+    meta = get_meta(request)
+    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     lang = 'en'
     app = Application.new_app(
         domain, _("Untitled Application"), lang=lang,
@@ -121,7 +125,7 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    return back_to_main(request, domain, app_id=app.id, module_id=module.id, form_id=form.id)
+    return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, 0, 0]))
 
 
 def get_app_view_context(request, app):
@@ -242,12 +246,6 @@ def get_apps_base_context(request, domain, app):
     }
 
     if app:
-        for _lang in app.langs:
-            try:
-                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
-            except Exception as e:
-                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
-
         v2_app = app.application_version == APP_V2
         context.update({
             'show_care_plan': (
@@ -261,6 +259,10 @@ def get_apps_base_context(request, domain, app):
                     toggles.APP_BUILDER_ADVANCED.enabled(request.user.username)
                     or getattr(app, 'commtrack_enabled', False)
                 )
+            ),
+            'show_shadow_modules': (
+                v2_app
+                and toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain)
             ),
         })
 
@@ -293,6 +295,8 @@ def copy_app(request, domain):
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
+    meta = get_meta(request)
+    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
@@ -304,7 +308,7 @@ def app_from_template(request, domain, slug):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
+    return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -370,6 +374,9 @@ def view_app(request, domain, app_id=None):
     module_id = request.GET.get('m', None)
     form_id = request.GET.get('f', None)
     if module_id or form_id:
+        soft_assert('{}@{}'.format('skelly', 'dimagi.com')).call(
+            False, 'old m=&f= url still in use'
+        )
         return back_to_main(request, domain, app_id=app_id, module_id=module_id,
                             form_id=form_id)
 
@@ -536,7 +543,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     attributes = [
         'all',
-        'recipients', 'name', 'success_message', 'use_commcare_sense',
+        'recipients', 'name', 'use_commcare_sense',
         'text_input', 'platform', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
@@ -574,6 +581,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('auto_gps_capture', None),
         ('amplifies_workers', None),
         ('amplifies_project', None),
+        ('use_grid_menus', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -589,10 +597,6 @@ def edit_app_attr(request, domain, app_id, attr):
             '.variable-app_name': name,
             '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),
         })
-
-    if should_edit("success_message"):
-        success_message = hq_settings['success_message']
-        app.success_message[lang] = success_message
 
     if should_edit("build_spec"):
         resp['update']['commcare-version'] = app.commcare_minor_release

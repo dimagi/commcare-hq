@@ -1,7 +1,7 @@
 from django.test import TestCase
 from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import XFormInstance
-from couchforms.util import SubmissionPost
 import os
 from corehq.apps.sofabed.models import FormData
 from datetime import date, datetime
@@ -21,12 +21,7 @@ class FormDataTestCase(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        SubmissionPost(
-            instance=xml_data,
-            domain='sofabed',
-            app_id='12345',
-            received_on=datetime.utcnow()
-        ).get_response()
+        submit_form_locally(xml_data, 'sofabed', app_id='12345', received_on=datetime.utcnow())
 
         self.instance = XFormInstance.get('THIS_IS_THE_INSTANCEID')
 

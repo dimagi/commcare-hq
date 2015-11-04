@@ -1,4 +1,4 @@
-{% extends 'settings/base_template.html' %}
+{% extends 'settings/bootstrap2/base_template.html' %}
 {# This is for editing information for the currently logged in WebUser #}
 
 {% load crispy_forms_tags %}
@@ -27,6 +27,12 @@
     </script>
 {% endblock %}
 
+{% block modals %}{{ block.super }}
+{% if user_type == 'web' %}
+    {% include 'users/partial/basic_info_modals.html' %}
+{% endif %}
+{% endblock %}
+
 {% block main_column %}
     <form class="form form-horizontal" name="user_information" method="post">
         <fieldset>
@@ -52,4 +58,7 @@
             </div>
         </fieldset>
     </form>
+    {% if user_type == 'web' %}
+        {% include 'users/partial/manage_phone_numbers.html' %}
+    {% endif %}
 {% endblock %}

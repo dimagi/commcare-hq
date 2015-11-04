@@ -30,7 +30,6 @@ class UserGenerationCache(GenerationCache):
         "users/by_org_and_team",
         "users/by_username",
         "users/mailing_list_emails",
-        "domain/related_to_domain",
         "domain/old_users",
         "domain/docs",
         "users_extra/phones_to_domains",
@@ -56,26 +55,9 @@ class UserRoleGenerationCache(GenerationCache):
     generation_key = '#gen#user_role#'
     doc_types = ['UserRole']
     views = [
-        'domain/related_to_domain',
         'users/roles_by_domain'
     ]
 
-
-class OrganizationGenerationCache(GenerationCache):
-    generation_key = '#gen#org#'
-    doc_types = ['Organization']
-    views = [
-        'orgs/by_name'
-    ]
-
-
-class TeamGenerationCache(GenerationCache):
-    generation_key = '#gen#team#'
-    doc_types = ['Team']
-    views = [
-        'orgs/team_by_domain',
-        'orgs/team_by_org_and_name'
-    ]
 
 class ReportGenerationCache(GenerationCache):
     generation_key = '#gen#reports#'

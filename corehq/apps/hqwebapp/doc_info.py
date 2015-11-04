@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
@@ -23,9 +24,16 @@ def get_doc_info_by_id(domain, id):
     not_found_value = DocInfo(display=id, link=None, owner_type=None)
     if not id:
         return not_found_value
-    try:
-        doc = CouchUser.get_db().get(id)
-    except ResourceNotFound:
+
+    # todo: I think we want a better system for this
+    for db_name in (None, 'users'):
+        try:
+            doc = get_db(db_name).get(id)
+        except ResourceNotFound:
+            pass
+        else:
+            break
+    else:
         return not_found_value
 
     if doc.get('domain') != domain and domain not in doc.get('domains', ()):

@@ -5,6 +5,7 @@ devs should have set.
 Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
+import os
 
 LOCAL_APPS = (
     'django_extensions',
@@ -17,7 +18,8 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.locations.models', 'Location'),
-    ('corehq.apps.users.models', ('CommCareUser', 'CommCareCase')),
+    ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
+    ('casexml.apps.case.models', 'CommCareCase'),
     ('couchforms.models', 'XFormInstance'),
 
     # Data querying utils
@@ -39,3 +41,10 @@ DATABASES = {
         'PORT': '5432'
     }
 }
+
+BOWER_PATH = os.popen('which bower').read().strip()
+
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
+
+
+PILLOWTOP_MACHINE_ID = 'testhq'  # for tests

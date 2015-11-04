@@ -1,5 +1,5 @@
 from dimagi.utils.logging import notify_exception
-from pillowtop.utils import get_all_pillows, force_seq_int
+from pillowtop.utils import force_seq_int, get_all_pillow_instances
 
 from .models import PillowCheckpointSeqStore
 
@@ -7,7 +7,7 @@ EPSILON = 10000000
 
 
 def pillow_seq_store():
-    for pillow in get_all_pillows():
+    for pillow in get_all_pillow_instances():
         checkpoint = pillow.get_checkpoint()
         store, created = PillowCheckpointSeqStore.objects.get_or_create(checkpoint_id=checkpoint['_id'])
         if not created and force_seq_int(checkpoint['seq']) < force_seq_int(store.seq) - EPSILON:

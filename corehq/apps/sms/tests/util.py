@@ -10,10 +10,11 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
+from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import \
     get_one_case_in_domain_by_external_id
-from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMSLog, CallLog
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -23,17 +24,51 @@ from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.dbaccessors import get_forms_by_type
 from time import sleep
 from dateutil.parser import parse
 import uuid
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 
 
 def time_parser(value):
     return parse(value).time()
+
+
+class BaseSMSTest(BaseAccountingTest):
+    def setUp(self):
+        super(BaseSMSTest, self).setUp()
+        self.account = None
+        self.subscription = None
+
+    def create_account_and_subscription(self, domain_name):
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            domain_name,
+            created_by="automated-test",
+        )[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(
+            domain_name, edition=SoftwarePlanEdition.ADVANCED
+        )
+        self.subscription = Subscription.new_domain_subscription(
+            self.account,
+            domain_name,
+            plan
+        )
+        self.subscription.is_active = True
+        self.subscription.save()
+
+    def tearDown(self):
+        SubscriptionAdjustment.objects.all().delete()
+
+        if self.subscription:
+            self.subscription.delete()
+
+        if self.account:
+            self.account.delete()
+
+        super(BaseSMSTest, self).tearDown()
 
 
 class TouchformsTestCase(LiveServerTestCase):
@@ -59,6 +94,10 @@ class TouchformsTestCase(LiveServerTestCase):
         domain_obj.default_sms_response = "Default SMS Response"
         domain_obj.save()
 
+        # I tried making this class inherit from BaseSMSTest, but somehow
+        # the multiple inheritance was causing the postgres connection to
+        # get in a weird state where it wasn't commiting any changes. So
+        # for now, keeping this subscription setup code as is.
         generator.instantiate_accounting_for_tests()
         self.account = BillingAccount.get_or_create_account_by_domain(
             domain_obj.name,
@@ -74,7 +113,6 @@ class TouchformsTestCase(LiveServerTestCase):
         )
         self.subscription.is_active = True
         self.subscription.save()
-
         return domain_obj
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):
@@ -92,9 +130,8 @@ class TouchformsTestCase(LiveServerTestCase):
             case_type='participant',
             owner_id=owner._id,
             user_id=owner._id,
-            version=V2
         ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
 
     def add_parent_access(self, user, case):
         case_block = CaseBlock(
@@ -102,10 +139,9 @@ class TouchformsTestCase(LiveServerTestCase):
             case_id=uuid.uuid4().hex,
             case_type='magic_map',
             owner_id=user._id,
-            version=V2,
             index={'parent': ('participant', case._id)}
         ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
         user = WebUser.create(self.domain, username, password)

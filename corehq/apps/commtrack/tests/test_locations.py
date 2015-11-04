@@ -108,7 +108,6 @@ class MultiLocationsTest(CommTrackTest):
         caseblock = CaseBlock(
             create=False,
             case_id=sp,
-            version=V2,
         ).as_xml()
         check_user_has_case(
             self,
@@ -116,7 +115,6 @@ class MultiLocationsTest(CommTrackTest):
             caseblock,
             line_by_line=False,
             should_have=should_have,
-            version=V2
         )
 
     def test_default_location_settings(self):

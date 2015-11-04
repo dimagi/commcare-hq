@@ -58,8 +58,6 @@ class Tile(object):
 
 
 class TileConfiguration(object):
-    """This is used by
-    """
 
     def __init__(self, title, slug, icon, context_processor_class,
                  url=None, urlname=None, is_external_link=False,

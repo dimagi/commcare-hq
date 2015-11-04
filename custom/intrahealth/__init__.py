@@ -65,7 +65,8 @@ PRODUCT_MAPPING = {
     "microlut": "Microlut/Ovrette",
     "preservatif_feminin": "Preservatif Feminin",
     "preservatif_masculin": "Preservatif Masculin",
-    "sayana_press": "Sayana Press"
+    "sayana_press": "Sayana Press",
+    "implanon": "IMPLANON"
 }
 
 
@@ -78,7 +79,7 @@ def get_products(form, property):
     return products
 
 
-def get_products_code(form, property):
+def get_products_id(form, property):
     products = []
     if 'products' in form.form:
         for product in form.form['products']:
@@ -87,7 +88,7 @@ def get_products_code(form, property):
                 if k is not None:
                     try:
                         code = SQLProduct.objects.get(name__iexact=k,
-                                                      domain=get_domain(form)).code
+                                                      domain=get_domain(form)).product_id
                         products.append(code)
                     except SQLProduct.DoesNotExist:
                         pass
@@ -102,7 +103,7 @@ def get_rupture_products(form):
     return result
 
 
-def get_rupture_products_code(form):
+def get_rupture_products_ids(form):
     result = []
     for k, v in form.form.iteritems():
         if re.match("^rupture.*hv$", k):
@@ -111,7 +112,7 @@ def get_rupture_products_code(form):
                 try:
                     prd = SQLProduct.objects.get(name__iexact=product_name,
                                                  domain=get_domain(form))
-                    result.append(prd.code)
+                    result.append(prd.product_id)
                 except SQLProduct.DoesNotExist:
                     pass
     return result

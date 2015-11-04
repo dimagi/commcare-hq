@@ -27,7 +27,7 @@ def expose_file_download(path, **kwargs):
     return ref
 
 
-def get_download_context(download_id, check_state=False):
+def get_download_context(download_id, check_state=False, message=None):
     is_ready = False
     context = {}
     download_data = DownloadBase.get(download_id)
@@ -68,4 +68,6 @@ def get_download_context(download_id, check_state=False):
     context['is_alive'] = alive
     context['progress'] = progress
     context['download_id'] = download_id
+    context['allow_dropbox_sync'] = isinstance(download_data, FileDownload) and download_data.use_transfer
+    context['custom_message'] = message
     return context

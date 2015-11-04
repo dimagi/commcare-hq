@@ -1,7 +1,8 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.api.urls import CommCareHqApi
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
-from custom.ewsghana.views import EWSConfigView, EWSGlobalStats, InputStockView
+from custom.ewsghana.views import EWSConfigView, EWSGlobalStats, InputStockView, EWSUserExtensionView, \
+    DashboardRedirectReportView, BalanceMigrationView
 
 hq_api = CommCareHqApi(api_name='v0.3')
 hq_api.register(EWSLocationResource())
@@ -20,9 +21,15 @@ urlpatterns = patterns('custom.ewsghana.views',
     url(r'^stockouts_product/$', 'stockouts_product', name='stockouts_product'),
     url(r'^ews_fix_locations/$', 'ews_fix_locations', name='ews_fix_locations'),
     url(r'^ews_add_products_to_locs/$', 'ews_add_products_to_locs', name='ews_add_products_to_locs'),
-    url(r'^clear_products/$', 'clear_products', name='clear_products'),
+    url(r'^migrate_email_settings/$', 'migrate_email_settings_view', name='migrate_email_settings'),
+    url(r'^migrate_needs_reminders_field/$', 'delete_connections_field',
+        name='delete_connections_field'),
     url(r'^delete_last_stock_data/$', 'delete_last_stock_data', name='delete_last_stock_data'),
     url(r'^(?P<site_code>\w+)/input_stock/$', InputStockView.as_view(), name='input_stock'),
     url(r'^', include(hq_api.urls)),
-    url(r'^convert_user_data_fields/$', 'convert_user_data_fields', name='convert_user_data_fields')
+    url(r'^convert_user_data_fields/$', 'convert_user_data_fields', name='convert_user_data_fields'),
+    url(r'^non_administrative_locations/$', 'non_administrative_locations_for_select2'),
+    url(r'^user_settings/(?P<user_id>[ \w-]+)/$', EWSUserExtensionView.as_view(), name='ews_user_settings'),
+    url(r'^dashboard/(?P<site_code>\w+)/', DashboardRedirectReportView.as_view(), name='dashboard_report'),
+    url(r'^balance/$', BalanceMigrationView.as_view(), name='balance_migration')
 )

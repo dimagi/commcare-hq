@@ -1,12 +1,11 @@
 $(function(){
     "use strict";
 
-    COMMCAREHQ.AsyncDownloader = function($el, download_url){
+    window.AsyncDownloader = function($el){
         var self = this;
         self.POLL_FREQUENCY = 1500; //ms
         self.ERROR_MESSAGE = "Sorry, something went wrong with the download. " +
                              "If you see this repeatedly please report an issue.";
-        self.download_url = download_url;
 
         self.$el = $el;
         self.el_id = $el.attr("id");
@@ -14,64 +13,83 @@ $(function(){
         self.$downloading = self.$el.find("#" + self.el_id + "-downloading");
 
         self.init = function(){
-            self.$download_progress.hide();
-            self.$downloading.show();
+            self.download_in_progress = false;
+            self.download_poll_url = null;
+            self.download_poll_id = null;
+            self.$download_progress.addClass("hide");
+            self.$downloading.removeClass("hide");
         };
 
-        self.startPollDownloadStatus = function(data){
-            var keep_polling = true;
-            var pollDownloadStatus = function(){
-                if (keep_polling) {
-                    $.ajax({
-                        url: data.download_url,
-                        success: function (resp) {
-                            if (resp.trim().length) {
-                                self.$downloading.hide();
-                                self.$download_progress.show().html(resp);
-                                if (self.$download_progress.find(".alert-success").length) {
-                                    keep_polling = false;
-                                }
-                            }
-                            if (keep_polling) {
-                                setTimeout(pollDownloadStatus, self.POLL_FREQUENCY);
-                            }
-                        },
-                        error: function (resp) {
-                            self.downloadError(resp.responseText);
+        self.pollDownloadStatus = function(){
+            if (self.download_in_progress) {
+                $.ajax({
+                    url: self.download_poll_url,
+                    data: {'message': self.ready_message},
+                    success: function (resp) {
+                        self.updateProgress(resp);
+                        if (!self.isDone(resp)) {
+                            setTimeout(self.pollDownloadStatus, self.POLL_FREQUENCY);
+                        } else {
+                            self.download_in_progress = false;
                         }
-                    });
-                }
-            };
-
-
-            self.$el.on("hidden", function(){
-                keep_polling = false;
-                self.init();
-            });
-
-            pollDownloadStatus();
+                    },
+                    error: function (resp) {
+                        self.downloadError(resp.responseText);
+                    }
+                });
+            }
         };
 
-        self.generateDownload = function(){
-            $.ajax({
-                url: self.download_url,
-                type: "GET",
-                dataType: "json",
-                success: function(data){
-                    self.startPollDownloadStatus(data);
-                },
-                error: function(){
-                    self.downloadError(self.ERROR_MESSAGE);
-                }
-            });
+        self.updateProgress = function (progress_response) {
+            if (progress_response.trim().length) {
+                self.$downloading.addClass("hide");
+                self.$download_progress.html(progress_response).removeClass("hide");
+            }
+        };
+
+        self.isDone = function (progress_response) {
+            var ready_id = 'ready_' + self.download_poll_id,
+                error_id = 'error_' + self.download_poll_id;
+            return progress_response &&
+                progress_response.trim().length &&
+                _.any([ready_id, error_id], function(el_id) {
+                    return progress_response.indexOf(el_id) >= 0;
+                });
+        };
+
+        self.generateDownload = function(download_url, message){
+            // prevent multiple calls
+            if (!self.download_in_progress) {
+                self.download_in_progress = true;
+                $.ajax({
+                    url: download_url,
+                    type: "GET",
+                    data: {'message': message},
+                    dataType: "json",
+                    success: function (data) {
+                        self.download_poll_url = data.download_url;
+                        self.download_poll_id = data.download_id;
+                        if (data.message) {
+                            self.ready_message = data.message;
+                        }
+                        self.pollDownloadStatus();
+                    },
+                    error: function () {
+                        self.downloadError(self.ERROR_MESSAGE);
+                    }
+                });
+            }
         };
 
         self.downloadError = function(text){
-            self.$downloading.hide();
-            self.$download_progress.show().html(text);
+            self.init();
+            self.$download_progress.html(text);
         };
 
-        self.$el.on("show", self.generateDownload);
+        self.$el.on("hidden hidden.bs.modal", function(){
+            self.init();
+        });
+
         self.init();
     };
 }());

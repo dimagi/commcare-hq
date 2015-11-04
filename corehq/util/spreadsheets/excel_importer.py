@@ -2,6 +2,10 @@ from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from soil import DownloadBase
 
 
+class UnknownFileRefException(Exception):
+    pass
+
+
 class ExcelImporter(object):
     """
     Base class for `SingleExcelImporter` and `MultiExcelImporter`.
@@ -16,6 +20,8 @@ class ExcelImporter(object):
             DownloadBase.set_progress(self.task, 0, 100)
 
         download_ref = DownloadBase.get(file_ref_id)
+        if download_ref is None:
+            raise UnknownFileRefException("Could not find file wih ref %s. It may have expired" % file_ref_id)
         self.workbook = WorkbookJSONReader(download_ref.get_filename())
 
     def mark_complete(self):

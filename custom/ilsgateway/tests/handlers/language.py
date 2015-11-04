@@ -1,6 +1,6 @@
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.reminders import LANGUAGE_CONFIRM
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSLanguageTest(ILSTestScript):

@@ -13,10 +13,10 @@ from corehq.apps.app_manager.models import (
     FormActionCondition,
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
-class ScheduleTest(SimpleTestCase, TestFileMixin):
+class ScheduleTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -314,7 +314,9 @@ class ScheduleTest(SimpleTestCase, TestFileMixin):
 
             upcoming_scheduled_visits = (
                 u"{visit}"
-                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"
+                "[{case}/last_visit_number_{form_id} = '' or "
+                    "if(@repeats = 'True', @id &gt;= {case}/last_visit_number_{form_id},"
+                        " @id &gt; {case}/last_visit_number_{form_id})]"
                 "[if(@repeats = 'True', "
                     "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "  # noqa
                         "(@expires = '' or today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment)"  # noqa

@@ -22,9 +22,7 @@ from corehq.apps.userreports.reports.view import (
     CustomConfigurableReportDispatcher,
 )
 import phonelog.reports as phonelog
-from corehq.apps.reports.commtrack import standard as commtrack_reports
-from corehq.apps.reports.commtrack import maps as commtrack_maps
-from corehq.apps.reports.commconnect import system_overview
+from corehq.apps.reports import commtrack
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
@@ -45,9 +43,9 @@ from corehq.apps.accounting.interface import (
     InvoiceInterface,
     WireInvoiceInterface,
     PaymentRecordInterface,
+    SubscriptionAdjustmentInterface,
+    CreditAdjustmentInterface,
 )
-from corehq.apps.reports.standard.domains import OrgDomainStatsReport
-from corehq.apps.appstore.interfaces import CommCareExchangeAdvanced
 from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
@@ -89,12 +87,13 @@ def REPORTS(project):
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("CommCare Supply"), (
-            commtrack_reports.SimplifiedInventoryReport,
-            commtrack_reports.InventoryReport,
-            commtrack_reports.CurrentStockStatusReport,
-            commtrack_maps.StockStatusMapReport,
-            commtrack_reports.ReportingRatesReport,
-            commtrack_maps.ReportingStatusMapReport,
+            commtrack.SimplifiedInventoryReport,
+            commtrack.InventoryReport,
+            commtrack.CurrentStockStatusReport,
+            commtrack.StockStatusMapReport,
+            commtrack.ReportingRatesReport,
+            commtrack.ReportingStatusMapReport,
+            commtrack.LedgersByLocationReport,
         )))
 
     if project.has_careplan:
@@ -113,26 +112,15 @@ def REPORTS(project):
             sms.MessagesReport,
         ])
 
-    if toggles.MESSAGING_STATUS_AND_ERROR_REPORTS.enabled(project.name):
-        messaging_reports.extend([
-            sms.MessagingEventsReport,
-            sms.MessageEventDetailReport,
-            sms.SurveyDetailReport,
-        ])
-
     # always have these historical reports visible
     messaging_reports.extend([
+        sms.MessagingEventsReport,
+        sms.MessageEventDetailReport,
+        sms.SurveyDetailReport,
         sms.MessageLogReport,
         ivr.CallLogReport,
         ivr.ExpectedCallbackReport,
     ])
-
-    project_can_use_inbound_sms = domain_has_privilege(project.name, privileges.INBOUND_SMS)
-    if project_can_use_inbound_sms:
-        messaging_reports.extend([
-            system_overview.SystemOverviewReport,
-            system_overview.SystemUsersReport,
-        ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
@@ -280,6 +268,8 @@ ACCOUNTING_ADMIN_INTERFACES = (
         InvoiceInterface,
         WireInvoiceInterface,
         PaymentRecordInterface,
+        SubscriptionAdjustmentInterface,
+        CreditAdjustmentInterface,
     )),
 )
 
@@ -292,17 +282,8 @@ SMS_ADMIN_INTERFACES = (
 )
 
 
-APPSTORE_INTERFACES = (
-    (_('App Store'), (
-        CommCareExchangeAdvanced,
-    )),
-)
-
-
 BASIC_REPORTS = (
-    (_('Project Stats'), (
-        OrgDomainStatsReport,
-    )),
+    (_('Project Stats'), ()),
 )
 
 ADMIN_REPORTS = (

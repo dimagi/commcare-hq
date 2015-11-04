@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui import help_text
@@ -99,6 +100,9 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                                   help_text=help_text.CONFIGURED_FILTER)
     configured_indicators = JsonField(
         expected_type=list, help_text=help_text.CONFIGURED_INDICATORS)
+    named_expressions = JsonField(required=False, expected_type=dict,
+                              label=_("Named expressions (optional)"),
+                              help_text=help_text.NAMED_EXPRESSIONS)
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"),
                               help_text=help_text.NAMED_FILTER)
@@ -106,6 +110,13 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
         super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
+
+        if toggles.LOCATIONS_IN_UCR.enabled(domain):
+            choices = self.fields['referenced_doc_type'].choices
+            choices.append(
+                ('Location', _('locations'))
+            )
+            self.fields['referenced_doc_type'].choices = choices
 
     def clean_table_id(self):
         # todo: validate table_id as [a-z][a-z0-9_]*

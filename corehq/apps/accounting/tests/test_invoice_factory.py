@@ -41,7 +41,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertFalse(self.community.feature_charges_exist_for_domain(domain_under_limits))
 
     def test_incomplete_starting_coverage(self):
-        some_plan = generator.arbitrary_subscribable_plan()
+        some_plan = generator.subscribable_plan()
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain, some_plan,
             date_start=self.invoice_start + datetime.timedelta(days=3)
@@ -54,7 +54,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self._clean_subs()
 
     def test_incomplete_ending_coverage(self):
-        some_plan = generator.arbitrary_subscribable_plan()
+        some_plan = generator.subscribable_plan()
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain, some_plan,
             date_start=self.invoice_start,
@@ -69,7 +69,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self._clean_subs()
 
     def test_patchy_coverage(self):
-        some_plan = generator.arbitrary_subscribable_plan()
+        some_plan = generator.subscribable_plan()
         middle_date = self.invoice_end - datetime.timedelta(days=15)
         Subscription.new_domain_subscription(
             self.account, self.domain, some_plan,
@@ -96,7 +96,7 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self._clean_subs()
 
     def test_full_coverage(self):
-        some_plan = generator.arbitrary_subscribable_plan()
+        some_plan = generator.subscribable_plan()
         Subscription.new_domain_subscription(
             self.account, self.domain, some_plan,
             date_start=self.invoice_start,

@@ -58,9 +58,9 @@ def guess_reporting_minute(now=None):
     """
     now = now or datetime.utcnow()
     window = 5
-    if now.minute <= window:
-        return 0
-    elif 30 <= now.minute <= 35:
-        return 30
+
+    for reporting_minute in [0, 15, 30, 45]:
+        if reporting_minute <= now.minute <= reporting_minute + window:
+            return reporting_minute
 
     raise ValueError("Couldn't guess reporting minute for time: {}".format(now))

@@ -3,12 +3,14 @@
 
 <div data-bind="with: fixtureSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
     <legend>
-        {% trans "Fixture Case Selection" %}
+        {% trans "Lookup Table Case Selection" %}
     </legend>
     <form class="form form-horizontal">
         <div class="control-group">
-            <label class="control-label">{% trans "Enable Fixture Filtering" %}
-                <span class="hq-help-template" data-title="{% trans "Fixture Case Selection" %}"data-content="{% trans "Enabling this allows you to filter the case list based on a fixture selection and an xpath expression that consumes that selection" %}"
+            <label class="control-label">{% trans "Enable Lookup Table Filtering" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Lookup Table Case Selection" %}"
+                      data-content="{% trans "Enabling this allows you to filter the case list based on a lookup table selection and an xpath expression that consumes that selection" %}"
             ></span>
             </label>
             <div class="controls">
@@ -17,8 +19,11 @@
         </div>
         <div class="control-group">
             <label class="control-label">
-                {% trans "Fixture Type" %}
-                <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
+                {% trans "Lookup Table Type" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Lookup Table Type" %}"
+                      data-content="{% trans "Lookup Table Type refers to the lookup table that should be used in selection" %}"
+                ></span>
             </label>
             <div class="controls">
                 <select type="text" name="fixture_type" data-bind="value: fixtureType">
@@ -45,8 +50,10 @@
         </div>
         <div class="control-group">
             <label class="control-label">{% trans "Localize Display Column" %}
-                <span class="hq-help-template" data-title="{% trans "Localize Display Column" %}"data-content="{% trans "Set this checkbox to indicate that the fixture does not contain the display string, but a reference to the localization string" %}"
-            ></span>
+                <span class="hq-help-template"
+                      data-title="{% trans "Localize Display Column" %}"
+                      data-content="{% trans "Set this checkbox to indicate that the lookup table does not contain the display string, but a reference to the localization string" %}"
+                ></span>
             </label>
             <div class="controls">
                 <input type="checkbox" data-bind="checked: localize"/>
@@ -68,7 +75,10 @@
         </div>
         <div class="control-group">
             <label class="control-label">{% trans "XPath filtering expression" %}
-            <span class="hq-help-template" data-title="{% trans "Fixture Type" %}"data-content="{% trans "NEEDS UPDATE" %}"></span>
+            <span class="hq-help-template"
+                  data-title="{% trans "Lookup Table Type" %}"
+                  data-content="{% trans "The XPath filtering expression will be added to the list of conditions that filter the case list" %}"
+            ></span>
             </label>
             <div class="controls">
                 <input type="text"name="case_type" data-bind="value: xpath" />

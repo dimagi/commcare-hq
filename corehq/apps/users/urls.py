@@ -6,10 +6,12 @@ from .views import (DefaultProjectUserSettingsView, DomainRequestView, EditWebUs
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
     BulkSMSVerificationView)
-from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
-    ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView,
+from .views.mobile.users import (
+    UploadCommCareUsers, EditCommCareUserView,
     ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
-    CreateCommCareUserModal)
+    CommCareUserSelfRegistrationView, MobileWorkerListView,
+    CreateCommCareUserModal,
+)
 
 
 urlpatterns = patterns('corehq.apps.users.views',
@@ -43,17 +45,16 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^web/role/delete/$', 'delete_user_role', name='delete_user_role'),
 
     url(r'^httpdigest/?$', 'test_httpdigest'),
-
-    url(r'^audit_logs/$', 'audit_logs', name='user_audit_logs')
 ) + \
 patterns("corehq.apps.users.views.mobile.users",
-    url(r'^commcare/$', ListCommCareUsersView.as_view(), name=ListCommCareUsersView.urlname),
+    url(r'^commcare/$',
+        MobileWorkerListView.as_view(),
+        name=MobileWorkerListView.urlname),
     url(r'^commcare/fields/$', UserFieldsView.as_view(), name=UserFieldsView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$', EditCommCareUserView.as_view(),
         name=EditCommCareUserView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/user_data/$', 'update_user_data', name='update_user_data'),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', 'update_user_groups', name='update_user_groups'),
-    url(r'^commcare/list/$', AsyncListCommCareUsersView.as_view(), name=AsyncListCommCareUsersView.urlname),
     url(r'^commcare/archive/(?P<user_id>[ \w-]+)/$', 'archive_commcare_user', name='archive_commcare_user'),
     url(r'^commcare/unarchive/(?P<user_id>[ \w-]+)/$', 'archive_commcare_user',
         name='unarchive_commcare_user', kwargs={'is_active': True}),
@@ -66,13 +67,13 @@ patterns("corehq.apps.users.views.mobile.users",
         'user_upload_job_poll', name='user_upload_job_poll'),
     url(r'^commcare/download/$', 'download_commcare_users', name='download_commcare_users'),
     url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
-    url(r'^commcare/add_commcare_account/$', CreateCommCareUserView.as_view(),
-        name=CreateCommCareUserView.urlname),
     url(r'^commcare/new_mobile_worker_modal/$',
         CreateCommCareUserModal.as_view(),
         name=CreateCommCareUserModal.urlname),
     url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname),
+    url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
+        name=CommCareUserSelfRegistrationView.urlname),
 ) +\
 patterns("corehq.apps.users.views.mobile.groups",
     url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.urlname),

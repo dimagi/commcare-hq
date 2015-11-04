@@ -1,12 +1,14 @@
 {  
    "domains":[
-        "airs",
         "abtmali",
+        "airs",
+        "airsethiopia",
         "airsmadagascar",
         "airsrwanda",
-        "airsethiopia"
+        "airszambia",
+        "airszimbabwe"
     ],
-   "data_source_table":"supervisory",
+   "data_source_table":"supervisory-002",
    "report_id":"incident-report",
    "custom_configurable_report":"custom.abt.reports.views.FormattedSupervisoryReport",
    "config":{

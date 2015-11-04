@@ -77,6 +77,10 @@ class DomainStatsReport(GenericTabularReport):
 
         for dom in domains:
             if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+                first_form_default_message = _("No Forms")
+                if dom.get("cp_last_form", None):
+                    first_form_default_message = _("Unable to parse date")
+
                 yield [
                     self.get_name_or_link(dom),
                     numcell(dom.get("cp_n_active_cc_users", _("Not yet calculated"))),
@@ -84,27 +88,10 @@ class DomainStatsReport(GenericTabularReport):
                     numcell(dom.get("cp_n_active_cases", _("Not yet calculated"))),
                     numcell(dom.get("cp_n_cases", _("Not yet calculated"))),
                     numcell(dom.get("cp_n_forms", _("Not yet calculated"))),
-                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_first_form"), first_form_default_message),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     numcell(dom.get("cp_n_web_users", _("Not yet calculated")))
                 ]
-
-
-class OrgDomainStatsReport(DomainStatsReport):
-    override_permissions_check = True
-
-    def get_domains(self):
-        from corehq.apps.orgs.models import Organization
-        from corehq.apps.domain.models import Domain
-        org = self.request.GET.get('org', None)
-        organization = Organization.get_by_name(org, strict=True)
-        if organization and \
-                (self.request.couch_user.is_superuser or self.request.couch_user.is_member_of_org(org)):
-            return [d for d in Domain.get_by_organization(organization.name)]
-        return []
-
-    def is_custom_param(self, param):
-        return param in ['org']
 
 
 def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):

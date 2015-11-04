@@ -53,7 +53,10 @@ def bootstrap_sms(apps, schema_editor):
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)
-    bootstrap_twilio_gateway(apps)
+    bootstrap_twilio_gateway(
+        apps,
+        'corehq/apps/smsbillables/management/commands/pricing_data/twilio-rates-2015_10_06.csv'
+    )
     bootstrap_unicel_gateway(apps)
     call_command('bootstrap_usage_fees')
     bootstrap_moz_gateway(apps)

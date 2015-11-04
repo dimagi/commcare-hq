@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from casexml.apps.case.cleanup import rebuild_case
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 
 
 class Command(BaseCommand):
@@ -12,4 +12,4 @@ class Command(BaseCommand):
         else:
             raise CommandError('Usage: %s\n%s' % (self.args, self.help))
 
-        rebuild_case(case_id)
+        rebuild_case_from_forms(case_id)

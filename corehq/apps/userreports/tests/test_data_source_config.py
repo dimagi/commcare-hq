@@ -2,6 +2,7 @@ import datetime
 from mock import patch
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
 from corehq.db import UCR_ENGINE_ID
@@ -88,6 +89,12 @@ class DataSourceConfigurationTest(SimpleTestCase):
         config = DataSourceConfiguration.wrap(source)
         config.validate()
 
+    def test_duplicate_columns(self):
+        bad_config = DataSourceConfiguration.wrap(self.config.to_json())
+        bad_config.configured_indicators.append(bad_config.configured_indicators[-1])
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
 
 class DataSourceConfigurationDbTest(TestCase):
 
@@ -127,6 +134,143 @@ class DataSourceConfigurationDbTest(TestCase):
     def test_doc_type_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain', table_id='table').save()
+
+
+class IndicatorNamedExpressionTest(SimpleTestCase):
+    def setUp(self):
+        self.indicator_configuration = DataSourceConfiguration.wrap({
+            'display_name': 'Mother Indicators',
+            'doc_type': 'DataSourceConfiguration',
+            'domain': 'test',
+            'referenced_doc_type': 'CommCareCase',
+            'table_id': 'mother_indicators',
+            'named_expressions': {
+                'pregnant': {
+                    'type': 'property_name',
+                    'property_name': 'pregnant',
+                },
+                'is_evil': {
+                    'type': 'property_name',
+                    'property_name': 'is_evil',
+                },
+                'laugh_sound': {
+                    'type': 'conditional',
+                    'test': {
+                        'type': 'boolean_expression',
+                        'expression': {
+                            'type': 'property_name',
+                            'property_name': 'is_evil',
+                        },
+                        'operator': 'eq',
+                        'property_value': True,
+                    },
+                    'expression_if_true': "mwa-ha-ha",
+                    'expression_if_false': "hehe",
+                }
+            },
+            'named_filters': {},
+            'configured_filter': {
+                'type': 'boolean_expression',
+                'expression': {
+                    'type': 'named',
+                    'name': 'pregnant'
+                },
+                'operator': 'eq',
+                'property_value': 'yes',
+            },
+            'configured_indicators': [
+                {
+                    "type": "expression",
+                    "column_id": "laugh_sound",
+                    "datatype": "string",
+                    "expression": {
+                        'type': 'named',
+                        'name': 'laugh_sound'
+                    }
+                },
+                {
+                    "type": "expression",
+                    "column_id": "characterization",
+                    "datatype": "string",
+                    "expression": {
+                        'type': 'conditional',
+                        'test': {
+                            'type': 'boolean_expression',
+                            'expression': {
+                                'type': 'named',
+                                'name': 'is_evil',
+                            },
+                            'operator': 'eq',
+                            'property_value': True,
+                        },
+                        'expression_if_true': "evil!",
+                        'expression_if_false': "okay",
+                    }
+                },
+
+            ]
+        })
+
+    def test_filter_match(self):
+        self.assertTrue(self.indicator_configuration.filter({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'pregnant': 'yes'
+        }))
+
+    def test_filter_nomatch(self):
+        self.assertFalse(self.indicator_configuration.filter({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'pregnant': 'no'
+        }))
+
+    def test_indicator(self):
+        for evil_status, laugh in ((True, 'mwa-ha-ha'), (False, 'hehe')):
+            [values] = self.indicator_configuration.get_all_values({
+                'doc_type': 'CommCareCase',
+                'domain': 'test',
+                'pregnant': 'yes',
+                'is_evil': evil_status
+            })
+            i = 2
+            self.assertEqual('laugh_sound', values[i].column.id)
+            self.assertEqual(laugh, values[i].value)
+
+    def test_nested_indicator(self):
+        for evil_status, characterization in ((True, 'evil!'), (False, 'okay')):
+            [values] = self.indicator_configuration.get_all_values({
+                'doc_type': 'CommCareCase',
+                'domain': 'test',
+                'pregnant': 'yes',
+                'is_evil': evil_status
+            })
+            i = 3
+            self.assertEqual('characterization', values[i].column.id)
+            self.assertEqual(characterization, values[i].value)
+
+    def test_missing_reference(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.configured_indicators.append({
+            "type": "expression",
+            "column_id": "missing",
+            "datatype": "string",
+            "expression": {
+                'type': 'named',
+                'name': 'missing'
+            }
+        })
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
+    def test_missing_no_named_in_named(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.named_expressions['broken'] = {
+            "type": "named",
+            "name": "pregnant",
+        }
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
 
 
 class IndicatorNamedFilterTest(SimpleTestCase):

@@ -86,6 +86,21 @@
                             <a href="{{ module_url }}">{{ module_name }}</a> module does not exist.
                             Please select another form.
                             {% endblocktrans %}
+                        {% case "report config ref invalid" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                            There are references to reports that are deleted in the
+                            <a href="{{ module_url }}">{{ module_name }}</a> module.
+                            You may re-save the module to deleted them.
+                            {% endblocktrans %}
+                        {% case "all forms in case list module must load the same cases" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            The <a href="{{ form_url }}">{{ form_name }}</a> form in the <a href="{{ module_url }}">{{ module_name }}</a>
+                            module loads different case types from the other forms in the module. All forms in a module that
+                            has a case registration form selected must load the same case types.
+                            {% endblocktrans %}
                         {% case "case list module form must require case" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
                             {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
@@ -144,6 +159,10 @@
                             The case list in module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                             has an invalid case tile configuration. Reason: {{ error.reason }}
+                        {% case "no source module id" %}
+                            Shadow module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            doesn't have a source module specified.
                         {% case "no parent select id" %}
                             Module
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>

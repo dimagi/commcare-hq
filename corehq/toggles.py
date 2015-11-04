@@ -161,10 +161,11 @@ APP_BUILDER_ADVANCED = StaticToggle(
     TAG_EXPERIMENTAL
 )
 
-APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
-    'include-multimedia-odk',
-    'Include multimedia in ODK deploy',
-    TAG_ONE_OFF
+APP_BUILDER_SHADOW_MODULES = StaticToggle(
+    'shadow-app-builder',
+    'Shadow Modules',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
 
 BOOTSTRAP3_PREVIEW = StaticToggle(
@@ -178,6 +179,7 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
 
 CASE_LIST_TILE = StaticToggle(
@@ -185,6 +187,13 @@ CASE_LIST_TILE = StaticToggle(
     'Allow configuration of case list tiles',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
+    'show_persist_case_context_setting',
+    'Allow toggling the persistent case context tile',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
 )
 
 CASE_LIST_LOOKUP = StaticToggle(
@@ -208,11 +217,26 @@ DEMO_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+SUPPLY_REPORTS = StaticToggle(
+    'supply_reports',
+    "Early stages reports for CommCare Supply",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+DETAIL_LIST_TAB_NODESETS = StaticToggle(
+    'detail-list-tab-nodesets',
+    'Associate a nodeset with a case detail tab',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -253,6 +277,13 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+LOCATIONS_IN_UCR = StaticToggle(
+    'locations_in_ucr',
+    'Add Locations as one of the Source Types for User Configurable Reports',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )
 
 REPORT_BUILDER = StaticToggle(
@@ -456,14 +487,6 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
-OWNERSHIP_CLEANLINESS_RESTORE = StaticToggle(
-    'enable_owner_cleanliness_restore',
-    'Enable restoring with updated owner cleanliness logic.',
-    TAG_EXPERIMENTAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
-)
-
 MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
@@ -590,13 +613,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MESSAGING_STATUS_AND_ERROR_REPORTS = StaticToggle(
-    'messaging_status',
-    'View the Messaging Status and Error Reports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 HSPH_HACK = StaticToggle(
     'hsph_hack',
     'Optmization hack for HSPH',
@@ -633,6 +649,13 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
+    'mobile_worker_self_registration',
+    'Allow mobile workers to self register',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
@@ -647,6 +670,14 @@ OBJECT_RESTORE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+AUTOMATIC_CASE_CLOSURE = StaticToggle(
+    'automatic_case_closure',
+    'Automatically Close Cases',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+
 SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'sms_performance_feedback',
     'Enable SMS-based performance feedback',
@@ -658,5 +689,40 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+VIEW_BUILD_SOURCE = StaticToggle(
+    'diff_builds',
+    'Allow users to view and diff build source files',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+USE_SQL_BACKEND = StaticToggle(
+    'sql_backend',
+    'Uses a sql backend instead of a couch backend for form processing',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
+EWS_WEB_USER_EXTENSION = StaticToggle(
+    'ews_web_user_extension',
+    'Enable EWSGhana web user extension',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+CALL_CENTER_LOCATION_OWNERS = StaticToggle(
+    'call_center_location_owners',
+    'Enable the use of locations as owners of call center cases',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+GRID_MENUS = StaticToggle(
+    'grid_menus',
+    'Allow using grid menus on Android',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

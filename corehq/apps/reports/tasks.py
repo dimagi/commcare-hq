@@ -1,31 +1,42 @@
-import hashlib
-from django.utils.translation import ugettext as _
 from datetime import datetime, timedelta
-import uuid
-import os
-from unidecode import unidecode
 from dateutil.parser import parse
-import zipfile
+import hashlib
+import os
 import tempfile
+from unidecode import unidecode
+import uuid
 from wsgiref.util import FileWrapper
+import zipfile
+
+from django.utils.translation import ugettext as _
+from django.conf import settings
 
 from celery.schedules import crontab
 from celery.task import periodic_task
-from corehq.apps.indicators.utils import get_mvp_domains
-from corehq.apps.reports.scheduled import get_scheduled_reports
-from corehq.util.files import file_extention_from_filename
-from corehq.util.view_utils import absolute_reverse
-from couchexport.files import Temp
-from couchexport.groupexports import export_for_group, rebuild_export
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.logging import notify_exception
-from couchexport.tasks import cache_file_to_be_served
 from celery.task import task
 from celery.utils.log import get_task_logger
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.django.email import send_HTML_email
 
-from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats, total_distinct_users
+from casexml.apps.case.xform import extract_case_blocks
+from casexml.apps.case.models import CommCareCase
+from couchexport.files import Temp
+from couchexport.groupexports import export_for_group, rebuild_export
+from couchexport.tasks import cache_file_to_be_served
+from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import json_format_datetime
+from soil import DownloadBase
+from soil.util import expose_file_download, expose_cached_download
+
+from corehq.apps.domain.calculations import (
+    _all_domain_stats,
+    CALC_FNS,
+    total_distinct_users,
+)
+from corehq.apps.es.domains import DomainES
 from corehq.apps.hqadmin.escheck import (
     CLUSTER_HEALTH,
     check_case_es_index,
@@ -34,13 +45,7 @@ from corehq.apps.hqadmin.escheck import (
     check_reportxform_es_index,
     check_xform_es_index,
 )
-from corehq.apps.reports.export import save_metadata_export_to_tempfile
-from corehq.apps.reports.models import (
-    HQGroupExportConfiguration,
-    ReportNotification,
-    UnsupportedScheduledReportError,
-)
-from corehq.apps.es.domains import DomainES
+from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.elastic import (
     get_es,
     ES_URLS,
@@ -48,15 +53,17 @@ from corehq.elastic import (
     send_to_elasticsearch,
 )
 from corehq.pillows.mappings.app_mapping import APP_INDEX
-from dimagi.utils.parsing import json_format_datetime
-import settings
-from couchforms.models import XFormInstance
-from corehq.apps.reports.models import FormExportSchema
-from dimagi.utils.couch.database import iter_docs
-from casexml.apps.case.xform import extract_case_blocks
-from casexml.apps.case.models import CommCareCase
-from soil import DownloadBase
-from soil.util import expose_file_download, expose_cached_download
+from corehq.util.files import file_extention_from_filename
+from corehq.util.view_utils import absolute_reverse
+
+from .export import save_metadata_export_to_tempfile
+from .models import (
+    FormExportSchema,
+    HQGroupExportConfiguration,
+    ReportNotification,
+    UnsupportedScheduledReportError,
+)
+from .scheduled import get_scheduled_reports
 
 
 logging = get_task_logger(__name__)
@@ -147,19 +154,28 @@ def create_metadata_export(download_id, domain, format, filename, datespan=None,
     return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def daily_reports():
     for rep in get_scheduled_reports('daily'):
         send_delayed_report(rep)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def weekly_reports():
     for rep in get_scheduled_reports('weekly'):
         send_delayed_report(rep)
 
 
-@periodic_task(run_every=crontab(hour="*", minute="*/30", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(
+    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
+)
 def monthly_reports():
     for rep in get_scheduled_reports('monthly'):
         send_delayed_report(rep)
@@ -174,7 +190,6 @@ def saved_exports():
 
 @task(queue='background_queue', ignore_result=True)
 def rebuild_export_task(groupexport_id, index, output_dir='couch', last_access_cutoff=None, filter=None):
-    from couchexport.groupexports import rebuild_export
     group_config = HQGroupExportConfiguration.get(groupexport_id)
     config, schema = group_config.all_exports[index]
     rebuild_export(config, schema, output_dir, last_access_cutoff, filter=filter)
@@ -198,45 +213,45 @@ def update_calculated_properties():
     all_stats = _all_domain_stats()
     for r in results:
         dom = r["name"]
-        calced_props = {
-            "_id": r["_id"],
-            "cp_n_web_users": int(all_stats["web_users"][dom]),
-            "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
-            "cp_n_cc_users": int(all_stats["commcare_users"][dom]),
-            "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
-            "cp_n_users_submitted_form": total_distinct_users([dom]),
-            "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
-            "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
-            "cp_n_cases": int(all_stats["cases"][dom]),
-            "cp_n_forms": int(all_stats["forms"][dom]),
-            "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-            "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
-            "cp_is_active": CALC_FNS["active"](dom),
-            "cp_has_app": CALC_FNS["has_app"](dom),
-            "cp_last_updated": json_format_datetime(datetime.utcnow()),
-            "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
-            "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
-            "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
-            "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
-            "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
-            "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
-            "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
-            "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
-        }
-        if calced_props['cp_first_form'] == 'No forms':
-            del calced_props['cp_first_form']
-            del calced_props['cp_last_form']
-        send_to_elasticsearch("domains", calced_props)
+        try:
+            calced_props = {
+                "_id": r["_id"],
+                "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
+                "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+                "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
+                "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+                "cp_n_users_submitted_form": total_distinct_users([dom]),
+                "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
+                "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
+                "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
+                "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
+                "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
+                "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
+                "cp_is_active": CALC_FNS["active"](dom),
+                "cp_has_app": CALC_FNS["has_app"](dom),
+                "cp_last_updated": json_format_datetime(datetime.utcnow()),
+                "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
+                "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
+                "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
+                "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
+                "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
+                "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+                "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+                "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
+            }
+            if calced_props['cp_first_form'] is None:
+                del calced_props['cp_first_form']
+            if calced_props['cp_last_form'] is None:
+                del calced_props['cp_last_form']
+            send_to_elasticsearch("domains", calced_props)
+        except Exception, e:
+            notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+
 
 
 def is_app_active(app_id, domain):
-    now = datetime.utcnow()
-    then = json_format_datetime(now - timedelta(days=30))
-    now = json_format_datetime(now)
+    return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
-    key = ['submission app', domain, app_id]
-    row = get_db().view("reports_forms/all_forms", startkey=key+[then], endkey=key+[now]).all()
-    return True if row else False
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def apps_update_calculated_properties():

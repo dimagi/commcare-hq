@@ -1,8 +1,9 @@
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.performance_sms.message_sender import send_messages_for_config
 from .schedule import get_message_configs_at_this_hour
-import settings
 
 
 @periodic_task(run_every=crontab(hour="*", minute="0"),
