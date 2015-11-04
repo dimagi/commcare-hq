@@ -370,6 +370,18 @@ class SubmissionPost(object):
         xform.export_tag = ["domain", "xmlns"]
         return xform
 
+    def _handle_known_error(self, error, instance, xforms):
+        # errors we know about related to the content of the form
+        # log the error and respond with a success code so that the phone doesn't
+        # keep trying to send the form
+        instance = _transform_instance_to_error(error, instance)
+        xforms[0] = instance
+        # this is usually just one document, but if an edit errored we want
+        # to save the deprecated form as well
+        bulk_save_docs(xforms, instance)
+        response = self._get_open_rosa_response(instance, None)
+        return response, instance, []
+
     def run(self):
         if timezone_migration_in_progress(self.domain):
             # keep submissions on the phone
@@ -424,26 +436,15 @@ class SubmissionPost(object):
                             case_result = process_cases_with_casedb(xforms, case_db)
                             stock_result = process_stock(xforms, case_db)
                         except known_errors as e:
-                            # errors we know about related to the content of the form
-                            # log the error and respond with a success code so that the phone doesn't
-                            # keep trying to send the form
-                            instance = _handle_known_error(e, instance)
-                            xforms[0] = instance
-                            # this is usually just one document, but if an edit errored we want
-                            # to save the deprecated form as well
-                            bulk_save_docs(xforms, instance)
-                            response = self._get_open_rosa_response(
-                                instance, None)
-                            return response, instance, cases
+                            return self._handle_known_error(e, instance, xforms)
                         except Exception as e:
                             # handle / log the error and reraise so the phone knows to resubmit
                             # note that in the case of edit submissions this won't flag the previous
                             # submission as having been edited. this is intentional, since we should treat
                             # this use case as if the edit "failed"
-                            error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
-                            instance = _handle_unexpected_error(instance, error_message)
-                            instance.save()
+                            _handle_unexpected_error(e, instance)
                             raise
+
                         now = datetime.datetime.utcnow()
                         unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
                             xform_id=instance.get_id,
@@ -562,7 +563,7 @@ class SubmissionPost(object):
         ).response()
 
 
-def _handle_known_error(e, instance):
+def _transform_instance_to_error(e, instance):
     error_message = '{}: {}'.format(
         type(e).__name__, unicode(e))
     logging.exception((
@@ -571,20 +572,22 @@ def _handle_known_error(e, instance):
     ).format(instance._id, error_message))
     return XFormError.from_xform_instance(instance, error_message)
 
-def _handle_unexpected_error(instance, error_message):
+
+def _handle_unexpected_error(e, instance):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
+    error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
     instance = XFormError.from_xform_instance(instance, error_message, with_new_id=True)
     notify_exception(None, (
         u"Error in case or stock processing "
         u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance.orig_id, error_message, instance._id))
-    return instance
+    instance.save()
 
 
 def fetch_and_wrap_form(doc_id):
