@@ -111,6 +111,7 @@ class FormDataQueryTest(TestCase):
         self.assertEqual(counts[('user1', 'form1', 'app_id')], 2)
         self.assertEqual(counts[('user1', 'form2', 'app_id')], 1)
         self.assertEqual(counts[('user2', 'form1', 'app_id')], 2)
+        self.assertEqual(counts[('user2', 'form2', 'app_id')], 0)
 
     def test_form_counts_by_completion_time(self):
         start, end = utc_date(2015, 2, 1), utc_date(2015, 3, 1)
@@ -119,3 +120,18 @@ class FormDataQueryTest(TestCase):
         self.assertEqual(counts[('user1', 'form1', 'app_id')], 1)
         self.assertEqual(counts[('user1', 'form2', 'app_id')], 1)
         self.assertEqual(counts[('user2', 'form1', 'app_id')], 2)
+        self.assertEqual(counts[('user2', 'form2', 'app_id')], 0)
+
+    def test_specific_users(self):
+        start, end = utc_date(2015, 2, 1), utc_date(2015, 3, 1)
+        counts = get_form_counts_by_user_xmlns('test-domain', start, end,
+                                               user_ids=['user1'])
+        self.assertEqual(counts[('user1', 'form1', 'app_id')], 2)
+        self.assertEqual(counts[('user2', 'form1', 'app_id')], 0)
+
+    def test_specific_xmlnss(self):
+        start, end = utc_date(2015, 2, 1), utc_date(2015, 3, 1)
+        counts = get_form_counts_by_user_xmlns('test-domain', start, end,
+                                               xmlnss=['form1'])
+        self.assertEqual(counts[('user1', 'form1', 'app_id')], 2)
+        self.assertEqual(counts[('user1', 'form2', 'app_id')], 0)
