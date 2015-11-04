@@ -4,6 +4,7 @@ function HQReportDataTables(options) {
     var self = this;
     self.dataTableElem = options.dataTableElem || '.datatable';
     self.paginationType = options.paginationType || 'bootstrap';
+    self.useBootstrap3 = options.useBootstrap3 || false;
     self.defaultRows = options.defaultRows || 10;
     self.startAtRowNum = options.startAtRowNum || 0;
     self.showAllRowsOption = options.showAllRowsOption || false;
@@ -48,7 +49,12 @@ function HQReportDataTables(options) {
     this.render = function () {
         if (self.rendered) {
             $(self.dataTableElem).each(function () {
-                $(this).dataTable().fnReloadAjax();
+                if (jQuery.fn.dataTable.versionCheck) {
+                    // jQuery.fn.dataTable.versionCheck does not exist prior to 1.10
+                    $(this).DataTable().ajax.reload();
+                } else {
+                    $(this).dataTable().fnReloadAjax();
+                }
             });
             return;
         }
@@ -68,7 +74,7 @@ function HQReportDataTables(options) {
         }
         applyBootstrapMagic();
 
-        var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
+        var dataTablesDom = (self.useBootstrap3) ? "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7'p>>" : "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
         $(self.dataTableElem).each(function(){
             var params = {
                 sDom: dataTablesDom,
@@ -191,7 +197,7 @@ function HQReportDataTables(options) {
 
                 $dataTablesFilter.append($inputField);
                 $inputField.attr("id", "dataTables-filter-box");
-                $inputField.addClass("search-query").addClass("input-medium");
+                $inputField.addClass("search-query").addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
                 $inputField.attr("placeholder", "Search...");
 
                 $inputLabel.attr("for", "dataTables-filter-box");
@@ -209,7 +215,7 @@ function HQReportDataTables(options) {
                 $selectField.children().append(" per page");
                 if (self.showAllRowsOption)
                     $selectField.append($('<option value="-1" />').text("All Rows"));
-                $selectField.addClass("input-medium");
+                $selectField.addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
                 $selectField.on("change", function(){
                     var selected_value = $selectField.find('option:selected').val();
                     window.analytics.usage("Reports", "Changed number of items shown", selected_value);
