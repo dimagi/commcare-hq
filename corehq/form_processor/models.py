@@ -3,6 +3,7 @@ import collections
 
 from lxml import etree
 
+from django.conf import settings
 from django.db import models
 from dimagi.utils.couch import RedisLockableMixIn
 
@@ -72,12 +73,18 @@ class XFormAttachmentSQL(models.Model):
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
 
+    @property
+    def filepath(self):
+        if getattr(settings, 'IS_TRAVIS', False):
+            return os.path.join('/home/travis/tmp/', self.attachment_uuid)
+        return os.path.join('/tmp/', self.attachment_uuid)
+
     def write_content(self, content):
-        with open(os.path.join('/tmp/', self.attachment_uuid), 'w+') as f:
+        with open(self.filepath, 'w+') as f:
             f.write(content)
 
     def read_content(self):
-        with open(os.path.join('/tmp/', self.attachment_uuid), 'r+') as f:
+        with open(self.filepath, 'r+') as f:
             content = f.read()
         return content
 
