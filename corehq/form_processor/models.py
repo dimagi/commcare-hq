@@ -1,4 +1,7 @@
+import os
 import collections
+
+from lxml import etree
 
 from django.db import models
 from dimagi.utils.couch import RedisLockableMixIn
@@ -39,5 +42,43 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     def form_id(self):
         return self.form_uuid
 
+    def get_xml_element(self):
+        xml = self._get_xml()
+        if not xml:
+            return None
+
+        def _to_xml_element(payload):
+            if isinstance(payload, unicode):
+                payload = payload.encode('utf-8', errors='replace')
+            return etree.fromstring(payload)
+        return _to_xml_element(xml)
+
+    @property
+    def form_data(self):
+        from .utils import convert_xform_to_json
+        xml = self._get_xml()
+        return convert_xform_to_json(xml)
+
+    def _get_xml(self):
+        xform_attachment = self.xformattachmentsql_set.filter(name='form.xml').first()
+        return xform_attachment.read_content()
+
+
+class XFormAttachmentSQL(models.Model):
+    attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+
+    xform = models.ForeignKey(XFormInstanceSQL)
+    name = models.CharField(max_length=255, db_index=True)
+    content_type = models.CharField(max_length=255)
+    md5 = models.CharField(max_length=255)
+
+    def write_content(self, content):
+        with open(os.path.join('/tmp/', self.attachment_uuid), 'w+') as f:
+            f.write(content)
+
+    def read_content(self):
+        with open(os.path.join('/tmp/', self.attachment_uuid), 'r+') as f:
+            content = f.read()
+        return content
 
 Attachment = collections.namedtuple('Attachment', 'name content content_type')

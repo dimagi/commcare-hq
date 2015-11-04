@@ -409,7 +409,7 @@ class SubmissionPost(object):
 
                     now = datetime.datetime.utcnow()
                     unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-                        xform_id=instance.get_id,
+                        xform_id=instance.form_id,
                         timestamp=now,
                         saved=False,
                         domain=domain,
