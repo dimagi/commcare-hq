@@ -1,6 +1,5 @@
 import uuid
 
-from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
 
@@ -10,6 +9,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
@@ -47,7 +47,7 @@ class TestFieldColumn(SimpleTestCase):
         self.assertEqual('doc_id', field.column_id)
 
     def testBadAggregation(self):
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 "aggregation": "simple_",
                 "field": "doc_id",
@@ -69,7 +69,7 @@ class TestFieldColumn(SimpleTestCase):
             ))
 
     def testBadFormat(self):
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 "aggregation": "simple",
                 "field": "doc_id",
@@ -315,18 +315,18 @@ class TestPercentageColumn(SimpleTestCase):
             "field": "is_pregnant",
             "type": "field",
         }
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
             })
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'numerator': field_spec,
             })
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
@@ -340,7 +340,7 @@ class TestPercentageColumn(SimpleTestCase):
             "field": "is_pregnant",
             "type": "percent",
         }
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
