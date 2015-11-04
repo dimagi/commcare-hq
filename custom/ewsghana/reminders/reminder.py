@@ -1,3 +1,4 @@
+from corehq.apps.reminders.util import get_verified_number_for_recipient
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import iter_docs
@@ -18,8 +19,9 @@ class Reminder(object):
 
     def get_recipients(self):
         for user in self.get_users():
-            if user.get_verified_number() and self.recipients_filter(user):
-                yield user.get_verified_number()
+            vn = get_verified_number_for_recipient(user)
+            if vn and self.recipients_filter(user):
+                yield vn
 
     def get_message(self, recipient):
         raise NotImplemented()

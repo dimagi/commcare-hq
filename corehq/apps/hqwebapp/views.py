@@ -108,22 +108,22 @@ def hb_check():
     if celery_monitoring:
         try:
             cresource = Resource(celery_monitoring, timeout=3)
-            t = cresource.get("api/workers").body_string()
+            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
             all_workers = json.loads(t)
             bad_workers = []
-            for hostname, w in all_workers.items():
-                if not w['status']:
+            for hostname, status in all_workers.items():
+                if not status:
                     bad_workers.append('* {} celery worker down'.format(hostname))
             if bad_workers:
                 return (False, '\n'.join(bad_workers))
             else:
                 hb = heartbeat.is_alive()
-        except:
+        except Exception:
             hb = False
     else:
         try:
             hb = heartbeat.is_alive()
-        except:
+        except Exception:
             hb = False
     return (hb, None)
 

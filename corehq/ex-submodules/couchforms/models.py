@@ -26,8 +26,9 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.mixins import UnicodeMixIn
-from corehq.form_processor.generic import GenericXFormInstance, GenericMetadata
-from corehq.form_processor.utils import ToFromGeneric
+from corehq.util.soft_assert import soft_assert
+from corehq.form_processor.abstract_models import AbstractXFormInstance
+from corehq.form_processor.exceptions import XFormNotFound
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
@@ -110,7 +111,7 @@ class XFormOperation(DocumentSchema):
 
 
 class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
-                    CouchDocLockableMixIn, ToFromGeneric):
+                    CouchDocLockableMixIn, AbstractXFormInstance):
     """An XForms instance."""
     domain = StringProperty()
     app_id = StringProperty()
@@ -143,12 +144,23 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         # on cloudant don't get the doc back until all nodes agree
         # on the copy, to avoid race conditions
         extras = get_safe_read_kwargs()
-        return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
+        try:
+            return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
+        except ResourceNotFound:
+            raise XFormNotFound
 
     @property
     def type(self):
         return self.form.get(const.TAG_TYPE, "")
         
+    @property
+    def form_id(self):
+        return self._id
+
+    @property
+    def form_data(self):
+        return self.form
+
     @property
     def name(self):
         return self.form.get(const.TAG_NAME, "")
@@ -160,6 +172,26 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     @property
     def uiversion(self):
         return self.form.get(const.TAG_UIVERSION, "")
+
+    @property
+    def is_error(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
+
+    @property
+    def is_duplicate(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
+
+    @property
+    def is_archived(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
+
+    @property
+    def is_deprecated(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
 
     @property
     def metadata(self):
@@ -249,38 +281,28 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 else:
                     raise
 
-    def to_generic(self):
-        generic = GenericXFormInstance(self.to_json())
-        generic._metadata = GenericMetadata.wrap(self.metadata.to_json() if self.metadata else None)
-        if '_id' in self:
-            generic.id = self['_id']
-        generic.attachments = self.attachments
-        return generic
-
-    @classmethod
-    def from_generic(cls, generic_xform):
-        xform_json = generic_xform.to_json()
-        xform_json.pop('metadata', None)
-        xform_json.pop('is_error', None)
-        xform_json.pop('is_duplicate', None)
-        xform_json.pop('is_deprecated', None)
-        xform_json.pop('is_archived', None)
-        return doc_types()[xform_json.get('doc_type', 'XFormInstance')].wrap(xform_json)
-
     def xpath(self, path):
         """
-        Evaluates an xpath expression like: path/to/node and returns the value 
+        Evaluates an xpath expression like: path/to/node and returns the value
+        of that element, or None if there is no value.
+        """
+        _soft_assert = soft_assert(to='{}@{}'.format('brudolph', 'dimagi.com'))
+        _soft_assert(False, "Reference to xpath instead of get_data")
+        return safe_index(self, path.split("/"))
+
+    def get_data(self, path):
+        """
+        Evaluates an xpath expression like: path/to/node and returns the value
         of that element, or None if there is no value.
         """
         return safe_index(self, path.split("/"))
-    
-        
+
     def found_in_multiselect_node(self, xpath, option):
         """
         Whether a particular value was found in a multiselect node, referenced
         by path.
         """
-        node = self.xpath(xpath)
+        node = self.get_data(xpath)
         return node and option in node.split(" ")
 
     @memoized
@@ -308,6 +330,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 return self[const.TAG_XML]
             except AttributeError:
                 return None
+
+    def get_attachment(self, attachment_name):
+        return self.fetch_attachment(attachment_name)
 
     def get_xml_element(self):
         xml_string = self.get_xml()
@@ -365,7 +390,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
             if key == "Meta":
                 key = "meta"
-            to_return[key] = self.xpath('form/' + key)
+            to_return[key] = self.get_data('form/' + key)
         return to_return
 
     def archive(self, user=None):
@@ -424,10 +449,9 @@ class XFormError(XFormInstance):
         self["doc_type"] = "XFormError" 
         super(XFormError, self).save(*args, **kwargs)
 
-    def to_generic(self):
-        generic = super(XFormError, self).to_generic()
-        generic.is_error = True
-        return generic
+    @property
+    def is_error(self):
+        return True
 
         
 class XFormDuplicate(XFormError):
@@ -442,10 +466,9 @@ class XFormDuplicate(XFormError):
         # we can't use super because XFormError also sets the doc type
         XFormInstance.save(self, *args, **kwargs)
 
-    def to_generic(self):
-        generic = super(XFormDuplicate, self).to_generic()
-        generic.is_duplicate = True
-        return generic
+    @property
+    def is_duplicate(self):
+        return True
 
 
 class XFormDeprecated(XFormError):
@@ -463,10 +486,9 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
-    def to_generic(self):
-        generic = super(XFormDeprecated, self).to_generic()
-        generic.is_deprecated = True
-        return generic
+    @property
+    def is_deprecated(self):
+        return True
 
 
 class XFormArchived(XFormError):
@@ -479,10 +501,9 @@ class XFormArchived(XFormError):
         self["doc_type"] = "XFormArchived"
         XFormInstance.save(self, *args, **kwargs)
 
-    def to_generic(self):
-        generic = super(XFormArchived, self).to_generic()
-        generic.is_archived = True
-        return generic
+    @property
+    def is_archived(self):
+        return True
 
 
 class SubmissionErrorLog(XFormError):
@@ -539,3 +560,12 @@ class UnfinishedSubmissionStub(models.Model):
 
     class Meta:
         app_label = 'couchforms'
+
+    @classmethod
+    def form_has_saved(cls, stub):
+        stub.saved = True
+        stub.save()
+
+    @classmethod
+    def form_process_completed(cls, stub):
+        stub.delete()

@@ -10,7 +10,8 @@ from dimagi.utils.couch.database import iter_docs
 class ThirdSOHReminder(SecondSOHReminder):
 
     def get_users_messages(self):
-        for sql_location in SQLLocation.objects.filter(domain=self.domain, location_type__administrative=False):
+        locations = SQLLocation.active_objects.filter(domain=self.domain, location_type__administrative=False)
+        for sql_location in locations:
             in_charges = map(CommCareUser.wrap, iter_docs(
                 CommCareUser.get_db(),
                 [in_charge.user_id for in_charge in sql_location.facilityincharge_set.all()]

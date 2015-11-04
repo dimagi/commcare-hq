@@ -1,5 +1,4 @@
 from collections import defaultdict
-import json
 import logging
 from datetime import timedelta, datetime
 from django.conf import settings
@@ -7,9 +6,9 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from corehq.apps.reports.dbaccessors import stale_get_export_count
+from corehq.couchapps.dbaccessors import get_attachment_size_by_domain
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -90,13 +89,6 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         ]
 
 
-def sizeof_fmt(num):
-    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
-        if num < 1024.0:
-            return "%3.1f %s" % (num, x)
-        num /= 1024.0
-
-
 class ExcelExportReport(FormExportReportBase):
     name = ugettext_noop("Export Forms")
     slug = "excel_export_data"
@@ -141,7 +133,7 @@ class ExcelExportReport(FormExportReportBase):
         startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
 
-        size_hash = self._get_domain_attachments_size()
+        size_hash = get_attachment_size_by_domain(self.domain)
 
         for f in db.view('exports_forms/by_xmlns',
                          startkey=startkey, endkey=startkey + [{}], group=True,

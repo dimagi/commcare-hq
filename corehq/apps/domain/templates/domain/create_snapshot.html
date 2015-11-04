@@ -76,21 +76,6 @@
         action="{% url "domain_create_snapshot" domain %}">
 
         {% crispy form %}
-        {% if can_publish_as_org %}
-            <div class="control-group">
-                <div class="control-label"><label>{% trans "Publishing as" %}</label></div>
-                <div class="controls">
-                    <label class="radio">
-                        <input type="radio" name="publisher" id="as_user" value="user" {% if not published_as_org %}checked{% endif %}>
-                        {% trans "A user" %}: <strong>{{ request.couch_user.username }}</strong>
-                    </label>
-                    <label class="radio">
-                        <input type="radio" name="publisher" id="as_org" value="organization" {% if published_as_org %}checked{% endif %}>
-                        {% trans "An organization" %}: <strong>{{ request.project.get_organization.title }}</strong>
-                    </label>
-                </div>
-            </div>
-        {% endif %}
         <div class="control-group{% if published_as_org %} hide{% endif %}" id="author-input">
             <div class="control-label"><label>{% trans "Publishing on behalf of" %}</label></div>
             <div class="controls">

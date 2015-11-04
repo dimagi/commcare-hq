@@ -520,7 +520,8 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         if error_response:
             return error_response
 
-        download = DownloadBase()
+        message = request.GET['message'] if 'message' in request.GET else None
+        download = DownloadBase(message=message)
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,

@@ -15,6 +15,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import toggles, privileges
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper

@@ -75,7 +75,5 @@
     "last_sync_token": null,
     "openrosa_headers": {},
     "path": null,
-    "submit_ip": null,
-    "deprecated_form_id": null,
-    "orig_id": null
+    "submit_ip": null
 }

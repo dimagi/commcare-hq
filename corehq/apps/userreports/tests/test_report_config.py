@@ -73,6 +73,49 @@ class ReportConfigurationTest(SimpleTestCase):
         data_source = ReportFactory.from_spec(report_config)
         self.assertEqual(['doc_id'], data_source.group_by)
 
+    def test_fall_back_display_to_column_id(self):
+        config = ReportConfiguration(
+            domain='somedomain',
+            config_id='someconfig',
+            aggregation_columns=['doc_id'],
+            columns=[{
+                "type": "field",
+                "column_id": "my_column",
+                "field": "somefield",
+                "format": "default",
+                "aggregation": "sum"
+            }],
+            filters=[],
+            configured_charts=[]
+        )
+        self.assertEqual(config.report_columns[0].display, 'my_column')
+
+    def test_missing_column_id(self):
+        config = ReportConfiguration(
+            domain='somedomain',
+            config_id='someconfig',
+            aggregation_columns=['doc_id'],
+            columns=[{
+                'type': 'percent',
+                #  'column_id': 'pct',
+                'numerator': {
+                    "aggregation": "sum",
+                    "field": "pct_numerator",
+                    "type": "field",
+                    "column_id": "pct_numerator",
+                },
+                'denominator': {
+                    "aggregation": "sum",
+                    "field": "pct_denominator",
+                    "type": "field",
+                },
+            }],
+            filters=[],
+            configured_charts=[]
+        )
+        with self.assertRaises(BadSpecError):
+            config.validate()
+
 
 class ReportConfigurationTotalRowTest(SimpleTestCase):
 

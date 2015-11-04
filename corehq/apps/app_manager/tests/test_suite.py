@@ -337,6 +337,9 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
+    def test_case_detail_tabs_with_nodesets(self):
+        self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
+
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
@@ -644,12 +647,3 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i=CommBugz',
             app.create_app_strings('default'),
         )
-
-    def test_shadow_module(self):
-        self._test_generic_suite('shadow_module')
-
-    def test_shadow_module_forms_only(self):
-        self._test_generic_suite('shadow_module_forms_only')
-
-    def test_shadow_module_cases(self):
-        self._test_generic_suite('shadow_module_cases')

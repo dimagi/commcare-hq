@@ -47,7 +47,10 @@
             }
             adjustToggleAppearance();
         });
-
+        $('.btn-danger').click(function (e) {
+            var warning = "{% trans 'Are you sure you want to do this? Deleting things is permanent and not undoable!' %}";
+            return window.confirm(warning);
+        })
     });
 </script>
 {% endblock %}
