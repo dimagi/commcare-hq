@@ -644,6 +644,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def purge(self, case_id):
         """With the subset of dependences, run purge over that tree
         """
+        logger.debug("purging: {}".format(case_id))
+        self.dependent_case_ids_on_phone.add(case_id)
         incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
         relevant = IndexTree.get_all_dependencies(
             case_id,
@@ -679,8 +681,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug("live cases: {}".format(live))
 
         to_remove = relevant - live
+        logger.debug("cases to remove: {}".format(relevant))
         for remove in to_remove:
+            this_case_indices = self.index_tree.indices.get(case_id, {})
             self._remove_case(remove)
+
+            for this_case_index in this_case_indices.values():
+                if (this_case_index in self.dependent_case_ids_on_phone):
+                    self.purge(this_case_index)
 
     def _remove_case(self, to_remove):
         # uses closures for assertions
