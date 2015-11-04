@@ -420,10 +420,16 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def _form_counts(self):
+        if EMWF.show_all_mobile_workers(self.request):
+            user_ids = []
+        else:
+            # Don't query ALL mobile workers
+            user_ids = [u.user_id for u in self.selected_users]
         return get_form_counts_by_user_xmlns(
             domain=self.domain,
             startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
             enddate=self.datespan.enddate_utc.replace(tzinfo=pytz.UTC),
+            user_ids=user_ids,
             by_submission_time=self.by_submission_time,
         )
 

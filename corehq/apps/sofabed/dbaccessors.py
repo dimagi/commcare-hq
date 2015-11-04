@@ -19,7 +19,8 @@ SAFormData = Table(
 )
 
 
-def get_form_counts_by_user_xmlns(domain, startdate, enddate, by_submission_time=True):
+def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
+                                  by_submission_time=True):
     # This kind of COUNT and GROUP BY query isn't possible with the Django ORM
     col = SAFormData.columns
     date_field = col.received_on if by_submission_time else col.time_end
@@ -28,6 +29,8 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, by_submission_time
              .where(startdate <= date_field)
              .where(date_field < enddate)
              .group_by(col.xmlns, col.user_id, col.app_id))
+    if user_ids:
+        query = query.where(col.user_id.in_(user_ids))
     return defaultdict(lambda: 0, {
         (user_id, xmlns, app_id): count
         for count, xmlns, user_id, app_id in Session.execute(query)
