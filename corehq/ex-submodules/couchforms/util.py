@@ -397,63 +397,68 @@ class SubmissionPost(object):
             )
             return self.get_exception_response(e.error_log), None, []
         else:
-            from casexml.apps.case.models import CommCareCase
-            from casexml.apps.case.xform import (
-                get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
-            )
-            from casexml.apps.case.signals import case_post_save
-            from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
-            from corehq.apps.commtrack.processing import process_stock
-            from corehq.apps.commtrack.exceptions import MissingProductId
-
-            cases = []
-            errors = []
-            known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
-                            PhoneDateValueError)
-            with lock_manager as xforms:
-                instance = xforms[0]
-                if self.validate_xforms_for_case_processing(xforms):
-                    domain = get_and_check_xform_domain(instance)
-                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
-                        try:
-                            case_result = process_cases_with_casedb(xforms, case_db)
-                            stock_result = process_stock(xforms, case_db)
-                        except known_errors as e:
-                            return self._handle_known_error(e, instance, xforms)
-                        except Exception as e:
-                            # handle / log the error and reraise so the phone knows to resubmit
-                            # note that in the case of edit submissions this won't flag the previous
-                            # submission as having been edited. this is intentional, since we should treat
-                            # this use case as if the edit "failed"
-                            _handle_unexpected_error(e, instance)
-                            raise
-
-                        now = datetime.datetime.utcnow()
-                        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-                            xform_id=instance.get_id,
-                            timestamp=now,
-                            saved=False,
-                            domain=domain,
-                        )
-
-                        # todo: this property is only used by the MVPFormIndicatorPillow
-                        instance.initial_processing_complete = True
-
-                        cases = case_db.get_cases_for_saving(now)
-
-                        bulk_save_docs(xforms + cases, instance)
-
-                        unfinished_submission_stub.saved = True
-                        unfinished_submission_stub.save()
-                        case_result.commit_dirtiness_flags()
-                        stock_result.commit()
-                        for case in cases:
-                            case_post_save.send(CommCareCase, case=case)
-
-                    errors = self.process_signals(instance)
-                    unfinished_submission_stub.delete()
+            instance, cases, errors = self.process_xforms_for_cases(lock_manager)
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
+
+    def process_xforms_for_cases(self, xform_lock_manager):
+        from casexml.apps.case.models import CommCareCase
+        from casexml.apps.case.xform import (
+            get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
+        )
+        from casexml.apps.case.signals import case_post_save
+        from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
+        from corehq.apps.commtrack.processing import process_stock
+        from corehq.apps.commtrack.exceptions import MissingProductId
+
+        cases = []
+        errors = []
+        known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
+                        PhoneDateValueError)
+        with xform_lock_manager as xforms:
+            instance = xforms[0]
+            if self.validate_xforms_for_case_processing(xforms):
+                domain = get_and_check_xform_domain(instance)
+                with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
+                    try:
+                        case_result = process_cases_with_casedb(xforms, case_db)
+                        stock_result = process_stock(xforms, case_db)
+                    except known_errors as e:
+                        return self._handle_known_error(e, instance, xforms)
+                    except Exception as e:
+                        # handle / log the error and reraise so the phone knows to resubmit
+                        # note that in the case of edit submissions this won't flag the previous
+                        # submission as having been edited. this is intentional, since we should treat
+                        # this use case as if the edit "failed"
+                        _handle_unexpected_error(e, instance)
+                        raise
+
+                    now = datetime.datetime.utcnow()
+                    unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+                        xform_id=instance.get_id,
+                        timestamp=now,
+                        saved=False,
+                        domain=domain,
+                    )
+
+                    # todo: this property is only used by the MVPFormIndicatorPillow
+                    instance.initial_processing_complete = True
+
+                    cases = case_db.get_cases_for_saving(now)
+
+                    bulk_save_docs(xforms + cases, instance)
+
+                    unfinished_submission_stub.saved = True
+                    unfinished_submission_stub.save()
+                    case_result.commit_dirtiness_flags()
+                    stock_result.commit()
+                    for case in cases:
+                        case_post_save.send(CommCareCase, case=case)
+
+                errors = self.process_signals(instance)
+                unfinished_submission_stub.delete()
+
+        return instance, cases, errors
 
     def get_response(self):
         response, _, _ = self.run()
