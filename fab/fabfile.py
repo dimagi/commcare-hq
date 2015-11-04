@@ -671,9 +671,6 @@ def copy_tf_localsettings():
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
         sudo('cp -r {}/bower_components {}/bower_components'.format(env.code_current, env.code_root))
-    else:
-        # In the event that the folder doesn't exist, create it so that djangobower doesn't choke
-        sudo('mkdir -p {}/bower_components/bower_components'.format(env.code_root))
 
 
 def copy_release_files():
