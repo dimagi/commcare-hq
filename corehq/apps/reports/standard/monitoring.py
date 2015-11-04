@@ -4,6 +4,7 @@ from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
@@ -421,8 +422,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     def _form_counts(self):
         return get_form_counts_by_user_xmlns(
             domain=self.domain,
-            startdate=self.datespan.startdate_utc,
-            enddate=self.datespan.enddate_utc,
+            startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
+            enddate=self.datespan.enddate_utc.replace(tzinfo=pytz.UTC),
             by_submission_time=self.by_submission_time,
         )
 
