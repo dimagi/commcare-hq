@@ -7,7 +7,9 @@ from dimagi.ext.jsonobject import (
 )
 from jsonobject.base import DefaultProperty
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
-from corehq.apps.userreports.reports.filters import DateFilterValue, NumericFilterValue, ChoiceListFilterValue
+from corehq.apps.userreports.reports.filters.values import (
+    DateFilterValue, NumericFilterValue, ChoiceListFilterValue
+)
 from corehq.apps.userreports.specs import TypeProperty
 
 
