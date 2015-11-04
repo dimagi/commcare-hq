@@ -995,7 +995,7 @@ def _do_collectstatic(use_current_release=False):
 @roles(ROLES_STATIC)
 def _bower_install(use_current_release=False):
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('bower install')
+        sudo('bower install --production')
 
 
 @roles(ROLES_DJANGO)
