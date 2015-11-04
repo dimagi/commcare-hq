@@ -520,8 +520,8 @@ class IndexTree(DocumentSchema):
             case_to_check = new_cases.pop()
             parent_cases = set(child_index_tree.indices.get(case_to_check, {}).values())
             host_cases = set(extension_index_tree.indices.get(case_to_check, {}).values())
-            all_cases = all_cases | parent_cases | host_cases
             new_cases = (new_cases | parent_cases | host_cases) - all_cases
+            all_cases = all_cases | parent_cases | host_cases
         return all_cases
 
     @staticmethod
@@ -681,13 +681,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug("live cases: {}".format(live))
 
         to_remove = relevant - live
-        logger.debug("cases to remove: {}".format(relevant))
+        logger.debug("cases to remove: {}".format(to_remove))
         for remove in to_remove:
             this_case_indices = self.index_tree.indices.get(case_id, {})
             self._remove_case(remove)
 
             for this_case_index in this_case_indices.values():
-                if (this_case_index in self.dependent_case_ids_on_phone):
+                if (this_case_index in self.dependent_case_ids_on_phone and this_case_index not in to_remove):
                     self.purge(this_case_index)
 
     def _remove_case(self, to_remove):
