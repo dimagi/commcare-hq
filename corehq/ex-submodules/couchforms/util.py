@@ -412,7 +412,6 @@ class SubmissionPost(object):
             from corehq.apps.commtrack.exceptions import MissingProductId
 
             cases = []
-            responses = []
             errors = []
             known_errors = (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError)
