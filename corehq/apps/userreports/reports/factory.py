@@ -56,6 +56,7 @@ def _build_dynamic_choice_list_filter(spec):
         label=wrapped.display,
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,
+        transform_fn=wrapped.get_transform_fn(),
     )
 
 

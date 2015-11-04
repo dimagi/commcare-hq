@@ -296,3 +296,11 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
         ]
         for i, s in enumerate(test_strings):
             self.assertListEqual(choices[0:i + 1], filter.value(dynoslug=s))
+
+    def test_transform(self):
+        self.filter_spec["transform"] = {
+            "type": "custom",
+            "custom_type": "month_display"
+        }
+        filter = ReportFilterFactory.from_spec(self.filter_spec)
+        self.assertEqual('January', filter.get_display_value(1))

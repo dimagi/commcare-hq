@@ -206,7 +206,7 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, field, datatype, label, show_all, url_generator, css_id=None):
+    def __init__(self, name, field, datatype, label, show_all, url_generator, transform_fn, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -221,13 +221,18 @@ class DynamicChoiceListFilter(BaseFilter):
         self.show_all = show_all
         self.css_id = css_id or self.name
         self.url_generator = url_generator
+        self._transform_fn = transform_fn if transform_fn is not None else lambda x: x
+
+    def get_display_value(self, value):
+        display = self._transform_fn(value)
+        return display if display is not None else value
 
     def value(self, **kwargs):
         selection = unicode(kwargs.get(self.name, ""))
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
-            return [Choice(tc, c) for (tc, c) in zip(typed_choices, choices)]
+            return [Choice(tc, self._transform_fn(c)) for (tc, c) in zip(typed_choices, choices)]
         return self.default_value()
 
     def default_value(self):

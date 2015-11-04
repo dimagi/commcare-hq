@@ -52,7 +52,7 @@
                     },
                     results: function (data, page) {
                         // parse the results into the format expected by Select2.
-                        var formattedData = _.map(data, function (val) { return {'id': val, 'text': val}});
+                        var formattedData = _.map(data, function (val) { return {'id': val.value, 'text': val.display}});
                         return {
                             results: formattedData,
                             more: data.length === pageSize

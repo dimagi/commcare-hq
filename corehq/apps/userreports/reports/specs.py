@@ -341,6 +341,11 @@ class DynamicChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('dynamic_choice_list')
     show_all = BooleanProperty(default=True)
     datatype = DataTypeProperty(default='string')
+    transform = DictProperty()
+
+    def get_transform_fn(self):
+        if self.transform:
+            return TransformFactory.get_transform(self.transform).get_transform_function()
 
     @property
     def choices(self):
