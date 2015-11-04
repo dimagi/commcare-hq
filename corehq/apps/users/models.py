@@ -1939,8 +1939,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Submit the case blocks creating the delgate case access
         for the location(s).
         """
-        from corehq.apps.commtrack.models import SupplyPointCase
-
         if self.project.supports_multiple_locations_per_user:
             new_locs_set = set([loc._id for loc in locations])
             old_locs_set = set([loc._id for loc in self.locations])
