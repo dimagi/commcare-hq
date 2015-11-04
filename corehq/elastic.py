@@ -36,7 +36,8 @@ def get_es(timeout=30):
     """
     return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST,
                                     settings.ELASTICSEARCH_PORT),
-                         timeout=timeout)
+                         timeout=timeout,
+                         retry_on_conflict=2)
 
 
 def doc_exists_in_es(index, doc_id):
