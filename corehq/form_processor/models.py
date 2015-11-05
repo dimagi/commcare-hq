@@ -11,6 +11,9 @@ from .abstract_models import AbstractXFormInstance
 from .exceptions import XFormNotFound
 
 
+Attachment = collections.namedtuple('Attachment', 'name content content_type')
+
+
 class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     """An XForms SQL instance."""
     form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -87,5 +90,3 @@ class XFormAttachmentSQL(models.Model):
         with open(self.filepath, 'r+') as f:
             content = f.read()
         return content
-
-Attachment = collections.namedtuple('Attachment', 'name content content_type')
