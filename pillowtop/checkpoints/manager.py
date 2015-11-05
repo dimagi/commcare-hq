@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import datetime
 from dateutil import parser
 import pytz
@@ -8,21 +9,26 @@ from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ChangeEventHandler
 
 
+DocGetOrCreateResult = namedtuple('DocGetOrCreateResult', ['document', 'created'])
+
+
 class PillowCheckpointManager(object):
 
     def __init__(self, dao):
         self._dao = dao
 
     def get_or_create_checkpoint(self, checkpoint_id):
+        created = False
         try:
             checkpoint_doc = self._dao.get_document(checkpoint_id)
         except DocumentNotFoundError:
             checkpoint_doc = {'seq': '0', 'timestamp': get_formatted_current_timestamp()}
             self._dao.save_document(checkpoint_id, checkpoint_doc)
-        return checkpoint_doc
+            created = True
+        return DocGetOrCreateResult(checkpoint_doc, created)
 
     def reset_checkpoint(self, checkpoint_id):
-        checkpoint_doc = self.get_or_create_checkpoint(checkpoint_id)
+        checkpoint_doc = self.get_or_create_checkpoint(checkpoint_id).document
         checkpoint_doc['old_seq'] = checkpoint_doc['seq']
         checkpoint_doc['seq'] = '0'
         checkpoint_doc['timestamp'] = get_formatted_current_timestamp()
@@ -40,20 +46,21 @@ class PillowCheckpoint(object):
         self._last_checkpoint = None
 
     def get_or_create(self, verify_unchanged=False):
-        checkpoint = self._manager.get_or_create_checkpoint(self.checkpoint_id)
+        result = self._manager.get_or_create_checkpoint(self.checkpoint_id)
+        checkpoint, created = result
         if verify_unchanged and self._last_checkpoint and checkpoint['seq'] != self._last_checkpoint['seq']:
             raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
                 self.checkpoint_id, self._last_checkpoint['seq'], checkpoint['seq'],
             ))
 
         self._last_checkpoint = checkpoint
-        return checkpoint
+        return result
 
     def update_to(self, seq):
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
-        checkpoint = self.get_or_create(verify_unchanged=True)
+        checkpoint = self.get_or_create(verify_unchanged=True).document
         checkpoint['seq'] = seq
         checkpoint['timestamp'] = get_formatted_current_timestamp()
         self._manager.update_checkpoint(self.checkpoint_id, checkpoint)
@@ -67,7 +74,7 @@ class PillowCheckpoint(object):
         Update the checkpoint timestamp without altering the sequence.
         :param min_interval: minimum interval between timestamp updates
         """
-        checkpoint = self.get_or_create(verify_unchanged=True)
+        checkpoint = self.get_or_create(verify_unchanged=True).document
         now = datetime.now(tz=pytz.UTC)
         previous = self._last_checkpoint.get('timestamp')
         do_update = True

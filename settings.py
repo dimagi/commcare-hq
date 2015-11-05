@@ -23,6 +23,8 @@ DATABASES = {
 }
 
 
+TIME_ZONE = 'UTC'
+
 ####### Pillow Retry Queue Settings #######
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
