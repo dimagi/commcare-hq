@@ -119,6 +119,8 @@ class CleanOwnerCaseSyncOperation(object):
             self.restore_state.current_sync_log.to_json()
         )
         self.restore_state.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
+        self.restore_state.current_sync_log.extensions_checked = True
+
         index_tree = IndexTree(indices=child_indices)
         extension_index_tree = IndexTree(indices=extension_indices)
         case_ids_on_phone = all_synced
@@ -156,7 +158,15 @@ class CleanOwnerCaseSyncOperation(object):
         return response
 
     def get_case_ids_for_owner(self, owner_id):
-        if self.is_clean(owner_id):
+        if not self.is_clean(owner_id) or self.restore_state.is_first_extension_sync:
+            # TODO: we may want to be smarter than this
+            # right now just return the whole footprint and do any filtering later
+            #
+            # If this is the first time a user with extensions has synced after
+            # the extension flag is toggled, pull all the cases so that the
+            # extension parameters get set correctly
+            return get_case_footprint_info(self.restore_state.domain, owner_id).all_ids
+        else:
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids and their extensions
                 all_case_ids = set(get_open_case_ids(self.restore_state.domain, owner_id))
@@ -171,10 +181,6 @@ class CleanOwnerCaseSyncOperation(object):
                 return set(get_case_ids_modified_with_owner_since(
                     self.restore_state.domain, owner_id, self.restore_state.last_sync_log.date
                 ))
-        else:
-            # todo: we may want to be smarter than this
-            # right now just return the whole footprint and do any filtering later
-            return get_case_footprint_info(self.restore_state.domain, owner_id).all_ids
 
 
 def _is_live(case, restore_state):

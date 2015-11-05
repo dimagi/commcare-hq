@@ -7,11 +7,12 @@ import os
 from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload
+from casexml.apps.phone.tests.utils import synclog_from_restore_payload, get_restore_config
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
+from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import (check_user_has_case,
     assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
@@ -928,6 +929,37 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
 
         all_ids = set([E1.case_id, E2.case_id, O.case_id, C.case_id])
         self.assertEqual(sync_log.case_ids_on_phone, all_ids)
+
+
+class ExtensionCasesFirstSync(SyncBaseTest):
+    def setUp(self):
+        super(ExtensionCasesFirstSync, self).setUp()
+        self.restore_config = RestoreConfig(project=self.project, user=self.user)
+        self.restore_state = self.restore_config.restore_state
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_is_first_extension_sync_toggled(self):
+        """Before any syncs, this should return true"""
+        self.assertTrue(self.restore_state.is_first_extension_sync)
+
+    def test_is_first_extension_sync_no_toggle(self):
+        """Before any syncs, this should return false"""
+        self.assertFalse(self.restore_state.is_first_extension_sync)
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_is_first_extension_sync_false_after_sync(self):
+        """After a sync with the extension code in place, this should be false"""
+        self.factory.create_case()
+        config = get_restore_config(self.project, self.user, restore_id=self.sync_log._id)
+        self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
+        self.assertFalse(config.restore_state.is_first_extension_sync)
+
+    def test_is_first_extension_sync_false_after_sync_no_flag(self):
+        """After a sync with the extension code in place, this should be false"""
+        self.factory.create_case()
+        config = get_restore_config(self.project, self.user, restore_id=self.sync_log._id)
+        self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
+        self.assertFalse(config.restore_state.is_first_extension_sync)
 
 
 class ChangingOwnershipTest(SyncBaseTest):
