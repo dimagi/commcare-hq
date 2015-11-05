@@ -1,9 +1,11 @@
 from sqlalchemy.exc import ProgrammingError
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter, Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 
 
 DATA_SOURCE_COLUMN = 'data_source_column'
+LOCATION = 'location'
 
 
 class ChoiceQueryContext(object):
@@ -12,6 +14,7 @@ class ChoiceQueryContext(object):
     """
     def __init__(self, report, report_filter, query=None, limit=20, page=0):
         self.report = report
+        self.domain = report.domain
         self.report_filter = report_filter
         self.query = query
         self.limit = limit
@@ -42,3 +45,16 @@ def get_choices_from_data_source_column(query_context):
         ]
     except ProgrammingError:
         return []
+
+
+def get_location_choices(query_context):
+    # todo: consider making this an extensions framework similar to custom expressions
+    # todo: does this need fancier permission restrictions and what not?
+    # see e.g. locations.views.child_locations_for_select2
+    locations = SQLLocation.objects.filter(domain=query_context.domain)
+    if query_context.query:
+        locations = locations.filter(name__icontains=query_context.query)
+    return [
+        Choice(loc.location_id, loc.name) for loc in
+        locations[query_context.offset:query_context.offset + query_context.limit]
+    ]
