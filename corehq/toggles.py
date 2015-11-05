@@ -165,7 +165,8 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'shadow-app-builder',
     'Shadow Modules',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
 BOOTSTRAP3_PREVIEW = StaticToggle(
@@ -617,13 +618,6 @@ HSPH_HACK = StaticToggle(
     'hsph_hack',
     'Optmization hack for HSPH',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
-EMAIL_IN_REMINDERS = StaticToggle(
-    'email_in_reminders',
-    'Send emails from reminders',
-    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 

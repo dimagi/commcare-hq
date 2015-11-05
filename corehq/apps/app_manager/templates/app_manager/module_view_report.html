@@ -11,6 +11,7 @@
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/report-module.js' %}"></script>
     <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
@@ -27,7 +28,6 @@
         var select2s = $('.choice_filter');
         for(var i = 0; i < select2s.length; i++) {
             var element = select2s.eq(i);
-            var pageSize = 20;
             var separator = select2Separator;
             var initialValues = element.val() !== "" ? element.val().split(separator) : [];
             element.select2({
@@ -43,21 +43,8 @@
                           + element.parent()[0].lastElementChild.value + "/"),
                     dataType: 'json',
                     quietMillis: 250,
-                    data: function (term, page) {
-                        return {
-                            q: term, // search term
-                            page: page,
-                            limit: pageSize
-                        };
-                    },
-                    results: function (data, page) {
-                        // parse the results into the format expected by Select2.
-                        var formattedData = _.map(data, function (val) { return {'id': val, 'text': val}});
-                        return {
-                            results: formattedData,
-                            more: data.length === pageSize
-                        };
-                    },
+                    data: choiceListUtils.getApiQueryParams,
+                    results: choiceListUtils.formatPageForSelect2,
                     cache: true
                 }
             });

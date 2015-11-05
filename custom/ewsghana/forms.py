@@ -109,7 +109,7 @@ class EWSUserSettings(forms.Form):
         self.fields['facility'].widget = FacilitiesSelectWidget(domain=domain, id='facility')
 
     def save(self, user, domain):
-        ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id)[0]
+        ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id, domain=domain)[0]
         ews_extension.domain = domain
         ews_extension.location_id = self.cleaned_data['facility']
         ews_extension.sms_notifications = self.cleaned_data['sms_notifications']

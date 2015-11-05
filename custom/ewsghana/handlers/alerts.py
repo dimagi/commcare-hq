@@ -283,7 +283,6 @@ class AlertsHandler(KeywordHandler):
 
     def handle(self):
         verified_contact = self.verified_contact
-        user = verified_contact.owner
         domain = Domain.get_by_name(verified_contact.domain)
         split_text = self.msg.text.split(' ', 1)
         if split_text[0].lower() == 'soh':
@@ -294,6 +293,7 @@ class AlertsHandler(KeywordHandler):
             text = self.msg.text
 
         if not domain.commtrack_enabled:
+            print "tutaj?"
             return False
         try:
             parser = EWSStockAndReceiptParser(domain, verified_contact)
@@ -312,7 +312,7 @@ class AlertsHandler(KeywordHandler):
 
         except NotAUserClassError:
             return False
-        except SMSError:
+        except (SMSError, NoDefaultLocationException):
             send_sms_to_verified_number(verified_contact, unicode(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
@@ -338,7 +338,7 @@ class AlertsHandler(KeywordHandler):
                 self.send_ms_alert(stockouts, transactions, 'RMS')
             elif self.sql_location.location_type.name == 'Central Medical Store':
                 self.send_ms_alert(stockouts, transactions, 'CMS')
-            stock_alerts(transactions, user)
+            stock_alerts(transactions, verified_contact)
         else:
             self.send_errors(transactions, parser.bad_codes)
 

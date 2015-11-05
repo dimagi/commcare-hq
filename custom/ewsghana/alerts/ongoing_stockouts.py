@@ -4,16 +4,16 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.alerts import ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
-from custom.ewsghana.alerts.alert import Alert
+from custom.ewsghana.alerts.alert import WeeklyAlert
 
 
-class OnGoingStockouts(Alert):
+class OnGoingStockouts(WeeklyAlert):
 
     message = ONGOING_STOCKOUT_AT_SDP
     filters = {}
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(
+        return SQLLocation.active_objects.filter(
             domain=self.domain, location_type__name__in=['region', 'district']
         )
 
@@ -22,7 +22,7 @@ class OnGoingStockouts(Alert):
 
     def get_descendants(self, sql_location):
         return sql_location.get_descendants().filter(location_type__administrative=False)\
-            .exclude(location_type__name='Regional Medical Store')
+            .exclude(location_type__name='Regional Medical Store').exclude(is_archived=True)
 
     def get_data(self, sql_location):
         data = {}
@@ -59,6 +59,6 @@ class OnGoingStockoutsRMS(OnGoingStockouts):
         return sql_location.get_descendants().filter(location_type__name='Regional Medical Store')
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(
+        return SQLLocation.active_objects.filter(
             domain=self.domain, location_type__name__in=['country', 'region']
         )

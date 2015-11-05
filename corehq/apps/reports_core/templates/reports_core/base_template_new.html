@@ -9,10 +9,11 @@
           href="{% new_static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
 {% endblock %}
 
-{% block js %}
+{% block js %}{{ block.super }}
     <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% new_static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
     <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
 {% endblock %}
 

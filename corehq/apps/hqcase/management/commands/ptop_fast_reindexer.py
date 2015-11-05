@@ -8,6 +8,7 @@ import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import AliasedElasticPillow
+from pillowtop.pillow.interface import PillowRuntimeContext
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -265,7 +266,7 @@ class PtopReindexer(NoArgsCommand):
                 try:
                     if not self.custom_filter(row):
                         break
-                    self.pillow.processor(row, do_set_checkpoint=False)
+                    self.pillow.processor(row, PillowRuntimeContext(do_set_checkpoint=False))
                     break
                 except Exception, ex:
                     retries += 1

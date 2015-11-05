@@ -272,6 +272,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return self.render_json_response({
                 'error': e.message,
                 'aaData': [],
+                'iTotalRecords': 0,
+                'iTotalDisplayRecords': 0,
             })
         except TableNotFoundWarning:
             if self.spec.report_meta.created_by_builder:

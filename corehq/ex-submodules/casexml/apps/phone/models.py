@@ -5,7 +5,6 @@ import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.form_processor.utils import ToFromGeneric
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
@@ -109,7 +108,7 @@ LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
 
 
-class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn, ToFromGeneric):
+class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     date = DateTimeProperty()
     # domain = StringProperty()
     user_id = StringProperty()
@@ -150,13 +149,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn, ToFromGeneric):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
-
-    @classmethod
-    def from_generic(cls, generic_sync_log):
-        sync_log = cls.wrap(generic_sync_log.to_json())
-        if generic_sync_log.id:
-            sync_log['_id'] = generic_sync_log.id
-        return sync_log
 
     def case_count(self):
         """
@@ -256,13 +248,6 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
-
-    def to_generic(self):
-        from corehq.form_processor.generic import GenericSyncLog
-        generic = GenericSyncLog(self.to_json())
-        if '_id' in self:
-            generic.id = self['_id']
-        return generic
 
     def case_count(self):
         return len(self.cases_on_phone)
@@ -604,8 +589,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # if the case had indexes they better also be in our removal list (except for ourselves)
                 for index in indices.values():
                     if not _domain_has_legacy_toggle_set():
-                        assert index in candidates_to_remove, \
-                            "expected {} in {} but wasn't".format(index, candidates_to_remove)
+                        # unblocking http://manage.dimagi.com/default.asp?185850#1039475
+                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True)
+                        _assert(index in candidates_to_remove,
+                            "expected {} in {} but wasn't".format(index, candidates_to_remove))
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:

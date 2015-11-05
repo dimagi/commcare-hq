@@ -1,10 +1,11 @@
+import functools
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
-from corehq.util.test_utils import unit_testing_only
+from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 
 
 class FormProcessorTestUtils(object):
@@ -55,3 +56,24 @@ class FormProcessorTestUtils(object):
                     deleted.add(doc_id)
                 except ResourceNotFound:
                     pass
+
+
+run_with_all_backends = functools.partial(
+    run_with_multiple_configs,
+    run_configs=[
+        # clean restore code but without cleanliness flags
+        RunConfig(
+            settings={
+                'TESTS_SHOULD_USE_SQL_BACKEND': True,
+            },
+            post_run=lambda *args, **kwargs: args[0].tearDown()
+        ),
+        # original code
+        RunConfig(
+            settings={
+                'TESTS_SHOULD_USE_SQL_BACKEND': False,
+            },
+            pre_run=lambda *args, **kwargs: args[0].setUp(),
+        ),
+    ]
+)
