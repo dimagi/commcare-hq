@@ -332,7 +332,7 @@ class OPMCaseRow(object):
                     else:
                         kwargs = {'months_before': 1}
                     return any(
-                        form.xpath('form/pregnancy_questions/attendance_vhnd') == '1'
+                        form.get_data('form/pregnancy_questions/attendance_vhnd') == '1'
                         for form in self.filtered_forms(BIRTH_PREP_XMLNS, **kwargs)
                     )
                 return _legacy_method() or _new_method()
