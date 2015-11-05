@@ -41,7 +41,16 @@ class ReportColumnFactory(object):
                     ', '.join(cls.class_map.keys())
                 )
             )
-        return cls.class_map[column_type].wrap(spec)
+        try:
+            return cls.class_map[column_type].wrap(spec)
+        except BadValueError as e:
+            raise BadSpecError(_(
+                'Problem creating column from spec: {}, message is: {}'
+            ).format(
+                json.dumps(spec, indent=2),
+                str(e),
+            ))
+
 
 
 class ChartFactory(object):

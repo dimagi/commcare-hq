@@ -344,10 +344,8 @@ class LineItemFactory(object):
     @property
     @memoized
     def subscribed_domains(self):
-        if self.subscription.subscriber.organization is None and self.subscription.subscriber.domain is None:
-            raise LineItemError("No domain or organization could be obtained as the subscriber.")
-        if self.subscription.subscriber.organization is not None:
-            return Domain.get_by_organization(self.subscription.subscriber.organization)
+        if self.subscription.subscriber.domain is None:
+            raise LineItemError("No domain could be obtained as the subscriber.")
         return [self.subscription.subscriber.domain]
 
     @property
