@@ -1,39 +1,23 @@
 from collections import defaultdict
-from sqlalchemy import Table, MetaData, Column, types, func, sql
-from corehq.db import Session
+from django.db.models import Count
 from .models import FormData
-
-
-# A SQLAlchemy representation of the FormData table.
-# This skips the SQLAlchemy ORM and uses their SQL Expression Language
-# http://docs.sqlalchemy.org/en/rel_0_8/core/tutorial.html#selecting
-SAFormData = Table(
-    FormData._meta.db_table,
-    MetaData(),
-    Column('domain', types.String),
-    Column('received_on', types.DateTime),
-    Column('time_end', types.DateTime),
-    Column('xmlns', types.String),
-    Column('user_id', types.String),
-    Column('app_id', types.String),
-)
 
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True):
-    # This kind of COUNT and GROUP BY query isn't possible with the Django ORM
-    col = SAFormData.columns
-    date_field = col.received_on if by_submission_time else col.time_end
-    query = (sql.select([func.count(), col.xmlns, col.user_id, col.app_id])
-             .where(col.domain == domain)
-             .where(startdate <= date_field)
-             .where(date_field < enddate)
-             .group_by(col.xmlns, col.user_id, col.app_id))
+    date_field = 'received_on' if by_submission_time else 'time_end'
+    query = (FormData.objects
+             .filter(domain=domain,
+                     **{'{}__gte'.format(date_field): startdate,
+                        '{}__lt'.format(date_field): enddate})
+             .values('xmlns', 'user_id', 'app_id')
+             .annotate(count=Count('pk')))
+
     if user_ids:
-        query = query.where(col.user_id.in_(user_ids))
+        query = query.filter(user_id__in=user_ids)
     if xmlnss:
-        query = query.where(col.xmlns.in_(xmlnss))
+        query = query.filter(xmlns__in=xmlnss)
+
     return defaultdict(lambda: 0, {
-        (user_id, xmlns, app_id): count
-        for count, xmlns, user_id, app_id in Session.execute(query)
+        (r['user_id'], r['xmlns'], r['app_id']): r['count'] for r in query
     })
