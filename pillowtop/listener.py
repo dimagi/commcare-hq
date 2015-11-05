@@ -335,6 +335,10 @@ class PythonPillow(BasicPillow):
                 self.process_chunk()
             self.set_checkpoint(change)
 
+    def fire_change_processed_event(self, change, context):
+        # todo: should fix this so that the checkpointing happens here.
+        pass
+
     def run(self):
         self.change_queue = []
         self.last_processed_time = datetime.utcnow()
