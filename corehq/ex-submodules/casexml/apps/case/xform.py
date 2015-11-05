@@ -19,7 +19,6 @@ from casexml.apps.case.exceptions import (
     NoDomainProvided,
 )
 from django.conf import settings
-from couchforms.util import is_deprecation
 from couchforms.validators import validate_phone_datetime
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs

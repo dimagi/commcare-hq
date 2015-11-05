@@ -126,7 +126,7 @@ def deprecate_xform(existing_doc, new_doc):
     new_doc.received_on = existing_doc.received_on
     new_doc.deprecated_form_id = existing_doc._id
     new_doc.edited_on = datetime.datetime.utcnow()
-    return existing_doc, new_doc
+    return XFormDeprecated.wrap(existing_doc.to_json()), new_doc
 
 
 def deduplicate_xform(new_doc):
