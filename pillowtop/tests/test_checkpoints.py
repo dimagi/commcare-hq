@@ -1,11 +1,13 @@
 from abc import ABCMeta, abstractproperty
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, override_settings, TestCase
 import time
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpointManager, PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id
+from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.exceptions import PillowtopCheckpointReset
+from pillowtop.models import DjangoPillowCheckpoint
 
 
 class PillowCheckpointTest(SimpleTestCase):
@@ -39,23 +41,25 @@ class PillowCheckpointDaoTestMixin(object):
 
     def test_get_or_create_empty(self):
         checkpoint_manager = PillowCheckpointManager(MockDocumentStore())
-        checkpoint = checkpoint_manager.get_or_create_checkpoint('some-id')
+        checkpoint, created = checkpoint_manager.get_or_create_checkpoint('some-id')
         self.assertEqual('0', checkpoint['seq'])
         self.assertTrue(bool(checkpoint['timestamp']))
+        self.assertTrue(bool(created))
 
     def test_create_initial_checkpoint(self):
-        checkpoint = self.checkpoint.get_or_create()
+        checkpoint, created = self.checkpoint.get_or_create()
         self.assertEqual('0', checkpoint['seq'])
+        self.assertTrue(bool(created))
 
     def test_db_changes_returned(self):
         self.checkpoint.get_or_create()
         self.dao.save_document(self._checkpoint_id, {'seq': '1'})
-        checkpoint = self.checkpoint.get_or_create()
+        checkpoint = self.checkpoint.get_or_create().document
         self.assertEqual('1', checkpoint['seq'])
 
     def test_verify_unchanged_ok(self):
         self.checkpoint.get_or_create()
-        checkpoint = self.checkpoint.get_or_create(verify_unchanged=True)
+        checkpoint = self.checkpoint.get_or_create(verify_unchanged=True).document
         self.assertEqual('0', checkpoint['seq'])
 
     def test_verify_unchanged_fail(self):
@@ -68,7 +72,7 @@ class PillowCheckpointDaoTestMixin(object):
         self.checkpoint.get_or_create()
         for seq in ['1', '5', '22']:
             self.checkpoint.update_to(seq)
-            self.assertEqual(seq, self.checkpoint.get_or_create()['seq'])
+            self.assertEqual(seq, self.checkpoint.get_or_create().document['seq'])
 
     def test_update_verify_unchanged_fail(self):
         self.checkpoint.get_or_create()
@@ -77,16 +81,20 @@ class PillowCheckpointDaoTestMixin(object):
             self.checkpoint.update_to('2')
 
     def test_touch_checkpoint_noop(self):
-        timestamp = self.checkpoint.get_or_create()['timestamp']
+        checkpoint, created = self.checkpoint.get_or_create()
+        self.assertTrue(created)
+        first_checkpoint, created = self.checkpoint.get_or_create()
+        self.assertFalse(created)
         self.checkpoint.touch(min_interval=10)
-        timestamp_back = self.checkpoint.get_or_create()['timestamp']
-        self.assertEqual(timestamp_back, timestamp)
+        second_checkpoint, created = self.checkpoint.get_or_create()
+        self.assertFalse(created)
+        self.assertEqual(first_checkpoint['timestamp'], second_checkpoint['timestamp'])
 
     def test_touch_checkpoint_update(self):
-        timestamp = self.checkpoint.get_or_create()['timestamp']
+        timestamp = self.checkpoint.get_or_create().document['timestamp']
         time.sleep(.1)
         self.checkpoint.touch(min_interval=0)
-        timestamp_back = self.checkpoint.get_or_create()['timestamp']
+        timestamp_back = self.checkpoint.get_or_create().document['timestamp']
         self.assertNotEqual(timestamp_back, timestamp)
 
 
