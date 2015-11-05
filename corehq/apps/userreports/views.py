@@ -55,6 +55,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -674,13 +675,14 @@ def choice_list_api(request, domain, report_id, filter_id):
     if report_filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
 
-    return json_response(get_choices_from_data_source_column(
-        report.config,
-        report_filter,
-        request.GET.get('q', None),
+    query_context = ChoiceQueryContext(
+        report=report,
+        report_filter=report_filter,
+        query=request.GET.get('q', None),
         limit=int(request.GET.get('limit', 20)),
         page=int(request.GET.get('page', 1)) - 1
-    ))
+    )
+    return json_response(get_choices_from_data_source_column(query_context))
 
 
 def _shared_context(domain):
