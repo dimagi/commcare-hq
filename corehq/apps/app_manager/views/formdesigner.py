@@ -189,7 +189,10 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     if app.domain != domain:
         raise Http404()
     data.append(get_casedb_schema(app))  # TODO use domain instead of app
-    data.extend(item_lists_by_domain(domain))
+    data.extend(
+        sorted(item_lists_by_domain(domain),
+               cmp=lambda x,y: cmp(x['name'].lower(), y['name'].lower()))
+    )
     kw = {}
     if "pretty" in request.GET:
         kw["indent"] = 2
