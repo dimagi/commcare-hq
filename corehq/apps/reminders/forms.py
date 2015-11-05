@@ -555,10 +555,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
             ])
 
-        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
-            add_field_choices(self, 'method', [
-                (METHOD_EMAIL, _('Email')),
-            ])
+        add_field_choices(self, 'method', [
+            (METHOD_EMAIL, _('Email')),
+        ])
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
@@ -1802,16 +1801,14 @@ class OneTimeReminderForm(Form):
 
     def __init__(self, *args, **kwargs):
         can_use_survey = kwargs.pop('can_use_survey', False)
-        can_use_email = kwargs.pop('can_use_email', False)
         super(OneTimeReminderForm, self).__init__(*args, **kwargs)
         if can_use_survey:
             add_field_choices(self, 'content_type', [
                 (METHOD_SMS_SURVEY, _('SMS Survey')),
             ])
-        if can_use_email:
-            add_field_choices(self, 'content_type', [
-                (METHOD_EMAIL, _('Email')),
-            ])
+        add_field_choices(self, 'content_type', [
+            (METHOD_EMAIL, _('Email')),
+        ])
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
@@ -2479,10 +2476,9 @@ class BroadcastForm(Form):
                 (METHOD_SMS_SURVEY, _('SMS Survey')),
             ])
 
-        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
-            add_field_choices(self, 'content_type', [
-                (METHOD_EMAIL, _('Email')),
-            ])
+        add_field_choices(self, 'content_type', [
+            (METHOD_EMAIL, _('Email')),
+        ])
 
         if toggles.BROADCAST_TO_LOCATIONS.enabled(self.domain):
             add_field_choices(self, 'recipient_type', [
