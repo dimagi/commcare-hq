@@ -353,7 +353,8 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
             if delete:
                 res = es_getter().delete(path=path)
             elif update:
-                res = es_getter().post("%s/_update" % path, data={"doc": data})
+                params = {'retry_on_conflict': 2}
+                res = es_getter().post("%s/_update" % path, data={"doc": data}, params=params)
             else:
                 res = es_getter().put(path, data=data)
             break
