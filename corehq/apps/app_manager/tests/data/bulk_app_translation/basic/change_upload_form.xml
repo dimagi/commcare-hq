@@ -20,6 +20,7 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <remove_markdown/>
                     <update_markdown/>
                     <vetoed_markdown/>
+					<blank_value_node />
                     <orx:meta xmlns:cc="http://commcarehq.org/xforms">
                     <orx:deviceID/>
                     <orx:timeStart/>
@@ -43,6 +44,7 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
             <bind nodeset="/data/remove_markdown" type="xsd:string"/>
             <bind nodeset="/data/update_markdown" type="xsd:string"/>
             <bind nodeset="/data/vetoed_markdown" type="xsd:string"/>
+			<bind nodeset="/data/blank_value_node" type="xsd:string" />
             <itext>
                 <translation lang="en" default="">
                     <text id="question1-label">
@@ -83,6 +85,10 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <text id="vetoed_markdown-label">
                         <value>*i just happen to like stars a lot*</value>
                     </text>
+					<text id="blank_value_node-label">
+						<value></value>
+						<value form="audio">en-audio.mp3</value>
+					</text>
                 </translation>
                 <translation lang="fra">
                     <text id="question1-label">
@@ -123,6 +129,10 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <text id="vetoed_markdown-label">
                         <value>*i just happen to like stars a lot*</value>
                     </text>
+					<text id="blank_value_node-label">
+						<value></value>
+						<value form="audio">fra-audio.mp3</value>
+					</text>
                 </translation>
             </itext>
         <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid"/>
@@ -175,5 +185,8 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
         <input ref="/data/vetoed_markdown">
             <label ref="jr:itext('vetoed_markdown-label')"/>
         </input>
+		<input ref="/data/blank_value_node">
+			<label ref="jr:itext('blank_value_node-label')" />
+		</input>
     </h:body>
 </h:html>
