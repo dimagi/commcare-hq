@@ -43,9 +43,7 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
             rev = CommCareCaseSQL.objects.filter(pk=case.pk, server_modified_on=case.server_modified_on)
             assert rev.exists(), (
                 "Aborting because there would have been "
-                "a document update conflict. {} {} {}".format(
-                    case.get_id, case.get_rev, rev
-                )
+                "a document update conflict. {}".format(case.csae_id)
             )
             case.server_modified_on = now
         return cases
