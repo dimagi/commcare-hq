@@ -45,6 +45,7 @@ class SMSBillablesInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.ShowBillablesFilter',
         'corehq.apps.smsbillables.interface.DomainFilter',
         'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
+        'corehq.apps.smsbillables.interface.GatewayTypeFilter',
     ]
 
     @property
@@ -170,6 +171,11 @@ class SMSBillablesInterface(GenericTabularReport):
                 selected_billables = selected_billables.filter(
                     gateway_fee=None
                 )
+        gateway_type = GatewayTypeFilter.get_value(self.request, self.domain)
+        if gateway_type:
+            selected_billables = selected_billables.filter(
+                gateway_fee__criteria__backend_api_id=gateway_type,
+            )
         return selected_billables
 
 
