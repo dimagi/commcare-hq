@@ -67,4 +67,3 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
                     )
                 )
         return cases
-

@@ -167,11 +167,11 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
     def __unicode__(self):
         return (
             "CommCareCase("
-                "case_id='{c.case_uuid}', "
-                "domain='{c.domain}', "
-                "closed={c.closed}, "
-                "owner_id='{c.owner_id}', "
-                "server_modified_on='{c.server_modified_on}')"
+            "case_id='{c.case_uuid}', "
+            "domain='{c.domain}', "
+            "closed={c.closed}, "
+            "owner_id='{c.owner_id}', "
+            "server_modified_on='{c.server_modified_on}')"
         ).format(c=self)
 
     class Meta:
@@ -201,12 +201,12 @@ class CommCareCaseIndexSQL(models.Model):
     def __unicode__(self):
         return (
             "CaseIndex("
-                "case_id='{i.case_uuid}', "
-                "domain='{i.domain}', "
-                "identifier='{i.identifier}', "
-                "referenced_type='{i.referenced_type}', "
-                "referenced_id='{i.referenced_id}', "
-                "relationship='{i.relationship})"
+            "case_id='{i.case_uuid}', "
+            "domain='{i.domain}', "
+            "identifier='{i.identifier}', "
+            "referenced_type='{i.referenced_type}', "
+            "referenced_id='{i.referenced_id}', "
+            "relationship='{i.relationship})"
         ).format(i=self)
 
     class Meta:

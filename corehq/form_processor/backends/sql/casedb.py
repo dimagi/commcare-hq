@@ -49,4 +49,3 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
             )
             case.server_modified_on = now
         return cases
-
