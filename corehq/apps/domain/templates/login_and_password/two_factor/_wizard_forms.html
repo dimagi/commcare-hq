@@ -1,0 +1,14 @@
+{% load i18n %}
+{{ wizard.management_form }}
+{% for field in wizard.form %}
+<div class="control-group">
+  <div class="control-label">{{ field.label }}</div>
+  <div class="controls">{{ field }}
+  {% if field.name == "password" %}
+    <p class="help-block">
+      <a href="{% url "password_reset_email" %}"><i class="icon icon-question-sign"></i> {% trans "Forgot your password?" %}</a>
+    </p>
+  {% endif %}
+  </div>
+</div>
+{% endfor %}
