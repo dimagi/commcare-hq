@@ -208,10 +208,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             pass
 
     @property
-    def id(self):
-        return self._id
-
-    @property
     @memoized
     def reverse_indices(self):
         return get_reverse_indices(self)
