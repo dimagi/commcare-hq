@@ -802,6 +802,40 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if case_id in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(case_id)
 
+    def _add_index(self, index, case_update):
+        logger.debug('adding index {} --<{}>--> {} ({}).'.format(
+            index.case_id, index.relationship, index.referenced_id, index.identifier))
+        if index.relationship == const.CASE_INDEX_EXTENSION:
+            self._add_extension_index(index, case_update)
+        else:
+            self._add_child_index(index)
+
+    def _add_extension_index(self, index, case_update):
+        assert index.relationship == const.CASE_INDEX_EXTENSION
+        self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+
+        if index.referenced_id not in self.case_ids_on_phone:
+            self.case_ids_on_phone.add(index.referenced_id)
+            self.dependent_case_ids_on_phone.add(index.referenced_id)
+
+        case_child_indices = [idx for idx in case_update.indices_to_add
+                              if idx.relationship == const.CASE_INDEX_CHILD
+                              and idx.referenced_id == index.referenced_id]
+        if not case_child_indices and not case_update.is_live:
+            # this case doesn't also have child indices, and it is not owned, so it is dependent
+            self.dependent_case_ids_on_phone.add(index.case_id)
+
+    def _add_child_index(self, index):
+        assert index.relationship == const.CASE_INDEX_CHILD
+        self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+        if index.referenced_id not in self.case_ids_on_phone:
+            self.case_ids_on_phone.add(index.referenced_id)
+            self.dependent_case_ids_on_phone.add(index.referenced_id)
+
+    def _delete_index(self, index):
+        self.index_tree.delete_index(index.case_id, index.identifier)
+        self.extension_index_tree.delete_index(index.case_id, index.identifier)
+
     def update_phone_lists(self, xform, case_list):
         made_changes = False
         logger.debug('updating sync log for {}'.format(self.user_id))
@@ -810,15 +844,35 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('index tree before update: {}'.format(self.index_tree))
 
         class CaseUpdate(object):
-            def __init__(self, case_id):
+            def __init__(self, case_id, owner_ids_on_phone):
                 self.case_id = case_id
+                self.owner_ids_on_phone = owner_ids_on_phone
                 self.was_live_previously = True
                 self.final_owner_id = None
                 self.is_closed = None
                 self.indices_to_add = []
                 self.indices_to_delete = []
 
-        ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id'])
+            @property
+            def extension_indices_to_add(self):
+                return [index for index in self.indices_to_add
+                        if index.relationship == const.CASE_INDEX_EXTENSION]
+
+            def has_extension_indices_to_add(self):
+                return len(self.extension_indices_to_add) > 0
+
+            @property
+            def is_live(self):
+                """returns whether an update is live for a specifc set of owner_ids"""
+                if self.is_closed:
+                    return False
+                elif self.final_owner_id is None:
+                    # we likely didn't touch owner_id so just default to whatever it was previously
+                    return self.was_live_previously
+                else:
+                    return self.final_owner_id in self.owner_ids_on_phone
+
+        ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id', 'relationship'])
 
         # this is a variable used via closures in the function below
         owner_id_map = {}
@@ -835,7 +889,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         for case in case_list:
             if case._id not in all_updates:
                 logger.debug('initializing update for case {}'.format(case._id))
-                all_updates[case._id] = CaseUpdate(case_id=case._id)
+                all_updates[case._id] = CaseUpdate(case_id=case._id,
+                                                   owner_ids_on_phone=self.owner_ids_on_phone)
 
             case_update = all_updates[case._id]
             case_update.was_live_previously = case._id in self.primary_case_ids
@@ -849,36 +904,19 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     for index in action.indices:
                         if index.referenced_id:
                             case_update.indices_to_add.append(
-                                ShortIndex(case._id, index.identifier, index.referenced_id)
+                                ShortIndex(case._id, index.identifier, index.referenced_id, index.relationship)
                             )
                         else:
                             case_update.indices_to_delete.append(
-                                ShortIndex(case._id, index.identifier, None)
+                                ShortIndex(case._id, index.identifier, None, None)
                             )
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     case_update.is_closed = True
 
-        def _add_index(index):
-            logger.debug('adding index {} -> {} ({}).'.format(
-                index.case_id, index.referenced_id, index.identifier))
-            self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
-            if index.referenced_id not in self.case_ids_on_phone:
-                self.case_ids_on_phone.add(index.referenced_id)
-                self.dependent_case_ids_on_phone.add(index.referenced_id)
-
-        def _is_live(case_update, owner_ids):
-            if case_update.is_closed:
-                return False
-            elif case_update.final_owner_id is None:
-                # we likely didn't touch owner_id so just default to whatever it was previously
-                return case_update.was_live_previously
-            else:
-                return case_update.final_owner_id in owner_ids
-
         non_live_updates = []
         for case in case_list:
             case_update = all_updates[case._id]
-            if _is_live(case_update, self.owner_ids_on_phone):
+            if case_update.is_live:
                 logger.debug('case {} is live.'.format(case_update.case_id))
                 if case._id not in self.case_ids_on_phone:
                     self._add_primary_case(case._id)
@@ -888,31 +926,43 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     made_changes = True
 
                 for index in case_update.indices_to_add:
-                    _add_index(index)
+                    self._add_index(index, case_update)
                     made_changes = True
                 for index in case_update.indices_to_delete:
-                    self.index_tree.delete_index(index.case_id, index.identifier)
+                    self._delete_index(index)
                     made_changes = True
             else:
                 # process the non-live updates after all live are already processed
                 non_live_updates.append(case_update)
+                # populate the closed cases list before processing non-live updates
+                if case_update.is_closed:
+                    self.closed_cases.add(case_update.case_id)
 
         for update in non_live_updates:
             logger.debug('case {} is NOT live.'.format(update.case_id))
+            if update.has_extension_indices_to_add():
+                # non-live cases with extension indices should be added and processed
+                self.case_ids_on_phone.add(update.case_id)
+                for index in update.indices_to_add:
+                    self._add_index(index, update)
+                    made_changes = True
+
+        for update in non_live_updates:
             if update.case_id in self.case_ids_on_phone:
                 # try pruning the case
-                self.prune_case(update.case_id)
+                self.purge(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
                     for index in update.indices_to_add:
-                        _add_index(index)
+                        self._add_index(index, update)
                     for index in update.indices_to_delete:
-                        self.index_tree.delete_index(index.case_id, index.identifier)
+                        self._delete_index(index)
                 made_changes = True
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree after update: {}'.format(self.index_tree))
+        logger.debug('extension index tree after update: {}'.format(self.extension_index_tree))
         if made_changes or case_list:
             try:
                 if made_changes:
@@ -944,7 +994,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             # as a result of pruning the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be pruned due to dependencies
-                self.prune_case(dependent_case_id)
+                self.purge(dependent_case_id)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
