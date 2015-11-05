@@ -162,7 +162,12 @@ class NumericFilter(BaseFilter):
         return None
 
 
-Choice = namedtuple('Choice', ['value', 'display'])
+class Choice(namedtuple('Choice', ['value', 'display'])):
+    def to_json(self):
+        return {
+            'value': self.value,
+            'display': self.display,
+        }
 
 
 class ChoiceListFilter(BaseFilter):

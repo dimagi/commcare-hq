@@ -680,7 +680,10 @@ def choice_list_api(request, domain, report_id, filter_id):
         limit=int(request.GET.get('limit', 20)),
         page=int(request.GET.get('page', 1)) - 1
     )
-    return json_response(FilterChoiceProviderFactory.from_type(report_filter.choice_provider_id)(query_context))
+    return json_response([
+        choice.to_json() for choice in
+        FilterChoiceProviderFactory.from_type(report_filter.choice_provider_id)(query_context)
+    ])
 
 
 def _shared_context(domain):

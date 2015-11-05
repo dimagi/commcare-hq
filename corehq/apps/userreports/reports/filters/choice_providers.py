@@ -1,5 +1,5 @@
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter
+from corehq.apps.reports_core.filters import DynamicChoiceListFilter, Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 
 
@@ -37,7 +37,7 @@ def get_choices_from_data_source_column(query_context):
 
     try:
         return [
-            {'value': v[0], 'display': v[0]}
+            Choice(v[0], v[0])
             for v in query.distinct().order_by(sql_column).limit(query_context.limit).offset(query_context.offset)
         ]
     except ProgrammingError:
