@@ -500,27 +500,28 @@ def update_form_translations(sheet, rows, missing_cols, app):
                 new_trans_el.set('default', '')
             itext.xml.append(new_trans_el)
 
-    def _update_translation_node(new_translation, value_node, attributes=None):
-        if new_translation:
-            # Create the node if it does not already exist
-            if not value_node.exists():
-                e = etree.Element(
-                    "{f}value".format(**namespaces), attributes
-                )
-                text_node.xml.append(e)
-                value_node = WrappedNode(e)
-            # Update the translation
-            value_node.xml.tail = ''
-            for node in value_node.findall("./*"):
-                node.xml.getparent().remove(node.xml)
-            escaped_trans = escape_output_value(new_translation)
-            value_node.xml.text = escaped_trans.text
-            for n in escaped_trans.getchildren():
-                value_node.xml.append(n)
-        else:
+    def _update_translation_node(new_translation, value_node, attributes=None, delete_node=True):
+        if delete_node and not new_translation:
             # Remove the node if it already exists
             if value_node.exists():
                 value_node.xml.getparent().remove(value_node.xml)
+            return
+
+        # Create the node if it does not already exist
+        if not value_node.exists():
+            e = etree.Element(
+                "{f}value".format(**namespaces), attributes
+            )
+            text_node.xml.append(e)
+            value_node = WrappedNode(e)
+        # Update the translation
+        value_node.xml.tail = ''
+        for node in value_node.findall("./*"):
+            node.xml.getparent().remove(node.xml)
+        escaped_trans = escape_output_value(new_translation)
+        value_node.xml.text = escaped_trans.text
+        for n in escaped_trans.getchildren():
+            value_node.xml.append(n)
 
     def _looks_like_markdown(str):
         return re.search(r'^\d+\. |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str)
@@ -578,16 +579,14 @@ def update_form_translations(sheet, rows, missing_cols, app):
                         had_markdown = markdown_node.exists()
                         vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
 
-                        _update_translation_node(new_translation, value_node)
                         if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
                                or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
                             _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
                                                      markdown_node,
                                                      {'form': 'markdown'})
-                    elif not keep_value_node:
-                        _update_translation_node(new_translation,
-                                                 text_node.find("./{f}value"),
-                                                 {'form': trans_type})
+                    _update_translation_node(new_translation,
+                                             text_node.find("./{f}value"),
+                                             {'form': trans_type}, delete_node=(not keep_value_node))
                 else:
                     _update_translation_node(new_translation,
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
