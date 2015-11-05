@@ -3,8 +3,8 @@ from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import CaseDbCache
-from casexml.apps.case.xml import V2
+from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
+from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
@@ -12,6 +12,9 @@ class CaseDbCacheTest(TestCase):
     """
     Tests the functionality of the CaseDbCache object
     """
+    @classmethod
+    def setUpClass(cls):
+        cls.interface = FormProcessorInterface()
 
     def testDomainCheck(self):
         id = uuid.uuid4().hex
@@ -22,14 +25,13 @@ class CaseDbCacheTest(TestCase):
                 ).as_xml()
             ], {'domain': 'good-domain'}
         )
-        bad_cache = CaseDbCache(domain='bad-domain')
+        bad_cache = self.interface.casedb_cache(domain='bad-domain')
         try:
             bad_cache.get(id)
             self.fail('domain security check failed to raise exception')
         except IllegalCaseId:
             pass
-
-        good_cache = CaseDbCache(domain='good-domain')
+        good_cache = self.interface.casedb_cache(domain='good-domain')
         case = good_cache.get(id)
         self.assertEqual('some-user', case.user_id) # just sanity check it's the right thing
 
@@ -39,7 +41,7 @@ class CaseDbCacheTest(TestCase):
             "_id": id,
             "doc_type": "AintNoCasesHere"
         })
-        cache = CaseDbCache()
+        cache = self.interface.casedb_cache()
         try:
             cache.get(id)
             self.fail('doc type security check failed to raise exception')
@@ -51,7 +53,7 @@ class CaseDbCacheTest(TestCase):
 
     def testGetPopulatesCache(self):
         case_ids = _make_some_cases(3)
-        cache = CaseDbCache()
+        cache = self.interface.casedb_cache()
         for id in case_ids:
             self.assertFalse(cache.in_cache(id))
 
@@ -64,7 +66,7 @@ class CaseDbCacheTest(TestCase):
 
     def testSetPopulatesCache(self):
         case_ids = _make_some_cases(3)
-        cache = CaseDbCache()
+        cache = self.interface.casedb_cache()
         for id in case_ids:
             self.assertFalse(cache.in_cache(id))
 
@@ -78,7 +80,7 @@ class CaseDbCacheTest(TestCase):
 
     def testPopulate(self):
         case_ids = _make_some_cases(3)
-        cache = CaseDbCache()
+        cache = self.interface.casedb_cache()
         for id in case_ids:
             self.assertFalse(cache.in_cache(id))
 
@@ -94,14 +96,14 @@ class CaseDbCacheTest(TestCase):
     def testStripHistory(self):
         case_ids = _make_some_cases(3)
 
-        history_cache = CaseDbCache()
+        history_cache = self.interface.casedb_cache()
         for i, id in enumerate(case_ids):
             self.assertFalse(history_cache.in_cache(id))
             case = history_cache.get(id)
             self.assertEqual(str(i), case.my_index)
             self.assertTrue(len(case.actions) > 0)
 
-        nohistory_cache = CaseDbCache(strip_history=True)
+        nohistory_cache = self.interface.casedb_cache(strip_history=True)
         for i, id in enumerate(case_ids):
             self.assertFalse(nohistory_cache.in_cache(id))
             case = nohistory_cache.get(id)
@@ -126,7 +128,7 @@ class CaseDbCacheTest(TestCase):
 
     def test_nowrap(self):
         case_ids = _make_some_cases(1)
-        cache = CaseDbCache(wrap=False)
+        cache = self.interface.casedb_cache(wrap=False)
         case = cache.get(case_ids[0])
         self.assertTrue(isinstance(case, dict))
         self.assertFalse(isinstance(case, CommCareCase))
@@ -134,14 +136,24 @@ class CaseDbCacheTest(TestCase):
 
 class CaseDbCacheNoDbTest(SimpleTestCase):
 
-    def test_wrap_lock_dependency(self):
+    @classmethod
+    def setUpClass(cls):
+        cls.interface = FormProcessorInterface()
+
+    def test_couch_wrap_lock_dependency_couch(self):
         # valid combinations
-        CaseDbCache(domain='some-domain', lock=False, wrap=True)
-        CaseDbCache(domain='some-domain', lock=False, wrap=False)
-        CaseDbCache(domain='some-domain', lock=True, wrap=True)
+        CaseDbCacheCouch(domain='some-domain', lock=False, wrap=True)
+        CaseDbCacheCouch(domain='some-domain', lock=False, wrap=False)
+        CaseDbCacheCouch(domain='some-domain', lock=True, wrap=True)
         with self.assertRaises(ValueError):
             # invalid
-            CaseDbCache(domain='some-domain', lock=True, wrap=False)
+            CaseDbCacheCouch(domain='some-domain', lock=True, wrap=False)
+
+    def test_sql_wrap_support(self):
+        CaseDbCacheSQL(domain='some-domain', wrap=True)
+        with self.assertRaises(ValueError):
+            # invalid
+            CaseDbCacheSQL(domain='some-domain', wrap=False)
 
 
 def _make_some_cases(howmany, domain='dbcache-test'):
