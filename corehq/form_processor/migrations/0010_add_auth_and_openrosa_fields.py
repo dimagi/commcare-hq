@@ -8,7 +8,7 @@ import json_field.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0005_auto_20151105_1556'),
+        ('form_processor', '0009_add_xform_operation_model_and_state'),
     ]
 
     operations = [
