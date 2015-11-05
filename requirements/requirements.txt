@@ -78,5 +78,5 @@ tinys3==0.1.11
 django-two-factor-auth==1.2.0
 
 # required by ctable
-SQLAlchemy==0.8.2
+SQLAlchemy==1.0.9
 alembic==0.6.4
