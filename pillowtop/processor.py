@@ -10,6 +10,14 @@ class PillowProcessor(object):
         pass
 
 
+class NoopProcessor(PillowProcessor):
+    """
+    Processor that does absolutely nothing.
+    """
+    def process_change(self, pillow_instance, change, do_set_checkpoint):
+        pass
+
+
 class LoggingProcessor(PillowProcessor):
     """
     Processor that just logs things - useful in tests or debugging.
