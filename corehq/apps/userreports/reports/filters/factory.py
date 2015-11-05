@@ -4,7 +4,7 @@ from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, C
     NumericFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.filters.dynamic_choice_lists import get_choices_from_data_source_column
+from corehq.apps.userreports.reports.filters.choice_providers import get_choices_from_data_source_column
 from corehq.apps.userreports.reports.filters.values import(
     dynamic_choice_list_url,
     NONE_CHOICE,
