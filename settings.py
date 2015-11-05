@@ -1186,7 +1186,7 @@ BOWER_CORE_APPS = (
     'less#1.7.3',
     'backbone#0.9.1',
     'bootstrap-daterangepicker#2.1.13',
-    'd3#3.0',
+    'd3#3.1',
     'nvd3#1.1.10-beta',
     'datatables#1.10.9',
     'datatables-bootstrap3#0.1',
