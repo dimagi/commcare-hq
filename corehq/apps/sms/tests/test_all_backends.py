@@ -16,6 +16,7 @@ from corehq.messaging.smsbackends.grapevine.api import GrapevineBackend
 from corehq.messaging.smsbackends.twilio.models import TwilioBackend
 from corehq.messaging.smsbackends.megamobile.api import MegamobileBackend
 from corehq.messaging.smsbackends.smsgh.models import SMSGHBackend
+from corehq.messaging.smsbackends.apposit.models import AppositBackend
 from dimagi.utils.parsing import json_format_datetime
 from django.conf import settings
 from django.test import TestCase
@@ -78,6 +79,9 @@ class AllBackendTest(BaseSMSTest):
         self.smsgh_backend = SMSGHBackend(name='SMSGH', is_global=True)
         self.smsgh_backend.save()
 
+        self.apposit_backend = AppositBackend(name='APPOSIT', is_global=True)
+        self.apposit_backend.save()
+
         if not hasattr(settings, 'SIMPLE_API_KEYS'):
             settings.SIMPLE_API_KEYS = {}
 
@@ -138,6 +142,7 @@ class AllBackendTest(BaseSMSTest):
         self._test_outbound_backend(self.twilio_backend, 'twilio test')
         self._test_outbound_backend(self.megamobile_backend, 'megamobile test')
         self._test_outbound_backend(self.smsgh_backend, 'smsgh test')
+        self._test_outbound_backend(self.apposit_backend, 'apposit test')
 
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
@@ -214,6 +219,22 @@ class AllBackendTest(BaseSMSTest):
 
         user.delete()
 
+    def test_apposit_inbound_sms(self):
+        user = ApiUser.create('apposit-api-key', 'apposit-api-key', permissions=[PERMISSION_POST_SMS])
+        user.save()
+
+        self._simulate_inbound_request(
+            '/apposit/in/apposit-api-key/',
+            phone_param='fromAddress',
+            msg_param='content',
+            msg_text='apposit test',
+            post=True,
+            additional_params={'channel': 'SMS'}
+        )
+        self._verify_inbound_request('APPOSIT', 'apposit test')
+
+        user.delete()
+
     def tearDown(self):
         backend_api.TEST = False
         self.contact1.get_verified_number().delete()
@@ -231,5 +252,6 @@ class AllBackendTest(BaseSMSTest):
         self.twilio_backend.delete()
         self.megamobile_backend.delete()
         self.smsgh_backend.delete()
+        self.apposit_backend.delete()
         settings.SIMPLE_API_KEYS.pop('grapevine-test')
         super(AllBackendTest, self).tearDown()
