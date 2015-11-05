@@ -94,6 +94,11 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     def history(self):
         return self.xformoperationsql_set.order_by('date')
 
+    def to_json(self):
+        from .serializers import XFormInstanceSQLSerializer
+        serializer = XFormInstanceSQLSerializer(self)
+        return serializer.data
+
     def get_xml_element(self):
         xml = self._get_xml()
         if not xml:
