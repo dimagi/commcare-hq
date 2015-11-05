@@ -93,7 +93,7 @@ class XFormAttachmentSQL(models.Model):
         return content
 
 
-class CommCareCaseSQL(models.Model, AbstractCommCareCase):
+class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     case_type = models.CharField(max_length=255)
@@ -155,6 +155,14 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase):
     @classmethod
     def get_case_xform_ids(cls, case_id):
         return CaseForms.objects.filter(case_uuid=case_id)
+
+    @classmethod
+    def get_obj_id(cls, obj):
+        return obj.case_uuid
+
+    @classmethod
+    def get_obj_by_id(cls, _id):
+        return CommCareCaseSQL.objects.get(_id)
 
     def __unicode__(self):
         return (
