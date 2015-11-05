@@ -15,9 +15,9 @@ from corehq.db import Session
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
-class ConfigurableReportViewTest(TestCase):
-    domain = 'my_domain'
-    case_type = 'my_case_type'
+class ConfigurableReportTestMixin(object):
+    domain = "TEST_DOMAIN"
+    case_type = "CASE_TYPE"
 
     @classmethod
     def _new_case(cls, properties):
@@ -30,6 +30,17 @@ class ConfigurableReportViewTest(TestCase):
         ).as_xml()
         FormProcessorInterface().post_case_blocks([case_block], {'domain': cls.domain})
         return CommCareCase.get(id)
+
+    @classmethod
+    def _delete_everything(cls):
+        delete_all_cases()
+        for config in DataSourceConfiguration.all():
+            config.delete()
+        for config in ReportConfiguration.all():
+            config.delete()
+
+
+class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _build_report(cls):
@@ -123,13 +134,6 @@ class ConfigurableReportViewTest(TestCase):
         report_config.save()
         return report_config
 
-    @classmethod
-    def _delete_everything(cls):
-        delete_all_cases()
-        for config in DataSourceConfiguration.all():
-            config.delete()
-        for config in ReportConfiguration.all():
-            config.delete()
 
     @classmethod
     def tearDownClass(cls):

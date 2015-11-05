@@ -54,7 +54,7 @@ class IntegerPropertyReference(object):
         self.transform = transform
 
     def __call__(self, form):
-        value = int(form.xpath(self.property_path) or 0)
+        value = int(form.get_data(self.property_path) or 0)
         if value and self.transform:
             value = self.transform(value)
         return value
@@ -118,7 +118,7 @@ class FilteredFormPropertyCalculator(fluff.Calculator):
         return (
             form.xmlns == self.xmlns and (
                 self.property_path is None or
-                self.operator(form.xpath(self.property_path), self.property_value)
+                self.operator(form.get_data(self.property_path), self.property_value)
             )
         )
 
@@ -157,7 +157,7 @@ class FormPropertyFilter(Filter):
         return (
             form.xmlns == self.xmlns and (
                 self.property_path is None or
-                self.operator(form.xpath(self.property_path), self.property_value)
+                self.operator(form.get_data(self.property_path), self.property_value)
             )
         )
 

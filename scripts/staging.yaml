@@ -53,10 +53,9 @@ branches:
   - report-builder-b3 # Noah 10/20
   - b3-tf # ben 10/1
   - two-factor-otp-only # j$ 10/2
-  - refactor-copy-domain #ts 11/2
-  - fab-bower-conflicts #ts 11/2
   - requests #Simon 11/3
-  - ucr-agg-bug # Noah 11/4
+  - add-tableau-dashboard # TS 11/5
+  - smsbillable-gateway  # Nick P 11/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

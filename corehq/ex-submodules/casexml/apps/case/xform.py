@@ -168,136 +168,6 @@ class CaseProcessingConfig(object):
         )
 
 
-class CaseDbCache(object):
-    """
-    A temp object we use to keep a cache of in-memory cases around
-    so we can get the latest updates even if they haven't been saved
-    to the database. Also provides some type checking safety.
-    """
-    def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, wrap=True, initial=None, xforms=None):
-        if initial:
-            self.cache = {case['_id']: case for case in initial}
-        else:
-            self.cache = {}
-
-        self.domain = domain
-        self.xforms = xforms if xforms is not None else []
-        self.strip_history = strip_history
-        self.deleted_ok = deleted_ok
-        self.lock = lock
-        self.wrap = wrap
-        if self.lock and not self.wrap:
-            raise ValueError('Currently locking only supports explicitly wrapping cases!')
-        self.locks = []
-        self._changed = set()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for lock in self.locks:
-            if lock:
-                release_lock(lock, True)
-
-    def validate_doc(self, doc):
-        if self.domain and doc['domain'] != self.domain:
-            raise IllegalCaseId("Bad case id")
-        elif doc['doc_type'] == 'CommCareCase-Deleted':
-            if not self.deleted_ok:
-                raise IllegalCaseId("Case [%s] is deleted " % doc['_id'])
-        elif doc['doc_type'] != 'CommCareCase':
-            raise IllegalCaseId(
-                'Bad case doc type! '
-                'This usually means you are using a bad value for case_id.'
-                'The offending ID is {}'.format(doc['_id'])
-            )
-
-    def get(self, case_id):
-        if not case_id:
-            raise IllegalCaseId('case_id must not be empty')
-        if case_id in self.cache:
-            return self.cache[case_id]
-
-        try:
-            if self.strip_history:
-                case_doc = CommCareCase.get_lite(case_id, wrap=self.wrap)
-            elif self.lock:
-                try:
-                    case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
-                except redis.RedisError:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    self.locks.append(lock)
-            else:
-                if self.wrap:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    case_doc = CommCareCase.get_db().get(case_id)
-        except ResourceNotFound:
-            return None
-
-        self.validate_doc(case_doc)
-        self.cache[case_id] = case_doc
-        return case_doc
-
-    def set(self, case_id, case):
-        self.cache[case_id] = case
-        
-    def doc_exist(self, case_id):
-        return case_id in self.cache or CommCareCase.get_db().doc_exist(case_id)
-
-    def in_cache(self, case_id):
-        return case_id in self.cache
-
-    def populate(self, case_ids):
-        """
-        Populates a set of IDs in the cache in bulk.
-        Use this if you know you are going to need to access these later for performance gains.
-        Does NOT overwrite what is already in the cache if there is already something there.
-        """
-        case_ids = set(case_ids) - set(self.cache.keys())
-        for case in iter_cases(case_ids, self.strip_history, self.wrap):
-            self.set(case['_id'], case)
-
-    def mark_changed(self, case):
-        assert self.cache.get(case.case_id) is case
-        self._changed.add(case['_id'])
-
-    def get_changed(self):
-        return [self.cache[case_id] for case_id in self._changed]
-
-    def clear_changed(self):
-        self._changed = set()
-
-    def get_cached_forms(self):
-        """
-        Get any in-memory forms being processed.
-        """
-        return {xform._id: xform for xform in self.xforms}
-
-    def get_cases_for_saving(self, now):
-        cases = self.get_changed()
-
-        for case in cases:
-            # in saving the cases, we have to do all the things
-            # done in CommCareCase.save()
-            case.initial_processing_complete = True
-            case.server_modified_on = now
-            try:
-                rev = CommCareCase.get_db().get_rev(case.case_id)
-            except ResourceNotFound:
-                pass
-            else:
-                assert rev == case.get_rev, (
-                    "Aborting because there would have been "
-                    "a document update conflict. {} {} {}".format(
-                        case.get_id, case.get_rev, rev
-                    )
-                )
-        return cases
-
-
 def get_and_check_xform_domain(xform):
     try:
         domain = xform.domain
@@ -342,7 +212,7 @@ def _get_or_update_cases(xforms, case_db):
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
-                # see CaseDbCache.validate_doc
+                # see CaseDbCache._validate_case
                 referenced_case = case_db.get(index.referenced_id)
                 if not referenced_case:
                     # just log, don't raise an error or modify the index

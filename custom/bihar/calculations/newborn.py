@@ -9,8 +9,8 @@ import fluff
 
 
 def _get_xpath_from_forms(case, path):
-    form = get_form(case, form_filter=lambda f: f.xpath("form/%s" % path))
-    return form.xpath("form/%s" % path) if form else None
+    form = get_form(case, form_filter=lambda f: f.get_data("form/%s" % path))
+    return form.get_data("form/%s" % path) if form else None
 
 
 def is_preterm(case):

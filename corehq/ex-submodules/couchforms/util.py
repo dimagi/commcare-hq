@@ -377,9 +377,7 @@ class SubmissionPost(object):
 
     def process_xforms_for_cases(self, xform_lock_manager):
         from casexml.apps.case.models import CommCareCase
-        from casexml.apps.case.xform import (
-            get_and_check_xform_domain, CaseDbCache
-        )
+        from casexml.apps.case.xform import get_and_check_xform_domain
         from casexml.apps.case.signals import case_post_save
         from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
         from corehq.apps.commtrack.exceptions import MissingProductId
@@ -392,7 +390,7 @@ class SubmissionPost(object):
             instance = xforms[0]
             if self.validate_xforms_for_case_processing(xforms):
                 domain = get_and_check_xform_domain(instance)
-                with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
+                with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                     try:
                         case_result = self.interface.process_cases_with_casedb(xforms, case_db)
                         stock_result = self.interface.process_stock(xforms, case_db)

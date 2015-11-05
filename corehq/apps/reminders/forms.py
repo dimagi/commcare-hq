@@ -16,10 +16,12 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
 from django import forms
 from django.forms import Field, Widget
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
+from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
@@ -125,6 +127,11 @@ EVENT_CHOICES = (
     (EVENT_AS_OFFSET, ugettext_lazy("Offset-based")),
     (EVENT_AS_SCHEDULE, ugettext_lazy("Schedule-based"))
 )
+
+EMAIL_TRIAL_MESSAGE = ugettext_lazy("You are currently on a trial plan. "
+    "You are allowed to send %(limit)s reminder emails after which you will "
+    "not be able to send anymore reminder emails unless you upgrade your "
+    "plan.")
 
 
 def add_field_choices(form, field_name, choice_tuples):
@@ -548,10 +555,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
             ])
 
-        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
-            add_field_choices(self, 'method', [
-                (METHOD_EMAIL, _('Email')),
-            ])
+        add_field_choices(self, 'method', [
+            (METHOD_EMAIL, _('Email')),
+        ])
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
@@ -916,7 +922,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     @property
     def current_values(self):
-        current_values = {}
+        current_values = {
+            'is_trial_project': domain_is_on_trial(self.domain),
+            'email_trial_message': EMAIL_TRIAL_MESSAGE % {'limit': TRIAL_MAX_EMAILS},
+        }
         for field_name in self.fields.keys():
             current_values[field_name] = self[field_name].value()
         return current_values
@@ -1792,16 +1801,14 @@ class OneTimeReminderForm(Form):
 
     def __init__(self, *args, **kwargs):
         can_use_survey = kwargs.pop('can_use_survey', False)
-        can_use_email = kwargs.pop('can_use_email', False)
         super(OneTimeReminderForm, self).__init__(*args, **kwargs)
         if can_use_survey:
             add_field_choices(self, 'content_type', [
                 (METHOD_SMS_SURVEY, _('SMS Survey')),
             ])
-        if can_use_email:
-            add_field_choices(self, 'content_type', [
-                (METHOD_EMAIL, _('Email')),
-            ])
+        add_field_choices(self, 'content_type', [
+            (METHOD_EMAIL, _('Email')),
+        ])
 
     def clean_recipient_type(self):
         return clean_selection(self.cleaned_data.get("recipient_type"))
@@ -2469,10 +2476,9 @@ class BroadcastForm(Form):
                 (METHOD_SMS_SURVEY, _('SMS Survey')),
             ])
 
-        if toggles.EMAIL_IN_REMINDERS.enabled(self.domain):
-            add_field_choices(self, 'content_type', [
-                (METHOD_EMAIL, _('Email')),
-            ])
+        add_field_choices(self, 'content_type', [
+            (METHOD_EMAIL, _('Email')),
+        ])
 
         if toggles.BROADCAST_TO_LOCATIONS.enabled(self.domain):
             add_field_choices(self, 'recipient_type', [
@@ -2694,7 +2700,10 @@ class BroadcastForm(Form):
 
     @property
     def current_values(self):
-        values = {}
+        values = {
+            'is_trial_project': domain_is_on_trial(self.domain),
+            'email_trial_message': EMAIL_TRIAL_MESSAGE % {'limit': TRIAL_MAX_EMAILS},
+        }
         for field_name in self.fields.keys():
             values[field_name] = self[field_name].value()
         return values

@@ -4,9 +4,11 @@ from django.db import transaction
 from django.utils.translation import ugettext as _
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.xform import is_device_report, CaseDbCache
+from casexml.apps.case.xform import is_device_report
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.parsing import unpack_commtrack
+from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.util import is_deprecation
 from dimagi.utils.decorators.log_exception import log_exception
 from casexml.apps.case.models import CommCareCaseAction
@@ -194,8 +196,10 @@ def process_stock(xforms, case_db=None):
     """
     process the commtrack xml constructs in an incoming submission
     """
-    case_db = case_db or CaseDbCache()
-    assert isinstance(case_db, CaseDbCache)
+    if not case_db:
+        case_db = FormProcessorInterface(xforms[0].domain).casedb_cache()
+    else:
+        assert isinstance(case_db, AbstractCaseDbCache)
 
     sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     stock_report_helpers = []
