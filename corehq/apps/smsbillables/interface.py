@@ -122,11 +122,10 @@ class SMSBillablesInterface(GenericTabularReport):
             [
                 sms_billable.date_sent,
                 sms_billable.domain,
-                ("Incoming"
-                 if sms_billable.direction == INCOMING
-                 else ("Outgoing"
-                       if sms_billable.direction == OUTGOING
-                       else "")),
+                {
+                    INCOMING: "Incoming",
+                    OUTGOING: "Outgoing",
+                }.get(sms_billable.direction, ""),
                 sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
                 (sms_billable.usage_fee.amount
