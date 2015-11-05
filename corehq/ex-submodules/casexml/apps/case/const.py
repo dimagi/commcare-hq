@@ -1,9 +1,8 @@
-
 # how cases/referrals are tagged in the xform/couch
 CASE_TAG = "case"
 REFERRAL_TAG = "referral"
 OUTCOME_TAG = "outcome"
-PATIENT_ID_TAG = "patient_id" 
+PATIENT_ID_TAG = "patient_id"
 FOLLOWUP_DATE_TAG = "followup_date"
 
 # internal case identifiers
@@ -52,3 +51,5 @@ CASE_INDEX_EXTENSION = 'extension'
 CASE_INDEX_CHILD = 'child'
 
 DEFAULT_CASE_INDEX_IDENTIFIERS = {CASE_INDEX_CHILD: 'parent', CASE_INDEX_EXTENSION: 'host'}
+
+UNOWNED_EXTENSION_OWNER_ID = '-'
