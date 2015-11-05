@@ -1111,7 +1111,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
             DataTablesColumnGroup(
                 "Credit Line",
                 DataTablesColumn("Account"),
-                DataTablesColumn("Is Subscription-Level"),
+                DataTablesColumn("Subscription"),
                 DataTablesColumn("Project Space"),
                 DataTablesColumn("Product/Feature Type")
             ),
@@ -1123,7 +1123,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import ManageBillingAccountView
+        from corehq.apps.accounting.views import EditSubscriptionView, ManageBillingAccountView
         return [
             map(lambda x: x or '', [
                 credit_adj.date_created,
@@ -1136,7 +1136,13 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     ),
                     sort_key=credit_adj.credit_line.account.name,
                 ),
-                str(credit_adj.credit_line.subscription is not None),
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(
+                        reverse(EditSubscriptionView.urlname, args=(credit_adj.credit_line.subscription.id,)),
+                        credit_adj.credit_line.subscription
+                    )),
+                    credit_adj.credit_line.subscription.id,
+                ) if credit_adj.credit_line.subscription else '',
                 (
                     credit_adj.credit_line.subscription.subscriber.domain
                     if credit_adj.credit_line.subscription is not None else ''
