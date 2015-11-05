@@ -76,7 +76,7 @@ class XFormAttachmentSQL(models.Model):
     @property
     def filepath(self):
         if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/tmp/', self.attachment_uuid)
+            return os.path.join('/home/travis/', self.attachment_uuid)
         return os.path.join('/tmp/', self.attachment_uuid)
 
     def write_content(self, content):
