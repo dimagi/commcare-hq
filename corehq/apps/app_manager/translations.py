@@ -541,14 +541,19 @@ def update_form_translations(sheet, rows, missing_cols, app):
                 ))
                 continue
 
-            # Add or remove translations
+            translations = dict()
             for trans_type in ['default', 'audio', 'image', 'video']:
                 try:
                     col_key = get_col_key(trans_type, lang)
-                    new_translation = row[col_key]
+                    translations[trans_type] = row[col_key]
                 except KeyError:
-                    # error has already been logged as unrecoginzed column
+                    # has already been logged as unrecoginzed column
                     continue
+
+            keep_value_node = any(v for k, v in translations.items())
+
+            # Add or remove translations
+            for trans_type, new_translation in translations.items():
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
@@ -562,22 +567,27 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             break
 
                 if trans_type == 'default':
-                    value_node = next(
-                        n for n in text_node.findall("./{f}value")
-                        if 'form' not in n.attrib
-                    )
-                    old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
-                    markdown_node = text_node.find("./{f}value[@form='markdown']")
-                    has_markdown = _looks_like_markdown(new_translation)
-                    had_markdown = markdown_node.exists()
-                    vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
+                    if new_translation:
+                        value_node = next(
+                            n for n in text_node.findall("./{f}value")
+                            if 'form' not in n.attrib
+                        )
+                        old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
+                        markdown_node = text_node.find("./{f}value[@form='markdown']")
+                        has_markdown = _looks_like_markdown(new_translation)
+                        had_markdown = markdown_node.exists()
+                        vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
 
-                    _update_translation_node(new_translation, value_node)
-                    if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
-                           or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
-                        _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
-                                                 markdown_node,
-                                                 {'form': 'markdown'})
+                        _update_translation_node(new_translation, value_node)
+                        if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
+                               or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
+                            _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
+                                                     markdown_node,
+                                                     {'form': 'markdown'})
+                    elif not keep_value_node:
+                        _update_translation_node(new_translation,
+                                                 text_node.find("./{f}value"),
+                                                 {'form': trans_type})
                 else:
                     _update_translation_node(new_translation,
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
