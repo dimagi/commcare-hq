@@ -990,15 +990,25 @@ class PaymentRecordInterface(GenericTabularReport):
 
     @property
     def rows(self):
+        from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for record in self.payment_records:
+            account = self.get_account(record)
             rows.append([
                 format_datatables_data(
                     text=record.date_created.strftime(USER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
-                self.get_account(record).name,
-                self.get_account(record).created_by_domain,
+                format_datatables_data(
+                    text=mark_safe(
+                        make_anchor_tag(
+                            reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                            account.name
+                        )
+                    ),
+                    sort_key=account.name,
+                ),
+                account.created_by_domain,
                 record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
