@@ -7,7 +7,9 @@ from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
 from dimagi.utils.couch import RedisLockableMixIn
+from dimagi.ext import jsonobject
 from couchforms.signals import xform_archived, xform_unarchived
+from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance
 from .exceptions import XFormNotFound
@@ -172,5 +174,38 @@ class XFormOperationSQL(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
 
+
+class XFormMetadata(jsonobject.JsonObject):
+    """
+    Metadata of an xform, from a meta block structured like:
+
+        <Meta>
+            <timeStart />
+            <timeEnd />
+            <instanceID />
+            <userID />
+            <deviceID />
+            <deprecatedID />
+            <username />
+
+            <!-- CommCare extension -->
+            <appVersion />
+            <location />
+        </Meta>
+
+    See spec: https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaMetaDataSchema
+
+    username is not part of the spec but included for convenience
+    """
+
+    timeStart = jsonobject.DateTimeProperty()
+    timeEnd = jsonobject.DateTimeProperty()
+    instanceID = jsonobject.StringProperty()
+    userID = jsonobject.StringProperty()
+    deviceID = jsonobject.StringProperty()
+    deprecatedID = jsonobject.StringProperty()
+    username = jsonobject.StringProperty()
+    appVersion = jsonobject.StringProperty()
+    location = GeoPointProperty()
 
 Attachment = collections.namedtuple('Attachment', 'name content content_type')
