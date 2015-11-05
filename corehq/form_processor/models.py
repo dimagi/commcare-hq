@@ -4,7 +4,7 @@ import collections
 from lxml import etree
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from dimagi.utils.couch import RedisLockableMixIn
 from couchforms.signals import xform_archived, xform_unarchived
 
@@ -112,23 +112,25 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     def archive(self, user=None):
         if self.is_archived:
             return
-        self.state = self.ARCHIVED
-        self.xformoperationsql_set.create(
-            user=user,
-            operation=XFormOperationSQL.ARCHIVE,
-        )
-        self.save()
+        with transaction.atomic():
+            self.state = self.ARCHIVED
+            self.xformoperationsql_set.create(
+                user=user,
+                operation=XFormOperationSQL.ARCHIVE,
+            )
+            self.save()
         xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user=None):
         if not self.is_archived:
             return
-        self.state = self.NORMAL
-        self.xformoperationsql_set.create(
-            user=user,
-            operation=XFormOperationSQL.UNARCHIVE,
-        )
-        self.save()
+        with transaction.atomic():
+            self.state = self.NORMAL
+            self.xformoperationsql_set.create(
+                user=user,
+                operation=XFormOperationSQL.UNARCHIVE,
+            )
+            self.save()
         # xform_unarchived.send(sender="form_processor", xform=self)
 
 
