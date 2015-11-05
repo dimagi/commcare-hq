@@ -14,39 +14,53 @@
         {{ block.super }}
     {% include "imports/proptable.html" %}
     {% include "imports/fancy-code.html" %}
+
+    <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% new_static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
+{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{% new_static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% new_static 'datatables/media/css/jquery.dataTables.min.css ' %}" />
+    <link rel="stylesheet" href="{% new_static 'formplayer/style/webforms.css' %}">
+    <link rel="stylesheet" href="{% new_static 'cloudcare/css/cloudcare.css' %}">
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script src="{% static 'case/js/casexml.js' %}"></script>
-    <script src="{% static 'backbone/backbone-min.js' %}"></script>
-    <script src="{% static 'cloudcare/js/util.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
-    <script src="{% static 'cloudcare/js/post.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% new_static 'case/js/casexml.js' %}"></script>
+    <script src="{% new_static 'backbone/backbone-min.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
 
-    {# touchforms includes #}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
-
-    <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-    <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-    <script src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
-    <script src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
-    <script src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
-    <script src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
-
-    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
-
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% new_static 'case/js/casexml.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/backbone.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/purify.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/shortcut.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/xforgasm.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/formnav-all.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/entrycontrols_full.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/fullform-ui.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -63,7 +77,7 @@
         unknownError: "{% trans "Unknown error: " %}",
         unknownErrorDetail: "{% trans "This can happen if you loaded CloudCare from a different address than the server address" %}",
         saveAll : "{% trans "All changes saved!" %}",
-        newWindow: "{% trans "open in new window" %}",
+        newWindow: "{% trans "Open in New Window" %}",
         deleteSaved: "{% trans "Permanently delete this form? You will not be able to return to it later." %}",
         deleteSuccess: "{% trans "Form was deleted." %}",
         caseListError: "{% trans "Unable to load the case list. If you are using a filter expression please double check the syntax and try again. Please report an issue if this problem persists." %}",
@@ -137,7 +151,7 @@
     </script>
 {% endblock %}
 
-{% block sidebar %}
+{% block page_navigation %}
 {% if sessions_enabled %}
     <div id="save-indicator" class="alert" style="display: none;"></div>
 {% endif %}
@@ -161,7 +175,7 @@
     </section>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% if request.couch_user.is_web_user %}
         <div class="alert fade in alert-block alert-full alert-warning ">
             <a class="close" data-dismiss="alert" href="#">&times;</a>
@@ -186,7 +200,7 @@
             (It may take a moment to start up once it has downloaded)
         {% endblocktrans %}
     </div>
-    <div id="cloudcare-main" style="position:relative;">
+    <div id="cloudcare-main">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
             {% blocktrans %}
@@ -214,7 +228,7 @@
         </div>
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
-        <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }" style="min-width: 800px;"></section>
+        <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}

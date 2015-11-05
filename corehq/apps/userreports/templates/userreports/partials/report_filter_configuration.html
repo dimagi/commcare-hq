@@ -12,111 +12,123 @@ TODO:
 - Move grip and delete icons into their own widgets/templates
 {% endcomment%}
 
+<div class="row">
+   <div class="col-sm-12">
+        <table class="table table-condensed">
 
-<table class="table table-condensed" style="display: inline-block">
+            <thead data-bind="visible: columns().length > 0">
+                <tr>
+                    <th></th>
+                    <th class="col-sm-4">
+                        {% trans "Property" %}
+                        <!--ko if: $data.propertyHelpText -->
+                        <span class="hq-help-template" data-bind="
+                            attr: {'data-content': propertyHelpText}
+                        "></span>
+                        <!--/ko-->
+                    </th>
+                    <th>
+                        {% trans "Display Text" %}
+                        <!--ko if: $data.displayHelpText -->
+                        <span class="hq-help-template" data-bind="
+                            attr: {'data-content': displayHelpText}
+                        "></span>
+                        <!--/ko-->
+                    </th>
+                    <!--ko if: $data.hasFormatCol -->
+                    <th>
+                        {% trans "Format" %}
+                        <!--ko if: $data.formatHelpText -->
+                        <span class="hq-help-template" data-bind="
+                            if: formatHelpText,
+                            attr: {'data-content': formatHelpText}
+                        "></span>
+                        <!--/ko-->
+                    </th>
+                    <!--/ko-->
+                    <th></th>
+                </tr>
+            </thead>
 
-    <thead data-bind="visible: columns().length > 0">
-        <tr>
-            <th></th>
-            <th>
-                {% trans "Property" %}
-                <!--ko if: $data.propertyHelpText -->
-                <span class="hq-help-template" data-bind="
-                    attr: {'data-content': propertyHelpText}
-                "></span>
+            <tbody data-bind="sortable: {
+                data: columns,
+                afterAdd: function (elem) { $(elem).hide().fadeIn() },
+                beforeRemove: function (elem) { $(elem).fadeOut() }
+            }"
+            {# there must be no whitespace between <tbody> and <tr> #}
+            {# the .hide().fadeIn() will fail badly on FireFox #}
+            ><tr data-bind="attr: {'data-order': _sortableOrder}">
+                <td class="span1">
+                    <i class="grip sortable-handle" style="cursor: move;" data-bind="
+                        css: COMMCAREHQ.icons.GRIP + ' hq-icon-full'
+                    "></i>
+                </td>
+
+                <td class="form-group" data-bind="css:{'error': !isValid()}">
+
+                    <!-- ko ifnot: $parent.optionsContainQuestions -->
+                    <input type="text"
+                           class="form-control"
+                           data-bind="select2: $parent.propertyOptions, value: property">
+                    <!-- /ko -->
+                    <!-- ko if: $parent.optionsContainQuestions -->
+                    <input class="form-control" type="hidden" data-bind="
+                        questionsSelect: $parent.propertyOptions().concat(
+                            existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
+                        ),
+                        value: existsInCurrentVersion() ? property : dataSourceField,
+                        attr: {disabled: !existsInCurrentVersion()}
+                    "/>
+                    <!-- /ko -->
+                    <label class="help-block" data-bind="if: $parent.showWarnings() && !isNotBlank()">
+                        {% trans "Please select a property." %}</label>
+                    {# This is gross and I hate it #}
+                    <label class="help-block" style="white-space: pre-wrap;" data-bind="if: !existsInCurrentVersion()">
+                        {% blocktrans %}
+                            This property or question no longer exists in your app.
+                            You must delete this property to update this report.
+                        {% endblocktrans %}
+                    </label>
+                </td>
+                <td class="form-group">
+                    <input type="text" class="form-control" data-bind="
+                        value: displayText,
+                        attr: {disabled: !existsInCurrentVersion()},
+                        event: {keydown: function(){$data.userModifiedDisplayText = true; return true;}}
+                    ">
+                </td>
+                <!--ko if: $parent.hasFormatCol -->
+                <td>
+                    <select class="form-control" data-bind="
+                        options: $parent.formatOptions,
+                        value: format,
+                        attr: {disabled: !existsInCurrentVersion()}
+                    "></select>
+                </td>
                 <!--/ko-->
-            </th>
-            <th>
-                {% trans "Display Text" %}
-                <!--ko if: $data.displayHelpText -->
-                <span class="hq-help-template" data-bind="
-                    attr: {'data-content': displayHelpText}
-                "></span>
-                <!--/ko-->
-            </th>
-            <!--ko if: $data.hasFormatCol -->
-            <th>
-                {% trans "Format" %}
-                <!--ko if: $data.formatHelpText -->
-                <span class="hq-help-template" data-bind="
-                    if: formatHelpText,
-                    attr: {'data-content': formatHelpText}
-                "></span>
-                <!--/ko-->
-            </th>
-            <!--/ko-->
-            <th></th>
-        </tr>
-    </thead>
 
-    <tbody data-bind="sortable: {
-        data: columns,
-        afterAdd: function (elem) { $(elem).hide().fadeIn() },
-        beforeRemove: function (elem) { $(elem).fadeOut() }
-    }"
-    {# there must be no whitespace between <tbody> and <tr> #}
-    {# the .hide().fadeIn() will fail badly on FireFox #}
-    ><tr data-bind="attr: {'data-order': _sortableOrder}">
-        <td class="span1">
-            <i class="grip sortable-handle" style="cursor: move;" data-bind="
-                css: COMMCAREHQ.icons.GRIP
-            "></i>
-        </td>
-
-        <td class="control-group" data-bind="css:{'error': !isValid()}">
-
-            <!-- ko ifnot: $parent.optionsContainQuestions -->
-            <input type="text" data-bind="select2: $parent.propertyOptions, value: property">
-            <!-- /ko -->
-            <!-- ko if: $parent.optionsContainQuestions -->
-            <input class="input-large" type="hidden" data-bind="
-                questionsSelect: $parent.propertyOptions().concat(
-                    existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
-                ),
-                value: existsInCurrentVersion() ? property : dataSourceField,
-                attr: {disabled: !existsInCurrentVersion()}
-            "/>
-            <!-- /ko -->
-            <label class="help-block" data-bind="if: $parent.showWarnings() && !isNotBlank()">Property may not be blank!</label>
-            {# This is gross and I hate it #}
-            <label class="help-block" style="white-space: pre-wrap;" data-bind="if: !existsInCurrentVersion()">This property or question no longer exists in your app.
-You must delete this property to update this report.</label>
-        </td>
-        <td class="control-group">
-            <input type="text" data-bind="
-                value: displayText,
-                attr: {disabled: !existsInCurrentVersion()},
-                event: {keydown: function(){$data.userModifiedDisplayText = true; return true;}}
-            ">
-        </td>
-        <!--ko if: $parent.hasFormatCol -->
-        <td>
-            <select data-bind="
-                options: $parent.formatOptions,
-                value: format,
-                attr: {disabled: !existsInCurrentVersion()}
-            "></select>
-        </td>
-        <!--/ko-->
-
-        <td class="span1">
-            <i style="cursor: pointer;" title="Delete" data-bind="
-                click: function(){$parent.columns.remove($data)},
-                css: COMMCAREHQ.icons.DELETE
-            "></i>
-        </td>
-    {# there must be no whitespace between <tbody> and <tr> #}
-    {# the .hide().fadeIn() will fail badly on FireFox #}
-    </tr></tbody>
-    <tbody data-bind="visible: columns().length < 10" class="add-prop">
-        <tr>
-            <td></td>
-            <td colspan="4">
-                <button class="btn" data-bind="
-                    click: buttonHandler,
-                    text: buttonText
-                "></button>
-            </td>
-        </tr>
-    </tbody>
-</table>
+                <td class="span1">
+                    <i style="cursor: pointer;" title="Delete" data-bind="
+                        click: function(){$parent.columns.remove($data)},
+                        css: COMMCAREHQ.icons.DELETE + ' hq-icon-full'
+                    "></i>
+                </td>
+            {# there must be no whitespace between <tbody> and <tr> #}
+            {# the .hide().fadeIn() will fail badly on FireFox #}
+            </tr></tbody>
+            <tbody data-bind="visible: columns().length < 10" class="add-prop">
+                <tr>
+                    <td></td>
+                    <td colspan="4">
+                        <button class="btn btn-default" data-bind="
+                            click: buttonHandler
+                        ">
+                            <i class="fa fa-plus"></i>&nbsp;
+                            <span data-bind="text: buttonText"></span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

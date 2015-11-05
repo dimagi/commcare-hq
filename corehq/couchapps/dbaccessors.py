@@ -2,7 +2,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
 
 
-def _sizeof_fmt(num):
+def sizeof_fmt(num):
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
@@ -35,5 +35,5 @@ def get_attachment_size_by_domain_app_id_xmlns(domain, app_id=None, xmlns=None):
         group=True
     )
     # grouped key = [domain, app_id, xmlns]
-    available_attachments = {(a['key'][1], a['key'][2]): _sizeof_fmt(a['value']) for a in view}
+    available_attachments = {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
     return available_attachments
