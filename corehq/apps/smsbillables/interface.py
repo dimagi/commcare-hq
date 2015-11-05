@@ -54,6 +54,7 @@ class SMSBillablesInterface(GenericTabularReport):
             DataTablesColumn("Date of Message"),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
+            DataTablesColumn("Gateway", sortable=False),
             DataTablesColumn("Gateway Fee", sortable=False),
             DataTablesColumn("Usage Fee", sortable=False),
             DataTablesColumn("Message Log ID", sortable=False),
@@ -126,6 +127,7 @@ class SMSBillablesInterface(GenericTabularReport):
                  else ("Outgoing"
                        if sms_billable.direction == OUTGOING
                        else "")),
+                sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
                 (sms_billable.usage_fee.amount
                  if sms_billable.usage_fee is not None else ""),
