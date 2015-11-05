@@ -38,6 +38,10 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     @property
+    def metadata(self):
+        raise NotImplementedError()
+
+    @property
     def is_normal(self):
         raise NotImplementedError()
 
