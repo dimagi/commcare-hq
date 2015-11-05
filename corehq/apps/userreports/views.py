@@ -680,7 +680,7 @@ def choice_list_api(request, domain, report_id, filter_id):
         page=int(request.GET.get('page', 1)) - 1
     )
     return json_response([
-        choice.to_json() for choice in
+        choice._asdict() for choice in
         report_filter.choice_provider(query_context)
     ])
 
