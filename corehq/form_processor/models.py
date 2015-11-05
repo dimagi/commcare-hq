@@ -118,6 +118,10 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase):
     case_json = JSONField(lazy=True)
     attachments_json = JSONField(lazy=True)
 
+    @property
+    def case_id(self):
+        return self.case_uuid
+
     def hard_delete(self):
         self.delete()
 
