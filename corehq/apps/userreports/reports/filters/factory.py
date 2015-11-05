@@ -57,7 +57,7 @@ def _build_dynamic_choice_list_filter(spec):
         label=wrapped.display,
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,
-        choice_provider_id=DATA_SOURCE_COLUMN,
+        choice_provider=FilterChoiceProviderFactory.from_spec(wrapped.get_choice_provider_spec()),
     )
 
 
@@ -97,5 +97,5 @@ class FilterChoiceProviderFactory(object):
     }
 
     @classmethod
-    def from_type(cls, choice_provider_type):
-        return cls.constructor_map.get(choice_provider_type, get_choices_from_data_source_column)
+    def from_spec(cls, choice_provider_spec):
+        return cls.constructor_map.get(choice_provider_spec['type'], get_choices_from_data_source_column)

@@ -682,7 +682,7 @@ def choice_list_api(request, domain, report_id, filter_id):
     )
     return json_response([
         choice.to_json() for choice in
-        FilterChoiceProviderFactory.from_type(report_filter.choice_provider_id)(query_context)
+        report_filter.choice_provider(query_context)
     ])
 
 
