@@ -1123,10 +1123,19 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
     @property
     def rows(self):
+        from corehq.apps.accounting.views import ManageBillingAccountView
         return [
             map(lambda x: x or '', [
                 credit_adj.date_created,
-                credit_adj.credit_line.account.name,
+                format_datatables_data(
+                    text=mark_safe(
+                        make_anchor_tag(
+                            reverse(ManageBillingAccountView.urlname, args=[credit_adj.credit_line.account.id]),
+                            credit_adj.credit_line.account.name
+                        )
+                    ),
+                    sort_key=credit_adj.credit_line.account.name,
+                ),
                 str(credit_adj.credit_line.subscription is not None),
                 (
                     credit_adj.credit_line.subscription.subscriber.domain
