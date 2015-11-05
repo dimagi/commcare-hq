@@ -16,10 +16,12 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple
 from django import forms
 from django.forms import Field, Widget
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
+from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
@@ -125,6 +127,11 @@ EVENT_CHOICES = (
     (EVENT_AS_OFFSET, ugettext_lazy("Offset-based")),
     (EVENT_AS_SCHEDULE, ugettext_lazy("Schedule-based"))
 )
+
+EMAIL_TRIAL_MESSAGE = ugettext_lazy("You are currently on a trial plan. "
+    "You are allowed to send %(limit)s reminder emails after which you will "
+    "not be able to send anymore reminder emails unless you upgrade your "
+    "plan.")
 
 
 def add_field_choices(form, field_name, choice_tuples):
@@ -916,7 +923,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     @property
     def current_values(self):
-        current_values = {}
+        current_values = {
+            'is_trial_project': domain_is_on_trial(self.domain),
+            'email_trial_message': EMAIL_TRIAL_MESSAGE  % {'limit': TRIAL_MAX_EMAILS},
+        }
         for field_name in self.fields.keys():
             current_values[field_name] = self[field_name].value()
         return current_values
@@ -2694,7 +2704,10 @@ class BroadcastForm(Form):
 
     @property
     def current_values(self):
-        values = {}
+        values = {
+            'is_trial_project': domain_is_on_trial(self.domain),
+            'email_trial_message': EMAIL_TRIAL_MESSAGE  % {'limit': TRIAL_MAX_EMAILS},
+        }
         for field_name in self.fields.keys():
             values[field_name] = self[field_name].value()
         return values

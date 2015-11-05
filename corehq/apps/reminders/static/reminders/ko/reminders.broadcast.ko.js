@@ -14,6 +14,19 @@ var BroadcastViewModel = function (initial_values) {
     self.form_unique_id = ko.observable(initial_values.form_unique_id);
     self.role = ko.observable(initial_values.role);
 
+    self.is_trial_project = initial_values.is_trial_project;
+    self.displayed_email_trial_message = false;
+    self.content_type.subscribe(function(newValue) {
+        if(
+            self.is_trial_project &&
+            !self.displayed_email_trial_message &&
+            newValue === 'email'
+        ) {
+            $('#email-trial-message-modal').modal('show');
+            self.displayed_email_trial_message = true;
+        }
+    });
+
     self.showDateAndTimeSelect = ko.computed(function () {
         return self.timing() === 'LATER';
     });
