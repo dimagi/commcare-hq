@@ -194,6 +194,16 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return False
 
     @property
+    def is_submission_error_log(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
+
+    @property
+    def is_normal(self):
+        assert self.doc_type == 'XFormInstance'
+        return not (self.is_error or self.is_deprecated or self.is_duplicate or self.is_archived)
+
+    @property
     def metadata(self):
         def get_text(node):
             if node is None:
@@ -524,6 +534,10 @@ class SubmissionErrorLog(XFormError):
         self["doc_type"] = "SubmissionErrorLog" 
         # and we can't use super for the same reasons XFormError 
         XFormInstance.save(self, *args, **kwargs)
+
+    @property
+    def is_submission_error_log(self):
+        return True
 
     @classmethod
     def from_instance(cls, instance, message):

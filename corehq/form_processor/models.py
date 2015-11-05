@@ -6,6 +6,7 @@ from lxml import etree
 from django.conf import settings
 from django.db import models
 from dimagi.utils.couch import RedisLockableMixIn
+from couchforms.signals import xform_archived, xform_unarchived
 
 from .abstract_models import AbstractXFormInstance
 from .exceptions import XFormNotFound
@@ -31,6 +32,11 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
     # export_tag = DefaultProperty(name='#export_tag')
+    is_archived = models.BooleanField(default=False)
+    is_duplicate = models.BooleanField(default=False)
+    is_error = models.BooleanField(default=False)
+    is_deprecated = models.BooleanField(default=False)
+    is_submission_error_log = models.BooleanField(default=False)
 
     @classmethod
     def get(cls, id):
@@ -43,6 +49,20 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     def form_id(self):
         return self.form_uuid
 
+    @property
+    def is_normal(self):
+        return not (self.is_error or self.is_deprecated or self.is_duplicate or self.is_archived)
+
+    @property
+    def form_data(self):
+        from .utils import convert_xform_to_json
+        xml = self._get_xml()
+        return convert_xform_to_json(xml)
+
+    @property
+    def history(self):
+        return self.xformoperationsql_set.order_by('date')
+
     def get_xml_element(self):
         xml = self._get_xml()
         if not xml:
@@ -54,15 +74,31 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
             return etree.fromstring(payload)
         return _to_xml_element(xml)
 
-    @property
-    def form_data(self):
-        from .utils import convert_xform_to_json
-        xml = self._get_xml()
-        return convert_xform_to_json(xml)
-
     def _get_xml(self):
         xform_attachment = self.xformattachmentsql_set.filter(name='form.xml').first()
         return xform_attachment.read_content()
+
+    def archive(self, user=None):
+        if self.is_archived:
+            return
+        self.is_archived = True
+        self.xformoperationsql_set.create(
+            user=user,
+            operation=XFormOperationSQL.ARCHIVE,
+        )
+        self.save()
+        xform_archived.send(sender="form_processor", xform=self)
+
+    def unarchive(self, user=None):
+        if not self.is_archived:
+            return
+        self.is_archived = False
+        self.xformoperationsql_set.create(
+            user=user,
+            operation=XFormOperationSQL.UNARCHIVE,
+        )
+        self.save()
+        # xform_unarchived.send(sender="form_processor", xform=self)
 
 
 class XFormAttachmentSQL(models.Model):
@@ -87,5 +123,16 @@ class XFormAttachmentSQL(models.Model):
         with open(self.filepath, 'r+') as f:
             content = f.read()
         return content
+
+
+class XFormOperationSQL(models.Model):
+    ARCHIVE = 'archive'
+    UNARCHIVE = 'unarchive'
+
+    user = models.CharField(max_length=255, null=True)
+    operation = models.CharField(max_length=255)
+    date = models.DateTimeField(auto_now_add=True)
+    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
+
 
 Attachment = collections.namedtuple('Attachment', 'name content content_type')

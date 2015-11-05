@@ -37,6 +37,10 @@ class AbstractXFormInstance(object):
     def to_json(self):
         raise NotImplementedError()
 
+    @property
+    def is_normal(self):
+        raise NotImplementedError()
+
 
 class AbstractCommCareCase(object):
 
