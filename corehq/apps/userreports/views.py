@@ -54,7 +54,6 @@ from corehq.apps.userreports.models import (
     get_report_config,
 )
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
-from corehq.apps.userreports.reports.filters.factory import FilterChoiceProviderFactory
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
