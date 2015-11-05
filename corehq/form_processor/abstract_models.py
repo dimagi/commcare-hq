@@ -40,9 +40,6 @@ class AbstractXFormInstance(object):
 
 class AbstractCommCareCase(object):
 
-    def id(self):
-        raise NotImplementedError()
-
     def hard_delete(self):
         raise NotImplementedError()
 
