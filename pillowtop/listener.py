@@ -348,15 +348,15 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
     """
     data = data if data is not None else {}
     current_tries = 0
-    params = {'retry_on_conflict': 2}
     while current_tries < retries:
         try:
             if delete:
-                res = es_getter().delete(path=path, params=params)
+                res = es_getter().delete(path=path)
             elif update:
+                params = {'retry_on_conflict': 2}
                 res = es_getter().post("%s/_update" % path, data={"doc": data}, params=params)
             else:
-                res = es_getter().put(path, data=data, params=params)
+                res = es_getter().put(path, data=data)
             break
         except ConnectionError, ex:
             current_tries += 1
