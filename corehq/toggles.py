@@ -165,7 +165,8 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'shadow-app-builder',
     'Shadow Modules',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
 BOOTSTRAP3_PREVIEW = StaticToggle(

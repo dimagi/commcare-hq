@@ -808,7 +808,6 @@ class Subscriber(models.Model):
     The objects that can be subscribed to a Subscription.
     """
     domain = models.CharField(max_length=256, null=True, db_index=True)
-    organization = models.CharField(max_length=256, null=True, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = SubscriberManager()
@@ -817,8 +816,6 @@ class Subscriber(models.Model):
         app_label = 'accounting'
 
     def __unicode__(self):
-        if self.organization:
-            return u"ORGANIZATION %s" % self.organization
         return u"DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, web_user, new_subscription, is_internal_change):
@@ -881,9 +878,6 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        if self.organization is not None:
-            raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
-
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
 
@@ -1269,11 +1263,6 @@ class Subscription(models.Model):
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
-        if self.subscriber.organization is not None:
-            raise SubscriptionRenewalError(
-                "Can't renew subscription because organizations are not "
-                "supported for this method."
-            )
         if self.date_end is None:
             raise SubscriptionRenewalError(
                 "Cannot renew a subscription with no date_end set."
@@ -1355,11 +1344,6 @@ class Subscription(models.Model):
         if self.date_end is None:
             raise SubscriptionReminderError(
                 "This subscription has no end date."
-            )
-        if self.subscriber.organization is not None:
-            raise SubscriptionReminderError(
-                "This reminder email does not yet handle organization "
-                "subscribers."
             )
         if self.is_renewed:
             # no need to send a reminder email if the subscription
@@ -1497,14 +1481,6 @@ class Subscription(models.Model):
         return current_subscription.plan_version, current_subscription
 
     @classmethod
-    def get_subscribed_plan_by_organization(cls, organization):
-        """
-        Returns SoftwarePlanVersion, Subscription for the given organization.
-        """
-        subscriber = Subscriber.objects.safe_get(organization=organization, domain=None)
-        return cls._get_plan_by_subscriber(subscriber) if subscriber else None, None
-
-    @classmethod
     def get_subscribed_plan_by_domain(cls, domain):
         """
         Returns SoftwarePlanVersion, Subscription for the given domain.
@@ -1520,9 +1496,8 @@ class Subscription(models.Model):
             except DefaultProductPlan.DoesNotExist:
                 raise ProductPlanNotFoundError
         domain = domain_obj
-        subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
-        plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
-                                      else cls.get_subscribed_plan_by_organization(domain.organization))
+        subscriber = Subscriber.objects.safe_get(domain=domain.name)
+        plan_version, subscription = cls._get_plan_by_subscriber(subscriber) if subscriber else (None, None)
         if plan_version is None:
             plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
         return plan_version, subscription
@@ -1532,7 +1507,7 @@ class Subscription(models.Model):
                                 date_start=None, date_end=None, note=None,
                                 web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
-        subscriber = Subscriber.objects.get_or_create(domain=domain, organization=None)[0]
+        subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         today = datetime.date.today()
         date_start = date_start or today
 
@@ -1611,8 +1586,7 @@ class Subscription(models.Model):
     @classmethod
     def can_reactivate_domain_subscription(cls, account, domain, plan_version,
                                            date_start=None):
-        subscriber = Subscriber.objects.get_or_create(
-            domain=domain, organization=None)[0]
+        subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         date_start = date_start or datetime.date.today()
         last_subscription = Subscription.objects.filter(
             subscriber=subscriber, date_end=date_start
