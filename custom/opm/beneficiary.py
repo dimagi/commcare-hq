@@ -348,7 +348,7 @@ class OPMCaseRow(object):
                 return True
             else:
                 return any(
-                    form.xpath(self.child_xpath('form/child_{num}/child{num}_attendance_vhnd')) == '1'
+                    form.get_data(self.child_xpath('form/child_{num}/child{num}_attendance_vhnd')) == '1'
                     for form in self.filtered_forms(CHILDREN_FORMS, 1)
                 )
 
@@ -362,7 +362,7 @@ class OPMCaseRow(object):
 
         def _from_forms(filter_kwargs):
             return any(
-                form.xpath('form/pregnancy_questions/mother_weight') == '1'
+                form.get_data('form/pregnancy_questions/mother_weight') == '1'
                 for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
             )
 
@@ -423,7 +423,7 @@ class OPMCaseRow(object):
 
             xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
             return any(
-                form.xpath(xpath) == '1'
+                form.get_data(xpath) == '1'
                 for form in self.filtered_forms(CHILDREN_FORMS, 3)
             )
 
@@ -434,7 +434,7 @@ class OPMCaseRow(object):
         """
         xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
         return any(
-            form.xpath(xpath) == '1'
+            form.get_data(xpath) == '1'
             for form in self.filtered_forms(CHILDREN_FORMS, 1)
         )
 
@@ -454,7 +454,7 @@ class OPMCaseRow(object):
 
             xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
             return any(
-                form.xpath(xpath) == '1'
+                form.get_data(xpath) == '1'
                 for form in self.filtered_forms(CHILDREN_FORMS, months_in_window)
             )
 
@@ -470,7 +470,7 @@ class OPMCaseRow(object):
 
                 def _from_forms():
                     return any(
-                        form.xpath('form/pregnancy_questions/ifa_receive') == '1'
+                        form.get_data('form/pregnancy_questions/ifa_receive') == '1'
                         for form in self.filtered_forms(BIRTH_PREP_XMLNS,
                                                         explicit_start=self.preg_first_eligible_datetime)
                     )
@@ -484,7 +484,7 @@ class OPMCaseRow(object):
 
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
                 xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
-                if form.xpath(xpath) == '0':
+                if form.get_data(xpath) == '0':
                     return False
             return True
 
@@ -492,7 +492,7 @@ class OPMCaseRow(object):
     def child_has_diarhea_in_this_month(self):
         for form in self.filtered_forms(CHILDREN_FORMS, 1):
             xpath = self.child_xpath('form/child_{num}/child{num}_suffer_diarrhea')
-            if form.xpath(xpath) == '1':
+            if form.get_data(xpath) == '1':
                 return True
         return False
 
@@ -500,7 +500,7 @@ class OPMCaseRow(object):
     def child_with_diarhea_received_ors(self):
         for form in self.filtered_forms(CHILDREN_FORMS, 1):
             xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
-            if form.xpath(xpath) and form.xpath(xpath) == '1':
+            if form.get_data(xpath) and form.get_data(xpath) == '1':
                 return True
         return False
 
@@ -508,7 +508,7 @@ class OPMCaseRow(object):
     def child_has_diarhea(self):
         for form in self.filtered_forms(CHILDREN_FORMS):
             xpath = self.child_xpath('form/child_{num}/child{num}_suffer_diarrhea')
-            if form.xpath(xpath) == '1':
+            if form.get_data(xpath) == '1':
                 return True
         return False
 
@@ -517,7 +517,7 @@ class OPMCaseRow(object):
         if self.child_age == 3 and self.block == 'atri':
             # This doesn't depend on a VHND - it should happen at the hospital
             def _test(form):
-                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
+                return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
 
             return any(
                 _test(form)
@@ -531,7 +531,7 @@ class OPMCaseRow(object):
                 return True
 
             def _test(form):
-                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
+                return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
             return any(
                 _test(form)
                 for form in self.filtered_forms(CFU1_XMLNS, 3)
@@ -544,7 +544,7 @@ class OPMCaseRow(object):
                 return True
 
             def _test(form):
-                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_measlesvacc')) == '1'
+                return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_measlesvacc')) == '1'
 
             return any(
                 _test(form)
@@ -577,7 +577,7 @@ class OPMCaseRow(object):
         if self.child_age == 6 and self.block == 'atri':
             xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
             forms = self.filtered_forms(CHILDREN_FORMS)
-            return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
+            return bool(forms) and all([form.get_data(xpath) == '1' for form in forms])
 
     @property
     def weight_grade_normal(self):
@@ -1080,14 +1080,14 @@ class LongitudinalConditionsMet(ConditionsMet):
 
     def get_value_from_form(self, form_xmlns, path):
         return self.get_first_or_empty([
-            form.xpath(path)
+            form.get_data(path)
             for form in self.filtered_forms(form_xmlns)
         ])
 
     @property
     def dob_known(self):
         return any(
-            form.xpath('form/dob_known') == 1
+            form.get_data('form/dob_known') == 1
             for form in self.filtered_forms(PREG_REG_XMLNS)
         )
 
@@ -1115,7 +1115,7 @@ class LongitudinalConditionsMet(ConditionsMet):
 
         def _from_forms(filter_kwargs):
             return any(
-                form.xpath('form/pregnancy_questions/mother_weight') == '1'
+                form.get_data('form/pregnancy_questions/mother_weight') == '1'
                 for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
             )
 
