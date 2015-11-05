@@ -9,7 +9,7 @@ from django.conf import settings
 
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
-from casexml.apps.case.dbaccessors import get_indexed_case_ids
+from casexml.apps.case.dbaccessors import get_indexed_case_ids, get_extension_case_ids
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
@@ -122,13 +122,19 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
 def get_indexed_cases(domain, case_ids):
     """
     Given a base list of cases, gets all wrapped cases that they reference
-    (parent cases).
+    (parent and host cases).
     """
     from casexml.apps.case.models import CommCareCase
     return [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
                                                         get_indexed_case_ids(domain, case_ids))]
 
-
+def get_extension_cases(domain, case_ids):
+    """
+    Given a base list of cases, gets all wrapped extension cases
+    """
+    from casexml.apps.case.models import CommCareCase
+    return [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(),
+                                                        get_extension_case_ids(domain, case_ids))]
 def primary_actions(case):
     return filter(lambda a: a.action_type != const.CASE_ACTION_REBUILD,
                   case.actions)
