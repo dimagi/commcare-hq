@@ -3,6 +3,9 @@ from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 
 
+DATA_SOURCE_COLUMN = 'data_source_column'
+
+
 class ChoiceQueryContext(object):
     """
     Context that will be passed to a choice provider function.

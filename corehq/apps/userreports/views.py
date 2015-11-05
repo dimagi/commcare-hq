@@ -28,7 +28,6 @@ from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.style.decorators import upgrade_knockout_js
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
@@ -38,7 +37,6 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserQueryError,
 )
-from corehq.apps.userreports.filters.dynamic_choice_lists import get_choices_from_data_source_column
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
@@ -56,8 +54,9 @@ from corehq.apps.userreports.models import (
     get_report_config,
 )
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
+from corehq.apps.userreports.reports.filters.factory import FilterChoiceProviderFactory
 from corehq.apps.userreports.reports.view import ConfigurableReport
-from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -66,7 +65,6 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.db import Session
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -682,7 +680,7 @@ def choice_list_api(request, domain, report_id, filter_id):
         limit=int(request.GET.get('limit', 20)),
         page=int(request.GET.get('page', 1)) - 1
     )
-    return json_response(get_choices_from_data_source_column(query_context))
+    return json_response(FilterChoiceProviderFactory.from_type(report_filter.choice_provider_id)(query_context))
 
 
 def _shared_context(domain):
