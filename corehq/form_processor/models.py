@@ -14,6 +14,21 @@ from .exceptions import XFormNotFound
 
 class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     """An XForms SQL instance."""
+    NORMAL = 0
+    ARCHIVED = 1
+    DEPRECATED = 2
+    DUPLICATE = 3
+    ERROR = 4
+    SUBMISSION_ERROR_LOG = 5
+    STATES = (
+        (NORMAL, 'normal'),
+        (ARCHIVED, 'archived'),
+        (DEPRECATED, 'deprecated'),
+        (DUPLICATE, 'duplicate'),
+        (ERROR, 'error'),
+        (SUBMISSION_ERROR_LOG, 'submission_error'),
+    )
+
     form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
@@ -32,11 +47,7 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
     # export_tag = DefaultProperty(name='#export_tag')
-    is_archived = models.BooleanField(default=False)
-    is_duplicate = models.BooleanField(default=False)
-    is_error = models.BooleanField(default=False)
-    is_deprecated = models.BooleanField(default=False)
-    is_submission_error_log = models.BooleanField(default=False)
+    state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
 
     @classmethod
     def get(cls, id):
@@ -51,7 +62,27 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
 
     @property
     def is_normal(self):
-        return not (self.is_error or self.is_deprecated or self.is_duplicate or self.is_archived)
+        return self.state == self.NORMAL
+
+    @property
+    def is_archived(self):
+        return self.state == self.ARCHIVED
+
+    @property
+    def is_deprecated(self):
+        return self.state == self.DEPRECATED
+
+    @property
+    def is_duplicate(self):
+        return self.state == self.DUPLICATE
+
+    @property
+    def is_error(self):
+        return self.state == self.ERROR
+
+    @property
+    def is_submission_error_log(self):
+        return self.state == self.SUBMISSION_ERROR_LOG
 
     @property
     def form_data(self):
@@ -81,7 +112,7 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     def archive(self, user=None):
         if self.is_archived:
             return
-        self.is_archived = True
+        self.state = self.ARCHIVED
         self.xformoperationsql_set.create(
             user=user,
             operation=XFormOperationSQL.ARCHIVE,
@@ -92,7 +123,7 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     def unarchive(self, user=None):
         if not self.is_archived:
             return
-        self.is_archived = False
+        self.state = self.NORMAL
         self.xformoperationsql_set.create(
             user=user,
             operation=XFormOperationSQL.UNARCHIVE,
