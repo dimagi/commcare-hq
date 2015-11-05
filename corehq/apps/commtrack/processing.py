@@ -197,7 +197,7 @@ def process_stock(xforms, case_db=None):
     process the commtrack xml constructs in an incoming submission
     """
     if not case_db:
-        case_db = FormProcessorInterface(xforms[0].domain).casedb_cache
+        case_db = FormProcessorInterface(xforms[0].domain).casedb_cache()
     else:
         assert isinstance(case_db, AbstractCaseDbCache)
 
