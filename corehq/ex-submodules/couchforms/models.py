@@ -200,7 +200,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     @property
     def is_normal(self):
-        assert self.doc_type == 'XFormInstance'
         return not (self.is_error or self.is_deprecated or self.is_duplicate or self.is_archived)
 
     @property
