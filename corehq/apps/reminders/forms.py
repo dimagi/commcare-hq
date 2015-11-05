@@ -924,7 +924,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def current_values(self):
         current_values = {
             'is_trial_project': domain_is_on_trial(self.domain),
-            'email_trial_message': EMAIL_TRIAL_MESSAGE  % {'limit': TRIAL_MAX_EMAILS},
+            'email_trial_message': EMAIL_TRIAL_MESSAGE % {'limit': TRIAL_MAX_EMAILS},
         }
         for field_name in self.fields.keys():
             current_values[field_name] = self[field_name].value()
@@ -2702,7 +2702,7 @@ class BroadcastForm(Form):
     def current_values(self):
         values = {
             'is_trial_project': domain_is_on_trial(self.domain),
-            'email_trial_message': EMAIL_TRIAL_MESSAGE  % {'limit': TRIAL_MAX_EMAILS},
+            'email_trial_message': EMAIL_TRIAL_MESSAGE % {'limit': TRIAL_MAX_EMAILS},
         }
         for field_name in self.fields.keys():
             values[field_name] = self[field_name].value()
