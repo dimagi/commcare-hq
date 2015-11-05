@@ -54,8 +54,8 @@ class StockSummaryReportData(EmailReportData):
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
 
-        products = self.unique_products(locations)
-        row_data = {product.name: defaultdict(lambda: 0) for product in products}
+        row_data = defaultdict(lambda: {'total_fac': 0, 'reported_fac': 0,
+                                        'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0})
 
         for location in locations:
             location_products = list(location.products)
