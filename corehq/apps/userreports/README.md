@@ -727,15 +727,33 @@ instead), but it exists because the report builder needs it.
 
 ### Dynamic choice lists
 
-Dynamic choice lists provide a select widget that shows all possible values for a column.
+Dynamic choice lists provide a select widget that will generate a list of options dynamically.
 
-```
+The default behavior is simply to show all possible values for a column, however you can also specify a `choice_provider` to customize this behavior.
+Currently the only supported `choice_provider` is for locations.
+
+Simple example assuming "village" is a name:
+```json
 {
   "type": "dynamic_choice_list",
   "slug": "village",
   "field": "village",
   "display": "Village",
   "datatype": "string"
+}
+```
+
+Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
+```json
+{
+  "type": "dynamic_choice_list",
+  "slug": "village",
+  "field": "location_id",
+  "display": "Village",
+  "datatype": "string",
+  "choice_provider": {
+      "type": "location"
+  }
 }
 ```
 

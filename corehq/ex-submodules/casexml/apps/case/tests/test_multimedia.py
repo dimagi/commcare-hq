@@ -192,7 +192,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     def testOTARestoreSingle(self):
         _, _, [case] = self._doCreateCaseWithMultimedia()
         restore_attachments = ['fruity_file']
-        self._validateOTARestore(case.id, restore_attachments)
+        self._validateOTARestore(case.case_id, restore_attachments)
 
     def testOTARestoreMultiple(self):
         _, _, [case] = self._doCreateCaseWithMultimedia()
@@ -200,7 +200,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         removes = ['fruity_file']
         _, _, [case] = self._doSubmitUpdateWithMultimedia(new_attachments=restore_attachments, removes=removes)
 
-        self._validateOTARestore(case.id, restore_attachments)
+        self._validateOTARestore(case.case_id, restore_attachments)
 
     def _validateOTARestore(self, case_id, restore_attachments):
         case_xml = self.interface.case_model.get(case_id).to_xml(V2)

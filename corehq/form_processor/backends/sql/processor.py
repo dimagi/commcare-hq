@@ -1,9 +1,10 @@
 import datetime
 import uuid
+import hashlib
 
 from couchforms.util import process_xform
 
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL
 from corehq.form_processor.utils import extract_meta_instance_id
 
 
@@ -22,13 +23,23 @@ class FormProcessorSQL(object):
                 xform.domain = domain
         xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
         with xform_lock as xforms:
-            for xform in xforms:
-                xform.save()
+            cls.bulk_save(xforms[0], xforms)
             return xforms[0]
 
     @classmethod
     def store_attachments(cls, xform, attachments):
-        pass
+        xform_attachments = []
+        for attachment in attachments:
+            xform_attachment = XFormAttachmentSQL(
+                name=attachment.name,
+                attachment_uuid=unicode(uuid.uuid4()),
+                content_type=attachment.content_type,
+                md5=hashlib.md5(attachment.content).hexdigest(),
+            )
+            xform_attachment.write_content(attachment.content)
+            xform_attachments.append(xform_attachment)
+
+        xform.unsaved_attachments = xform_attachments
 
     @classmethod
     def new_xform(cls, form_data):
@@ -44,3 +55,21 @@ class FormProcessorSQL(object):
     @classmethod
     def is_duplicate(cls, xform, lock):
         return False
+
+    @classmethod
+    def bulk_save(cls, instance, xforms, cases=None):
+        try:
+            XFormInstanceSQL.objects.bulk_create(xforms)
+        except Exception as e:
+            xforms_being_saved = [xform.form_id for xform in xforms]
+            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+                type(e).__name__,
+                unicode(e),
+                ', '.join(xforms_being_saved)
+            )
+            # instance = _handle_unexpected_error(instance, error_message)
+            raise
+
+        for unsaved_attachment in instance.unsaved_attachments:
+            unsaved_attachment.xform = instance
+        instance.xformattachmentsql_set.bulk_create(instance.unsaved_attachments)

@@ -192,8 +192,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
 
     if request.method == "POST":
         form = OneTimeReminderForm(request.POST,
-            can_use_survey=can_use_survey_reminders(request),
-            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
+            can_use_survey=can_use_survey_reminders(request))
         form._cchq_domain = domain
         if form.is_valid():
             content_type = form.cleaned_data.get("content_type")
@@ -261,8 +260,7 @@ def add_one_time_reminder(request, domain, handler_id=None):
             initial = {}
 
         form = OneTimeReminderForm(initial=initial,
-            can_use_survey=can_use_survey_reminders(request),
-            can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
+            can_use_survey=can_use_survey_reminders(request))
 
     return render_one_time_reminder_form(request, domain, form, handler_id)
 
@@ -283,8 +281,7 @@ def copy_one_time_reminder(request, domain, handler_id):
                            if handler.events[0].form_unique_id is not None else None),
     }
     form = OneTimeReminderForm(initial=initial,
-        can_use_survey=can_use_survey_reminders(request),
-        can_use_email=toggles.EMAIL_IN_REMINDERS.enabled(domain))
+        can_use_survey=can_use_survey_reminders(request))
     return render_one_time_reminder_form(request, domain, form, None)
 
 @reminders_framework_permission
