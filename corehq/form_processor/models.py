@@ -3,6 +3,7 @@ import collections
 
 from lxml import etree
 
+from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
 from dimagi.utils.couch import RedisLockableMixIn
@@ -37,11 +38,10 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
 
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
+    auth_context = JSONField(lazy=True)
+    openrosa_headers = JSONField(lazy=True)
     partial_submission = models.BooleanField(default=False)
-    # history = SchemaListProperty(XFormOperation)
-    # auth_context = DictProperty()
     submit_ip = models.CharField(max_length=255, null=True)
-    # openrosa_headers = DictProperty()
     last_sync_token = models.CharField(max_length=255, null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
