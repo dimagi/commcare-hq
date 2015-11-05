@@ -151,6 +151,19 @@ var ManageRemindersViewModel = function (
 
     self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
 
+    self.is_trial_project = initial.is_trial_project;
+    self.displayed_email_trial_message = false;
+    self.method.subscribe(function(newValue) {
+        if(
+            self.is_trial_project &&
+            !self.displayed_email_trial_message &&
+            newValue === self.choices.METHOD_EMAIL
+        ) {
+            $('#email-trial-message-modal').modal('show');
+            self.displayed_email_trial_message = true;
+        }
+    });
+
     self.available_case_types = ko.observableArray();
     self.available_case_properties = {};
     self.available_subcase_properties = {};

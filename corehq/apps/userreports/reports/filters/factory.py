@@ -4,6 +4,8 @@ from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, C
     NumericFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.reports.filters.choice_providers import get_choices_from_data_source_column, \
+    DATA_SOURCE_COLUMN, LOCATION, get_location_choices
 from corehq.apps.userreports.reports.filters.values import(
     dynamic_choice_list_url,
     NONE_CHOICE,
@@ -55,6 +57,7 @@ def _build_dynamic_choice_list_filter(spec):
         label=wrapped.display,
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,
+        choice_provider=FilterChoiceProviderFactory.from_spec(wrapped.get_choice_provider_spec()),
     )
 
 
@@ -86,3 +89,14 @@ class ReportFilterFactory(object):
                     ', '.join(cls.constructor_map.keys())
                 )
             )
+
+
+class FilterChoiceProviderFactory(object):
+    constructor_map = {
+        DATA_SOURCE_COLUMN: get_choices_from_data_source_column,
+        LOCATION: get_location_choices,
+    }
+
+    @classmethod
+    def from_spec(cls, choice_provider_spec):
+        return cls.constructor_map.get(choice_provider_spec['type'], get_choices_from_data_source_column)

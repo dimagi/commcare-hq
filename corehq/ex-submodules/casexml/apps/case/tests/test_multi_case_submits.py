@@ -41,6 +41,6 @@ class MultiCaseTest(TestCase):
 
     def _check_ids(self, form, cases):
         for case in cases:
-            ids = self.interface.case_model.get_case_xform_ids(case.id)
+            ids = self.interface.case_model.get_case_xform_ids(case.case_id)
             self.assertEqual(1, len(ids))
             self.assertEqual(form._id, ids[0])
