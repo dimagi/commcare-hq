@@ -104,3 +104,13 @@ class SimplePillowCheckpointDaoTest(SimpleTestCase, PillowCheckpointDaoTestMixin
     @memoized
     def dao(self):
         return MockDocumentStore()
+
+
+class SQLPillowCheckpointDaoTest(TestCase, PillowCheckpointDaoTestMixin):
+
+    @property
+    @memoized
+    def dao(self):
+        return DjangoDocumentStore(
+            DjangoPillowCheckpoint, DjangoPillowCheckpoint.to_dict, DjangoPillowCheckpoint.from_dict,
+        )
