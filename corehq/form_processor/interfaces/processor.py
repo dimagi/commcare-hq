@@ -29,8 +29,9 @@ class FormProcessorInterface(object):
     @memoized
     def case_model(self):
         from casexml.apps.case.models import CommCareCase
+        from corehq.form_processor.models import CommCareCaseSQL
         if should_use_sql_backend(self.domain):
-            return CommCareCase
+            return CommCareCaseSQL
         else:
             return CommCareCase
 
@@ -54,6 +55,17 @@ class FormProcessorInterface(object):
             return FormProcessorSQL
         else:
             return FormProcessorCouch
+
+    @property
+    @memoized
+    def casedb_cache(self):
+        from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
+        from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
+
+        if should_use_sql_backend(self.domain):
+            return CaseDbCacheSQL
+        else:
+            return CaseDbCacheCouch
 
     @unit_testing_only
     def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):

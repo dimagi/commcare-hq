@@ -1,5 +1,6 @@
 class AbstractXFormInstance(object):
 
+    @property
     def form_id(self):
         raise NotImplementedError()
 
@@ -40,7 +41,8 @@ class AbstractXFormInstance(object):
 
 class AbstractCommCareCase(object):
 
-    def id(self):
+    @property
+    def case_id(self):
         raise NotImplementedError()
 
     def hard_delete(self):
@@ -53,6 +55,13 @@ class AbstractCommCareCase(object):
         raise NotImplementedError()
 
     def is_deleted(self):
+        raise NotImplementedError()
+
+    def to_xml(self, version, include_case_on_closed=False):
+        raise NotImplementedError()
+
+    @classmethod
+    def get(cls, case_id):
         raise NotImplementedError()
 
     @classmethod
