@@ -156,6 +156,21 @@ def _extract_meta_instance_id(form):
         return None
 
 
+def get_text_attribute(node):
+    if node is None:
+        return None
+    if isinstance(node, dict) and '#text' in node:
+        value = node['#text']
+    elif isinstance(node, dict) and all(a.startswith('@') for a in node):
+        return None
+    else:
+        value = node
+
+    if not isinstance(value, basestring):
+        value = unicode(value)
+    return value
+
+
 def acquire_lock_for_xform(xform_id):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
