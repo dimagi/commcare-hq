@@ -77,3 +77,6 @@ class FormProcessorInterface(object):
 
     def new_xform(self, instance_xml):
         return self.processor.new_xform(instance_xml)
+
+    def bulk_save(self, instance, xforms, cases=None):
+        return self.processor.bulk_save(instance, xforms, cases=cases)
