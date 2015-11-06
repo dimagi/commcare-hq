@@ -3,11 +3,13 @@ import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
+from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 
 
 class CaseDbCacheCouch(AbstractCaseDbCache):
     case_model_classes = (dict, CommCareCase)
+    case_update_strategy = ActionsUpdateStrategy
 
     def _validate_case(self, doc):
         if self.domain and doc['domain'] != self.domain:

@@ -19,6 +19,7 @@ from casexml.apps.case.exceptions import (
     NoDomainProvided,
 )
 from django.conf import settings
+from couchforms.util import legacy_soft_assert
 from couchforms.validators import validate_phone_datetime
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
@@ -180,29 +181,41 @@ def get_and_check_xform_domain(xform):
     return domain
 
 
-def _get_or_update_cases(xforms, case_db):
-    """
-    Given an xform document, update any case blocks found within it,
-    returning a dictionary mapping the case ids affected to the
-    couch case document objects
+def get_cases_from_forms(case_db, xforms):
+    """Get all cases affected by the forms. Includes new cases, updated cases.
     """
     # have to apply the deprecations before the updates
     sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     touched_cases = {}
     for xform in sorted_forms:
         for case_update in get_case_updates(xform):
-            case_doc = _get_or_update_model(case_update, xform, case_db)
-            touched_cases[case_doc['_id']] = case_doc
+            case_doc = case_db.get_case_from_case_update(case_update, xform)
+            touched_cases[case_doc.case_id] = case_doc
             if case_doc:
                 # todo: legacy behavior, should remove after new case processing
                 # is fully enabled.
-                if xform._id not in case_doc.xform_ids:
+                if xform.form_id not in case_doc.xform_ids:
+                    legacy_soft_assert(False, "xform_id missing from case.xform_ids", {
+                        'xform_id': xform._id,
+                        'case_id': case_doc.case_id
+                    })
                     case_doc.xform_ids.append(xform.get_id)
             else:
                 logging.error(
                     "XForm %s had a case block that wasn't able to create a case! "
                     "This usually means it had a missing ID" % xform.get_id
                 )
+
+    return touched_cases
+
+
+def _get_or_update_cases(xforms, case_db):
+    """
+    Given an xform document, update any case blocks found within it,
+    returning a dictionary mapping the case ids affected to the
+    couch case document objects
+    """
+    touched_cases = get_cases_from_forms(case_db, xforms)
 
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
@@ -246,21 +259,6 @@ def _get_or_update_cases(xforms, case_db):
         dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
 
     return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
-
-
-def _get_or_update_model(case_update, xform, case_db):
-    """
-    Gets or updates an existing case, based on a block of data in a
-    submitted form.  Doesn't save anything.
-    """
-    case = case_db.get(case_update.id)
-    if case is None:
-        case = ActionsUpdateStrategy.case_from_case_update(case_update, xform)
-        case_db.set(case['_id'], case)
-        return case
-    else:
-        ActionsUpdateStrategy(case).update_from_case_update(case_update, xform, case_db.get_cached_forms())
-        return case
 
 
 def is_device_report(doc):

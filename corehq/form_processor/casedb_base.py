@@ -18,6 +18,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     """
 
     case_model_classes = ()  # tuple of allowable classes
+    case_update_strategy = None
 
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
                  lock=False, wrap=True, initial=None, xforms=None):
@@ -110,3 +111,17 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     @abstractmethod
     def get_cases_for_saving(self, now):
         pass
+
+    def get_case_from_case_update(self, case_update, xform):
+        """
+        Gets or updates an existing case, based on a block of data in a
+        submitted form.  Doesn't save anything.
+        """
+        case = self.get(case_update.id)
+        if case is None:
+            case = self.case_update_strategy.case_from_case_update(case_update, xform)
+            self.set(case.case_id, case)
+            return case
+        else:
+            self.case_update_strategy(case).update_from_case_update(case_update, xform, self.get_cached_forms())
+            return case
