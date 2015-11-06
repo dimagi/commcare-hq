@@ -81,6 +81,7 @@ class BasicPillow(PillowBase):
     extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
     _couch_db = None
+    _checkpoint = None
     include_docs = True
     use_locking = False
 
@@ -118,12 +119,13 @@ class BasicPillow(PillowBase):
         return CouchDocumentStore(self._couch_db)
 
     @property
-    @memoized
     def checkpoint(self):
-        return PillowCheckpoint(
-            self.document_store,
-            construct_checkpoint_doc_id_from_name(self.get_name()),
-        )
+        if self._checkpoint is None:
+            self._checkpoint = PillowCheckpoint(
+                self.document_store,
+                construct_checkpoint_doc_id_from_name(self.get_name()),
+            )
+        return self._checkpoint
 
     def get_change_feed(self):
         return CouchChangeFeed(
