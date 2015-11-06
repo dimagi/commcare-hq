@@ -77,6 +77,15 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_jquery_ui %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
+        {% endcompress %}
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
         {% include "style/includes/bootstrap3/core_libraries.html" %}
@@ -298,6 +307,12 @@
         {% if request.use_select2_v4 %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_jquery_ui %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
