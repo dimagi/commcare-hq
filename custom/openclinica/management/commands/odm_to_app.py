@@ -34,6 +34,9 @@ ODK_DATA_TYPES = {
     'intervalDatetime': 'string',
     'incompleteDatetime': 'string',
     'URI': 'string',
+    # Convert ODM questions with choices to XForm selects
+    'select': 'select',
+    'select1': 'select1',
 }
 
 
@@ -187,7 +190,8 @@ class StudyForm(StudyObject):
             data_type = 'repeatGroup' if self.is_repeating else 'group'
             group = xform.new_group(ig.question_name, ig.question_label, data_type)
             for item in ig.iter_items():
-                group.add_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type])
+                group.add_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
+                                   choices=item.choices)
         return xform.tostring(pretty_print=True)
 
 
@@ -223,26 +227,30 @@ class Item(StudyObject):
         self.comment = defn.get('Comment')
         self.item_group = item_group
 
-        cl_ref = defn.xpath('./CodeListRef')
+        cl_ref = defn.xpath('./odm:CodeListRef', namespaces=odm_nsmap)
         if cl_ref:
             self.data_type = 'select1'
             self.choices = self.get_choices(cl_ref[0].get('CodeListOID'))
+        else:
+            self.choices = None
 
         self.question_name = self.oid.lower()
-        text = defn.xpath('./Question/TranslatedText')
+        text = defn.xpath('./odm:Question/odm:TranslatedText', namespaces=odm_nsmap)
         self.question_label = text[0].text if text else self.name
 
     def get_choices(self, cl_oid):
         choices = {}
         cl_def = self.meta.xpath('./odm:CodeList[@OID="{}"]'.format(cl_oid), namespaces=odm_nsmap)[0]
         for cl_item in cl_def:
-            choices[cl_item.get('CodedValue')] = cl_item.xpath('./Decode/TranslatedText')[0].text
+            value = cl_item.get('CodedValue')
+            label = cl_item.xpath('./odm:Decode/odm:TranslatedText', namespaces=odm_nsmap)[0].text
+            choices[value] = label
         return choices
 
 
 class Command(BaseCommand):
     help = 'Create an application from an ODM document in the given domain'
-    args = '<domain> <app-name> <odm-doc>'
+    args = '<domain> <app-slug> <odm-doc>'
 
     def handle(self, *args, **options):
         domain_name, app_name, odm_filename = args
