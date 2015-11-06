@@ -8,6 +8,7 @@ from corehq.apps.styleguide.palette import (
     PaletteColorGroup,
     Palette,
 )
+from corehq.apps.styleguide.example_forms import BasicCrispyForm
 
 
 def styleguide_default(request):
@@ -79,10 +80,17 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def sections(self):
         return [
-            'forms/best_practices',
+            'forms/intro',
+            'forms/b3_migration',
             'forms/anatomy',
             'forms/controls',
         ]
+
+    @property
+    def page_context(self):
+        return {
+            'basic_crispy_form': BasicCrispyForm(),
+        }
 
 
 class IconsStyleGuideView(BaseStyleGuideArticleView):
