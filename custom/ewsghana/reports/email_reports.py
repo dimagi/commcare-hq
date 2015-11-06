@@ -66,14 +66,12 @@ class StockSummaryReportData(EmailReportData):
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
                 sql_product__in=location_products
-            ).select_related('sql_product')
+            )
 
             for product in location_products:
                 row_data[product.name]['total_fac'] += 1
 
             for state in stock_states:
-                if state.sql_product not in location_products:
-                    continue
                 p_name = state.sql_product.name
                 row_data[p_name]['reported_fac'] += 1
                 s = _stock_status(state, location)
