@@ -191,16 +191,7 @@ def get_cases_from_forms(case_db, xforms):
         for case_update in get_case_updates(xform):
             case_doc = case_db.get_case_from_case_update(case_update, xform)
             touched_cases[case_doc.case_id] = case_doc
-            if case_doc:
-                # todo: legacy behavior, should remove after new case processing
-                # is fully enabled.
-                if xform.form_id not in case_doc.xform_ids:
-                    legacy_soft_assert(False, "xform_id missing from case.xform_ids", {
-                        'xform_id': xform._id,
-                        'case_id': case_doc.case_id
-                    })
-                    case_doc.xform_ids.append(xform.get_id)
-            else:
+            if not case_doc:
                 logging.error(
                     "XForm %s had a case block that wasn't able to create a case! "
                     "This usually means it had a missing ID" % xform.get_id

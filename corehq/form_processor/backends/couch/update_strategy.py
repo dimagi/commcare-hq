@@ -16,7 +16,7 @@ from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
-from couchforms.util import is_deprecation, is_override
+from couchforms.util import is_deprecation, is_override, legacy_soft_assert
 from dimagi.utils import parsing
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
@@ -183,6 +183,15 @@ class ActionsUpdateStrategy(UpdateStrategy):
 
         if case_update.version:
             self.case.version = case_update.version
+
+        # todo: legacy behavior, should remove after new case processing
+        # is fully enabled.
+        if xformdoc.form_id not in self.case.xform_ids:
+            legacy_soft_assert(False, "xform_id missing from case.xform_ids", {
+                'xform_id': xformdoc._id,
+                'case_id': self.case.case_id
+            })
+            self.case.xform_ids.append(xformdoc.get_id)
 
     def reset_case_state(self):
         """
