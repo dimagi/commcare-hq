@@ -1,3 +1,8 @@
+import logging
+from couchdbkit import ResourceNotFound
+from dimagi.utils.decorators.memoized import memoized
+
+
 class AbstractXFormInstance(object):
 
     @property
@@ -65,6 +70,19 @@ class AbstractXFormInstance(object):
     @property
     def is_submission_error_log(self):
         raise NotImplementedError()
+
+    @memoized
+    def get_sync_token(self):
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        if self.last_sync_token:
+            try:
+                return get_properly_wrapped_sync_log(self.last_sync_token)
+            except ResourceNotFound:
+                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
+                    self.last_sync_token, self.form_id, self.domain,
+                ))
+                raise
+        return None
 
 
 class AbstractCommCareCase(object):
