@@ -31,7 +31,7 @@ from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
 try:
     from corehq.util.soft_assert import soft_assert
-    _assert = soft_assert(to='@'.join('czue', 'dimagi.com'))
+    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
 except ImportError:
     # hack for dependency resolution if corehq not available
     _assert = lambda assertion, message: None
