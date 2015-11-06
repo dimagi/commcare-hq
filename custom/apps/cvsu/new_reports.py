@@ -12,6 +12,7 @@ class NewChildProtectionReport(ChildProtectionReport):
 
     slug = 'new_child_protection_report'
 
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return USER_CONFIGURABLE_REPORTS.enabled(user.username)
 
@@ -29,6 +30,7 @@ class NewChildProtectionReportTrend(ChildProtectionReportTrend):
 
     slug = 'new_child_protection_report_trend'
 
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return USER_CONFIGURABLE_REPORTS.enabled(user.username)
 
@@ -46,6 +48,7 @@ class NewCVSUPerformanceReport(CVSUPerformanceReport):
 
     slug = 'new_cvsu_performance_report'
 
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return USER_CONFIGURABLE_REPORTS.enabled(user.username)
 
@@ -64,6 +67,7 @@ class NewCVSUPerformanceReportTrend(CVSUPerformanceReportTrend):
 
     slug = 'new_cvsu_performance_report_trend'
 
+    @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return USER_CONFIGURABLE_REPORTS.enabled(user.username)
 

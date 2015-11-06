@@ -312,7 +312,7 @@
                     "type": "property_path",
                     "property_path": [
                         "form",
-                        "age"
+                        "victim_age"
                     ]
                 },
                 "is_primary_key": false,
