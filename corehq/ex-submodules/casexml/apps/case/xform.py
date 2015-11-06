@@ -116,7 +116,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
         notify_exception(
             None,
             'something went wrong sending the cases_received signal '
-            'for form %s: %s' % (xform._id, e)
+            'for form %s: %s' % (xform.form_id, e)
         )
 
     for case in cases:
@@ -199,17 +199,17 @@ def _get_or_update_cases(xforms, case_db):
                     if referenced_case.owner_id != case.owner_id:
                         is_dirty = True
         if is_dirty:
-            dirtiness_flags.append(DirtinessFlag(case._id, case.owner_id))
+            dirtiness_flags.append(DirtinessFlag(case.case_id, case.owner_id))
         return dirtiness_flags
 
     def _get_dirtiness_flags_for_child_cases(domain, cases):
-        child_cases = get_reverse_indexed_cases(domain, [c['_id'] for c in cases])
-        case_owner_map = dict((case._id, case.owner_id) for case in cases)
+        child_cases = get_reverse_indexed_cases(domain, [c.case_id for c in cases])
+        case_owner_map = dict((case.case_id, case.owner_id) for case in cases)
         for child_case in child_cases:
             for index in child_case.indices:
                 if (index.referenced_id in case_owner_map
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
-                    yield DirtinessFlag(child_case._id, child_case.owner_id)
+                    yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
     dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
     domain = getattr(case_db, 'domain', None)
