@@ -353,14 +353,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_daterangepicker %}
-        {% compress js %}
-        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
         {% compress js %}
         {% block js %}{% endblock js %}
         {% endcompress %}
