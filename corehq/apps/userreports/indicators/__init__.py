@@ -1,7 +1,7 @@
 from collections import defaultdict
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.sql import truncate_value
-from fluff import TYPE_INTEGER, TYPE_DECIMAL
+from fluff import TYPE_INTEGER
 
 
 class Column(object):
@@ -109,7 +109,7 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
 
     def _make_column(self, product_code):
         column_id = '{}_{}'.format(self.column_id, product_code)
-        return Column(column_id, TYPE_DECIMAL)
+        return Column(column_id, TYPE_INTEGER)
 
     @staticmethod
     def _get_values_by_product(ledger_section, case_id, product_codes):
