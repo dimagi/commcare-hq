@@ -54,8 +54,11 @@ class StockSummaryReportData(EmailReportData):
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
 
-        row_data = defaultdict(lambda: {'total_fac': 0, 'reported_fac': 0,
-                                        'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0})
+        row_data = {}
+
+        for product in SQLProduct.by_domain(self.domain).exclude(is_archived=True):
+            row_data[product.name] = {'total_fac': 0, 'reported_fac': 0,
+                                      'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0}
 
         for location in locations:
             location_products = list(location.products)
@@ -63,12 +66,14 @@ class StockSummaryReportData(EmailReportData):
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
                 sql_product__in=location_products
-            )
+            ).select_related('sql_product')
 
             for product in location_products:
                 row_data[product.name]['total_fac'] += 1
 
             for state in stock_states:
+                if state.sql_product not in location_products:
+                    continue
                 p_name = state.sql_product.name
                 row_data[p_name]['reported_fac'] += 1
                 s = _stock_status(state, location)
