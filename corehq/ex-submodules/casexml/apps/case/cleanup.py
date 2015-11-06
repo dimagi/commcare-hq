@@ -69,7 +69,7 @@ def rebuild_case_from_actions(case, actions):
     case.actions = actions
     # call "rebuild" on the case, which should populate xform_ids
     # and re-sort actions if necessary
-    strategy.soft_rebuild_case(strict=False)
+    strategy.soft_rebuild_case()
 
 
 def rebuild_case_from_forms(case_id):

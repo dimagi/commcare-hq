@@ -103,7 +103,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
         if rebuild:
             # it's pretty important not to block new case changes
             # just because previous case changes have been bad
-            self.soft_rebuild_case(strict=False, xforms=xforms)
+            self.soft_rebuild_case(xforms=xforms)
 
         return self
 
@@ -145,7 +145,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
         # rebuild the case
         local_forms = {xformdoc.form_id: xformdoc}
         local_forms.update(other_forms or {})
-        self.soft_rebuild_case(strict=False, xforms=local_forms)
+        self.soft_rebuild_case(xforms=local_forms)
 
         if case_update.version:
             self.case.version = case_update.version
@@ -203,7 +203,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
         self.case.closed_by = ''
         return self
 
-    def soft_rebuild_case(self, strict=True, xforms=None):
+    def soft_rebuild_case(self, xforms=None):
         """
         Rebuilds the case state in place from its actions.
 
@@ -215,20 +215,11 @@ class ActionsUpdateStrategy(UpdateStrategy):
         try:
             self.case.actions = sorted(self.case.actions, key=_action_sort_key_function(self.case))
         except MissingServerDate:
-            # only worry date reconciliation if in strict mode
-            if strict:
-                raise
+            pass
 
         # remove all deprecated actions during rebuild.
         self.case.actions = [a for a in self.case.actions if not a.deprecated]
         actions = copy.deepcopy(list(self.case.actions))
-
-        if strict:
-            if actions[0].action_type != const.CASE_ACTION_CREATE:
-                error = u"Case {0} first action not create action: {1}"
-                raise ReconciliationError(
-                    error.format(self.case.case_id, self.case.actions[0])
-                )
 
         for a in actions:
             self._apply_action(a, xforms.get(a.xform_id))
