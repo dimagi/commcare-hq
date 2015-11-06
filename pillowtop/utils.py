@@ -1,11 +1,9 @@
 from __future__ import division
 from collections import namedtuple
-import inspect
 from datetime import datetime
-from dateutil.parser import parse
 import importlib
 from django.conf import settings
-import pytz
+from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.exceptions import PillowNotFoundError
 
 
@@ -115,7 +113,7 @@ def get_pillow_json(pillow_config):
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.get('timestamp')
     if timestamp:
-        time_since_last = datetime.now(tz=pytz.UTC) - parse(timestamp)
+        time_since_last = datetime.utcnow() - string_to_utc_datetime(timestamp)
         hours_since_last = time_since_last.total_seconds() // 3600
 
         try:
