@@ -260,6 +260,8 @@ def extract_case_blocks(doc, include_path=False):
     """
     if isinstance(doc, XFormInstance):
         form = doc.to_json()['form']
+    elif isinstance(doc, dict):
+        form = doc
     else:
         form = doc.form_data
 
