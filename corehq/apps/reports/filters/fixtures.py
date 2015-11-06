@@ -35,7 +35,7 @@ class AsyncDrillableFilter(BaseReportFilter):
     @property
     def api_root(self):
         return reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'fixture',
+                                                        'resource_name': 'fixture_internal',
                                                         'api_name': 'v0.1'})
 
     @property
@@ -107,7 +107,7 @@ class AsyncLocationFilter(BaseReportFilter):
     @property
     def filter_context(self):
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'location',
+                                                        'resource_name': 'location_internal',
                                                         'api_name': 'v0.3'})
         user = self.request.couch_user
         loc_id = self.request.GET.get('location_id')
