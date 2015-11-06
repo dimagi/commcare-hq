@@ -717,7 +717,8 @@ class FluffPillow(PythonPillow):
         if doc.get('domain') in self.domains:
             return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
 
-    def _get_base_name(self):
+    @classmethod
+    def _get_base_name(cls):
         # used in the name/checkpoint ID
         return 'fluff'
 
