@@ -17,3 +17,50 @@
      padding-left: 8px;
   }
 }
+
+legend .subtext {
+  font-size: .8em;
+  color: lighten(@cc-text, 40%);
+  padding-bottom: 5px;
+}
+
+.daterangepicker {
+  .ranges li {
+    background-color: @cc-bg !important;
+    color: @cc-light-cool-accent-low !important;
+    border: none !important;
+    line-height: 30px;
+    &:hover {
+      background-color: @cc-light-cool-accent-mid !important;
+      color: #ffffff !important;
+    }
+  }
+
+  .ranges li.active {
+    background-color: @cc-light-cool-accent-low !important;
+    color: #ffffff !important;
+  }
+
+  .range_inputs {
+    button {
+      line-height: 25px;
+      font-size: 12px;
+    }
+  }
+  .applyBtn {
+    background-color: @cc-neutral-low;
+    color: #ffffff;
+    position: relative;
+    margin-bottom: 5px;
+    &:hover {
+      background-color: @cc-att-pos-mid;
+    }
+  }
+  .cancelBtn {
+    background-color: @cc-bg;
+  }
+}
+
+.ui-widget-header select{
+  color: @cc-text;
+}
