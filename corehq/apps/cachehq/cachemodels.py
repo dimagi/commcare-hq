@@ -97,6 +97,14 @@ class DomainInvitationGenerationCache(GenerationCache):
     ]
 
 
+class CommtrackConfigGenerationCache(GenerationCache):
+    generation_key = '#gen#commtrackconfig#'
+    doc_types = ['CommtrackConfig']
+    views = [
+        'domain/docs',
+    ]
+
+
 class UserReportsDataSourceCache(GenerationCache):
     generation_key = '#gen#userreports#datasource#'
     doc_types = ['DataSourceConfiguration']
