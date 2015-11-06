@@ -5,19 +5,35 @@ from lxml import etree
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from custom.openclinica.utils import odm_nsmap
 
 
-# Map ODM data types to XForm data types
-DATA_TYPES = {
+# Map ODM data types to ODK XForm data types
+# cf. http://www.cdisc.org/system/files/all/generic/application/octet-stream/odm1_3_0_final.htm#ItemDef
+#     https://opendatakit.github.io/odk-xform-spec/#data-types
+#     http://www.w3.org/TR/xmlschema-2/#built-in-primitive-datatypes
+ODK_DATA_TYPES = {
     'text': 'string',
-    'date': 'date',
     'integer': 'int',
+    'float': 'decimal',
+    'date': 'date',
     'time': 'time',
     'datetime': 'dateTime',
+    'string': 'string',
     'boolean': 'boolean',
-    'float': 'decimal',
     'double': 'decimal',
+    'hexBinary': 'string',
+    'base64Binary': 'string',
+    'hexFloat': 'string',
+    'base64Float': 'string',
+    'partialDate': 'date',
+    'partialTime': 'time',
+    'partialDatetime': 'dateTime',
+    'durationDatetime': 'string',
+    'intervalDatetime': 'string',
+    'incompleteDatetime': 'string',
+    'URI': 'string',
 }
 
 
@@ -50,10 +66,23 @@ class Study(StudyObject):
             yield StudyEvent(se_def, self.meta)
 
     @staticmethod
-    def new_subject_module():
+    def get_reg_form_source():
+        """
+        Return a registration form that mimics OpenClinica subject registration
+        """
+        xform = XFormBuilder('Register Subject')
+        xform.add_question('name', 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
+        xform.add_question('subject_study_id', 'Subject Study ID')  # Subject number for this study
+        xform.add_question('dob', 'Date of Birth', data_type='date')
+        xform.add_question('sex', 'Sex', data_type='int', choices={1: 'Male', 2: 'Female'})
+        xform.add_question('enrollment_date', 'Enrollment Date', data_type='date')
+        return xform.tostring(pretty_print=True)
+
+    def new_subject_module(self):
         module = Module.new_module('Study Subjects', None)
         module.case_type = 'subject'
         reg_form = module.new_form('Register Subject')
+        reg_form.source = self.get_reg_form_source()
         reg_form.actions.open_case = OpenCaseAction(name_path="/data/name", external_id=None)
         reg_form.actions.open_case.condition.type = 'always'
         return module
@@ -102,16 +131,76 @@ class StudyForm(StudyObject):
         self.name = defn.get('Name')
         self.is_repeating = defn.get('Repeating') == 'Yes'
 
-    def add_form_to_module(self, module):
+    def iter_item_groups(self):
+        for ig_ref in self.defn.xpath('./odm:ItemGroupRef', namespaces=odm_nsmap):
+            ig_oid = ig_ref.get('ItemGroupOID')
+            ig_def = self.meta.xpath('./odm:ItemGroupDef[@OID="{}"]'.format(ig_oid), namespaces=odm_nsmap)[0]
+            yield ItemGroup(ig_def, self.meta)
+
+    def add_new_form_to_module(self, module):
         """
         Add a CommCare form based in this form's item groups and items to a given CommCare module
         """
         form = module.new_form(self.name, None)
         form.source = self.build_xform()
 
-    def build_form(self):
-        # TODO: Return xform source
-        return ''
+    def build_xform(self):
+        xform = XFormBuilder()
+        for ig in self.iter_item_groups():
+            data_type = 'repeatGroup' if self.is_repeating else 'group'
+            group = xform.new_group(ig.question_name, ig.question_label, data_type)
+            for item in ig.iter_items():
+                group.add_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type])
+        return xform.tostring(pretty_print=True)
+
+
+class ItemGroup(StudyObject):
+
+    def __init__(self, defn, meta):
+        super(ItemGroup, self).__init__(defn, meta)
+        self.oid = defn.get('OID')
+        self.name = defn.get('Name')
+        self.is_repeating = defn.get('Repeating') == 'Yes'
+        self.sas_dataset_name = defn.get('SASDatasetName')
+        self.comment = defn.get('Comment')
+
+        self.question_name = self.oid.lower()
+        self.question_label = self.name
+
+    def iter_items(self):
+        for item_ref in self.defn.xpath('./odm:ItemRef', namespaces=odm_nsmap):
+            item_oid = item_ref.get('ItemOID')
+            item_def = self.meta.xpath('./odm:ItemDef[@OID="{}"]'.format(item_oid), namespaces=odm_nsmap)[0]
+            yield Item(item_def, self.meta, self)
+
+
+class Item(StudyObject):
+
+    def __init__(self, defn, meta, item_group):
+        super(Item, self).__init__(defn, meta)
+        self.oid = defn.get('OID')
+        self.name = defn.get('Name')
+        self.data_type = defn.get('DataType')
+        self.length = defn.get('Length')
+        self.sas_field_name = defn.get('SASFieldName')
+        self.comment = defn.get('Comment')
+        self.item_group = item_group
+
+        cl_ref = defn.xpath('./CodeListRef')
+        if cl_ref:
+            self.data_type = 'select1'
+            self.choices = self.get_choices(cl_ref[0].get('CodeListOID'))
+
+        self.question_name = self.oid.lower()
+        text = defn.xpath('./Question/TranslatedText')
+        self.question_label = text[0].text if text else self.name
+
+    def get_choices(self, cl_oid):
+        choices = {}
+        cl_def = self.meta.xpath('./odm:CodeList[@OID="{}"]'.format(cl_oid), namespaces=odm_nsmap)[0]
+        for cl_item in cl_def:
+            choices[cl_item.get('CodedValue')] = cl_item.xpath('./Decode/TranslatedText')[0].text
+        return choices
 
 
 class Command(BaseCommand):
