@@ -113,6 +113,7 @@ del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
+ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -823,6 +824,12 @@ LOGGING = {
             'formatter': 'verbose',
             'filename': ACCOUNTING_LOG_FILE
         },
+        'analytics': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'simple',
+            'filename': ANALYTICS_LOG_FILE
+        },
         'couchlog': {
             'level': 'WARNING',
             'class': 'couchlog.handlers.CouchHandler',
@@ -885,6 +892,11 @@ LOGGING = {
             'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'analytics': {
+            'handlers': ['analytics'],
+            'level': 'DEBUG',
+            'propagate': True,
         },
     }
 }
