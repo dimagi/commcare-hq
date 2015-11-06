@@ -5,7 +5,6 @@ from custom.apps.cvsu.new_sqldata import NewChildProtectionData, NewChildrenInHo
     NewCVSUIncidentResolutionDataTrend
 from custom.apps.cvsu.reports import ChildProtectionReport, ChildProtectionReportTrend, CVSUPerformanceReport, \
     CVSUPerformanceReportTrend
-from custom.apps.cvsu.sqldata import CVSUServicesDataTrend, CVSUIncidentResolutionDataTrend
 from dimagi.utils.decorators.memoized import memoized
 
 

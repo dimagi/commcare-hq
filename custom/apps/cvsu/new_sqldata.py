@@ -1,14 +1,11 @@
 from sqlagg import SumColumn, AliasColumn
-from sqlagg.columns import MonthColumn, YearColumn, YearQuarterColumn
 from sqlagg.filters import BETWEEN
 from corehq.apps.reports.datatables import DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.sql import get_table_name
 from custom.apps.cvsu.mixins import FilterMixin, CVSUSqlDataMixin, DateColumnMixin
 from custom.apps.cvsu.sqldata import ChildProtectionData, ChildrenInHouseholdData, CVSUActivityData, \
-    CVSUServicesData, CVSUIncidentResolutionData, make_trend, combine_month_year, format_date, \
-    combine_quarter_year, \
-    format_year
+    CVSUServicesData, CVSUIncidentResolutionData, make_trend
 from custom.apps.cvsu.utils import dynamic_date_aggregation
 
 
