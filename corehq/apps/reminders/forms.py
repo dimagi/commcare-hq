@@ -26,8 +26,9 @@ from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
-    FieldWithHelpBubble, InlineColumnField, ErrorsOnlyField,
+    InlineColumnField, ErrorsOnlyField,
 )
+from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
 from corehq.util.spreadsheets.excel import WorksheetNotFound, \

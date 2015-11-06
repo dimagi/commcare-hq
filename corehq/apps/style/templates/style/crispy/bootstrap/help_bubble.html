@@ -1,0 +1,13 @@
+{% if help_bubble_text %}
+    <span class="hq-help-template"
+        data-title="{{ field.label }}"
+        data-content="{{ help_bubble_text }}"
+    ></span>
+    <script>
+        $(function () {
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
+        });
+    </script>
+{% endif %}
