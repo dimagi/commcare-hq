@@ -381,6 +381,7 @@ class SubmissionPost(object):
         from casexml.apps.case.signals import case_post_save
         from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
         from corehq.apps.commtrack.exceptions import MissingProductId
+        from casexml.apps.case.xform import process_cases_with_casedb
 
         cases = []
         errors = []
@@ -392,7 +393,7 @@ class SubmissionPost(object):
                 domain = get_and_check_xform_domain(instance)
                 with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                     try:
-                        case_result = self.interface.process_cases_with_casedb(xforms, case_db)
+                        case_result = process_cases_with_casedb(xforms, case_db)
                         stock_result = self.interface.process_stock(xforms, case_db)
                     except known_errors as e:
                         return self._handle_known_error(e, instance, xforms)

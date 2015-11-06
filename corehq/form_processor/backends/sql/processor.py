@@ -77,11 +77,6 @@ class FormProcessorSQL(object):
             raise
 
     @classmethod
-    def process_cases_with_casedb(cls, xforms, case_db):
-        from casexml.apps.case.xform import CaseProcessingResult
-        return CaseProcessingResult('test-domain', [], [], False)
-
-    @classmethod
     def process_stock(cls, xforms, case_db):
         from corehq.apps.commtrack.processing import StockProcessingResult
         return StockProcessingResult(xforms[0])
