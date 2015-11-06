@@ -244,7 +244,7 @@ GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
