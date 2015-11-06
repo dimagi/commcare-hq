@@ -73,6 +73,18 @@ class BaseStyleGuideArticleView(TemplateView):
             context, **response_kwargs)
 
 
+class ClassBasedViewStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_views'
+    navigation_name = 'cb_views'
+
+    @property
+    def sections(self):
+        return [
+            'views/intro',
+            'views/base_classes',
+        ]
+
+
 class FormsStyleGuideView(BaseStyleGuideArticleView):
     urlname = 'styleguide_forms'
     navigation_name = 'forms'
