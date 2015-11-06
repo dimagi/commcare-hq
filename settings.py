@@ -1399,6 +1399,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
+    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
 ]
 
 
@@ -1459,6 +1460,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
+    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
 ]
 
 CUSTOM_MODULES = [
