@@ -327,6 +327,21 @@ class TestCommCareCaseResource(APIResourceTest):
         community_domain.delete()
         new_user.delete()
 
+    def test_superuser(self):
+        """
+        Tests superuser overrides authorization
+        :return:
+        """
+        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(community_domain.name, 'test', 'testpass', is_superuser=True)
+        new_user.save()
+        self.client.login(username='test', password='testpass')
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        community_domain.delete()
+        new_user.delete()
+
 class TestHOPECaseResource(APIResourceTest):
     """
     Tests the HOPECaseREsource, currently only v0_4, just to make sure
