@@ -8,64 +8,78 @@ Third-party solutions lacked important features like nested groups, and most
 required their input to come via an Excel spreadsheet or JSON, which did not
 seem to be a good fit.
 
+
 >>> from corehq.apps.app_manager.xform_builder import XFormBuilder
 >>> xform = XFormBuilder('Built by XFormBuilder')
 >>> xform.add_question('name', 'What is your name?')
->>> xform.add_question('fav_color', u'Quelle est ta couleur préférée?',
+>>> group = xform.new_group('personal', 'Personal Questions')
+>>> group.add_question('fav_color', u'Quelle est ta couleur préférée?',
 ...                    choices={'r': 'Rot', 'g': u'Grün', 'b': 'Blau'})
->>> xml = xform.tostring(pretty_print=True, encoding='utf-8')
+>>> xml = xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+>>> # Skip the random xmlns when checking the result:
 >>> xml.startswith(
+... '''<?xml version=\'1.0\' encoding=\'utf-8\'?>\\n'''
 ... '''<h:html xmlns:h="http://www.w3.org/1999/xhtml" '''
 ...         '''xmlns:orx="http://openrosa.org/jr/xforms" '''
 ...         '''xmlns="http://www.w3.org/2002/xforms" '''
 ...         '''xmlns:xsd="http://www.w3.org/2001/XMLSchema" '''
 ...         '''xmlns:jr="http://openrosa.org/javarosa">\\n'''
-... '''    <h:head>\\n'''
-... '''        <h:title>Built by XFormBuilder</h:title>\\n'''
-... '''        <model>\\n'''
-... '''            <instance>\\n'''
-... '''                <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '''
-...                       '''xmlns="http://openrosa.org/formdesigner/''')  # Skip the random xmlns.
-True
->>> xml.endswith('''" '''
-...                       '''uiVersion="1" '''
-...                       '''version="3" '''
-...                       '''name="Built by XFormBuilder">'''
-...                     '''<name/>'''
-...                     '''<fav_color/>'''
-...                 '''</data>\\n'''
-... '''            </instance>\\n'''
-... '''            <itext>\\n'''
-... '''                <translation lang="en" default="">'''
-...                     '''<text id="name-label">'''
-...                         '''<value>What is your name?</value>'''
-...                     '''</text>'''
-...                     '''<text id="fav_color-label">'''
-...                         '''<value>'''
-...                             '''Quelle est ta couleur pr\xc3\x83\xc2\xa9f\xc3\x83\xc2\xa9r\xc3\x83\xc2\xa9e?'''
-...                         '''</value>'''
-...                     '''</text>'''
-...                     '''<text id="fav_color-r-label">'''
-...                         '''<value>Rot</value>'''
-...                     '''</text>'''
-...                     '''<text id="fav_color-b-label">'''
-...                         '''<value>Blau</value>'''
-...                     '''</text>'''
-...                     '''<text id="fav_color-g-label">'''
-...                         '''<value>Gr\xc3\x83\xc2\xbcn</value>'''
-...                     '''</text>'''
-...                 '''</translation>\\n'''
-... '''            </itext>\\n'''
-...     '''        <bind nodeset="/data/name" type="xsd:string"/>'''
-...             '''<bind nodeset="/data/fav_color" type="xsd:string"/>'''
-...         '''</model>\\n'''
-... '''    </h:head>\\n'''
-... '''    <h:body>'''
-...         '''<input ref="/data/name"><label ref="jr:itext(\'name-label\')"/></input>'''
-...         '''<input ref="/data/fav_color"><label ref="jr:itext(\'fav_color-label\')"/></input>'''
-...     '''</h:body>\\n'''
-... '''</h:html>\\n'''
-... )
+... '''  <h:head>\\n'''
+... '''    <h:title>Built by XFormBuilder</h:title>\\n'''
+... '''    <model>\\n'''
+... '''      <instance>\\n'''
+... '''        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '''
+...               '''xmlns="http://openrosa.org/formdesigner/''') and xml.endswith('''" '''
+...               '''uiVersion="1" '''
+...               '''version="3" '''
+...               '''name="Built by XFormBuilder">\\n'''
+... '''          <name/>\\n'''
+... '''          <personal>\\n'''
+... '''            <fav_color/>\\n'''
+... '''          </personal>\\n'''
+... '''        </data>\\n'''
+... '''      </instance>\\n'''
+... '''      <itext>\\n'''
+... '''        <translation lang="en" default="">\\n'''
+... '''          <text id="name-label">\\n'''
+... '''            <value>What is your name?</value>\\n'''
+... '''          </text>\\n'''
+... '''          <text id="personal-label">\\n'''
+... '''            <value>Personal Questions</value>\\n'''
+... '''          </text>\\n'''
+... '''          <text id="personal/fav_color-label">\\n'''
+... '''            <value>'''
+...               '''Quelle est ta couleur pr\xc3\x83\xc2\xa9f\xc3\x83\xc2\xa9r\xc3\x83\xc2\xa9e?'''
+...             '''</value>\\n'''
+... '''          </text>\\n'''
+... '''          <text id="personal/fav_color-r-label">\\n'''
+... '''            <value>Rot</value>\\n'''
+... '''          </text>\\n'''
+... '''          <text id="personal/fav_color-b-label">\\n'''
+... '''            <value>Blau</value>\\n'''
+... '''          </text>\\n'''
+... '''          <text id="personal/fav_color-g-label">\\n'''
+... '''            <value>Gr\xc3\x83\xc2\xbcn</value>\\n'''
+... '''          </text>\\n'''
+... '''        </translation>\\n'''
+... '''      </itext>\\n'''
+... '''      <bind nodeset="/data/name" type="xsd:string"/>\\n'''
+... '''      <bind nodeset="/data/personal"/>\\n'''
+... '''      <bind nodeset="/data/personal/fav_color" type="xsd:string"/>\\n'''
+... '''    </model>\\n'''
+... '''  </h:head>\\n'''
+... '''  <h:body>\\n'''
+... '''    <input ref="/data/name">\\n'''
+... '''      <label ref="jr:itext(\'name-label\')"/>\\n'''
+... '''    </input>\\n'''
+... '''    <group ref="/data/personal">\\n'''
+... '''      <label ref="jr:itext(\'personal-label\')"/>\\n'''
+... '''      <input ref="/data/personal/fav_color">\\n'''
+... '''        <label ref="jr:itext(\'personal/fav_color-label\')"/>\\n'''
+... '''      </input>\\n'''
+... '''    </group>\\n'''
+... '''  </h:body>\\n'''
+... '''</h:html>\\n''')
 True
 
 """
@@ -121,13 +135,14 @@ class XFormBuilder(object):
             'jr': "http://openrosa.org/javarosa",
             'jrm': "http://dev.commcarehq.org/jr/xforms",
         }
+        strip_spaces = etree.XMLParser(remove_blank_text=True)
         if source is None:
             xmlns = 'http://openrosa.org/formdesigner/{}'.format(uuid.uuid4())
-            self._etree = etree.XML(EMPTY_XFORM.format(name=name, xmlns=xmlns))
+            self._etree = etree.XML(EMPTY_XFORM.format(name=name, xmlns=xmlns), parser=strip_spaces)
             self.ns['d'] = xmlns
             self._data = self._etree.xpath('./h:head/x:model/x:instance/d:data', namespaces=self.ns)[0]
         else:
-            self._etree = etree.fromstring(source)
+            self._etree = etree.fromstring(source, parser=strip_spaces)
             # We don't know the data node's namespace, so we can't just fetch it with xpath.
             instance = self._etree.xpath('./h:head/x:model/x:instance', namespaces=self.ns)[0]
             self._data = [e for e in instance if e.tag == 'data'][0]
@@ -157,48 +172,45 @@ class XFormBuilder(object):
             raise TypeError('Unknown question data type "{}"'.format(data_type))
         if group is not None and not isinstance(group, basestring) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
-        self._append_to_data(name, group)
-        self._append_to_translation(name, label, group, choices)
-        self._append_to_model(name, data_type, group)
-        self._append_to_body(name, data_type, group, choices)
+        groups = [group] if isinstance(group, basestring) else group
+        self._append_to_data(name, groups)
+        self._append_to_translation(name, label, groups, choices)
+        self._append_to_model(name, data_type, groups)
+        self._append_to_body(name, data_type, groups, choices)
+
+    def new_group(self, name, label, data_type='group', group=None):
+        """
+        Adds and returns a question group to the XForm.
+
+        :param name: Group name
+        :param label: Group label
+        :param data_type: The type of the group ("group" or "repeatGroup")
+        :param group: The name or names of the group(s) that this group is inside
+        """
+        if data_type not in ('group', 'repeatGroup'):
+            raise TypeError('Unknown question group type "{}"'.format(data_type))
+        self.add_question(name, label, data_type, group)
+        parents = [group] if isinstance(group, basestring) else group
+        return QuestionGroup(name, self, parents)
 
     @staticmethod
-    def groups_path(groups, ns=None):
-        """
-        Join groups with "/", and prefix with namespace if given.
-
-        >>> XFormBuilder.groups_path(('foo', 'bar', 'baz'), ns='x')
-        'x:foo/x:bar/x:baz'
-        >>> XFormBuilder.groups_path('foo', ns='x')
-        'x:foo'
-        >>> XFormBuilder.groups_path(('foo', 'bar', 'baz'))
-        'foo/bar/baz'
-
-        """
-        if isinstance(groups, basestring):
-            groups = [groups]
-        if ns is None:
-            return '/'.join(groups)
-        return '/'.join(['{}:{}'.format(ns, g) for g in groups])
-
-    @staticmethod
-    def get_text_id(name, group=None, choice_name=None):
+    def get_text_id(name, groups=None, choice_name=None):
         """
         Builds a text node "id" parameter
 
         >>> XFormBuilder.get_text_id('foo')
         'foo-label'
-        >>> XFormBuilder.get_text_id('foo', 'bar')
+        >>> XFormBuilder.get_text_id('foo', ['bar'])
         'bar/foo-label'
-        >>> XFormBuilder.get_text_id('foo', ('bar', 'baz'))
+        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'])
         'bar/baz/foo-label'
-        >>> XFormBuilder.get_text_id('foo', ('bar', 'baz'), 'choice1')
+        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1')
         'bar/baz/foo-choice1-label'
 
         """
         text_id = []
-        if group:
-            text_id.append(XFormBuilder.groups_path(group) + '/')
+        if groups:
+            text_id.append('/'.join(groups) + '/')
         text_id.append(name)
         if choice_name is not None:
             text_id.append('-{}'.format(choice_name))
@@ -206,25 +218,25 @@ class XFormBuilder(object):
         return ''.join(text_id)
 
     @staticmethod
-    def get_data_ref(name, group=None):
+    def get_data_ref(name, groups=None):
         """
         Returns the reference to the data node of the given question
 
         >>> XFormBuilder.get_data_ref('foo')
         '/data/foo'
-        >>> XFormBuilder.get_text_id('foo', 'bar')
+        >>> XFormBuilder.get_text_id('foo', ['bar'])
         '/data/bar/foo'
-        >>> XFormBuilder.get_data_ref('foo', ('bar', 'baz'))
+        >>> XFormBuilder.get_data_ref('foo', ['bar', 'baz'])
         '/data/bar/baz/foo'
 
         """
-        if group is None:
+        if groups is None:
             return '/data/' + name
-        return '/data/{}/{}'.format(XFormBuilder.groups_path(group), name)
+        return '/data/{}/{}'.format('/'.join(groups), name)
 
-    def _append_to_data(self, name, group=None):
-        if group:
-            node = self._data.xpath('./' + self.groups_path(group))[0]
+    def _append_to_data(self, name, groups=None):
+        if groups:
+            node = self._data.xpath('./' + '/'.join(groups))[0]
         else:
             node = self._data
         node.append(etree.Element(name))
@@ -250,14 +262,15 @@ class XFormBuilder(object):
             bind = E.bind({'nodeset': self.get_data_ref(name, group)})
         self._model.append(bind)
 
-    def _append_to_body(self, name, data_type, group=None, choices=None):
+    def _append_to_body(self, name, data_type, groups=None, choices=None):
 
-        def walk_groups(node_, groups, data_ref='/data'):
+        def walk_groups(node_, groups_, data_ref='/data'):
             """
             The structure of repeating and non-repeating groups is different.
             Walk a list of groups and return the node of the last one.
             """
-            group_ = groups.pop(0)
+            groups_ = list(groups_)  # groups_ is passed by ref. Don't modify original.
+            group_ = groups_.pop(0)
             data_ref = '{}/{}'.format(data_ref, group_)
             try:
                 # Is it a repeat group?
@@ -265,11 +278,11 @@ class XFormBuilder(object):
             except IndexError:
                 # It must be a normal group
                 group_node = node_.xpath('./group[@ref="{}"]'.format(data_ref))[0]
-            if not groups:
+            if not groups_:
                 return group_node
-            return walk_groups(group_node, groups, data_ref)
+            return walk_groups(group_node, groups_, data_ref)
 
-        def get_group_question_node(name_, group_=None, choices_=None):
+        def get_group_question_node(name_, groups_=None, choices_=None):
             """
             Returns a question node for a non-repeating group
 
@@ -279,11 +292,11 @@ class XFormBuilder(object):
 
             """
             return E.group(
-                {'ref': self.get_data_ref(name_, group_)},
-                E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, group_))})
+                {'ref': self.get_data_ref(name_, groups_)},
+                E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))})
             )
 
-        def get_repeat_group_question_node(name_, group_=None, choices_=None):
+        def get_repeat_group_question_node(name_, groups_=None, choices_=None):
             """
             Returns a question node for a repeat group
 
@@ -293,11 +306,11 @@ class XFormBuilder(object):
 
             """
             return E.group(
-                E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, group_))}),
-                E.repeat({'nodeset': self.get_data_ref(name_, group_)})
+                E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))}),
+                E.repeat({'nodeset': self.get_data_ref(name_, groups_)})
             )
 
-        def _get_any_select_question_node(tag, name_, group_=None, choices_=None):
+        def _get_any_select_question_node(tag, name_, groups_=None, choices_=None):
             """
             Return a question node for a single- or multiple-select multiple choice question
 
@@ -314,30 +327,30 @@ class XFormBuilder(object):
                     </item>
                 </select>
             """
-            node_ = etree.Element(tag, {'ref': self.get_data_ref(name_, group_)})
-            node_.append(E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, group_))}))
+            node_ = etree.Element(tag, {'ref': self.get_data_ref(name_, groups_)})
+            node_.append(E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))}))
             for choice_name in choices_.keys():
                 node_.append(
                     E.item(
-                        E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, group_, choice_name))}),
+                        E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, choice_name))}),
                         E.value(choice_name)
                     )
                 )
             return node_
 
-        def get_select_question_node(name_, group_=None, choices_=None):
+        def get_select_question_node(name_, groups_=None, choices_=None):
             """
             Return a question node for a multiple-select multiple choice question
             """
-            return _get_any_select_question_node('select', name_, group_=None, choices_=None)
+            return _get_any_select_question_node('select', name_, groups_, choices_)
 
-        def get_select1_question_node(name_, group_=None, choices_=None):
+        def get_select1_question_node(name_, groups_=None, choices_=None):
             """
             Return a question node for a single-select multiple choice question
             """
-            return _get_any_select_question_node('select1', name_, group_=None, choices_=None)
+            return _get_any_select_question_node('select1', name_, groups_, choices_)
 
-        def get_input_question_node(name_, group_=None, choices_=None):
+        def get_input_question_node(name_, groups_=None, choices_=None):
             """
             Return a question node for a normal question
 
@@ -346,14 +359,13 @@ class XFormBuilder(object):
             '<input ref="/data/text_question"><label ref="jr:itext(\'text_question-label\')"/></input>'
 
             """
-            node_ = etree.Element('input', {'ref': self.get_data_ref(name_, group_)})
-            node_.append(etree.Element('label', {'ref': "jr:itext('{}')".format(self.get_text_id(name_, group_))}))
-            return node_
+            return E.input(
+                {'ref': self.get_data_ref(name_, groups_)},
+                E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))})
+            )
 
-        if group:
-            if isinstance(group, basestring):
-                group = [group]
-            node = walk_groups(self._body, group)
+        if groups:
+            node = walk_groups(self._body, groups)
         else:
             node = self._body
         func = {
@@ -362,5 +374,18 @@ class XFormBuilder(object):
             'select': get_select_question_node,
             'select1': get_select1_question_node,
         }.get(data_type, get_input_question_node)
-        question_node = func(name, group, choices)
+        question_node = func(name, groups, choices)
         node.append(question_node)
+
+
+class QuestionGroup(object):
+    def __init__(self, name, xform, parents=None):
+        self.name = name
+        self.xform = xform
+        self.groups = [name] if parents is None else list(parents) + [name]
+
+    def add_question(self, name, label, data_type='string', choices=None):
+        self.xform.add_question(name, label, data_type, self.groups, choices)
+
+    def new_group(self, name, label, data_type='group'):
+        return self.xform.new_group(name, label, data_type, self.groups)
