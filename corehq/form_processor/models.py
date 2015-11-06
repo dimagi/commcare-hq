@@ -302,9 +302,13 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
     case_json = JSONField(lazy=True)
     attachments_json = JSONField(lazy=True)
 
-    @property
-    def case_id(self):
+    def __get_case_id(self):
         return self.case_uuid
+
+    def __set_case_id(self, _id):
+        self.case_uuid = _id
+
+    case_id = property(__get_case_id, __set_case_id)
 
     def hard_delete(self):
         self.delete()
@@ -346,7 +350,7 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
 
     @classmethod
     def get_obj_by_id(cls, _id):
-        return CommCareCaseSQL.objects.get(_id)
+        return cls.get(_id)
 
     def __unicode__(self):
         return (
