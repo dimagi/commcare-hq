@@ -50,7 +50,8 @@ class PillowCheckpoint(object):
     def get_or_create(self, verify_unchanged=False):
         result = self._manager.get_or_create_checkpoint(self.checkpoint_id)
         checkpoint, created = result
-        if verify_unchanged and self._last_checkpoint and checkpoint['seq'] != self._last_checkpoint['seq']:
+        if (verify_unchanged and self._last_checkpoint and
+                    str(checkpoint['seq']) != str(self._last_checkpoint['seq'])):
             raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
                 self.checkpoint_id, self._last_checkpoint['seq'], checkpoint['seq'],
             ))
