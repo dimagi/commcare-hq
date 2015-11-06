@@ -272,7 +272,7 @@ def update_case(domain, case_id, case_properties=None, close=False):
     context = {
         'case_id': case_id,
         'date_modified': json_format_datetime(datetime.datetime.utcnow()),
-        'user_id': '',
+        'user_id': 'system',
         'case_properties': case_properties,
         'close': close,
     }
