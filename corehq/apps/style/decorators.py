@@ -133,7 +133,7 @@ def use_daterangepicker(view_func):
 
 def use_jquery_ui(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the jquery-ui library at the base template
+    to enable the inclusion of the jquery ui library at the base template
     level.
 
     Example:
@@ -147,3 +147,22 @@ def use_jquery_ui(view_func):
         request.use_jquery_ui = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
+
+
+def use_datatables(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable the inclusion of the datatables library at the base template
+    level.
+
+    Example:
+
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
+    """
+    @wraps(view_func)
+    def _wrapped(class_based_view, request, *args, **kwargs):
+        request.use_datatables = True
+        return view_func(class_based_view, request, *args, **kwargs)
+    return _wrapped
+
