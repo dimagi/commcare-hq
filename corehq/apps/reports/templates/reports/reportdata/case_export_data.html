@@ -15,7 +15,7 @@
         var exportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
-            downloadUrl: '{% url "download_cases" domain %}',
+            downloadUrl: '{% url "download_cases_internal" domain %}',
             export_type: "case"
         } );
         $('#full-case-export').one().each(function () {
