@@ -206,7 +206,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
             for attachment in self.unsaved_attachments:
                 if attachment.name == attachment_name:
                     return attachment.read_content()
-        else:
+        elif self.is_saved():
             xform_attachment = self.xformattachmentsql_set.filter(name=attachment_name).first()
             return xform_attachment.read_content()
 
@@ -348,6 +348,14 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
     def is_deleted(self):
         return self.deleted
 
+    @property
+    @memoized
+    def indices(self):
+        if hasattr(self, 'unsaved_indices'):
+            return self.unsaved_indices
+
+        return self.index_set.all() if self.is_saved() else []
+
     def get_attachment(self, attachment_name):
         assert attachment_name in self.attachments_json
         with open(self._get_attachment_path(attachment_name), 'r+') as f:
@@ -409,7 +417,7 @@ class CommCareCaseIndexSQL(models.Model):
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
-        related_name="indices", related_query_name="index"
+        related_name="index_set", related_query_name="index"
     )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
     identifier = models.CharField(max_length=255, null=False)
