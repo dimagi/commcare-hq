@@ -3,9 +3,11 @@ from datetime import datetime
 from dateutil import parser
 import pytz
 from pillowtop.checkpoints.util import get_formatted_current_timestamp
+from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
+from pillowtop.models import DjangoPillowCheckpoint
 from pillowtop.pillow.interface import ChangeEventHandler
 
 
@@ -48,7 +50,8 @@ class PillowCheckpoint(object):
     def get_or_create(self, verify_unchanged=False):
         result = self._manager.get_or_create_checkpoint(self.checkpoint_id)
         checkpoint, created = result
-        if verify_unchanged and self._last_checkpoint and checkpoint['seq'] != self._last_checkpoint['seq']:
+        if (verify_unchanged and self._last_checkpoint and
+                    str(checkpoint['seq']) != str(self._last_checkpoint['seq'])):
             raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
                 self.checkpoint_id, self._last_checkpoint['seq'], checkpoint['seq'],
             ))
@@ -95,3 +98,9 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
     def fire_change_processed(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             self.checkpoint.update_to(change['seq'])
+
+
+def get_django_checkpoint_store():
+    return DjangoDocumentStore(
+        DjangoPillowCheckpoint, DjangoPillowCheckpoint.to_dict, DjangoPillowCheckpoint.from_dict,
+    )

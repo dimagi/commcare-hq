@@ -29,6 +29,13 @@ from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
+try:
+    from corehq.util.soft_assert import soft_assert
+    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
+except ImportError:
+    # hack for dependency resolution if corehq not available
+    _assert = lambda assertion, message: None
+
 
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
@@ -81,6 +88,7 @@ class BasicPillow(PillowBase):
     extra_args = {}  # filter args if needed
     document_class = None  # couchdbkit Document class
     _couch_db = None
+    _checkpoint = None
     include_docs = True
     use_locking = False
 
@@ -104,7 +112,6 @@ class BasicPillow(PillowBase):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
-
     @property
     def couch_db(self):
         return self._couch_db
@@ -118,12 +125,13 @@ class BasicPillow(PillowBase):
         return CouchDocumentStore(self._couch_db)
 
     @property
-    @memoized
     def checkpoint(self):
-        return PillowCheckpoint(
-            self.document_store,
-            construct_checkpoint_doc_id_from_name(self.get_name()),
-        )
+        if self._checkpoint is None:
+            self._checkpoint = PillowCheckpoint(
+                self.document_store,
+                construct_checkpoint_doc_id_from_name(self.get_name()),
+            )
+        return self._checkpoint
 
     def get_change_feed(self):
         return CouchChangeFeed(
@@ -135,16 +143,15 @@ class BasicPillow(PillowBase):
 
     @memoized
     def get_name(self):
-        return "%s.%s.%s" % (
-            self._get_base_name(), self.__class__.__name__, get_machine_id())
+        return self.get_legacy_name()
 
-    def _get_base_name(self):
-        return self.__module__
+    @classmethod
+    def get_legacy_name(cls):
+        return "%s.%s.%s" % (cls._get_base_name(), cls.__name__, get_machine_id())
 
-    @property
-    def since(self):
-        # todo: see if we can remove this. It is hard to search for.
-        return self.get_last_checkpoint_sequence()
+    @classmethod
+    def _get_base_name(cls):
+        return cls.__module__
 
     def processor(self, change, context):
         """
@@ -281,11 +288,7 @@ class PythonPillow(BasicPillow):
     def process_chunk(self):
         def _assert_change_has_id(change):
             if 'id' not in change:
-                # use an inline import for tests since corehq is not a dependency
-                # we can remove this once the assertion is better understood
-                from corehq.util.soft_assert import soft_assert
-                _assertion = soft_assert(to='@'.join(('czue', 'dimagi.com')))
-                _assertion(False, "expected 'id' in change, but wasn't found! change is: {}".format(
+                _assert(False, "expected 'id' in change, but wasn't found! change is: {}".format(
                     simplejson.dumps(change)
                 ))
                 return False
