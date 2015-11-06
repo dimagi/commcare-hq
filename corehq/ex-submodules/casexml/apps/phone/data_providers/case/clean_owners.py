@@ -3,6 +3,7 @@ from copy import copy
 from functools import partial
 from datetime import datetime
 from dimagi.utils.couch.undo import is_deleted
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.case.dbaccessors import get_extension_case_ids
@@ -158,10 +159,30 @@ class CleanOwnerCaseSyncOperation(object):
         return response
 
     def get_case_ids_for_owner(self, owner_id):
-        if not self.is_clean(owner_id) or self.restore_state.is_first_extension_sync:
+        if EXTENSION_CASES_SYNC_ENABLED.enabled(self.restore_state.domain):
+            return self._get_case_ids_for_extension_owners(owner_id)
+        else:
+            return self._get_case_ids_for_regular_owners(owner_id)
+
+    def _get_case_ids_for_regular_owners(self, owner_id):
+        if self.is_clean(owner_id):
+            if self.restore_state.is_initial:
+                # for a clean owner's initial sync the base set is just the open ids
+                return set(get_open_case_ids(self.restore_state.domain, owner_id))
+            else:
+                # for a clean owner's steady state sync, the base set is anything modified since last sync
+                return set(get_case_ids_modified_with_owner_since(
+                    self.restore_state.domain, owner_id, self.restore_state.last_sync_log.date
+                ))
+        else:
             # TODO: we may want to be smarter than this
             # right now just return the whole footprint and do any filtering later
-            #
+            # Note: This will also return extensions if they exist.
+            return get_case_footprint_info(self.restore_state.domain, owner_id).all_ids
+
+    def _get_case_ids_for_extension_owners(self, owner_id):
+        """Fetches base and extra cases when extensions are enabled"""
+        if not self.is_clean(owner_id) or self.restore_state.is_first_extension_sync:
             # If this is the first time a user with extensions has synced after
             # the extension flag is toggled, pull all the cases so that the
             # extension parameters get set correctly
@@ -178,9 +199,15 @@ class CleanOwnerCaseSyncOperation(object):
                 return all_case_ids
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
-                return set(get_case_ids_modified_with_owner_since(
+                modified_non_extension_cases = set(get_case_ids_modified_with_owner_since(
                     self.restore_state.domain, owner_id, self.restore_state.last_sync_log.date
                 ))
+                # we also need to fetch unowned extension cases that have been modified
+                extension_case_ids = self.restore_state.last_sync_log.extension_index_tree.indices.keys()
+                modified_extension_cases = set(filter_cases_modified_since(
+                    self.restore_state.domain, extension_case_ids, self.restore_state.last_sync_log.date
+                ))
+                return modified_non_extension_cases | modified_extension_cases
 
 
 def _is_live(case, restore_state):
