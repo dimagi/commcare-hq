@@ -2,7 +2,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE,\
-    MS_STOCKOUT, MS_RESOLVED_STOCKOUTS
+    MS_STOCKOUT, MS_RESOLVED_STOCKOUTS, NO_SUPPLY_POINT_MESSAGE
 from collections import defaultdict
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction
@@ -293,8 +293,11 @@ class AlertsHandler(KeywordHandler):
             text = self.msg.text
 
         if not domain.commtrack_enabled:
-            print "tutaj?"
             return False
+
+        if not verified_contact.location_id:
+            self.respond(NO_SUPPLY_POINT_MESSAGE)
+
         try:
             parser = EWSStockAndReceiptParser(domain, verified_contact)
             formatted_text = EWSFormatter().format(text)
