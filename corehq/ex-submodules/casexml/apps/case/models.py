@@ -324,17 +324,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         ]
 
     @classmethod
-    def get_with_rebuild(cls, id):
-        try:
-            return cls.get(id)
-        except ResourceNotFound:
-            from casexml.apps.case.cleanup import rebuild_case_from_forms
-            case = rebuild_case_from_forms(id)
-            if case is None:
-                raise
-            return case
-
-    @classmethod
     def get_lite(cls, id, wrap=True):
         from corehq.apps.hqcase.dbaccessors import get_lite_case_json
         results = get_lite_case_json(id)
