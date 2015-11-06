@@ -401,8 +401,8 @@ class SubmissionPost(object):
                         # note that in the case of edit submissions this won't flag the previous
                         # submission as having been edited. this is intentional, since we should treat
                         # this use case as if the edit "failed"
-                        raise
                         _handle_unexpected_error(instance, e)
+                        raise
 
                     now = datetime.datetime.utcnow()
                     unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
