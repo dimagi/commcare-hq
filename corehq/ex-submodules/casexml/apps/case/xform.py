@@ -1,27 +1,19 @@
 from collections import namedtuple
 import logging
-import warnings
 
 from couchdbkit import ResourceNotFound
-import datetime
 from django.db.models import Q
-import redis
 from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
-from casexml.apps.case.signals import cases_received, case_post_save
-from casexml.apps.case.update_strategy import ActionsUpdateStrategy
+from casexml.apps.case.signals import cases_received
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from casexml.apps.case.util import iter_cases
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
-    IllegalCaseId,
     NoDomainProvided,
 )
 from django.conf import settings
-from couchforms.util import legacy_soft_assert
 from couchforms.validators import validate_phone_datetime
-from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
