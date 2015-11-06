@@ -112,7 +112,7 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     @property
     def metadata(self):
         if const.TAG_META in self.form_data:
-            return XFormMetadata.wrap(self._clean_metadata(self.form_data[const.TAG_META]))
+            return XFormPhoneMetadata.wrap(self._clean_metadata(self.form_data[const.TAG_META]))
 
         return None
 
@@ -244,7 +244,7 @@ class XFormOperationSQL(models.Model):
     xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
 
 
-class XFormMetadata(jsonobject.JsonObject):
+class XFormPhoneMetadata(jsonobject.JsonObject):
     """
     Metadata of an xform, from a meta block structured like:
 
@@ -274,6 +274,7 @@ class XFormMetadata(jsonobject.JsonObject):
     username = jsonobject.StringProperty()
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
+
 
 class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
