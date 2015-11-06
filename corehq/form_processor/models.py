@@ -1,21 +1,17 @@
 import os
 import collections
-import logging
 
 from lxml import etree
 from json_field.fields import JSONField
-from jsonobject.api import re_date
 from django.conf import settings
 from django.db import models, transaction
 
 from dimagi.utils.couch import RedisLockableMixIn
-from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.ext import jsonobject
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
-from corehq.util.dates import iso_string_to_datetime
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
 from .exceptions import XFormNotFound
@@ -111,61 +107,11 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
 
     @property
     def metadata(self):
+        from .utils import clean_metadata
         if const.TAG_META in self.form_data:
-            return XFormPhoneMetadata.wrap(self._clean_metadata(self.form_data[const.TAG_META]))
+            return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
         return None
-
-    def _clean_metadata(self, meta_block):
-        from .utils import get_text_attribute
-
-        if not meta_block:
-            return meta_block
-        meta_block = self._remove_unused_meta_attributes(meta_block)
-        meta_block['appVersion'] = get_text_attribute(meta_block.get('appVersion'))
-        meta_block['location'] = get_text_attribute(meta_block.get('location'))
-        meta_block = self._parse_meta_times(meta_block)
-
-        # also clean dicts on the return value, since those are not allowed
-        for key in meta_block:
-            if isinstance(meta_block[key], dict):
-                meta_block[key] = self._flatten_dict(meta_block[key])
-
-        return meta_block
-
-    def _flatten_dict(self, dictionary):
-        return ", ".join("{}:{}".format(k, v) for k, v in dictionary.items())
-
-    def _remove_unused_meta_attributes(self, meta_block):
-        for key in meta_block.keys():
-            # remove attributes from the meta block
-            if key.startswith('@'):
-                del meta_block[key]
-        return meta_block
-
-    def _parse_meta_times(self, meta_block):
-        for key in ("timeStart", "timeEnd"):
-            if key not in meta_block:
-                continue
-            if meta_block[key]:
-                if re_date.match(meta_block[key]):
-                    # this kind of leniency is pretty bad and making it midnight in UTC
-                    # is totally arbitrary here for backwards compatibility
-                    meta_block[key] += 'T00:00:00.000000Z'
-                try:
-                    # try to parse to ensure correctness
-                    parsed = iso_string_to_datetime(meta_block[key])
-                    # and set back in the right format in case it was a date, not a datetime
-                    meta_block[key] = json_format_datetime(parsed)
-                except Exception:
-                    logging.exception('Could not parse meta_block')
-                    # we couldn't parse it
-                    del meta_block[key]
-            else:
-                # it was empty, also a failure
-                del meta_block[key]
-
-        return meta_block
 
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
