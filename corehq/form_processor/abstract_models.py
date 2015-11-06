@@ -72,18 +72,21 @@ class AbstractXFormInstance(object):
     def is_submission_error_log(self):
         raise NotImplementedError()
 
-    @memoized
     def get_sync_token(self):
-        from casexml.apps.phone.models import get_properly_wrapped_sync_log
-        if self.last_sync_token:
+        # Can't use memoize on unsaved Django models
+        if not self.last_sync_token:
+            return
+
+        if not self._sync_token:
+            from casexml.apps.phone.models import get_properly_wrapped_sync_log
             try:
-                return get_properly_wrapped_sync_log(self.last_sync_token)
+                self._sync_token = get_properly_wrapped_sync_log(self.last_sync_token)
             except ResourceNotFound:
                 logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
                     self.last_sync_token, self.form_id, self.domain,
                 ))
                 raise
-        return None
+        return self._sync_token
 
 
 class AbstractCommCareCase(object):
