@@ -1058,6 +1058,9 @@ USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 NEW_FIXTURES_DB = 'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
 
+#  NEW_DOMAINS_DB = 'domains'
+#  DOMAINS_DB = NEW_DOMAINS_DB
+
 COUCHDB_APPS = [
     'api',
     'app_manager',
@@ -1078,7 +1081,7 @@ COUCHDB_APPS = [
     'ctable',
     'custom_data_fields',
     'hqadmin',
-    'domain',
+    'domain',  # TODO remove
     'ext',
     'facilities',
     'fluff_filter',
@@ -1149,6 +1152,9 @@ COUCHDB_APPS = [
 
     # fixtures
     ('fixtures', FIXTURES_DB),
+
+    # domains
+    #  ('domain', DOMAINS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS

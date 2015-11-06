@@ -1,3 +1,43 @@
+# Domain notes
+```
+# Normal domain views:
+corehq/apps/domain/_design/views/domains/map.js
+    if (doc.doc_type === "Domain") {
+        emit(doc.name, null);
+
+corehq/apps/domain/_design/views/by_status/map.js
+        emit([doc.is_active, doc.name], null);  # domains -> active?
+  # This is only used in one place - take a list of a user's domains and
+  # check which ones are active
+
+
+# random-ass view:
+corehq/apps/domain/_design/views/fields_by_prefix/map.js
+
+
+# snapshot views:
+corehq/apps/domain/_design/views/snapshots/map.js
+    if (doc.doc_type == 'Domain' && doc.is_snapshot) {
+        emit([doc.copy_history[doc.copy_history.length - 1], doc.snapshot_time], doc.downloads || 0);
+
+corehq/apps/domain/_design/views/not_snapshots/map.js
+    if (doc.doc_type === "Domain" && !doc.is_snapshot) {
+        emit(doc.name, null);
+    # should this just be a part of domain/domains?
+
+corehq/apps/domain/_design/views/copied_from_snapshot/map.js
+    if (doc.doc_type == 'Domain' && !doc.is_snapshot && doc.copy_history.length > 0) {
+        emit(doc.copy_history[doc.copy_history.length - 1], null);
+
+corehq/apps/domain/_design/views/published_snapshots/map.js
+        emit([doc.is_approved, doc.snapshot_time], null);
+
+What about these?
+domain/docs
+domain/related_to_domain
+```
+
+
 # Migrating certain doc types to their own db
 
 ## Do prepwork to decouple your doc types

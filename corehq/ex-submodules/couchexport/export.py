@@ -175,7 +175,7 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
 
     previous_export = ExportSchema.get(previous_export_id)\
         if previous_export_id else None
-    database = get_db()
+    database = get_db()  # This one's a bit trickier
     config = ExportConfiguration(database, schema_index,
         previous_export, filter)
 
