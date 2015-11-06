@@ -965,7 +965,8 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
-        if globals().get("FIX_LOGGER_ERROR_OBFUSCATION"):
+        _fix_logger_obfuscation = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
+        if _fix_logger_obfuscation:
             # this is here because the logging config cannot import
             # corehq.util.log.HqAdminEmailHandler, for example, if there
             # is a syntax error in any module imported by corehq/__init__.py
@@ -975,10 +976,11 @@ try:
             # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
-                    print "{} logger is being changed to {}".format(
-                        handler['class'],
-                        'logging.StreamHandler'
-                    )
+                    if _fix_logger_obfuscation != 'quiet':
+                        print "{} logger is being changed to {}".format(
+                            handler['class'],
+                            'logging.StreamHandler'
+                        )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
    # fallback in case nothing else is found - used for readthedocs
