@@ -19,6 +19,7 @@ class TestMeta(TestCase):
     def _check_metadata(self, xform, expected):
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             del expected['doc_type']
+            del expected['deprecatedID']
         self.assertEqual(xform.metadata.to_json(), expected)
 
     @run_with_all_backends

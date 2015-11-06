@@ -254,7 +254,6 @@ class XFormMetadata(jsonobject.JsonObject):
             <instanceID />
             <userID />
             <deviceID />
-            <deprecatedID />
             <username />
 
             <!-- CommCare extension -->
@@ -272,7 +271,6 @@ class XFormMetadata(jsonobject.JsonObject):
     instanceID = jsonobject.StringProperty()
     userID = jsonobject.StringProperty()
     deviceID = jsonobject.StringProperty()
-    deprecatedID = jsonobject.StringProperty()
     username = jsonobject.StringProperty()
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
