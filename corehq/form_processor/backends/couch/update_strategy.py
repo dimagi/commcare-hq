@@ -46,6 +46,9 @@ class UpdateStrategy(object):
         else:
             case.modified_on = datetime.utcnow()
 
+        # attach domain and export tag
+        case.domain = xformdoc.domain
+
         # apply initial updates, if present
         cls(case).update_from_case_update(case_update, xformdoc)
         return case
@@ -183,6 +186,10 @@ class ActionsUpdateStrategy(UpdateStrategy):
 
         if case_update.version:
             self.case.version = case_update.version
+
+        if self.case.domain:
+            assert hasattr(self.case, 'type')
+            self.case['#export_tag'] = ["domain", "type"]
 
         # todo: legacy behavior, should remove after new case processing
         # is fully enabled.

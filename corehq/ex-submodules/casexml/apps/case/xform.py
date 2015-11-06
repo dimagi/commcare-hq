@@ -93,18 +93,6 @@ def process_cases_with_casedb(xforms, case_db, config=None):
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    # attach domain and export tag
-    domain = xform.domain
-
-    def attach_extras(case):
-        case.domain = domain
-        if domain:
-            assert hasattr(case, 'type')
-            case['#export_tag'] = ["domain", "type"]
-        return case
-
-    cases = [attach_extras(case) for case in cases]
-
     # handle updating the sync records for apps that use sync mode
     try:
         relevant_log = xform.get_sync_token()
