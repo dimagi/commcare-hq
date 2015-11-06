@@ -29,6 +29,13 @@ from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
+try:
+    from corehq.util.soft_assert import soft_assert
+    _assert = soft_assert(to='@'.join('czue', 'dimagi.com'))
+except ImportError:
+    # hack for dependency resolution if corehq not available
+    _assert = lambda assertion, message: None
+
 
 WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
@@ -283,11 +290,7 @@ class PythonPillow(BasicPillow):
     def process_chunk(self):
         def _assert_change_has_id(change):
             if 'id' not in change:
-                # use an inline import for tests since corehq is not a dependency
-                # we can remove this once the assertion is better understood
-                from corehq.util.soft_assert import soft_assert
-                _assertion = soft_assert(to='@'.join(('czue', 'dimagi.com')))
-                _assertion(False, "expected 'id' in change, but wasn't found! change is: {}".format(
+                _assert(False, "expected 'id' in change, but wasn't found! change is: {}".format(
                     simplejson.dumps(change)
                 ))
                 return False
