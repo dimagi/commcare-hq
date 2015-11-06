@@ -113,6 +113,14 @@ EMPTY_XFORM = """<?xml version="1.0"?>
 </h:html>"""
 
 
+# cf. https://opendatakit.github.io/odk-xform-spec/#data-types
+ODK_DATA_TYPES = (
+    'string', 'int', 'boolean', 'decimal', 'date', 'time', 'dateTime', 'select', 'select1', 'geopoint', 'geotrace',
+    'geoshape', 'binary', 'barcode',
+)
+GROUP_TYPES = ('group', 'repeatGroup')  # TODO: Support 'questionList'
+
+
 class XFormBuilder(object):
     """
     A utility class for adding questions to an XForm
@@ -167,8 +175,7 @@ class XFormBuilder(object):
         :param group: The name of the question's group, or an iterable of names if nesting is deeper than one
         :param choices: A dictionary of {name: label} pairs
         """
-        if data_type not in ('string', 'int', 'double', 'date', 'time', 'dateTime', 'select', 'select1', 'group',
-                             'repeatGroup'):
+        if data_type not in ODK_DATA_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
         if group is not None and not isinstance(group, basestring) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
@@ -187,7 +194,7 @@ class XFormBuilder(object):
         :param data_type: The type of the group ("group" or "repeatGroup")
         :param group: The name or names of the group(s) that this group is inside
         """
-        if data_type not in ('group', 'repeatGroup'):
+        if data_type not in GROUP_TYPES:
             raise TypeError('Unknown question group type "{}"'.format(data_type))
         self.add_question(name, label, data_type, group)
         parents = [group] if isinstance(group, basestring) else group
