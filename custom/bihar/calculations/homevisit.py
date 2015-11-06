@@ -163,7 +163,7 @@ class NoBPPrep(TotalCalculator):
         forms = list(get_forms(case, action_filter=self.action_filter))
         return any(
             all(
-                form.xpath(xpath) != 'yes'
+                form.get_data(xpath) != 'yes'
                 for form in forms
             )
             for xpath in self.no_prep_paths
