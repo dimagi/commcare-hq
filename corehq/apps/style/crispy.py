@@ -134,7 +134,7 @@ class LinkButton(LayoutObject):
             else:
                 self.attrs['class'] = kwargs.pop('css_class')
 
-    def render(self ,form, form_style, context, template_pack=None):
+    def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
         template = self.template.format(template_pack=template_pack)
         context.update({
