@@ -68,12 +68,30 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_nvd3 %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'nvd3/src/nv.d3.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
         {% if request.use_daterangepicker %}
         {% compress css %}
             <link type="text/css"
                   rel="stylesheet"
                   media="screen"
                   href="{% new_static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_jquery_ui %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
         {% endcompress %}
         {% endif %}
 
@@ -280,12 +298,19 @@
         {# JavaScript Display Logic Libaries #}
 
         {# Use knockout explicitly, opt to move to angular js when possible. #}
-        {% if use_knockout_js %}
+        {% if request.use_knockout_js %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_nvd3 %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -306,11 +331,9 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_daterangepicker %}
+        {% if request.use_jquery_ui %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
