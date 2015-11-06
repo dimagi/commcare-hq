@@ -172,3 +172,11 @@ class TestMeta(TestCase):
 
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
+
+    @run_with_all_backends
+    def test_missing_meta_key(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "missing_date_in_meta.xml")
+        xml_data = open(file_path, "rb").read()
+        xform = FormProcessorInterface().post_xform(xml_data)
+        self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
+        self.assertIsNone(xform.metadata.timeEnd)

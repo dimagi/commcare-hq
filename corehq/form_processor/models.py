@@ -145,7 +145,9 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
 
     def _parse_meta_times(self, meta_block):
         for key in ("timeStart", "timeEnd"):
-            if meta_block.get(key, None):
+            if key not in meta_block:
+                continue
+            if meta_block[key]:
                 if re_date.match(meta_block[key]):
                     # this kind of leniency is pretty bad and making it midnight in UTC
                     # is totally arbitrary here for backwards compatibility
