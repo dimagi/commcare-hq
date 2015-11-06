@@ -24,7 +24,17 @@ from .exceptions import XFormNotFound
 Attachment = collections.namedtuple('Attachment', 'name content content_type')
 
 
-class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
+class PreSaveHashableMixin(object):
+    hash_property = None
+
+    def __hash__(self):
+        hash_val = getattr(self.hash_property, None)
+        if not hash_val:
+            raise TypeError("Form instances without form ID value are unhashable")
+        return hash(hash_val)
+
+
+class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn, PreSaveHashableMixin):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -40,6 +50,8 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
+
+    hash_property = 'form_uuid'
 
     form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
 
@@ -278,7 +290,9 @@ class XFormMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
+class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn, PreSaveHashableMixin):
+    hash_property = 'case_uuid'
+
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     case_type = models.CharField(max_length=255)
