@@ -14,15 +14,14 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from corehq.util.test_utils import flag_enabled
-from casexml.apps.case.tests.util import (check_user_has_case,
-    assert_user_doesnt_have_case,
+from casexml.apps.case.tests.util import (
+    check_user_has_case, assert_user_doesnt_have_case,
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases)
 from casexml.apps.phone.models import SyncLog, User, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
 from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from datetime import datetime
 
 USER_ID = "main_user"
