@@ -65,7 +65,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
     def reconcile_actions_if_necessary(self, xform):
         if not self.check_action_order():
             try:
-                self.reconcile_actions(rebuild=True, xforms={xform._id: xform})
+                self.reconcile_actions(rebuild=True, xforms={xform.form_id: xform})
             except ReconciliationError:
                 pass
 
@@ -144,7 +144,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
-                xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
+                xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
@@ -164,7 +164,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
             # This form is overriding a deprecated form.
             # Apply the actions just after the last action with this form type.
             # This puts the overriding actions in the right order relative to the others.
-            prior_actions = [a for a in self.case.actions if a.xform_id == xformdoc._id]
+            prior_actions = [a for a in self.case.actions if a.xform_id == xformdoc.form_id]
             if prior_actions:
                 action_insert_pos = self.case.actions.index(prior_actions[-1]) + 1
                 # slice insertion
@@ -177,7 +177,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
             self.case.actions.extend(case_update.get_case_actions(xformdoc))
 
         # rebuild the case
-        local_forms = {xformdoc._id: xformdoc}
+        local_forms = {xformdoc.form_id: xformdoc}
         local_forms.update(other_forms or {})
         self.soft_rebuild_case(strict=False, xforms=local_forms)
 
@@ -188,10 +188,10 @@ class ActionsUpdateStrategy(UpdateStrategy):
         # is fully enabled.
         if xformdoc.form_id not in self.case.xform_ids:
             legacy_soft_assert(False, "xform_id missing from case.xform_ids", {
-                'xform_id': xformdoc._id,
+                'xform_id': xformdoc.form_id,
                 'case_id': self.case.case_id
             })
-            self.case.xform_ids.append(xformdoc.get_id)
+            self.case.xform_ids.append(xformdoc.form_id)
 
     def reset_case_state(self):
         """
@@ -342,7 +342,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
         # todo attach cached attachment info
         def fetch_attachment(name):
             if xform and 'data' in xform._attachments[name]:
-                assert xform._id == attachment_action.xform_id
+                assert xform.form_id == attachment_action.xform_id
                 return base64.b64decode(xform._attachments[name]['data'])
             else:
                 return XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, name)
