@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractproperty
 import base64
 import copy
-from datetime import datetime
 from functools import cmp_to_key
 import logging
 from PIL import Image
@@ -14,48 +13,12 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
+from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
 from couchforms.util import is_override, legacy_soft_assert
-from dimagi.utils import parsing
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
-
-
-class UpdateStrategy(object):
-    __metaclass__ = ABCMeta
-
-    @abstractproperty
-    def case_implementation_class(self):
-        pass
-
-    def __init__(self, case):
-        self.case = case
-
-    @classmethod
-    def case_from_case_update(cls, case_update, xformdoc):
-        """
-        Create a case object from a case update object.
-        """
-        assert not xformdoc.is_deprecated  # you should never be able to create a case from a deleted update
-        case = cls.case_implementation_class()
-        case.case_id = case_update.id
-
-        if case_update.modified_on_str:
-            case.modified_on = parsing.string_to_utc_datetime(case_update.modified_on_str)
-        else:
-            case.modified_on = datetime.utcnow()
-
-        # attach domain and export tag
-        case.domain = xformdoc.domain
-
-        # apply initial updates, if present
-        cls(case).update_from_case_update(case_update, xformdoc)
-        return case
-
-    @abstractproperty
-    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
-        pass
 
 
 class ActionsUpdateStrategy(UpdateStrategy):

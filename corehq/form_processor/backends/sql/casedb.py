@@ -1,11 +1,13 @@
 import redis
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.models import CommCareCaseSQL
 
 
 class CaseDbCacheSQL(AbstractCaseDbCache):
     case_model_classes = (CommCareCaseSQL,)
+    case_update_strategy = SqlCaseUpdateStrategy
 
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
                  lock=False, wrap=True, initial=None, xforms=None):

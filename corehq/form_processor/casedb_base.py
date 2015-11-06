@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 from casexml.apps.case.exceptions import IllegalCaseId
 from dimagi.utils.couch import release_lock
@@ -17,8 +17,16 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     to the database. Also provides some type checking safety.
     """
 
-    case_model_classes = ()  # tuple of allowable classes
-    case_update_strategy = None
+    @abstractproperty
+    def case_model_classes(self):
+        """
+        :return: tuple of allowable classes
+        """
+        return ()
+
+    @abstractproperty
+    def case_update_strategy(self):
+        return None
 
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
                  lock=False, wrap=True, initial=None, xforms=None):
