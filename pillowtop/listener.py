@@ -143,11 +143,15 @@ class BasicPillow(PillowBase):
 
     @memoized
     def get_name(self):
-        return "%s.%s.%s" % (
-            self._get_base_name(), self.__class__.__name__, get_machine_id())
+        return self.get_legacy_name()
 
-    def _get_base_name(self):
-        return self.__module__
+    @classmethod
+    def get_legacy_name(cls):
+        return "%s.%s.%s" % (cls._get_base_name(), cls.__name__, get_machine_id())
+
+    @classmethod
+    def _get_base_name(cls):
+        return cls.__module__
 
     def processor(self, change, context):
         """
