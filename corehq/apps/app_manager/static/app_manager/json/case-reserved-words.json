@@ -1,5 +1,6 @@
 [
     "actions",
+    "case_id",
     "case_name",
     "case_type",
     "case_type_id",
