@@ -28,13 +28,18 @@ class PreSaveHashableMixin(object):
     hash_property = None
 
     def __hash__(self):
-        hash_val = getattr(self.hash_property, None)
+        hash_val = getattr(self, self.hash_property, None)
         if not hash_val:
             raise TypeError("Form instances without form ID value are unhashable")
         return hash(hash_val)
 
 
-class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn, PreSaveHashableMixin):
+class SaveStateMixin(object):
+    def is_saved(self):
+        return bool(self._get_pk_val())
+
+
+class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance, RedisLockableMixIn, SaveStateMixin):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -298,7 +303,7 @@ class XFormMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn, PreSaveHashableMixin):
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, RedisLockableMixIn, SaveStateMixin):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
