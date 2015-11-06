@@ -1081,8 +1081,7 @@ class Domain(Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        from corehq.apps.app_manager.models import Application
-        return Application.get_db().view("domain/snapshots",
+        return self.get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],
             reduce=True,
