@@ -51,10 +51,13 @@ def get_location_choices(query_context):
     # todo: consider making this an extensions framework similar to custom expressions
     # todo: does this need fancier permission restrictions and what not?
     # see e.g. locations.views.child_locations_for_select2
-    locations = SQLLocation.objects.filter(domain=query_context.domain)
     if query_context.query:
-        locations = locations.filter(name__icontains=query_context.query)
+        locations = SQLLocation.objects.filter_path_by_user_input(
+            domain=query_context.domain, user_input=query_context.query
+        )
+    else:
+        locations = SQLLocation.objects.filter(domain=query_context.domain)
     return [
-        Choice(loc.location_id, loc.name) for loc in
+        Choice(loc.location_id, loc.display_name) for loc in
         locations[query_context.offset:query_context.offset + query_context.limit]
     ]
