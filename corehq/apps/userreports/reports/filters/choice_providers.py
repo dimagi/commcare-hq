@@ -26,11 +26,6 @@ class ChoiceQueryContext(object):
 
 
 def get_choices_from_data_source_column(query_context):
-    # todo: we may want to log this as soon as mobile UCR stops hitting this
-    # for misconfigured filters
-    if not isinstance(query_context.report_filter, DynamicChoiceListFilter):
-        return []
-
     adapter = IndicatorSqlAdapter(query_context.report.config)
     table = adapter.get_table()
     sql_column = table.c[query_context.report_filter.field]
