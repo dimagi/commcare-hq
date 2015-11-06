@@ -194,8 +194,16 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn, 
         return _to_xml_element(xml)
 
     def _get_xml(self):
-        xform_attachment = self.xformattachmentsql_set.filter(name='form.xml').first()
-        return xform_attachment.read_content()
+        return self.get_attachment('form.xml')
+
+    def get_attachment(self, attachment_name):
+        if hasattr(self, 'unsaved_attachments'):
+            for attachment in self.unsaved_attachments:
+                if attachment.name == attachment_name:
+                    return attachment.read_content()
+        else:
+            xform_attachment = self.xformattachmentsql_set.filter(name=attachment_name).first()
+            return xform_attachment.read_content()
 
     def archive(self, user=None):
         if self.is_archived:
