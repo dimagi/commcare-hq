@@ -259,9 +259,11 @@ def extract_case_blocks(doc, include_path=False):
     Repeat nodes will all share the same path.
     """
     if isinstance(doc, XFormInstance):
-        doc = doc.to_json()['form']
+        form = doc.to_json()['form']
+    else:
+        form = doc.form_data
 
-    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
+    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(form)]
 
 
 def _extract_case_blocks(data, path=None):
