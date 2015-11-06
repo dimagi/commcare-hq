@@ -48,16 +48,15 @@ branches:
   - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
-  - report-builder-b3+exports-ui-changes+b3-tf+11-4 # Noah 11/4
+  - exports-ui-changes+crispy-styleguide+report-builder-b3+b3-tf # BB 11/6
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3 # Noah 10/20
+  - crispy-styleguide # Biyeun 11/6
   - b3-tf # ben 10/1
   - two-factor-otp-only # j$ 10/2
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
-  - exports-ui-changes+crispy-styleguide #biyeun 11/6
-  - crispy-styleguide # Biyeun 11/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
