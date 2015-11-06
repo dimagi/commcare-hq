@@ -6,7 +6,7 @@ from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.redis_assets import RedisAssetsAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
-from corehq.apps.fixtures.resources.v0_1 import FixtureResource
+from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
 from corehq.apps.locations import resources as locations
 from corehq.apps.reports.resources.v0_1 import ReportResource
 from django.conf.urls import *
@@ -40,9 +40,11 @@ API_LIST = (
         v0_3.CommCareCaseResource,
         v0_3.XFormInstanceResource,
         FixtureResource,
+        InternalFixtureResource,
         ReportResource,
         DomainMetadataResource,
         locations.v0_1.LocationResource,
+        locations.v0_1.InternalLocationResource,
         ProductResource,
     )),
     ((0, 4), (

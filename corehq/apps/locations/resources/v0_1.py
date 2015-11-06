@@ -1,5 +1,6 @@
 import json
 from tastypie import fields
+from tastypie.resources import Resource
 
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
@@ -74,4 +75,16 @@ class LocationResource(HqBaseResource):
         authentication = LoginAndDomainAuthentication()
         object_class = Location
         resource_name = 'location'
+        limit = 0
+
+class InternalLocationResource(LocationResource):
+
+    # using the default resource dispatch function to bypass our authorization for internal use
+    def dispatch(self, request_type, request, **kwargs):
+        return Resource.dispatch(self, request_type, request, **kwargs)
+
+    class Meta(CustomResourceMeta):
+        authentication = LoginAndDomainAuthentication()
+        object_class = Location
+        resource_name = 'location_internal'
         limit = 0
