@@ -379,7 +379,7 @@ class StockStatus(MultiReport):
         }
 
     def data(self):
-        locations = self.report_location.get_descendants()
+        locations = self.location.get_descendants()
         locations_ids = locations.values_list('supply_point_id', flat=True)
 
         if not locations_ids:
