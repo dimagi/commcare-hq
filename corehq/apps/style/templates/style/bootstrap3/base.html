@@ -307,7 +307,7 @@
         {# JavaScript Display Logic Libaries #}
 
         {# Use knockout explicitly, opt to move to angular js when possible. #}
-        {% if use_knockout_js %}
+        {% if request.use_knockout_js %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
