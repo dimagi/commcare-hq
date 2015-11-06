@@ -84,7 +84,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
                 elif a.xform_id is None:
                     error = u"Case {0} action xform_id is None: {1}"
                 if error:
-                    raise ReconciliationError(error.format(self.case.get_id, a))
+                    raise ReconciliationError(error.format(self.case.case_id, a))
 
         _check_preconditions()
 
@@ -131,7 +131,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
             if sorted_actions[0].action_type != const.CASE_ACTION_CREATE:
                 error = u"Case {0} first action not create action: {1}"
                 raise ReconciliationError(
-                    error.format(self.case.get_id, sorted_actions[0])
+                    error.format(self.case.case_id, sorted_actions[0])
                 )
         self.case.actions = sorted_actions
         if rebuild:
@@ -212,7 +212,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
                 if k != 'case_id':
                     logging.error(
                         "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
-                            'case_id': self.case._id,
+                            'case_id': self.case.case_id,
                             'attribute': k,
                         }
                     )
