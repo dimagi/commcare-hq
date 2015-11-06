@@ -128,3 +128,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
 
     def post_process_case(self, case, xform):
         pass
+
+    @abstractmethod
+    def get_reverse_indexed_cases(self, case_ids):
+        pass

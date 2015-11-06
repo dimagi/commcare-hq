@@ -1,6 +1,7 @@
 import logging
 from couchdbkit import ResourceNotFound
 import redis
+from casexml.apps.case.dbaccessors.related import get_reverse_indexed_cases
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
@@ -83,3 +84,6 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
                     case.case_id
                 )
             )
+
+    def get_reverse_indexed_cases(self, case_ids):
+        return get_reverse_indexed_cases(self.domain, case_ids)

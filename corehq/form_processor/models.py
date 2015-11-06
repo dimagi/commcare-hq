@@ -277,6 +277,7 @@ class XFormMetadata(jsonobject.JsonObject):
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
 
+
 class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
@@ -379,7 +380,10 @@ class CommCareCaseIndexSQL(models.Model):
         (EXTENSION, 'extension'),
     )
 
-    case = models.ForeignKey('CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True)
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        related_name="indices", related_query_name="index"
+    )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
     identifier = models.CharField(max_length=255, null=False)
     referenced_id = models.CharField(max_length=255, null=False)

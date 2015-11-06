@@ -202,8 +202,8 @@ def _get_or_update_cases(xforms, case_db):
             dirtiness_flags.append(DirtinessFlag(case.case_id, case.owner_id))
         return dirtiness_flags
 
-    def _get_dirtiness_flags_for_child_cases(domain, cases):
-        child_cases = get_reverse_indexed_cases(domain, [c.case_id for c in cases])
+    def _get_dirtiness_flags_for_child_cases(cases):
+        child_cases = case_db.get_reverse_indexed_cases([c.case_id for c in cases])
         case_owner_map = dict((case.case_id, case.owner_id) for case in cases)
         for child_case in child_cases:
             for index in child_case.indices:
@@ -217,7 +217,7 @@ def _get_or_update_cases(xforms, case_db):
     if track_cleanliness:
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
-        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
 
     return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
 
