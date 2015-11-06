@@ -104,7 +104,7 @@ var showError = function (message, location, autoHideTime) {
     if (message === undefined) {
         message = "sorry, there was an error";
     }
-    _show(message, location, autoHideTime, "alert alert-error");
+    _show(message, location, autoHideTime, "alert alert-danger");
 };
 
 var showSuccess = function (message, location, autoHideTime) {
@@ -135,7 +135,7 @@ var showLoading = function (selector) {
 
 var tfLoading = function (selector) {
     showLoading();
-    $('#save-indicator').text(translatedStrings.saving).removeClass('alert-success alert-error').addClass('alert-warning').show();
+    $('#save-indicator').text(translatedStrings.saving).removeClass('alert-success alert-danger').addClass('alert-warning').show();
 }
 
 var hideLoading = function (selector) {
@@ -146,9 +146,9 @@ var hideLoading = function (selector) {
 var tfLoadingComplete = function (isError) {
     hideLoading();
     if (isError) {
-        $('#save-indicator').text(translatedStrings.errSaving).removeClass('alert-warning alert-success').addClass('alert-error').show();
+        $('#save-indicator').text(translatedStrings.errSaving).removeClass('alert-warning alert-success').addClass('alert-danger').show();
     } else {
-        $('#save-indicator').text(translatedStrings.saveAll).removeClass('alert-warning alert-error').addClass('alert-success').show();
+        $('#save-indicator').text(translatedStrings.saveAll).removeClass('alert-warning alert-danger').addClass('alert-success').show();
     }
 
 }
