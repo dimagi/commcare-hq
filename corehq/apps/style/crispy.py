@@ -100,3 +100,19 @@ class CrispyTemplate(object):
     def render(self, form, form_style, context, template_pack=None):
         context.update(self.context)
         return render_to_string(self.template, context)
+
+
+class FieldWithHelpBubble(Field):
+    template = "field_with_help_bubble.html"
+
+    def __init__(self, *args, **kwargs):
+        super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
+        self.help_bubble_text = kwargs.pop('help_bubble_text')
+
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        self.template = "style/crispy/{}/{}".format(template_pack, self.template)
+        context.update({
+            'help_bubble_text': self.help_bubble_text,
+        })
+        return super(FieldWithHelpBubble, self).render(form, form_style, context, template_pack=template_pack)

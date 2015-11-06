@@ -60,21 +60,6 @@ class HiddenFieldWithErrors(Field):
     template = "hqwebapp/crispy/field/hidden_with_errors.html"
 
 
-class FieldWithHelpBubble(Field):
-    template = "hqwebapp/crispy/field/field_with_help_bubble.html"
-
-    def __init__(self, *args, **kwargs):
-        super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
-        self.help_bubble_text = kwargs.pop('help_bubble_text')
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        context.update({
-            'help_bubble_text': self.help_bubble_text,
-        })
-        return super(FieldWithHelpBubble, self).render(form, form_style, context, template_pack=template_pack)
-
-
 class TextField(Field):
     """
     Layout object.
