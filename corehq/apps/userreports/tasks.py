@@ -37,7 +37,8 @@ def rebuild_indicators(indicator_config_id):
         adapter.rebuild_table()
         relevant_ids = get_doc_ids_in_domain_by_type(config.domain, config.referenced_doc_type,
                                    database=couchdb)
-        client.sadd(redis_key, *relevant_ids)
+        if relevant_ids:
+            client.sadd(redis_key, *relevant_ids)
 
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
         try:
