@@ -16,7 +16,7 @@ from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
-from couchforms.util import is_deprecation, is_override, legacy_soft_assert
+from couchforms.util import is_override, legacy_soft_assert
 from dimagi.utils import parsing
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
@@ -37,7 +37,7 @@ class UpdateStrategy(object):
         """
         Create a case object from a case update object.
         """
-        assert not is_deprecation(xformdoc)  # you should never be able to create a case from a deleted update
+        assert not xformdoc.is_deprecated  # you should never be able to create a case from a deleted update
         case = cls.case_implementation_class()
         case.case_id = case_update.id
 
@@ -151,7 +151,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
             )
             raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
-        if is_deprecation(xformdoc):
+        if xformdoc.is_deprecated:
             # Mark all of the form actions as deprecated. These will get removed on rebuild.
             # This assumes that there is a second update coming that will actually
             # reapply the equivalent actions from the form that caused the current
