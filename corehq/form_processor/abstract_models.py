@@ -12,6 +12,7 @@ class AbstractXFormInstance(object):
     def auth_context(self):
         raise NotImplementedError()
 
+    @property
     def form_data(self):
         raise NotImplementedError()
 
