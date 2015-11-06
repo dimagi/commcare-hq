@@ -22,10 +22,10 @@ class AbstractXFormInstance(object):
     def get_attachment(self, attachment_name):
         raise NotImplementedError()
 
-    def archive(self, xform_generic, user=None):
+    def archive(self, user=None):
         raise NotImplementedError()
 
-    def unarchive(self, xform_generic, user=None):
+    def unarchive(self, user=None):
         raise NotImplementedError()
 
     def get_xml_element(self):
