@@ -1191,6 +1191,8 @@ BOWER_CORE_APPS = (
     'bootstrap-daterangepicker#2.1.13',
     'd3#3.1',
     'nvd3#1.1.10-beta',
+    'datatables#1.10.9',
+    'datatables-bootstrap3#0.1',
 )
 
 BOWER_TEST_APPS = (
