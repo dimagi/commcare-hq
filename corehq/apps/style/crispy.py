@@ -116,3 +116,30 @@ class FieldWithHelpBubble(Field):
             'help_bubble_text': self.help_bubble_text,
         })
         return super(FieldWithHelpBubble, self).render(form, form_style, context, template_pack=template_pack)
+
+
+class LinkButton(LayoutObject):
+    template = "style/crispy/{template_pack}/link_button.html"
+
+    def __init__(self, button_text, button_url, **kwargs):
+        self.button_text = button_text
+        self.button_url = button_url
+
+        if not hasattr(self, 'attrs'):
+            self.attrs = {}
+
+        if 'css_class' in kwargs:
+            if 'class' in self.attrs:
+                self.attrs['class'] += " %s" % kwargs.pop('css_class')
+            else:
+                self.attrs['class'] = kwargs.pop('css_class')
+
+    def render(self ,form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        template = self.template.format(template_pack=template_pack)
+        context.update({
+            'button_text': self.button_text,
+            'button_url': self.button_url,
+            'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
+        })
+        return render_to_string(template, context)
