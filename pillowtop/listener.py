@@ -112,7 +112,6 @@ class BasicPillow(PillowBase):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
-
     @property
     def couch_db(self):
         return self._couch_db
@@ -149,11 +148,6 @@ class BasicPillow(PillowBase):
 
     def _get_base_name(self):
         return self.__module__
-
-    @property
-    def since(self):
-        # todo: see if we can remove this. It is hard to search for.
-        return self.get_last_checkpoint_sequence()
 
     def processor(self, change, context):
         """
