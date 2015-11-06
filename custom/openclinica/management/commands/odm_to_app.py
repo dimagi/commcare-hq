@@ -4,7 +4,7 @@ Create a template app from ODM-formatted OpenClinica study metadata
 from lxml import etree
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction
+from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, UpdateCaseAction, PreloadAction
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from custom.openclinica.utils import odm_nsmap
 
@@ -66,11 +66,11 @@ class Study(StudyObject):
             yield StudyEvent(se_def, self.meta)
 
     @staticmethod
-    def get_reg_form_source():
+    def get_subject_form_source(name):
         """
         Return a registration form that mimics OpenClinica subject registration
         """
-        xform = XFormBuilder('Register Subject')
+        xform = XFormBuilder(name)
         xform.add_question('name', 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
         xform.add_question('subject_study_id', 'Subject Study ID')  # Subject number for this study
         xform.add_question('dob', 'Date of Birth', data_type='date')
@@ -78,24 +78,54 @@ class Study(StudyObject):
         xform.add_question('enrollment_date', 'Enrollment Date', data_type='date')
         return xform.tostring(pretty_print=True)
 
-    def new_subject_module(self):
-        module = Module.new_module('Study Subjects', None)
+    def new_subject_module(self, app):
+        module = app.add_module(Module.new_module('Study Subjects', None))
+        module.unique_id = 'study_subjects'
         module.case_type = 'subject'
-        reg_form = module.new_form('Register Subject')
-        reg_form.source = self.get_reg_form_source()
-        reg_form.actions.open_case = OpenCaseAction(name_path="/data/name", external_id=None)
+
+        reg_form = module.new_form('Register Subject', None)
+        reg_form.unique_id = 'register_subject'
+        reg_form.source = self.get_subject_form_source('Register Subject')
+        reg_form.actions.open_case = OpenCaseAction(name_path='/data/name', external_id=None)
         reg_form.actions.open_case.condition.type = 'always'
+        reg_form.actions.update_case = UpdateCaseAction(update={
+            'subject_study_id': '/data/subject_study_id',
+            'dob': '/data/dob',
+            'sex': '/data/sex',
+            'enrollment_date': '/data/enrollment_date',
+        })
+        reg_form.actions.update_case.condition.type = 'always'
+
+        edit_form = module.new_form('Edit Subject', None)
+        edit_form.unique_id = 'edit_subject'
+        edit_form.source = self.get_subject_form_source('Edit Subject')
+        edit_form.requires = 'case'
+        edit_form.actions.case_preload = PreloadAction(preload={
+            '/data/name': 'name',
+            '/data/subject_study_id': 'subject_study_id',
+            '/data/dob': 'dob',
+            '/data/sex': 'sex',
+            '/data/enrollment_date': 'enrollment_date',
+        })
+        edit_form.actions.case_preload.condition.type = 'always'
+        edit_form.actions.update_case = UpdateCaseAction(update={
+            'name': '/data/name',
+            'subject_study_id': '/data/subject_study_id',
+            'dob': '/data/dob',
+            'sex': '/data/sex',
+            'enrollment_date': '/data/enrollment_date',
+        })
+        edit_form.actions.update_case.condition.type = 'always'
         return module
 
     def get_new_app(self, domain_name, app_name, version=APP_V2):
         app = Application.new_app(domain_name, app_name, application_version=version)
         app.name = self.name
-        app.add_module(self.new_subject_module())
+        subject_module = self.new_subject_module(app)
         for event in self.iter_events():
-            module = event.get_new_module()
+            module = event.new_module_for_app(app, subject_module)
             for study_form in event.iter_forms():
                 study_form.add_new_form_to_module(module)
-            app.add_module(module)
         return app
 
 
@@ -107,6 +137,7 @@ class StudyEvent(StudyObject):
         self.name = defn.get('Name')
         self.is_repeating = defn.get('Repeating') == 'Yes'
         self.event_type = defn.get('Type')  # Scheduled, Unscheduled, or Common
+        self.unique_id = self.oid.lower()
 
     def iter_forms(self):
         for form_ref in self.defn.xpath('./odm:FormRef', namespaces=odm_nsmap):
@@ -114,12 +145,16 @@ class StudyEvent(StudyObject):
             form_def = self.meta.xpath('./odm:FormDef[@OID="{}"]'.format(form_oid), namespaces=odm_nsmap)[0]
             yield StudyForm(form_def, self.meta)
 
-    def get_new_module(self):
+    def new_module_for_app(self, app, subject_module):
         """
         Return a CommCare module
         """
-        module = Module.new_module(self.name, None)
+        module = app.add_module(Module.new_module(self.name, None))
+        module.unique_id = self.unique_id
         module.case_type = 'event'
+        module.root_module_id = subject_module.unique_id
+        module.parent_select.active = True
+        module.parent_select.module_id = subject_module.unique_id
         return module
 
 
@@ -130,6 +165,7 @@ class StudyForm(StudyObject):
         self.oid = defn.get('OID')
         self.name = defn.get('Name')
         self.is_repeating = defn.get('Repeating') == 'Yes'
+        self.unique_id = self.oid.lower()
 
     def iter_item_groups(self):
         for ig_ref in self.defn.xpath('./odm:ItemGroupRef', namespaces=odm_nsmap):
@@ -142,6 +178,7 @@ class StudyForm(StudyObject):
         Add a CommCare form based in this form's item groups and items to a given CommCare module
         """
         form = module.new_form(self.name, None)
+        form.unique_id = self.unique_id
         form.source = self.build_xform()
 
     def build_xform(self):
