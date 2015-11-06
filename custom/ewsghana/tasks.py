@@ -1,7 +1,8 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.models import ReportNotification, ReportConfig
+from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
@@ -188,6 +189,13 @@ def migrate_email_settings(domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
     migrate_email = EmailSettingsSync(domain)
+
+    for user in iter_docs(WebUser.get_db(), WebUser.ids_by_domain(domain)):
+        for notification in ReportNotification.by_domain_and_owner(domain, user['_id'], stale=False):
+            notification.delete()
+
+        for config in ReportConfig.by_domain_and_owner(domain, user['_id'], stale=False):
+            config.delete()
 
     for report in endpoint.get_daily_reports(limit=1000)[1]:
         migrate_email.daily_report_sync(report)

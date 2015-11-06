@@ -850,19 +850,11 @@ class EmailSettingsSync(object):
             return
 
         try:
-            location = SQLLocation.objects.get(site_code=location_code, domain=self.domain)
+            location = SQLLocation.objects.get(site_code=location_code, domain=self.domain, is_archived=False)
         except SQLLocation.DoesNotExist:
             return
 
-        notifications = ReportNotification.by_domain_and_owner(self.domain, user.get_id)
-        reports = []
-        for n in notifications:
-            for config_id in n.config_ids:
-                config = ReportConfig.get(config_id)
-                reports.append((config.filters.get('location_id'), config.report_slug, interval))
-
-        if report.report not in self.REPORT_MAP or (location.location_id, self.REPORT_MAP[report.report],
-                                                    interval) in reports:
+        if report.report not in self.REPORT_MAP:
             return
 
         saved_config = ReportConfig(
