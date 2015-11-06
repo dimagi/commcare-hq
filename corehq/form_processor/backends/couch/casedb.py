@@ -1,3 +1,4 @@
+import logging
 from couchdbkit import ResourceNotFound
 import redis
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -72,3 +73,13 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
 
     def post_process_case(self, case, xform):
         self.case_update_strategy(case).reconcile_actions_if_necessary(xform)
+
+        action_xforms = {action.xform_id for action in case.actions if action.xform_id}
+        mismatched_forms = action_xforms ^ set(case.xform_ids)
+        if mismatched_forms:
+            logging.warning(
+                "CASE XFORM MISMATCH /a/{},{}".format(
+                    xform.domain,
+                    case.case_id
+                )
+            )
