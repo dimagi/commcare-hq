@@ -1175,6 +1175,7 @@ BOWER_CORE_APPS = (
     'jquery-form#3.45.0',
     'jquery.cookie#1.4.1',
     'jquery-timeago#1.2.0',
+    'jquery-ui#1.11.4',
     'angular#1.4.4',
     'angular-route#1.4.4',
     'angular-resource#1.4.4',
@@ -1188,6 +1189,10 @@ BOWER_CORE_APPS = (
     'less#1.7.3',
     'backbone#0.9.1',
     'bootstrap-daterangepicker#2.1.13',
+    'd3#3.1',
+    'nvd3#1.1.10-beta',
+    'datatables#1.10.9',
+    'datatables-bootstrap3#0.1',
 )
 
 BOWER_TEST_APPS = (
