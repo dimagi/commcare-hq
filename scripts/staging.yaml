@@ -56,7 +56,8 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
-#  - crispy-styleguide # Biyeun 11/6
+  - exports-ui-changes+crispy-styleguide #biyeun 11/6
+  - crispy-styleguide # Biyeun 11/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
