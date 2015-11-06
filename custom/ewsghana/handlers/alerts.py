@@ -295,8 +295,9 @@ class AlertsHandler(KeywordHandler):
         if not domain.commtrack_enabled:
             return False
 
-        if not verified_contact.location_id:
+        if not self.sql_location:
             self.respond(NO_SUPPLY_POINT_MESSAGE)
+            return True
 
         try:
             parser = EWSStockAndReceiptParser(domain, verified_contact)
