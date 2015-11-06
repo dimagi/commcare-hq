@@ -24,12 +24,15 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
 
     def _get_case(self, case_id):
         try:
-            try:
-                case, lock = CommCareCaseSQL.get_locked_obj(_id=case_id)
-            except redis.RedisError:
-                case = CommCareCaseSQL.get(case_id)
+            if self.lock:
+                try:
+                    case, lock = CommCareCaseSQL.get_locked_obj(_id=case_id)
+                except redis.RedisError:
+                    case = CommCareCaseSQL.get(case_id)
+                else:
+                    self.locks.append(lock)
             else:
-                self.locks.append(lock)
+                case = CommCareCaseSQL.get(case_id)
         except CommCareCaseSQL.DoesNotExist:
             return None
 
