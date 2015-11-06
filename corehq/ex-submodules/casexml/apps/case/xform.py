@@ -132,7 +132,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
         )
 
     for case in cases:
-        ActionsUpdateStrategy(case).reconcile_actions_if_necessary(xform)
+        case_db.post_process_case(case, xform)
         case_db.mark_changed(case)
 
         action_xforms = {action.xform_id for action in case.actions if action.xform_id}

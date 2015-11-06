@@ -125,3 +125,6 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         else:
             self.case_update_strategy(case).update_from_case_update(case_update, xform, self.get_cached_forms())
             return case
+
+    def post_process_case(self, case, xform):
+        pass

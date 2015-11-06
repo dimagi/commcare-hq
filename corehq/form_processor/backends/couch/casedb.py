@@ -69,3 +69,6 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
                     )
                 )
         return cases
+
+    def post_process_case(self, case, xform):
+        self.case_update_strategy(case).reconcile_actions_if_necessary(xform)
