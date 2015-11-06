@@ -8,6 +8,7 @@ from casexml.apps.phone.exceptions import MissingSyncLog, RestoreException
 from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, generate_restore_payload
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload, get_restore_config
+from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
@@ -1691,6 +1692,93 @@ class MultiUserSyncTest(SyncBaseTest):
         self._testUpdate(latest_sync_log._id, {
             child_id: [new_mom_ref, dad_ref], mom_id: [], dad_id: [], new_mom_id: []
         })
+
+
+class SteadyStateExtensionSyncTest(SyncBaseTest):
+    """
+    Test that doing multiple clean syncs with extensions does what we think it will
+    """
+    def setUp(self):
+        super(SteadyStateExtensionSyncTest, self).setUp()
+        self.other_user = User(user_id=OTHER_USER_ID, username=OTHER_USERNAME,
+                               password="changeme", date_joined=datetime(2011, 6, 9),
+                               additional_owner_ids=[SHARED_ID])
+        self._create_ownership_cleanliness(USER_ID)
+        self._create_ownership_cleanliness(OTHER_USER_ID)
+
+    def _create_ownership_cleanliness(self, user_id):
+        OwnershipCleanlinessFlag.objects.get_or_create(
+            owner_id=USER_ID,
+            domain=self.project.name,
+            defaults={'is_clean': True}
+        )
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_delegating_extensions(self):
+        """Make an extension, delegate it, send it back, see what happens"""
+        host = CaseStructure(case_id='host',
+                             attrs={'create': True})
+        extension = CaseStructure(
+            case_id='extension',
+            attrs={'create': True, 'owner_id': '-'},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+        )
+        # Make a simple extension
+        self.factory.create_or_update_case(extension)
+
+        # Make sure we get it
+        assert_user_has_case(self, self.user, host.case_id)
+        # But ferrel doesn't
+        assert_user_doesnt_have_case(self, self.other_user, host.case_id)
+
+        # Reassign the extension to ferrel
+        re_assigned_extension = CaseStructure(
+            case_id='extension',
+            attrs={'owner_id': OTHER_USER_ID}
+        )
+        self.factory.create_or_update_case(re_assigned_extension)
+
+        # other user should sync the host
+        assert_user_has_case(self, self.other_user, host.case_id)
+
+        # original user should sync the extension because it has changed
+        sync_log_id = SyncLog.last_for_user(USER_ID)._id
+        assert_user_has_case(self, self.user, extension.case_id,
+                             restore_id=sync_log_id)
+        # but not the host, because that didn't
+        assert_user_doesnt_have_case(self, self.user, host.case_id,
+                                     restore_id=sync_log_id)
+
+        # syncing again by original user should not pull anything
+        sync_again_id = SyncLog.last_for_user(USER_ID)._id
+        assert_user_doesnt_have_case(self, self.user, extension.case_id,
+                                     restore_id=sync_again_id)
+        assert_user_doesnt_have_case(self, self.user, host.case_id,
+                                     restore_id=sync_again_id)
+
+        # reassign the extension case
+        re_assigned_extension = CaseStructure(
+            case_id='extension',
+            attrs={'owner_id': '-'}
+        )
+        self.factory.create_or_update_case(re_assigned_extension)
+
+        # make sure other_user doesn't gets it because it changed
+        assert_user_has_case(self, self.other_user, extension.case_id,
+                             restore_id=SyncLog.last_for_user(OTHER_USER_ID)._id)
+        # first user should also get it since it was updated
+        assert_user_has_case(self, self.user, extension.case_id, restore_id=SyncLog.last_for_user(USER_ID)._id)
+
+        # other user syncs again, should not get the extension
+        assert_user_doesnt_have_case(self, self.other_user, extension.case_id,
+                                     restore_id=SyncLog.last_for_user(OTHER_USER_ID)._id)
+
+        # Hooray!
 
 
 class SyncTokenReprocessingTest(SyncBaseTest):
