@@ -22,7 +22,6 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
