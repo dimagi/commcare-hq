@@ -28,11 +28,17 @@ $(function () {
                 separator: separator
             }
         };
-        if (!_.isEmpty(startdate) && !_.isEmpty(enddate)) {
+        var hasStartAndEndDate = !_.isEmpty(startdate) && !_.isEmpty(enddate);
+        if (hasStartAndEndDate) {
             config.startDate = new Date(startdate);
             config.endDate = new Date(enddate);
         }
+
         $(this).daterangepicker(config);
+
+        if (! hasStartAndEndDate){
+            $(this).val("");
+        }
     };
     $.fn.createBootstrap3DefaultDateRangePicker = function () {
         this.createBootstrap3DateRangePicker(
