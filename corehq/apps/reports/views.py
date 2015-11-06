@@ -233,6 +233,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
 
     return render(request, template, context)
 
+
 @requires_privilege_json_response(privileges.API_ACCESS)
 @login_or_digest
 @require_form_export_permission
@@ -1263,9 +1264,11 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         workbook.close()
     return FileWrapper(open(path))
 
+
 @requires_privilege_json_response(privileges.API_ACCESS)
 def download_cases(request, domain):
     return download_cases_internal(request, domain)
+
 
 @login_or_digest
 @require_case_export_permission

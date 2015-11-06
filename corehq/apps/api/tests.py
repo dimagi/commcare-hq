@@ -64,19 +64,11 @@ class FakeXFormES(object):
             }
         }
 
+
 def set_up_subscription(cls):
-    cls.account = BillingAccount.get_or_create_account_by_domain(
-                    cls.domain.name,
-                    created_by="automated-test",
-                    )[0]
-    plan = DefaultProductPlan.get_default_plan_by_domain(
-                cls.domain.name, edition=SoftwarePlanEdition.ADVANCED
-                )
-    cls.subscription = Subscription.new_domain_subscription(
-                        cls.account,
-                        cls.domain.name,
-                        plan
-                        )
+    cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
+    plan = DefaultProductPlan.get_default_plan_by_domain(cls.domain.name, edition=SoftwarePlanEdition.ADVANCED)
+    cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
     cls.subscription.is_active = True
     cls.subscription.save()
 
@@ -1087,18 +1079,9 @@ class TestSingleSignOnResource(APIResourceTest):
         wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
 
         # have to set up subscription for the bad domain or it will fail on authorization
-        new_account = BillingAccount.get_or_create_account_by_domain(
-                        wrong_domain.name,
-                        created_by="automated-test",
-                        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-                wrong_domain.name, edition=SoftwarePlanEdition.ADVANCED
-                )
-        new_subscription = Subscription.new_domain_subscription(
-                        new_account,
-                        wrong_domain.name,
-                        plan
-                        )
+        new_account = BillingAccount.get_or_create_account_by_domain(wrong_domain.name, created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(wrong_domain.name, edition=SoftwarePlanEdition.ADVANCED)
+        new_subscription = Subscription.new_domain_subscription(new_account, wrong_domain.name, plan)
         new_subscription.is_active = True
         new_subscription.save()
         wrong_list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=wrong_domain.name,

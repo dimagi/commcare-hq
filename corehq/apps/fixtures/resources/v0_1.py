@@ -30,7 +30,6 @@ class FixtureResource(HqBaseResource):
     id = tp_f.CharField(attribute='_id', readonly=True, unique=True)
 
     def obj_get(self, bundle, **kwargs):
-        import ipdb; ipdb.set_trace()
         return convert_fdt(get_object_or_not_exist(
             FixtureDataItem, kwargs['pk'], kwargs['domain']))
 
@@ -64,6 +63,7 @@ class FixtureResource(HqBaseResource):
         object_class = FixtureDataItem
         resource_name = 'fixture'
         limit = 0
+
 
 class InternalFixtureResource(FixtureResource):
 

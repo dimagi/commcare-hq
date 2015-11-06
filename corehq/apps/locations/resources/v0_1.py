@@ -77,6 +77,7 @@ class LocationResource(HqBaseResource):
         resource_name = 'location'
         limit = 0
 
+
 class InternalLocationResource(LocationResource):
 
     # using the default resource dispatch function to bypass our authorization for internal use

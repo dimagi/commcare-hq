@@ -71,18 +71,9 @@ class ExportTest(BaseAccountingTest):
     def setUp(self):
         self._clear_docs()
         self.domain = create_domain(DOMAIN)
-        self.account = BillingAccount.get_or_create_account_by_domain(
-                    DOMAIN,
-                    created_by="automated-test",
-                    )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-                DOMAIN, edition=SoftwarePlanEdition.ADVANCED
-                )
-        self.subscription = Subscription.new_domain_subscription(
-                        self.account,
-                        DOMAIN,
-                        plan
-                        )
+        self.account = BillingAccount.get_or_create_account_by_domain(DOMAIN, created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(DOMAIN, edition=SoftwarePlanEdition.ADVANCED)
+        self.subscription = Subscription.new_domain_subscription(self.account, DOMAIN, plan)
         self.subscription.is_active = True
         self.subscription.save()
         self.couch_user = WebUser.create(None, "test", "foobar")

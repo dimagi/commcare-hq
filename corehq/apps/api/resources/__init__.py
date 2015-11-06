@@ -90,12 +90,12 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     Convenience class to allow easy adjustment of API resource base classes.
     """
     def dispatch(self, request_type, request, **kwargs):
-        if  request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
+        if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:
             raise ImmediateHttpResponse(HttpResponse(json.dumps({"error": "not authorized"}),
-                                                        content_type="application/json",
-                                                        status=401))
+                                            content_type="application/json",
+                                            status=401))
 
 
 class SimpleSortableResourceMixin(object):
