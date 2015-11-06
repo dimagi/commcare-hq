@@ -201,7 +201,7 @@ def process_stock(xforms, case_db=None):
     else:
         assert isinstance(case_db, AbstractCaseDbCache)
 
-    sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     stock_report_helpers = []
     case_action_intents = []
     for xform in sorted_forms:

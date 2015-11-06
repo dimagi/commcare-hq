@@ -92,3 +92,9 @@ class FormProcessorInterface(object):
 
     def bulk_save(self, instance, xforms, cases=None):
         return self.processor.bulk_save(instance, xforms, cases=cases)
+
+    def process_cases_with_casedb(self, xforms, case_db):
+        return self.processor.process_cases_with_casedb(xforms, case_db)
+
+    def process_stock(self, xforms, case_db):
+        return self.processor.process_stock(xforms, case_db)

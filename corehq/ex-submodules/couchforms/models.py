@@ -29,6 +29,7 @@ from dimagi.utils.mixins import UnicodeMixIn
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.utils import get_text_attribute
 
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms.const import ATTACHMENT_NAME
@@ -194,20 +195,16 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return False
 
     @property
-    def metadata(self):
-        def get_text(node):
-            if node is None:
-                return None
-            if isinstance(node, dict) and '#text' in node:
-                value = node['#text']
-            elif isinstance(node, dict) and all(a.startswith('@') for a in node):
-                return None
-            else:
-                value = node
+    def is_submission_error_log(self):
+        assert self.doc_type == 'XFormInstance'
+        return False
 
-            if not isinstance(value, basestring):
-                value = unicode(value)
-            return value
+    @property
+    def is_normal(self):
+        return not (self.is_error or self.is_deprecated or self.is_duplicate or self.is_archived)
+
+    @property
+    def metadata(self):
 
         if const.TAG_META in self.form:
             def _clean(meta_block):
@@ -219,8 +216,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
                 # couchdbkit erroneously converts appVersion to a Decimal just because it is possible (due to it being within a "dynamic" property)
                 # (see https://github.com/benoitc/couchdbkit/blob/a23343e539370cffcf8b0ce483c712911bb022c1/couchdbkit/schema/properties.py#L1038)
-                ret['appVersion'] = get_text(meta_block.get('appVersion'))
-                ret['location'] = get_text(meta_block.get('location'))
+                ret['appVersion'] = get_text_attribute(meta_block.get('appVersion'))
+                ret['location'] = get_text_attribute(meta_block.get('location'))
 
                 # couchdbkit chokes on dates that aren't actually dates
                 # so check their validity before passing them up
@@ -524,6 +521,10 @@ class SubmissionErrorLog(XFormError):
         self["doc_type"] = "SubmissionErrorLog" 
         # and we can't use super for the same reasons XFormError 
         XFormInstance.save(self, *args, **kwargs)
+
+    @property
+    def is_submission_error_log(self):
+        return True
 
     @classmethod
     def from_instance(cls, instance, message):

@@ -3,6 +3,7 @@ import uuid
 import hashlib
 
 from couchforms.util import process_xform
+from django.db import transaction
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL
 from corehq.form_processor.utils import extract_meta_instance_id
@@ -59,7 +60,12 @@ class FormProcessorSQL(object):
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
         try:
-            XFormInstanceSQL.objects.bulk_create(xforms)
+            with transaction.atomic():
+                for xform in xforms:
+                    xform.save()
+                for unsaved_attachment in instance.unsaved_attachments:
+                    unsaved_attachment.xform = instance
+                instance.xformattachmentsql_set.bulk_create(instance.unsaved_attachments)
         except Exception as e:
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
@@ -70,6 +76,12 @@ class FormProcessorSQL(object):
             # instance = _handle_unexpected_error(instance, error_message)
             raise
 
-        for unsaved_attachment in instance.unsaved_attachments:
-            unsaved_attachment.xform = instance
-        instance.xformattachmentsql_set.bulk_create(instance.unsaved_attachments)
+    @classmethod
+    def process_cases_with_casedb(cls, xforms, case_db):
+        from casexml.apps.case.xform import CaseProcessingResult
+        return CaseProcessingResult('test-domain', [], [], False)
+
+    @classmethod
+    def process_stock(cls, xforms, case_db):
+        from corehq.apps.commtrack.processing import StockProcessingResult
+        return StockProcessingResult(xforms[0])

@@ -38,6 +38,34 @@ class AbstractXFormInstance(object):
     def to_json(self):
         raise NotImplementedError()
 
+    @property
+    def metadata(self):
+        raise NotImplementedError()
+
+    @property
+    def is_normal(self):
+        raise NotImplementedError()
+
+    @property
+    def is_archived(self):
+        raise NotImplementedError()
+
+    @property
+    def is_deprecated(self):
+        raise NotImplementedError()
+
+    @property
+    def is_duplicate(self):
+        raise NotImplementedError()
+
+    @property
+    def is_error(self):
+        raise NotImplementedError()
+
+    @property
+    def is_submission_error_log(self):
+        raise NotImplementedError()
+
 
 class AbstractCommCareCase(object):
 

@@ -782,7 +782,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    StockReport.objects.filter(form_id=xform._id).delete()
+    StockReport.objects.filter(form_id=xform.form_id).delete()
 
 
 @receiver(xform_unarchived)

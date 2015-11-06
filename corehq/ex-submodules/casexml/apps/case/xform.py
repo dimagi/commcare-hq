@@ -19,7 +19,6 @@ from casexml.apps.case.exceptions import (
     NoDomainProvided,
 )
 from django.conf import settings
-from couchforms.util import is_deprecation
 from couchforms.validators import validate_phone_datetime
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
@@ -188,7 +187,7 @@ def _get_or_update_cases(xforms, case_db):
     couch case document objects
     """
     # have to apply the deprecations before the updates
-    sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
+    sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     touched_cases = {}
     for xform in sorted_forms:
         for case_update in get_case_updates(xform):

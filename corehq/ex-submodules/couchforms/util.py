@@ -126,7 +126,7 @@ def deprecate_xform(existing_doc, new_doc):
     new_doc.received_on = existing_doc.received_on
     new_doc.deprecated_form_id = existing_doc._id
     new_doc.edited_on = datetime.datetime.utcnow()
-    return existing_doc, new_doc
+    return XFormDeprecated.wrap(existing_doc.to_json()), new_doc
 
 
 def deduplicate_xform(new_doc):
@@ -359,7 +359,7 @@ class SubmissionPost(object):
 
         def process(xform):
             self._set_submission_properties(xform)
-            if xform.doc_type != 'SubmissionErrorLog':
+            if xform.is_submission_error_log:
                 found_old = scrub_meta(xform)
                 legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
@@ -377,12 +377,9 @@ class SubmissionPost(object):
 
     def process_xforms_for_cases(self, xform_lock_manager):
         from casexml.apps.case.models import CommCareCase
-        from casexml.apps.case.xform import (
-            get_and_check_xform_domain, process_cases_with_casedb
-        )
+        from casexml.apps.case.xform import get_and_check_xform_domain
         from casexml.apps.case.signals import case_post_save
         from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
-        from corehq.apps.commtrack.processing import process_stock
         from corehq.apps.commtrack.exceptions import MissingProductId
 
         cases = []
@@ -395,8 +392,8 @@ class SubmissionPost(object):
                 domain = get_and_check_xform_domain(instance)
                 with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                     try:
-                        case_result = process_cases_with_casedb(xforms, case_db)
-                        stock_result = process_stock(xforms, case_db)
+                        case_result = self.interface.process_cases_with_casedb(xforms, case_db)
+                        stock_result = self.interface.process_stock(xforms, case_db)
                     except known_errors as e:
                         return self._handle_known_error(e, instance, xforms)
                     except Exception as e:
@@ -404,8 +401,8 @@ class SubmissionPost(object):
                         # note that in the case of edit submissions this won't flag the previous
                         # submission as having been edited. this is intentional, since we should treat
                         # this use case as if the edit "failed"
-                        _handle_unexpected_error(instance, e)
                         raise
+                        _handle_unexpected_error(instance, e)
 
                     now = datetime.datetime.utcnow()
                     unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
@@ -473,7 +470,7 @@ class SubmissionPost(object):
         return HttpResponseForbidden('Bad auth')
 
     def _get_open_rosa_response(self, instance, errors):
-        if instance.doc_type == "XFormInstance":
+        if instance.is_normal:
             response = self.get_success_response(instance, errors)
         else:
             response = self.get_failure_response(instance)
@@ -482,7 +479,7 @@ class SubmissionPost(object):
         response["Location"] = self.location
 
         # this is a magic thing that we add
-        response['X-CommCareHQ-FormID'] = instance.get_id
+        response['X-CommCareHQ-FormID'] = instance.form_id
         return response
 
     @staticmethod
