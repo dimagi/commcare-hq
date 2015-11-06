@@ -35,8 +35,8 @@ class AsyncDrillableFilter(BaseReportFilter):
     @property
     def api_root(self):
         return reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'fixture_internal',
-                                                        'api_name': 'v0.1'})
+                                                    'resource_name': 'fixture_internal',
+                                                    'api_name': 'v0.1'})
 
     @property
     def full_hierarchy(self):
