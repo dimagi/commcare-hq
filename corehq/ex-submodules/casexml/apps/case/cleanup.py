@@ -6,11 +6,11 @@ from casexml.apps.case import const
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.update_strategy import ActionsUpdateStrategy
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
 from couchforms import fetch_and_wrap_form
 
 
