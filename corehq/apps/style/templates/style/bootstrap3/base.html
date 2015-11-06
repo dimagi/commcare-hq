@@ -86,6 +86,15 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_nvd3 %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'nvd3/src/nv.d3.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
         {% include "style/includes/bootstrap3/core_libraries.html" %}
@@ -313,6 +322,13 @@
         {% if request.use_jquery_ui %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_nvd3 %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
