@@ -1,7 +1,4 @@
 from abc import ABCMeta, abstractproperty
-from datetime import datetime
-
-from dimagi.utils import parsing
 
 
 class UpdateStrategy(object):
@@ -23,10 +20,7 @@ class UpdateStrategy(object):
         case = cls.case_implementation_class()
         case.case_id = case_update.id
 
-        if case_update.modified_on_str:
-            case.modified_on = parsing.string_to_utc_datetime(case_update.modified_on_str)
-        else:
-            case.modified_on = datetime.utcnow()
+        case.modified_on = case_update.guess_modified_on()
 
         # attach domain and export tag
         case.domain = xformdoc.domain
