@@ -107,7 +107,8 @@ class ActionsUpdateStrategy(UpdateStrategy):
 
         return self
 
-    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+    def update_from_case_update(self, case_update, other_forms=None):
+        xformdoc = case_update.xform
         if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
@@ -135,12 +136,12 @@ class ActionsUpdateStrategy(UpdateStrategy):
                 action_insert_pos = self.case.actions.index(prior_actions[-1]) + 1
                 # slice insertion
                 # http://stackoverflow.com/questions/7376019/python-list-extend-to-index/7376026#7376026
-                self.case.actions[action_insert_pos:action_insert_pos] = case_update.get_case_actions(xformdoc)
+                self.case.actions[action_insert_pos:action_insert_pos] = case_update.get_case_actions()
             else:
-                self.case.actions.extend(case_update.get_case_actions(xformdoc))
+                self.case.actions.extend(case_update.get_case_actions())
         else:
             # normal form - just get actions and apply them on the end
-            self.case.actions.extend(case_update.get_case_actions(xformdoc))
+            self.case.actions.extend(case_update.get_case_actions())
 
         # rebuild the case
         local_forms = {xformdoc.form_id: xformdoc}
