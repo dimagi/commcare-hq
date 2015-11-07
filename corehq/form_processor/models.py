@@ -353,6 +353,11 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
     def is_deleted(self):
         return self.deleted
 
+    def to_json(self):
+        from .serializers import CommCareCaseSQLSerializer
+        serializer = CommCareCaseSQLSerializer(self)
+        return serializer.data
+
     @property
     @memoized
     def indices(self):
