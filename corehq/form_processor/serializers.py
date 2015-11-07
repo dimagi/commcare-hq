@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
 
 from .models import XFormInstanceSQL, XFormOperationSQL
 
@@ -15,3 +16,16 @@ class XFormInstanceSQLSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = XFormInstanceSQL
+
+
+class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CommCareCaseIndexSQL
+
+
+class CommCareCaseSQLSerializer(serializers.ModelSerializer):
+    indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = CommCareCaseSQL

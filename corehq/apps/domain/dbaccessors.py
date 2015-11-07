@@ -22,6 +22,25 @@ def get_doc_ids_in_domain_by_type(domain, doc_type, database=None):
     )]
 
 
+def get_docs_in_domain_by_class(domain, doc_class):
+    """
+    Given a domain and doc class, get all docs matching that domain and type
+
+    in order to prevent this from being used on a doc_class with many docs per domain
+    doc_class must be white-listed.
+    """
+    whitelist = ['CommtrackConfig']
+    doc_type = doc_class.__name__
+    assert doc_type in whitelist
+    return doc_class.view(
+        'domain/docs',
+        startkey=[domain, doc_type],
+        endkey=[domain, doc_type, {}],
+        reduce=False,
+        include_docs=True,
+    ).all()
+
+
 def get_domain_ids_by_names(names):
     return [result['id'] for result in Domain.view(
         "domain/domains",

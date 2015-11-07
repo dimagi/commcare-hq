@@ -1,7 +1,8 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler, \
+    get_django_checkpoint_store
 from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.models import DjangoPillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
@@ -14,16 +15,13 @@ KAFKA_CHECKPOINT_FREQUENCY = 1000
 
 
 def get_demo_case_consumer_pillow():
-    document_store = DjangoDocumentStore(
-        DjangoPillowCheckpoint, DjangoPillowCheckpoint.to_dict, DjangoPillowCheckpoint.from_dict,
-    )
     checkpoint = PillowCheckpoint(
-        document_store,
+        get_django_checkpoint_store(),
         'kafka-demo-case-pillow-checkpoint',
     )
     return ConstructedPillow(
         name='KafkaCaseConsumerPillow',
-        document_store=document_store,
+        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topic=topics.CASE, group_id='demo-case-group'),
         processor=NoopProcessor(),

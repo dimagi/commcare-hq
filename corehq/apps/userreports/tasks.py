@@ -8,6 +8,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSo
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
@@ -15,28 +16,40 @@ def rebuild_indicators(indicator_config_id):
     is_static = indicator_config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(indicator_config_id)
+        rev = 'static'
     else:
         config = DataSourceConfiguration.get(indicator_config_id)
+        rev = config._rev
         # Save the start time now in case anything goes wrong. This way we'll be
         # able to see if the rebuild started a long time ago without finishing.
         config.meta.build.initiated = datetime.datetime.utcnow()
         config.save()
 
     adapter = IndicatorSqlAdapter(config)
-    adapter.rebuild_table()
 
     couchdb = _get_db(config.referenced_doc_type)
-    relevant_ids = get_doc_ids_in_domain_by_type(config.domain, config.referenced_doc_type,
-                               database=couchdb)
+    client = get_redis_client().client.get_client()
+    redis_key = 'ucr_queue-{}:{}'.format(indicator_config_id, rev)
+
+    if len(client.smembers(redis_key)) > 0:
+        relevant_ids = client.smembers(redis_key)
+    else:
+        adapter.rebuild_table()
+        relevant_ids = get_doc_ids_in_domain_by_type(config.domain, config.referenced_doc_type,
+                                   database=couchdb)
+        if relevant_ids:
+            client.sadd(redis_key, *relevant_ids)
 
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
         try:
             # save is a noop if the filter doesn't match
             adapter.save(doc)
+            client.srem(redis_key, doc.get('_id'))
         except DataError as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
     if not is_static:
+        client.delete(redis_key)
         config.meta.build.finished = True
         config.save()
 

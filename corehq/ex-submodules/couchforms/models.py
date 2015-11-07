@@ -254,19 +254,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         node = self.get_data(xpath)
         return node and option in node.split(" ")
 
-    @memoized
-    def get_sync_token(self):
-        from casexml.apps.phone.models import get_properly_wrapped_sync_log
-        if self.last_sync_token:
-            try:
-                return get_properly_wrapped_sync_log(self.last_sync_token)
-            except ResourceNotFound:
-                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
-                    self.last_sync_token, self._id, self.domain,
-                ))
-                raise
-        return None
-
     def get_xml(self):
         if (self._attachments and ATTACHMENT_NAME in self._attachments
                 and 'data' in self._attachments[ATTACHMENT_NAME]):
