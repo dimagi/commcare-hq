@@ -349,6 +349,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
         self.deleted = True
         self.save()
 
+    @property
     def is_deleted(self):
         return self.deleted
 
