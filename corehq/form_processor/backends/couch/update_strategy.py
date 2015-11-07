@@ -1,7 +1,5 @@
-from abc import ABCMeta
 import base64
 import copy
-from datetime import datetime
 from functools import cmp_to_key
 import logging
 from PIL import Image
@@ -14,37 +12,16 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
+from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
-from couchforms.util import is_deprecation, is_override
-from dimagi.utils import parsing
+from couchforms.util import is_override, legacy_soft_assert
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
 
 
-class UpdateStrategy(object):
-    __metaclass__ = ABCMeta
-
-    def __init__(self, case):
-        self.case = case
-
-
 class ActionsUpdateStrategy(UpdateStrategy):
-
-    @classmethod
-    def case_from_case_update(cls, case_update, xformdoc):
-        """
-        Create a case object from a case update object.
-        """
-        assert not is_deprecation(xformdoc)  # you should never be able to create a case from a deleted update
-        case = CommCareCase()
-        case._id = case_update.id
-        case.modified_on = parsing.string_to_utc_datetime(case_update.modified_on_str) \
-                            if case_update.modified_on_str else datetime.utcnow()
-
-        # apply initial updates, if present
-        ActionsUpdateStrategy(case).update_from_case_update(case_update, xformdoc)
-        return case
+    case_implementation_class = CommCareCase
 
     def check_action_order(self):
         action_dates = [a.server_date for a in self.case.actions if a.server_date]
@@ -53,7 +30,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
     def reconcile_actions_if_necessary(self, xform):
         if not self.check_action_order():
             try:
-                self.reconcile_actions(rebuild=True, xforms={xform._id: xform})
+                self.reconcile_actions(rebuild=True, xforms={xform.form_id: xform})
             except ReconciliationError:
                 pass
 
@@ -72,7 +49,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
                 elif a.xform_id is None:
                     error = u"Case {0} action xform_id is None: {1}"
                 if error:
-                    raise ReconciliationError(error.format(self.case.get_id, a))
+                    raise ReconciliationError(error.format(self.case.case_id, a))
 
         _check_preconditions()
 
@@ -119,24 +96,24 @@ class ActionsUpdateStrategy(UpdateStrategy):
             if sorted_actions[0].action_type != const.CASE_ACTION_CREATE:
                 error = u"Case {0} first action not create action: {1}"
                 raise ReconciliationError(
-                    error.format(self.case.get_id, sorted_actions[0])
+                    error.format(self.case.case_id, sorted_actions[0])
                 )
         self.case.actions = sorted_actions
         if rebuild:
             # it's pretty important not to block new case changes
             # just because previous case changes have been bad
-            self.soft_rebuild_case(strict=False, xforms=xforms)
+            self.soft_rebuild_case(xforms=xforms)
 
         return self
 
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
-                xformdoc._id, case_update.id, getattr(xformdoc, 'domain', None))
+                xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
-        if is_deprecation(xformdoc):
+        if xformdoc.is_deprecated:
             # Mark all of the form actions as deprecated. These will get removed on rebuild.
             # This assumes that there is a second update coming that will actually
             # reapply the equivalent actions from the form that caused the current
@@ -152,7 +129,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
             # This form is overriding a deprecated form.
             # Apply the actions just after the last action with this form type.
             # This puts the overriding actions in the right order relative to the others.
-            prior_actions = [a for a in self.case.actions if a.xform_id == xformdoc._id]
+            prior_actions = [a for a in self.case.actions if a.xform_id == xformdoc.form_id]
             if prior_actions:
                 action_insert_pos = self.case.actions.index(prior_actions[-1]) + 1
                 # slice insertion
@@ -165,12 +142,25 @@ class ActionsUpdateStrategy(UpdateStrategy):
             self.case.actions.extend(case_update.get_case_actions(xformdoc))
 
         # rebuild the case
-        local_forms = {xformdoc._id: xformdoc}
+        local_forms = {xformdoc.form_id: xformdoc}
         local_forms.update(other_forms or {})
-        self.soft_rebuild_case(strict=False, xforms=local_forms)
+        self.soft_rebuild_case(xforms=local_forms)
 
         if case_update.version:
             self.case.version = case_update.version
+
+        if self.case.domain:
+            assert hasattr(self.case, 'type')
+            self.case['#export_tag'] = ["domain", "type"]
+
+        # todo: legacy behavior, should remove after new case processing
+        # is fully enabled.
+        if xformdoc.form_id not in self.case.xform_ids:
+            legacy_soft_assert(False, "xform_id missing from case.xform_ids", {
+                'xform_id': xformdoc.form_id,
+                'case_id': self.case.case_id
+            })
+            self.case.xform_ids.append(xformdoc.form_id)
 
     def reset_case_state(self):
         """
@@ -191,7 +181,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
                 if k != 'case_id':
                     logging.error(
                         "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
-                            'case_id': self.case._id,
+                            'case_id': self.case.case_id,
                             'attribute': k,
                         }
                     )
@@ -212,7 +202,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
         self.case.closed_by = ''
         return self
 
-    def soft_rebuild_case(self, strict=True, xforms=None):
+    def soft_rebuild_case(self, xforms=None):
         """
         Rebuilds the case state in place from its actions.
 
@@ -224,20 +214,11 @@ class ActionsUpdateStrategy(UpdateStrategy):
         try:
             self.case.actions = sorted(self.case.actions, key=_action_sort_key_function(self.case))
         except MissingServerDate:
-            # only worry date reconciliation if in strict mode
-            if strict:
-                raise
+            pass
 
         # remove all deprecated actions during rebuild.
         self.case.actions = [a for a in self.case.actions if not a.deprecated]
         actions = copy.deepcopy(list(self.case.actions))
-
-        if strict:
-            if actions[0].action_type != const.CASE_ACTION_CREATE:
-                error = u"Case {0} first action not create action: {1}"
-                raise ReconciliationError(
-                    error.format(self.case.case_id, self.case.actions[0])
-                )
 
         for a in actions:
             self._apply_action(a, xforms.get(a.xform_id))
@@ -321,7 +302,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
         # todo attach cached attachment info
         def fetch_attachment(name):
             if xform and 'data' in xform._attachments[name]:
-                assert xform._id == attachment_action.xform_id
+                assert xform.form_id == attachment_action.xform_id
                 return base64.b64decode(xform._attachments[name]['data'])
             else:
                 return XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, name)

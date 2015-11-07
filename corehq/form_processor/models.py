@@ -24,7 +24,22 @@ from .exceptions import XFormNotFound
 Attachment = collections.namedtuple('Attachment', 'name content content_type')
 
 
-class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
+class PreSaveHashableMixin(object):
+    hash_property = None
+
+    def __hash__(self):
+        hash_val = getattr(self, self.hash_property, None)
+        if not hash_val:
+            raise TypeError("Form instances without form ID value are unhashable")
+        return hash(hash_val)
+
+
+class SaveStateMixin(object):
+    def is_saved(self):
+        return bool(self._get_pk_val())
+
+
+class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance, RedisLockableMixIn, SaveStateMixin):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -40,6 +55,8 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
+
+    hash_property = 'form_uuid'
 
     form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
 
@@ -182,8 +199,16 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
         return _to_xml_element(xml)
 
     def _get_xml(self):
-        xform_attachment = self.xformattachmentsql_set.filter(name='form.xml').first()
-        return xform_attachment.read_content()
+        return self.get_attachment('form.xml')
+
+    def get_attachment(self, attachment_name):
+        if hasattr(self, 'unsaved_attachments'):
+            for attachment in self.unsaved_attachments:
+                if attachment.name == attachment_name:
+                    return attachment.read_content()
+        elif self.is_saved():
+            xform_attachment = self.xformattachmentsql_set.filter(name=attachment_name).first()
+            return xform_attachment.read_content()
 
     def archive(self, user=None):
         if self.is_archived:
@@ -277,7 +302,10 @@ class XFormMetadata(jsonobject.JsonObject):
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
 
-class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
+
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, RedisLockableMixIn, SaveStateMixin):
+    hash_property = 'case_uuid'
+
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     case_type = models.CharField(max_length=255)
@@ -302,19 +330,42 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
     case_json = JSONField(lazy=True)
     attachments_json = JSONField(lazy=True)
 
-    @property
-    def case_id(self):
+    def __get_case_id(self):
         return self.case_uuid
 
+    def __set_case_id(self, _id):
+        self.case_uuid = _id
+
+    case_id = property(__get_case_id, __set_case_id)
+
+    @property
+    def user_id(self):
+        return self.modified_by
+
     def hard_delete(self):
-        self.delete()
+        # see cleanup.safe_hard_delete
+        raise NotImplementedError()
 
     def soft_delete(self):
         self.deleted = True
         self.save()
 
+    @property
     def is_deleted(self):
         return self.deleted
+
+    def to_json(self):
+        from .serializers import CommCareCaseSQLSerializer
+        serializer = CommCareCaseSQLSerializer(self)
+        return serializer.data
+
+    @property
+    @memoized
+    def indices(self):
+        if hasattr(self, 'unsaved_indices'):
+            return self.unsaved_indices
+
+        return self.index_set.all() if self.is_saved() else []
 
     def get_attachment(self, attachment_name):
         assert attachment_name in self.attachments_json
@@ -346,7 +397,7 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
 
     @classmethod
     def get_obj_by_id(cls, _id):
-        return CommCareCaseSQL.objects.get(_id)
+        return cls.get(_id)
 
     def __unicode__(self):
         return (
@@ -375,7 +426,10 @@ class CommCareCaseIndexSQL(models.Model):
         (EXTENSION, 'extension'),
     )
 
-    case = models.ForeignKey('CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True)
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        related_name="index_set", related_query_name="index"
+    )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
     identifier = models.CharField(max_length=255, null=False)
     referenced_id = models.CharField(max_length=255, null=False)

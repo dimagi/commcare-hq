@@ -84,11 +84,6 @@ class FormProcessorCouch(object):
             raise
 
     @classmethod
-    def process_cases_with_casedb(cls, xforms, case_db):
-        from casexml.apps.case.xform import process_cases_with_casedb
-        return process_cases_with_casedb(xforms, case_db)
-
-    @classmethod
     def process_stock(cls, xforms, case_db):
         from corehq.apps.commtrack.processing import process_stock
         return process_stock(xforms, case_db)

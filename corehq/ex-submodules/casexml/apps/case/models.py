@@ -22,6 +22,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueEr
 from PIL import Image
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
+from corehq.form_processor.abstract_models import AbstractCommCareCase
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -129,7 +130,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
 
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CouchDocLockableMixIn):
+                   CouchDocLockableMixIn, AbstractCommCareCase):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -322,17 +323,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 ids
             )
         ]
-
-    @classmethod
-    def get_with_rebuild(cls, id):
-        try:
-            return cls.get(id)
-        except ResourceNotFound:
-            from casexml.apps.case.cleanup import rebuild_case_from_forms
-            case = rebuild_case_from_forms(id)
-            if case is None:
-                raise
-            return case
 
     @classmethod
     def get_lite(cls, id, wrap=True):
