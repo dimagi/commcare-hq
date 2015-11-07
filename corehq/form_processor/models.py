@@ -76,16 +76,20 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
 
+    def __get_form_id(self):
+        return self.form_uuid
+
+    def __set_form_id(self, _id):
+        self.form_uuid = _id
+
+    form_id = property(__get_form_id, __set_form_id)
+
     @classmethod
     def get(cls, id):
         try:
             return XFormInstanceSQL.objects.get(form_uuid=id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
-
-    @property
-    def form_id(self):
-        return self.form_uuid
 
     @property
     def is_normal(self):
