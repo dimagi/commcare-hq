@@ -101,7 +101,7 @@ class CommtrackConfigGenerationCache(GenerationCache):
     generation_key = '#gen#commtrackconfig#'
     doc_types = ['CommtrackConfig']
     views = [
-        'commtrack/domain_config',
+        'domain/docs',
     ]
 
 
