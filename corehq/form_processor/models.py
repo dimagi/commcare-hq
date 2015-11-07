@@ -338,6 +338,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
 
     case_id = property(__get_case_id, __set_case_id)
 
+    @property
+    def user_id(self):
+        return self.modified_by
+
     def hard_delete(self):
         self.delete()
 
