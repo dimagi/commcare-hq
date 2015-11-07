@@ -420,12 +420,6 @@ LOGIN_URL = "/accounts/login/"
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
-# domain syncs
-# e.g.
-#               { sourcedomain1: { "domain": targetdomain1,
-#                      "transform": path.to.transformfunction1 },
-#                 sourcedomain2: {...} }
-DOMAIN_SYNCS = {}
 # if you want to deidentify app names, put a dictionary in your settings
 # of source names to deidentified names
 DOMAIN_SYNC_APP_NAME_MAP = {}
