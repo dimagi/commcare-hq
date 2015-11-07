@@ -6,6 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import run_with_all_backends
 
 
 class CaseDbCacheTest(TestCase):
@@ -16,6 +17,7 @@ class CaseDbCacheTest(TestCase):
     def setUpClass(cls):
         cls.interface = FormProcessorInterface()
 
+    @run_with_all_backends
     def testDomainCheck(self):
         id = uuid.uuid4().hex
         FormProcessorInterface().post_case_blocks([
