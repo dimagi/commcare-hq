@@ -17,8 +17,7 @@ KNOWN_PROPERTIES_MAP = {
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
 
-    def update_from_case_update(self, case_update, other_forms=None):
-        xformdoc = case_update.xform
+    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
