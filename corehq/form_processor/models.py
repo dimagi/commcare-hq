@@ -343,7 +343,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
         return self.modified_by
 
     def hard_delete(self):
-        self.delete()
+        # see cleanup.safe_hard_delete
+        raise NotImplementedError()
 
     def soft_delete(self):
         self.deleted = True
