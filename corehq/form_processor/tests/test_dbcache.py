@@ -13,9 +13,8 @@ class CaseDbCacheTest(TestCase):
     """
     Tests the functionality of the CaseDbCache object
     """
-    @classmethod
-    def setUpClass(cls):
-        cls.interface = FormProcessorInterface()
+    def setUp(self):
+        self.interface = FormProcessorInterface()
 
     @run_with_all_backends
     def testDomainCheck(self):
