@@ -44,9 +44,9 @@ class CaseGenerationException(Exception):
     pass
 
 
-def case_update_from_block(xform, case_block):
+def case_update_from_block(case_block):
     case_version = get_version(case_block)
-    return VERSION_FUNCTION_MAP[case_version](xform, case_block)
+    return VERSION_FUNCTION_MAP[case_version](case_block)
 
 
 class CaseActionBase(object):
@@ -237,12 +237,11 @@ class CaseUpdate(object):
     The actual Case objects use this to update themselves.
     """
     
-    def __init__(self, id, version, block, xform, user_id="", modified_on_str=""):
+    def __init__(self, id, version, block, user_id="", modified_on_str=""):
         self.id = id
         self.version = version
         self.user_id = user_id
         self.modified_on_str = modified_on_str
-        self.xform = xform
         
         # deal with the various blocks
         self.raw_block = block
@@ -299,14 +298,14 @@ class CaseUpdate(object):
     def has_attachments(self):
         return bool(self.attachment_block)
 
-    def get_case_actions(self):
+    def get_case_actions(self, xformdoc):
         """
         Gets case actions from this object. These are the actual objects that get stored
         in the CommCareCase model (as opposed to the parser's representation of those)
         """
         return [
             CommCareCaseAction.from_parsed_action(
-                self.guess_modified_on(), self.user_id, self.xform, action
+                self.guess_modified_on(), self.user_id, xformdoc, action
             )
             for action in self.actions
         ]
@@ -337,7 +336,7 @@ class CaseUpdate(object):
         return self._filtered_action(lambda a: isinstance(a, CaseAttachmentAction))
 
     @classmethod
-    def from_v1(cls, xform, case_block):
+    def from_v1(cls, case_block):
         """
         Gets a case update from a version 1 case. 
         Spec: https://bitbucket.org/javarosa/javarosa/wiki/casexml
@@ -352,11 +351,10 @@ class CaseUpdate(object):
         return cls(id=case_block[const.CASE_TAG_ID],
                    version=V1,
                    block=case_block,
-                   xform=xform,
                    modified_on_str=modified_on)
     
     @classmethod
-    def from_v2(cls, xform, case_block):
+    def from_v2(cls, case_block):
         """
         Gets a case update from a version 2 case. 
         Spec: https://github.com/dimagi/commcare/wiki/casexml20
@@ -377,7 +375,6 @@ class CaseUpdate(object):
         return cls(id=case_block[case_id_attr],
                    version=V2,
                    block=case_block,
-                   xform=xform,
                    user_id=user_id,
                    modified_on_str=modified_on)
 

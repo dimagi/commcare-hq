@@ -157,7 +157,7 @@ def prepare_planning_db(domain):
         case_actions = [
             (case_update.id, action.xform_id, action.to_json())
             for case_update in case_updates
-            for action in case_update.get_case_actions()
+            for action in case_update.get_case_actions(xformdoc)
         ]
 
         stock_report_helpers, stock_case_actions = get_stock_actions(xformdoc)

@@ -51,7 +51,7 @@ def _get_actions_from_forms(sorted_forms, case_id):
         case_updates = get_case_updates(form)
         filtered_updates = [u for u in case_updates if u.id == case_id]
         for u in filtered_updates:
-            case_actions.extend(u.get_case_actions())
+            case_actions.extend(u.get_case_actions(form))
         stock_actions = get_stock_actions(form)
         case_actions.extend([intent.action
                              for intent in stock_actions.case_action_intents

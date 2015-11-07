@@ -159,7 +159,7 @@ def get_cases_from_forms(case_db, xforms):
     touched_cases = {}
     for xform in sorted_forms:
         for case_update in get_case_updates(xform):
-            case_doc = case_db.get_case_from_case_update(case_update)
+            case_doc = case_db.get_case_from_case_update(case_update, xform)
             touched_cases[case_doc.case_id] = case_doc
             if not case_doc:
                 logging.error(
@@ -300,7 +300,7 @@ def _extract_case_blocks(data, path=None):
 
 
 def get_case_updates(xform):
-    return [case_update_from_block(xform, cb) for cb in extract_case_blocks(xform)]
+    return [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
 
 
 def get_case_ids_from_form(xform):
