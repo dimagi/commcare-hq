@@ -1,5 +1,6 @@
 import os
 import collections
+import hashlib
 
 from lxml import etree
 from json_field.fields import JSONField
@@ -169,6 +170,9 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
 
     def get_xml(self):
         return self.get_attachment('form.xml')
+
+    def xml_md5(self):
+        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
 
     def get_attachment(self, attachment_name):
         if hasattr(self, 'unsaved_attachments'):
