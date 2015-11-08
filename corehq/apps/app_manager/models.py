@@ -3318,7 +3318,7 @@ class ReportAppConfig(DocumentSchema):
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
-    description = DictProperty()
+    description = StringProperty()
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -3329,6 +3329,17 @@ class ReportAppConfig(DocumentSchema):
         super(ReportAppConfig, self).__init__(*args, **kwargs)
         if not self.uuid:
             self.uuid = random_hex()
+
+    @classmethod
+    def wrap(cls, doc):
+        from corehq.apps.userreports.util import default_language, localize
+        if isinstance(doc.get('description'), dict):
+            if doc['description']:
+                doc['description'] = localize(doc['description'], default_language())
+            else:
+                doc['description'] = ''
+
+        return super(ReportAppConfig, cls).wrap(doc)
 
     @property
     def report(self):
