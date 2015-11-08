@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
   - exports-ui-changes  # biyeun 9/28
