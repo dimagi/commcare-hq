@@ -16,6 +16,12 @@ class TestMeta(TestCase):
     def tearDown(self):
         XFormInstance.get_db().flush()
 
+    def _check_metadata(self, xform, expected):
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
+            del expected['doc_type']
+            del expected['deprecatedID']
+        self.assertEqual(xform.metadata.to_json(), expected)
+
     @run_with_all_backends
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
@@ -41,9 +47,7 @@ class TestMeta(TestCase):
             'clinic_id': u'5020280',
             'location': None,
         }
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            del result['doc_type']
-        self.assertEqual(xform.metadata.to_json(), result)
+        self._check_metadata(xform, result)
 
     @run_with_all_backends
     def testDecimalAppVersion(self):
@@ -71,9 +75,7 @@ class TestMeta(TestCase):
             'clinic_id': u'5020280',
             'location': None,
         }
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            del result['doc_type']
-        self.assertEqual(xform.metadata.to_json(), result)
+        self._check_metadata(xform, result)
 
     @run_with_all_backends
     def testMetaBadUsername(self):
@@ -94,9 +96,7 @@ class TestMeta(TestCase):
             'deviceID': u'commconnect',
             'location': None,
         }
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            del result['doc_type']
-        self.assertEqual(xform.metadata.to_json(), result)
+        self._check_metadata(xform, result)
 
     @run_with_all_backends
     def testMetaAppVersionDict(self):
@@ -117,9 +117,7 @@ class TestMeta(TestCase):
             'deviceID': u'commconnect',
             'location': None,
         }
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            del result['doc_type']
-        self.assertEqual(xform.metadata.to_json(), result)
+        self._check_metadata(xform, result)
 
     @run_with_all_backends
     def test_gps_location(self):
@@ -151,9 +149,7 @@ class TestMeta(TestCase):
             'deviceID': u'commconnect',
             'location': '42.3739063 -71.1109113 0.0 886.0',
         }
-        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            del result['doc_type']
-        self.assertEqual(xform.metadata.to_json(), result)
+        self._check_metadata(xform, result)
 
     @run_with_all_backends
     def test_empty_gps_location(self):
@@ -176,3 +172,11 @@ class TestMeta(TestCase):
 
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
+
+    @run_with_all_backends
+    def test_missing_meta_key(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "missing_date_in_meta.xml")
+        xml_data = open(file_path, "rb").read()
+        xform = FormProcessorInterface().post_xform(xml_data)
+        self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
+        self.assertIsNone(xform.metadata.timeEnd)

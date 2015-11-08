@@ -376,11 +376,11 @@ class SubmissionPost(object):
             return response, instance, cases
 
     def process_xforms_for_cases(self, xform_lock_manager):
-        from casexml.apps.case.models import CommCareCase
         from casexml.apps.case.xform import get_and_check_xform_domain
         from casexml.apps.case.signals import case_post_save
         from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
         from corehq.apps.commtrack.exceptions import MissingProductId
+        from casexml.apps.case.xform import process_cases_with_casedb
 
         cases = []
         errors = []
@@ -392,7 +392,7 @@ class SubmissionPost(object):
                 domain = get_and_check_xform_domain(instance)
                 with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                     try:
-                        case_result = self.interface.process_cases_with_casedb(xforms, case_db)
+                        case_result = process_cases_with_casedb(xforms, case_db)
                         stock_result = self.interface.process_stock(xforms, case_db)
                     except known_errors as e:
                         return self._handle_known_error(e, instance, xforms)
@@ -424,7 +424,7 @@ class SubmissionPost(object):
                     case_result.commit_dirtiness_flags()
                     stock_result.commit()
                     for case in cases:
-                        case_post_save.send(CommCareCase, case=case)
+                        case_post_save.send(case.__class__, case=case)
 
                 errors = self.process_signals(instance)
                 unfinished_submission_stub.delete()

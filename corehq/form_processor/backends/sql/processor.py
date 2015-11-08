@@ -66,6 +66,12 @@ class FormProcessorSQL(object):
                 for unsaved_attachment in instance.unsaved_attachments:
                     unsaved_attachment.xform = instance
                 instance.xformattachmentsql_set.bulk_create(instance.unsaved_attachments)
+
+                if cases:
+                    for case in cases:
+                        case.save()
+                    if getattr(case, 'unsaved_indices', None):
+                        case.index_set.bulk_create(case.unsaved_indices)
         except Exception as e:
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
@@ -75,11 +81,6 @@ class FormProcessorSQL(object):
             )
             # instance = _handle_unexpected_error(instance, error_message)
             raise
-
-    @classmethod
-    def process_cases_with_casedb(cls, xforms, case_db):
-        from casexml.apps.case.xform import CaseProcessingResult
-        return CaseProcessingResult('test-domain', [], [], False)
 
     @classmethod
     def process_stock(cls, xforms, case_db):
