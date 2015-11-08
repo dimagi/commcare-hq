@@ -4,7 +4,7 @@ import xml2json
 
 from redis.exceptions import RedisError
 from dimagi.ext.jsonobject import re_loose_datetime
-from dimagi.utils.couch import LockManager
+from dimagi.utils.couch import LockManager, ReleaseOnError
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
@@ -69,8 +69,9 @@ def new_xform(instance_xml, attachments=None, process=None):
         process(xform)
 
     lock = acquire_lock_for_xform(xform.form_id)
-    if FormProcessorInterface().is_duplicate(xform, lock):
-        raise DuplicateError(xform)
+    with ReleaseOnError(lock):
+        if FormProcessorInterface().is_duplicate(xform):
+            raise DuplicateError(xform)
 
     return LockManager(xform, lock)
 

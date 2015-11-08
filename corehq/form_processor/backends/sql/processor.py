@@ -54,8 +54,8 @@ class FormProcessorSQL(object):
         )
 
     @classmethod
-    def is_duplicate(cls, xform, lock):
-        return False
+    def is_duplicate(cls, xform):
+        return XFormInstanceSQL.objects.filter(form_uuid=xform.form_id).exists()
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):

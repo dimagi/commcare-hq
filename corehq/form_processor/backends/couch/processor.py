@@ -3,11 +3,9 @@ import datetime
 
 from couchdbkit import BulkSaveError
 
-from dimagi.utils.couch import ReleaseOnError
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import process_xform, _handle_unexpected_error
 from couchforms.models import XFormInstance
-from couchforms.exceptions import DuplicateError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
@@ -58,10 +56,8 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def is_duplicate(cls, xform, lock):
-        with ReleaseOnError(lock):
-            if xform.form_id in XFormInstance.get_db():
-                raise DuplicateError(xform)
+    def is_duplicate(cls, xform):
+        return xform.form_id in XFormInstance.get_db()
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):

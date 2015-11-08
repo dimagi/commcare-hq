@@ -84,8 +84,8 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
-    def is_duplicate(self, xform, lock):
-        return self.processor.is_duplicate(xform, lock)
+    def is_duplicate(self, xform):
+        return self.processor.is_duplicate(xform)
 
     def new_xform(self, instance_xml):
         return self.processor.new_xform(instance_xml)
