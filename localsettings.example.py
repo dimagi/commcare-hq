@@ -91,16 +91,6 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #     'key_pass': "*******",
 # }
 
-####### Domain sync / de-id ########
-
-DOMAIN_SYNCS = { 
-    "domain_name": { 
-        "target": "target_db_name",
-        "transform": "corehq.apps.domainsync.transforms.deidentify_domain" 
-    }
-}
-DOMAIN_SYNC_APP_NAME_MAP = {"app_name": "new_app_name"}
-
 ####### Touchforms config - for CloudCare #######
 
 XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
