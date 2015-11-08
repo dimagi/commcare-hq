@@ -116,6 +116,6 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def should_handle_as_duplicate_or_edit(xform_id, domain):
+    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
         existing_doc = XFormInstance.get_db().get(xform_id)
         return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
