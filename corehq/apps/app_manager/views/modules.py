@@ -491,7 +491,7 @@ def _new_report_module(request, domain, app, name, lang):
         ReportAppConfig(
             report_id=report._id,
             header={lang: report.title},
-            description={lang: report.description},
+            description=report.description,
         )
         for report in ReportConfiguration.by_domain(domain)
     ]
