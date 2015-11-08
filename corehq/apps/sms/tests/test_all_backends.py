@@ -18,7 +18,6 @@ from corehq.messaging.smsbackends.megamobile.api import MegamobileBackend
 from corehq.messaging.smsbackends.smsgh.models import SMSGHBackend
 from corehq.messaging.smsbackends.apposit.models import AppositBackend
 from dimagi.utils.parsing import json_format_datetime
-from django.conf import settings
 from django.test import TestCase
 from django.test.client import Client
 from urllib import urlencode
@@ -81,11 +80,6 @@ class AllBackendTest(BaseSMSTest):
 
         self.apposit_backend = AppositBackend(name='APPOSIT', is_global=True)
         self.apposit_backend.save()
-
-        if not hasattr(settings, 'SIMPLE_API_KEYS'):
-            settings.SIMPLE_API_KEYS = {}
-
-        settings.SIMPLE_API_KEYS['grapevine-test'] = 'grapevine-api-key'
 
     def _test_outbound_backend(self, backend, msg_text):
         from corehq.apps.sms.tests import BackendInvocationDoc
@@ -169,20 +163,21 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request(self.telerivet_backend.get_api_id(), 'telerivet test')
 
-    def test_grapevine_inbound_sms(self):
-        xml = """
-        <gviSms>
-            <smsDateTime>2015-10-12T12:00:00</smsDateTime>
-            <cellNumber>99912345</cellNumber>
-            <content>grapevine test</content>
-        </gviSms>
-        """
-        payload = urlencode({'XML': xml})
-        self._simulate_inbound_request_with_payload(
-            '/gvi/api/sms/?apiuser=grapevine-test&apikey=grapevine-api-key',
-            content_type='application/x-www-form-urlencoded', payload=payload)
+    def test_grapevine_inbound_sms(self, *args, **kwargs):
+        with self.settings(SIMPLE_API_KEYS={'grapevine-test': 'grapevine-api-key'}):
+            xml = """
+            <gviSms>
+                <smsDateTime>2015-10-12T12:00:00</smsDateTime>
+                <cellNumber>99912345</cellNumber>
+                <content>grapevine test</content>
+            </gviSms>
+            """
+            payload = urlencode({'XML': xml})
+            self._simulate_inbound_request_with_payload(
+                '/gvi/api/sms/?apiuser=grapevine-test&apikey=grapevine-api-key',
+                content_type='application/x-www-form-urlencoded', payload=payload)
 
-        self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
+            self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
 
     def test_twilio_inbound_sms(self):
         self._simulate_inbound_request('/twilio/sms/', phone_param='From',
@@ -253,5 +248,4 @@ class AllBackendTest(BaseSMSTest):
         self.megamobile_backend.delete()
         self.smsgh_backend.delete()
         self.apposit_backend.delete()
-        settings.SIMPLE_API_KEYS.pop('grapevine-test')
         super(AllBackendTest, self).tearDown()
