@@ -20,6 +20,7 @@ from corehq.messaging.smsbackends.apposit.models import AppositBackend
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
 from django.test.client import Client
+from django.test.utils import override_settings
 from urllib import urlencode
 
 
@@ -163,21 +164,21 @@ class AllBackendTest(BaseSMSTest):
 
         self._verify_inbound_request(self.telerivet_backend.get_api_id(), 'telerivet test')
 
-    def test_grapevine_inbound_sms(self, *args, **kwargs):
-        with self.settings(SIMPLE_API_KEYS={'grapevine-test': 'grapevine-api-key'}):
-            xml = """
-            <gviSms>
-                <smsDateTime>2015-10-12T12:00:00</smsDateTime>
-                <cellNumber>99912345</cellNumber>
-                <content>grapevine test</content>
-            </gviSms>
-            """
-            payload = urlencode({'XML': xml})
-            self._simulate_inbound_request_with_payload(
-                '/gvi/api/sms/?apiuser=grapevine-test&apikey=grapevine-api-key',
-                content_type='application/x-www-form-urlencoded', payload=payload)
+    @override_settings(SIMPLE_API_KEYS={'grapevine-test': 'grapevine-api-key'})
+    def test_grapevine_inbound_sms(self):
+        xml = """
+        <gviSms>
+            <smsDateTime>2015-10-12T12:00:00</smsDateTime>
+            <cellNumber>99912345</cellNumber>
+            <content>grapevine test</content>
+        </gviSms>
+        """
+        payload = urlencode({'XML': xml})
+        self._simulate_inbound_request_with_payload(
+            '/gvi/api/sms/?apiuser=grapevine-test&apikey=grapevine-api-key',
+            content_type='application/x-www-form-urlencoded', payload=payload)
 
-            self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
+        self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
 
     def test_twilio_inbound_sms(self):
         self._simulate_inbound_request('/twilio/sms/', phone_param='From',
