@@ -545,32 +545,6 @@ class Domain(Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_by_organization(cls, organization):
-        result = cache_core.cached_view(
-            cls.get_db(), "domain/by_organization",
-            startkey=[organization],
-            endkey=[organization, {}],
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap
-        )
-        from corehq.apps.accounting.utils import domain_has_privilege
-        from corehq import privileges
-        result = filter(
-            lambda x: domain_has_privilege(x.name, privileges.CROSS_PROJECT_REPORTS),
-            result
-        )
-        return result
-
-    @classmethod
-    def get_by_organization_and_hrname(cls, organization, hr_name):
-        result = cls.view("domain/by_organization",
-                          key=[organization, hr_name],
-                          reduce=False,
-                          include_docs=True)
-        return result
-
-    @classmethod
     def get_or_create_with_name(cls, name, is_active=False,
                                 secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
