@@ -1151,7 +1151,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 ) if credit_adj.credit_line.subscription else '',
                 (
                     credit_adj.credit_line.subscription.subscriber.domain
-                    if credit_adj.credit_line.subscription is not None else ''
+                    if credit_adj.credit_line.subscription is not None else (
+                        credit_adj.credit_line.invoice.subscription.subscriber.domain
+                        if credit_adj.credit_line.invoice else ''
+                    )
                 ),
                 dict(FeatureType.CHOICES).get(
                     credit_adj.credit_line.feature_type,
