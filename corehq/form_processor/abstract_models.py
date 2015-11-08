@@ -31,6 +31,9 @@ class AbstractXFormInstance(object):
     def get_xml_element(self):
         raise NotImplementedError()
 
+    def get_xml(self):
+        raise NotImplementedError()
+
     @classmethod
     def get(self, xform_id):
         raise NotImplementedError()

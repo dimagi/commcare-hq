@@ -119,7 +119,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     @memoized
     def form_data(self):
         from .utils import convert_xform_to_json
-        xml = self._get_xml()
+        xml = self.get_xml()
         return convert_xform_to_json(xml)
 
     @property
@@ -140,7 +140,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
         return serializer.data
 
     def get_xml_element(self):
-        xml = self._get_xml()
+        xml = self.get_xml()
         if not xml:
             return None
 
@@ -150,7 +150,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
             return etree.fromstring(payload)
         return _to_xml_element(xml)
 
-    def _get_xml(self):
+    def get_xml(self):
         return self.get_attachment('form.xml')
 
     def get_attachment(self, attachment_name):
