@@ -100,6 +100,14 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
+    @classmethod
+    def get_obj_id(cls, obj):
+        return obj.form_uuid
+
+    @classmethod
+    def get_obj_by_id(cls, _id):
+        return cls.get(_id)
+
     @property
     def is_normal(self):
         return self.state == self.NORMAL
