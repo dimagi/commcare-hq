@@ -95,3 +95,5 @@ class FormProcessorInterface(object):
 
     def process_stock(self, xforms, case_db):
         return self.processor.process_stock(xforms, case_db)
+    def should_handle_as_duplicate_or_edit(self, xform_id, domain):
+        return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)

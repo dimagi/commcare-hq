@@ -83,3 +83,7 @@ class FormProcessorCouch(object):
     def process_stock(cls, xforms, case_db):
         from corehq.apps.commtrack.processing import process_stock
         return process_stock(xforms, case_db)
+    @classmethod
+    def should_handle_as_duplicate_or_edit(xform_id, domain):
+        existing_doc = XFormInstance.get_db().get(xform_id)
+        return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()

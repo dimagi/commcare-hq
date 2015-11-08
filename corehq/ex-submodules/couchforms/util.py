@@ -138,11 +138,6 @@ def deduplicate_xform(new_doc):
     return assign_new_id(dupe)
 
 
-def is_duplicate_or_edit(xform_id, domain):
-    existing_doc = XFormInstance.get_db().get(xform_id)
-    return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
-
-
 def _handle_id_conflict(instance, xform, domain):
     """
     For id conflicts, we check if the files contain exactly the same content,
@@ -153,7 +148,7 @@ def _handle_id_conflict(instance, xform, domain):
     assert domain
     conflict_id = xform._id
 
-    if is_duplicate_or_edit(conflict_id, domain):
+    if FormProcessorInterface().should_handle_as_duplicate_or_edit(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
         return _handle_duplicate(xform, instance)
     else:
