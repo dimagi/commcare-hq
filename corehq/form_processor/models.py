@@ -95,7 +95,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     form_id = property(__get_form_id, __set_form_id)
 
     @classmethod
-    def get(cls, id):
+    def get(cls, id, attachments=None):
         try:
             return XFormInstanceSQL.objects.get(form_uuid=id)
         except XFormInstanceSQL.DoesNotExist:
@@ -151,6 +151,15 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
         return None
+
+    def save(self, *args, **kwargs):
+        super(XFormInstanceSQL, self).save(*args, **kwargs)
+        if getattr(self, 'initial_deprecation', False):
+            attachments = XFormAttachmentSQL.objects.filter(xform_id=self.orig_id)
+            attachments.update(xform_id=self.form_id)
+
+            operations = XFormOperationSQL.objects.filter(xform_id=self.orig_id)
+            operations.update(xform_id=self.form_id)
 
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer

@@ -121,7 +121,7 @@ def _handle_id_conflict(instance, xform, domain):
     """
 
     assert domain
-    conflict_id = xform._id
+    conflict_id = xform.form_id
 
     if FormProcessorInterface().should_handle_as_duplicate_or_edit(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
@@ -141,9 +141,8 @@ def _handle_duplicate(new_doc, instance):
     and *must* include inline attachments
 
     """
-    conflict_id = new_doc._id
-    existing_doc = XFormInstance.get_db().get(conflict_id, attachments=True)
-    existing_doc = XFormInstance.wrap(existing_doc)
+    conflict_id = new_doc.form_id
+    existing_doc = FormProcessorInterface().xform_model.get(conflict_id, attachments=True)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()
@@ -153,11 +152,11 @@ def _handle_duplicate(new_doc, instance):
         #  - "Deprecate" the old form by making a new document with the same contents
         #    but a different ID and a doc_type of XFormDeprecated
         #  - Save the new instance to the previous document to preserve the ID
-        existing_doc, new_doc = deprecate_xform(existing_doc, new_doc)
-        
+        existing_doc, new_doc = FormProcessorInterface().deprecate_xform(existing_doc, new_doc)
+
         # Lock docs with their original ID's (before they got switched during deprecation)
         return MultiLockManager([
-            LockManager(new_doc, acquire_lock_for_xform(existing_doc._id)),
+            LockManager(new_doc, acquire_lock_for_xform(existing_doc.form_id)),
             LockManager(existing_doc, acquire_lock_for_xform(existing_doc.orig_id)),
         ])
     else:
