@@ -60,6 +60,15 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
 
+    # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
+    orig_id = models.CharField(max_length=255, null=True)
+
+    # When a form is deprecated, the new form gets a reference to the deprecated form
+    deprecated_form_id = models.CharField(max_length=255, null=True)
+
+    # Stores the datetime of when a form was deprecated
+    edited_on = models.DateTimeField(null=True)
+
     # The time at which the server has received the form
     received_on = models.DateTimeField()
 
@@ -190,7 +199,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
 class XFormAttachmentSQL(models.Model):
     attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
 
-    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
+    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid')
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
