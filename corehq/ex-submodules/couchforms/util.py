@@ -104,31 +104,6 @@ def assign_new_id(xform):
     return xform
 
 
-def deprecate_xform(existing_doc, new_doc):
-    # if the form contents are not the same:
-    #  - "Deprecate" the old form by making a new document with the same contents
-    #    but a different ID and a doc_type of XFormDeprecated
-    #  - Save the new instance to the previous document to preserve the ID
-
-    old_id = existing_doc._id
-    new_doc = assign_new_id(new_doc)
-
-    # swap the two documents so the original ID now refers to the new one
-    # and mark original as deprecated
-    new_doc._id, existing_doc._id = old_id, new_doc._id
-    new_doc._rev, existing_doc._rev = existing_doc._rev, new_doc._rev
-
-    # flag the old doc with metadata pointing to the new one
-    existing_doc.doc_type = deprecation_type()
-    existing_doc.orig_id = old_id
-
-    # and give the new doc server data of the old one and some metadata
-    new_doc.received_on = existing_doc.received_on
-    new_doc.deprecated_form_id = existing_doc._id
-    new_doc.edited_on = datetime.datetime.utcnow()
-    return XFormDeprecated.wrap(existing_doc.to_json()), new_doc
-
-
 def deduplicate_xform(new_doc):
     # follow standard dupe handling, which simply saves a copy of the form
     # but a new doc_id, and a doc_type of XFormDuplicate

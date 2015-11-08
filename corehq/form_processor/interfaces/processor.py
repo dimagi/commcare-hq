@@ -95,5 +95,9 @@ class FormProcessorInterface(object):
 
     def process_stock(self, xforms, case_db):
         return self.processor.process_stock(xforms, case_db)
+
+    def deprecate_xform(self, existing_doc, new_doc):
+        return self.processor.deprecate_xform(existing_doc, new_doc)
+
     def should_handle_as_duplicate_or_edit(self, xform_id, domain):
         return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)
