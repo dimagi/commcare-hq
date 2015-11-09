@@ -40,15 +40,15 @@ class FundamentalCaseTests(TestCase):
         self.assertIsNotNone(case)
         self.assertEqual(case.case_id, case_id)
         self.assertEqual(case.owner_id, 'owner1')
-        self.assertEqual(case.case_type, 'owner1')
-        self.assertEqual(case.case_name, 'owner1')
+        self.assertEqual(case.case_type, 'type_create')
+        self.assertEqual(case.case_name, 'create_case')
         self.assertEqual(case.opened_on, modified_on)
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user1')
         self.assertTrue(case.server_modified_on > modified_on)
         self.assertFalse(case.closed)
-        self.assertIsNone(case.closed_by)
+        self.assertTrue(case.closed_by is None or case.closed_by == '')
         self.assertIsNone(case.closed_on)
 
     def test_update_case(self):
