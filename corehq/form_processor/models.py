@@ -40,6 +40,7 @@ class AttachmentMixin(SaveStateMixin):
     """Requires the model to be linked to the attachments model via the 'attachments' related name.
     """
     ATTACHMENTS_RELATED_NAME = 'attachments'
+
     def get_attachment(self, attachment_name):
         if hasattr(self, 'unsaved_attachments'):
             for attachment in self.unsaved_attachments:
@@ -50,7 +51,7 @@ class AttachmentMixin(SaveStateMixin):
             return xform_attachment.read_content()
 
 
-class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance, RedisLockableMixIn, AttachmentMixin):
+class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -302,7 +303,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, RedisLockableMixIn, AttachmentMixin):
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractCommCareCase):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
