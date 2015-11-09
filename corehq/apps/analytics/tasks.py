@@ -91,7 +91,8 @@ def _hubspot_post(url, data):
             data=data,
             headers=headers
         )
-        logger.debug('Sent this data to HS: %s \nreceived: %s'.format(data, req.json))
+        logger.debug('Sent this data to HS: %s \nreceived: %s'
+                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
         req.raise_for_status()
 
 
