@@ -15,7 +15,7 @@ class ThirdSOHReminder(SecondSOHReminder):
     def get_message_for_location(self, location):
         supply_point = SupplyPointCase.get_by_location(location)
         if not supply_point:
-            return
+            return None, {}
 
         on_time_products, missing_products = report_status(location.sql_location, days_until_late=DAYS_UNTIL_LATE)
 
