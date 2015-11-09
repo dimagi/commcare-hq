@@ -340,6 +340,9 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
     def is_deleted(self):
         return self.deleted
 
+    def dynamic_case_properties(self):
+        return self.case_json
+
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
