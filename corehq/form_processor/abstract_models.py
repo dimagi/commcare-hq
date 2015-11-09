@@ -114,6 +114,9 @@ class AbstractCommCareCase(object):
     def to_xml(self, version, include_case_on_closed=False):
         raise NotImplementedError()
 
+    def dynamic_case_properties(self):
+        raise NotImplementedError()
+
     @classmethod
     def get(cls, case_id):
         raise NotImplementedError()
