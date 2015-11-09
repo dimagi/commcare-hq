@@ -39,6 +39,7 @@ class SaveStateMixin(object):
 class AttachmentMixin(SaveStateMixin):
     """Requires the model to be linked to the attachments model via the 'attachments' related name.
     """
+    ATTACHMENTS_RELATED_NAME = 'attachments'
     def get_attachment(self, attachment_name):
         if hasattr(self, 'unsaved_attachments'):
             for attachment in self.unsaved_attachments:
@@ -255,7 +256,7 @@ class AbstractAttachment(models.Model):
 class XFormAttachmentSQL(AbstractAttachment):
     xform = models.ForeignKey(
         XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid',
-        related_name="attachments", related_query_name="attachment"
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
 
@@ -406,7 +407,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
 class CaseAttachmentSQL(AbstractAttachment):
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
-        related_name="attachments", related_query_name="attachment"
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
 
