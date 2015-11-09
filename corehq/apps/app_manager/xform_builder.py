@@ -113,12 +113,17 @@ EMPTY_XFORM = """<?xml version="1.0"?>
 </h:html>"""
 
 
+# The data types supported by the Open Data Kit XForm spec
 # cf. https://opendatakit.github.io/odk-xform-spec/#data-types
-ODK_DATA_TYPES = (
+ODK_TYPES = (
     'string', 'int', 'boolean', 'decimal', 'date', 'time', 'dateTime', 'select', 'select1', 'geopoint', 'geotrace',
     'geoshape', 'binary', 'barcode',
 )
+# CommCare question group types
 GROUP_TYPES = ('group', 'repeatGroup')  # TODO: Support 'questionList'
+# The subset of ODK data types that are XSD data types
+# cf. http://www.w3.org/TR/xmlschema-2/#built-in-datatypes
+XSD_TYPES = ('string', 'int', 'boolean', 'decimal', 'date', 'time', 'dateTime')
 
 
 class XFormBuilder(object):
@@ -175,7 +180,7 @@ class XFormBuilder(object):
         :param group: The name of the question's group, or an iterable of names if nesting is deeper than one
         :param choices: A dictionary of {name: label} pairs
         """
-        if data_type not in ODK_DATA_TYPES + GROUP_TYPES:
+        if data_type not in ODK_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
         if group is not None and not isinstance(group, basestring) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
@@ -262,12 +267,8 @@ class XFormBuilder(object):
                 self._translation1.append(get_text_node(name, choice_label, group, choice_name))
 
     def _append_to_model(self, name, data_type, group=None):
-        if data_type in ('string', 'int', 'double', 'date', 'time', 'dateTime'):
-            bind = E.bind({'nodeset': self.get_data_ref(name, group),
-                           'type': 'xsd:' + data_type})
-        else:
-            bind = E.bind({'nodeset': self.get_data_ref(name, group)})
-        self._model.append(bind)
+        if data_type in XSD_TYPES:
+            self._model.append(E.bind({'nodeset': self.get_data_ref(name, group), 'type': 'xsd:' + data_type}))
 
     def _append_to_body(self, name, data_type, groups=None, choices=None):
 
