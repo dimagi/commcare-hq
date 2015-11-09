@@ -21,7 +21,11 @@
         "select2-3.4.5-legacy": "select2#~3.4.5",
         "less": "~1.7.3",
         "backbone": "~0.9.1",
-        "bootstrap-daterangepicker": "~2.1.13"
+        "bootstrap-daterangepicker": "~2.1.13",
+        "datatables": "~1.10.9",
+        "datatables-bootstrap3": "~0.1",
+        "d3": "~3.1",
+        "nvd3": "1.1.10-beta"
     },
     "devDependencies": {
         "chai": "~3.3.0",
