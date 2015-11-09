@@ -163,6 +163,13 @@ class XFormBuilder(object):
         self._model = self._etree.xpath('./h:head/x:model', namespaces=self.ns)[0]
         self._body = self._etree.xpath('./h:body', namespaces=self.ns)[0]
 
+    @property
+    def xmlns(self):
+        """
+        Unique XMLNS
+        """
+        return self.ns['d']
+
     def tostring(self, **kwargs):
         return etree.tostring(self._etree, **kwargs)
 
@@ -360,7 +367,7 @@ class XFormBuilder(object):
                 node_.append(
                     E.item(
                         E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, choice_name))}),
-                        E.value(choice_name)
+                        E.value(choice_name if isinstance(choice_name, basestring) else str(choice_name))
                     )
                 )
             return node_
