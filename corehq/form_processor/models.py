@@ -346,6 +346,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
     def user_id(self):
         return self.modified_by
 
+    @property
+    def case_name(self):
+        return self.case_json.get('name', None)
+
     def hard_delete(self):
         # see cleanup.safe_hard_delete
         raise NotImplementedError()
