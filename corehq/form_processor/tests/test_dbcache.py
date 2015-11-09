@@ -42,16 +42,17 @@ class CaseDbCacheTest(TestCase):
             "_id": id,
             "doc_type": "AintNoCasesHere"
         })
-        cache = self.interface.casedb_cache()
+        doc_back = CommCareCase.get_db().get(id)
+        self.assertEqual("AintNoCasesHere", doc_back['doc_type'])
+
+        cache = CaseDbCacheCouch()
         try:
             cache.get(id)
             self.fail('doc type security check failed to raise exception')
         except IllegalCaseId:
             pass
 
-        doc_back = CommCareCase.get_db().get(id)
-        self.assertEqual("AintNoCasesHere", doc_back['doc_type'])
-
+    @run_with_all_backends
     def testGetPopulatesCache(self):
         case_ids = _make_some_cases(3)
         cache = self.interface.casedb_cache()
@@ -60,11 +61,12 @@ class CaseDbCacheTest(TestCase):
 
         for i, id in enumerate(case_ids):
             case = cache.get(id)
-            self.assertEqual(str(i), case.my_index)
+            self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
 
         for id in case_ids:
             self.assertTrue(cache.in_cache(id))
 
+    @run_with_all_backends
     def testSetPopulatesCache(self):
         case_ids = _make_some_cases(3)
         cache = self.interface.casedb_cache()
@@ -72,13 +74,14 @@ class CaseDbCacheTest(TestCase):
             self.assertFalse(cache.in_cache(id))
 
         for id in case_ids:
-            cache.set(id, CommCareCase.get(id))
+            cache.set(id, self.interface.case_model.get(id))
 
         for i, id in enumerate(case_ids):
             self.assertTrue(cache.in_cache(id))
             case = cache.get(id)
-            self.assertEqual(str(i), case.my_index)
+            self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
 
+    @run_with_all_backends
     def testPopulate(self):
         case_ids = _make_some_cases(3)
         cache = self.interface.casedb_cache()
@@ -92,7 +95,7 @@ class CaseDbCacheTest(TestCase):
         #  sanity check
         for i, id in enumerate(case_ids):
             case = cache.get(id)
-            self.assertEqual(str(i), case.my_index)
+            self.assertEqual(str(i), case.dynamic_case_properties()['my_index'])
 
     def testStripHistory(self):
         case_ids = _make_some_cases(3)
