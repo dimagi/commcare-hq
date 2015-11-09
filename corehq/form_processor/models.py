@@ -36,7 +36,18 @@ class SaveStateMixin(object):
         return bool(self._get_pk_val())
 
 
-class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance, RedisLockableMixIn, SaveStateMixin):
+class AttachmentMixin(SaveStateMixin):
+    def get_attachment(self, attachment_name):
+        if hasattr(self, 'unsaved_attachments'):
+            for attachment in self.unsaved_attachments:
+                if attachment.name == attachment_name:
+                    return attachment.read_content()
+        elif self.is_saved():
+            xform_attachment = self.xformattachmentsql_set.filter(name=attachment_name).first()
+            return xform_attachment.read_content()
+
+
+class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance, RedisLockableMixIn, AttachmentMixin):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -188,15 +199,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
 
     def xml_md5(self):
         return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
-
-    def get_attachment(self, attachment_name):
-        if hasattr(self, 'unsaved_attachments'):
-            for attachment in self.unsaved_attachments:
-                if attachment.name == attachment_name:
-                    return attachment.read_content()
-        elif self.is_saved():
-            xform_attachment = self.xformattachmentsql_set.filter(name=attachment_name).first()
-            return xform_attachment.read_content()
 
     def archive(self, user=None):
         if self.is_archived:
