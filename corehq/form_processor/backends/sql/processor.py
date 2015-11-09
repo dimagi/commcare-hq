@@ -60,8 +60,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        xform = XFormInstanceSQL.objects.get(form_uuid=xform_id)
-        return xform.domain == domain
+        return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
