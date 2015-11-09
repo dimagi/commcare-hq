@@ -11,76 +11,12 @@ seem to be a good fit.
 
 >>> from corehq.apps.app_manager.xform_builder import XFormBuilder
 >>> xform = XFormBuilder('Built by XFormBuilder')
->>> xform.new_question('name', 'What is your name?')
+>>> _ = xform.new_question('name', 'What is your name?')
 >>> group = xform.new_group('personal', 'Personal Questions')
->>> group.new_question('fav_color', u'Quelle est ta couleur préférée?',
-...                    choices={'r': 'Rot', 'g': u'Grün', 'b': 'Blau'})
+>>> _ = group.new_question('fav_color', u'Quelle est ta couleur préférée?',
+...                        choices={'r': 'Rot', 'g': u'Grün', 'b': 'Blau'})
 >>> xml = xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
->>> # Skip the random xmlns when checking the result:
->>> xml.startswith(
-... '''<?xml version=\'1.0\' encoding=\'utf-8\'?>\\n'''
-... '''<h:html xmlns:h="http://www.w3.org/1999/xhtml" '''
-...         '''xmlns:orx="http://openrosa.org/jr/xforms" '''
-...         '''xmlns="http://www.w3.org/2002/xforms" '''
-...         '''xmlns:xsd="http://www.w3.org/2001/XMLSchema" '''
-...         '''xmlns:jr="http://openrosa.org/javarosa">\\n'''
-... '''  <h:head>\\n'''
-... '''    <h:title>Built by XFormBuilder</h:title>\\n'''
-... '''    <model>\\n'''
-... '''      <instance>\\n'''
-... '''        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '''
-...               '''xmlns="http://openrosa.org/formdesigner/''') and xml.endswith('''" '''
-...               '''uiVersion="1" '''
-...               '''version="3" '''
-...               '''name="Built by XFormBuilder">\\n'''
-... '''          <name/>\\n'''
-... '''          <personal>\\n'''
-... '''            <fav_color/>\\n'''
-... '''          </personal>\\n'''
-... '''        </data>\\n'''
-... '''      </instance>\\n'''
-... '''      <itext>\\n'''
-... '''        <translation lang="en" default="">\\n'''
-... '''          <text id="name-label">\\n'''
-... '''            <value>What is your name?</value>\\n'''
-... '''          </text>\\n'''
-... '''          <text id="personal-label">\\n'''
-... '''            <value>Personal Questions</value>\\n'''
-... '''          </text>\\n'''
-... '''          <text id="personal/fav_color-label">\\n'''
-... '''            <value>'''
-...               '''Quelle est ta couleur pr\xc3\x83\xc2\xa9f\xc3\x83\xc2\xa9r\xc3\x83\xc2\xa9e?'''
-...             '''</value>\\n'''
-... '''          </text>\\n'''
-... '''          <text id="personal/fav_color-r-label">\\n'''
-... '''            <value>Rot</value>\\n'''
-... '''          </text>\\n'''
-... '''          <text id="personal/fav_color-b-label">\\n'''
-... '''            <value>Blau</value>\\n'''
-... '''          </text>\\n'''
-... '''          <text id="personal/fav_color-g-label">\\n'''
-... '''            <value>Gr\xc3\x83\xc2\xbcn</value>\\n'''
-... '''          </text>\\n'''
-... '''        </translation>\\n'''
-... '''      </itext>\\n'''
-... '''      <bind nodeset="/data/name" type="xsd:string"/>\\n'''
-... '''      <bind nodeset="/data/personal"/>\\n'''
-... '''      <bind nodeset="/data/personal/fav_color" type="xsd:string"/>\\n'''
-... '''    </model>\\n'''
-... '''  </h:head>\\n'''
-... '''  <h:body>\\n'''
-... '''    <input ref="/data/name">\\n'''
-... '''      <label ref="jr:itext(\'name-label\')"/>\\n'''
-... '''    </input>\\n'''
-... '''    <group ref="/data/personal">\\n'''
-... '''      <label ref="jr:itext(\'personal-label\')"/>\\n'''
-... '''      <input ref="/data/personal/fav_color">\\n'''
-... '''        <label ref="jr:itext(\'personal/fav_color-label\')"/>\\n'''
-... '''      </input>\\n'''
-... '''    </group>\\n'''
-... '''  </h:body>\\n'''
-... '''</h:html>\\n''')
-True
+
 
 """
 import uuid

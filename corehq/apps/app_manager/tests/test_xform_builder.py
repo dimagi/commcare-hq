@@ -102,3 +102,14 @@ class XformBuilderTests(SimpleTestCase, TestXmlMixin):
             self.replace_xmlns(self.get_xml('data_types'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
         )
+
+    def test_xform_title(self):
+        self.xform = XFormBuilder('Built by XFormBuilder')
+        self.xform.new_question('name', 'What is your name?')
+        group = self.xform.new_group('personal', 'Personal Questions')
+        group.new_question('fav_color', u'Quelle est ta couleur préférée?',
+                           choices={'r': 'Rot', 'g': u'Grün', 'b': 'Blau'})
+        self.assertXmlEqual(
+            self.replace_xmlns(self.get_xml('xform_title'), self.xform.xmlns),
+            self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+        )
