@@ -657,6 +657,12 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+OBJECT_RESTORE = StaticToggle(
+    'object_restore',
+    'Use RIAK CS as backend for restore',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN],
+)
 
 AUTOMATIC_CASE_CLOSURE = StaticToggle(
     'automatic_case_closure',

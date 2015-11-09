@@ -11,7 +11,8 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
+from corehq.s3 import ObjectStore
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OBJECT_RESTORE
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
@@ -123,11 +124,12 @@ class FileRestoreResponse(RestoreResponse):
     BODY_TAG_SUFFIX = '-body'
     EXTENSION = 'xml'
 
-    def __init__(self, username=None, items=False):
+    def __init__(self, username=None, items=False, domain=None):
         super(FileRestoreResponse, self).__init__(username, items)
         self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
+        self.domain = domain
 
     def get_filename(self, suffix=None):
         return "{filename}{suffix}.{ext}".format(
@@ -137,10 +139,10 @@ class FileRestoreResponse(RestoreResponse):
         )
 
     def __add__(self, other):
-        if not isinstance(other, FileRestoreResponse):
+        if not isinstance(other, self.__class__):
             raise NotImplemented()
 
-        response = FileRestoreResponse(self.username, self.items)
+        response = self.__class__(self.username, self.items, self.domain)
         response.num_items = self.num_items + other.num_items
 
         self.response_body.seek(0)
@@ -168,7 +170,7 @@ class FileRestoreResponse(RestoreResponse):
             shutil.copyfileobj(self.response_body, response)
 
             response.write(self.closing_tag)
-        
+
         self.finalized = True
         self.close()
 
@@ -184,6 +186,48 @@ class FileRestoreResponse(RestoreResponse):
     def get_http_response(self):
         headers = {'Content-Length': os.path.getsize(self.get_filename())}
         return stream_response(open(self.get_filename(), 'r'), headers)
+
+
+class ObjectRestoreResponse(FileRestoreResponse):
+    """
+    Restore response powered by RiakCS backend
+    """
+    def __init__(self, username=None, items=False, domain=None):
+        super(ObjectRestoreResponse, self).__init__(username, items, domain)
+        self.object_store = ObjectStore(domain)
+
+    def finalize(self):
+        """
+        Creates the final file with start and ending tag
+        """
+        with open(self.get_filename(), 'w') as response:
+            # Add 1 to num_items to account for message element
+            items = self.items_template.format(self.num_items + 1) if self.items else ''
+            response.write(self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS
+            ))
+
+            self.response_body.seek(0)
+            shutil.copyfileobj(self.response_body, response)
+
+            response.write(self.closing_tag)
+            content_length = os.path.getsize(self.get_filename())
+
+        self.object_store.set(
+            self.get_filename(),
+            open(self.get_filename(), 'rb'),
+            content_length,
+        )
+
+        self.finalized = True
+        self.close()
+
+    def get_http_response(self):
+        obj = self.object_store.get(self.get_filename())
+        headers = {'Content-Length': obj.get('ContentLength', None)}
+        return stream_response(obj['Body'], headers)
 
 
 class CachedPayload(object):
@@ -296,7 +340,6 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
-    restore_class = FileRestoreResponse
 
     def __init__(self, project, user, params):
         self.project = project
@@ -304,6 +347,7 @@ class RestoreState(object):
         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], fail_if_debug=True)
         _assert(self.domain, 'Restore for {} missing a domain!'.format(user.username))
 
+        self.restore_class = get_restore_cls(self.domain)
         self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
@@ -552,3 +596,9 @@ class RestoreConfig(object):
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
                 self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)
+
+
+def get_restore_cls(domain):
+    if not settings.RIAKCS_ENABLED:
+        return FileRestoreResponse
+    return ObjectRestoreResponse if OBJECT_RESTORE.enabled(domain) else FileRestoreResponse
