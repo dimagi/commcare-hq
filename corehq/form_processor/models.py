@@ -1,5 +1,6 @@
 import os
 import collections
+import hashlib
 
 from lxml import etree
 from json_field.fields import JSONField
@@ -60,6 +61,15 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
 
+    # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
+    orig_id = models.CharField(max_length=255, null=True)
+
+    # When a form is deprecated, the new form gets a reference to the deprecated form
+    deprecated_form_id = models.CharField(max_length=255, null=True)
+
+    # Stores the datetime of when a form was deprecated
+    edited_on = models.DateTimeField(null=True)
+
     # The time at which the server has received the form
     received_on = models.DateTimeField()
 
@@ -85,11 +95,24 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     form_id = property(__get_form_id, __set_form_id)
 
     @classmethod
-    def get(cls, id):
+    def get(cls, xform_id):
         try:
-            return XFormInstanceSQL.objects.get(form_uuid=id)
+            return XFormInstanceSQL.objects.get(form_uuid=xform_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
+
+    @classmethod
+    def get_with_attachments(cls, xform_id):
+        # NOOP for the SQL XFormInstance
+        return cls.get(xform_id)
+
+    @classmethod
+    def get_obj_id(cls, obj):
+        return obj.form_uuid
+
+    @classmethod
+    def get_obj_by_id(cls, _id):
+        return cls.get(_id)
 
     @property
     def is_normal(self):
@@ -119,7 +142,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     @memoized
     def form_data(self):
         from .utils import convert_xform_to_json
-        xml = self._get_xml()
+        xml = self.get_xml()
         return convert_xform_to_json(xml)
 
     @property
@@ -134,13 +157,22 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
 
         return None
 
+    def save(self, *args, **kwargs):
+        super(XFormInstanceSQL, self).save(*args, **kwargs)
+        if getattr(self, 'initial_deprecation', False):
+            attachments = XFormAttachmentSQL.objects.filter(xform_id=self.orig_id)
+            attachments.update(xform_id=self.form_id)
+
+            operations = XFormOperationSQL.objects.filter(xform_id=self.orig_id)
+            operations.update(xform_id=self.form_id)
+
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self)
         return serializer.data
 
     def get_xml_element(self):
-        xml = self._get_xml()
+        xml = self.get_xml()
         if not xml:
             return None
 
@@ -150,8 +182,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
             return etree.fromstring(payload)
         return _to_xml_element(xml)
 
-    def _get_xml(self):
+    def get_xml(self):
         return self.get_attachment('form.xml')
+
+    def xml_md5(self):
+        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
 
     def get_attachment(self, attachment_name):
         if hasattr(self, 'unsaved_attachments'):
@@ -190,7 +225,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
 class XFormAttachmentSQL(models.Model):
     attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
 
-    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
+    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid')
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
