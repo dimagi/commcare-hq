@@ -7,6 +7,7 @@ http://bitbucket.org/javarosa/javarosa/wiki/casexml
 from __future__ import absolute_import
 from StringIO import StringIO
 import base64
+from collections import OrderedDict
 from functools import cmp_to_key
 import re
 from datetime import datetime
@@ -262,7 +263,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             "server_date_modified": self.server_modified_on,
             # renamed
             "server_date_opened": self.server_opened_on,
-            "properties": dict(self.dynamic_case_properties() + {
+            "properties": dict(self.dynamic_case_properties().items() + {
                 "external_id": self.external_id,
                 "owner_id": self.owner_id,
                 # renamed
@@ -522,8 +523,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if type(self) != CommCareCase:
             wrapped_case = CommCareCase.wrap(self._doc)
 
-        return sorted([(key, json[key]) for key in wrapped_case.dynamic_properties()
-                       if re.search(r'^[a-zA-Z]', key)])
+        items = [
+            (key, json[key])
+            for key in wrapped_case.dynamic_properties()
+            if re.search(r'^[a-zA-Z]', key)
+        ]
+        return OrderedDict(sorted(items))
 
     def save(self, **params):
         self.server_modified_on = datetime.utcnow()
