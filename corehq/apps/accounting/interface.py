@@ -1118,9 +1118,9 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 "Credit Line",
                 DataTablesColumn("Account"),
                 DataTablesColumn("Subscription"),
-                DataTablesColumn("Project Space"),
                 DataTablesColumn("Product/Feature Type")
             ),
+            DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
@@ -1149,16 +1149,19 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     )),
                     credit_adj.credit_line.subscription.id,
                 ) if credit_adj.credit_line.subscription else '',
-                (
-                    credit_adj.credit_line.subscription.subscriber.domain
-                    if credit_adj.credit_line.subscription is not None else ''
-                ),
                 dict(FeatureType.CHOICES).get(
                     credit_adj.credit_line.feature_type,
                     dict(SoftwareProductType.CHOICES).get(
                         credit_adj.credit_line.product_type,
                         "Any"
                     ),
+                ),
+                (
+                    credit_adj.credit_line.subscription.subscriber.domain
+                    if credit_adj.credit_line.subscription is not None else (
+                        credit_adj.credit_line.invoice.subscription.subscriber.domain
+                        if credit_adj.credit_line.invoice else ''
+                    )
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
                 credit_adj.note,
