@@ -2,15 +2,17 @@ from datetime import datetime, timedelta
 import os
 import uuid
 from django.test import TestCase
+from django.conf import settings
 from mock import MagicMock
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms.models import XFormInstance, \
-    UnfinishedSubmissionStub
+from couchforms.models import (
+    XFormInstance,
+    XFormDeprecated,
+    UnfinishedSubmissionStub,
+)
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
@@ -54,6 +56,8 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual("Edited Baby!", xform.form_data['assessment']['categories'])
 
         deprecated_xform = self.interface.xform_model.get(xform.deprecated_form_id)
+        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
+            deprecated_xform = XFormDeprecated.wrap(deprecated_xform.to_json())
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
         self.assertNotEqual(self.ID, deprecated_xform.form_id)

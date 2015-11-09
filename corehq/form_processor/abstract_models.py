@@ -38,6 +38,10 @@ class AbstractXFormInstance(object):
     def get(self, xform_id):
         raise NotImplementedError()
 
+    @classmethod
+    def get_with_attachments(slef, xform_id):
+        raise NotImplementedError()
+
     def save(self, *args, **kwargs):
         raise NotImplementedError()
 

@@ -95,11 +95,16 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     form_id = property(__get_form_id, __set_form_id)
 
     @classmethod
-    def get(cls, id, attachments=None):
+    def get(cls, xform_id):
         try:
-            return XFormInstanceSQL.objects.get(form_uuid=id)
+            return XFormInstanceSQL.objects.get(form_uuid=xform_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
+
+    @classmethod
+    def get_with_attachments(cls, xform_id):
+        # NOOP for the SQL XFormInstance
+        return cls.get(xform_id)
 
     @classmethod
     def get_obj_id(cls, obj):

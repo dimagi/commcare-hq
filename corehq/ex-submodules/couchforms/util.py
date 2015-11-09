@@ -142,7 +142,7 @@ def _handle_duplicate(new_doc, instance):
 
     """
     conflict_id = new_doc.form_id
-    existing_doc = FormProcessorInterface().xform_model.get(conflict_id, attachments=True)
+    existing_doc = FormProcessorInterface().xform_model.get_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()
