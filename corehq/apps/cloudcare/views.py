@@ -90,7 +90,10 @@ class CloudcareMain(View):
             apps = get_cloudcare_apps(domain)
             if request.project.use_cloudcare_releases:
                 # replace the apps with the last starred build of each app, removing the ones that aren't starred
-                apps = filter(lambda app: app.is_released, [get_app(domain, app['_id'], latest=True) for app in apps])
+                apps = filter(
+                    lambda app: app.is_released,
+                    [get_app(domain, app['_id'], latest=True) for app in apps]
+                )
                 # convert to json
                 apps = [get_app_json(app) for app in apps]
             else:
@@ -104,7 +107,7 @@ class CloudcareMain(View):
         # trim out empty apps
         apps = filter(lambda app: app, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
-        
+
         def _default_lang():
             if apps:
                 # unfortunately we have to go back to the DB to find this
@@ -112,10 +115,10 @@ class CloudcareMain(View):
             else:
                 return "en"
 
-        # default language to user's preference, followed by 
+        # default language to user's preference, followed by
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
-        
+
         def _url_context():
             # given a url path, returns potentially the app, parent, and case, if
             # they're selected. the front end optimizes with these to avoid excess
@@ -132,7 +135,7 @@ class CloudcareMain(View):
 
             # if there are parent cases, it will be:
             # "view/:app/:module/:form/parent/:parent/case/:case/
-            
+
             # could use regex here but this is actually simpler with the potential
             # absence of a trailing slash
             split = urlPath.split('/')
@@ -162,7 +165,7 @@ class CloudcareMain(View):
 
             case = _get_case(domain, case_id) if case_id else None
             if parent_id is None and case is not None:
-                parent_id = case.get('indices',{}).get('parent', {}).get('case_id', None)
+                parent_id = case.get('indices', {}).get('parent', {}).get('case_id', None)
             parent = _get_case(domain, parent_id) if parent_id else None
 
             return {
@@ -172,18 +175,19 @@ class CloudcareMain(View):
             }
 
         context = {
-           "domain": domain,
-           "language": language,
-           "apps": apps,
-           "apps_raw": apps,
-           "preview": preview,
-           "maps_api_key": settings.GMAPS_API_KEY,
-           'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
-           'sessions_enabled': request.couch_user.is_commcare_user(),
-           'use_cloudcare_releases': request.project.use_cloudcare_releases,
+            "domain": domain,
+            "language": language,
+            "apps": apps,
+            "apps_raw": apps,
+            "preview": preview,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "offline_enabled": toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
+            "sessions_enabled": request.couch_user.is_commcare_user(),
+            "use_cloudcare_releases": request.project.use_cloudcare_releases,
         }
         context.update(_url_context())
         return render(request, "cloudcare/cloudcare_home.html", context)
+
 
 @login_and_domain_required
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
