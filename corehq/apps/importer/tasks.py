@@ -28,9 +28,9 @@ def bulk_import_async(import_id, config, domain, excel_id):
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
     if not spreadsheet:
-        return {'error': 'EXPIRED'}
+        return {'errors': 'EXPIRED'}
     if spreadsheet.has_errors:
-        return {'error': 'HAS_ERRORS'}
+        return {'errors': 'HAS_ERRORS'}
 
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
@@ -235,9 +235,11 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     _submit_caseblocks(caseblocks)
     num_chunks += 1
     return {
-        'created_count': created_count,
-        'match_count': match_count,
-        'too_many_matches': too_many_matches,
-        'errors': errors.as_dict(),
-        'num_chunks': num_chunks,
+        'messages': {
+            'created_count': created_count,
+            'match_count': match_count,
+            'too_many_matches': too_many_matches,
+            'errors': errors.as_dict(),
+            'num_chunks': num_chunks,
+        }
     }
