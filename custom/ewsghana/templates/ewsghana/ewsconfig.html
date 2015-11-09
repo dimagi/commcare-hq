@@ -139,8 +139,8 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="delete_connections_field">
-                        {% trans "Delete connections field" %}
+                    <button class="btn" id="delete_archived_locations_reports">
+                        {% trans "Delete archived locations reports" %}
                     </button>
                 </div>
             </div>
@@ -218,8 +218,8 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#delete_connections_field").click(function() {
-            var url = '{% url 'delete_connections_field' domain %}';
+        $("#delete_archived_locations_reports").click(function() {
+            var url = '{% url 'delete_archived_locations_reports' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

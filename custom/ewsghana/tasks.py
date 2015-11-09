@@ -1,7 +1,9 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.models import ReportNotification, ReportConfig
+from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
@@ -200,18 +202,26 @@ def migrate_email_settings(domain):
 
 
 @task(queue='logistics_background_queue', ignore_result=True)
-def delete_connections_field_task(domain):
-    to_save = []
-    for user in iter_docs(CommCareUser.get_db(), CommCareUser.ids_by_domain(domain)):
-        if 'connections' in user['user_data']:
-            del user['user_data']['connections']
-            to_save.append(user)
-            if len(to_save) > 500:
-                CommCareUser.get_db().bulk_save(to_save)
-                to_save = []
+def delete_archived_locations_reports_task(domain):
+    for web_user in WebUser.by_domain(domain):
+        notifications = ReportNotification.by_domain_and_owner(domain, web_user.get_id, stale=False)
+        for notification in notifications:
+            configs = []
+            for config_id in notification.config_ids:
+                config = ReportConfig.get(doc_id=config_id)
+                location_id = config.filters.get('location_id')
+                if not location_id:
+                    configs.append(config)
+                    continue
 
-    if to_save:
-        CommCareUser.get_db().bulk_save(to_save)
+                try:
+                    SQLLocation.objects.get(is_archived=False, location_id=location_id)
+                    configs.append(config)
+                except SQLLocation.DoesNotExist:
+                    config.delete()
+
+            if not configs:
+                notification.delete()
 
 
 @task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
