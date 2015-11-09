@@ -5,7 +5,7 @@ from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 
 
-class XformBuilderTests(SimpleTestCase, TestXmlMixin):
+class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'xform_builder')
 
     def setUp(self):
