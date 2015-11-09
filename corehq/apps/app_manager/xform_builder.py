@@ -11,9 +11,9 @@ seem to be a good fit.
 
 >>> from corehq.apps.app_manager.xform_builder import XFormBuilder
 >>> xform = XFormBuilder('Built by XFormBuilder')
->>> xform.add_question('name', 'What is your name?')
+>>> xform.new_question('name', 'What is your name?')
 >>> group = xform.new_group('personal', 'Personal Questions')
->>> group.add_question('fav_color', u'Quelle est ta couleur préférée?',
+>>> group.new_question('fav_color', u'Quelle est ta couleur préférée?',
 ...                    choices={'r': 'Rot', 'g': u'Grün', 'b': 'Blau'})
 >>> xml = xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
 >>> # Skip the random xmlns when checking the result:
@@ -86,7 +86,6 @@ True
 import uuid
 from lxml import etree
 from lxml.builder import E
-
 
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
@@ -167,7 +166,7 @@ class XFormBuilder(object):
     def tostring(self, **kwargs):
         return etree.tostring(self._etree, **kwargs)
 
-    def add_question(self, name, label, data_type='string', group=None, choices=None):
+    def new_question(self, name, label, data_type='string', group=None, choices=None, label_safe=False, **params):
         """
         Adds a question to the XForm.
 
@@ -179,6 +178,9 @@ class XFormBuilder(object):
         :param data_type: The type of the question
         :param group: The name of the question's group, or an iterable of names if nesting is deeper than one
         :param choices: A dictionary of {name: label} pairs
+        :param label_safe: Does the label contain (safe) XML?
+        :param params: Supported question parameters: repeat_count
+        :return: A Question instance, or QuestionGroup instance if `data_type` is a group type.
         """
         if data_type not in ODK_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
@@ -186,11 +188,14 @@ class XFormBuilder(object):
             raise TypeError('group parameter needs to be a string or iterable')
         groups = [group] if isinstance(group, basestring) else group
         self._append_to_data(name, groups)
-        self._append_to_translation(name, label, groups, choices)
+        self._append_to_translation(name, label, groups, choices, label_safe)
         self._append_to_model(name, data_type, groups)
-        self._append_to_body(name, data_type, groups, choices)
+        self._append_to_body(name, data_type, groups, choices, **params)
+        if data_type in GROUP_TYPES:
+            return QuestionGroup(name, self, groups)
+        return Question(name, self, groups)
 
-    def new_group(self, name, label, data_type='group', group=None):
+    def new_group(self, name, label, data_type='group', group=None, label_safe=False, **params):
         """
         Adds and returns a question group to the XForm.
 
@@ -198,12 +203,14 @@ class XFormBuilder(object):
         :param label: Group label
         :param data_type: The type of the group ("group" or "repeatGroup")
         :param group: The name or names of the group(s) that this group is inside
+        :param label_safe: Does the label contain (safe) XML?
+        :param params: Supported question parameters: repeat_count
+        :return: A QuestionGroup instance
         """
         if data_type not in GROUP_TYPES:
             raise TypeError('Unknown question group type "{}"'.format(data_type))
-        self.add_question(name, label, data_type, group)
-        parents = [group] if isinstance(group, basestring) else group
-        return QuestionGroup(name, self, parents)
+        # Note: new_question returns a QuestionGroup, because data_type is a group type.
+        return self.new_question(name, label, data_type, group, label_safe=label_safe, **params)
 
     @staticmethod
     def get_text_id(name, groups=None, choice_name=None):
@@ -253,24 +260,29 @@ class XFormBuilder(object):
             node = self._data
         node.append(etree.Element(name))
 
-    def _append_to_translation(self, name, label, group=None, choices=None):
+    def _append_to_translation(self, name, label, group=None, choices=None, label_safe=False):
 
-        def get_text_node(name_, label_, group_=None, choice_name_=None):
+        def get_text_node(name_, label_, group_=None, choice_name_=None, label_safe_=False):
+            if label_safe_:
+                return E.text(
+                    {'id': self.get_text_id(name_, group_, choice_name_)},
+                    etree.fromstring('<value>{}</value>'.format(label_))
+                )
             return E.text(
                 {'id': self.get_text_id(name_, group_, choice_name_)},
                 E.value(label_)
             )
 
-        self._translation1.append(get_text_node(name, label, group))
+        self._translation1.append(get_text_node(name, label, group, label_safe_=label_safe))
         if choices:
             for choice_name, choice_label in choices.items():
-                self._translation1.append(get_text_node(name, choice_label, group, choice_name))
+                self._translation1.append(get_text_node(name, choice_label, group, choice_name, label_safe))
 
     def _append_to_model(self, name, data_type, group=None):
         if data_type in XSD_TYPES:
             self._model.append(E.bind({'nodeset': self.get_data_ref(name, group), 'type': 'xsd:' + data_type}))
 
-    def _append_to_body(self, name, data_type, groups=None, choices=None):
+    def _append_to_body(self, name, data_type, groups=None, choices=None, **params):
 
         def walk_groups(node_, groups_, data_ref='/data'):
             """
@@ -290,7 +302,7 @@ class XFormBuilder(object):
                 return group_node
             return walk_groups(group_node, groups_, data_ref)
 
-        def get_group_question_node(name_, groups_=None, choices_=None):
+        def get_group_question_node(name_, groups_=None, choices_=None, **params_):
             """
             Returns a question node for a non-repeating group
 
@@ -304,7 +316,7 @@ class XFormBuilder(object):
                 E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))})
             )
 
-        def get_repeat_group_question_node(name_, groups_=None, choices_=None):
+        def get_repeat_group_question_node(name_, groups_=None, choices_=None, **params_):
             """
             Returns a question node for a repeat group
 
@@ -313,12 +325,19 @@ class XFormBuilder(object):
             '<group><label ref="jr:itext(\'repeat_group-label\')"/><repeat nodeset="/data/repeat_group"/></group>'
 
             """
+            repeat_attrs = {'nodeset': self.get_data_ref(name_, groups_)}
+            if 'repeat_count' in params_:
+                question = params_['repeat_count']
+                repeat_attrs.update({
+                    '{{{jr}}}count'.format(**self.ns): self.get_data_ref(question.name, question.groups),
+                    '{{{jr}}}noAddRemove'.format(**self.ns): "true()"
+                })
             return E.group(
                 E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))}),
-                E.repeat({'nodeset': self.get_data_ref(name_, groups_)})
+                E.repeat(repeat_attrs)
             )
 
-        def _get_any_select_question_node(tag, name_, groups_=None, choices_=None):
+        def _get_any_select_question_node(tag, name_, groups_=None, choices_=None, **params_):
             """
             Return a question node for a single- or multiple-select multiple choice question
 
@@ -346,19 +365,19 @@ class XFormBuilder(object):
                 )
             return node_
 
-        def get_select_question_node(name_, groups_=None, choices_=None):
+        def get_select_question_node(name_, groups_=None, choices_=None, **params_):
             """
             Return a question node for a multiple-select multiple choice question
             """
-            return _get_any_select_question_node('select', name_, groups_, choices_)
+            return _get_any_select_question_node('select', name_, groups_, choices_, **params_)
 
-        def get_select1_question_node(name_, groups_=None, choices_=None):
+        def get_select1_question_node(name_, groups_=None, choices_=None, **params_):
             """
             Return a question node for a single-select multiple choice question
             """
-            return _get_any_select_question_node('select1', name_, groups_, choices_)
+            return _get_any_select_question_node('select1', name_, groups_, choices_, **params_)
 
-        def get_input_question_node(name_, groups_=None, choices_=None):
+        def get_input_question_node(name_, groups_=None, choices_=None, **params_):
             """
             Return a question node for a normal question
 
@@ -382,8 +401,15 @@ class XFormBuilder(object):
             'select': get_select_question_node,
             'select1': get_select1_question_node,
         }.get(data_type, get_input_question_node)
-        question_node = func(name, groups, choices)
+        question_node = func(name, groups, choices, **params)
         node.append(question_node)
+
+
+class Question(object):
+    def __init__(self, name, xform, groups=None):
+        self.name = name
+        self.xform = xform
+        self.groups = groups
 
 
 class QuestionGroup(object):
@@ -392,8 +418,8 @@ class QuestionGroup(object):
         self.xform = xform
         self.groups = [name] if parents is None else list(parents) + [name]
 
-    def add_question(self, name, label, data_type='string', choices=None):
-        self.xform.add_question(name, label, data_type, self.groups, choices)
+    def new_question(self, name, label, data_type='string', choices=None, label_safe=False, **params):
+        return self.xform.new_question(name, label, data_type, self.groups, choices, label_safe, **params)
 
-    def new_group(self, name, label, data_type='group'):
-        return self.xform.new_group(name, label, data_type, self.groups)
+    def new_group(self, name, label, data_type='group', label_safe=False, **params):
+        return self.xform.new_group(name, label, data_type, self.groups, label_safe, **params)
