@@ -74,7 +74,7 @@ class EWSFormatter(object):
             return
         match = re.search("[0-9]", string)
         if not match:
-            return string
+            raise SMSError
         string = self._clean_string(string)
         an_iter = self._getTokens(string)
         commodity = None
