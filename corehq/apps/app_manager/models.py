@@ -3318,7 +3318,7 @@ class ReportAppConfig(DocumentSchema):
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
-    description = DictProperty()
+    description = StringProperty()
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -3329,6 +3329,18 @@ class ReportAppConfig(DocumentSchema):
         super(ReportAppConfig, self).__init__(*args, **kwargs)
         if not self.uuid:
             self.uuid = random_hex()
+
+    @classmethod
+    def wrap(cls, doc):
+        # for backwards compatibility with apps that have localized descriptions
+        from corehq.apps.userreports.util import default_language, localize
+        if isinstance(doc.get('description'), dict):
+            if doc['description']:
+                doc['description'] = localize(doc['description'], default_language())
+            else:
+                doc['description'] = ''
+
+        return super(ReportAppConfig, cls).wrap(doc)
 
     @property
     def report(self):
@@ -3395,7 +3407,7 @@ class ReportModule(ModuleBase):
         """
         returns is_valid, valid_report_configs
 
-        If any report doesn't exist, is_value is False, otherwise True
+        If any report doesn't exist, is_valid is False, otherwise True
         valid_report_configs is a list of all report configs that refer to existing reports
 
         """
@@ -3465,6 +3477,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return 'none'
         return self.source_module.requires
+
+    @property
+    def root_module_id(self):
+        if not self.source_module:
+            return None
+        return self.source_module.root_module_id
 
     def get_suite_forms(self):
         if not self.source_module:

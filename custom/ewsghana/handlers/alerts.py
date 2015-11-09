@@ -2,8 +2,8 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE,\
-    MS_STOCKOUT, MS_RESOLVED_STOCKOUTS
-from collections import defaultdict
+    MS_STOCKOUT, MS_RESOLVED_STOCKOUTS, NO_SUPPLY_POINT_MESSAGE
+from collections import defaultdict, OrderedDict
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
@@ -74,14 +74,13 @@ class EWSFormatter(object):
             return
         match = re.search("[0-9]", string)
         if not match:
-            return string
+            raise SMSError
         string = self._clean_string(string)
         an_iter = self._getTokens(string)
         commodity = None
         valid = False
 
-        result = ''
-
+        product_quantity = OrderedDict()
         while True:
             try:
                 while commodity is None or not commodity.isalpha():
@@ -89,7 +88,7 @@ class EWSFormatter(object):
                 count = an_iter.next()
                 while not count.isdigit():
                     count = an_iter.next()
-                result += '{} {}'.format(commodity, count)
+                product_quantity[commodity] = {'soh': count, 'receipts': 0}
                 valid = True
                 token_a = an_iter.next()
                 if not token_a.isalnum():
@@ -98,7 +97,7 @@ class EWSFormatter(object):
                         token_b = an_iter.next()
                     if token_b.isdigit():
                         # if digit, then the user is reporting receipts
-                        result += '.{} '.format(token_b)
+                        product_quantity[commodity]['receipts'] = token_b
                         commodity = None
                         valid = True
                     else:
@@ -115,6 +114,15 @@ class EWSFormatter(object):
                 break
         if not valid:
             return string
+
+        result = ""
+        for product, soh_receipt_dict in product_quantity.iteritems():
+            soh = soh_receipt_dict.get('soh')
+            if not soh:
+                continue
+            receipts = soh_receipt_dict.get('receipts', 0)
+            result += "{} {}.{} ".format(product, soh, receipts)
+
         return result.strip()
 
 
@@ -293,12 +301,15 @@ class AlertsHandler(KeywordHandler):
             text = self.msg.text
 
         if not domain.commtrack_enabled:
-            print "tutaj?"
             return False
+
+        if not self.sql_location:
+            self.respond(NO_SUPPLY_POINT_MESSAGE)
+            return True
+
         try:
             parser = EWSStockAndReceiptParser(domain, verified_contact)
             formatted_text = EWSFormatter().format(text)
-
             data = parser.parse(formatted_text)
             if not data:
                 return False

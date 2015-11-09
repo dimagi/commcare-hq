@@ -2,9 +2,11 @@
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
     <foo>bar</foo>
     <n0:case case_id="ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169" user_id="user-xxx-eve" date_modified="2013-04-19T16:53:02.799-04" xmlns:n0="http://commcarehq.org/case/transaction/v2">
-        <n0:update>
-            <n0:foo> bar</n0:foo>
-        </n0:update>
+        <n0:create>
+            <n0:case_name>bar</n0:case_name>
+            <n0:owner_id>user-xxx-eve</n0:owner_id>
+            <n0:case_type>member</n0:case_type>
+        </n0:create>
     </n0:case>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>A00000245706EE</n1:deviceID>

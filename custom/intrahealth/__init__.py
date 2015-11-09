@@ -65,7 +65,8 @@ PRODUCT_MAPPING = {
     "microlut": "Microlut/Ovrette",
     "preservatif_feminin": "Preservatif Feminin",
     "preservatif_masculin": "Preservatif Masculin",
-    "sayana_press": "Sayana Press"
+    "sayana_press": "Sayana Press",
+    "implanon": "IMPLANON"
 }
 
 
@@ -238,7 +239,7 @@ class IsExistFormPropertyFilter(FormPropertyFilter):
         return (
             form.xmlns == self.xmlns and (
                 self.property_path is None or
-                self.operator(self.property_value, form.xpath(self.property_path))
+                self.operator(self.property_value, form.get_data(self.property_path))
             )
         )
 

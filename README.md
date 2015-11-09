@@ -48,28 +48,49 @@ individual project sites when necessary.
 + pip  (If you use virtualenv (see below) this will be installed automatically)
 + CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
   - Mac users: note that when installing erlang, you do NOT need to check out an older version of erlang.rb
-+ PostgreSQL >= 8.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
-+ [elasticsearch][elasticsearch] (including Java 7).
-  - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
-  - `brew install homebrew/versions/elasticsearch090` works well on mac
-+ redis >= 3.0.3 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
-+ [Jython][jython] 2.5.3 (optional, only needed for CloudCare), CloudCare will _not_ work on 2.7.0 which is the default download
++ PostgreSQL >= 9.1 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
++ [Elasticsearch][elasticsearch] 0.90.13. In Ubuntu and other Debian derivatives,
+  [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
+
+        $ sudo dpkg -i elasticsearch-0.90.13.deb
+        $ sudo apt-mark hold elasticsearch
+
+  On Mac, the following works well:
+
+        $ brew install homebrew/versions/elasticsearch090
+
++ redis >= 3.0.3 (install from OS package manager (`sudo apt-get install redis-server`) or follow these
+  [installation notes][redis])
++ [Jython][jython] 2.5.3 (optional, only needed for CloudCare). **Note**: CloudCare will _not_ work on 2.7.0 which is
+  the default version at jython.org. 2.5.3 is the default version in current versions of Ubuntu
+  (`sudo apt-get install jython`) but to be safe you can explicitly set and hold the version with
+
+        $ sudo apt-get install jython=2.5.3
+        $ sudo apt-mark hold jython
+
 + For additional requirements necessary only if you want to modify the default
   JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
 
  [couchdb]: http://wiki.apache.org/couchdb/Installation
  [postgres]: http://www.postgresql.org/download/
+ [redis]: https://gist.github.com/mwhite/c0381c5236855993572c
  [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
  [jython]: http://jython.org/downloads.html
 
 #### Elasticsearch Configuration (optional)
 
-To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
+To run Elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
-To secure elasticsearch, we recommend setting the listen port to localhost on a
+To secure Elasticsearch, we recommend setting the listen port to localhost on a
 local machine. On a distributed environment, we recommend setting up ssh
-tunneled ports for the elasticsearch port. The supervisor_elasticsearch.conf
+tunneled ports for the Elasticsearch port. The supervisor_elasticsearch.conf
 supervisor config demonstrates the tunnel creation using autossh.
+
+If working on a network with other Elasticsearch instances that you do not want to be included in your cluster
+automatically, set the cluster name to your hostname in /etc/elasticsearch/elasticsearch.yml:
+```yaml
+cluster.name: <your hostname>
+```
 
 #### CouchDB Configuration
 

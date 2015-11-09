@@ -78,7 +78,7 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         caseblock = None
         if case:
-            props = dict(case.dynamic_case_properties())
+            props = case.dynamic_case_properties()
 
             changed = close != case.closed
             changed = changed or case.type != case_type
@@ -119,11 +119,14 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
 def sync_call_center_user_case(user):
     domain = user.project
     if domain and domain.call_center_config.enabled:
-        owner_id, case = call_center_case_and_owner(user, domain)
+        case, owner_id = _get_call_center_case_and_owner(user, domain)
         sync_user_case(user, domain.call_center_config.case_type, owner_id, case)
 
 
-def call_center_case_and_owner(user, domain):
+CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
+
+
+def _get_call_center_case_and_owner(user, domain):
     """
     Return the appropriate owner id for the given users call center case.
     """
@@ -134,7 +137,7 @@ def call_center_case_and_owner(user, domain):
         owner_id = case.owner_id
     else:
         owner_id = domain.call_center_config.case_owner_id
-    return (owner_id, case)
+    return CallCenterCaseAndOwner(case, owner_id)
 
 
 def call_center_location_owner(user, ancestor_level):

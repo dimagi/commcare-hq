@@ -1,7 +1,4 @@
-import re
-
 from django.db import models
-
 from corehq.apps.products.models import SQLProduct
 
 
@@ -103,5 +100,6 @@ class DocDomainMapping(models.Model):
 
     class Meta:
         app_label = 'stock'
+
 
 from .signals import *

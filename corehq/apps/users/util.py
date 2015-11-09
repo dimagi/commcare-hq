@@ -7,7 +7,6 @@ from django.utils import html, safestring
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges
 
-from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
 from django_prbac.utils import has_privilege
 

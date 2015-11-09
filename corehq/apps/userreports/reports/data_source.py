@@ -12,8 +12,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     SortConfigurationError)
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.reports.sorting import get_default_sort_value
-from corehq.apps.userreports.reports.specs import DESCENDING
+from corehq.apps.userreports.reports.sorting import get_default_sort_value, DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.views import get_datasource_config_or_404

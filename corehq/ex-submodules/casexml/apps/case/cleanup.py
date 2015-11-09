@@ -6,11 +6,11 @@ from casexml.apps.case import const
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.update_strategy import ActionsUpdateStrategy
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
 from couchforms import fetch_and_wrap_form
 
 
@@ -69,7 +69,7 @@ def rebuild_case_from_actions(case, actions):
     case.actions = actions
     # call "rebuild" on the case, which should populate xform_ids
     # and re-sort actions if necessary
-    strategy.soft_rebuild_case(strict=False)
+    strategy.soft_rebuild_case()
 
 
 def rebuild_case_from_forms(case_id):

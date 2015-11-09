@@ -7,6 +7,7 @@ http://bitbucket.org/javarosa/javarosa/wiki/casexml
 from __future__ import absolute_import
 from StringIO import StringIO
 import base64
+from collections import OrderedDict
 from functools import cmp_to_key
 import re
 from datetime import datetime
@@ -22,10 +23,11 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueEr
 from PIL import Image
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
+from corehq.form_processor.abstract_models import AbstractCommCareCase
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from corehq.form_processor.utils import ToFromGeneric
+from corehq.util.test_utils import unit_testing_only
 from couchforms.util import is_deprecation, is_override
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
@@ -40,7 +42,9 @@ from dimagi.utils.modules import to_function
 from dimagi.utils import parsing, web
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchforms.models import XFormInstance
+from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch import (
@@ -127,7 +131,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
 
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CouchDocLockableMixIn, ToFromGeneric):
+                   CouchDocLockableMixIn, AbstractCommCareCase):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -216,22 +220,21 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return CommCareCase.view('_all_docs', keys=subcase_ids, include_docs=True)
 
     @property
+    def is_deleted(self):
+        return self.doc_type.endswith(DELETED_SUFFIX)
+
+    @property
     def has_indices(self):
         return self.indices or self.reverse_indices
 
-    def to_generic(self):
-        from corehq.form_processor.generic import GenericCommCareCase
-        generic = GenericCommCareCase(self.to_json())
-        if '_id' in self:
-            generic.id = self['_id']
-        return generic
+    def soft_delete(self):
+        self.doc_type += DELETED_SUFFIX
+        self.save()
 
-    @classmethod
-    def from_generic(cls, generic_case):
-        case = cls.wrap(generic_case.to_json())
-        if generic_case.id:
-            case['_id'] = generic_case.id
-        return case
+    @unit_testing_only
+    def hard_delete(self):
+        from casexml.apps.case.cleanup import safe_hard_delete
+        safe_hard_delete(self)
 
     def to_full_dict(self):
         """
@@ -260,7 +263,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             "server_date_modified": self.server_modified_on,
             # renamed
             "server_date_opened": self.server_opened_on,
-            "properties": dict(self.dynamic_case_properties() + {
+            "properties": dict(self.dynamic_case_properties().items() + {
                 "external_id": self.external_id,
                 "owner_id": self.owner_id,
                 # renamed
@@ -302,20 +305,25 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def get(cls, id, strip_history=False, **kwargs):
-        if strip_history:
-            return cls.get_lite(id)
-        return super(CommCareCase, cls).get(id, **kwargs)
+        try:
+            if strip_history:
+                return cls.get_lite(id)
+            return super(CommCareCase, cls).get(id, **kwargs)
+        except ResourceNotFound:
+            raise CaseNotFound
 
     @classmethod
-    def get_with_rebuild(cls, id):
-        try:
-            return cls.get(id)
-        except ResourceNotFound:
-            from casexml.apps.case.cleanup import rebuild_case_from_forms
-            case = rebuild_case_from_forms(id)
-            if case is None:
-                raise
-            return case
+    def get_case_xform_ids(cls, case_id):
+        return get_case_xform_ids(case_id)
+
+    @classmethod
+    def get_cases(cls, ids):
+        return [
+            CommCareCase.wrap(doc) for doc in iter_docs(
+                CommCareCase.get_db(),
+                ids
+            )
+        ]
 
     @classmethod
     def get_lite(cls, id, wrap=True):
@@ -386,8 +394,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         forms = iter_docs(self.get_db(), self.xform_ids)
         return [XFormInstance(form) for form in forms]
 
-    def get_attachment(self, attachment_key):
-        return self.fetch_attachment(attachment_key)
+    def get_attachment(self, attachment_name):
+        return self.fetch_attachment(attachment_name)
 
     def get_attachment_server_url(self, attachment_key):
         """
@@ -515,8 +523,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if type(self) != CommCareCase:
             wrapped_case = CommCareCase.wrap(self._doc)
 
-        return sorted([(key, json[key]) for key in wrapped_case.dynamic_properties()
-                       if re.search(r'^[a-zA-Z]', key)])
+        items = [
+            (key, json[key])
+            for key in wrapped_case.dynamic_properties()
+            if re.search(r'^[a-zA-Z]', key)
+        ]
+        return OrderedDict(sorted(items))
 
     def save(self, **params):
         self.server_modified_on = datetime.utcnow()

@@ -483,6 +483,13 @@ def record_successful_deploy(url):
         })
 
 
+@task
+@roles(ROLES_DB_ONLY)
+def set_in_progress_flag():
+    with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py celery_deploy_in_progress' % env)
+
+
 @roles(ROLES_ALL_SRC)
 @parallel
 def record_successful_release():
@@ -579,8 +586,9 @@ def _deploy_without_asking():
         do_migrate = env.should_migrate
         if do_migrate:
 
-            if execute(_migrations_exist):
+            if all(execute(_migrations_exist).values()):
                 _execute_with_timing(stop_pillows)
+                execute(set_in_progress_flag)
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
