@@ -91,13 +91,6 @@ def _has_errors(response, errors):
     return errors or "error" in response
 
 
-def _assign_new_id_and_lock(xform):
-    new_id = XFormInstance.get_db().server.next_uuid()
-    xform._id = new_id
-    lock = acquire_lock_for_xform(new_id)
-    return MultiLockManager([LockManager(xform, lock)])
-
-
 def assign_new_id(xform):
     new_id = XFormInstance.get_db().server.next_uuid()
     xform._id = new_id
@@ -121,7 +114,9 @@ def _handle_id_conflict(instance, xform, domain):
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
-        return _assign_new_id_and_lock(xform)
+        xform = FormProcessorInterface().assign_new_id(xform)
+        lock = acquire_lock_for_xform(xform.form_id)
+        return MultiLockManager([LockManager(xform, lock)])
 
 
 def _handle_duplicate(new_doc, instance):

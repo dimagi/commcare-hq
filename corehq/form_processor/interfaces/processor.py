@@ -104,3 +104,6 @@ class FormProcessorInterface(object):
 
     def should_handle_as_duplicate_or_edit(self, xform_id, domain):
         return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)
+
+    def assign_new_id(self, xform):
+        return self.processor.assign_new_id(xform)
