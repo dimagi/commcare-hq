@@ -36,7 +36,22 @@ class SaveStateMixin(object):
         return bool(self._get_pk_val())
 
 
-class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance, RedisLockableMixIn, SaveStateMixin):
+class AttachmentMixin(SaveStateMixin):
+    """Requires the model to be linked to the attachments model via the 'attachments' related name.
+    """
+    ATTACHMENTS_RELATED_NAME = 'attachments'
+
+    def get_attachment(self, attachment_name):
+        if hasattr(self, 'unsaved_attachments'):
+            for attachment in self.unsaved_attachments:
+                if attachment.name == attachment_name:
+                    return attachment.read_content()
+        elif self.is_saved():
+            xform_attachment = self.attachments.filter(name=attachment_name).first()
+            return xform_attachment.read_content()
+
+
+class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -189,15 +204,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     def xml_md5(self):
         return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
 
-    def get_attachment(self, attachment_name):
-        if hasattr(self, 'unsaved_attachments'):
-            for attachment in self.unsaved_attachments:
-                if attachment.name == attachment_name:
-                    return attachment.read_content()
-        elif self.is_saved():
-            xform_attachment = self.xformattachmentsql_set.filter(name=attachment_name).first()
-            return xform_attachment.read_content()
-
     def archive(self, user=None):
         if self.is_archived:
             return
@@ -223,10 +229,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
         # xform_unarchived.send(sender="form_processor", xform=self)
 
 
-class XFormAttachmentSQL(models.Model):
+class AbstractAttachment(models.Model):
     attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
-
-    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid')
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
@@ -245,6 +249,16 @@ class XFormAttachmentSQL(models.Model):
         with open(self.filepath, 'r+') as f:
             content = f.read()
         return content
+
+    class Meta:
+        abstract = True
+
+
+class XFormAttachmentSQL(AbstractAttachment):
+    xform = models.ForeignKey(
+        XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid',
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+    )
 
 
 class XFormOperationSQL(models.Model):
@@ -289,7 +303,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, RedisLockableMixIn, SaveStateMixin):
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractCommCareCase):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -314,7 +328,6 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
     external_id = models.CharField(max_length=255)
 
     case_json = JSONField(lazy=True)
-    attachments_json = JSONField(lazy=True)
 
     def __get_case_id(self):
         return self.case_uuid
@@ -353,18 +366,6 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
 
         return self.index_set.all() if self.is_saved() else []
 
-    def get_attachment(self, attachment_name):
-        assert attachment_name in self.attachments_json
-        with open(self._get_attachment_path(attachment_name), 'r+') as f:
-            content = f.read()
-        return content
-
-    def _get_attachment_path(self, attachment_name):
-        attachment_id = '{}_{}'.format(self.case_uuid, attachment_name)
-        if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', attachment_id)
-        return os.path.join('/tmp/', attachment_id)
-
     @classmethod
     def get(cls, case_id):
         return CommCareCaseSQL.objects.get(case_uuid=case_id)
@@ -402,6 +403,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+
+
+class CaseAttachmentSQL(AbstractAttachment):
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+    )
 
 
 class CommCareCaseIndexSQL(models.Model):

@@ -71,7 +71,7 @@ class FormProcessorSQL(object):
                     xform.save()
                 for unsaved_attachment in instance.unsaved_attachments:
                     unsaved_attachment.xform = instance
-                instance.xformattachmentsql_set.bulk_create(instance.unsaved_attachments)
+                instance.attachments.bulk_create(instance.unsaved_attachments)
 
                 if cases:
                     for case in cases:
