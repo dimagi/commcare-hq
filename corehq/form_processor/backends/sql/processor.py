@@ -6,7 +6,7 @@ from django.db import transaction
 from couchforms.util import process_xform
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL
-from corehq.form_processor.utils import extract_meta_instance_id
+from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
 class FormProcessorSQL(object):
@@ -50,7 +50,8 @@ class FormProcessorSQL(object):
             # other properties can be set post-wrap
             form_uuid=form_id,
             xmlns=form_data.get('@xmlns'),
-            received_on=datetime.datetime.now()
+            received_on=datetime.datetime.now(),
+            user_id=extract_meta_user_id(form_data),
         )
 
     @classmethod

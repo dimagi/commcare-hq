@@ -34,6 +34,13 @@ def extract_meta_instance_id(form):
         return None
 
 
+def extract_meta_user_id(form):
+    user_id = None
+    if form.get('meta'):
+        user_id = form.get('meta').get('userID', None)
+    return user_id
+
+
 def new_xform(instance_xml, attachments=None, process=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)

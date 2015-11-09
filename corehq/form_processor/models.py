@@ -77,6 +77,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, null=True)
 
     # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
     orig_id = models.CharField(max_length=255, null=True)
