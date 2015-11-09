@@ -11,7 +11,8 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.util.files import file_extention_from_filename
-from soil.util import expose_cached_download
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 from soil import DownloadBase
 from soil.heartbeat import heartbeat_enabled, is_alive
 from django.template.context import RequestContext
@@ -309,26 +310,10 @@ def excel_commit(request, domain):
 
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="importer/partials/import_status.html"):
-    download_data = DownloadBase.get(download_id)
-    is_ready = False
-
-    if download_data is None:
-        download_data = DownloadBase(download_id=download_id)
-        try:
-            if download_data.task.failed():
-                return HttpResponseServerError()
-        except (TypeError, NotImplementedError):
-            # no result backend / improperly configured
-            pass
-
-    alive = True
-    if heartbeat_enabled():
-        alive = is_alive()
-
-    context = RequestContext(request)
-
-    if download_data.task.result and 'error' in download_data.task.result:
-        error = download_data.task.result['error']
+    try:
+        download_context = get_download_context(download_id)
+    except TaskFailedError as e:
+        error = e.errors
         if error == 'EXPIRED':
             return _spreadsheet_expired(request, domain)
         elif error == 'HAS_ERRORS':
@@ -336,17 +321,11 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
                                       'uploaded has expired - please upload '
                                       'a new one.'))
             return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
-
-    if download_data.task.state == 'SUCCESS':
-        is_ready = True
-        context['result'] = download_data.task.result
-
-    context['is_ready'] = is_ready
-    context['is_alive'] = alive
-    context['progress'] = download_data.get_progress()
-    context['download_id'] = download_id
-    context['url'] = base.ImportCases.get_url(domain=domain)
-    return render_to_response(template, context_instance=context)
+    else:
+        context = RequestContext(request)
+        context.update(download_context)
+        context['url'] = base.ImportCases.get_url(domain=domain)
+        return render_to_response(template, context_instance=context)
 
 
 def _spreadsheet_expired(req, domain):
