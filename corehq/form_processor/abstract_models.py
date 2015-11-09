@@ -100,15 +100,7 @@ class AbstractCommCareCase(object):
         raise NotImplementedError()
 
     @property
-    def case_type(self):
-        raise NotImplementedError()
-
-    @property
     def case_name(self):
-        raise NotImplementedError()
-
-    @property
-    def modified_by(self):
         raise NotImplementedError()
 
     def hard_delete(self):
