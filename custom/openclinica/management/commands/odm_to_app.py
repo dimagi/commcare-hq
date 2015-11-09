@@ -74,11 +74,11 @@ class Study(StudyObject):
         Return a registration form that mimics OpenClinica subject registration
         """
         xform = XFormBuilder(name)
-        xform.add_question('name', 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
-        xform.add_question('subject_study_id', 'Subject Study ID')  # Subject number for this study
-        xform.add_question('dob', 'Date of Birth', data_type='date')
-        xform.add_question('sex', 'Sex', data_type='int', choices={1: 'Male', 2: 'Female'})
-        xform.add_question('enrollment_date', 'Enrollment Date', data_type='date')
+        xform.new_question('name', 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
+        xform.new_question('subject_study_id', 'Subject Study ID')  # Subject number for this study
+        xform.new_question('dob', 'Date of Birth', data_type='date')
+        xform.new_question('sex', 'Sex', data_type='int', choices={1: 'Male', 2: 'Female'})
+        xform.new_question('enrollment_date', 'Enrollment Date', data_type='date')
         return xform.tostring(pretty_print=True)
 
     def new_subject_module(self, app):
@@ -190,7 +190,7 @@ class StudyForm(StudyObject):
             data_type = 'repeatGroup' if self.is_repeating else 'group'
             group = xform.new_group(ig.question_name, ig.question_label, data_type)
             for item in ig.iter_items():
-                group.add_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
+                group.new_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
                                    choices=item.choices)
         return xform.tostring(pretty_print=True)
 
