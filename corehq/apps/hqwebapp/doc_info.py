@@ -9,6 +9,10 @@ from corehq.apps.users.util import raw_username
 from couchforms import models as couchforms_models
 
 
+class DomainMismatchException(Exception):
+    pass
+
+
 class DocInfo(JsonObject):
     id = StringProperty()
     domain = StringProperty()
@@ -56,7 +60,14 @@ def get_doc_info(doc, domain_hint=None, cache=None):
         return (doc_type == expected_doc_type or
             doc_type == ('%s%s' % (expected_doc_type, DELETED_SUFFIX)))
 
-    assert doc.get('domain') == domain or domain in doc.get('domains', ())
+    if (
+        domain_hint and
+        not (
+            doc.get('domain') == domain_hint or
+            domain_hint in doc.get('domains', ())
+        )
+    ):
+        raise DomainMismatchException("Doc '%s' does not match the domain_hint '%s'" % (doc_id, domain_hint))
 
     if cache and doc_id in cache:
         return cache[doc_id]
