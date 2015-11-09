@@ -52,6 +52,7 @@ from corehq.apps.accounting.models import (
     Feature,
     FeatureRate,
     FeatureType,
+    FundingSource,
     Invoice,
     ProBonoStatus,
     SoftwarePlan,
@@ -355,6 +356,11 @@ class SubscriptionForm(forms.Form):
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
     )
+    funding_source = forms.ChoiceField(
+        label=ugettext_lazy("Funding Source"),
+        choices=FundingSource.CHOICES,
+        initial=FundingSource.CLIENT,
+    )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -438,6 +444,7 @@ class SubscriptionForm(forms.Form):
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
+            self.fields['funding_source'].initial = subscription.funding_source
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
@@ -514,7 +521,8 @@ class SubscriptionForm(forms.Form):
                     data_bind="visible: noInvoice"),
                 'auto_generate_credits',
                 'service_type',
-                'pro_bono_status'
+                'pro_bono_status',
+                'funding_source'
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -583,6 +591,7 @@ class SubscriptionForm(forms.Form):
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
         service_type = self.cleaned_data['service_type']
         pro_bono_status = self.cleaned_data['pro_bono_status']
+        funding_source = self.cleaned_data['funding_source']
         sub = Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
@@ -595,6 +604,7 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=service_type,
             pro_bono_status=pro_bono_status,
+            funding_source=funding_source,
             internal_change=True,
         )
         return sub
@@ -618,6 +628,7 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source']
         )
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:

@@ -218,6 +218,16 @@ class ProBonoStatus(object):
     )
 
 
+class FundingSource(object):
+    DIMAGI = "DIMAGI"
+    CLIENT = "CLIENT"
+    EXTERNAL = "EXTERNAL"
+    CHOICES = (
+        (DIMAGI, "Dimagi"),
+        (CLIENT, "Client Funding"),
+        (EXTERNAL, "External Funding"),
+    )
+
 class EntryPoint(object):
     CONTRACTED = "CONTRACTED"
     SELF_STARTED = "SELF_STARTED"
@@ -949,6 +959,11 @@ class Subscription(models.Model):
         choices=ProBonoStatus.CHOICES,
         default=ProBonoStatus.NOT_SET,
     )
+    funding_source = models.CharField(
+        max_length = 25,
+        choices = FundingSource.CHOICES,
+        default = FundingSource.CLIENT
+    )
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -1160,7 +1175,7 @@ class Subscription(models.Model):
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
-                    service_type=None, pro_bono_status=None,
+                    service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
                     do_not_invoice=None, no_invoice_reason=None, **kwargs):
         """
@@ -1198,6 +1213,7 @@ class Subscription(models.Model):
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            funding_source=(funding_source or FundingSource.CLIENT)
             **kwargs
         )
         new_subscription.save()
