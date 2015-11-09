@@ -1435,3 +1435,48 @@ class SelfRegistrationInvitation(models.Model):
             success_numbers.append(phone_number)
 
         return (success_numbers, invalid_format_numbers, numbers_in_use)
+
+
+class SMSBackend(models.Model):
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # Global backends are system owned and can be used by anyone
+    is_global = models.BooleanField(default=False)
+
+    # This is the domain that the backend belongs to, or None for
+    # global backends
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+
+    # A short name for a backend instance which is referenced when
+    # setting a case contact's preferred backend
+    name = models.CharField(max_length=126)
+
+    # Simple name to display to users - e.g. "Twilio"
+    display_name = models.CharField(max_length=126, null=True)
+
+    # Optionally, a description of this backend
+    description = models.TextField(null=True)
+
+    # A JSON list of countries that this backend supports.
+    # This information is displayed in the gateway list UI.
+    # If this backend represents an international gateway,
+    # set this to: ['*']
+    supported_countries = models.CharField(max_length=126, null=True)
+
+    # To avoid having many tables with so few records in them, all
+    # SMS backends are stored in this same table. This field is a
+    # JSON dict which stores any additional fields that the SMS
+    # backend subclasses need.
+    additional_fields = models.TextField(default='{}')
+
+    class Meta:
+        unique_together = ('domain', 'name')
+
+
+class SMSBackendInvitation(models.Model):
+    # The domain that is being invited to share another domain's backend
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+
+    # The backend that is being shared
+    backend = models.ForeignKey('SMSBackend')
+    invitation_accepted = models.BooleanField(default=False)
