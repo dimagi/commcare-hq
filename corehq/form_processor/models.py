@@ -37,13 +37,15 @@ class SaveStateMixin(object):
 
 
 class AttachmentMixin(SaveStateMixin):
+    """Requires the model to be linked to the attachments model via the 'attachments' related name.
+    """
     def get_attachment(self, attachment_name):
         if hasattr(self, 'unsaved_attachments'):
             for attachment in self.unsaved_attachments:
                 if attachment.name == attachment_name:
                     return attachment.read_content()
         elif self.is_saved():
-            xform_attachment = self.xformattachmentsql_set.filter(name=attachment_name).first()
+            xform_attachment = self.attachments.filter(name=attachment_name).first()
             return xform_attachment.read_content()
 
 
@@ -251,7 +253,10 @@ class AbstractAttachment(models.Model):
 
 
 class XFormAttachmentSQL(AbstractAttachment):
-    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid')
+    xform = models.ForeignKey(
+        XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid',
+        related_name="attachments", related_query_name="attachment"
+    )
 
 
 class XFormOperationSQL(models.Model):
@@ -296,7 +301,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, RedisLockableMixIn, SaveStateMixin):
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, RedisLockableMixIn, AttachmentMixin):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -358,18 +363,6 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
             return self.unsaved_indices
 
         return self.index_set.all() if self.is_saved() else []
-
-    def get_attachment(self, attachment_name):
-        assert attachment_name in self.attachments_json
-        with open(self._get_attachment_path(attachment_name), 'r+') as f:
-            content = f.read()
-        return content
-
-    def _get_attachment_path(self, attachment_name):
-        attachment_id = '{}_{}'.format(self.case_uuid, attachment_name)
-        if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', attachment_id)
-        return os.path.join('/tmp/', attachment_id)
 
     @classmethod
     def get(cls, case_id):
