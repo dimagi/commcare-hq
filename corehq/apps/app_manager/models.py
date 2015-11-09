@@ -3332,6 +3332,7 @@ class ReportAppConfig(DocumentSchema):
 
     @classmethod
     def wrap(cls, doc):
+        # for backwards compatibility with apps that have localized descriptions
         from corehq.apps.userreports.util import default_language, localize
         if isinstance(doc.get('description'), dict):
             if doc['description']:
