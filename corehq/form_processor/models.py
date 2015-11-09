@@ -223,10 +223,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
         # xform_unarchived.send(sender="form_processor", xform=self)
 
 
-class XFormAttachmentSQL(models.Model):
+class AbstractAttachment(models.Model):
     attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
-
-    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid')
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
@@ -245,6 +243,13 @@ class XFormAttachmentSQL(models.Model):
         with open(self.filepath, 'r+') as f:
             content = f.read()
         return content
+
+    class Meta:
+        abstract = True
+
+
+class XFormAttachmentSQL(AbstractAttachment):
+    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid')
 
 
 class XFormOperationSQL(models.Model):
@@ -314,7 +319,6 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
     external_id = models.CharField(max_length=255)
 
     case_json = JSONField(lazy=True)
-    attachments_json = JSONField(lazy=True)
 
     def __get_case_id(self):
         return self.case_uuid
@@ -402,6 +406,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, AbstractCommCareCase, 
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+
+
+class CaseAttachmentSQL(AbstractAttachment):
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        related_name="attachments", related_query_name="attachment"
+    )
 
 
 class CommCareCaseIndexSQL(models.Model):
