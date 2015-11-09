@@ -311,7 +311,7 @@ def excel_commit(request, domain):
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="importer/partials/import_status.html"):
     try:
-        download_context = get_download_context(download_id)
+        download_context = get_download_context(download_id, check_state=True)
     except TaskFailedError as e:
         error = e.errors
         if error == 'EXPIRED':
