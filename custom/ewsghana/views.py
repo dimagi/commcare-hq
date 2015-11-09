@@ -30,7 +30,7 @@ from custom.ewsghana.reports.stock_levels_report import InventoryManagementData,
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     delete_last_migrated_stock_data, convert_user_data_fields_task, migrate_email_settings, \
-    delete_connections_field_task
+    delete_archived_locations_reports_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
@@ -275,8 +275,8 @@ def migrate_email_settings_view(request, domain):
 
 @domain_admin_required
 @require_POST
-def delete_connections_field(request, domain):
-    delete_connections_field_task.delay(domain)
+def delete_archived_locations_reports(request, domain):
+    delete_archived_locations_reports_task.delay(domain)
     return HttpResponse('OK')
 
 
