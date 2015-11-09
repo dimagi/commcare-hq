@@ -159,9 +159,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     @property
     @memoized
     def form_data(self):
-        from .utils import convert_xform_to_json
+        from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
-        return convert_xform_to_json(xml)
+        form_json = convert_xform_to_json(xml)
+        adjust_datetimes(form_json)
+        return form_json
 
     @property
     def history(self):
