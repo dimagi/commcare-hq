@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             name='CaseAttachmentSQL',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('attachment_uuid', models.CharField(unique=True, max_length=255, db_index=True)),
-                ('name', models.CharField(max_length=255, db_index=True)),
+                ('attachment_uuid', models.CharField(unique=False, max_length=255, db_index=False)),
+                ('name', models.CharField(max_length=255, db_index=False)),
                 ('content_type', models.CharField(max_length=255)),
                 ('md5', models.CharField(max_length=255)),
                 ('case', models.ForeignKey(related_query_name=b'attachment', related_name='attachments', db_column=b'case_uuid', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', db_index=False)),
