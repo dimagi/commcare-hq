@@ -1,26 +1,19 @@
 from collections import namedtuple
 import logging
-import warnings
 
 from couchdbkit import ResourceNotFound
-import datetime
 from django.db.models import Q
-import redis
 from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
-from casexml.apps.case.signals import cases_received, case_post_save
-from casexml.apps.case.update_strategy import ActionsUpdateStrategy
+from casexml.apps.case.signals import cases_received
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from casexml.apps.case.util import iter_cases
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
-    IllegalCaseId,
     NoDomainProvided,
 )
 from django.conf import settings
 from couchforms.validators import validate_phone_datetime
-from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -100,18 +93,6 @@ def process_cases_with_casedb(xforms, case_db, config=None):
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    # attach domain and export tag
-    domain = xform.domain
-
-    def attach_extras(case):
-        case.domain = domain
-        if domain:
-            assert hasattr(case, 'type')
-            case['#export_tag'] = ["domain", "type"]
-        return case
-
-    cases = [attach_extras(case) for case in cases]
-
     # handle updating the sync records for apps that use sync mode
     try:
         relevant_log = xform.get_sync_token()
@@ -135,22 +116,12 @@ def process_cases_with_casedb(xforms, case_db, config=None):
         notify_exception(
             None,
             'something went wrong sending the cases_received signal '
-            'for form %s: %s' % (xform._id, e)
+            'for form %s: %s' % (xform.form_id, e)
         )
 
     for case in cases:
-        ActionsUpdateStrategy(case).reconcile_actions_if_necessary(xform)
+        case_db.post_process_case(case, xform)
         case_db.mark_changed(case)
-
-        action_xforms = {action.xform_id for action in case.actions if action.xform_id}
-        mismatched_forms = action_xforms ^ set(case.xform_ids)
-        if mismatched_forms:
-            logging.warning(
-                "CASE XFORM MISMATCH /a/{},{}".format(
-                    domain,
-                    case.case_id
-                )
-            )
 
     case_processing_result.set_cases(cases)
     return case_processing_result
@@ -180,29 +151,32 @@ def get_and_check_xform_domain(xform):
     return domain
 
 
-def _get_or_update_cases(xforms, case_db):
-    """
-    Given an xform document, update any case blocks found within it,
-    returning a dictionary mapping the case ids affected to the
-    couch case document objects
+def get_cases_from_forms(case_db, xforms):
+    """Get all cases affected by the forms. Includes new cases, updated cases.
     """
     # have to apply the deprecations before the updates
     sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     touched_cases = {}
     for xform in sorted_forms:
         for case_update in get_case_updates(xform):
-            case_doc = _get_or_update_model(case_update, xform, case_db)
-            touched_cases[case_doc['_id']] = case_doc
-            if case_doc:
-                # todo: legacy behavior, should remove after new case processing
-                # is fully enabled.
-                if xform._id not in case_doc.xform_ids:
-                    case_doc.xform_ids.append(xform.get_id)
-            else:
+            case_doc = case_db.get_case_from_case_update(case_update, xform)
+            touched_cases[case_doc.case_id] = case_doc
+            if not case_doc:
                 logging.error(
                     "XForm %s had a case block that wasn't able to create a case! "
                     "This usually means it had a missing ID" % xform.get_id
                 )
+
+    return touched_cases
+
+
+def _get_or_update_cases(xforms, case_db):
+    """
+    Given an xform document, update any case blocks found within it,
+    returning a dictionary mapping the case ids affected to the
+    couch case document objects
+    """
+    touched_cases = get_cases_from_forms(case_db, xforms)
 
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
@@ -225,17 +199,17 @@ def _get_or_update_cases(xforms, case_db):
                     if referenced_case.owner_id != case.owner_id:
                         is_dirty = True
         if is_dirty:
-            dirtiness_flags.append(DirtinessFlag(case._id, case.owner_id))
+            dirtiness_flags.append(DirtinessFlag(case.case_id, case.owner_id))
         return dirtiness_flags
 
-    def _get_dirtiness_flags_for_child_cases(domain, cases):
-        child_cases = get_reverse_indexed_cases(domain, [c['_id'] for c in cases])
-        case_owner_map = dict((case._id, case.owner_id) for case in cases)
+    def _get_dirtiness_flags_for_child_cases(cases):
+        child_cases = case_db.get_reverse_indexed_cases([c.case_id for c in cases])
+        case_owner_map = dict((case.case_id, case.owner_id) for case in cases)
         for child_case in child_cases:
             for index in child_case.indices:
                 if (index.referenced_id in case_owner_map
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
-                    yield DirtinessFlag(child_case._id, child_case.owner_id)
+                    yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
     dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
     domain = getattr(case_db, 'domain', None)
@@ -243,24 +217,9 @@ def _get_or_update_cases(xforms, case_db):
     if track_cleanliness:
         # only do this extra step if the toggle is enabled since we know we aren't going to
         # care about the dirtiness flags otherwise.
-        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
 
     return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
-
-
-def _get_or_update_model(case_update, xform, case_db):
-    """
-    Gets or updates an existing case, based on a block of data in a
-    submitted form.  Doesn't save anything.
-    """
-    case = case_db.get(case_update.id)
-    if case is None:
-        case = ActionsUpdateStrategy.case_from_case_update(case_update, xform)
-        case_db.set(case['_id'], case)
-        return case
-    else:
-        ActionsUpdateStrategy(case).update_from_case_update(case_update, xform, case_db.get_cached_forms())
-        return case
 
 
 def is_device_report(doc):
@@ -300,9 +259,13 @@ def extract_case_blocks(doc, include_path=False):
     Repeat nodes will all share the same path.
     """
     if isinstance(doc, XFormInstance):
-        doc = doc.to_json()['form']
+        form = doc.to_json()['form']
+    elif isinstance(doc, dict):
+        form = doc
+    else:
+        form = doc.form_data
 
-    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
+    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(form)]
 
 
 def _extract_case_blocks(data, path=None):

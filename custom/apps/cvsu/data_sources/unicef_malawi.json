@@ -1,0 +1,745 @@
+{
+    "domains": [
+        "cvsulive"
+    ],
+    "config": {
+        "referenced_doc_type": "XFormInstance",
+        "engine_id": "ucr",
+        "table_id": "unicef_malawi",
+        "display_name": "Unicef Malawi",
+        "configured_filter": {
+            "type": "and",
+            "filters": [
+                {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "operator": "not_eq",
+                    "property_value": "http://openrosa.org/user-registration"
+                },
+                {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "operator": "not_eq",
+                    "property_value": "http://openrosa.org/user/registration"
+                },
+                {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "operator": "not_eq",
+                    "property_value": "http://code.javarosa.org/devicereport"
+                },
+                {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "meta",
+                            "userID"
+                        ]
+                    },
+                    "operator": "not_eq",
+                    "property_value": "demo_user"
+                },
+                {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "cvsu_expression",
+                        "name": "group_id"
+                    },
+                    "operator": "not_eq",
+                    "property_value": null
+                }
+            ]
+        },
+        "configured_indicators": [
+            {
+                "column_id": "received_on",
+                "type": "raw",
+                "display_name": "received_on",
+                "datatype": "date",
+                "property_name": "received_on"
+            },
+            {
+                "column_id": "xmlns",
+                "type": "raw",
+                "display_name": "xmlns",
+                "datatype": "string",
+                "property_name": "xmlns"
+            },
+            {
+                "column_id": "actions_to_resolve_case",
+                "type": "expression",
+                "display_name": "actions_to_resolve_case",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "actions_to_resolve_case"
+                    ]
+                }
+            },
+            {
+                "column_id": "date_reported",
+                "type": "expression",
+                "display_name": "date_reported",
+                "datatype": "date",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "date_reported"
+                            ]
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [null, ""]
+                    },
+                    "expression_if_true": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    },
+                    "expression_if_false": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "date_reported"
+                        ]
+                    }
+                }
+            },
+            {
+                "column_id": "start_date",
+                "type": "expression",
+                "display_name": "start_date",
+                "datatype": "date",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "start_date"
+                            ]
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [null, ""]
+                    },
+                    "expression_if_true": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    },
+                    "expression_if_false": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "start_date"
+                        ]
+                    }
+                }
+            },
+            {
+                "column_id": "date",
+                "type": "expression",
+                "display_name": "date",
+                "datatype": "date",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "date"
+                            ]
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [null, ""]
+                    },
+                    "expression_if_true": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    },
+                    "expression_if_false": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "date"
+                        ]
+                    }
+                }
+            },
+            {
+                "column_id": "mediation_provided_date",
+                "type": "expression",
+                "display_name": "mediation_provided_date",
+                "datatype": "date",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "mediation_provided_date"
+                            ]
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [null, ""]
+                    },
+                    "expression_if_true": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    },
+                    "expression_if_false": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "mediation_provided_date"
+                        ]
+                    }
+                }
+            },
+            {
+                "column_id": "mediation_date",
+                "type": "expression",
+                "display_name": "mediation_date",
+                "datatype": "date",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "mediation_date"
+                            ]
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [null, ""]
+                    },
+                    "expression_if_true": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    },
+                    "expression_if_false": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "mediation_date"
+                        ]
+                    }
+                }
+            },
+            {
+                "display_name": "date_reported_mediated",
+                "datatype": "date",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "date_reported_mediated"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "date_reported_mediated"
+            },
+            {
+                "display_name": "date_reported_provided_mediated",
+                "datatype": "date",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "date_reported_provided_mediated"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "date_reported_provided_mediated"
+            },
+            {
+                "display_name": "User ID",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "meta",
+                        "userID"
+                    ]
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "user_id"
+            },
+            {
+                "display_name": "Group ID",
+                "datatype": "string",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "group_id"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "group_id"
+            },
+            {
+                "display_name": "victim_age",
+                "datatype": "integer",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "victim_age"
+                    ]
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "age"
+            },
+            {
+                "display_name": "victim_sex",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "victim_sex"
+                    ]
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "sex"
+            },
+            {
+                "display_name": "resolution_resolved_at_cvsu_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_resolved_at_cvsu"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_resolved_at_cvsu_total"
+            },
+            {
+                "display_name": "resolution_unresolved_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_unresolved"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_unresolved_total"
+            },
+            {
+                "display_name": "resolution_case_withdrawn_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_case_withdrawn"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_case_withdrawn_total"
+            },
+            {
+                "display_name": "resolution_referred_ta_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_referred_ta"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_referred_ta_total"
+            },
+            {
+                "display_name": "resolution_referral_ta_court_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_referral_ta_court"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_referral_ta_court_total"
+            },
+            {
+                "display_name": "resolution_referral_police_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_referral_police"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_referral_police_total"
+            },
+            {
+                "display_name": "resolution_referral_social_welfare_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_referral_social_welfare"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_referral_social_welfare_total"
+            },
+            {
+                "display_name": "resolution_referral_ngo_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_referral_ngo"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_referral_ngo_total"
+            },
+            {
+                "display_name": "resolution_referral_other_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_referral_other"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_referral_other_total"
+            },
+            {
+                "display_name": "resolution_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_total_total"
+            },
+            {
+                "display_name": "resolution_other_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "resolution_other"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "resolution_other_total"
+            },
+            {
+                "display_name": "service_referral_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_referral"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_referral_total"
+            },
+            {
+                "display_name": "service_mediation_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_mediation"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_mediation_total"
+            },
+            {
+                "display_name": "service_counselling_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_counselling"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_counselling_total"
+            },
+            {
+                "display_name": "service_psychosocial_support_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_psychosocial_support"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_psychosocial_support_total"
+            },
+            {
+                "display_name": "service_first_aid_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_first_aid"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_first_aid_total"
+            },
+            {
+                "display_name": "service_shelter_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_shelter"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_shelter_total"
+            },
+            {
+                "display_name": "service_other_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_other"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_other_total"
+            },
+            {
+                "display_name": "service_total_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "service_total"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "service_total_total"
+            },
+            {
+                "display_name": "incidents_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "incidents"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "incidents_total"
+            },
+            {
+                "display_name": "outreach_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "outreach"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "outreach_total"
+            },
+            {
+                "display_name": "iga_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "iga"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "iga_total"
+            },
+            {
+                "display_name": "abuse_children_in_household_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_children_in_household"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_children_in_household_total"
+            },
+            {
+                "display_name": "abuse_children_abused_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_children_abused"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_children_abused_total"
+            },
+            {
+                "display_name": "abuse_category_physical_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_category_physical"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_category_physical_total"
+            },
+            {
+                "display_name": "abuse_category_sexual_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_category_sexual"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_category_sexual_total"
+            },
+            {
+                "display_name": "abuse_category_psychological_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_category_psychological"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_category_psychological_total"
+            },
+            {
+                "display_name": "abuse_category_exploitation_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_category_exploitation"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_category_exploitation_total"
+            },
+            {
+                "display_name": "abuse_category_neglect_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_category_neglect"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_category_neglect_total"
+            },
+            {
+                "display_name": "abuse_category_other_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_category_other"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_category_other_total"
+            },
+            {
+                "display_name": "abuse_category_total_total",
+                "datatype": "integer",
+                "expression": {
+                    "type": "cvsu_expression",
+                    "name": "abuse_category_total"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "abuse_category_total_total"
+            }
+        ]
+    }
+}

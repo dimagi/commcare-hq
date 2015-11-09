@@ -1,13 +1,17 @@
+import logging
 from couchdbkit import ResourceNotFound
 import redis
+from casexml.apps.case.dbaccessors.related import get_reverse_indexed_cases
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
+from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 
 
 class CaseDbCacheCouch(AbstractCaseDbCache):
     case_model_classes = (dict, CommCareCase)
+    case_update_strategy = ActionsUpdateStrategy
 
     def _validate_case(self, doc):
         if self.domain and doc['domain'] != self.domain:
@@ -67,3 +71,19 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
                     )
                 )
         return cases
+
+    def post_process_case(self, case, xform):
+        self.case_update_strategy(case).reconcile_actions_if_necessary(xform)
+
+        action_xforms = {action.xform_id for action in case.actions if action.xform_id}
+        mismatched_forms = action_xforms ^ set(case.xform_ids)
+        if mismatched_forms:
+            logging.warning(
+                "CASE XFORM MISMATCH /a/{},{}".format(
+                    xform.domain,
+                    case.case_id
+                )
+            )
+
+    def get_reverse_indexed_cases(self, case_ids):
+        return get_reverse_indexed_cases(self.domain, case_ids)

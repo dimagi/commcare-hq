@@ -3,24 +3,14 @@ import pytz
 import xml2json
 
 from redis.exceptions import RedisError
-from django.conf import settings
 from dimagi.ext.jsonobject import re_loose_datetime
+from dimagi.utils.couch import LockManager, ReleaseOnError
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.couch import LockManager
 
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
-from corehq.toggles import USE_SQL_BACKEND
 from couchforms.exceptions import DuplicateError
 
-from .models import Attachment
-
-
-def should_use_sql_backend(domain):
-    if settings.UNIT_TESTING:
-        override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
-        if override is not None:
-            return override
-    return USE_SQL_BACKEND.enabled(domain)
+from ..models import Attachment
 
 
 def extract_meta_instance_id(form):
@@ -79,8 +69,9 @@ def new_xform(instance_xml, attachments=None, process=None):
         process(xform)
 
     lock = acquire_lock_for_xform(xform.form_id)
-    if FormProcessorInterface().is_duplicate(xform, lock):
-        raise DuplicateError(xform)
+    with ReleaseOnError(lock):
+        if FormProcessorInterface().is_duplicate(xform):
+            raise DuplicateError(xform)
 
     return LockManager(xform, lock)
 
@@ -133,42 +124,6 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
-
-
-def _extract_meta_instance_id(form):
-    """Takes form json (as returned by xml2json)"""
-    if form.get('Meta'):
-        # bhoma, 0.9 commcare
-        meta = form['Meta']
-    elif form.get('meta'):
-        # commcare 1.0
-        meta = form['meta']
-    else:
-        return None
-
-    if meta.get('uid'):
-        # bhoma
-        return meta['uid']
-    elif meta.get('instanceID'):
-        # commcare 0.9, commcare 1.0
-        return meta['instanceID']
-    else:
-        return None
-
-
-def get_text_attribute(node):
-    if node is None:
-        return None
-    if isinstance(node, dict) and '#text' in node:
-        value = node['#text']
-    elif isinstance(node, dict) and all(a.startswith('@') for a in node):
-        return None
-    else:
-        value = node
-
-    if not isinstance(value, basestring):
-        value = unicode(value)
-    return value
 
 
 def acquire_lock_for_xform(xform_id):
