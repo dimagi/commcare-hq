@@ -66,7 +66,7 @@ class FormProcessorSQL(object):
     def bulk_save(cls, instance, xforms, cases=None):
         try:
             with transaction.atomic():
-                # Ensure already saved forms that get saved first to avoid ID conflicts
+                # Ensure already saved forms get saved first to avoid ID conflicts
                 for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
                     xform.save()
                 for unsaved_attachment in instance.unsaved_attachments:
