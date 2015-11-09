@@ -48,17 +48,14 @@ EMPTY_XFORM = """<?xml version="1.0"?>
 </h:html>"""
 
 
-# The data types supported by the Open Data Kit XForm spec
-# cf. https://opendatakit.github.io/odk-xform-spec/#data-types
-ODK_TYPES = (
-    'string', 'int', 'boolean', 'decimal', 'date', 'time', 'dateTime', 'select', 'select1', 'geopoint', 'geotrace',
-    'geoshape', 'binary', 'barcode',
-)
-# CommCare question group types
-GROUP_TYPES = ('group', 'repeatGroup')  # TODO: Support 'questionList'
 # The subset of ODK data types that are XSD data types
 # cf. http://www.w3.org/TR/xmlschema-2/#built-in-datatypes
 XSD_TYPES = ('string', 'int', 'boolean', 'decimal', 'date', 'time', 'dateTime')
+# The data types supported by the Open Data Kit XForm spec
+# cf. https://opendatakit.github.io/odk-xform-spec/#data-types
+ODK_TYPES = XSD_TYPES + ('select', 'select1', 'geopoint', 'geotrace', 'geoshape', 'binary', 'barcode')
+# CommCare question group types
+GROUP_TYPES = ('group', 'repeatGroup')  # TODO: Support 'questionList'
 
 
 class XFormBuilder(object):
