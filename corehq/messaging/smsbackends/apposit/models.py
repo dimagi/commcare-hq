@@ -54,7 +54,7 @@ class AppositBackend(SMSBackend):
             "Response Code: %s, API Code: %s."
             % (response.status_code, data.get('api_code')))
 
-    def send_sms(self, msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         if not self.is_ethiopia_number(msg):
             msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             return

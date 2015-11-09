@@ -21,6 +21,7 @@ from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
+from mock import patch
 from urllib import urlencode
 
 
@@ -82,8 +83,7 @@ class AllBackendTest(BaseSMSTest):
         self.apposit_backend = AppositBackend(name='APPOSIT', is_global=True)
         self.apposit_backend.save()
 
-    def _test_outbound_backend(self, backend, msg_text):
-        from corehq.apps.sms.tests import BackendInvocationDoc
+    def _test_outbound_backend(self, backend, msg_text, mock_send):
         self.domain_obj.default_sms_backend_id = backend._id
         self.domain_obj.save()
 
@@ -94,9 +94,9 @@ class AllBackendTest(BaseSMSTest):
             text=msg_text
         )
 
-        invoke_doc_id = '%s-%s' % (backend.__class__.__name__, json_format_datetime(sms.date))
-        invoke_doc = BackendInvocationDoc.get(invoke_doc_id)
-        self.assertIsNotNone(invoke_doc)
+        self.assertTrue(mock_send.called)
+        msg_arg = mock_send.call_args[0][0]
+        self.assertEqual(msg_arg.date, sms.date)
 
     def _verify_inbound_request(self, backend_api_id, msg_text):
         sms = SMS.objects.get(
@@ -126,18 +126,41 @@ class AllBackendTest(BaseSMSTest):
         response = fcn(url, payload)
         self.assertEqual(response.status_code, 200)
 
-    def test_outbound_sms(self):
-        self._test_outbound_backend(self.unicel_backend, 'unicel test')
-        self._test_outbound_backend(self.mach_backend, 'mach test')
-        self._test_outbound_backend(self.tropo_backend, 'tropo test')
-        self._test_outbound_backend(self.http_backend, 'http test')
-        self._test_outbound_backend(self.telerivet_backend, 'telerivet test')
-        self._test_outbound_backend(self.test_backend, 'test test')
-        self._test_outbound_backend(self.grapevine_backend, 'grapevine test')
-        self._test_outbound_backend(self.twilio_backend, 'twilio test')
-        self._test_outbound_backend(self.megamobile_backend, 'megamobile test')
-        self._test_outbound_backend(self.smsgh_backend, 'smsgh test')
-        self._test_outbound_backend(self.apposit_backend, 'apposit test')
+    @patch('corehq.messaging.smsbackends.unicel.api.UnicelBackend.send')
+    @patch('corehq.messaging.smsbackends.mach.api.MachBackend.send')
+    @patch('corehq.messaging.smsbackends.tropo.api.TropoBackend.send')
+    @patch('corehq.messaging.smsbackends.http.api.HttpBackend.send')
+    @patch('corehq.messaging.smsbackends.telerivet.models.TelerivetBackend.send')
+    @patch('corehq.messaging.smsbackends.test.api.TestSMSBackend.send')
+    @patch('corehq.messaging.smsbackends.grapevine.api.GrapevineBackend.send')
+    @patch('corehq.messaging.smsbackends.twilio.models.TwilioBackend.send')
+    @patch('corehq.messaging.smsbackends.megamobile.api.MegamobileBackend.send')
+    @patch('corehq.messaging.smsbackends.smsgh.models.SMSGHBackend.send')
+    @patch('corehq.messaging.smsbackends.apposit.models.AppositBackend.send')
+    def test_outbound_sms(
+            self,
+            apposit_send,
+            smsgh_send,
+            megamobile_send,
+            twilio_send,
+            grapevine_send,
+            test_send,
+            telerivet_send,
+            http_send,
+            tropo_send,
+            mach_send,
+            unicel_send):
+        self._test_outbound_backend(self.unicel_backend, 'unicel test', unicel_send)
+        self._test_outbound_backend(self.mach_backend, 'mach test', mach_send)
+        self._test_outbound_backend(self.tropo_backend, 'tropo test', tropo_send)
+        self._test_outbound_backend(self.http_backend, 'http test', http_send)
+        self._test_outbound_backend(self.telerivet_backend, 'telerivet test', telerivet_send)
+        self._test_outbound_backend(self.test_backend, 'test test', test_send)
+        self._test_outbound_backend(self.grapevine_backend, 'grapevine test', grapevine_send)
+        self._test_outbound_backend(self.twilio_backend, 'twilio test', twilio_send)
+        self._test_outbound_backend(self.megamobile_backend, 'megamobile test', megamobile_send)
+        self._test_outbound_backend(self.smsgh_backend, 'smsgh test', smsgh_send)
+        self._test_outbound_backend(self.apposit_backend, 'apposit test', apposit_send)
 
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
