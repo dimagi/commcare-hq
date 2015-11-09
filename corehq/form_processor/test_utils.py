@@ -13,8 +13,20 @@ class FormProcessorTestUtils(object):
 
     @classmethod
     @unit_testing_only
-    def delete_all_cases(cls):
-        cls._delete_all(CommCareCase.get_db(), 'case/get_lite')
+    def delete_all_cases(cls, domain=None):
+        view_kwargs = {}
+
+        if domain:
+            view_kwargs = {
+                'startkey': [domain],
+                'endkey': [domain, {}],
+            }
+
+        cls._delete_all(
+            CommCareCase.get_db(),
+            'cases_by_server_date/by_server_modified_on',
+            **view_kwargs
+        )
 
     @classmethod
     @unit_testing_only
