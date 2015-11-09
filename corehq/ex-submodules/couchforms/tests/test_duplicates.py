@@ -2,7 +2,7 @@ import os
 from django.test import TestCase
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -11,25 +11,26 @@ class DuplicateFormTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
-    @classmethod
-    def setUpClass(cls):
-        cls.interface = FormProcessorInterface()
+    def setUp(self):
+        self.interface = FormProcessorInterface()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
 
+    @run_with_all_backends
     def test_basic_duplicate(self):
         xml_data = self.get_xml('duplicate')
         xform = self.interface.post_xform(xml_data)
         self.assertEqual(self.ID, xform.form_id)
-        self.assertEqual("XFormInstance", xform.doc_type)
+        self.assertTrue(xform.is_normal)
         self.assertEqual("test-domain", xform.domain)
 
         xform = self.interface.post_xform(xml_data, domain='test-domain')
         self.assertNotEqual(self.ID, xform.form_id)
-        self.assertEqual("XFormDuplicate", xform.doc_type)
+        self.assertTrue(xform.is_duplicate)
         self.assertTrue(self.ID in xform.problem)
 
+    @run_with_all_backends
     def test_wrong_doc_type(self):
         domain = 'test-domain'
         instance = self.get_xml('duplicate')
@@ -53,6 +54,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
 
         self.assertNotEqual(xform1.form_id, xform2.form_id)
 
+    @run_with_all_backends
     def test_wrong_domain(self):
         domain = 'test-domain'
         instance = self.get_xml('duplicate')
