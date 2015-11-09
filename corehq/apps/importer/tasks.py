@@ -23,7 +23,12 @@ CASEBLOCK_CHUNKSIZE = 100
 def bulk_import_async(import_id, config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
     spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
-    return do_import(spreadsheet, config, domain, task=bulk_import_async)
+    result = do_import(spreadsheet, config, domain, task=bulk_import_async)
+
+    # return compatible with soil
+    return {
+        'messages': result
+    }
 
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
@@ -235,11 +240,9 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     _submit_caseblocks(caseblocks)
     num_chunks += 1
     return {
-        'messages': {
-            'created_count': created_count,
-            'match_count': match_count,
-            'too_many_matches': too_many_matches,
-            'errors': errors.as_dict(),
-            'num_chunks': num_chunks,
-        }
+        'created_count': created_count,
+        'match_count': match_count,
+        'too_many_matches': too_many_matches,
+        'errors': errors.as_dict(),
+        'num_chunks': num_chunks,
     }
