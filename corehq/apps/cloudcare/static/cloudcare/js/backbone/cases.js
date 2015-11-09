@@ -244,7 +244,7 @@ cloudCare.CaseListView = Backbone.View.extend({
     },
     appendItem: function (item) {
         var self = this;
-        item.set('casedb', self.caseList.casedb)
+        item.set('casedb', self.caseList.casedb);
         var caseView = new cloudCare.CaseView({
             model: item,
             columns: self.detailsShort.get("columns"),
