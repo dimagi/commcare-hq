@@ -119,6 +119,12 @@ class FormProcessorSQL(object):
         return existing_xform, new_xform
 
     @classmethod
+    def deduplicate_xform(cls, xform):
+        xform.state = XFormInstanceSQL.DUPLICATE
+        xform.problem = "Form is a duplicate of another! (%s)" % xform.form_id
+        return cls.assign_new_id(xform)
+
+    @classmethod
     def assign_new_id(cls, xform):
         new_id = unicode(uuid.uuid4())
         xform.form_id = new_id

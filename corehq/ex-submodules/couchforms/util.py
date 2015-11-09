@@ -104,15 +104,6 @@ def assign_new_id(xform):
     return xform
 
 
-def deduplicate_xform(new_doc):
-    # follow standard dupe handling, which simply saves a copy of the form
-    # but a new doc_id, and a doc_type of XFormDuplicate
-    new_doc.doc_type = XFormDuplicate.__name__
-    dupe = XFormDuplicate.wrap(new_doc.to_json())
-    dupe.problem = "Form is a duplicate of another! (%s)" % new_doc._id
-    return assign_new_id(dupe)
-
-
 def _handle_id_conflict(instance, xform, domain):
     """
     For id conflicts, we check if the files contain exactly the same content,
@@ -162,9 +153,9 @@ def _handle_duplicate(new_doc, instance):
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
-        duplicate = deduplicate_xform(new_doc)
+        duplicate = FormProcessorInterface().deduplicate_xform(new_doc)
         return MultiLockManager([
-            LockManager(duplicate, acquire_lock_for_xform(duplicate._id)),
+            LockManager(duplicate, acquire_lock_for_xform(duplicate.form_id)),
         ])
 
 

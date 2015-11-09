@@ -5,7 +5,7 @@ from couchdbkit import BulkSaveError
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import process_xform, _handle_unexpected_error, deprecation_type
-from couchforms.models import XFormInstance, XFormDeprecated, doc_types
+from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
@@ -109,6 +109,14 @@ class FormProcessorCouch(object):
         new_xform.edited_on = datetime.datetime.utcnow()
         return XFormDeprecated.wrap(existing_xform.to_json()), new_xform
 
+    @classmethod
+    def deduplicate_xform(cls, xform):
+        # follow standard dupe handling, which simply saves a copy of the form
+        # but a new doc_id, and a doc_type of XFormDuplicate
+        xform.doc_type = XFormDuplicate.__name__
+        dupe = XFormDuplicate.wrap(xform.to_json())
+        dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
+        return cls.assign_new_id(dupe)
 
     @classmethod
     def assign_new_id(cls, xform):

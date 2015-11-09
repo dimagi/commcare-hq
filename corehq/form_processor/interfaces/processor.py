@@ -99,5 +99,8 @@ class FormProcessorInterface(object):
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)
 
+    def deduplicate_xform(self, xform):
+        return self.processor.deduplicate_xform(xform)
+
     def should_handle_as_duplicate_or_edit(self, xform_id, domain):
         return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)
