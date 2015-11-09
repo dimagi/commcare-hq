@@ -185,14 +185,14 @@ class StudyForm(StudyObject):
         form.source = self.build_xform()
 
     def build_xform(self):
-        xform = XFormBuilder()
+        xform = XFormBuilder(self.name)
         for ig in self.iter_item_groups():
             data_type = 'repeatGroup' if self.is_repeating else 'group'
             group = xform.new_group(ig.question_name, ig.question_label, data_type)
             for item in ig.iter_items():
                 group.new_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
                                    choices=item.choices)
-        return xform.tostring(pretty_print=True)
+        return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 
 class ItemGroup(StudyObject):
@@ -236,7 +236,7 @@ class Item(StudyObject):
 
         self.question_name = self.oid.lower()
         text = defn.xpath('./odm:Question/odm:TranslatedText', namespaces=odm_nsmap)
-        self.question_label = text[0].text if text else self.name
+        self.question_label = text[0].text.strip() if text else self.name
 
     def get_choices(self, cl_oid):
         choices = {}
