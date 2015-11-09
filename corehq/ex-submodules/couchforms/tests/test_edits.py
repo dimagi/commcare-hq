@@ -26,7 +26,6 @@ class EditFormTest(TestCase, TestFileMixin):
     file_path = ('data', 'deprecation')
     root = os.path.dirname(__file__)
 
-    @classmethod
     def setUp(self):
         self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
 

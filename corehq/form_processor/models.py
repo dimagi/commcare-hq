@@ -80,6 +80,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, AbstractXFormInstance
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
+    problem = models.CharField(max_length=255, null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)

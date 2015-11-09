@@ -91,26 +91,10 @@ def _has_errors(response, errors):
     return errors or "error" in response
 
 
-def _assign_new_id_and_lock(xform):
-    new_id = XFormInstance.get_db().server.next_uuid()
-    xform._id = new_id
-    lock = acquire_lock_for_xform(new_id)
-    return MultiLockManager([LockManager(xform, lock)])
-
-
 def assign_new_id(xform):
     new_id = XFormInstance.get_db().server.next_uuid()
     xform._id = new_id
     return xform
-
-
-def deduplicate_xform(new_doc):
-    # follow standard dupe handling, which simply saves a copy of the form
-    # but a new doc_id, and a doc_type of XFormDuplicate
-    new_doc.doc_type = XFormDuplicate.__name__
-    dupe = XFormDuplicate.wrap(new_doc.to_json())
-    dupe.problem = "Form is a duplicate of another! (%s)" % new_doc._id
-    return assign_new_id(dupe)
 
 
 def _handle_id_conflict(instance, xform, domain):
@@ -130,7 +114,9 @@ def _handle_id_conflict(instance, xform, domain):
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
-        return _assign_new_id_and_lock(xform)
+        xform = FormProcessorInterface().assign_new_id(xform)
+        lock = acquire_lock_for_xform(xform.form_id)
+        return MultiLockManager([LockManager(xform, lock)])
 
 
 def _handle_duplicate(new_doc, instance):
@@ -162,9 +148,9 @@ def _handle_duplicate(new_doc, instance):
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
-        duplicate = deduplicate_xform(new_doc)
+        duplicate = FormProcessorInterface().deduplicate_xform(new_doc)
         return MultiLockManager([
-            LockManager(duplicate, acquire_lock_for_xform(duplicate._id)),
+            LockManager(duplicate, acquire_lock_for_xform(duplicate.form_id)),
         ])
 
 
