@@ -2,7 +2,7 @@ import uuid
 
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from casexml.apps.case.dbaccessors.related import get_extension_case_ids, \
-    get_indexed_case_ids, get_reverse_indexed_cases
+    get_indexed_case_ids, get_reverse_indexed_cases, get_reverse_indices_json
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
@@ -188,21 +188,50 @@ class TestReverseIndexedCases(TestCase):
     def setUp(self):
         self.domain = 'domain'
         self.factory = CaseFactory(self.domain)
+        self.indexed_case_id = uuid.uuid4().hex
+        self.index = CommCareCaseIndex(
+            identifier="host",
+            referenced_type="host",
+            relationship=CASE_INDEX_EXTENSION,
+            referenced_id=self.indexed_case_id
+        )
+        self.case = CommCareCase(domain=self.domain, indices=[self.index])
+        self.case.save()
+
+    def _delete_relationship(self):
+        del self.case.indices[0].relationship
+        self.case.save()
 
     def test_legacy_reverse_index(self):
         """Test that cases with indices without a relationship are still returned"""
-        indexed_case_id = uuid.uuid4().hex
-        index = CommCareCaseIndex(identifier="host",
-                                  referenced_type="host",
-                                  referenced_id=indexed_case_id)
-        case = CommCareCase(domain=self.domain, indices=[index])
-        case.save()
-        self.assertEqual([case._id], [c._id for c in get_reverse_indexed_cases(self.domain, [indexed_case_id])])
+        self.assertEqual(
+            [self.case._id],
+            [c._id for c in
+             get_reverse_indexed_cases(self.domain, [self.indexed_case_id], relationship=CASE_INDEX_EXTENSION)])
         # remove the relationship and make sure the case is still returned when asking for child indexes
-        del case.indices[0].relationship
-        case.save()
-        self.assertEqual([case._id], [c._id for c in get_reverse_indexed_cases(self.domain, [indexed_case_id])])
+        self._delete_relationship()
+        self.assertEqual(
+            [self.case._id],
+            [c._id for c in get_reverse_indexed_cases(self.domain, [self.indexed_case_id])])
         # make sure it doesn't show up if we are asking for extension indexes
-        self.assertEqual([], [c._id for c in get_reverse_indexed_cases(self.domain,
-                                                                       [indexed_case_id],
-                                                                       CASE_INDEX_EXTENSION)])
+        self.assertEqual(
+            [],
+            [c._id for c in
+             get_reverse_indexed_cases(self.domain, [self.indexed_case_id], CASE_INDEX_EXTENSION)])
+
+    def test_legacy_reverse_index_json(self):
+        expected_returned_json = [{
+            'doc_type': 'CommCareCaseIndex',
+            'identifier': self.index.identifier,
+            'relationship': self.index.relationship,
+            'referenced_type': self.index.referenced_type,
+            'referenced_id': self.case._id
+        }]
+        self.assertEqual(
+            expected_returned_json,
+            get_reverse_indices_json(self.domain, self.indexed_case_id, relationship=CASE_INDEX_EXTENSION))
+
+        self._delete_relationship()
+        # it should now be a child relationship
+        expected_returned_json[0]['relationship'] = CASE_INDEX_CHILD
+        self.assertEqual(expected_returned_json, get_reverse_indices_json(self.domain, self.indexed_case_id))

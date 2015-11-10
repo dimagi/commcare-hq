@@ -11,6 +11,7 @@ function(doc) {
                     }
                 }
                 reverse_index.referenced_id = doc._id;
+                reverse_index.relationship = reverse_index.relationship || "child";
 
                 // Emit "child" relationship if there is no relationship set
                 var relationship = doc.indices[i].relationship || "child";
