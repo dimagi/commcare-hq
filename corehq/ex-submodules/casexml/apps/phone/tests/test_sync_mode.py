@@ -1762,7 +1762,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
         )
         self.factory.create_or_update_case(re_assigned_extension)
 
-        # make sure other_user doesn't gets it because it changed
+        # make sure other_user gets it because it changed
         assert_user_has_case(self, self.other_user, extension.case_id,
                              restore_id=SyncLog.last_for_user(OTHER_USER_ID)._id)
         # first user should also get it since it was updated
