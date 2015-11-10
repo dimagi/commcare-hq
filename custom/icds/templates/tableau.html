@@ -12,9 +12,14 @@
         <div id="sideNav" class="col-md-3">
             <h2 class="text-center">Reports</h2>
         </div>
-        <div class="col-md-9">
+        <div class="col-md-7">
             {#    TODO: update this div to use B3 spacing that is the right size.#}
             <div id="tableauPlaceholder" style="width:1100px; height:900px;"></div>
+        </div>
+        <div class="col-md-2">
+            <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
+            <div id="drilldown" class="well">
+            </div>
         </div>
     </div>
 
@@ -23,10 +28,11 @@
 
 
 <script>
-    var viz = {}
+    var viz = {};
+    var workbook = {}
     function initializeViz() {
         var placeholderDiv = document.getElementById("tableauPlaceholder");
-        var url = "https://icds.commcarehq.org/#/views/DashboardReviewed/Dashboard";
+        var url = "https://icds.commcarehq.org/#/views/POCReports/MainDashboard";
         var options = {
             width: placeholderDiv.offsetWidth,
             height: placeholderDiv.offsetHeight,
@@ -40,7 +46,7 @@
     }
 
     function setUpNav(viz) {
-        var workbook = viz.getWorkbook();
+        workbook = viz.getWorkbook();
         var sheets = workbook.getPublishedSheetsInfo();
         _.each(sheets, function(sheet) {
             addNavigationButton(sheet.$0.name, sheet.$0.isActive)
@@ -52,12 +58,101 @@
             btn.removeClass('btn-default').addClass('btn-success');
 
         })
+
+        viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
     }
 
     function addNavigationButton(sheetName, isActive) {
         var btnColor = isActive  ? 'success' : 'default';
         var html = "<div class='row'><button class='btn btn-block btn-" + btnColor + "'>" + sheetName + "</btn></div>";
         $("#sideNav").append(html);
+    }
+
+    function onMarksSelection(marksEvent) {
+        console.log('onMarksSelection', marksEvent);
+        return marksEvent.getMarksAsync().then(activateDrilldown);
+    }
+
+    function activateDrilldown(marks) {
+        console.log('onMarksSelection', marks   );
+        clearDrilldown();
+        {# marks is an array of what the user has clicked #}
+        var html = [];
+        var sheetName = '';
+        var filters = {};
+        var params = {};
+        for (var markIndex = 0; markIndex < marks.length; markIndex++) {
+            var pairs = marks[markIndex].getPairs();
+            for (var pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
+                var pair = pairs[pairIndex];
+                html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
+
+                // Find the sheet we are navigating to
+                if(pair.fieldName === 'js_sheet') {
+                    console.log('sheetName = ', pair.formattedValue);
+                    sheetName = pair.formattedValue;
+                }
+
+                // Split out params and filters to be applied
+                var FILTER_SUBSTRING = 'ATTR(js_key_',
+                    PARAM_SUBSTRING = 'ATTR(js_param_';
+                if(pair.fieldName.includes(FILTER_SUBSTRING)) {
+                    var filter_key = pair.fieldName.slice(FILTER_SUBSTRING.length, -1);
+                    filters[filter_key] = pair.formattedValue;
+                }
+                if(pair.fieldName.includes(PARAM_SUBSTRING)) {
+                    var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1);
+                    params[param_key] = pair.formattedValue;
+                }
+
+            }
+            html.push("</ul>");
+        }
+
+
+        html = html.join("");
+        console.log('html', html);
+
+        $("#drilldown").append(html);
+
+        // Add inspect button listener
+        $("#inspectButton").unbind('click').click(function() {
+            // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
+            console.log('Activating: ', sheetName);
+            var worksheet;
+            workbook.activateSheetAsync(sheetName)
+                    .then(function(sheet) {
+                        worksheet = sheet;
+                        console.log('Setting sheet')
+                    }).then(function(){
+                        key = 'Location Key';
+                        value  = filters[key];
+                        console.log('Applying filter to: ', key, ', value: ', value);
+                        debugger
+                        return worksheet.applyFilterAsync(key, value, tableau.FilterUpdateType.ADD);
+                    }).then(function() {
+                        //_.each(params, function(value, key, list) {
+                        key = 'View By';
+                        value = params[key];
+
+                        console.log('Applying parameter to: ', key, ' value: ', value);
+                        return worksheet.changeParameterValueAsync(key, value);
+                        //});
+
+                    }).otherwise(function(err){
+                        console.log(err);
+                    })
+            ;
+        }).prop('disabled', false);
+
+        console.log(filters)
+        console.log(params)
+    }
+
+    function clearDrilldown() {
+        $("#drilldown").empty();
+        // TODO: Disabling the button doesn't work
+        $("#inspectButton").prop('disabled', true);
     }
 
     initializeViz()
