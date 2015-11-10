@@ -285,7 +285,7 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/owner_name',
             column_id=get_column_name('computed/owner_name'),
-            text='owner_name (computed)',
+            text='owner name',
             source='computed/owner_name'
         )
 
@@ -1009,6 +1009,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
     @property
     def _report_columns(self):
         agg_field_id = self.data_source_properties[self.aggregation_field].column_id
+        agg_field_text = self.data_source_properties[self.aggregation_field].text
 
         columns = super(ConfigureTableReportForm, self)._report_columns
 
@@ -1020,7 +1021,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                 'aggregation': 'simple',
                 "type": "field",
                 'field': agg_field_id,
-                'display': self.aggregation_field
+                'display': agg_field_text
             }] + columns
 
         # Expand all columns except for the column being used for aggregation.
