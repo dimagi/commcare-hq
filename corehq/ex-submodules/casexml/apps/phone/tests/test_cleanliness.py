@@ -168,7 +168,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertTrue(self._owner_cleanliness_for_id(new_owner).is_clean)
         self._verify_set_cleanliness_flags()
 
-    def test_change_host_owner_makes_extension_chain_dirty(self):
+    def test_change_host_owner_makes_both_owners_dirty(self):
         """change owner for extension, both owners dirty"""
         new_owner = uuid.uuid4().hex
         self._owner_cleanliness_for_id(new_owner)
@@ -362,7 +362,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._verify_set_cleanliness_flags(other_owner_id)
 
     def test_extension_chain_with_other_owner_makes_dirty(self):
-        """An extension chain of unowned extensions that ends at an owned case is dirty"""
+        """An extension chain of unowned extensions that ends at a case owned by a different owner is dirty"""
         other_owner_id = uuid.uuid4().hex
         self._owner_cleanliness_for_id(other_owner_id)
         host = CaseStructure(case_id=self.sample_case.case_id, attrs={'create': False})
