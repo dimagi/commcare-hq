@@ -301,7 +301,7 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/user_name',
             column_id=get_column_name('computed/user_name'),
-            text='user name',
+            text='mobile worker',
             source='computed/user_name',
         )
 
