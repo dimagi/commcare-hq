@@ -54,7 +54,8 @@ class MALTTableGenerator(object):
             num_of_forms = app_row_dict['num_of_forms']
 
             try:
-                wam, pam, is_app_deleted = self._app_data(domain_name, app_id)
+                import ipdb; ipdb.set_trace()
+                wam, pam, threshold, is_app_deleted = self._app_data(domain_name, app_id)
                 user_id, username, user_type, email = self._user_data(
                     app_row_dict['user_id'],
                     app_row_dict['username'],
@@ -76,6 +77,7 @@ class MALTTableGenerator(object):
                 'app_id': app_id,
                 'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, MALTRow.NOT_SET),
                 'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, MALTRow.NOT_SET),
+                'threshold': threshold,
                 'is_app_deleted': is_app_deleted,
             }
             malt_row_dicts.append(malt_dict)
@@ -143,6 +145,7 @@ class MALTTableGenerator(object):
             return (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, False)
         return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
                 getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
+                getattr(app, 'minimum_use_threshold', 15),
                 app.is_deleted())
 
     @classmethod
