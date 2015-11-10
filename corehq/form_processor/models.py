@@ -326,7 +326,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
 
     closed = models.BooleanField(default=False, null=False)
     closed_on = models.DateTimeField(null=True)
-    closed_by = models.CharField(max_length=255, null=False)
+    closed_by = models.CharField(max_length=255, null=True)
 
     deleted = models.BooleanField(default=False, null=False)
 
