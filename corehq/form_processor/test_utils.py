@@ -6,7 +6,7 @@ from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseAttachmentSQL
 
 
 class FormProcessorTestUtils(object):
@@ -28,10 +28,14 @@ class FormProcessorTestUtils(object):
             **view_kwargs
         )
 
-        query = CommCareCaseSQL.objects
-        if domain is not None:
-            query.filter(domain=domain)
-        query.all().delete()
+        def _sql_delete(query):
+            if domain is not None:
+                query.filter(domain=domain)
+            query.all().delete()
+
+        _sql_delete(CommCareCaseIndexSQL.objects)
+        _sql_delete(CaseAttachmentSQL.objects)
+        _sql_delete(CommCareCaseSQL.objects)
 
     @classmethod
     @unit_testing_only
