@@ -20,6 +20,7 @@ from dimagi.utils.logging import notify_exception
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids', 'extension_ids'])
 DependentCaseInfo = namedtuple("DependentCaseInfo", ["all_ids", "extension_ids"])
+DirectDependencies = namedtuple("DirectDependencies", ['all', 'indexed_cases', 'extension_cases'])
 CleanlinessFlag = namedtuple('CleanlinessFlag', ['is_clean', 'hint'])
 
 
@@ -201,17 +202,25 @@ def _get_info_by_case_id(index_infos, case_id):
 def get_dependent_case_info(domain, cases):
     """ Fetches all dependent cases of cases passed in"""
     all_dependencies = set()
-    extension_cases = set(get_extension_case_ids(domain, cases))
-    indexed_cases = set(get_indexed_case_ids(domain, cases))
-    new_case_ids = extension_cases | indexed_cases
-    all_extensions = set()
+    direct_dependencies = _get_direct_dependencies(domain, cases)
+    new_case_ids = direct_dependencies.all
+    all_extensions = direct_dependencies.extension_cases
     while new_case_ids:
         all_dependencies = all_dependencies | new_case_ids
-        extension_cases = set(get_extension_case_ids(domain, list(new_case_ids)))
-        all_extensions = all_extensions | extension_cases
-        indexed_cases = set(get_indexed_case_ids(domain, list(new_case_ids)))
-        new_case_ids = (extension_cases | indexed_cases) - all_dependencies
+        direct_dependencies = _get_direct_dependencies(domain, list(new_case_ids))
+        all_extensions = all_extensions | direct_dependencies.extension_cases
+        new_case_ids = direct_dependencies.all - all_dependencies
     return DependentCaseInfo(all_ids=all_dependencies, extension_ids=all_extensions)
+
+
+def _get_direct_dependencies(domain, cases):
+    extension_cases = set(get_extension_case_ids(domain, cases))
+    indexed_cases = set(get_indexed_case_ids(domain, cases))
+    return DirectDependencies(
+        all=extension_cases | indexed_cases,
+        indexed_cases=indexed_cases,
+        extension_cases=extension_cases
+    )
 
 
 def get_case_footprint_info(domain, owner_id):
