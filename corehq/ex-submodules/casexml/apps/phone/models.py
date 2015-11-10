@@ -518,8 +518,7 @@ class IndexTree(DocumentSchema):
 
     @staticmethod
     def get_all_outgoing_cases(case_id, child_index_tree, extension_index_tree):
-        """traverse all outgoing child and extension indices and incoming extension indices
-        """
+        """traverse all outgoing child and extension indices"""
         all_cases = set([case_id])
         new_cases = set([case_id])
         while new_cases:
@@ -532,8 +531,7 @@ class IndexTree(DocumentSchema):
 
     @staticmethod
     def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases, cached_map=None):
-        """traverse open incoming extensions
-        """
+        """traverse open incoming extensions"""
         all_cases = set([case_id])
         new_cases = set([case_id])
         cached_map = cached_map or _reverse_index_map(extension_index_tree.indices)
@@ -650,21 +648,40 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def purge(self, case_id):
         """
         This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
+        Definitions:
+        -----------
+        A case is *relevant* if:
+        - it is open and owned or,
+        - it has a relevant child or,
+        - it has a relevant extension or,
+        - it is the extension of a relevant case.
 
-        1. Mark relevant cases
+        A case is *available* if:
+        - it is open and not an extension case or,
+        - it is open and is the extension of an available case.
+
+        A case is *live* if:
+        - it is owned and available or,
+        - it has a live child or,
+        - it has a live extension or,
+        - it is the exension of a live case.
+
+        Algorithm:
+        ----------
+        1. Mark *relevant* cases
             Mark all open cases owned by the user relevant. Traversing all outgoing child
             and extension indexes, as well as all incoming extension indexes, mark all
             touched cases relevant.
 
-        2. Mark available cases
+        2. Mark *available* cases
             Mark all relevant cases that are open and have no outgoing extension indexes
             as available. Traverse incoming extension indexes which don't lead to closed
-            cases, mark all touched cases as available
+            cases, mark all touched cases as available.
 
-        3. Mark live cases
+        3. Mark *live* cases
             Mark all relevant, owned, available cases as live. Traverse incoming
             extension indexes which don't lead to closed cases, mark all touched
-            cases as available
+            cases as live.
         """
         logger.debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
