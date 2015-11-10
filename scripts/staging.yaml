@@ -64,9 +64,7 @@ submodules:
       - new-libs # Ben 9/3
       - b3-tf # ben 10/1
   submodules/formtranslate-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
+      - 2.24-validator #wsp 11/10
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
