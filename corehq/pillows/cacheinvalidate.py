@@ -16,7 +16,6 @@ class CacheInvalidatePillow(BasicPillow):
     """
     couch_filter = "hqadmin/not_case_form"  # string for filter if needed
 
-
     def __init__(self):
         super(CacheInvalidatePillow, self).__init__(couch_db=XFormInstance.get_db())
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
