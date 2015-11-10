@@ -14,7 +14,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 
 
 class ImporterConfig(object):
@@ -402,17 +402,11 @@ def get_spreadsheet(download_ref, column_headers=True):
     return ExcelFile(download_ref.get_filename(), column_headers)
 
 
-def is_valid_location_owner(owner_id, domain):
-    results = SQLLocation.objects.filter(
-        domain=domain,
-        location_id=owner_id,
-        location_type__shares_cases=True,
-    )
-    return results.exists()
-
-
-def is_user_or_case_sharing_group(owner):
-    return not isinstance(owner, Group) or owner.case_sharing
+def is_valid_location_owner(owner, domain):
+    if isinstance(owner, Location):
+        return owner.sql_location.domain == domain and owner.sql_location.location_type.shares_cases
+    else:
+        return False
 
 
 def is_valid_id(uploaded_id, domain, cache):
@@ -420,13 +414,14 @@ def is_valid_id(uploaded_id, domain, cache):
         return cache[uploaded_id]
 
     owner = get_wrapped_owner(uploaded_id)
+    return is_valid_owner(owner, domain)
+
+
+def is_valid_owner(owner, domain):
     return (
-        (
-            owner and
-            is_user_or_case_sharing_group(owner) and
-            owner.is_member_of(domain)
-        ) or
-        is_valid_location_owner(uploaded_id, domain)
+        (isinstance(owner, CouchUser) and owner.is_member_of(domain)) or
+        (isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)) or
+        is_valid_location_owner(owner, domain)
     )
 
 

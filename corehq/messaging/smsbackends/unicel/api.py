@@ -65,7 +65,7 @@ class UnicelBackend(SMSBackend):
     def get_form_class(cls):
         return UnicelBackendForm
 
-    def send_sms(self, message, delay=True, *args, **kwargs):
+    def send(self, message, delay=True, *args, **kwargs):
         """
         Send an outbound message using the Unicel API
         """

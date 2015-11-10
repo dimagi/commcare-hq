@@ -54,8 +54,11 @@ class StockSummaryReportData(EmailReportData):
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
 
-        products = self.unique_products(locations)
-        row_data = {product.name: defaultdict(lambda: 0) for product in products}
+        row_data = {}
+
+        for product in SQLProduct.by_domain(self.domain).exclude(is_archived=True):
+            row_data[product.name] = {'total_fac': 0, 'reported_fac': 0,
+                                      'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0}
 
         for location in locations:
             location_products = list(location.products)
@@ -76,15 +79,16 @@ class StockSummaryReportData(EmailReportData):
 
         rows = []
         for k, v in row_data.iteritems():
-            rows.append([
-                k,
-                v['total_fac'],
-                v['reported_fac'],
-                percent(v['stockout'], v['reported_fac']),
-                percent(v['adequate'], v['reported_fac']),
-                percent(v['low'], v['reported_fac']),
-                percent(v['overstock'], v['reported_fac']),
-            ])
+            if v['total_fac'] > 0:
+                rows.append([
+                    k,
+                    v['total_fac'],
+                    v['reported_fac'],
+                    percent(v['stockout'], v['reported_fac']),
+                    percent(v['adequate'], v['reported_fac']),
+                    percent(v['low'], v['reported_fac']),
+                    percent(v['overstock'], v['reported_fac']),
+                ])
         return rows
 
     def get_locations(self, loc_id, domain):

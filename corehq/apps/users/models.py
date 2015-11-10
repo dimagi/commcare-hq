@@ -34,7 +34,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache
-from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -2089,17 +2088,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
         return self.is_superuser
-
-    @classmethod
-    def by_organization(cls, org, team_id=None):
-        key = [org] if team_id is None else [org, team_id]
-        users = cls.view("users/by_org_and_team",
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-        ).all()
-        # return a list of users with the duplicates removed
-        return dict([(u.get_id, u) for u in users]).values()
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):

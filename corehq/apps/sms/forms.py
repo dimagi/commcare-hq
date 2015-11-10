@@ -9,7 +9,8 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, ErrorsOnlyField,
-    FieldWithHelpBubble, HiddenFieldWithErrors, FieldsetAccordionGroup)
+    HiddenFieldWithErrors, FieldsetAccordionGroup)
+from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD

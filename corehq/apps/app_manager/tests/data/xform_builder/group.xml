@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Untitled Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/0e4cb20f-2a04-4398-bd75-7806a9bcc302" uiVersion="1" version="3" name="Untitled Form">
+          <personal>
+            <name/>
+          </personal>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="en" default="">
+          <text id="personal-label">
+            <value>Personal Questions</value>
+          </text>
+          <text id="personal/name-label">
+            <value>What is your name?</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/personal/name" type="xsd:string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <group ref="/data/personal">
+      <label ref="jr:itext('personal-label')"/>
+      <input ref="/data/personal/name">
+        <label ref="jr:itext('personal/name-label')"/>
+      </input>
+    </group>
+  </h:body>
+</h:html>

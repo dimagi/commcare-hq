@@ -1,5 +1,4 @@
 from django.test.client import Client
-from django.test import TestCase
 from couchforms.util import spoof_submission
 import uuid
 from corehq.apps.receiverwrapper.util import get_submit_url
@@ -10,6 +9,16 @@ from couchforms.models import XFormInstance
 from couchexport.export import ExportConfiguration
 import time
 from couchexport.models import ExportSchema
+
+from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustment,
+)
+from corehq.apps.domain.models import Domain
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
 <foo xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://www.commcarehq.org/export/test">
@@ -33,10 +42,10 @@ def submit_form(f=None, domain=DOMAIN):
     return spoof_submission(url, f, hqsubmission=False)
 
 
-def get_export_response(client, previous="", include_errors=False):
+def get_export_response(client, previous="", include_errors=False, domain=DOMAIN):
     # e.g. /a/wvtest/reports/export/?export_tag=%22http://openrosa.org/formdesigner/0B5AEAF6-0394-4E4B-B2FD-6CDDE1BCBC8D%22
     return client.get(
-        reverse("corehq.apps.reports.views.export_data", args=[DOMAIN]),
+        reverse("corehq.apps.reports.views.export_data", args=[domain]),
         {
             "export_tag": '"http://www.commcarehq.org/export/test"',
             "previous_export": previous,
@@ -51,7 +60,7 @@ def _content(streaming_response):
     return ''.join(streaming_response.streaming_content)
 
 
-class ExportTest(TestCase):
+class ExportTest(BaseAccountingTest):
     
     def _clear_docs(self):
         config = ExportConfiguration(XFormInstance.get_db(),
@@ -61,7 +70,12 @@ class ExportTest(TestCase):
 
     def setUp(self):
         self._clear_docs()
-        create_domain(DOMAIN)
+        self.domain = create_domain(DOMAIN)
+        self.account = BillingAccount.get_or_create_account_by_domain(DOMAIN, created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(DOMAIN, edition=SoftwarePlanEdition.ADVANCED)
+        self.subscription = Subscription.new_domain_subscription(self.account, DOMAIN, plan)
+        self.subscription.is_active = True
+        self.subscription.save()
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(DOMAIN, is_admin=True)
         self.couch_user.save()
@@ -69,6 +83,16 @@ class ExportTest(TestCase):
     def tearDown(self):
         self.couch_user.delete()
         self._clear_docs()
+
+        SubscriptionAdjustment.objects.all().delete()
+
+        if self.subscription:
+            self.subscription.delete()
+
+        if self.account:
+            self.account.delete()
+
+        super(ExportTest, self).tearDown()
 
     def testExportTokenMigration(self):
         c = Client()
@@ -145,3 +169,21 @@ class ExportTest(TestCase):
         resp = get_export_response(c, include_errors=True)
         self.assertEqual(200, resp.status_code)
         self.assertTrue(len(_content(resp)) > len(initial_content))
+
+    def test_no_subscription(self):
+        """
+        Tests authorization function properly blocks domains without proper subscription
+        :return:
+        """
+        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(community_domain.name, 'test2', 'testpass')
+        new_user.save()
+        c = Client()
+        c.login(**{'username': 'test2', 'password': 'testpass'})
+        f = get_form()
+        submit_form(f, community_domain.name)
+        resp = get_export_response(c, domain=community_domain.name)
+        self.assertEqual(401, resp.status_code)
+
+        community_domain.delete()
+        new_user.delete()

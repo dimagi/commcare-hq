@@ -9,16 +9,18 @@ from corehq.apps.change_feed.models import ChangeMeta
 from corehq.apps.change_feed.topics import get_topic
 from couchforms.models import all_known_formlike_doc_types
 import logging
+from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
 
 
 class ChangeFeedPillow(PythonPillow):
 
-    def __init__(self, couch_db, kafka):
+    def __init__(self, couch_db, kafka, checkpoint):
         super(ChangeFeedPillow, self).__init__(couch_db=couch_db)
         self._kafka = kafka
         self._producer = KeyedProducer(self._kafka)
+        self._checkpoint = checkpoint
 
     def get_db_name(self):
         return self.couch_db.dbname
@@ -51,7 +53,11 @@ def get_default_couch_db_change_feed_pillow():
         logging.warning('Ignoring missing kafka client during unit testing')
         kafka_client = None
 
-    return ChangeFeedPillow(couch_db=default_couch_db, kafka=kafka_client)
+    return ChangeFeedPillow(
+        couch_db=default_couch_db,
+        kafka=kafka_client,
+        checkpoint=PillowCheckpoint(get_django_checkpoint_store(), 'default-couch-change-feed')
+    )
 
 
 def _get_document_type(document_or_none):

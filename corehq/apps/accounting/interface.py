@@ -981,24 +981,30 @@ class PaymentRecordInterface(GenericTabularReport):
     def payment_records(self):
         return PaymentRecord.objects.filter(**self.filters)
 
-    def get_account(self, payment_record):
-        return (CreditAdjustment.objects
-                .filter(payment_record_id=payment_record.id)
-                .latest('last_modified')
-                .credit_line
-                .account)
-
     @property
     def rows(self):
+        from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for record in self.payment_records:
+            applicable_credit_line = CreditAdjustment.objects.filter(
+                payment_record_id=record.id
+            ).latest('last_modified').credit_line
+            account = applicable_credit_line.account
             rows.append([
                 format_datatables_data(
                     text=record.date_created.strftime(USER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
-                self.get_account(record).name,
-                self.get_account(record).created_by_domain,
+                format_datatables_data(
+                    text=mark_safe(
+                        make_anchor_tag(
+                            reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                            account.name
+                        )
+                    ),
+                    sort_key=account.name,
+                ),
+                applicable_credit_line.subscription.subscriber.domain if applicable_credit_line.subscription else 'None',
                 record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
@@ -1111,10 +1117,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
             DataTablesColumnGroup(
                 "Credit Line",
                 DataTablesColumn("Account"),
-                DataTablesColumn("Is Subscription-Level"),
-                DataTablesColumn("Project Space"),
+                DataTablesColumn("Subscription"),
                 DataTablesColumn("Product/Feature Type")
             ),
+            DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
@@ -1123,21 +1129,39 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
     @property
     def rows(self):
+        from corehq.apps.accounting.views import EditSubscriptionView, ManageBillingAccountView
         return [
             map(lambda x: x or '', [
                 credit_adj.date_created,
-                credit_adj.credit_line.account.name,
-                str(credit_adj.credit_line.subscription is not None),
-                (
-                    credit_adj.credit_line.subscription.subscriber.domain
-                    if credit_adj.credit_line.subscription is not None else ''
+                format_datatables_data(
+                    text=mark_safe(
+                        make_anchor_tag(
+                            reverse(ManageBillingAccountView.urlname, args=[credit_adj.credit_line.account.id]),
+                            credit_adj.credit_line.account.name
+                        )
+                    ),
+                    sort_key=credit_adj.credit_line.account.name,
                 ),
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(
+                        reverse(EditSubscriptionView.urlname, args=(credit_adj.credit_line.subscription.id,)),
+                        credit_adj.credit_line.subscription
+                    )),
+                    credit_adj.credit_line.subscription.id,
+                ) if credit_adj.credit_line.subscription else '',
                 dict(FeatureType.CHOICES).get(
                     credit_adj.credit_line.feature_type,
                     dict(SoftwareProductType.CHOICES).get(
                         credit_adj.credit_line.product_type,
                         "Any"
                     ),
+                ),
+                (
+                    credit_adj.credit_line.subscription.subscriber.domain
+                    if credit_adj.credit_line.subscription is not None else (
+                        credit_adj.credit_line.invoice.subscription.subscriber.domain
+                        if credit_adj.credit_line.invoice else ''
+                    )
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
                 credit_adj.note,

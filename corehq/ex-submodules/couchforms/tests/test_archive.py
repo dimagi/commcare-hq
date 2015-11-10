@@ -4,7 +4,7 @@ from django.test import TestCase
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -12,14 +12,14 @@ class TestFormArchiving(TestCase, TestFileMixin):
     file_path = ('data', 'sample_xforms')
     root = os.path.dirname(__file__)
 
-    @classmethod
-    def setUpClass(cls):
-        cls.interface = FormProcessorInterface('test-domain')
+    def setUp(self):
+        self.interface = FormProcessorInterface('test-domain')
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_cases()
 
+    @run_with_all_backends
     def testArchive(self):
         xml_data = self.get_xml('basic')
         response, xform, cases = self.interface.submit_form_locally(
@@ -27,7 +27,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
             'test-domain',
         )
 
-        self.assertEqual("XFormInstance", xform.doc_type)
+        self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
@@ -35,7 +35,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.interface.xform_model.get(xform.form_id)
-        self.assertEqual('XFormArchived', xform.doc_type)
+        self.assertTrue(xform.is_archived)
 
         [archival] = xform.history
         self.assertTrue(lower_bound <= archival.date <= upper_bound)
@@ -47,7 +47,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.interface.xform_model.get(xform.form_id)
-        self.assertEqual('XFormInstance', xform.doc_type)
+        self.assertTrue(xform.is_normal)
 
         [archival, restoration] = xform.history
         self.assertTrue(lower_bound <= restoration.date <= upper_bound)

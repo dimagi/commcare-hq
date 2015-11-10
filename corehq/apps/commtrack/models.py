@@ -12,6 +12,7 @@ from django.db.models.signals import post_save
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.commtrack.exceptions import MissingProductId
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 
 from dimagi.ext.couchdbkit import *
 from dimagi.ext import jsonobject
@@ -229,10 +230,11 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def for_domain(cls, domain):
-        result = cls.view("commtrack/domain_config",
-                          key=[domain],
-                          include_docs=True).first()
-        return result
+        result = get_docs_in_domain_by_class(domain, cls)
+        try:
+            return result[0]
+        except IndexError:
+            return None
 
     @property
     def all_actions(self):
@@ -782,7 +784,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    StockReport.objects.filter(form_id=xform._id).delete()
+    StockReport.objects.filter(form_id=xform.form_id).delete()
 
 
 @receiver(xform_unarchived)

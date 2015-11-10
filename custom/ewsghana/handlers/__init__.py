@@ -21,3 +21,6 @@ START_MESSAGE = _('You have requested to receive reminders to this number. '
 
 HELP_TEXT = _("Txt 'help stock' 4 the format of stock reports; 'help codes' 4 commodity codes; "
               "'start' or 'stop' 2 start and stop reminders.")
+
+NO_SUPPLY_POINT_MESSAGE = "You are not associated with a facility. " \
+                          "Please contact your DHIO or RHIO for help."

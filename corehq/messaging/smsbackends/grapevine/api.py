@@ -60,7 +60,7 @@ class GrapevineBackend(SMSBackend):
     def get_form_class(cls):
         return GrapevineBackendForm
 
-    def send_sms(self, msg, delay=True, *args, **kwargs):
+    def send(self, msg, delay=True, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
         text = msg.text.encode("utf-8")
 

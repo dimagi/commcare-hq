@@ -31,7 +31,7 @@ class CaseFromXFormTest(TestCase):
         # we don't need to bother checking all the properties because this is
         # the exact same workflow as above.
         
-        case = bootstrap_case_from_xml(self, "update.xml", original_case.id)
+        case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         # fetch the case from the DB to ensure it is property wrapped
         case = self.interface.case_model.get(case.case_id)
         self.assertEqual(False, case.closed)
@@ -69,7 +69,7 @@ class CaseFromXFormTest(TestCase):
         case = bootstrap_case_from_xml(self, "create.xml")
 
         # now close it
-        case = bootstrap_case_from_xml(self, "close.xml", case.id)
+        case = bootstrap_case_from_xml(self, "close.xml", case.case_id)
         self.assertEqual(True, case.closed)
         
         self.assertEqual(3, len(case.actions))
