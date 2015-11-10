@@ -17,9 +17,8 @@ class CacheInvalidatePillow(BasicPillow):
     couch_filter = "hqadmin/not_case_form"  # string for filter if needed
 
 
-    def __init__(self, **kwargs):
-        super(CacheInvalidatePillow, self).__init__(**kwargs)
-        self._couch_db = Domain.get_db()
+    def __init__(self):
+        super(CacheInvalidatePillow, self).__init__(couch_db=Domain.get_db())
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
 
     def set_checkpoint(self, change):
