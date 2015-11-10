@@ -6,7 +6,7 @@ from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
-from corehq.form_processor.unsaved import TrackRelatedChanges
+from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
