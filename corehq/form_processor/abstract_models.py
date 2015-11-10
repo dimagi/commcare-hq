@@ -99,6 +99,10 @@ class AbstractCommCareCase(object):
     def case_id(self):
         raise NotImplementedError()
 
+    @property
+    def case_name(self):
+        raise NotImplementedError()
+
     def hard_delete(self):
         raise NotImplementedError()
 

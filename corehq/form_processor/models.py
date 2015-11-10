@@ -6,6 +6,7 @@ from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
+from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
@@ -308,7 +309,8 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractCommCareCase):
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
+                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -326,7 +328,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
 
     closed = models.BooleanField(default=False, null=False)
     closed_on = models.DateTimeField(null=True)
-    closed_by = models.CharField(max_length=255, null=False)
+    closed_by = models.CharField(max_length=255, null=True)
 
     deleted = models.BooleanField(default=False, null=False)
 
@@ -345,6 +347,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
     @property
     def user_id(self):
         return self.modified_by
+
+    @property
+    def case_name(self):
+        return self.case_json.get('name', None)
 
     def hard_delete(self):
         # see cleanup.safe_hard_delete
@@ -366,13 +372,23 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
         serializer = CommCareCaseSQLSerializer(self)
         return serializer.data
 
-    @property
     @memoized
-    def indices(self):
-        if hasattr(self, 'unsaved_indices'):
-            return self.unsaved_indices
-
+    def _saved_indices(self):
         return self.index_set.all() if self.is_saved() else []
+
+    @property
+    def indices(self):
+        indices = self._saved_indices()
+
+        to_delete = [to_delete.identifier for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
+        indices = [index for index in indices if index.identifier not in to_delete]
+
+        indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
+
+        return indices
+
+    def on_tracked_models_cleared(self, model_class=None):
+        self._saved_indices.reset_cache(self)
 
     @classmethod
     def get(cls, case_id):
@@ -420,13 +436,15 @@ class CaseAttachmentSQL(AbstractAttachment):
     )
 
 
-class CommCareCaseIndexSQL(models.Model):
+class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
         (CHILD, 'child'),
         (EXTENSION, 'extension'),
     )
+    RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
+    RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
@@ -436,12 +454,20 @@ class CommCareCaseIndexSQL(models.Model):
     identifier = models.CharField(max_length=255, null=False)
     referenced_id = models.CharField(max_length=255, null=False)
     referenced_type = models.CharField(max_length=255, null=False)
-    relationship = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+    relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+
+    def __get_relationship(self):
+        return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
+
+    def __set_relationship(self, relationship):
+        self.relationship_id = self.RELATIONSHIP_MAP[relationship]
+
+    relationship = property(__get_relationship, __set_relationship)
 
     def __unicode__(self):
         return (
             "CaseIndex("
-            "case_id='{i.case_uuid}', "
+            "case_id='{i.case_id}', "
             "domain='{i.domain}', "
             "identifier='{i.identifier}', "
             "referenced_type='{i.referenced_type}', "

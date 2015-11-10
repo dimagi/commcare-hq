@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 import functools
 import json
+import logging
 import mock
 import os
 
 from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
+import sys
+from corehq.util.decorators import ContextDecorator
 
 
 class UnitTestingRequired(Exception):
@@ -165,3 +168,30 @@ def run_with_multiple_configs(fn, run_configs):
         return helper(*args, **kwargs)
 
     return inner
+
+
+class log_sql_output(ContextDecorator):
+    """
+    Can be used as either a context manager or decorator.
+    """
+    def __init__(self):
+        self.logger = logging.getLogger('django.db.backends')
+        self.new_level = logging.DEBUG
+        self.original_level = self.logger.level
+        self.original_debug_value = settings.DEBUG
+        self.original_handlers = self.logger.handlers
+        for handler in self.original_handlers:
+            self.logger.removeHandler(handler)
+        self.logger.addHandler(logging.StreamHandler(sys.stdout))
+
+    def __enter__(self):
+        settings.DEBUG = True
+        self.logger.setLevel(self.new_level)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.logger.setLevel(self.original_level)
+        settings.DEBUG = self.original_debug_value
+        for handler in self.logger.handlers:
+            self.logger.removeHandler(handler)
+        for handler in self.original_handlers:
+            self.logger.addHandler(handler)
