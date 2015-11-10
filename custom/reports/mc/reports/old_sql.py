@@ -230,7 +230,7 @@ class FormPropertySection(Section):
             ).one()
             if last_submission:
                 wrapped = XFormInstance.wrap(last_submission['doc'])
-                user_row = [wrapped.xpath(path) for path in self.column_slugs]
+                user_row = [wrapped.get_data(path) for path in self.column_slugs]
             else:
                 user_row = [NO_VALUE] * len(self.column_slugs)
             rows.append((user, user_row))

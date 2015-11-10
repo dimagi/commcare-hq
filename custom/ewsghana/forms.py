@@ -35,7 +35,7 @@ class InputStockForm(forms.Form):
     stock_on_hand = forms.IntegerField(min_value=0, required=False)
     receipts = forms.IntegerField(min_value=0, initial=0, required=False)
     units = forms.CharField(required=False)
-    monthly_consumption = forms.IntegerField(required=False, widget=forms.HiddenInput())
+    monthly_consumption = forms.DecimalField(required=False, widget=forms.HiddenInput())
 
 
 class EWSBroadcastForm(BroadcastForm):

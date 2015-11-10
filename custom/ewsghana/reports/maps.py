@@ -20,8 +20,16 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
 
     @property
     @memoized
+    def default_location_id(self):
+        return get_country_id(self.domain)
+
+    @property
+    @memoized
     def active_location(self):
-        return SQLLocation.objects.get(domain=self.domain, location_id=self.config.get('location_id'))
+        return SQLLocation.objects.get(
+            domain=self.domain,
+            location_id=self.config.get('location_id') or self.default_location_id
+        )
 
     @property
     def locations(self):

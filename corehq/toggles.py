@@ -621,13 +621,6 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EMAIL_IN_REMINDERS = StaticToggle(
-    'email_in_reminders',
-    'Send emails from reminders',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',

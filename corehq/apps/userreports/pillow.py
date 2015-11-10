@@ -99,10 +99,6 @@ class ConfigurableIndicatorPillow(PythonPillow):
             elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
-    def set_checkpoint(self, change):
-        # override this to rebootstrap the tables
-        super(ConfigurableIndicatorPillow, self).set_checkpoint(change)
-
 
 class StaticDataSourcePillow(ConfigurableIndicatorPillow):
 

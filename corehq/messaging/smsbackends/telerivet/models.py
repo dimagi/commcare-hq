@@ -42,7 +42,7 @@ class TelerivetBackend(SMSBackend):
     def get_form_class(cls):
         return TelerivetBackendForm
 
-    def send_sms(self, msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         text = msg.text.encode("utf-8")
         params = {
             "phone_id": str(self.phone_id),

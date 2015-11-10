@@ -24,7 +24,7 @@ from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
-    iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
+    iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -545,32 +545,6 @@ class Domain(Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_by_organization(cls, organization):
-        result = cache_core.cached_view(
-            cls.get_db(), "domain/by_organization",
-            startkey=[organization],
-            endkey=[organization, {}],
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap
-        )
-        from corehq.apps.accounting.utils import domain_has_privilege
-        from corehq import privileges
-        result = filter(
-            lambda x: domain_has_privilege(x.name, privileges.CROSS_PROJECT_REPORTS),
-            result
-        )
-        return result
-
-    @classmethod
-    def get_by_organization_and_hrname(cls, organization, hr_name):
-        result = cls.view("domain/by_organization",
-                          key=[organization, hr_name],
-                          reduce=False,
-                          include_docs=True)
-        return result
-
-    @classmethod
     def get_or_create_with_name(cls, name, is_active=False,
                                 secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
@@ -878,7 +852,7 @@ class Domain(Document, SnapshotMixin):
         if page:
             skip = (page - 1) * per_page
             limit = per_page
-        results = get_db().search('domain/snapshot_search',
+        results = cls.get_db().search('domain/snapshot_search',
             q=json.dumps(query),
             limit=limit,
             skip=skip,
@@ -1081,8 +1055,7 @@ class Domain(Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        from corehq.apps.app_manager.models import Application
-        return Application.get_db().view("domain/snapshots",
+        return self.get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],
             reduce=True,

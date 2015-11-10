@@ -113,6 +113,7 @@ del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
+ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -276,6 +277,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
@@ -374,6 +376,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
     'djangobower',
@@ -419,17 +422,6 @@ LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
-
-# domain syncs
-# e.g.
-#               { sourcedomain1: { "domain": targetdomain1,
-#                      "transform": path.to.transformfunction1 },
-#                 sourcedomain2: {...} }
-DOMAIN_SYNCS = {}
-# if you want to deidentify app names, put a dictionary in your settings
-# of source names to deidentified names
-DOMAIN_SYNC_APP_NAME_MAP = {}
-DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 
 
 ####### Release Manager App settings  #######
@@ -823,6 +815,12 @@ LOGGING = {
             'formatter': 'verbose',
             'filename': ACCOUNTING_LOG_FILE
         },
+        'analytics': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'simple',
+            'filename': ANALYTICS_LOG_FILE
+        },
         'couchlog': {
             'level': 'WARNING',
             'class': 'couchlog.handlers.CouchHandler',
@@ -885,6 +883,11 @@ LOGGING = {
             'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'analytics': {
+            'handlers': ['analytics'],
+            'level': 'DEBUG',
+            'propagate': True,
         },
     }
 }
@@ -965,7 +968,8 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
-        if globals().get("FIX_LOGGER_ERROR_OBFUSCATION"):
+        _fix_logger_obfuscation = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
+        if _fix_logger_obfuscation:
             # this is here because the logging config cannot import
             # corehq.util.log.HqAdminEmailHandler, for example, if there
             # is a syntax error in any module imported by corehq/__init__.py
@@ -975,10 +979,11 @@ try:
             # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
-                    print "{} logger is being changed to {}".format(
-                        handler['class'],
-                        'logging.StreamHandler'
-                    )
+                    if _fix_logger_obfuscation != 'quiet':
+                        print "{} logger is being changed to {}".format(
+                            handler['class'],
+                            'logging.StreamHandler'
+                        )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
    # fallback in case nothing else is found - used for readthedocs
@@ -1173,6 +1178,7 @@ BOWER_CORE_APPS = (
     'jquery-form#3.45.0',
     'jquery.cookie#1.4.1',
     'jquery-timeago#1.2.0',
+    'jquery-ui#1.11.4',
     'angular#1.4.4',
     'angular-route#1.4.4',
     'angular-resource#1.4.4',
@@ -1186,6 +1192,10 @@ BOWER_CORE_APPS = (
     'less#1.7.3',
     'backbone#0.9.1',
     'bootstrap-daterangepicker#2.1.13',
+    'd3#3.1',
+    'nvd3#1.1.10-beta',
+    'datatables#1.10.9',
+    'datatables-bootstrap3#0.1',
 )
 
 BOWER_TEST_APPS = (
@@ -1266,6 +1276,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
     "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
     "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
+    "corehq.messaging.smsbackends.apposit.models.AppositBackend",
 ]
 
 IVR_BACKEND_MAP = {
@@ -1399,6 +1410,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
+    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
 ]
 
 
@@ -1459,6 +1471,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
+    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
 ]
 
 CUSTOM_MODULES = [

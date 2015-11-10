@@ -30,7 +30,8 @@ def copy_data_to_backup():
                      prod_couchdb_connection,
                      GUINEA_CONTACT_TRACING_DOMAIN,
                      guinea_couchdb_connection,
-                     **{'since': unicode(last_update)})
+                     **{'since': unicode(last_update),
+                        'run_multi_process': False})
 
         # A dumb soft assert to make sure I see this working
         _assert = soft_assert(to='{}@{}'.format('tsheffels', 'dimagi.com'),

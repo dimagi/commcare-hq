@@ -129,7 +129,7 @@ def hb_check():
             else:
                 hb = heartbeat.is_alive()
         except Exception:
-            hb = False
+            hb = is_deploy_in_progress()
     else:
         try:
             hb = heartbeat.is_alive()

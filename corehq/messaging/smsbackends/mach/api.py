@@ -34,7 +34,7 @@ class MachBackend(SMSBackend):
     def get_sms_interval(self):
         return (1.0 / self.max_sms_per_second)
 
-    def send_sms(self, msg, delay=True, *args, **kwargs):
+    def send(self, msg, delay=True, *args, **kwargs):
         params = {
             "id" : self.account_id,
             "pw" : self.password,

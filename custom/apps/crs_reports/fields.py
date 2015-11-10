@@ -1,8 +1,8 @@
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.users import SelectCaseOwnerFilter
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
-from dimagi.utils.couch.database import get_db
 from django.utils.translation import ugettext as _
 
 
@@ -23,7 +23,7 @@ class SelectBlockField(ReportSelectField):
     @classmethod
     def get_blocks(cls, domain):
         key = [domain]
-        for r in get_db().view('crs_reports/field_block',
+        for r in CommCareCase.get_db().view('crs_reports/field_block',
                       startkey=key,
                       endkey=key + [{}],
                       group_level=3).all():

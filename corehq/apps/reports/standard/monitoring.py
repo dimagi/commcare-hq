@@ -4,6 +4,7 @@ from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
@@ -15,6 +16,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -384,19 +386,22 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         return headers
 
     @property
+    @memoized
+    def selected_users(self):
+        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
+        return users_data.combined_users
+
+    @property
     def rows(self):
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
-        for user in users_data.combined_users:
+        for user in self.selected_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
-                    row.append(
-                        self._get_num_submissions(
-                            user.user_id, form['xmlns'], form['app_id'])
-                    )
+                    row.append(self._form_counts[
+                        (user.user_id, form['xmlns'], form['app_id'])
+                    ])
                 row_sum = sum(row)
                 row = (
                     [self.get_user_link(user)] +
@@ -412,27 +417,22 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             self.total_row = [_("All Users")] + totals
         return rows
 
-    def _get_num_submissions(self, user_id, xmlns, app_id):
-        return get_number_of_submissions(
-            self.domain, user_id=user_id, xmlns=xmlns,
-            by_submission_time=self.by_submission_time, app_id=app_id,
-            start=self.datespan.startdate_utc, end=self.datespan.enddate_utc)
-
+    @property
     @memoized
-    def forms_per_user(self, app_id, xmlns):
-        # todo: this seems to not work properly
-        # needs extensive QA before being used
-        query = (FormES()
-                 .domain(self.domain)
-                 .xmlns(xmlns)
-                 .submitted(gt=self.datespan.startdate_utc,
-                            lte=self.datespan.enddate_utc)
-                 .size(0)
-                 .user_facet())
-        if app_id and app_id != MISSING_APP_ID:
-            query = query.app(app_id)
-        res = query.run()
-        return res.facets.user.counts_by_term()
+    def _form_counts(self):
+        if EMWF.show_all_mobile_workers(self.request):
+            user_ids = []
+        else:
+            # Don't query ALL mobile workers
+            user_ids = [u.user_id for u in self.selected_users]
+        return get_form_counts_by_user_xmlns(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
+            enddate=self.datespan.enddate_utc.replace(tzinfo=pytz.UTC),
+            user_ids=user_ids,
+            xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
+            by_submission_time=self.by_submission_time,
+        )
 
 
 class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):

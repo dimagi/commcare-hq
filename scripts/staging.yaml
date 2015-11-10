@@ -45,18 +45,17 @@
 trunk: master
 name: autostaging
 branches:
-  - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
-  - report-builder-b3+exports-ui-changes+b3-tf+11-4 # Noah 11/4
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3 # Noah 10/20
+  - crispy-styleguide # Biyeun 11/6
   - b3-tf # ben 10/1
   - two-factor-otp-only # j$ 10/2
-  - refactor-copy-domain #ts 11/2
-  - fab-bower-conflicts #ts 11/2
   - requests #Simon 11/3
-  - ucr-agg-bug # Noah 11/4
+  - add-tableau-dashboard # TS 11/5
+  - upgrade-sqlalchemy # Nick P 11/5
+  - report-description-xpath # Nick P 11/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
