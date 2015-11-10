@@ -50,7 +50,7 @@ class FormProcessorSQL(object):
             # other properties can be set post-wrap
             form_uuid=form_id,
             xmlns=form_data.get('@xmlns'),
-            received_on=datetime.datetime.now(),
+            received_on=datetime.datetime.utcnow(),
             user_id=extract_meta_user_id(form_data),
         )
 
