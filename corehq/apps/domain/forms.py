@@ -49,6 +49,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
     EntryPoint,
+    FundingSource
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
@@ -1085,6 +1086,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.SELF_SERVICE,
                         pro_bono_status=ProBonoStatus.NO,
+                        funding_source=FundingSource.CLIENT
                     )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
@@ -1180,6 +1182,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 adjustment_method=SubscriptionAdjustmentMethod.USER,
                 service_type=SubscriptionType.SELF_SERVICE,
                 pro_bono_status=ProBonoStatus.NO,
+                funding_source=FundingSource.CLIENT,
                 new_version=self.renewed_version,
             )
         except SubscriptionRenewalError as e:

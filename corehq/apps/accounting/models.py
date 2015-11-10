@@ -1129,7 +1129,7 @@ class Subscription(models.Model):
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None,
-                            service_type=None, pro_bono_status=None):
+                            service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -1165,6 +1165,8 @@ class Subscription(models.Model):
             self.service_type = service_type
         if pro_bono_status is not None:
             self.pro_bono_status = pro_bono_status
+        if funding_source is not None:
+            self.funding_source = funding_source
         self.save()
 
         SubscriptionAdjustment.record_adjustment(
@@ -1269,7 +1271,7 @@ class Subscription(models.Model):
     def renew_subscription(self, date_end=None, note=None, web_user=None,
                            adjustment_method=None,
                            service_type=None, pro_bono_status=None,
-                           new_version=None):
+                           funding_source=None, new_version=None):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
@@ -1309,6 +1311,8 @@ class Subscription(models.Model):
             renewed_subscription.service_type = service_type
         if pro_bono_status is not None:
             renewed_subscription.pro_bono_status = pro_bono_status
+        if funding_source is not None:
+            renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.save()
