@@ -231,11 +231,11 @@ def filter_cases_modified_since(domain, case_ids, reference_date):
 
 def case_needs_to_sync(case, last_sync_log):
     owner_id = case.owner_id or case.user_id  # need to fallback to user_id for v1 cases
-    is_extension_case = [index for index in case.indices
-                         if index.relationship == CASE_INDEX_EXTENSION]
+    extension_cases = [index for index in case.indices
+                       if index.relationship == CASE_INDEX_EXTENSION]
     if (not last_sync_log or
         (owner_id not in last_sync_log.owner_ids_on_phone and
-         not (is_extension_case and case._id in last_sync_log.case_ids_on_phone))):
+         not (extension_cases and case._id in last_sync_log.case_ids_on_phone))):
         # initial sync or new owner IDs always sync down everything
         # extension cases don't get synced again if they haven't changed
         return True
