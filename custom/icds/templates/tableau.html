@@ -119,24 +119,32 @@
         $("#inspectButton").unbind('click').click(function() {
             // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
             console.log('Activating: ', sheetName);
-            var worksheet;
+            var dashboard,
+                worksheets;
             workbook.activateSheetAsync(sheetName)
-                    .then(function(sheet) {
-                        worksheet = sheet;
-                        console.log('Setting sheet')
-                    }).then(function(){
-                        key = 'Location Key';
-                        value  = filters[key];
-                        console.log('Applying filter to: ', key, ', value: ', value);
-                        debugger
-                        return worksheet.applyFilterAsync(key, value, tableau.FilterUpdateType.ADD);
-                    }).then(function() {
+                    .then(function(dash) {
+                        dashboard = dash;
+                        worksheets = dashboard.getWorksheets();
+                    })
+{#                    .then(function(){#}
+{#                        // I need the last worksheet to return a promise like object when all the iteration is complete#}
+{#                        var last_worksheet;#}
+{#                        _.each(worksheets, function (worksheet) {#}
+{#                            _.each(filters, function(value, key) {#}
+{#                                console.log('Applying filter to:', key, ', value: ', value);#}
+{#                                last_worksheet = worksheet.applyFilterAsync(key, value, tableau.FilterUpdateType.ADD);#}
+{#                            })#}
+{#                        });#}
+{##}
+{#                        return last_worksheet;#}
+{#                    })#}
+                    .then(function() {
                         //_.each(params, function(value, key, list) {
                         key = 'View By';
                         value = params[key];
 
                         console.log('Applying parameter to: ', key, ' value: ', value);
-                        return worksheet.changeParameterValueAsync(key, value);
+                        return workbook.changeParameterValueAsync(key, value);
                         //});
 
                     }).otherwise(function(err){
