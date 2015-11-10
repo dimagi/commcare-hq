@@ -85,15 +85,16 @@ def _hubspot_post(url, data):
         headers = {
             'content-type': 'application/json'
         }
-        req = requests.post(
+        response = requests.post(
             url,
             params={'hapikey': api_key},
             data=data,
             headers=headers
         )
-        logger.debug('Sent this data to HS: %s \nreceived: %s'
-                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
-        req.raise_for_status()
+        logger.debug('Sent this data to HS: %s \nreceived: %s' %
+                     (json.dumps(data, indent=2, sort_keys=True),
+                      json.dumps(response.json(), indent=2, sort_keys=True)))
+        response.raise_for_status()
 
 
 def _get_user_hubspot_id(webuser):
@@ -140,13 +141,14 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
 
-        req = requests.post(
+        response = requests.post(
             url,
             data=data
         )
-        logger.debug('Sent this data to HS: %s \nreceived: %s'
-                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
-        req.raise_for_status()
+        logger.debug('Sent this data to HS: %s \nreceived: %s',
+                     (json.dumps(data, indent=2, sort_keys=True),
+                      json.dumps(response.json(), indent=2, sort_keys=True)))
+        response.raise_for_status()
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
