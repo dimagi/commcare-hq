@@ -21,7 +21,7 @@ class ChangeFeedPillow(PythonPillow):
         self._producer = KeyedProducer(self._kafka)
 
     def get_db_name(self):
-        return self.couch_db.dbname
+        return self.get_couch_db().dbname
 
     def process_change(self, change, is_retry_attempt=False):
         document_type = _get_document_type(change.document)
