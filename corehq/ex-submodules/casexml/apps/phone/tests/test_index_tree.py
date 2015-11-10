@@ -1,4 +1,4 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
 
@@ -148,6 +148,21 @@ class PruningTest(SimpleTestCase):
         for id in all_ids:
             self.assertFalse(id in sync_log.case_ids_on_phone)
             self.assertFalse(id in sync_log.dependent_case_ids_on_phone)
+
+    @override_settings(DEBUG=True)
+    def test_prune_partial_children(self):
+        [parent_id, child_id_1, child_id_2] = all_ids = ['parent', 'child1', 'child2']
+        tree = IndexTree(indices={
+            child_id_1: convert_list_to_dict([parent_id]),
+            child_id_2: convert_list_to_dict([parent_id]),
+        })
+        sync_log = SimplifiedSyncLog(
+            index_tree=tree,
+            case_ids_on_phone=set(all_ids),
+            dependent_case_ids_on_phone=set([parent_id, child_id_2])
+        )
+        # this used to fail with an AssertionError
+        sync_log.prune_case(parent_id)
 
     def test_prune_multiple_parents(self):
         [grandparent_id, mother_id, father_id, child_id] = all_ids = ['heart-tree', 'catelyn', 'ned', 'arya']
