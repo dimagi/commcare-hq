@@ -263,11 +263,11 @@ class PythonPillow(BasicPillow):
 
     def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
                  checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
-                 couch_db=None):
+                 couch_db=None, checkpoint=None):
         """
         Use chunk_size = 0 to disable chunking
         """
-        super(PythonPillow, self).__init__(document_class=document_class)
+        super(PythonPillow, self).__init__(document_class=document_class, checkpoint=checkpoint)
         self.change_queue = []
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
