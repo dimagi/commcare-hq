@@ -114,6 +114,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
     url(r"^export/forms/all/async/$", 'export_all_form_metadata_async', name="export_all_form_metadata_async"),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),
+    url(r'^download/internal/cases/$', 'download_cases_internal', name='download_cases_internal'),
 
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),

@@ -10,7 +10,7 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
-    SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT
+    SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT, THIRD_STOCK_ON_HAND_REMINDER, INCOMPLETE_SOH_TO_SUPER
 from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 
 from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third_soh_to_super, \
@@ -228,8 +228,14 @@ class TestReminders(TestCase):
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 2)
 
-        self.assertEqual(smses[0].text, SECOND_STOCK_ON_HAND_REMINDER % {'name': self.web_user2.full_name})
-        self.assertEqual(smses[1].text, SECOND_STOCK_ON_HAND_REMINDER % {'name': self.in_charge.full_name})
+        self.assertEqual(smses[0].text, THIRD_STOCK_ON_HAND_REMINDER % {
+            'name': self.web_user2.full_name,
+            'facility': self.loc2.name,
+        })
+        self.assertEqual(smses[1].text, THIRD_STOCK_ON_HAND_REMINDER % {
+            'name': self.in_charge.full_name,
+            'facility': self.loc2.name,
+        })
 
         create_stock_report(self.loc2, {
             'tp': 100
@@ -240,11 +246,19 @@ class TestReminders(TestCase):
         self.assertEqual(smses.count(), 2)
         self.assertEqual(
             smses[0].text,
-            SECOND_INCOMPLETE_SOH_REMINDER % {'name': self.web_user2.full_name, 'products': 'Test Product2'}
+            INCOMPLETE_SOH_TO_SUPER % {
+                'name': self.web_user2.full_name,
+                'facility': self.loc2.name,
+                'products': 'Test Product2'
+            }
         )
         self.assertEqual(
             smses[1].text,
-            SECOND_INCOMPLETE_SOH_REMINDER % {'name': self.in_charge.full_name, 'products': 'Test Product2'}
+            INCOMPLETE_SOH_TO_SUPER % {
+                'name': self.in_charge.full_name,
+                'facility': self.loc2.name,
+                'products': 'Test Product2'
+            }
         )
 
         create_stock_report(self.loc2, {

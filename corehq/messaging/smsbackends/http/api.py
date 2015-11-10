@@ -113,7 +113,7 @@ class HttpBackend(SMSBackend):
     def get_form_class(cls):
         return HttpBackendForm
 
-    def send_sms(self, msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         if self.additional_params is not None:
             params = self.additional_params.copy()
         else:

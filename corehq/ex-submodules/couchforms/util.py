@@ -91,56 +91,10 @@ def _has_errors(response, errors):
     return errors or "error" in response
 
 
-def _assign_new_id_and_lock(xform):
-    new_id = XFormInstance.get_db().server.next_uuid()
-    xform._id = new_id
-    lock = acquire_lock_for_xform(new_id)
-    return MultiLockManager([LockManager(xform, lock)])
-
-
 def assign_new_id(xform):
     new_id = XFormInstance.get_db().server.next_uuid()
     xform._id = new_id
     return xform
-
-
-def deprecate_xform(existing_doc, new_doc):
-    # if the form contents are not the same:
-    #  - "Deprecate" the old form by making a new document with the same contents
-    #    but a different ID and a doc_type of XFormDeprecated
-    #  - Save the new instance to the previous document to preserve the ID
-
-    old_id = existing_doc._id
-    new_doc = assign_new_id(new_doc)
-
-    # swap the two documents so the original ID now refers to the new one
-    # and mark original as deprecated
-    new_doc._id, existing_doc._id = old_id, new_doc._id
-    new_doc._rev, existing_doc._rev = existing_doc._rev, new_doc._rev
-
-    # flag the old doc with metadata pointing to the new one
-    existing_doc.doc_type = deprecation_type()
-    existing_doc.orig_id = old_id
-
-    # and give the new doc server data of the old one and some metadata
-    new_doc.received_on = existing_doc.received_on
-    new_doc.deprecated_form_id = existing_doc._id
-    new_doc.edited_on = datetime.datetime.utcnow()
-    return XFormDeprecated.wrap(existing_doc.to_json()), new_doc
-
-
-def deduplicate_xform(new_doc):
-    # follow standard dupe handling, which simply saves a copy of the form
-    # but a new doc_id, and a doc_type of XFormDuplicate
-    new_doc.doc_type = XFormDuplicate.__name__
-    dupe = XFormDuplicate.wrap(new_doc.to_json())
-    dupe.problem = "Form is a duplicate of another! (%s)" % new_doc._id
-    return assign_new_id(dupe)
-
-
-def is_duplicate_or_edit(xform_id, domain):
-    existing_doc = XFormInstance.get_db().get(xform_id)
-    return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
 
 
 def _handle_id_conflict(instance, xform, domain):
@@ -151,16 +105,18 @@ def _handle_id_conflict(instance, xform, domain):
     """
 
     assert domain
-    conflict_id = xform._id
+    conflict_id = xform.form_id
 
-    if is_duplicate_or_edit(conflict_id, domain):
+    if FormProcessorInterface().should_handle_as_duplicate_or_edit(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
         return _handle_duplicate(xform, instance)
     else:
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
-        return _assign_new_id_and_lock(xform)
+        xform = FormProcessorInterface().assign_new_id(xform)
+        lock = acquire_lock_for_xform(xform.form_id)
+        return MultiLockManager([LockManager(xform, lock)])
 
 
 def _handle_duplicate(new_doc, instance):
@@ -171,9 +127,8 @@ def _handle_duplicate(new_doc, instance):
     and *must* include inline attachments
 
     """
-    conflict_id = new_doc._id
-    existing_doc = XFormInstance.get_db().get(conflict_id, attachments=True)
-    existing_doc = XFormInstance.wrap(existing_doc)
+    conflict_id = new_doc.form_id
+    existing_doc = FormProcessorInterface().xform_model.get_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()
@@ -183,19 +138,19 @@ def _handle_duplicate(new_doc, instance):
         #  - "Deprecate" the old form by making a new document with the same contents
         #    but a different ID and a doc_type of XFormDeprecated
         #  - Save the new instance to the previous document to preserve the ID
-        existing_doc, new_doc = deprecate_xform(existing_doc, new_doc)
-        
+        existing_doc, new_doc = FormProcessorInterface().deprecate_xform(existing_doc, new_doc)
+
         # Lock docs with their original ID's (before they got switched during deprecation)
         return MultiLockManager([
-            LockManager(new_doc, acquire_lock_for_xform(existing_doc._id)),
+            LockManager(new_doc, acquire_lock_for_xform(existing_doc.form_id)),
             LockManager(existing_doc, acquire_lock_for_xform(existing_doc.orig_id)),
         ])
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
-        duplicate = deduplicate_xform(new_doc)
+        duplicate = FormProcessorInterface().deduplicate_xform(new_doc)
         return MultiLockManager([
-            LockManager(duplicate, acquire_lock_for_xform(duplicate._id)),
+            LockManager(duplicate, acquire_lock_for_xform(duplicate.form_id)),
         ])
 
 
@@ -376,11 +331,11 @@ class SubmissionPost(object):
             return response, instance, cases
 
     def process_xforms_for_cases(self, xform_lock_manager):
-        from casexml.apps.case.models import CommCareCase
         from casexml.apps.case.xform import get_and_check_xform_domain
         from casexml.apps.case.signals import case_post_save
         from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
         from corehq.apps.commtrack.exceptions import MissingProductId
+        from casexml.apps.case.xform import process_cases_with_casedb
 
         cases = []
         errors = []
@@ -392,7 +347,7 @@ class SubmissionPost(object):
                 domain = get_and_check_xform_domain(instance)
                 with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                     try:
-                        case_result = self.interface.process_cases_with_casedb(xforms, case_db)
+                        case_result = process_cases_with_casedb(xforms, case_db)
                         stock_result = self.interface.process_stock(xforms, case_db)
                     except known_errors as e:
                         return self._handle_known_error(e, instance, xforms)
@@ -424,7 +379,7 @@ class SubmissionPost(object):
                     case_result.commit_dirtiness_flags()
                     stock_result.commit()
                     for case in cases:
-                        case_post_save.send(CommCareCase, case=case)
+                        case_post_save.send(case.__class__, case=case)
 
                 errors = self.process_signals(instance)
                 unfinished_submission_stub.delete()

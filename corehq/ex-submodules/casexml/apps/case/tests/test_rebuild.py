@@ -9,8 +9,8 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.update_strategy import _action_sort_key_function, ActionsUpdateStrategy
 from casexml.apps.case.util import primary_actions
+from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy, _action_sort_key_function
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.models import XFormInstance
 
@@ -168,11 +168,6 @@ class CaseRebuildTest(TestCase):
 
     def testRebuildEmpty(self):
         self.assertEqual(None, rebuild_case_from_forms('notarealid'))
-        try:
-            CommCareCase.get_with_rebuild('notarealid')
-            self.fail('get with rebuild should still fail for unknown cases')
-        except ResourceNotFound:
-            pass
 
     def testRebuildCreateCase(self):
         case_id = _post_util(create=True)
@@ -182,21 +177,16 @@ class CaseRebuildTest(TestCase):
         case = CommCareCase.get(case_id)
         case.delete()
 
-        case = rebuild_case_from_forms(case_id)
-        self.assertEqual(case.p1, 'p1')
-        self.assertEqual(case.p2, 'p2')
-        self.assertEqual(2, len(primary_actions(case)))  # create + update
-
-        case.delete()
         try:
             CommCareCase.get(case_id)
             self.fail('get should fail on deleted cases')
         except ResourceNotFound:
             pass
 
-        case = CommCareCase.get_with_rebuild(case_id)
+        case = rebuild_case_from_forms(case_id)
         self.assertEqual(case.p1, 'p1')
         self.assertEqual(case.p2, 'p2')
+        self.assertEqual(2, len(primary_actions(case)))  # create + update
 
     def testReconcileActions(self):
         now = datetime.utcnow()

@@ -45,10 +45,8 @@
 trunk: master
 name: autostaging
 branches:
-  - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
-  - exports-ui-changes+crispy-styleguide+report-builder-b3+b3-tf # BB 11/6
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3 # Noah 10/20
   - crispy-styleguide # Biyeun 11/6
@@ -57,6 +55,7 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
+  - report-description-xpath # Nick P 11/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

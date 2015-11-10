@@ -1,21 +1,18 @@
 import os
 import collections
-import logging
+import hashlib
 
 from lxml import etree
 from json_field.fields import JSONField
-from jsonobject.api import re_date
 from django.conf import settings
 from django.db import models, transaction
 
 from dimagi.utils.couch import RedisLockableMixIn
-from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.ext import jsonobject
 from couchforms.signals import xform_archived, xform_unarchived
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
-from corehq.util.dates import iso_string_to_datetime
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
 from .exceptions import XFormNotFound
@@ -24,7 +21,39 @@ from .exceptions import XFormNotFound
 Attachment = collections.namedtuple('Attachment', 'name content content_type')
 
 
-class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
+class PreSaveHashableMixin(object):
+    hash_property = None
+
+    def __hash__(self):
+        hash_val = getattr(self, self.hash_property, None)
+        if not hash_val:
+            raise TypeError("Form instances without form ID value are unhashable")
+        return hash(hash_val)
+
+
+class SaveStateMixin(object):
+    def is_saved(self):
+        return bool(self._get_pk_val())
+
+
+class AttachmentMixin(SaveStateMixin):
+    """Requires the model to be linked to the attachments model via the 'attachments' related name.
+    """
+    ATTACHMENTS_RELATED_NAME = 'attachments'
+
+    def get_attachment(self, attachment_name):
+        return self.get_attachment_meta(attachment_name).read_content()
+
+    def get_attachment_meta(self, attachment_name):
+        if hasattr(self, 'unsaved_attachments'):
+            for attachment in self.unsaved_attachments:
+                if attachment.name == attachment_name:
+                    return attachment
+        elif self.is_saved():
+            return self.attachments.filter(name=attachment_name).first()
+
+
+class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -41,11 +70,23 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
 
+    hash_property = 'form_uuid'
+
     form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
 
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, null=True)
+
+    # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
+    orig_id = models.CharField(max_length=255, null=True)
+
+    # When a form is deprecated, the new form gets a reference to the deprecated form
+    deprecated_form_id = models.CharField(max_length=255, null=True)
+
+    # Stores the datetime of when a form was deprecated
+    edited_on = models.DateTimeField(null=True)
 
     # The time at which the server has received the form
     received_on = models.DateTimeField()
@@ -57,22 +98,40 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
+    problem = models.TextField(null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
     # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
 
+    def __get_form_id(self):
+        return self.form_uuid
+
+    def __set_form_id(self, _id):
+        self.form_uuid = _id
+
+    form_id = property(__get_form_id, __set_form_id)
+
     @classmethod
-    def get(cls, id):
+    def get(cls, xform_id):
         try:
-            return XFormInstanceSQL.objects.get(form_uuid=id)
+            return XFormInstanceSQL.objects.get(form_uuid=xform_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
-    @property
-    def form_id(self):
-        return self.form_uuid
+    @classmethod
+    def get_with_attachments(cls, xform_id):
+        # NOOP for the SQL XFormInstance
+        return cls.get(xform_id)
+
+    @classmethod
+    def get_obj_id(cls, obj):
+        return obj.form_uuid
+
+    @classmethod
+    def get_obj_by_id(cls, _id):
+        return cls.get(_id)
 
     @property
     def is_normal(self):
@@ -101,9 +160,11 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
     @property
     @memoized
     def form_data(self):
-        from .utils import convert_xform_to_json
-        xml = self._get_xml()
-        return convert_xform_to_json(xml)
+        from .utils import convert_xform_to_json, adjust_datetimes
+        xml = self.get_xml()
+        form_json = convert_xform_to_json(xml)
+        adjust_datetimes(form_json)
+        return form_json
 
     @property
     def history(self):
@@ -111,59 +172,20 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
 
     @property
     def metadata(self):
+        from .utils import clean_metadata
         if const.TAG_META in self.form_data:
-            return XFormMetadata.wrap(self._clean_metadata(self.form_data[const.TAG_META]))
+            return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
         return None
 
-    def _clean_metadata(self, meta_block):
-        from .utils import get_text_attribute
+    def save(self, *args, **kwargs):
+        super(XFormInstanceSQL, self).save(*args, **kwargs)
+        if getattr(self, 'initial_deprecation', False):
+            attachments = XFormAttachmentSQL.objects.filter(xform_id=self.orig_id)
+            attachments.update(xform_id=self.form_id)
 
-        if not meta_block:
-            return meta_block
-        meta_block = self._remove_unused_meta_attributes(meta_block)
-        meta_block['appVersion'] = get_text_attribute(meta_block.get('appVersion'))
-        meta_block['location'] = get_text_attribute(meta_block.get('location'))
-        meta_block = self._parse_meta_times(meta_block)
-
-        # also clean dicts on the return value, since those are not allowed
-        for key in meta_block:
-            if isinstance(meta_block[key], dict):
-                meta_block[key] = self._flatten_dict(meta_block[key])
-
-        return meta_block
-
-    def _flatten_dict(self, dictionary):
-        return ", ".join("{}:{}".format(k, v) for k, v in dictionary.items())
-
-    def _remove_unused_meta_attributes(self, meta_block):
-        for key in meta_block.keys():
-            # remove attributes from the meta block
-            if key.startswith('@'):
-                del meta_block[key]
-        return meta_block
-
-    def _parse_meta_times(self, meta_block):
-        for key in ("timeStart", "timeEnd"):
-            if meta_block.get(key, None):
-                if re_date.match(meta_block[key]):
-                    # this kind of leniency is pretty bad and making it midnight in UTC
-                    # is totally arbitrary here for backwards compatibility
-                    meta_block[key] += 'T00:00:00.000000Z'
-                try:
-                    # try to parse to ensure correctness
-                    parsed = iso_string_to_datetime(meta_block[key])
-                    # and set back in the right format in case it was a date, not a datetime
-                    meta_block[key] = json_format_datetime(parsed)
-                except Exception:
-                    logging.exception('Could not parse meta_block')
-                    # we couldn't parse it
-                    del meta_block[key]
-            else:
-                # it was empty, also a failure
-                del meta_block[key]
-
-        return meta_block
+            operations = XFormOperationSQL.objects.filter(xform_id=self.orig_id)
+            operations.update(xform_id=self.form_id)
 
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
@@ -171,7 +193,7 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
         return serializer.data
 
     def get_xml_element(self):
-        xml = self._get_xml()
+        xml = self.get_xml()
         if not xml:
             return None
 
@@ -181,9 +203,11 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
             return etree.fromstring(payload)
         return _to_xml_element(xml)
 
-    def _get_xml(self):
-        xform_attachment = self.xformattachmentsql_set.filter(name='form.xml').first()
-        return xform_attachment.read_content()
+    def get_xml(self):
+        return self.get_attachment('form.xml')
+
+    def xml_md5(self):
+        return self.get_attachment_meta('form.xml').md5
 
     def archive(self, user=None):
         if self.is_archived:
@@ -210,10 +234,8 @@ class XFormInstanceSQL(models.Model, AbstractXFormInstance, RedisLockableMixIn):
         # xform_unarchived.send(sender="form_processor", xform=self)
 
 
-class XFormAttachmentSQL(models.Model):
+class AbstractAttachment(models.Model):
     attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
-
-    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
@@ -233,6 +255,16 @@ class XFormAttachmentSQL(models.Model):
             content = f.read()
         return content
 
+    class Meta:
+        abstract = True
+
+
+class XFormAttachmentSQL(AbstractAttachment):
+    xform = models.ForeignKey(
+        XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid',
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+    )
+
 
 class XFormOperationSQL(models.Model):
     ARCHIVE = 'archive'
@@ -244,7 +276,7 @@ class XFormOperationSQL(models.Model):
     xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
 
 
-class XFormMetadata(jsonobject.JsonObject):
+class XFormPhoneMetadata(jsonobject.JsonObject):
     """
     Metadata of an xform, from a meta block structured like:
 
@@ -254,7 +286,6 @@ class XFormMetadata(jsonobject.JsonObject):
             <instanceID />
             <userID />
             <deviceID />
-            <deprecatedID />
             <username />
 
             <!-- CommCare extension -->
@@ -272,12 +303,14 @@ class XFormMetadata(jsonobject.JsonObject):
     instanceID = jsonobject.StringProperty()
     userID = jsonobject.StringProperty()
     deviceID = jsonobject.StringProperty()
-    deprecatedID = jsonobject.StringProperty()
     username = jsonobject.StringProperty()
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
 
-class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
+
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractCommCareCase):
+    hash_property = 'case_uuid'
+
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     case_type = models.CharField(max_length=255)
@@ -300,33 +333,46 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
     external_id = models.CharField(max_length=255)
 
     case_json = JSONField(lazy=True)
-    attachments_json = JSONField(lazy=True)
 
-    @property
-    def case_id(self):
+    def __get_case_id(self):
         return self.case_uuid
 
+    def __set_case_id(self, _id):
+        self.case_uuid = _id
+
+    case_id = property(__get_case_id, __set_case_id)
+
+    @property
+    def user_id(self):
+        return self.modified_by
+
     def hard_delete(self):
-        self.delete()
+        # see cleanup.safe_hard_delete
+        raise NotImplementedError()
 
     def soft_delete(self):
         self.deleted = True
         self.save()
 
+    @property
     def is_deleted(self):
         return self.deleted
 
-    def get_attachment(self, attachment_name):
-        assert attachment_name in self.attachments_json
-        with open(self._get_attachment_path(attachment_name), 'r+') as f:
-            content = f.read()
-        return content
+    def dynamic_case_properties(self):
+        return self.case_json
 
-    def _get_attachment_path(self, attachment_name):
-        attachment_id = '{}_{}'.format(self.case_uuid, attachment_name)
-        if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', attachment_id)
-        return os.path.join('/tmp/', attachment_id)
+    def to_json(self):
+        from .serializers import CommCareCaseSQLSerializer
+        serializer = CommCareCaseSQLSerializer(self)
+        return serializer.data
+
+    @property
+    @memoized
+    def indices(self):
+        if hasattr(self, 'unsaved_indices'):
+            return self.unsaved_indices
+
+        return self.index_set.all() if self.is_saved() else []
 
     @classmethod
     def get(cls, case_id):
@@ -346,7 +392,7 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
 
     @classmethod
     def get_obj_by_id(cls, _id):
-        return CommCareCaseSQL.objects.get(_id)
+        return cls.get(_id)
 
     def __unicode__(self):
         return (
@@ -367,6 +413,13 @@ class CommCareCaseSQL(models.Model, AbstractCommCareCase, RedisLockableMixIn):
         ]
 
 
+class CaseAttachmentSQL(AbstractAttachment):
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
+    )
+
+
 class CommCareCaseIndexSQL(models.Model):
     CHILD = 0
     EXTENSION = 1
@@ -375,7 +428,10 @@ class CommCareCaseIndexSQL(models.Model):
         (EXTENSION, 'extension'),
     )
 
-    case = models.ForeignKey('CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True)
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        related_name="index_set", related_query_name="index"
+    )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
     identifier = models.CharField(max_length=255, null=False)
     referenced_id = models.CharField(max_length=255, null=False)

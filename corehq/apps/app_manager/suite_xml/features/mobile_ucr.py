@@ -149,7 +149,7 @@ def _get_summary_details(config):
                         ),
                         template=Template(
                             text=Text(
-                                xpath=Xpath(function='description')
+                                xpath=Xpath(function=config.description)
                             )
                         ),
                     ),

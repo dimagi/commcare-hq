@@ -58,7 +58,7 @@ def render_case(case, options):
     default_properties = _get_tables_as_rows(data, display)
 
     # pop seen properties off of remaining case properties
-    dynamic_data = dict(case.dynamic_case_properties())
+    dynamic_data = case.dynamic_case_properties()
     # hack - as of commcare 2.0, external id is basically a dynamic property
     # so also check and add it here
     if case.external_id:

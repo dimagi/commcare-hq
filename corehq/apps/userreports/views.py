@@ -728,17 +728,21 @@ def choice_list_api(request, domain, report_id, filter_id):
     if report_filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
 
-    query_context = ChoiceQueryContext(
-        report=report,
-        report_filter=report_filter,
-        query=request.GET.get('q', None),
-        limit=int(request.GET.get('limit', 20)),
-        page=int(request.GET.get('page', 1)) - 1
-    )
-    return json_response([
-        choice._asdict() for choice in
-        report_filter.choice_provider(query_context)
-    ])
+    if hasattr(report_filter, 'choice_provider'):
+        query_context = ChoiceQueryContext(
+            report=report,
+            report_filter=report_filter,
+            query=request.GET.get('q', None),
+            limit=int(request.GET.get('limit', 20)),
+            page=int(request.GET.get('page', 1)) - 1
+        )
+        return json_response([
+            choice._asdict() for choice in
+            report_filter.choice_provider(query_context)
+        ])
+    else:
+        # mobile UCR hits this API for invalid filters. Just return no choices.
+        return json_response([])
 
 
 def _shared_context(domain):

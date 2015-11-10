@@ -3,11 +3,9 @@ import datetime
 
 from couchdbkit import BulkSaveError
 
-from dimagi.utils.couch import ReleaseOnError
 from casexml.apps.case.models import CommCareCase
-from couchforms.util import process_xform, _handle_unexpected_error
-from couchforms.models import XFormInstance
-from couchforms.exceptions import DuplicateError
+from couchforms.util import process_xform, _handle_unexpected_error, deprecation_type
+from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
@@ -58,10 +56,8 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def is_duplicate(cls, xform, lock):
-        with ReleaseOnError(lock):
-            if xform.form_id in XFormInstance.get_db():
-                raise DuplicateError(xform)
+    def is_duplicate(cls, xform):
+        return xform.form_id in XFormInstance.get_db()
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
@@ -84,11 +80,51 @@ class FormProcessorCouch(object):
             raise
 
     @classmethod
-    def process_cases_with_casedb(cls, xforms, case_db):
-        from casexml.apps.case.xform import process_cases_with_casedb
-        return process_cases_with_casedb(xforms, case_db)
-
-    @classmethod
     def process_stock(cls, xforms, case_db):
         from corehq.apps.commtrack.processing import process_stock
         return process_stock(xforms, case_db)
+
+    @classmethod
+    def deprecate_xform(cls, existing_xform, new_xform):
+        # if the form contents are not the same:
+        #  - "Deprecate" the old form by making a new document with the same contents
+        #    but a different ID and a doc_type of XFormDeprecated
+        #  - Save the new instance to the previous document to preserve the ID
+
+        old_id = existing_xform._id
+        new_xform = cls.assign_new_id(new_xform)
+
+        # swap the two documents so the original ID now refers to the new one
+        # and mark original as deprecated
+        new_xform._id, existing_xform._id = old_id, new_xform._id
+        new_xform._rev, existing_xform._rev = existing_xform._rev, new_xform._rev
+
+        # flag the old doc with metadata pointing to the new one
+        existing_xform.doc_type = deprecation_type()
+        existing_xform.orig_id = old_id
+
+        # and give the new doc server data of the old one and some metadata
+        new_xform.received_on = existing_xform.received_on
+        new_xform.deprecated_form_id = existing_xform._id
+        new_xform.edited_on = datetime.datetime.utcnow()
+        return XFormDeprecated.wrap(existing_xform.to_json()), new_xform
+
+    @classmethod
+    def deduplicate_xform(cls, xform):
+        # follow standard dupe handling, which simply saves a copy of the form
+        # but a new doc_id, and a doc_type of XFormDuplicate
+        xform.doc_type = XFormDuplicate.__name__
+        dupe = XFormDuplicate.wrap(xform.to_json())
+        dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
+        return cls.assign_new_id(dupe)
+
+    @classmethod
+    def assign_new_id(cls, xform):
+        new_id = XFormInstance.get_db().server.next_uuid()
+        xform._id = new_id
+        return xform
+
+    @classmethod
+    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
+        existing_doc = XFormInstance.get_db().get(xform_id)
+        return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()

@@ -103,8 +103,8 @@ cloudCare.Details = Backbone.Model.extend({
 cloudCare.caseViewMixin = {
     lookupField: function (field) {
         var parentCase;
-        if (isParentField(field) && this.options.casedb) {
-            parentCase = this.options.casedb.get(this.model.get('indices').parent.case_id);
+        if (isParentField(field) && this.model.get('casedb')) {
+            parentCase = this.model.get('casedb').get(this.model.get('indices').parent.case_id);
             return parentCase.getProperty(field.slice('parent/'.length));
         }
         return this.model.getProperty(field);
@@ -244,11 +244,11 @@ cloudCare.CaseListView = Backbone.View.extend({
     },
     appendItem: function (item) {
         var self = this;
+        item.set('casedb', self.caseList.casedb);
         var caseView = new cloudCare.CaseView({
             model: item,
             columns: self.detailsShort.get("columns"),
             delegation: self.options.delegation,
-            casedb: self.caseList.casedb,
             appConfig: self.options.appConfig,
             language: self.options.language
         });

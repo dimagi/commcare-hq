@@ -1,3 +1,8 @@
+import logging
+from couchdbkit import ResourceNotFound
+from dimagi.utils.decorators.memoized import memoized
+
+
 class AbstractXFormInstance(object):
 
     @property
@@ -7,6 +12,7 @@ class AbstractXFormInstance(object):
     def auth_context(self):
         raise NotImplementedError()
 
+    @property
     def form_data(self):
         raise NotImplementedError()
 
@@ -16,17 +22,24 @@ class AbstractXFormInstance(object):
     def get_attachment(self, attachment_name):
         raise NotImplementedError()
 
-    def archive(self, xform_generic, user=None):
+    def archive(self, user=None):
         raise NotImplementedError()
 
-    def unarchive(self, xform_generic, user=None):
+    def unarchive(self, user=None):
         raise NotImplementedError()
 
     def get_xml_element(self):
         raise NotImplementedError()
 
+    def get_xml(self):
+        raise NotImplementedError()
+
     @classmethod
     def get(self, xform_id):
+        raise NotImplementedError()
+
+    @classmethod
+    def get_with_attachments(slef, xform_id):
         raise NotImplementedError()
 
     def save(self, *args, **kwargs):
@@ -66,6 +79,19 @@ class AbstractXFormInstance(object):
     def is_submission_error_log(self):
         raise NotImplementedError()
 
+    @memoized
+    def get_sync_token(self):
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        if self.last_sync_token:
+            try:
+                return get_properly_wrapped_sync_log(self.last_sync_token)
+            except ResourceNotFound:
+                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
+                    self.last_sync_token, self.form_id, self.domain,
+                ))
+                raise
+        return None
+
 
 class AbstractCommCareCase(object):
 
@@ -86,6 +112,9 @@ class AbstractCommCareCase(object):
         raise NotImplementedError()
 
     def to_xml(self, version, include_case_on_closed=False):
+        raise NotImplementedError()
+
+    def dynamic_case_properties(self):
         raise NotImplementedError()
 
     @classmethod

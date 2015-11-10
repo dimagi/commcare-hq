@@ -123,6 +123,7 @@
     {% endblock report_alerts %}
     {% block main_column_content %}
     <div class="report-controls">
+        {% if report.spec.description %}<p class="lead">{{ report.spec.description }}</p>{% endif %}
         <form id="report-filters" class="form form-horizontal" method="GET" action="">
             <fieldset>
                 <legend>{% trans "Report Filters" %}</legend>

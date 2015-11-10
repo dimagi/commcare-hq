@@ -6,6 +6,7 @@ from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
+from corehq.form_processor.models import XFormInstanceSQL
 
 
 class FormProcessorTestUtils(object):
@@ -38,6 +39,12 @@ class FormProcessorTestUtils(object):
             view,
             **view_kwargs
         )
+        query = XFormInstanceSQL.objects
+        if domain is not None:
+            query = query.filter(domain=domain)
+        if user_id is not None:
+            query = query.filter(user_id=user_id)
+        query.all().delete()
 
     @classmethod
     @unit_testing_only

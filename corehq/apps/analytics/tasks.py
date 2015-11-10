@@ -13,10 +13,14 @@ import json
 import requests
 import urllib
 import KISSmetrics
+import logging
 
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.accounting.models import SoftwarePlanEdition
+
+logger = logging.getLogger('analytics')
+logger.setLevel('DEBUG')
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -87,6 +91,8 @@ def _hubspot_post(url, data):
             data=data,
             headers=headers
         )
+        logger.debug('Sent this data to HS: %s \nreceived: %s'
+                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
         req.raise_for_status()
 
 
@@ -138,6 +144,8 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             url,
             data=data
         )
+        logger.debug('Sent this data to HS: %s \nreceived: %s'
+                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
         req.raise_for_status()
 
 

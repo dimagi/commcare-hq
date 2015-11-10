@@ -84,8 +84,8 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
-    def is_duplicate(self, xform, lock):
-        return self.processor.is_duplicate(xform, lock)
+    def is_duplicate(self, xform):
+        return self.processor.is_duplicate(xform)
 
     def new_xform(self, instance_xml):
         return self.processor.new_xform(instance_xml)
@@ -93,8 +93,17 @@ class FormProcessorInterface(object):
     def bulk_save(self, instance, xforms, cases=None):
         return self.processor.bulk_save(instance, xforms, cases=cases)
 
-    def process_cases_with_casedb(self, xforms, case_db):
-        return self.processor.process_cases_with_casedb(xforms, case_db)
-
     def process_stock(self, xforms, case_db):
         return self.processor.process_stock(xforms, case_db)
+
+    def deprecate_xform(self, existing_xform, new_xform):
+        return self.processor.deprecate_xform(existing_xform, new_xform)
+
+    def deduplicate_xform(self, xform):
+        return self.processor.deduplicate_xform(xform)
+
+    def should_handle_as_duplicate_or_edit(self, xform_id, domain):
+        return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)
+
+    def assign_new_id(self, xform):
+        return self.processor.assign_new_id(xform)

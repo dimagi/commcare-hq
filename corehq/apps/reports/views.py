@@ -79,6 +79,7 @@ from soil import DownloadBase
 from soil.tasks import prepare_download
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
@@ -234,6 +235,7 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
     return render(request, template, context)
 
 
+@requires_privilege_json_response(privileges.API_ACCESS)
 @login_or_digest
 @require_form_export_permission
 @datespan_default
@@ -1270,10 +1272,19 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         workbook.close()
     return FileWrapper(open(path))
 
+
+@requires_privilege_json_response(privileges.API_ACCESS)
+def download_cases(request, domain):
+    return download_cases_internal(request, domain)
+
+
 @login_or_digest
 @require_case_export_permission
 @require_GET
-def download_cases(request, domain):
+def download_cases_internal(request, domain):
+    """
+    bypass api access checks to allow internal use
+    """
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
     try:
         format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
