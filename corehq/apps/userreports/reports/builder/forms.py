@@ -1096,6 +1096,26 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
             return "computed/user_name"
 
     @property
+    @memoized
+    def _default_case_report_filters(self):
+        return [
+            FilterViewModel(
+                exists_in_current_version=True,
+                property='closed',
+                data_source_field=None,
+                display_text='closed',
+                format='Choice',
+            ),
+            FilterViewModel(
+                exists_in_current_version=True,
+                property='computed/user_name',
+                data_source_field=None,
+                display_text='user name',
+                format='Choice',
+            ),
+        ]
+
+    @property
     def container_fieldset(self):
         return crispy.Fieldset(
             "",
