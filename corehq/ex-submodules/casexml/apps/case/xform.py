@@ -194,6 +194,7 @@ def _get_or_update_cases(xforms, case_db):
                         case.get_id,
                         index.referenced_id,
                     )
+
     def _get_dirtiness_flags_for_outgoing_indices(case, tree_owners=None):
         """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
         if tree_owners is None:
@@ -208,7 +209,7 @@ def _get_or_update_cases(xforms, case_db):
                 unowned_host_cases.append(host_case)
 
         owner_ids = {case_db.get(index.referenced_id).owner_id
-                     for index in case.indices if case_db.doc_exist(index.referenced_id)} | tree_owners
+                     for index in case.indices if case_db.get(index.referenced_id)} | tree_owners
         potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
         more_than_one_owner_touched = len(owner_ids) > 1
         touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
@@ -243,7 +244,7 @@ def _get_or_update_cases(xforms, case_db):
     dirtiness_flags = []
     for case in touched_cases.values():
         dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case))
-    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
 
     return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, True)
 
