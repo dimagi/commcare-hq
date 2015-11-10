@@ -839,7 +839,7 @@ class EmailSettingsSync(object):
         self.domain = domain
 
     def _report_notfication_sync(self, report, interval, day):
-        if not report.users:
+        if not report.users or report.report not in self.REPORT_MAP:
             return
         user_id = report.users[0]
         recipients = report.users[1:]
@@ -855,15 +855,18 @@ class EmailSettingsSync(object):
             return
 
         notifications = ReportNotification.by_domain_and_owner(self.domain, user.get_id)
-        reports = []
         for n in notifications:
-            for config_id in n.config_ids:
-                config = ReportConfig.get(config_id)
-                reports.append((config.filters.get('location_id'), config.report_slug, interval))
-
-        if report.report not in self.REPORT_MAP or (location.location_id, self.REPORT_MAP[report.report],
-                                                    interval) in reports:
-            return
+            if len(n.config_ids) == 1:
+                # Migrated reports have only one config
+                config = ReportConfig.get(doc_id=n.config_ids[0])
+                location_id = config.filters.get('location_id')
+                slug = self.REPORT_MAP[report.report]
+                report_slug = config.report_slug
+                if (n.day, location_id, report_slug, n.interval) == (day, location.location_id, slug, interval):
+                    if not n.send_to_owner and not n.recipient_emails:
+                        n.send_to_owner = True
+                        n.save()
+                    return
 
         saved_config = ReportConfig(
             report_type='custom_project_report', name=report.report, owner_id=user.get_id,
@@ -873,7 +876,7 @@ class EmailSettingsSync(object):
         saved_config.save()
         saved_notification = ReportNotification(
             hour=report.hours, day=day, interval=interval, owner_id=user.get_id, domain=self.domain,
-            recipient_emails=recipients, config_ids=[saved_config.get_id]
+            recipient_emails=recipients, config_ids=[saved_config.get_id], send_to_owner=True
         )
         saved_notification.save()
         return saved_notification
