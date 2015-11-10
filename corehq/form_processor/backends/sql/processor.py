@@ -5,7 +5,7 @@ import hashlib
 from django.db import transaction
 from couchforms.util import process_xform
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -76,8 +76,19 @@ class FormProcessorSQL(object):
                 if cases:
                     for case in cases:
                         case.save()
+
                     if getattr(case, 'unsaved_indices', None):
-                        case.index_set.bulk_create(case.unsaved_indices)
+                        to_delete = [index.identifier for index in case.unsaved_indices if getattr(index, 'to_delete', False)]
+                        if to_delete:
+                            CommCareCaseIndexSQL.objects.filter(case=case, identifier__in=to_delete).delete()
+
+                        to_update = [index for index in case.unsaved_indices if index.is_saved() and not getattr(index, 'to_delete', False)]
+                        for index in to_update:
+                            index.save()
+
+                        to_create = [index for index in case.unsaved_indices if not index.is_saved()]
+                        if to_create:
+                            case.index_set.bulk_create(to_create)
         except Exception as e:
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(

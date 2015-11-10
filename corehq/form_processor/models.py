@@ -373,10 +373,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
     @property
     @memoized
     def indices(self):
-        if hasattr(self, 'unsaved_indices'):
-            return self.unsaved_indices
-
-        return self.index_set.all() if self.is_saved() else []
+        if self.is_saved():
+            return self.index_set.all()
+        else:
+            return getattr(self, 'unsaved_indices', [])
 
     @classmethod
     def get(cls, case_id):
@@ -424,13 +424,15 @@ class CaseAttachmentSQL(AbstractAttachment):
     )
 
 
-class CommCareCaseIndexSQL(models.Model):
+class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
         (CHILD, 'child'),
         (EXTENSION, 'extension'),
     )
+    RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
+    RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
@@ -440,12 +442,20 @@ class CommCareCaseIndexSQL(models.Model):
     identifier = models.CharField(max_length=255, null=False)
     referenced_id = models.CharField(max_length=255, null=False)
     referenced_type = models.CharField(max_length=255, null=False)
-    relationship = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+    relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+
+    def __get_relationship(self):
+        return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
+
+    def __set_relationship(self, relationship):
+        self.relationship_id = self.RELATIONSHIP_MAP[relationship]
+
+    relationship = property(__get_relationship, __set_relationship)
 
     def __unicode__(self):
         return (
             "CaseIndex("
-            "case_id='{i.case_uuid}', "
+            "case_id='{i.case.case_uuid}', "
             "domain='{i.domain}', "
             "identifier='{i.identifier}', "
             "referenced_type='{i.referenced_type}', "

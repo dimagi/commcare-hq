@@ -2,7 +2,7 @@ import logging
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xml import V2
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -87,7 +87,47 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self.case.case_json[key] = value
 
     def _apply_index_action(self, action):
-        raise NotImplementedError()
+        if not action.indices:
+            return
+
+        case_indices = self.case.indices
+        self.case.unsaved_indices = []
+
+        def has_index(index_id):
+            return index_id in (i.identifier for i in case_indices)
+
+        def get_index(index_id):
+            found = filter(lambda i: i.identifier == index_id, case_indices)
+            if found:
+                assert(len(found) == 1)
+                return found[0]
+            return None
+
+        for index_update in action.indices:
+            if has_index(index_update.identifier):
+                if not index_update.referenced_id:
+                    # empty ID = delete
+                    index = get_index(index_update.identifier)
+                    index.to_delete = True
+                    self.case.unsaved_indices.append(index)
+                else:
+                    # update
+                    index = get_index(index_update.identifier)
+                    index.referenced_type = index_update.referenced_type
+                    index.referenced_id = index_update.referenced_id
+                    index.relationship = index_update.relationship
+                    self.case.unsaved_indices.append(index)
+            else:
+                # no id, no index
+                if index_update.referenced_id:
+                    index = CommCareCaseIndexSQL(
+                        case=self.case,
+                        identifier=index_update.identifier,
+                        referenced_type=index_update.referenced_type,
+                        referenced_id=index_update.referenced_id,
+                        relationship=index_update.relationship
+                    )
+                    self.case.unsaved_indices.append(index)
 
     def _apply_attachments_action(self, attachment_action, xform=None):
         raise NotImplementedError()

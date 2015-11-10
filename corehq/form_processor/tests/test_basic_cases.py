@@ -124,13 +124,77 @@ class FundamentalCaseTests(TestCase):
             }
         )
 
+        case = self.interface.case_model.get(child_case_id)
+        self.assertEqual(len(case.indices), 1)
+        index = case.indices[0]
+        self.assertEqual(index.identifier, 'mom')
+        self.assertEqual(index.referenced_id, mother_case_id)
+        self.assertEqual(index.referenced_type, 'mother')
+        self.assertEqual(index.relationship, 'child')
+
+    @run_with_all_backends
+    def test_update_index(self):
+        mother_case_id = uuid.uuid4().hex
+        _submit_case_block(
+            True, mother_case_id, user_id='user1', owner_id='owner1', case_type='mother',
+            case_name='mother', date_modified=datetime.utcnow()
+        )
+
+        child_case_id = uuid.uuid4().hex
+        _submit_case_block(
+            True, child_case_id, user_id='user1', owner_id='owner1', case_type='child',
+            case_name='child', date_modified=datetime.utcnow(), index={
+                'mom': ('mother', mother_case_id)
+            }
+        )
+
+        case = self.interface.case_model.get(child_case_id)
+        self.assertEqual(case.indices[0].identifier, 'mom')
+
+        _submit_case_block(
+            False, child_case_id, user_id='user1', date_modified=datetime.utcnow(), index={
+                'mom': ('other_mother', mother_case_id)
+            }
+        )
+        case = self.interface.case_model.get(child_case_id)
+        self.assertEqual(case.indices[0].referenced_type, 'other_mother')
+
+    @run_with_all_backends
+    def test_delete_index(self):
+        mother_case_id = uuid.uuid4().hex
+        _submit_case_block(
+            True, mother_case_id, user_id='user1', owner_id='owner1', case_type='mother',
+            case_name='mother', date_modified=datetime.utcnow()
+        )
+
+        child_case_id = uuid.uuid4().hex
+        _submit_case_block(
+            True, child_case_id, user_id='user1', owner_id='owner1', case_type='child',
+            case_name='child', date_modified=datetime.utcnow(), index={
+                'mom': ('mother', mother_case_id)
+            }
+        )
+
+        case = self.interface.case_model.get(child_case_id)
+        self.assertEqual(len(case.indices), 1)
+
+        _submit_case_block(
+            False, child_case_id, user_id='user1', date_modified=datetime.utcnow(), index={
+                'mom': ('mother', '')
+            }
+        )
+        case = self.interface.case_model.get(child_case_id)
+        self.assertEqual(len(case.indices), 0)
+
+
+
     def test_case_with_attachment(self):
         # same as update, attachments
         pass
 
 
 def _submit_case_block(create, case_id, **kwargs):
-    FormProcessorInterface().post_case_blocks(
+    return FormProcessorInterface().post_case_blocks(
         [
             CaseBlock(
                 create=create,
