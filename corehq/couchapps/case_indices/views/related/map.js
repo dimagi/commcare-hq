@@ -11,7 +11,10 @@ function(doc) {
                     }
                 }
                 reverse_index.referenced_id = doc._id;
-                emit([doc.domain, doc.indices[i].referenced_id, "reverse_index", doc.indices[i].relationship],
+
+                // Emit "child" relationship if there is no relationship set
+                var relationship = doc.indices[i].relationship || "child";
+                emit([doc.domain, doc.indices[i].referenced_id, "reverse_index", relationship],
                      reverse_index);
             }
         }
