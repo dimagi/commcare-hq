@@ -1,9 +1,9 @@
 import logging
 
-from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.cache.cache_core import GenerationCache
-from pillowtop.listener import BasicPillow, ms_from_timedelta
+from couchforms.models import XFormInstance
+from pillowtop.listener import BasicPillow
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -18,7 +18,7 @@ class CacheInvalidatePillow(BasicPillow):
 
 
     def __init__(self):
-        super(CacheInvalidatePillow, self).__init__(couch_db=Domain.get_db())
+        super(CacheInvalidatePillow, self).__init__(couch_db=XFormInstance.get_db())
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
 
     def set_checkpoint(self, change):
