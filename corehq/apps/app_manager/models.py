@@ -4654,7 +4654,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if self.show_user_registration:
             yield self.get_user_registration() if bare else {
                 'type': 'user_registration',
-                'form': self.get_user_registration()
+                'form': self.get_user_registration(),
             }
         for module in self.get_modules():
             for form in module.get_forms():
