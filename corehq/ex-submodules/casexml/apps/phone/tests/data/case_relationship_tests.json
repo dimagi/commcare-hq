@@ -403,6 +403,50 @@
         ]
     },
     {
+        "name": "Closed_Extension",
+        "owned": [
+            "a"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "Closed_Extension_With_Children",
+        "owned": [
+            "a"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "c",
+                "b"
+            ]
+        ],
+        "subcases": [
+            [
+                "a",
+                "b"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "c"
+        ]
+    },
+    {
         "name": "Double_Chain",
         "owned": [
             "a",
@@ -621,6 +665,30 @@
         "closed": [
             "e"
         ],
-        "outcome": ["a"]
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "Broken_Extension_Chain",
+        "owned": [
+            "a"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "b",
+                "a"
+            ],
+            [
+                "c",
+                "b"
+            ]
+        ],
+        "outcome": [
+            "a"
+        ]
     }
 ]
