@@ -1,5 +1,6 @@
 from datetime import datetime
 import uuid
+from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -22,25 +23,18 @@ class FundamentalCaseTests(TestCase):
     def test_create_case(self):
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
-        FormProcessorInterface().post_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id=case_id,
-                    user_id='user1',
-                    owner_id='owner1',
-                    case_type='type_create',
-                    case_name='create_case',
-                    date_modified=modified_on
-                ).as_xml()
-            ], domain=DOMAIN
+        _submit_case_block(
+            True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+            case_name='create_case', date_modified=modified_on, update={
+                'dynamic': '123'
+            }
         )
 
         case = self.interface.case_model.get(case_id)
         self.assertIsNotNone(case)
         self.assertEqual(case.case_id, case_id)
         self.assertEqual(case.owner_id, 'owner1')
-        self.assertEqual(case.case_type, 'type_create')
+        self.assertEqual(case.case_type, 'demo')
         self.assertEqual(case.case_name, 'create_case')
         self.assertEqual(case.opened_on, modified_on)
         self.assertEqual(case.opened_by, 'user1')
@@ -48,21 +42,100 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(case.modified_by, 'user1')
         self.assertTrue(case.server_modified_on > modified_on)
         self.assertFalse(case.closed)
-        self.assertTrue(case.closed_by is None or case.closed_by == '')
         self.assertIsNone(case.closed_on)
 
-    def test_update_case(self):
-        # userid, updated props, modified on, modified by, server modified
-        pass
+        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertIsNone(case.closed_by)
+        else:
+            self.assertEqual(case.closed_by, '')
 
+        self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
+
+
+    @run_with_all_backends
+    def test_update_case(self):
+        case_id = uuid.uuid4().hex
+        opened_on = datetime.utcnow()
+        _submit_case_block(
+            True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+            case_name='create_case', date_modified=opened_on, update={
+                'dynamic': '123'
+            }
+        )
+
+        modified_on = datetime.utcnow()
+        _submit_case_block(
+            False, case_id, user_id='user2', owner_id='owner2',
+            case_name='update_case', date_modified=modified_on, update={
+                'dynamic': '1234'
+            }
+        )
+
+        case = self.interface.case_model.get(case_id)
+        self.assertEqual(case.owner_id, 'owner2')
+        self.assertEqual(case.case_name, 'update_case')
+        self.assertEqual(case.opened_on, opened_on)
+        self.assertEqual(case.opened_by, 'user1')
+        self.assertEqual(case.modified_on, modified_on)
+        self.assertEqual(case.modified_by, 'user2')
+        self.assertTrue(case.server_modified_on > modified_on)
+        self.assertFalse(case.closed)
+        self.assertIsNone(case.closed_on)
+        self.assertEqual(case.dynamic_case_properties()['dynamic'], '1234')
+
+    @run_with_all_backends
     def test_close_case(self):
         # same as update, closed, closed on, closed by
-        pass
+        case_id = uuid.uuid4().hex
+        opened_on = datetime.utcnow()
+        _submit_case_block(
+            True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+            case_name='create_case', date_modified=opened_on
+        )
 
+        modified_on = datetime.utcnow()
+        _submit_case_block(
+            False, case_id, user_id='user2', date_modified=modified_on, close=True
+        )
+
+        case = self.interface.case_model.get(case_id)
+        self.assertEqual(case.owner_id, 'owner1')
+        self.assertEqual(case.modified_on, modified_on)
+        self.assertEqual(case.modified_by, 'user2')
+        self.assertTrue(case.closed)
+        self.assertEqual(case.closed_on, modified_on)
+        self.assertEqual(case.closed_by, 'user2')
+        self.assertTrue(case.server_modified_on > modified_on)
+
+    @run_with_all_backends
     def test_case_with_index(self):
         # same as update, indexes
-        pass
+        mother_case_id = uuid.uuid4().hex
+        _submit_case_block(
+            True, mother_case_id, user_id='user1', owner_id='owner1', case_type='mother',
+            case_name='mother', date_modified=datetime.utcnow()
+        )
+
+        child_case_id = uuid.uuid4().hex
+        _submit_case_block(
+            True, child_case_id, user_id='user1', owner_id='owner1', case_type='child',
+            case_name='child', date_modified=datetime.utcnow(), index={
+                'mom': ('mother', mother_case_id)
+            }
+        )
 
     def test_case_with_attachment(self):
         # same as update, attachments
         pass
+
+
+def _submit_case_block(create, case_id, **kwargs):
+    FormProcessorInterface().post_case_blocks(
+        [
+            CaseBlock(
+                create=create,
+                case_id=case_id,
+                **kwargs
+            ).as_xml()
+        ], domain=DOMAIN
+    )
