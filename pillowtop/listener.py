@@ -95,7 +95,7 @@ class BasicPillow(PillowBase):
         if document_class:
             self.document_class = document_class
 
-        self._checkpoint = checkpoint or self._get_default_checkpoint()
+        self._checkpoint = checkpoint
 
         # Explicitly check for None since a couch db class will evaluate to False
         # if there are no docs in the database.
@@ -127,6 +127,8 @@ class BasicPillow(PillowBase):
 
     @property
     def checkpoint(self):
+        if self._checkpoint is None:
+            self._checkpoint = self._get_default_checkpoint()
         return self._checkpoint
 
     def _get_default_checkpoint(self):
