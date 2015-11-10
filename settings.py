@@ -277,6 +277,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
@@ -375,6 +376,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
     'djangobower',
@@ -1274,6 +1276,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
     "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
     "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
+    "corehq.messaging.smsbackends.apposit.models.AppositBackend",
 ]
 
 IVR_BACKEND_MAP = {

@@ -39,7 +39,7 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         return case
 
     def _iter_cases(self, case_ids):
-        return CommCareCaseSQL.query.filter(case_uuid__in=case_ids).all()
+        return CommCareCaseSQL.objects.filter(case_uuid__in=case_ids).all()
 
     def get_cases_for_saving(self, now):
         cases = self.get_changed()

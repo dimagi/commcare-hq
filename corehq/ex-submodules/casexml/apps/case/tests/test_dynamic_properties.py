@@ -9,9 +9,8 @@ class DynamicPropertiesTest(SimpleTestCase):
         case = CommCareCase(foo='some property', bar='some other property')
         props = case.dynamic_case_properties()
         self.assertEqual(2, len(props))
-        props_dict = dict(props)
-        self.assertEqual('some property', props_dict['foo'])
-        self.assertEqual('some other property', props_dict['bar'])
+        self.assertEqual('some property', props['foo'])
+        self.assertEqual('some other property', props['bar'])
 
     def test_subclass(self):
         class CaseWithNewProperty(CommCareCase):
@@ -24,6 +23,5 @@ class DynamicPropertiesTest(SimpleTestCase):
         case = CaseWithNewProperty(new_property='some property', bar='some other property')
         props = case.dynamic_case_properties()
         self.assertEqual(2, len(props))
-        props_dict = dict(props)
-        self.assertEqual('some property', props_dict['new_property'])
-        self.assertEqual('some other property', props_dict['bar'])
+        self.assertEqual('some property', props['new_property'])
+        self.assertEqual('some other property', props['bar'])

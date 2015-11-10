@@ -144,6 +144,8 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             url,
             data=data
         )
+        logger.debug('Sent this data to HS: %s \nreceived: %s'
+                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
         req.raise_for_status()
 
 
