@@ -459,9 +459,6 @@ class SyncLog(AbstractSyncLog):
         return self.dependent_cases_on_phone
 
 
-PruneResult = namedtuple('PruneResult', ['seen', 'pruned'])
-
-
 class IndexTree(DocumentSchema):
     """
     Document type representing a case dependency tree (which is flattened to a single dict)
@@ -617,7 +614,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty(unicode)
     # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
-    # this allows us to prune it if possible from other actions
+    # this allows us to purge it if possible from other actions
     dependent_case_ids_on_phone = SetProperty(unicode)
     owner_ids_on_phone = SetProperty(unicode)
     index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
@@ -952,7 +949,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         for update in non_live_updates:
             if update.case_id in self.case_ids_on_phone:
-                # try pruning the case
+                # try purging the case
                 self.purge(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
@@ -986,17 +983,17 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 ))
                 raise
 
-    def prune_dependent_cases(self):
+    def purge_dependent_cases(self):
         """
-        Attempt to prune any dependent cases from the sync log.
+        Attempt to purge any dependent cases from the sync log.
         """
         # this is done when migrating from old formats or during initial sync
-        # to prune non-relevant dependencies
+        # to purge non-relevant dependencies
         for dependent_case_id in list(self.dependent_case_ids_on_phone):
-            # need this additional check since the case might have already been pruned/remove
-            # as a result of pruning the child case
+            # need this additional check since the case might have already been purged/remove
+            # as a result of purging the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
-                # this will be a no-op if the case cannot be pruned due to dependencies
+                # this will be a no-op if the case cannot be purged due to dependencies
                 self.purge(dependent_case_id)
 
     @classmethod
@@ -1026,10 +1023,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     _add_state_contributions(ret, case_state, is_dependent=True)
                     dependent_case_ids.add(case_state.case_id)
 
-            # try to prune any dependent cases - the old format does this on
+            # try to purge any dependent cases - the old format does this on
             # access, but the new format does it ahead of time and always assumes
             # its current state is accurate.
-            ret.prune_dependent_cases()
+            ret.purge_dependent_cases()
 
             # set and cleanup other properties
             ret.log_format = LOG_FORMAT_SIMPLIFIED

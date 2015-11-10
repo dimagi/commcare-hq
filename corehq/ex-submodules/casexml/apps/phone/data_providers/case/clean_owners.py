@@ -142,15 +142,15 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.closed_cases = closed_cases
 
         _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state)
-        self.restore_state.current_sync_log.prune_dependent_cases()
+        self.restore_state.current_sync_log.purge_dependent_cases()
 
-        pruned_cases = case_ids_on_phone - self.restore_state.current_sync_log.case_ids_on_phone
+        purged_cases = case_ids_on_phone - self.restore_state.current_sync_log.case_ids_on_phone
 
-        # don't sync pruned cases that were never on the phone
+        # don't sync purged cases that were never on the phone
         if self.restore_state.is_initial:
-            irrelevant_cases = pruned_cases
+            irrelevant_cases = purged_cases
         else:
-            irrelevant_cases = pruned_cases - self.restore_state.last_sync_log.case_ids_on_phone
+            irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
 
         for update in potential_updates_to_sync:
             if update.case._id not in irrelevant_cases:
