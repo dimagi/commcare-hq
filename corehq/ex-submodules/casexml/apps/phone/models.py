@@ -766,11 +766,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
         for remove in to_remove:
             indices = self.index_tree.indices.get(remove, {})
             self._remove_case(remove)
-            for this_case_index in indices.values():
-                dependent_case = this_case_index in self.dependent_case_ids_on_phone
-                already_primed_for_removal = this_case_index in to_remove
-                if dependent_case and not already_primed_for_removal:
-                    self.purge(this_case_index)
+            for referenced_case in indices.values():
+                is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
+                already_primed_for_removal = referenced_case in to_remove
+                if is_dependent_case and not already_primed_for_removal:
+                    self.purge(referenced_case)
 
     def _remove_case(self, to_remove):
         # uses closures for assertions
