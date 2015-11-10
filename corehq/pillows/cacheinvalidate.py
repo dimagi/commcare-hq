@@ -1,12 +1,13 @@
 import logging
 
-from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.cache.cache_core import GenerationCache
-from pillowtop.listener import BasicPillow, ms_from_timedelta
+from couchforms.models import XFormInstance
+from pillowtop.listener import BasicPillow
 
 
 pillow_logging = logging.getLogger("pillowtop")
+
 
 class CacheInvalidatePillow(BasicPillow):
     """
@@ -15,11 +16,8 @@ class CacheInvalidatePillow(BasicPillow):
     """
     couch_filter = "hqadmin/not_case_form"  # string for filter if needed
 
-
-
-    def __init__(self, **kwargs):
-        super(CacheInvalidatePillow, self).__init__(**kwargs)
-        self.couch_db = Domain.get_db()
+    def __init__(self):
+        super(CacheInvalidatePillow, self).__init__(couch_db=XFormInstance.get_db())
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
 
     def set_checkpoint(self, change):
@@ -66,7 +64,6 @@ class CacheInvalidatePillow(BasicPillow):
             pillow_logging.info("[CacheInvalidate]: Change %s (%s), generation change: %s" % (doc_id, doc.get('doc_type', 'unknown'), ', '.join(generation_change)))
         else:
             pillow_logging.info("[CacheInvalidate]: Change %s (%s), no generation change" % (doc_id, doc.get('doc_type', 'unknown')))
-
 
     def change_transport(self, doc_dict):
         """
