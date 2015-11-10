@@ -160,11 +160,11 @@ class CleanOwnerCaseSyncOperation(object):
 
     def get_case_ids_for_owner(self, owner_id):
         if EXTENSION_CASES_SYNC_ENABLED.enabled(self.restore_state.domain):
-            return self._get_case_ids_for_extension_owners(owner_id)
+            return self._get_case_ids_for_owners_with_extensions(owner_id)
         else:
-            return self._get_case_ids_for_regular_owners(owner_id)
+            return self._get_case_ids_for_owners_without_extensions(owner_id)
 
-    def _get_case_ids_for_regular_owners(self, owner_id):
+    def _get_case_ids_for_owners_without_extensions(self, owner_id):
         if self.is_clean(owner_id):
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids
@@ -180,7 +180,7 @@ class CleanOwnerCaseSyncOperation(object):
             # Note: This will also return extensions if they exist.
             return get_case_footprint_info(self.restore_state.domain, owner_id).all_ids
 
-    def _get_case_ids_for_extension_owners(self, owner_id):
+    def _get_case_ids_for_owners_with_extensions(self, owner_id):
         """Fetches base and extra cases when extensions are enabled"""
         if not self.is_clean(owner_id) or self.restore_state.is_first_extension_sync:
             # If this is the first time a user with extensions has synced after
