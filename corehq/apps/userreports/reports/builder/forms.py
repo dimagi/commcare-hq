@@ -43,8 +43,8 @@ from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
     make_owner_name_indicator,
-    get_filter_format_from_question_type
-)
+    get_filter_format_from_question_type,
+    make_user_name_indicator)
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
@@ -209,6 +209,8 @@ class DataSourceBuilder(object):
                 ))
             elif prop.type == 'case_property' and prop.source == 'computed/owner_name':
                 ret.append(make_owner_name_indicator(prop.column_id))
+            elif prop.type == 'case_property' and prop.source == 'computed/user_name':
+                ret.append(make_user_name_indicator(prop.column_id))
             elif prop.type == 'case_property':
                 ret.append(make_case_property_indicator(
                     prop.source, prop.column_id
@@ -274,6 +276,7 @@ class DataSourceBuilder(object):
                 source=property
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
+        properties['computed/user_name'] = cls._get_user_name_pseudo_property()
         return properties
 
     @staticmethod
@@ -287,6 +290,19 @@ class DataSourceBuilder(object):
             column_id=get_column_name('computed/owner_name'),
             text='owner name',
             source='computed/owner_name'
+        )
+
+    @staticmethod
+    def _get_user_name_pseudo_property():
+        # user_name is a special pseudo case property for which
+        # the report builder will create a related_doc indicator based on the
+        # user_id of the case
+        return DataSourceProperty(
+            type='case_property',
+            id='computed/user_name',
+            column_id=get_column_name('computed/user_name'),
+            text='user name',
+            source='computed/user_name',
         )
 
     @staticmethod
@@ -1077,7 +1093,7 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
         if self.source_type == "form":
             return "username"
         if self.source_type == "case":
-            return "user_id"
+            return "computed/user_name"
 
     @property
     def container_fieldset(self):
