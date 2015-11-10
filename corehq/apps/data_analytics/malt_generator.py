@@ -54,7 +54,6 @@ class MALTTableGenerator(object):
             num_of_forms = app_row_dict['num_of_forms']
 
             try:
-                import ipdb; ipdb.set_trace()
                 wam, pam, threshold, is_app_deleted = self._app_data(domain_name, app_id)
                 user_id, username, user_type, email = self._user_data(
                     app_row_dict['user_id'],
@@ -142,7 +141,7 @@ class MALTTableGenerator(object):
         except Http404:
             if app_id is not MISSING_APP_ID:
                 logger.debug("App not found %s" % app_id)
-            return (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, False)
+            return (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, False)
         return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
                 getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
                 getattr(app, 'minimum_use_threshold', 15),
