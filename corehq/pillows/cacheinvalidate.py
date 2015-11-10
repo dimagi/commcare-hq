@@ -8,6 +8,7 @@ from pillowtop.listener import BasicPillow, ms_from_timedelta
 
 pillow_logging = logging.getLogger("pillowtop")
 
+
 class CacheInvalidatePillow(BasicPillow):
     """
     Pillow that listens to non xform/case _changes and invalidates the cache whether it's a
@@ -16,10 +17,9 @@ class CacheInvalidatePillow(BasicPillow):
     couch_filter = "hqadmin/not_case_form"  # string for filter if needed
 
 
-
     def __init__(self, **kwargs):
         super(CacheInvalidatePillow, self).__init__(**kwargs)
-        self.couch_db = Domain.get_db()
+        self._couch_db = Domain.get_db()
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
 
     def set_checkpoint(self, change):
