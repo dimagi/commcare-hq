@@ -77,10 +77,12 @@
         console.log('onMarksSelection', marks   );
         clearDrilldown();
         {# marks is an array of what the user has clicked #}
-        var html = [];
-        var sheetName = '';
-        var filters = {};
-        var params = {};
+        var html = [],
+            sheetName = '',
+            filters = {},
+            params = {},
+            filter_key,
+            filter_value;
         for (var markIndex = 0; markIndex < marks.length; markIndex++) {
             var pairs = marks[markIndex].getPairs();
             for (var pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
@@ -94,11 +96,15 @@
                 }
 
                 // Split out params and filters to be applied
-                var FILTER_SUBSTRING = 'ATTR(js_key_',
+                var FILTER_KEY_SUBSTRING = 'ATTR(js_key_Location Key',
+                    FILTER_VALUE_SUBSTRING = 'ATTR(js_key_Location Name',
                     PARAM_SUBSTRING = 'ATTR(js_param_';
-                if(pair.fieldName.includes(FILTER_SUBSTRING)) {
-                    var filter_key = pair.fieldName.slice(FILTER_SUBSTRING.length, -1);
-                    filters[filter_key] = pair.formattedValue;
+                if(pair.fieldName.includes(FILTER_KEY_SUBSTRING)) {
+                    filter_key = pair.formattedValue;
+                }
+                if(pair.fieldName.includes(FILTER_VALUE_SUBSTRING)) {
+                    filter_value = pair.formattedValue;
+                    filters[filter_key] = filter_value;
                 }
                 if(pair.fieldName.includes(PARAM_SUBSTRING)) {
                     var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1);
@@ -126,18 +132,19 @@
                         dashboard = dash;
                         worksheets = dashboard.getWorksheets();
                     })
-{#                    .then(function(){#}
-{#                        // I need the last worksheet to return a promise like object when all the iteration is complete#}
-{#                        var last_worksheet;#}
-{#                        _.each(worksheets, function (worksheet) {#}
-{#                            _.each(filters, function(value, key) {#}
-{#                                console.log('Applying filter to:', key, ', value: ', value);#}
-{#                                last_worksheet = worksheet.applyFilterAsync(key, value, tableau.FilterUpdateType.ADD);#}
-{#                            })#}
-{#                        });#}
-{##}
-{#                        return last_worksheet;#}
-{#                    })#}
+                    .then(function(){
+                        // I need the last worksheet to return a promise like object when all the iteration is complete
+                        var last_worksheet;
+                        _.each(worksheets, function (worksheet) {
+                            _.each(filters, function(value, key) {
+                                console.log('Applying filter to:', worksheet, 'filter key:', key, ', value:', value);
+                                last_worksheet = worksheet.applyFilterAsync(key, value, tableau.FilterUpdateType.REPLACE);
+                                worksheet.getFiltersAsync().then(function(filters) {console.log(filters)})
+                            })
+                        });
+
+                        return last_worksheet;
+                    })
                     .then(function() {
                         //_.each(params, function(value, key, list) {
                         key = 'View By';
