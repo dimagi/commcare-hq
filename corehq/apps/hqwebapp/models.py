@@ -303,7 +303,7 @@ class ProjectReportsTab(UITab):
                 [{
                     "title": _('Create new report'),
                     "url": reverse("report_builder_select_type", args=[self.domain]),
-                    "icon": "icon-plus"
+                    "icon": "icon-plus fa fa-plus"
                 }]
             )]
 
