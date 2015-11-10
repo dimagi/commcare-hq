@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Untitled Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/52628aa1-5fb2-4726-a917-653d50c965fd" uiVersion="1" version="3" name="Untitled Form">
+          <num_names/>
+          <personal>
+            <name/>
+          </personal>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="en" default="">
+          <text id="num_names-label">
+            <value>How many names do you have?</value>
+          </text>
+          <text id="personal-label">
+            <value>Personal Questions</value>
+          </text>
+          <text id="personal/name-label">
+            <value>What is your <output value="ordinal(position(..) + 1)" /> name?</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/num_names" type="xsd:int"/>
+      <bind nodeset="/data/personal/name" type="xsd:string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/num_names">
+      <label ref="jr:itext('num_names-label')"/>
+    </input>
+    <group>
+      <label ref="jr:itext('personal-label')"/>
+      <repeat jr:count="/data/num_names" nodeset="/data/personal" jr:noAddRemove="true()">
+        <input ref="/data/personal/name">
+          <label ref="jr:itext('personal/name-label')"/>
+        </input>
+      </repeat>
+    </group>
+  </h:body>
+</h:html>

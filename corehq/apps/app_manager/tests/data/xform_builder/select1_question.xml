@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Untitled Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/6b870fef-2c47-438c-aa52-e55c29d61034" uiVersion="1" version="3" name="Untitled Form">
+          <you_aint_been_blue/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="en" default="">
+          <text id="you_aint_been_blue-label">
+            <value>What kind of blue are you?</value>
+          </text>
+          <text id="you_aint_been_blue-1-label">
+            <value>Blue</value>
+          </text>
+          <text id="you_aint_been_blue-2-label">
+            <value>Indigo</value>
+          </text>
+          <text id="you_aint_been_blue-3-label">
+            <value>Black</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <select1 ref="/data/you_aint_been_blue">
+      <label ref="jr:itext('you_aint_been_blue-label')"/>
+      <item>
+        <label ref="jr:itext('you_aint_been_blue-1-label')"/>
+        <value>1</value>
+      </item>
+      <item>
+        <label ref="jr:itext('you_aint_been_blue-2-label')"/>
+        <value>2</value>
+      </item>
+      <item>
+        <label ref="jr:itext('you_aint_been_blue-3-label')"/>
+        <value>3</value>
+      </item>
+    </select1>
+  </h:body>
+</h:html>
