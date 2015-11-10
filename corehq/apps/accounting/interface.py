@@ -1166,7 +1166,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
                 credit_adj.note,
-                credit_adj.amount,
+                quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,
             ])
             for credit_adj in self.filtered_credit_adjustments
