@@ -1,4 +1,5 @@
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
+from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
@@ -26,7 +27,9 @@ from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.groups.models import Group
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.app_manager.models import Form
-from casexml.apps.case.models import CommCareCase
+
+
+LOCATION_KEYWORD = 'LOCATION'
 
 
 class StructuredSMSException(Exception):
@@ -49,11 +52,11 @@ def contact_can_use_keyword(v, keyword):
 
 def handle_global_keywords(v, text, msg, text_words, open_sessions):
     global_keyword = text_words[0]
-
     global_keywords = {
         "#START": global_keyword_start,
         "#STOP": global_keyword_stop,
         "#CURRENT": global_keyword_current,
+        "#UPDATE": global_keyword_update
     }
 
     inbound_metadata = MessageMetadata(
@@ -63,6 +66,53 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
 
     fcn = global_keywords.get(global_keyword, global_keyword_unknown)
     return fcn(v, text, msg, text_words, open_sessions)
+
+
+def global_keyword_update(v, text, msg, text_words, open_sessions):
+
+    outbound_metadata = MessageMetadata(
+        workflow=WORKFLOW_KEYWORD,
+    )
+
+    if v.owner_doc_type != 'CommCareUser':
+        send_sms_to_verified_number(v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v), metadata=outbound_metadata)
+        return True
+
+    if len(text_words) > 1:
+        keyword = text_words[1]
+        if keyword.upper() == LOCATION_KEYWORD:
+            site_code = text_words[2:]
+            if not site_code:
+                send_sms_to_verified_number(v, get_message(MSG_UPDATE_LOCATION_SYNTAX, v),
+                                            metadata=outbound_metadata)
+                return True
+
+            site_code = site_code[0].lower()
+
+            location = Location.by_site_code(v.domain, site_code)
+            if location:
+                v.owner.set_location(location)
+                send_sms_to_verified_number(
+                    v,
+                    get_message(MSG_UPDATE_LOCATION_SUCCESS),
+                    metadata=outbound_metadata
+                )
+                return True
+            else:
+                send_sms_to_verified_number(
+                    v,
+                    get_message(MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND, v, context=[site_code]),
+                    metadata=outbound_metadata
+                )
+                return True
+        else:
+            send_sms_to_verified_number(
+                v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v, (keyword,)), metadata=outbound_metadata
+            )
+    else:
+        send_sms_to_verified_number(v, get_message(MSG_UPDATE, v),
+                                    metadata=outbound_metadata)
+    return True
 
 
 def global_keyword_start(v, text, msg, text_words, open_sessions):

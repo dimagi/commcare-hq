@@ -23,22 +23,7 @@
         {% endcompress %}
         {% block stylesheets %}{% endblock %}
 
-        {# this should eventually be moved to the end of the page #}
-        {% if formdesigner %}
-        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-        {% else %}
-        <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
-        {% endif %}
-
-        {% if request.upgrade_knockout_js %}
-        <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
-        {% else %}
-        <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
-        {% endif %}
-        <script type="text/javascript" src="{% static 'underscore-legacy/underscore-min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/ko/global_handlers.ko.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/hq_extensions.jquery.js' %}"></script>
+        {% include "style/includes/bootstrap2/core_libraries.html" %}
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
@@ -91,9 +76,6 @@
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info snapshot-alert">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
-                    {% if request.project.copied_from.organization %}
-                        by <a href="{% url "orgs_landing" request.project.copied_from.organization %}">{{ request.project.copied_from.get_organization.title }}</a>
-                    {% endif %}
                 </div>
             {% endif %}
 

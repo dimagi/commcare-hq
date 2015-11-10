@@ -16,7 +16,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 
-TEST = False
+
 phone_number_re = re.compile("^\d+$")
 
 
@@ -149,9 +149,8 @@ class VerifiedNumber(Document):
         # We use .one() here because the framework prevents duplicates
         # from being entered when a contact saves a number.
         # See CommCareMobileContactMixin.save_verified_number()
-        from corehq.apps.sms.util import strip_plus
         v = cls.view(view_name,
-                     key=strip_plus(phone_number),
+                     key=apply_leniency(phone_number),
                      include_docs=True).one()
         return v if (include_pending or (v and v.verified)) else None
 
@@ -488,20 +487,8 @@ class SMSBackend(MobileBackend):
         """
         return None
 
-    def test_send_sms(self, msg, *args, **kwargs):
-        from corehq.apps.sms.tests import BackendInvocationDoc
-        doc = BackendInvocationDoc()
-        doc._id = '%s-%s' % (self.__class__.__name__, json_format_datetime(msg.date))
-        doc.save()
-
-    def send_sms(self, msg, *args, **kwargs):
-        raise NotImplementedError("send_sms() method not implemented")
-
     def send(self, msg, *args, **kwargs):
-        if TEST:
-            return self.test_send_sms(msg, *args, **kwargs)
-        else:
-            return self.send_sms(msg, *args, **kwargs)
+        raise NotImplementedError("send() method not implemented")
 
     @classmethod
     def get_opt_in_keywords(cls):

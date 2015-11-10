@@ -11,14 +11,12 @@ from custom.openclinica.const import (
     CC_STUDY_SUBJECT_ID,
     CC_SUBJECT_KEY,
     CC_SUBJECT_CASE_TYPE,
+    CC_ENROLLMENT_DATE,
+    CC_SEX,
+    CC_DOB,
 )
 from custom.openclinica.models import Subject
-from custom.openclinica.utils import (
-    OpenClinicaIntegrationError,
-    get_question_item,
-    get_study_constant,
-    originals_first,
-    oc_format_date)
+from custom.openclinica.utils import get_study_constant, originals_first
 
 
 class OdmExportReportView(GenericReportView):
@@ -60,6 +58,9 @@ class OdmExportReportView(GenericReportView):
         return DataTablesHeader(
             DataTablesColumn('Subject Key'),
             DataTablesColumn('Study Subject ID'),
+            DataTablesColumn('Enrollment Date'),
+            DataTablesColumn('Sex'),
+            DataTablesColumn('Date of Birth'),
             DataTablesColumn('Events'),
         )
 
@@ -95,20 +96,22 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
             row = [
                 subject.subject_key,  # What OpenClinica refers to as Person ID; i.e. OID with the "SS_" prefix
                 subject.study_subject_id,
+                subject.enrollment_date,
+                subject.sex,
+                subject.dob,
                 subject.get_report_events(),
             ]
             yield row
 
-    def get_subject_cases(self):
+    def get_study_subject_cases(self):
         cases = (CommCareCase.wrap(res['_source']) for res in self.es_results['hits'].get('hits', []))
         for case in cases:
             if case.type != CC_SUBJECT_CASE_TYPE:
-                # Skip cases that are not subjects. TODO: Remove case type selection from UI
+                # Skip cases that are not subjects.
                 continue
             if not (hasattr(case, CC_SUBJECT_KEY) and hasattr(case, CC_STUDY_SUBJECT_ID)):
-                raise OpenClinicaIntegrationError(
-                    'Mandatory property "{}" or "{}" missing from subject "{}"'.format(
-                        CC_SUBJECT_KEY, CC_STUDY_SUBJECT_ID, case.name))
+                # Skip subjects that have not been selected for the study
+                continue
             yield case
 
     def subject_headers(self):
@@ -120,20 +123,15 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
         ]
 
     def subject_rows(self):
-        audit_log_id = 0  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        for case in self.get_subject_cases():
+        audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
+        for case in self.get_study_subject_cases():
             subject = Subject(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), self.domain)
+            subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE)
+            subject.sex = getattr(case, CC_SEX)
+            subject.dob = getattr(case, CC_DOB)
             for form in originals_first(case.get_forms()):
-                updates = form.form['case'].get('update', {})
-                if updates:
-                    for question, answer in updates.iteritems():
-                        item = get_question_item(self.domain, form.xmlns, question)
-                        if item is None:
-                            # This is a CommCare-only question or form
-                            continue
-                        audit_log_id += 1
-                        subject.add_item(item, form, question, oc_format_date(answer), audit_log_id)
-                    subject.close_form(form)
+                # Pass audit log ID by reference to increment it for each audit log
+                subject.add_data(form.form, form, audit_log_id_ref)
             yield subject
 
     def subject_export_rows(self):

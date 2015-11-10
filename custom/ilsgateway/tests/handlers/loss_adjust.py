@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.tanzania.reminders import LOSS_ADJUST_CONFIRM, SOH_CONFIRM
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSLossesAdjustmentsTest(ILSTestScript):

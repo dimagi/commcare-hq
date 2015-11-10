@@ -3,7 +3,6 @@ import os
 from uuid import uuid4
 import shutil
 import hashlib
-from copy import copy
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
@@ -12,11 +11,11 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
-    LOG_FORMAT_LEGACY, get_sync_log_class_by_format
+    get_sync_log_class_by_format
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
@@ -378,28 +377,6 @@ class RestoreState(object):
         return self.params.version
 
     @property
-    def use_clean_restore(self):
-        def should_use_clean_restore(domain):
-            toggle_to_check = OWNERSHIP_CLEANLINESS_RESTORE
-            if settings.UNIT_TESTING:
-                # disable randomness globally for tests since they already handle everything explicitly
-                toggle_to_check = copy(toggle_to_check)
-                toggle_to_check.randomness = 0
-                override = getattr(
-                    settings, 'TESTS_SHOULD_USE_CLEAN_RESTORE', None)
-                if override is not None:
-                    return override
-            return toggle_to_check.enabled(domain)
-
-        # this can be overridden explicitly in the params but will default to the domain setting
-        if self.params.force_restore_mode == 'clean':
-            return True
-        elif self.params.force_restore_mode == 'legacy':
-            return False
-
-        return should_use_clean_restore(self.domain)
-
-    @property
     @memoized
     def owner_ids(self):
         return set(self.user.get_owner_ids())
@@ -438,8 +415,7 @@ class RestoreState(object):
 
     @property
     def sync_log_class(self):
-        format = LOG_FORMAT_SIMPLIFIED if self.use_clean_restore else LOG_FORMAT_LEGACY
-        return get_sync_log_class_by_format(format)
+        return get_sync_log_class_by_format(LOG_FORMAT_SIMPLIFIED)
 
     @property
     @memoized

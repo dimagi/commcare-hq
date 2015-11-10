@@ -18,7 +18,8 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
     ('corehq.apps.locations.models', 'Location'),
-    ('corehq.apps.users.models', ('CommCareUser', 'CommCareCase')),
+    ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
+    ('casexml.apps.case.models', 'CommCareCase'),
     ('couchforms.models', 'XFormInstance'),
 
     # Data querying utils
@@ -47,3 +48,8 @@ CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
+
+#  make celery synchronous
+CELERY_ALWAYS_EAGER = True
+# Fail hard in tasks so you get a traceback
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = True

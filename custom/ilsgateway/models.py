@@ -524,36 +524,36 @@ def domain_pre_delete_receiver(domain, **kwargs):
         DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
         SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
 
-        cursor = connection.cursor()
-        cursor.execute(
-            "DELETE FROM ilsgateway_alert WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
-        cursor.execute(
-            "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
-            "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
-        )
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM ilsgateway_alert WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
+            cursor.execute(
+                "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
+                "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
-            "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
-        cursor.execute(
-            "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
-            "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
-        )
+            cursor.execute(
+                "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
+                "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
 
     ReportRun.objects.filter(domain=domain_name).delete()
     ILSNotes.objects.filter(domain=domain_name).delete()

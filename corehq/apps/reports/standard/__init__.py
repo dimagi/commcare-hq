@@ -292,6 +292,7 @@ class DatespanMixin(object):
     """
     datespan_field = 'corehq.apps.reports.filters.dates.DatespanFilter'
     datespan_default_days = 7
+    datespan_max_days = None
     inclusive = True
 
     _datespan = None
@@ -314,6 +315,7 @@ class DatespanMixin(object):
     @property
     def default_datespan(self):
         datespan = DateSpan.since(self.datespan_default_days, timezone=self.timezone, inclusive=self.inclusive)
+        datespan.max_days = self.datespan_max_days
         datespan.is_default = True
         return datespan
 

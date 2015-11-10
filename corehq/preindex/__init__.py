@@ -23,6 +23,7 @@ class PreindexPlugin(object):
         self.app_label = app_label
         self.dir = dir
         self.app_db_map = app_db_map
+        self.synced = False
 
     @classmethod
     def register(cls, app_label, file, app_db_map=None):
@@ -39,6 +40,12 @@ class PreindexPlugin(object):
         raise NotImplementedError()
 
     def sync_design_docs(self, temp=None):
+        if self.synced:
+            # workaround emit_post_sync_signal called twice
+            # https://code.djangoproject.com/ticket/17977
+            # this is to speed up test initialization
+            return
+        self.synced = True
         synced = set()
         for design in self.get_designs():
             key = (design.db.uri, design.app_label)

@@ -34,7 +34,6 @@ application_urls = patterns('corehq.apps.hqmedia.views',
     url(r'^map/$', MultimediaReferencesView.as_view(), name=MultimediaReferencesView.name),
     url(r'^search/$', 'search_for_media', name='hqmedia_search'),
     url(r'^choose/$', 'choose_media', name='hqmedia_choose_media'),
-    url(r'^urls/$', 'media_urls', name='hqmedia_media_urls'),
 )
 
 download_urls = patterns('corehq.apps.hqmedia.views',

@@ -3,6 +3,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
+    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
 python:
   - "2.7"
 env:
@@ -12,37 +13,30 @@ env:
     - COUCHDB_PW=""
     - TRAVIS_INSTALL="y"
   matrix:
-    - TEST_RUNNER=testrunner.GroupTestRunnerCatchall
-    - TEST_RUNNER=testrunner.GroupTestRunner0
+    - MATRIX_TYPE=javascript BOWER=yes
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
 branches:
   only:
     - master
-before_install:
-  - "curl http://localhost:5984/"  # print couch info
-  - "uname -a"
-  - "lsb_release -a"
 addons:
   apt:
     packages:
     - moreutils
     - libblas-dev
     - liblapack-dev
+before_install:
+  - "curl http://localhost:5984/"  # print couch info
+  - "uname -a"
+  - "lsb_release -a"
 install:
-  - "git clone https://github.com/dimagi/commcarehq-venv.git"
-  - "cp -r commcarehq-venv/hq_env/* ~/virtualenv/"
-  - "source ~/virtualenv/bin/activate"
-  - "bash -e scripts/uninstall-requirements.sh"
-  # set env variables for couch username/password, used by install.sh, to blank
-  - "bash -e .travis/quietly-run-install.sh"
+  - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
-  - "time (pip install --exists-action w -r requirements/requirements.txt --use-mirrors --timeout 60)"
-  - "bash -e .travis/misc-setup.sh"
+  - "scripts/uninstall-requirements.sh"
+  - "time (pip install --exists-action w -r requirements/requirements.txt --timeout 60)"
   - "cp .travis/localsettings.py localsettings.py"
-  - "pip install coverage unittest2 mock --use-mirrors"
-  - "npm install -g bower"
-  - "ln -nfs `which bower` /home/travis/bower"
-  - "python manage.py bower install"
-script: "coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TEST_RUNNER"
+  - ".travis/matrix-installs.sh"
+script: ".travis/matrix-runner.sh"
 after_success:
   - coverage report
   - coveralls

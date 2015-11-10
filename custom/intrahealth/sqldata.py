@@ -1,5 +1,5 @@
 # coding=utf-8
-from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
+from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import alias
 from corehq.apps.locations.models import SQLLocation
@@ -12,6 +12,8 @@ from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
+from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.parsing import json_format_date
 
 PRODUCT_NAMES = {
@@ -26,6 +28,11 @@ PRODUCT_NAMES = {
     u'cu': [u"cu"],
     u'collier': [u"collier"]
 }
+
+
+def _locations_filter(archived_locations):
+    return NOT(IN('location_id', get_INFilter_bindparams('archived_locations', archived_locations)))
+
 
 class BaseSqlData(SqlData):
     datatables = False
@@ -78,6 +85,10 @@ class BaseSqlData(SqlData):
                     total_row.append('')
         return total_row
 
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(BaseSqlData, self).filter_values, 'archived_locations')
+
 
 class ConventureData(BaseSqlData):
     slug = 'conventure'
@@ -93,7 +104,7 @@ class ConventureData(BaseSqlData):
         filters = super(ConventureData, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters[1:]
 
     @property
@@ -168,7 +179,7 @@ class DispDesProducts(BaseSqlData):
             group_by.append('region_id')
         elif 'district_id' in self.config:
             group_by.append('district_id')
-        group_by.append('product_code')
+        group_by.append('product_id')
         return group_by
 
     @property
@@ -215,15 +226,15 @@ class DispDesProducts(BaseSqlData):
 
     @property
     def columns(self):
-        def get_prd_name(code):
+        def get_prd_name(id):
             try:
-                return SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                return SQLProduct.objects.get(product_id=id, domain=self.config['domain'],
                                               is_archived=False).name
             except SQLProduct.DoesNotExist:
                 pass
         return [
-            DatabaseColumn('Product Name', SimpleColumn('product_code'),
-                           format_fn=lambda code: get_prd_name(code)),
+            DatabaseColumn('Product Name', SimpleColumn('product_id'),
+                           format_fn=lambda id: get_prd_name(id)),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
         ]
@@ -239,7 +250,7 @@ class TauxDeRuptures(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['product_code']
+        group_by = ['product_id']
         if 'region_id' in self.config:
             group_by.append('district_name')
         else:
@@ -252,7 +263,7 @@ class TauxDeRuptures(BaseSqlData):
         filter = super(TauxDeRuptures, self).filters
         filter.append("total_stock_total = 0")
         if 'archived_locations' in self.config:
-            filter.append(NOT(IN('location_id', 'archived_locations')))
+            filter.append(_locations_filter(self.config['archived_locations']))
         return filter
 
     @property
@@ -305,12 +316,12 @@ class FicheData(BaseSqlData):
     def filters(self):
         filters = super(FicheData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
     def group_by(self):
-        return ['product_code', 'PPS_name']
+        return ['product_id', 'PPS_name']
 
     @property
     def columns(self):
@@ -325,9 +336,10 @@ class FicheData(BaseSqlData):
                             [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]
 
+
 class PPSAvecDonnees(BaseSqlData):
     slug = 'pps_avec_donnees'
-    title = 'PPS Avec Données'
+    title = u'PPS Avec Données'
     table_name = 'fluff_CouvertureFluff'
     col_names = ['location_id']
     have_groups = False
@@ -337,7 +349,7 @@ class PPSAvecDonnees(BaseSqlData):
         filters = super(PPSAvecDonnees, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters[1:]
 
     @property
@@ -386,7 +398,7 @@ class DateSource(BaseSqlData):
         filters = super(DateSource, self).filters
         if 'location_id' in self.config:
             filters.append(EQ('location_id', 'location_id'))
-        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
+        filters.append(NOT(EQ('product_id', 'empty_prd_code')))
         return filters
 
     @property
@@ -421,26 +433,26 @@ class RecapPassageData(BaseSqlData):
         filters = super(RecapPassageData, self).filters
         if 'location_id' in self.config:
             filters.append(EQ("location_id", "location_id"))
-        filters.append(NOT(EQ('product_code', 'empty_prd_code')))
+        filters.append(NOT(EQ('product_id', 'empty_prd_code')))
         return filters
 
     @property
     def group_by(self):
-        return ['date', 'product_code']
+        return ['date', 'product_id']
 
     @property
     def columns(self):
         diff = lambda x, y: (x or 0) - (y or 0)
 
-        def get_prd_name(code):
+        def get_prd_name(id):
             try:
-                return SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                return SQLProduct.objects.get(product_id=id, domain=self.config['domain'],
                                               is_archived=False).name
             except SQLProduct.DoesNotExist:
                 pass
         return [
-            DatabaseColumn(_("Designations"), SimpleColumn('product_code'),
-                           format_fn=lambda code: get_prd_name(code)),
+            DatabaseColumn(_("Designations"), SimpleColumn('product_id'),
+                           format_fn=lambda id: get_prd_name(id)),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
@@ -473,12 +485,12 @@ class ConsommationData(BaseSqlData):
     def filters(self):
         filters = super(ConsommationData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
     def group_by(self):
-        group_by = ['product_code']
+        group_by = ['product_id']
         if 'region_id' in self.config:
             group_by.append('district_name')
         else:
@@ -513,7 +525,7 @@ class TauxConsommationData(BaseSqlData):
     def filters(self):
         filters = super(TauxConsommationData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
@@ -523,7 +535,7 @@ class TauxConsommationData(BaseSqlData):
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.append('product_code')
+        group_by.append('product_id')
         return group_by
 
     @property
@@ -578,7 +590,7 @@ class NombreData(BaseSqlData):
     def filters(self):
         filters = super(NombreData, self).filters
         if 'archived_locations' in self.config:
-            filters.append(NOT(IN('location_id', 'archived_locations')))
+            filters.append(_locations_filter(self.config['archived_locations']))
         return filters
 
     @property
@@ -588,7 +600,7 @@ class NombreData(BaseSqlData):
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.append('product_code')
+        group_by.append('product_id')
 
         return group_by
 
@@ -720,17 +732,23 @@ class IntraHealthQueryMeta(QueryMeta):
         super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by)
 
     def execute(self, metadata, connection, filter_values):
-        return connection.execute(self._build_query(filter_values)).fetchall()
+        try:
+            table = metadata.tables[self.table_name]
+        except KeyError:
+            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
+        return connection.execute(self._build_query(table, filter_values)).fetchall()
+
+    def _build_query(self, table, filter_values):
+        raise NotImplementedError()
 
 
 class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, filter_values):
+    def _build_query(self, table, filter_values):
 
         sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
                                  group_by=self.group_by + ['month'],
-                                 whereclause=' AND '.join([f.build_expression() for f in self.filters]),
-                                 from_obj="\"" + self.table_name + "\""
+                                 whereclause=AND(self.filters).build_expression(table),
                                  ), name='s')
 
         return select(self.group_by + ['AVG(s.sum_col) AS %s' % self.key],
@@ -741,12 +759,11 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
-    def _build_query(self, filter_values):
+    def _build_query(self, table, filter_values):
 
         count_uniq = alias(select(self.group_by + ["COUNT(DISTINCT(%s)) AS count_unique" % self.key],
                                   group_by=self.group_by + ['month'],
-                                  whereclause=' AND '.join([f.build_expression() for f in self.filters]),
-                                  from_obj="\"" + self.table_name + "\""
+                                  whereclause=AND(self.filters).build_expression(table),
                                   ), name='cq')
 
         return select(self.group_by + ['SUM(cq.count_unique) AS %s' % self.key],
@@ -762,6 +779,7 @@ class IntraHealthCustomColumn(CustomQueryColumn):
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by
         return self.query_cls(table_name, filters, group_by, self.key)
+
 
 class SumAndAvgGCustomColumn(IntraHealthCustomColumn):
     query_cls = SumAndAvgQueryMeta

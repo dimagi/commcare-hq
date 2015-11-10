@@ -7,9 +7,9 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 from corehq import privileges
 from corehq.apps.accounting.utils import get_active_reminders_by_domain_name
 from corehq.apps.app_manager.models import Application
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.orgs.models import Organization
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.const import USER_DATE_FORMAT
@@ -74,6 +74,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         privileges.OUTBOUND_SMS,
         privileges.INBOUND_SMS,
         privileges.ROLE_BASED_ACCESS,
+        privileges.DATA_CLEANUP,
         LATER_SUBSCRIPTION_NOTIFICATION,
     ]
     action_type = "downgrade"
@@ -180,6 +181,25 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             pass
         return True
 
+    @property
+    def response_data_cleanup(self):
+        """
+        Any active automatic case update rules should be deactivated.
+        """
+        try:
+            AutomaticUpdateRule.objects.filter(
+                domain=self.domain.name,
+                deleted=False,
+                active=True,
+            ).update(active=False)
+            return True
+        except Exception:
+            logger.exception(
+                "[BILLING] Failed to deactivate automatic update rules "
+                "for domain %s." % self.domain.name
+            )
+            return False
+
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
@@ -222,6 +242,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         privileges.DEIDENTIFIED_DATA,
         privileges.MOBILE_WORKER_CREATION,
         privileges.ROLE_BASED_ACCESS,
+        privileges.DATA_CLEANUP,
         LATER_SUBSCRIPTION_NOTIFICATION,
     ]
     action_type = "notification"
@@ -305,14 +326,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Organization menu and corresponding reports are hidden on downgrade.
         """
-        if self.domain.organization:
-            org = Organization.get_by_name(self.domain.organization)
-            return self._fmt_alert(
-                _("You will lose access to cross-project reports for the "
-                  "organization '%(org_name)s'.") %
-                {
-                    'org_name': org.title,
-                })
+        return None
 
     @property
     @memoized
@@ -473,3 +487,28 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 'date_start': next_subscription.date_start.strftime(USER_DATE_FORMAT),
                 'plan_name': plan_desc['name'],
             })
+
+    @property
+    def response_data_cleanup(self):
+        """
+        Any active automatic case update rules should be deactivated.
+        """
+        rule_count = AutomaticUpdateRule.objects.filter(
+            domain=self.domain.name,
+            deleted=False,
+            active=True,
+        ).count()
+        if rule_count > 0:
+            return self._fmt_alert(
+                ungettext(
+                    "You have %(rule_count)d automatic case update rule "
+                    "configured in your project. If you select this plan, "
+                    "this rule will be deactivated.",
+                    "You have %(rule_count)d automatic case update rules "
+                    "configured in your project. If you select this plan, "
+                    "these rules will be deactivated.",
+                    rule_count
+                ) % {
+                    'rule_count': rule_count,
+                }
+            )

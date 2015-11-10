@@ -9,9 +9,28 @@ from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
-from corehq.apps.app_manager.suite_xml.xml_models import Text, Xpath, Locale, Id, Header, Template, Field, Lookup, Extra, \
-    Response, Detail, LocalizedAction, Stack, Action, Display, PushFrame, StackDatum, \
-    Style
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Action,
+    Detail,
+    DetailVariable,
+    Display,
+    Extra,
+    Field,
+    Header,
+    Id,
+    Locale,
+    LocalizedAction,
+    Lookup,
+    PushFrame,
+    Response,
+    Stack,
+    StackDatum,
+    Style,
+    Template,
+    Text,
+    Xpath,
+)
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column
 from corehq.apps.app_manager import id_strings
@@ -50,13 +69,11 @@ class DetailContributor(SectionContributor):
                                         detail_type,
                                         detail,
                                         detail_column_infos,
-                                        list(detail.get_tabs()),
-                                        id_strings.detail(module, detail_type),
-                                        Text(locale_id=id_strings.detail_title_locale(
+                                        tabs=list(detail.get_tabs()),
+                                        id=id_strings.detail(module, detail_type),
+                                        title=Text(locale_id=id_strings.detail_title_locale(
                                             module, detail_type
                                         )),
-                                        0,
-                                        len(detail_column_infos)
                                     )
                                     if d:
                                         r.append(d)
@@ -69,13 +86,13 @@ class DetailContributor(SectionContributor):
         return r
 
     def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs, id, title, start, end):
+                     tabs=None, id=None, title=None, nodeset=None, start=0, end=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title)
+        d = Detail(id=id, title=title, nodeset=nodeset)
         if tabs:
             tab_spans = detail.get_tab_spans()
             for tab in tabs:
@@ -84,17 +101,19 @@ class DetailContributor(SectionContributor):
                     detail_type,
                     detail,
                     detail_column_infos,
-                    [],
-                    None,
-                    Text(locale_id=id_strings.detail_tab_title_locale(
+                    title=Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
-                    tab_spans[tab.id][0],
-                    tab_spans[tab.id][1]
+                    nodeset=tab.nodeset if tab.has_nodeset else None,
+                    start=tab_spans[tab.id][0],
+                    end=tab_spans[tab.id][1]
                 )
                 if sub_detail:
                     d.details.append(sub_detail)
             if len(d.details):
+                helper = EntriesHelper(self.app)
+                datums = helper.get_datum_meta_module(module)
+                d.variables.extend([DetailVariable(name=datum.datum.id, function=datum.datum.value) for datum in datums])
                 return d
             else:
                 return None
@@ -113,6 +132,8 @@ class DetailContributor(SectionContributor):
                 d.variables.extend(variables)
 
             # Add fields
+            if end is None:
+                end = len(detail_column_infos)
             for column_info in detail_column_infos[start:end]:
                 fields = get_column_generator(
                     self.app, module, detail,

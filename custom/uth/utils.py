@@ -1,7 +1,6 @@
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms import convert_xform_to_json
-from dimagi.utils.couch.database import get_db
+from corehq.form_processor.utils import convert_xform_to_json
 from casexml.apps.case.models import CommCareCase
 from lxml import etree
 import os
@@ -25,7 +24,7 @@ def scan_case(scanner_serial, scan_id):
     # but has them on the file itself
     scan_id = scan_id.lstrip('0')
 
-    return get_db().view(
+    return CommCareCase.get_db().view(
         'uth/uth_lookup',
         startkey=[UTH_DOMAIN, scanner_serial, scan_id],
         endkey=[UTH_DOMAIN, scanner_serial, scan_id, {}],

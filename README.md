@@ -45,31 +45,52 @@ Otherwise, install the following software from your OS package manager or the
 individual project sites when necessary.
 
 + Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
-+ pip
-+ CouchDB >= 1.0 (1.2 recommended) ([installation instructions][couchdb])
++ pip  (If you use virtualenv (see below) this will be installed automatically)
++ CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
   - Mac users: note that when installing erlang, you do NOT need to check out an older version of erlang.rb
-+ PostgreSQL >= 8.4 - (install from OS package manager or [here][postgres])
-+ [elasticsearch][elasticsearch] (including Java 7).
-  - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
-  - `brew install homebrew/versions/elasticsearch090` works well on mac
-+ redis >= 3.0.3 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
-+ [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
++ PostgreSQL >= 9.1 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
++ [Elasticsearch][elasticsearch] 0.90.13. In Ubuntu and other Debian derivatives,
+  [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
+
+        $ sudo dpkg -i elasticsearch-0.90.13.deb
+        $ sudo apt-mark hold elasticsearch
+
+  On Mac, the following works well:
+
+        $ brew install homebrew/versions/elasticsearch090
+
++ redis >= 3.0.3 (install from OS package manager (`sudo apt-get install redis-server`) or follow these
+  [installation notes][redis])
++ [Jython][jython] 2.5.3 (optional, only needed for CloudCare). **Note**: CloudCare will _not_ work on 2.7.0 which is
+  the default version at jython.org. 2.5.3 is the default version in current versions of Ubuntu
+  (`sudo apt-get install jython`) but to be safe you can explicitly set and hold the version with
+
+        $ sudo apt-get install jython=2.5.3
+        $ sudo apt-mark hold jython
+
 + For additional requirements necessary only if you want to modify the default
   JavaScript or CSS styling, see [CommCare HQ Style](https://github.com/dimagi/hqstyle-src).
 
  [couchdb]: http://wiki.apache.org/couchdb/Installation
  [postgres]: http://www.postgresql.org/download/
+ [redis]: https://gist.github.com/mwhite/c0381c5236855993572c
  [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
  [jython]: http://jython.org/downloads.html
 
 #### Elasticsearch Configuration (optional)
 
-To run elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
+To run Elasticsearch in an upstart configuration, see [this example](https://gist.github.com/3961323).
 
-To secure elasticsearch, we recommend setting the listen port to localhost on a
+To secure Elasticsearch, we recommend setting the listen port to localhost on a
 local machine. On a distributed environment, we recommend setting up ssh
-tunneled ports for the elasticsearch port. The supervisor_elasticsearch.conf
+tunneled ports for the Elasticsearch port. The supervisor_elasticsearch.conf
 supervisor config demonstrates the tunnel creation using autossh.
+
+If working on a network with other Elasticsearch instances that you do not want to be included in your cluster
+automatically, set the cluster name to your hostname in /etc/elasticsearch/elasticsearch.yml:
+```yaml
+cluster.name: <your hostname>
+```
 
 #### CouchDB Configuration
 
@@ -87,37 +108,62 @@ Add the required user:
 
 #### PostgreSQL Configuration
 
-    createuser -U postgres commcarehq
-    createdb -U postgres commcarehq
-    createdb -U postgres commcarehq_reporting
+Log in as the postgres user, and create a `commcarehq` user with password `commcarehq`, and `commcarehq` and 
+`commcarehq_reporting` databases:
 
-If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default postgres role has been created. If not, `createuser -s -r postgres` will create it.
+    $ sudo su - postgres
+    postgres$ createuser -P commcarehq  # When prompted, enter password "commcarehq"
+    postgres$ createdb commcarehq
+    postgres$ createdb commcarehq_reporting
+
+If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default 
+postgres role has been created, and run the same commands without first logging in as the postgres POSIX user:
+
+    $ createuser -s -r postgres  # Create the postgres role if it does not yet exist
+    $ createuser -U postgres -P commcarehq  # When prompted, enter password "commcarehq"
+    $ createdb -U postgres commcarehq
+    $ createdb -U postgres commcarehq_reporting
 
 
 ### Setting up a virtualenv
 
 A virtualenv is not required, but it may make your life easier. If you're on Windows see the section `Alternate steps
-for Windows` below.
+for Windows` below. Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching 
+between environments easy:
 
-    sudo pip install virtualenv
-    mkdir ~/.virtualenvs/
-    virtualenv ~/.virtualenvs/commcare-hq --no-site-packages
+    $ sudo apt-get install virtualenvwrapper
+    $ mkvirtualenv cchq
+
+
+### Installing required dev packages
+
+The Python libraries you will be installing in the next step require the following packages:
+
+    $ sudo apt-get install rabbitmq-server \
+          libpq-dev \
+          libfreetype6-dev \
+          libjpeg-dev \
+          libtiff-dev \
+          libwebp-dev \
+          libxml2-dev \
+          libxslt-dev \
+          python-dev
+
 
 ### Downloading and configuring CommCare HQ
 
 Once all the dependencies are in order, please do the following:
 
-    git clone git@github.com:dimagi/commcare-hq.git
-    cd commcare-hq
-    git submodule update --init --recursive
-    source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
-    mkdir pip_cache
-    pip install --download-cache pip_cache -r requirements/requirements.txt -r requirements/prod-requirements.txt
-    cp localsettings.example.py localsettings.py
+    $ git clone git@github.com:dimagi/commcare-hq.git
+    $ cd commcare-hq
+    $ git submodule update --init --recursive
+    $ workon cchq  # if your "cchq" virtualenv is not already activated
+    $ pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
+    $ cp localsettings.example.py localsettings.py
 
 There is also a separate collection of Dimagi dev oriented tools that you can install:
 
-  pip install -r requirements/dev-requirements.txt
+    $ pip install -r requirements/dev-requirements.txt
 
 Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
 log file settings are correct, as well as any settings required by any other
@@ -146,8 +192,11 @@ that you have a 32bit version of Python installed.
   $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
   option. The http-parser package is required by restkit.
 + Having installed those packages you can comment them out of the requirements/requirements.txt file.
-+ Now run `pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt` as described in the
-  section above.
++ Now run 
+
+        $ pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
+
+  as described in the section above.
 
  [mingw]: http://www.mingw.org/wiki/Getting_Started
  [gevent]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#gevent
@@ -159,37 +208,50 @@ that you have a 32bit version of Python installed.
 
 ### Set up your django environment
 
-    # you may have to run syncdb twice to get past a transient error
-    ./manage.py syncdb --noinput
-    ./manage.py migrate --noinput
-    ./manage.py collectstatic --noinput
+Populate your database:
 
-    # This will do some basic setup, create a superuser, and create a project.
-    # The project-name, email, and password given here are specific to your
-    # local development environment.
-    # Ignore warnings related to Raven for the following three commands.
-    ./manage.py bootstrap <project-name> <email> <password>
+    $ ./manage.py syncdb --noinput  # you may have to run syncdb twice to get past a transient error
+    $ ./manage.py migrate --noinput
+    $ ./manage.py collectstatic --noinput
 
-    # To set up elasticsearch indexes, first run (and then kill once you see the
-    "Starting pillow" lines):
-    ./manage.py run_ptop --all
-    # This will do an initial run of the elasticsearch indexing process, but this will run as a
-    # service later. This run at least creates the indices for the first time.
+Create a project. The following command will do some basic setup, create a superuser, and create a project. The 
+project-name, email, and password given here are specific to your local development environment. Ignore warnings 
+related to Raven for the following three commands.
 
-    # Next, set the aliases of the elastic indices. These can be set by a management command
-    # that sets the stored index names to the aliases.
+    $ ./manage.py bootstrap <project-name> <email> <password>
 
-    ./manage.py ptop_es_manage --flip_all_aliases
+To set up elasticsearch indexes, first run (and then kill once you see the "Starting pillow" lines):
+
+    $ ./manage.py run_ptop --all
+
+This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run 
+at least creates the indices for the first time.
+
+Next, set the aliases of the elastic indices. These can be set by a management command that sets the stored index 
+names to the aliases.
+
+    $ ./manage.py ptop_es_manage --flip_all_aliases
 
 ### Installing Bower
 
 We use bower to manage our javascript dependencies. In order to download the required javascript packages, 
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
-    1. Install [npm](https://www.npmjs.com/)
-    2. Install bower `npm -g install bower`
-    3. Add `BOWER_PATH` to `localsettings.py`. Find your local bower path by using `which bower`
-    4. Run bower with `./manage.py bower install`
+1. Install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled with NodeJS. An up-to-date version is 
+   available on the NodeSource repository.
+
+        $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+        $ sudo apt-get install -y nodejs
+
+2. Install bower:
+ 
+        $ `sudo npm -g install bower`
+
+3. Add `BOWER_PATH` to `localsettings.py`. Find your local bower path by using `which bower`
+
+4. Run bower with:
+
+        $ ./manage.py bower install
 
 
 ### Using LESS: 3 Options
@@ -248,9 +310,9 @@ simultaneously, we need to have two versions installed.
 
 For LESS 1.3.1 (the native less compiler):
 
-    1. Install [npm](https://www.npmjs.com/)
-    2. Install less@1.3.1 by running `npm install -g less@1.3.1`
-    3. Make sure `lessc --version` outputs something like 1.3.1 or 1.3.0 as the current version
+1. Install [npm](https://www.npmjs.com/)
+2. Install less@1.3.1 by running `npm install -g less@1.3.1`
+3. Make sure `lessc --version` outputs something like 1.3.1 or 1.3.0 as the current version
 
 On production we're using LESS 1.7.3 as the alternate LESS, and this version
 for sure works with Bootstrap 3.
@@ -263,10 +325,10 @@ LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 You can change that to wherever you clone the git repo for 1.7.3, or leave it
 as is and follow this accordingly:
 
-    1. in `/opt`: `git clone https://github.com/less/less.js.git lessc`
-    2. In the `lessc` repo `git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e`
-    to go straight to the 1.7.3 release. Experiment with newer releases at will.
-    3. Verify that `/opt/lessc/bin/lessc --version` is around 1.7.3
+1. in `/opt`: `git clone https://github.com/less/less.js.git lessc`
+2. In the `lessc` repo `git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e` to go straight to the 1.7.3 
+   release. Experiment with newer releases at will.
+3. Verify that `/opt/lessc/bin/lessc --version` is around 1.7.3
 
 ###### Compressor and Caching
 
@@ -281,7 +343,8 @@ COMPRESS_REBUILD_TIMEOUT = 0
 
 If you deleted your STATIC files directory, and you're getting 404s on all the
 Compressed files, force compression by running:
-`manage.py compress --force`
+
+    $ manage.py compress --force
 
 
 #### Option 3: Compress OFFLINE, just like production
@@ -309,11 +372,10 @@ Notice that `COMPRESS_MINT_DELAY`, `COMPRESS_MTIME_DELAY`, and
 `COMPRESS_REBUILD_TIMEOUT` are not set.
 
 For all STATICFILES changes, run:
-```
-manage.py collectstatic
-manage.py fix_less_imports_collectstatic
-manage.py compress
-```
+
+    $ manage.py collectstatic
+    $ manage.py fix_less_imports_collectstatic
+    $ manage.py compress
 
 Option 3 is really only useful if you're trying to debug issues that mirror
 production that's related to staticfiles and compressor. For all practical uses
@@ -326,8 +388,9 @@ To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
 django admin user you created above (with manage.py bootstrap) and then create
 the file `submodules/touchforms-src/touchforms/backend/localsettings.py` with
 the following contents:
-
-    URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
+```
+URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
+```
 
 #### Common issues
 
@@ -374,25 +437,23 @@ Running CommCare HQ
 If your installation didn't set up the helper processes required by CommCare HQ
 to automatically run on system startup, you need to run them manually:
 
-    redis-server /path/to/redis.conf
-
-    /path/to/unzipped/elasticsearch/bin/elasticsearch &
-
-    /path/to/couchdb/bin/couchdb &
+    $ redis-server /path/to/redis.conf
+    $ /path/to/unzipped/elasticsearch/bin/elasticsearch &
+    $ /path/to/couchdb/bin/couchdb &
 
 Then run the following separately:
 
     # Setting up the asynchronous task scheduler
     # For Mac / Linux
-    ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
+    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
     > manage.py celeryd --settings=settings
 
     # Keeps elasticsearch index in sync
-    ./manage.py run_ptop --all
+    $ ./manage.py run_ptop --all
 
     # run the Django server
-    ./manage.py runserver 0.0.0.0:8000
+    $ ./manage.py runserver 0.0.0.0:8000
 
 If you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
 
@@ -400,7 +461,9 @@ If you want to use CloudCare you will also need to run the Touchforms server and
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
 
     # On Mac / Linux use Gunicorn as the multi-threaded server
-    gunicorn deployment.gunicorn.commcarehq_wsgi:application -c deployment/gunicorn/gunicorn_conf.py -k gevent --bind 0.0.0.0:8000
+    $ gunicorn deployment.gunicorn.commcarehq_wsgi:application \
+        -c deployment/gunicorn/gunicorn_conf.py \
+        -k gevent --bind 0.0.0.0:8000
 
     # on Windows use CherryPy
     > manage.py runcpserver port=8000
@@ -409,11 +472,13 @@ Running Formdesigner in Development mode
 ----------------------------------------
 By default, HQ uses vellum minified build files to render form-designer. To use files from Vellum directly, do following
 
-    # in localsettings
-    VELLUM_DEBUG = "dev"
+```
+# localsettings.py:
+VELLUM_DEBUG = "dev"
+```
 
     # simlink your Vellum code to submodules/formdesigner
-    ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
+    $ ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
 
 Building CommCare Mobile Apps
 -----------------------------
@@ -429,16 +494,16 @@ Running Tests
 
 To run the standard tests for CommCare HQ, simply run
 
-    ./manage.py test
+    $ ./manage.py test
 
 To run a particular test or subset of tests
 
-    ./manage.py test <app_name>[.<TestClass>[.<test_name>]]
+    $ ./manage.py test <app_name>[.<TestClass>[.<test_name>]]
 
     # examples
-    ./manage.py test app_manager
-    ./manage.py test app_manager.SuiteTest
-    ./manage.py test app_manager.SuiteTest.test_picture_format
+    $ ./manage.py test app_manager
+    $ ./manage.py test app_manager.SuiteTest
+    $ ./manage.py test app_manager.SuiteTest.test_picture_format
 
 To run the selenium tests, you first need to install the
 [ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).
@@ -451,7 +516,57 @@ The tests for CloudCare currently expect the "Basic Tests" app from the
 
 Make sure to edit the selenium user credentials in `localsettings.py`.  Then run
 
-    ./manage.py seltest
+    $ ./manage.py seltest
+
+## Javascript tests
+
+### Setup
+
+In order to run the javascript tests you'll need to install the required npm packages:
+
+    $ npm install
+
+It's recommended to install grunt globally in order to use grunt from the command line:
+
+    $ npm install -g grunt
+    $ npm install -g grunt-cli
+
+In order for the tests to run the __development server needs to be running on port 8000__.
+
+### Running tests from the command line
+
+To run all javascript tests in all the apps:
+
+    $ grunt mocha
+
+To run the javascript tests for a particular app run:
+
+    $ grunt mocha:<app_name> // (e.g. grunt mocha:app_manager)
+
+To list all the apps available to run:
+
+    $ grunt list
+
+
+### Running tests from the browser
+
+To run tests from the browser (useful for debugging) visit this url:
+
+```
+http://localhost:8000/mocha/<app_name>
+```
+
+Occasionally you will see an app specified with a `#`, like `app_manager#b3`. The string after `#` specifies that the test uses an alternate configuration. To visit this suite in the browser go to:
+
+```
+http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
+```
+
+### Continuous javascript testing
+
+By running the `watch` command, it's possible to continuously run the javascript test suite while developing 
+
+    $ grunt watch:<app_name>  // (e.g. grunt watch:app_manager)
 
 ## Sniffer
 
@@ -462,9 +577,8 @@ For example, you are working on the `retire` method of `CommCareUser`. You are w
 
 ### Sniffer Usage
 
-```sh
-sniffer -x <app_name>[.<TestClass>[.<test_name>]]
-```
+    $ sniffer -x <app_name>[.<TestClass>[.<test_name>]]
+
 In our example, we would run `sniffer -x users.RetireUserTestCase`
 You should see beautiful green `In good standing` if all is well, otherwise a `Failed - Back to work!` message is displayed. 
 If you want to run the whole test suite whenever a file is changed (not recommended), you would run sniffer without the `-x` argument

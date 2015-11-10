@@ -42,7 +42,8 @@ from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorExcept
     pillow_supervisor_status
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
-from pillowtop import get_all_pillows_json, get_pillow_by_name
+from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
@@ -85,7 +86,6 @@ from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
-from pillowtop.utils import get_pillow_json
 
 
 @require_superuser
@@ -399,7 +399,12 @@ def db_comparisons(request):
 def pillow_operation_api(request):
     pillow_name = request.POST["pillow_name"]
     operation = request.POST["operation"]
-    pillow = get_pillow_by_name(pillow_name)
+    try:
+        pillow_config = get_pillow_config_by_name(pillow_name)
+        pillow = pillow_config.get_instance()
+    except PillowNotFoundError:
+        pillow_config = None
+        pillow = None
 
     def get_response(error=None):
         response = {
@@ -409,8 +414,8 @@ def pillow_operation_api(request):
             'message': error,
         }
         response.update(pillow_supervisor_status(pillow_name))
-        if pillow:
-            response.update(get_pillow_json(pillow))
+        if pillow_config:
+            response.update(get_pillow_json(pillow_config))
         return json_response(response)
 
     @any_toggle_enabled(SUPPORT)

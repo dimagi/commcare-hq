@@ -23,6 +23,8 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 
+from corehq.apps.analytics.tasks import track_workflow
+
 logger = logging.getLogger(__name__)
 
 
@@ -166,6 +168,9 @@ class InvitationView(object):
             if request.method == "POST":
                 couch_user = CouchUser.from_django_user(request.user)
                 self._invite(invitation, couch_user)
+                track_workflow(request.couch_user.get_email(),
+                               "Current user accepted a project invitation",
+                               {"Current user accepted a project invitation": "yes"})
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
@@ -188,6 +193,9 @@ class InvitationView(object):
                     if authenticated is not None and authenticated.is_active:
                         login(request, authenticated)
                     if isinstance(invitation, DomainInvitation):
+                        track_workflow(request.POST['email'],
+                                       "New User Accepted a project invitation",
+                                       {"New User Accepted a project invitation": "yes"})
                         return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
                     else:
                         return HttpResponseRedirect(reverse("homepage"))

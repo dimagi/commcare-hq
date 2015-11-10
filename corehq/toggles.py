@@ -165,7 +165,8 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'shadow-app-builder',
     'Shadow Modules',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
 BOOTSTRAP3_PREVIEW = StaticToggle(
@@ -229,6 +230,14 @@ DETAIL_LIST_TABS = StaticToggle(
     'Tabs in the case detail list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+DETAIL_LIST_TAB_NODESETS = StaticToggle(
+    'detail-list-tab-nodesets',
+    'Associate a nodeset with a case detail tab',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -479,15 +488,6 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
-OWNERSHIP_CLEANLINESS_RESTORE = PredictablyRandomToggle(
-    'enable_owner_cleanliness_restore',
-    'Enable restoring with updated owner cleanliness logic.',
-    TAG_PRODUCT_CORE,
-    namespaces=[NAMESPACE_DOMAIN],
-    randomness=.5,
-    help_link='https://docs.google.com/a/dimagi.com/document/d/12WfZLerFL832LZbMwqRAvXt82scdjDL51WZVNa31f28/edit#heading=h.gu9sjekp0u2p',
-)
-
 MOBILE_UCR = StaticToggle(
     'mobile_ucr',
     ('Mobile UCR: Configure viewing user configurable reports on the mobile '
@@ -621,13 +621,6 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EMAIL_IN_REMINDERS = StaticToggle(
-    'email_in_reminders',
-    'Send emails from reminders',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -665,6 +658,14 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
 )
 
 
+AUTOMATIC_CASE_CLOSURE = StaticToggle(
+    'automatic_case_closure',
+    'Automatically Close Cases',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+
 SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'sms_performance_feedback',
     'Enable SMS-based performance feedback',
@@ -684,6 +685,13 @@ VIEW_BUILD_SOURCE = StaticToggle(
     'Allow users to view and diff build source files',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+USE_SQL_BACKEND = StaticToggle(
+    'sql_backend',
+    'Uses a sql backend instead of a couch backend for form processing',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
 )
 
 EWS_WEB_USER_EXTENSION = StaticToggle(

@@ -16,6 +16,7 @@
     <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
     <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
 {% endblock %}
@@ -120,7 +121,6 @@
     <div id="report-title">{{ report.title }}</div>
 </div>
 {% endblock %}
-
 {% block main_column %}
 {% block report_alerts %}
 <div id="report-error" class="alert alert-error hide">
@@ -138,6 +138,7 @@
 {% endblock report_alerts %}
 {% block main_column_content %}
 <div class="report-controls">
+    {% if report.spec.description %}<p class="lead">{{ report.spec.description }}</p>{% endif %}
     <form id="report-filters" class="form-horizontal" method="GET" action="">
         <fieldset>
             <legend><span>{% trans "Report Filters" %}</span></legend>

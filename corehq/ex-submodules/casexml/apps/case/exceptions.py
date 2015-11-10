@@ -38,3 +38,7 @@ class ReconciliationError(CommCareCaseError):
 
 class MissingServerDate(ReconciliationError):
     pass
+
+
+class VersionNotSupported(CommCareCaseError):
+    pass

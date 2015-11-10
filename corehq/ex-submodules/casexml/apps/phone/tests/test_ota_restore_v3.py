@@ -5,7 +5,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import FileRestoreResponse
@@ -25,7 +25,7 @@ class OtaV3RestoreTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        FormProcessorInterface.submit_form_locally(xml_data, self.domain)
+        FormProcessorInterface().submit_form_locally(xml_data, self.domain)
 
         expected_case_block = """
         <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo"

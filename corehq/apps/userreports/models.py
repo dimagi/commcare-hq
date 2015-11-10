@@ -23,11 +23,12 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, \
     ReportColumnFactory, ReportOrderByFactory
-from corehq.apps.userreports.reports.specs import FilterSpec
+from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch.database import iter_docs
@@ -70,6 +71,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     base_item_expression = DictProperty()
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
+    named_expressions = DictProperty()
     named_filters = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
 
@@ -94,15 +96,15 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @memoized
     def _get_deleted_filter(self):
-        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
+        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type), include_configured=False)
 
-    def _get_filter(self, doc_types):
+    def _get_filter(self, doc_types, include_configured=True):
         if not doc_types:
             return None
 
         extras = (
             [self.configured_filter]
-            if self.configured_filter else []
+            if include_configured and self.configured_filter else []
         )
         built_in_filters = [
             self._get_domain_filter_spec(),
@@ -123,7 +125,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self.named_filter_objects,
+            context=self._get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -135,9 +137,18 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
+    def named_expression_objects(self):
+        return {name: ExpressionFactory.from_spec(expression, FactoryContext.empty())
+                for name, expression in self.named_expressions.items()}
+
+    @property
+    @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, {})
+        return {name: FilterFactory.from_spec(filter, FactoryContext.empty())
                 for name, filter in self.named_filters.items()}
+
+    def _get_factory_context(self):
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
 
     @property
     @memoized
@@ -156,20 +167,20 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                     "property_name": "_id"
                 }
             }
-        }, self.named_filter_objects)]
+        }, self._get_factory_context())]
 
         default_indicators.append(IndicatorFactory.from_spec({
             "type": "inserted_at",
-        }, self.named_filter_objects))
+        }, self._get_factory_context()))
 
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
-            }, self.named_filter_objects))
+            }, self._get_factory_context()))
         return CompoundIndicator(
             self.display_name,
             default_indicators + [
-                IndicatorFactory.from_spec(indicator, self.named_filter_objects)
+                IndicatorFactory.from_spec(indicator, self._get_factory_context())
                 for indicator in self.configured_indicators
             ]
         )
@@ -178,7 +189,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
+            return ExpressionFactory.from_spec(self.base_item_expression, context=self._get_factory_context())
         return None
 
     def get_columns(self):
@@ -216,7 +227,15 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         # these two properties implicitly call other validation
         self._get_main_filter()
         self._get_deleted_filter()
-        self.indicators
+
+        # validate indicators and column uniqueness
+        columns = [c.id for c in self.indicators.get_columns()]
+        unique_columns = set(columns)
+        if len(columns) != len(unique_columns):
+            for column in set(columns):
+                columns.remove(column)
+            raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+
         self.parsed_expression
 
 

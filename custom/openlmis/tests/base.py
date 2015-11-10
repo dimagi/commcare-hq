@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.models import OpenLMISConfig, CommtrackConfig
-from corehq.apps.commtrack.tests import CommTrackTest
+from corehq.apps.commtrack.tests.util import CommTrackTest
 from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 
 

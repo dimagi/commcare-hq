@@ -83,7 +83,7 @@ class CaseXMLGeneratorBase(object):
         element.append(self.get_case_name_element())
 
     def add_custom_properties(self, element):
-        for k, v, in self.case.dynamic_case_properties():
+        for k, v, in self.case.dynamic_case_properties().items():
             element.append(get_dynamic_element(k, v))
 
     def add_indices(self, element):

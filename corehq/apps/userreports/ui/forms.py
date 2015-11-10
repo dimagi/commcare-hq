@@ -100,6 +100,9 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                                   help_text=help_text.CONFIGURED_FILTER)
     configured_indicators = JsonField(
         expected_type=list, help_text=help_text.CONFIGURED_INDICATORS)
+    named_expressions = JsonField(required=False, expected_type=dict,
+                              label=_("Named expressions (optional)"),
+                              help_text=help_text.NAMED_EXPRESSIONS)
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"),
                               help_text=help_text.NAMED_FILTER)

@@ -3,8 +3,8 @@ from django.conf import settings
 from django.test import TestCase
 import json
 from corehq.util.test_utils import TestFileMixin
-from pillowtop import get_all_pillow_classes
-from pillowtop.listener import AliasedElasticPillow
+from pillowtop.listener import AliasedElasticPillow, BasicPillow
+from pillowtop.utils import get_all_pillow_configs
 
 
 class PillowtopSettingsTest(TestCase, TestFileMixin):
@@ -24,34 +24,44 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
         settings.PILLOWTOPS = cls._PILLOWTOPS
 
     def test_instantiate_all(self):
-        all_pillow_classes = get_all_pillow_classes()
+        all_pillow_configs = list(get_all_pillow_configs())
         expected_meta = self.get_json('all-pillow-meta')
 
-        self.assertEqual(len(all_pillow_classes), len(expected_meta))
-        for pillow_class in all_pillow_classes:
-            self.assertEqual(expected_meta[pillow_class.__name__], _pillow_meta_from_class(pillow_class))
+        self.assertEqual(len(all_pillow_configs), len(expected_meta))
+        for pillow_config in all_pillow_configs:
+            self.assertEqual(expected_meta[pillow_config.name], _pillow_meta_from_config(pillow_config))
 
-    def _rewrite_file(self, pillow_classes):
+    def _rewrite_file(self, pillow_configs):
         # utility that should only be called manually
         with open(self.get_path('all-pillow-meta', 'json'), 'w') as f:
             f.write(
-                json.dumps({cls.__name__: _pillow_meta_from_class(cls) for cls in pillow_classes},
-                           indent=4)
+                json.dumps({config.name: _pillow_meta_from_config(config) for config in pillow_configs},
+                           indent=4, sort_keys=True)
             )
 
 
-def _pillow_meta_from_class(pillow_class):
+def _pillow_meta_from_config(pillow_config):
+    pillow_class = pillow_config.get_class()
     is_elastic = issubclass(pillow_class, AliasedElasticPillow)
-    kwargs = {'create_index': False, 'online': False} if is_elastic else {}
-    pillow_instance = pillow_class(**kwargs)
+    if pillow_config.instance_generator == pillow_config.class_name:
+        kwargs = {'create_index': False, 'online': False} if is_elastic else {}
+        pillow_instance = pillow_class(**kwargs)
+    else:
+        # if we have a custom instance generator just use it
+        pillow_instance = pillow_config.get_instance()
     props = {
-        'class_name': pillow_instance.__class__.__name__,
-        'document_class': pillow_instance.document_class.__name__ if pillow_instance.document_class else None,
-        'couch_filter': pillow_instance.couch_filter,
-        'include_docs': pillow_instance.include_docs,
-        'extra_args': pillow_instance.extra_args,
-        'checkpoint_id': pillow_instance.checkpoint.checkpoint_id
+        'name': pillow_config.name,
+        'advertised_name': pillow_instance.get_name(),
+        'full_class_name': pillow_config.class_name,
+        'checkpoint_id': pillow_instance.checkpoint.checkpoint_id,
     }
+    if issubclass(pillow_class, BasicPillow):
+        props.update({
+            'document_class': pillow_instance.document_class.__name__ if pillow_instance.document_class else None,
+            'couch_filter': getattr(pillow_instance, 'couch_filter'),
+            'include_docs': getattr(pillow_instance, 'include_docs'),
+            'extra_args': getattr(pillow_instance, 'extra_args'),
+        })
     if is_elastic:
         props.update({
             'es_alias': pillow_instance.es_alias,

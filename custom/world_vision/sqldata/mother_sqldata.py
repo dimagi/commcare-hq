@@ -3,6 +3,8 @@ from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.utils.utils import clean_IN_filter_value
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails
 
@@ -349,7 +351,11 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     @property
     def filters(self):
         self.config['mother_ids'] = tuple(DeliveryMothersIds(config=self.config).data.keys()) + ('',)
-        return [IN('mother_id', 'mother_ids')]
+        return [IN('mother_id', get_INFilter_bindparams('mother_id', self.config['mother_ids']))]
+
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(DeliveryLiveBirthDetails, self).filter_values, 'mother_ids')
 
     @property
     def columns(self):

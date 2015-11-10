@@ -1,17 +1,18 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_cases_in_domain
 from corehq.apps.importer.tasks import do_import
-from corehq.apps.importer.util import ImporterConfig
+from corehq.apps.importer.util import ImporterConfig, is_valid_owner
 from corehq.apps.locations.models import LocationType
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
 
 from .const import ImportErrors
+
 
 class MockExcelFile(object):
     """
@@ -334,3 +335,27 @@ class ImporterTest(TestCase):
         error_message = ImportErrors.InvalidOwnerId
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message]['rows'], [5])
+
+
+class ImporterUtilsTest(SimpleTestCase):
+
+    def test_user_owner_match(self):
+        self.assertTrue(is_valid_owner(_mk_user(domain='match'), 'match'))
+
+    def test_user_owner_nomatch(self):
+        self.assertFalse(is_valid_owner(_mk_user(domain='match'), 'nomatch'))
+
+    def test_web_user_owner_match(self):
+        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match'))
+        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match2'))
+
+    def test_web_user_owner_nomatch(self):
+        self.assertFalse(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
+
+
+def _mk_user(domain):
+    return CommCareUser(domain=domain, domain_membership=DomainMembership(domain=domain))
+
+
+def _mk_web_user(domains):
+    return WebUser(domains=domains, domain_memberships=[DomainMembership(domain=domain) for domain in domains])

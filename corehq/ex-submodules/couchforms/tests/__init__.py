@@ -12,7 +12,6 @@ try:
     from .test_post import *
     from .test_xml import *
     from .test_errors import *
-    from .test_adjust_datetimes import *
     from .test_dbaccessors import *
     from .test_analytics import *
 except ImportError, e:

@@ -6,6 +6,7 @@ from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.products.models import Product
 from custom.ilsgateway.models import ILSGatewayConfig
+from custom.logistics.mixin import UserMigrationMixin
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -115,7 +116,7 @@ class ApiSyncObject(object):
             self.filters[self.date_filter_name + '__lte'] = end_date
 
 
-class APISynchronization(object):
+class APISynchronization(UserMigrationMixin):
 
     LOCATION_CUSTOM_FIELDS = []
     SMS_USER_CUSTOM_FIELDS = []
@@ -253,14 +254,6 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def get_username(self, ilsgateway_smsuser, username_part=None):
-        domain_part = "%s.commcarehq.org" % self.domain
-
-        if not username_part:
-            username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(),
-                                      ilsgateway_smsuser.id)
-        return "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part), username_part
-
     def edit_phone_numbers(self, ilsgateway_smsuser, user):
         verified_number = user.get_verified_number()
         phone_number = verified_number.phone_number if verified_number else None
@@ -373,3 +366,6 @@ class APISynchronization(object):
                 return
             user.set_default_phone_number(phone_number)
             self._save_verified_number(user, phone_number)
+
+    def balance_migration(self, date=None):
+        pass

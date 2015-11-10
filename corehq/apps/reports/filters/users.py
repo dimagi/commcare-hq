@@ -205,6 +205,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         emws = request.GET.getlist(cls.slug)
         return [l[3:] for l in emws if l.startswith("l__")]
 
+    @classmethod
+    def show_all_mobile_workers(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return 't__0' in emws
+
     def get_default_selections(self):
         defaults = [('t__0', _("[All mobile workers]"))]
         if self.request.project.commtrack_enabled:

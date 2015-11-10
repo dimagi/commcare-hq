@@ -6,8 +6,8 @@ import re
 from corehq.apps.app_manager.models import RemoteApp, Application
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
 # For translations
@@ -450,7 +450,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
         if app_id is not None and app_id != '_MISSING_APP_ID':
             try:
-                app = get_db().get(app_id)
+                app = Application.get_db().get(app_id)
             except ResourceNotFound:
                 # must have been a weird app id, don't fail hard
                 pass
@@ -463,7 +463,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         key = ["xmlns", self.domain, xmlns]
         results = cache_core.cached_view(
-            get_db(),
+            XFormInstance.get_db(),
             'reports_forms/name_by_xmlns',
             reduce=False,
             startkey=key,
@@ -698,21 +698,6 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
     label = ugettext_noop("Choose a Form")
     use_only_last = True
     show_global_hide_fuzzy_checkbox = False
-
-    def get_selected_forms(self, filter_results):
-        xmlns = None
-        app_id = None
-        if self.show_unknown and self.selected_unknown_xmlns:
-            xmlns = self.selected_unknown_xmlns
-        elif filter_results and filter_results[-1]['slug'] == 'xmlns':
-            xmlns = filter_results[-1]['value']
-            if self.fuzzy_forms and self.hide_fuzzy_results:
-                app_id = filter_results[-3]['value']
-            app_id = app_id if app_id != self.unknown_remote_app_id else {}
-        return {
-            'xmlns': xmlns,
-            'app_id': app_id,
-        }
 
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):

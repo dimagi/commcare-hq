@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
 
 from dimagi.utils.dates import utcnow_sans_milliseconds
@@ -54,10 +55,10 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     )
 
     domain = domain or 'test-domain'
-    _, _, [case] = FormProcessorInterface.submit_form_locally(updated_xml, domain=domain)
+    _, _, [case] = FormProcessorInterface().submit_form_locally(updated_xml, domain=domain)
     test_class.assertLessEqual(starttime, case.server_modified_on)
     test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
-    test_class.assertEqual(case_id, case.id)
+    test_class.assertEqual(case_id, case.case_id)
     return case
 
 
@@ -194,14 +195,14 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
 
 @unit_testing_only
 def delete_all_cases():
-    FormProcessorInterface.delete_all_cases()
+    FormProcessorTestUtils.delete_all_cases()
 
 
 @unit_testing_only
 def delete_all_xforms():
-    FormProcessorInterface.delete_all_xforms()
+    FormProcessorTestUtils.delete_all_xforms()
 
 
 @unit_testing_only
 def delete_all_sync_logs():
-    FormProcessorInterface.delete_all_sync_logs()
+    FormProcessorTestUtils.delete_all_sync_logs()

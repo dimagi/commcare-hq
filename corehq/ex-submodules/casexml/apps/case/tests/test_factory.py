@@ -2,7 +2,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 
 
@@ -103,7 +103,7 @@ class CaseFactoryTest(TestCase):
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
-        self.assertIsNotNone(FormProcessorInterface.get_case(case.id))
+        self.assertIsNotNone(FormProcessorInterface().case_model.get(case.case_id))
 
     def test_create_overrides(self):
         factory = CaseFactory()
@@ -177,7 +177,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': token_id})
-        form = FormProcessorInterface.get_xform(case.xform_ids[0])
+        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_default(self):
@@ -188,7 +188,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         case = factory.create_case()
-        form = FormProcessorInterface.get_xform(case.xform_ids[0])
+        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_override_defaults(self):
@@ -197,5 +197,5 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': 'differenttoken'})
-        form = FormProcessorInterface.get_xform(case.xform_ids[0])
+        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
         self.assertEqual('differenttoken', form.last_sync_token)

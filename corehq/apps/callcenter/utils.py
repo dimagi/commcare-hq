@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 import uuid
 from xml.etree import ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -12,6 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
+from corehq.apps.locations.models import SQLLocation
 from corehq.feature_previews import CALLCENTER
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -42,7 +42,7 @@ class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type us
 CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
 
 
-def sync_user_case(commcare_user, case_type, owner_id):
+def sync_user_case(commcare_user, case_type, owner_id, case=None):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -73,11 +73,12 @@ def sync_user_case(commcare_user, case_type, owner_id):
             'phone_number': commcare_user.phone_number or ''
         })
 
-        case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
+        if not case:
+            case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         caseblock = None
         if case:
-            props = dict(case.dynamic_case_properties())
+            props = case.dynamic_case_properties()
 
             changed = close != case.closed
             changed = changed or case.type != case_type
@@ -118,15 +119,38 @@ def sync_user_case(commcare_user, case_type, owner_id):
 def sync_call_center_user_case(user):
     domain = user.project
     if domain and domain.call_center_config.enabled:
-        owner_id = domain.call_center_config.case_owner_id
-        if domain.call_center_config.use_user_location_as_owner:
-            owner_id = user.location_id
+        case, owner_id = _get_call_center_case_and_owner(user, domain)
+        sync_user_case(user, domain.call_center_config.case_type, owner_id, case)
 
-        sync_user_case(
-            user,
-            domain.call_center_config.case_type,
-            owner_id
-        )
+
+CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
+
+
+def _get_call_center_case_and_owner(user, domain):
+    """
+    Return the appropriate owner id for the given users call center case.
+    """
+    case = get_case_by_domain_hq_user_id(user.project.name, user._id, domain.call_center_config.case_type)
+    if domain.call_center_config.use_user_location_as_owner:
+        owner_id = call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
+    elif case and case.owner_id:
+        owner_id = case.owner_id
+    else:
+        owner_id = domain.call_center_config.case_owner_id
+    return CallCenterCaseAndOwner(case, owner_id)
+
+
+def call_center_location_owner(user, ancestor_level):
+    if ancestor_level == 0:
+        owner_id = user.location_id
+    else:
+        location = SQLLocation.objects.get(location_id=user.location_id)
+        ancestors = location.get_ancestors(ascending=True, include_self=True)
+        try:
+            owner_id = ancestors[ancestor_level].location_id
+        except IndexError:
+            owner_id = ancestors[-1].location_id
+    return owner_id
 
 
 def sync_usercase(user):

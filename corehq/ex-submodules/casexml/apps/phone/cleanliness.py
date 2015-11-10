@@ -44,9 +44,9 @@ def should_create_flags_on_submission(domain):
     return False
 
 
-def set_cleanliness_flags_for_enabled_domains(force_full=False):
+def set_cleanliness_flags_for_all_domains(force_full=False):
     """
-    Updates cleanliness for all domains that have the toggle enabled
+    Updates cleanliness for all domains
     """
     for domain in Domain.get_all_names():
         try:

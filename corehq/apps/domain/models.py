@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from itertools import imap
 import json
-import logging
 import uuid
-from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
@@ -23,11 +21,10 @@ from django.db import models, connection
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
-from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
-    iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
+    iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -66,24 +63,6 @@ for lang in all_langs:
     if lang['two'] != '':
         lang_lookup[lang['two']] = lang['names'][0]
 
-
-class DomainMigrations(DocumentSchema):
-    has_migrated_permissions = BooleanProperty(default=False)
-
-    def apply(self, domain):
-        if not self.has_migrated_permissions:
-            logging.info("Applying permissions migration to domain %s" % domain.name)
-            from corehq.apps.users.models import UserRole, WebUser
-            UserRole.init_domain_with_presets(domain.name)
-            for web_user in WebUser.by_domain(domain.name):
-                try:
-                    web_user.save()
-                except ResourceConflict:
-                    # web_user has already been saved by another thread in the last few seconds
-                    pass
-
-            self.has_migrated_permissions = True
-            domain.save()
 
 LICENSES = {
     'cc': 'Creative Commons Attribution (CC BY)',
@@ -131,8 +110,11 @@ class Deployment(DocumentSchema, UpdatableSchema):
 class CallCenterProperties(DocumentSchema):
     enabled = BooleanProperty(default=False)
     use_fixtures = BooleanProperty(default=True)
-    use_user_location_as_owner = BooleanProperty(default=False)
+
     case_owner_id = StringProperty()
+    use_user_location_as_owner = BooleanProperty(default=False)
+    user_location_ancestor_level = IntegerProperty(default=0)
+
     case_type = StringProperty()
 
     def fixtures_are_active(self):
@@ -328,8 +310,6 @@ class Domain(Document, SnapshotMixin):
     image_path = StringProperty()
     image_type = StringProperty()
 
-    migrations = SchemaProperty(DomainMigrations)
-
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
@@ -396,8 +376,6 @@ class Domain(Document, SnapshotMixin):
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
-        if self.get_id:
-            self.apply_migrations()
         if should_save:
             self.save()
         return self
@@ -439,9 +417,9 @@ class Domain(Document, SnapshotMixin):
     def field_by_prefix(cls, field, prefix='', is_approved=True):
         # unichr(0xfff8) is something close to the highest character available
         res = cls.view("domain/fields_by_prefix",
-                                    group=True,
-                                    startkey=[field, is_approved, prefix],
-                                    endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
+                       group=True,
+                       startkey=[field, is_approved, prefix],
+                       endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]
@@ -449,9 +427,6 @@ class Domain(Document, SnapshotMixin):
     @classmethod
     def get_by_field(cls, field, value, is_approved=True):
         return cls.view('domain/fields_by_prefix', key=[field, is_approved, value], reduce=False, include_docs=True).all()
-
-    def apply_migrations(self):
-        self.migrations.apply(self)
 
     def add(self, model_instance, is_active=True):
         """
@@ -570,32 +545,6 @@ class Domain(Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_by_organization(cls, organization):
-        result = cache_core.cached_view(
-            cls.get_db(), "domain/by_organization",
-            startkey=[organization],
-            endkey=[organization, {}],
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap
-        )
-        from corehq.apps.accounting.utils import domain_has_privilege
-        from corehq import privileges
-        result = filter(
-            lambda x: domain_has_privilege(x.name, privileges.CROSS_PROJECT_REPORTS),
-            result
-        )
-        return result
-
-    @classmethod
-    def get_by_organization_and_hrname(cls, organization, hr_name):
-        result = cls.view("domain/by_organization",
-                          key=[organization, hr_name],
-                          reduce=False,
-                          include_docs=True)
-        return result
-
-    @classmethod
     def get_or_create_with_name(cls, name, is_active=False,
                                 secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
@@ -608,7 +557,6 @@ class Domain(Document, SnapshotMixin):
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
             )
-            new_domain.migrations = DomainMigrations(has_migrated_permissions=True)
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
 
@@ -688,7 +636,7 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
         from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
         from corehq.apps.fixtures.models import FixtureDataType
         from corehq.apps.users.models import UserRole
 
@@ -746,7 +694,7 @@ class Domain(Document, SnapshotMixin):
                 if component:
                     new_app_components[original_doc_id] = component
 
-            for doc_id in get_doc_ids_in_domain_by_type(self.name, FixtureDataType):
+            for doc_id in get_doc_ids_in_domain_by_class(self.name, FixtureDataType):
                 if copy_by_id and doc_id not in copy_by_id:
                     continue
                 component = self.copy_component(
@@ -754,11 +702,11 @@ class Domain(Document, SnapshotMixin):
                 copy_data_items(doc_id, component._id)
 
             if share_reminders:
-                for doc_id in get_doc_ids_in_domain_by_type(self.name, CaseReminderHandler):
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, CaseReminderHandler):
                     self.copy_component(
                         'CaseReminderHandler', doc_id, new_domain_name, user=user)
             if share_user_roles:
-                for doc_id in get_doc_ids_in_domain_by_type(self.name, UserRole):
+                for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
 
             new_domain.save()
@@ -904,25 +852,13 @@ class Domain(Document, SnapshotMixin):
         if page:
             skip = (page - 1) * per_page
             limit = per_page
-        results = get_db().search('domain/snapshot_search',
+        results = cls.get_db().search('domain/snapshot_search',
             q=json.dumps(query),
             limit=limit,
             skip=skip,
             #stale='ok',
         )
         return map(cls.get, [r['id'] for r in results]), results.total_rows
-
-    @memoized
-    def get_organization(self):
-        from corehq.apps.orgs.models import Organization
-        return Organization.get_by_name(self.organization)
-
-    @memoized
-    def organization_title(self):
-        if self.organization:
-            return self.get_organization().title
-        else:
-            return ''
 
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
@@ -939,19 +875,8 @@ class Domain(Document, SnapshotMixin):
 
     def long_display_name(self):
         if self.is_snapshot:
-            return format_html(
-                "Snapshot of {0} &gt; {1}",
-                self.organization_title(),
-                self.copied_from.display_name()
-            )
-        if self.organization:
-            return format_html(
-                '{0} &gt; {1}',
-                self.organization_title(),
-                self.hr_name or self.name
-            )
-        else:
-            return self.hr_name or self.name
+            return format_html("Snapshot of {}", self.copied_from.display_name())
+        return self.hr_name or self.name
 
     __str__ = long_display_name
 
@@ -986,8 +911,9 @@ class Domain(Document, SnapshotMixin):
 
     def _delete_web_users_from_domain(self):
         from corehq.apps.users.models import WebUser
-        web_users = WebUser.by_domain(self.name)
-        for web_user in web_users:
+        active_web_users = WebUser.by_domain(self.name)
+        inactive_web_users = WebUser.by_domain(self.name, is_active=False)
+        for web_user in list(active_web_users) + list(inactive_web_users):
             web_user.delete_domain_membership(self.name)
             web_user.save()
 
@@ -996,31 +922,46 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.locations.models import SQLLocation, LocationType
         from corehq.apps.products.models import SQLProduct
 
-        cursor = connection.cursor()
+        with connection.cursor() as cursor:
 
-        """
-            We use raw queries instead of ORM because Django queryset delete needs to
-            fetch objects into memory to send signals and handle cascades. It makes deletion very slow
-            if we have a millions of rows in stock data tables.
-        """
-        cursor.execute(
-            "DELETE FROM stock_stocktransaction "
-            "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
-        )
+            """
+                We use raw queries instead of ORM because Django queryset delete needs to
+                fetch objects into memory to send signals and handle cascades. It makes deletion very slow
+                if we have a millions of rows in stock data tables.
+            """
+            cursor.execute(
+                "DELETE FROM stock_stocktransaction "
+                "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
+            )
 
-        cursor.execute(
-            "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
-        )
+            cursor.execute(
+                "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
+            )
 
-        cursor.execute(
-            "DELETE FROM commtrack_stockstate"
-            " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
-        )
+            cursor.execute(
+                "DELETE FROM commtrack_stockstate"
+                " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
+            )
 
         SQLProduct.objects.filter(domain=self.name).delete()
         SQLLocation.objects.filter(domain=self.name).delete()
         LocationType.objects.filter(domain=self.name).delete()
         DocDomainMapping.objects.filter(domain_name=self.name).delete()
+
+        from corehq.apps.accounting.models import Subscription, Subscriber, SubscriptionAdjustment, Invoice, \
+            BillingRecord, LineItem, CreditAdjustment, CreditLine
+
+        SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
+        BillingRecord.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(credit_line__subscription__subscriber__domain=self.name).delete()
+        CreditAdjustment.objects.filter(related_credit__subscription__subscriber__domain=self.name).delete()
+        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
+
+        CreditLine.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Invoice.objects.filter(subscription__subscriber__domain=self.name).delete()
+        Subscription.objects.filter(subscriber__domain=self.name).delete()
+        Subscriber.objects.filter(domain=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
@@ -1114,8 +1055,7 @@ class Domain(Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        from corehq.apps.app_manager.models import Application
-        return Application.get_db().view("domain/snapshots",
+        return self.get_db().view("domain/snapshots",
             startkey=[self.get_id],
             endkey=[self.get_id, {}],
             reduce=True,

@@ -1,12 +1,12 @@
 from __future__ import absolute_import
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from datetime import datetime, date, time
 import logging
 import re
 from lxml import etree
 import os
 from django.conf import settings
-import yaml
+from corehq.apps.app_manager.util import all_apps_by_domain
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
 
@@ -32,39 +32,55 @@ odm_nsmap = {
 }
 
 
-def simplify(fancy):
-    """
-    Replace dict-like data types with dicts, and list-like data types with lists
-
-    >>> from collections import defaultdict
-    >>> simplify(defaultdict(list, {'bacon': ['spam']}))
-    {'bacon': ['spam']}
-    >>> simplify(('ham',))
-    ['ham']
-    >>> simplify({'spam'})
-    ['spam']
-
-    """
-    if hasattr(fancy, 'keys'):
-        return {simplify(k): simplify(fancy[k]) for k in fancy.keys()}
-    elif isinstance(fancy, unicode):
-        return fancy.encode('utf8')
-    elif isinstance(fancy, str):
-        return fancy
-    elif hasattr(fancy, '__iter__'):
-        return [simplify(i) for i in fancy]
-    else:
-        return fancy
-
-
 @quickcache(['domain'])
-def _get_question_items(domain):
+def get_question_items(domain):
     """
-    Return a dictionary of form_xmlns: {question_name: openclinica_item}
+    Return a map of CommCare form questions to OpenClinica form items
     """
-    file_path = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'commcare_questions.yaml')
-    with file(file_path) as question_items_file:
-        question_items = yaml.load(question_items_file)
+
+    def read_question_item_map(odm):
+        """
+        Return a dictionary of {question: (study_event_oid, form_oid, item_group_oid, item_oid)}
+        """
+        question_item_map = {}  # A dictionary of question: (study_event_oid, form_oid, item_group_oid, item_oid)
+
+        meta_e = odm.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
+
+        for se_ref in meta_e.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
+            se_oid = se_ref.get('StudyEventOID')
+            for form_ref in meta_e.xpath('./odm:StudyEventDef[@OID="{}"]/odm:FormRef'.format(se_oid),
+                                         namespaces=odm_nsmap):
+                form_oid = form_ref.get('FormOID')
+                for ig_ref in meta_e.xpath('./odm:FormDef[@OID="{}"]/odm:ItemGroupRef'.format(form_oid),
+                                           namespaces=odm_nsmap):
+                    ig_oid = ig_ref.get('ItemGroupOID')
+                    for item_ref in meta_e.xpath('./odm:ItemGroupDef[@OID="{}"]/odm:ItemRef'.format(ig_oid),
+                                                 namespaces=odm_nsmap):
+                        item_oid = item_ref.get('ItemOID')
+                        question = item_oid.lower()
+                        question_item_map[question] = (se_oid, form_oid, ig_oid, item_oid)
+        return question_item_map
+
+    def read_forms(question_item_map):
+        data = defaultdict(dict)
+        for domain_, pymodule in settings.DOMAIN_MODULE_MAP.iteritems():
+            if pymodule == 'custom.openclinica':
+                for app in all_apps_by_domain(domain_):
+                    for ccmodule in app.get_modules():
+                        for ccform in ccmodule.get_forms():
+                            form = data[ccform.xmlns]
+                            form['app'] = app.name
+                            form['module'] = ccmodule.name['en']
+                            form['name'] = ccform.name['en']
+                            form['questions'] = {}
+                            for question in ccform.get_questions(['en']):
+                                name = question['value'].split('/')[-1]
+                                form['questions'][name] = question_item_map.get(name)
+        return data
+
+    metadata_xml = get_study_metadata(domain)
+    map_ = read_question_item_map(metadata_xml)
+    question_items = read_forms(map_)
     return question_items
 
 
@@ -72,7 +88,7 @@ def get_question_item(domain, form_xmlns, question):
     """
     Returns an Item namedtuple given a CommCare form and question name
     """
-    question_items = _get_question_items(domain)
+    question_items = get_question_items(domain)
     try:
         se_oid, form_oid, ig_oid, item_oid = question_items[form_xmlns]['questions'][question]
         return Item(se_oid, form_oid, ig_oid, item_oid)
@@ -88,10 +104,11 @@ def get_question_item(domain, form_xmlns, question):
 @quickcache(['domain'])
 def get_study_metadata_string(domain):
     """
-    Return the study metadata for the given domain
+    Return the study metadata for the given domain as an XML string
     """
     # For this first OpenClinica integration project, for the sake of simplicity, we are just fetching
-    # metadata from custom/openclinica/study_metadata.xml. In future, metadata must be stored for each domain.
+    # metadata from custom/openclinica/study_metadata.xml. In future, we can fetch it from the web service
+    # (See branch openclinica_ws)
     metadata_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
     with open(metadata_filename) as metadata_file:
         return metadata_file.read()

@@ -13,9 +13,14 @@ import json
 import requests
 import urllib
 import KISSmetrics
+import logging
 
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
+from corehq.apps.accounting.models import SoftwarePlanEdition
+
+logger = logging.getLogger('analytics')
+logger.setLevel('DEBUG')
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -86,6 +91,8 @@ def _hubspot_post(url, data):
             data=data,
             headers=headers
         )
+        logger.debug('Sent this data to HS: %s \nreceived: %s'
+                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
         req.raise_for_status()
 
 
@@ -119,7 +126,7 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_ID')
+    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
         url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
@@ -137,6 +144,8 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             url,
             data=data
         )
+        logger.debug('Sent this data to HS: %s \nreceived: %s'
+                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
         req.raise_for_status()
 
 
@@ -191,6 +200,20 @@ def track_app_from_template_on_hubspot(webuser, cookies, meta):
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_user_subscriptions_on_hubspot(webuser, properties):
+    vid = _get_user_hubspot_id(webuser)
+    if vid:
+        _track_on_hubspot(webuser, {
+            'is_on_community_plan': properties[SoftwarePlanEdition.COMMUNITY],
+            'is_on_standard_plan': properties[SoftwarePlanEdition.STANDARD],
+            'is_on_pro_plan': properties[SoftwarePlanEdition.PRO],
+            'is_on_advanced_plan': properties[SoftwarePlanEdition.ADVANCED],
+            'is_on_enterprise_plan': properties[SoftwarePlanEdition.ENTERPRISE],
+            'is_on_pro_bono_or_discounted_plan': properties["Pro Bono"],
+        })
 
 
 def track_workflow(email, event, properties=None):

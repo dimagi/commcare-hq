@@ -1,4 +1,4 @@
-from corehq.apps.groups.tests import WrapGroupTestMixin
+from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.commtrack.helpers import make_supply_point, make_product

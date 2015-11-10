@@ -1,7 +1,7 @@
 from copy import copy
 import decimal
 import uuid
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from mock import patch
 from datetime import datetime, timedelta
 from casexml.apps.case.models import CommCareCase
@@ -52,20 +52,6 @@ class IndicatorPillowTest(TestCase):
         self.config.delete()
         self.adapter.drop_table()
 
-    def test_filter(self):
-        # note: this is a silly test now that python_filter always returns true
-        not_matching = [
-            dict(doc_type="NotCommCareCase", domain='user-reports', type='ticket'),
-            dict(doc_type="CommCareCase", domain='not-user-reports', type='ticket'),
-            dict(doc_type="CommCareCase", domain='user-reports', type='not-ticket'),
-        ]
-        for document in not_matching:
-            self.assertTrue(self.pillow.python_filter(document))
-
-        self.assertTrue(self.pillow.python_filter(
-            dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
-        ))
-
     def test_stale_rebuild(self):
         later_config = copy(self.config)
         later_config.save()
@@ -115,3 +101,38 @@ class IndicatorPillowTest(TestCase):
                 self.assertAlmostEqual(expected_indicators[k], v)
             else:
                 self.assertEqual(expected_indicators[k], v)
+
+
+class IndicatorConfigFilterTest(SimpleTestCase):
+
+    def setUp(self):
+        self.config = get_sample_data_source()
+
+    def test_filter(self):
+        not_matching = [
+            dict(doc_type="NotCommCareCase", domain='user-reports', type='ticket'),
+            dict(doc_type="CommCareCase", domain='not-user-reports', type='ticket'),
+            dict(doc_type="CommCareCase", domain='user-reports', type='not-ticket'),
+        ]
+        for document in not_matching:
+            self.assertFalse(self.config.filter(document)), 'Failing dog: %s' % document
+
+        self.assertTrue(self.config.filter(
+            dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
+        ))
+
+    def test_deleted_filter(self):
+        not_matching = [
+            dict(doc_type="CommCareCase", domain='user-reports', type='ticket'),
+            dict(doc_type="CommCareCase-Deleted", domain='not-user-reports', type='ticket'),
+        ]
+        for document in not_matching:
+            self.assertFalse(self.config.deleted_filter(document), 'Failing dog: %s' % document)
+
+        matching = [
+            dict(doc_type="CommCareCase-Deleted", domain='user-reports', type='ticket'),
+            dict(doc_type="CommCareCase-Deleted", domain='user-reports', type='bot-ticket'),
+            dict(doc_type="CommCareCase-Deleted", domain='user-reports'),
+        ]
+        for document in matching:
+            self.assertTrue(self.config.deleted_filter(document), 'Failing dog: %s' % document)

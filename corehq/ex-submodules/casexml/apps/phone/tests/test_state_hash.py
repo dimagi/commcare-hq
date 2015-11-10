@@ -10,7 +10,7 @@ from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import generate_restore_response, \
     get_exactly_one_wrapped_sync_log, generate_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -57,7 +57,7 @@ class StateHashTest(TestCase):
                        owner_id=self.user.user_id).as_xml()
         c2 = CaseBlock(case_id="123abc", create=True, 
                        owner_id=self.user.user_id).as_xml()
-        FormProcessorInterface.post_case_blocks([c1, c2],
+        FormProcessorInterface().post_case_blocks([c1, c2],
                          form_extras={"last_sync_token": self.sync_log.get_id})
         
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)

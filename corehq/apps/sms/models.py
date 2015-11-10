@@ -262,6 +262,7 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
     ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
+    ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -272,6 +273,8 @@ class SMS(SyncSQLToCouchMixin, models.Model):
             ugettext_noop('Unknown message direction.'),
         ERROR_PHONE_NUMBER_OPTED_OUT:
             ugettext_noop('Phone number has opted out of receiving SMS.'),
+        ERROR_INVALID_DESTINATION_NUMBER:
+            ugettext_noop("The gateway can't reach the destination number."),
     }
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
@@ -806,7 +809,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
     ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
+    ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
+    ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -849,8 +854,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
             ugettext_noop('No suitable gateway could be found.'),
+        ERROR_GATEWAY_NOT_FOUND:
+            ugettext_noop('Gateway could not be found.'),
         ERROR_NO_EMAIL_ADDRESS:
             ugettext_noop('Recipient has no email address.'),
+        ERROR_TRIAL_EMAIL_LIMIT_REACHED:
+            ugettext_noop("Cannot send any more reminder emails. The limit for "
+                "sending reminder emails on a Trial plan has been reached."),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)

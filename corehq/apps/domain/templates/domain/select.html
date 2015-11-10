@@ -31,10 +31,6 @@
         {% endif %}
     </div>
     <div class="span4">
-    {% if request.couch_user.organizations %}
-        <h2>{% trans "My Organizations" %}</h2>
-        {% list_my_orgs request %}
-    {% endif %}
     </div>
     <div class="span4">
         <aside class="well">

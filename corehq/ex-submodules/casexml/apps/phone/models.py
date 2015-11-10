@@ -89,7 +89,7 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
             })
 
         return cls(
-            case_id=case.get_id,
+            case_id=case.case_id,
             type=case.type,
             indices=case.indices,
         )
@@ -357,32 +357,32 @@ class SyncLog(AbstractSyncLog):
         removed_states = {}
         new_indices = set()
         for case in case_list:
-            actions = case.get_actions_for_form(xform.get_id)
+            actions = case.get_actions_for_form(xform.form_id)
             for action in actions:
-                logger.debug('OLD {}: {}'.format(case._id, action.action_type))
+                logger.debug('OLD {}: {}'.format(case.case_id, action.action_type))
                 if action.action_type == const.CASE_ACTION_CREATE:
-                    self._assert(not self.phone_has_case(case._id),
-                                 'phone has case being created: %s' % case._id)
-                    starter_state = CaseState(case_id=case.get_id, indices=[])
+                    self._assert(not self.phone_has_case(case.case_id),
+                                 'phone has case being created: %s' % case.case_id)
+                    starter_state = CaseState(case_id=case.case_id, indices=[])
                     if self._phone_owns(action):
                         self.cases_on_phone.append(starter_state)
                         self._case_state_map.reset_cache(self)
                     else:
-                        removed_states[case._id] = starter_state
+                        removed_states[case.case_id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     if not self._phone_owns(action):
                         # only action necessary here is in the case of
                         # reassignment to an owner the phone doesn't own
-                        state = self.archive_case(case.get_id)
+                        state = self.archive_case(case.case_id)
                         if state:
-                            removed_states[case._id] = state
+                            removed_states[case.case_id] = state
                 elif action.action_type == const.CASE_ACTION_INDEX:
                     # in the case of parallel reassignment and index update
                     # the phone might not have the case
-                    if self.phone_has_case(case.get_id):
-                        case_state = self.get_case_state(case.get_id)
+                    if self.phone_has_case(case.case_id):
+                        case_state = self.get_case_state(case.case_id)
                     else:
-                        case_state = self.get_dependent_case_state(case.get_id)
+                        case_state = self.get_dependent_case_state(case.case_id)
                     # reconcile indices
                     if case_state:
                         for index in action.indices:
@@ -390,10 +390,10 @@ class SyncLog(AbstractSyncLog):
                         case_state.update_indices(action.indices)
 
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    if self.phone_has_case(case.get_id):
-                        state = self.archive_case(case.get_id)
+                    if self.phone_has_case(case.case_id):
+                        state = self.archive_case(case.case_id)
                         if state:
-                            removed_states[case._id] = state
+                            removed_states[case.case_id] = state
 
         # if we just removed a state and added an index to it
         # we have to put it back in our dependent case list
@@ -589,8 +589,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # if the case had indexes they better also be in our removal list (except for ourselves)
                 for index in indices.values():
                     if not _domain_has_legacy_toggle_set():
-                        assert index in candidates_to_remove, \
-                            "expected {} in {} but wasn't".format(index, candidates_to_remove)
+                        # unblocking http://manage.dimagi.com/default.asp?185850#1039475
+                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True)
+                        _assert(index in candidates_to_remove,
+                            "expected {} in {} but wasn't".format(index, candidates_to_remove))
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:
@@ -676,27 +678,27 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         all_updates = {}
         for case in case_list:
-            if case._id not in all_updates:
-                logger.debug('initializing update for case {}'.format(case._id))
-                all_updates[case._id] = CaseUpdate(case_id=case._id)
+            if case.case_id not in all_updates:
+                logger.debug('initializing update for case {}'.format(case.case_id))
+                all_updates[case.case_id] = CaseUpdate(case_id=case.case_id)
 
-            case_update = all_updates[case._id]
-            case_update.was_live_previously = case._id in self.primary_case_ids
-            actions = case.get_actions_for_form(xform.get_id)
+            case_update = all_updates[case.case_id]
+            case_update.was_live_previously = case.case_id in self.primary_case_ids
+            actions = case.get_actions_for_form(xform.form_id)
             for action in actions:
-                logger.debug('{}: {}'.format(case._id, action.action_type))
-                owner_id = get_latest_owner_id(case._id, action)
+                logger.debug('{}: {}'.format(case.case_id, action.action_type))
+                owner_id = get_latest_owner_id(case.case_id, action)
                 if owner_id is not None:
                     case_update.final_owner_id = owner_id
                 if action.action_type == const.CASE_ACTION_INDEX:
                     for index in action.indices:
                         if index.referenced_id:
                             case_update.indices_to_add.append(
-                                ShortIndex(case._id, index.identifier, index.referenced_id)
+                                ShortIndex(case.case_id, index.identifier, index.referenced_id)
                             )
                         else:
                             case_update.indices_to_delete.append(
-                                ShortIndex(case._id, index.identifier, None)
+                                ShortIndex(case.case_id, index.identifier, None)
                             )
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     case_update.is_closed = True
@@ -720,14 +722,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         non_live_updates = []
         for case in case_list:
-            case_update = all_updates[case._id]
+            case_update = all_updates[case.case_id]
             if _is_live(case_update, self.owner_ids_on_phone):
                 logger.debug('case {} is live.'.format(case_update.case_id))
-                if case._id not in self.case_ids_on_phone:
-                    self._add_primary_case(case._id)
+                if case.case_id not in self.case_ids_on_phone:
+                    self._add_primary_case(case.case_id)
                     made_changes = True
-                elif case._id in self.dependent_case_ids_on_phone:
-                    self.dependent_case_ids_on_phone.remove(case._id)
+                elif case.case_id in self.dependent_case_ids_on_phone:
+                    self.dependent_case_ids_on_phone.remove(case.case_id)
                     made_changes = True
 
                 for index in case_update.indices_to_add:

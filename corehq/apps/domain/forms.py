@@ -412,7 +412,9 @@ class SubAreaMixin():
 
 
 class DomainGlobalSettingsForm(forms.Form):
-    USE_LOCATIONS_CHOICE = "user_location"
+    USE_LOCATION_CHOICE = "user_location"
+    USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
+    LOCATION_CHOICES = [USE_LOCATION_CHOICE, USE_PARENT_LOCATION_CHOICE]
     CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
     CASES_ONLY_CHOICE = "cases_only"
 
@@ -500,7 +502,8 @@ class DomainGlobalSettingsForm(forms.Form):
                 call_center_location_choices = []
                 if CALL_CENTER_LOCATION_OWNERS.enabled(domain):
                     call_center_location_choices = [
-                        (self.USE_LOCATIONS_CHOICE, ugettext_lazy("user's location [location]"))
+                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
+                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
                     ]
 
                 self.fields["call_center_case_owner"].choices = \
@@ -546,22 +549,23 @@ class DomainGlobalSettingsForm(forms.Form):
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
     def _save_call_center_configuration(self, domain):
-        domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
-        if domain.call_center_config.enabled:
+        cc_config = domain.call_center_config
+        cc_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+        if cc_config.enabled:
 
             domain.internal.using_call_center = True
-            domain.call_center_config.use_fixtures = \
-                self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
+            cc_config.use_fixtures = self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
 
             owner = self.cleaned_data.get('call_center_case_owner', None)
-            if owner == self.USE_LOCATIONS_CHOICE:
-                domain.call_center_config.call_center_case_owner = None
-                domain.call_center_config.use_user_location_as_owner = True
+            if owner in self.LOCATION_CHOICES:
+                cc_config.call_center_case_owner = None
+                cc_config.use_user_location_as_owner = True
+                cc_config.user_location_ancestor_level = 1 if owner == self.USE_PARENT_LOCATION_CHOICE else 0
             else:
-                domain.call_center_config.case_owner_id = owner
-                domain.call_center_config.use_user_location_as_owner = False
+                cc_config.case_owner_id = owner
+                cc_config.use_user_location_as_owner = False
 
-            domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+            cc_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
     def _save_timezone_configuration(self, domain):
         global_tz = self.cleaned_data['default_timezone']

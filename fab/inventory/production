@@ -18,6 +18,12 @@ hqdb0.internal.commcarehq.org
 [rabbitmq]
 hqdb0.internal.commcarehq.org
 
+[zookeeper]
+hqes0.internal.commcarehq.org
+
+[kafka]
+hqes0.internal.commcarehq.org kafka_broker_id=0
+
 [celery]
 # ansible makes the first thing in this list the flower url
 # a little bit redundant with with more explicit settings in environments.yml

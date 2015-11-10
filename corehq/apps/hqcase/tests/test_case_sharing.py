@@ -6,7 +6,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class CaseSharingTest(TestCase):
@@ -47,7 +47,7 @@ class CaseSharingTest(TestCase):
                 user_id=user.user_id,
                 owner_id=owner.get_id,
             )
-            FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
+            FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
             check_has_block(case_block, should_have, should_not_have)
 
         def update_and_test(case_id, owner=None, should_have=None, should_not_have=None):
@@ -56,7 +56,7 @@ class CaseSharingTest(TestCase):
                 update={'greeting': "Hello!"},
                 owner_id=owner.get_id if owner else None,
             )
-            FormProcessorInterface.post_case_blocks([case_block], {'domain': self.domain})
+            FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
             check_has_block(case_block, should_have, should_not_have, line_by_line=False)
 
         def check_has_block(case_block, should_have, should_not_have, line_by_line=True):

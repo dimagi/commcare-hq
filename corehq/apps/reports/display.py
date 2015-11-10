@@ -73,14 +73,14 @@ class _FormType(object):
         if app_id:
             self.app_id = app_id
         else:
-            form = get_form_analytics_metadata(domain, xmlns, app_id)
+            form = get_form_analytics_metadata(domain, app_id, xmlns)
             try:
-                self.app_id = form['app']['id']
+                self.app_id = form['app']['id'] if form else None
             except KeyError:
-                self.app_id = {}
+                self.app_id = None
 
     def get_label(self):
-        form = get_form_analytics_metadata(self.domain, self.xmlns, self.app_id)
+        form = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
         if form and form.get('app'):
             langs = form['app']['langs']
             app_name = form['app']['name']

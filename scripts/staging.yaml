@@ -45,22 +45,17 @@
 trunk: master
 name: autostaging
 branches:
-  - kill-orgs  # danny 10/21
   - pare-down-related_to_domain  # danny 10/8
   - vellum-staging # J$ 11/13
-  - sync-history-email # Cal 9/22
-  - shadow-modules # Jenny 10/6
-  - b3-tf+exports-ui-changes+report-builder-b3 # Biyeun 10/23
   - exports-ui-changes  # biyeun 9/28
   - report-builder-b3 # Noah 10/20
-  - update-pillow # Jenny 10/20
-  - update-pillow+two-factor-otp-only+requirements-update # Nick P 10/21
-  - two-factor-otp-only+requirements-update # Nick P 10/21
-  - two-factor-otp-only # j$ 10/2
+  - crispy-styleguide # Biyeun 11/6
   - b3-tf # ben 10/1
-  - use-absolute_reverse # Nick P 10/20
-  - memoize-immutable # Nick P 10/20
-  - requirements-update # Simon 10/21
+  - two-factor-otp-only # j$ 10/2
+  - requests #Simon 11/3
+  - add-tableau-dashboard # TS 11/5
+  - upgrade-sqlalchemy # Nick P 11/5
+  - report-description-xpath # Nick P 11/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -84,4 +79,3 @@ submodules:
     branches: []
   submodules/fluff-src:
     branches: []
-

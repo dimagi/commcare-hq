@@ -33,7 +33,7 @@ var ReportModule = (function () {
                 var series_configs = {};
                 var chart_series = [];
                 for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
-                    var series = currentChart.y_axis_columns[k];
+                    var series = currentChart.y_axis_columns[k].column_id;
                     chart_series.push(series);
                     series_configs[series] = new Config(
                         currentReportId === report_id ? (graph_config.series_configs || {})[series] || {} : {}
@@ -213,10 +213,9 @@ var ReportModule = (function () {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
-        this.fullDescription = description || {};
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
-        this.description = ko.observable(this.fullDescription[this.lang]);
+        this.description = ko.observable(description);
         this.uuid = uuid;
         this.reportId = ko.observable(report_id);
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
@@ -224,13 +223,12 @@ var ReportModule = (function () {
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
-            self.fullDescription[self.lang] = self.description();
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
-                description: self.fullDescription,
+                description: self.description(),
                 uuid: self.uuid
             };
         };

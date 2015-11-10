@@ -250,3 +250,30 @@ def _process_case_block(case_block, attachments, old_case_id):
     # Add namespace back in without { } added by ET
     root.attrib['xmlns'] = xmlns
     return ET.tostring(root), ret_attachments
+
+
+def submit_case_block_from_template(domain, template, context):
+    case_block = render_to_string(template, context)
+    # Ensure the XML is formatted properly
+    # An exception is raised if not
+    case_block = ElementTree.tostring(ElementTree.XML(case_block))
+    submit_case_blocks(case_block, domain)
+
+
+def update_case(domain, case_id, case_properties=None, close=False):
+    """
+    Updates or closes a case (or both) by submitting a form.
+    domain - the case's domain
+    case_id - the case's id
+    case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
+                      to ignore case updates, leave this argument out
+    close - True to close the case, False otherwise
+    """
+    context = {
+        'case_id': case_id,
+        'date_modified': json_format_datetime(datetime.datetime.utcnow()),
+        'user_id': '',
+        'case_properties': case_properties,
+        'close': close,
+    }
+    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context)

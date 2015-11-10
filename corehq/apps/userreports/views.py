@@ -28,7 +28,6 @@ from corehq.apps.dashboard.models import IconContext, TileConfiguration
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.style.decorators import upgrade_knockout_js
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
@@ -54,8 +53,9 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
 )
+from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
-from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -64,7 +64,6 @@ from corehq.apps.userreports.ui.forms import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.db import Session
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -96,11 +95,14 @@ def swallow_programming_errors(fn):
     def decorated(request, domain, *args, **kwargs):
         try:
             return fn(request, domain, *args, **kwargs)
-        except ProgrammingError:
+        except ProgrammingError as e:
             messages.error(
                 request,
                 _('There was a problem processing your request. '
-                  'If you have recently modified your report data source please try again in a few minutes.'))
+                  'If you have recently modified your report data source please try again in a few minutes.'
+                  '<br><br>Technical details:<br>{}'.format(e)),
+                extra_tags='html',
+            )
             return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
     return decorated
 
@@ -666,36 +668,25 @@ def data_source_status(request, domain, config_id):
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
-    filter = report.get_ui_filter(filter_id)
-    if filter is None:
+    report_filter = report.get_ui_filter(filter_id)
+    if report_filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
 
-    def get_choices(data_source, filter, search_term=None, limit=20, page=0):
-        # todo: we may want to log this as soon as mobile UCR stops hitting this
-        # for misconfigured filters
-        if not isinstance(filter, DynamicChoiceListFilter):
-            return []
-
-        adapter = IndicatorSqlAdapter(data_source)
-        table = adapter.get_table()
-        sql_column = table.c[filter.field]
-        query = adapter.session_helper.Session.query(sql_column)
-        if search_term:
-            query = query.filter(sql_column.contains(search_term))
-
-        offset = page * limit
-        try:
-            return [v[0] for v in query.distinct().order_by(sql_column).limit(limit).offset(offset)]
-        except ProgrammingError:
-            return []
-
-    return json_response(get_choices(
-        report.config,
-        filter,
-        request.GET.get('q', None),
-        limit=int(request.GET.get('limit', 20)),
-        page=int(request.GET.get('page', 1)) - 1
-    ))
+    if hasattr(report_filter, 'choice_provider'):
+        query_context = ChoiceQueryContext(
+            report=report,
+            report_filter=report_filter,
+            query=request.GET.get('q', None),
+            limit=int(request.GET.get('limit', 20)),
+            page=int(request.GET.get('page', 1)) - 1
+        )
+        return json_response([
+            choice._asdict() for choice in
+            report_filter.choice_provider(query_context)
+        ])
+    else:
+        # mobile UCR hits this API for invalid filters. Just return no choices.
+        return json_response([])
 
 
 def _shared_context(domain):

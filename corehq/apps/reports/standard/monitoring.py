@@ -4,6 +4,7 @@ from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
@@ -15,6 +16,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -384,19 +386,22 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         return headers
 
     @property
+    @memoized
+    def selected_users(self):
+        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
+        return users_data.combined_users
+
+    @property
     def rows(self):
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
-        for user in users_data.combined_users:
+        for user in self.selected_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
-                    row.append(
-                        self._get_num_submissions(
-                            user.user_id, form['xmlns'], form['app_id'])
-                    )
+                    row.append(self._form_counts[
+                        (user.user_id, form['xmlns'], form['app_id'])
+                    ])
                 row_sum = sum(row)
                 row = (
                     [self.get_user_link(user)] +
@@ -412,27 +417,22 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             self.total_row = [_("All Users")] + totals
         return rows
 
-    def _get_num_submissions(self, user_id, xmlns, app_id):
-        return get_number_of_submissions(
-            self.domain, user_id=user_id, xmlns=xmlns,
-            by_submission_time=self.by_submission_time, app_id=app_id,
-            start=self.datespan.startdate_utc, end=self.datespan.enddate_utc)
-
+    @property
     @memoized
-    def forms_per_user(self, app_id, xmlns):
-        # todo: this seems to not work properly
-        # needs extensive QA before being used
-        query = (FormES()
-                 .domain(self.domain)
-                 .xmlns(xmlns)
-                 .submitted(gt=self.datespan.startdate_utc,
-                            lte=self.datespan.enddate_utc)
-                 .size(0)
-                 .user_facet())
-        if app_id and app_id != MISSING_APP_ID:
-            query = query.app(app_id)
-        res = query.run()
-        return res.facets.user.counts_by_term()
+    def _form_counts(self):
+        if EMWF.show_all_mobile_workers(self.request):
+            user_ids = []
+        else:
+            # Don't query ALL mobile workers
+            user_ids = [u.user_id for u in self.selected_users]
+        return get_form_counts_by_user_xmlns(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
+            enddate=self.datespan.enddate_utc.replace(tzinfo=pytz.UTC),
+            user_ids=user_ids,
+            xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
+            by_submission_time=self.by_submission_time,
+        )
 
 
 class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
@@ -453,6 +453,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     is_cacheable = False
     ajax_pagination = True
     exportable_all = True
+    datespan_max_days = 90
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -471,11 +472,14 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
-        for d in self.dates:
-            headers.add_column(DataTablesColumn(json_format_date(d), sort_type=DTSortType.NUMERIC))
-        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
-        return headers
+        if self.datespan.is_valid():
+            headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
+            for d in self.dates:
+                headers.add_column(DataTablesColumn(json_format_date(d), sort_type=DTSortType.NUMERIC))
+            headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
+            return headers
+        else:
+            return DataTablesHeader(DataTablesColumn(_("Error")))
 
     @property
     def date_field(self):
@@ -570,21 +574,23 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def rows(self):
-        self.sort_col = self.request_params.get('iSortCol_0', 0)
-        totals_col = self.column_count - 1
-        order = self.request_params.get('sSortDir_0')
-        if self.sort_col == totals_col:
-            users = self.users_by_range(self.startdate, self.enddate, order)
-        elif 0 < self.sort_col < totals_col:
-            start = self.dates[self.sort_col-1]
-            end = start + datetime.timedelta(days=1)
-            users = self.users_by_range(start, end, order)
-        else:
-            users = self.users_by_username(order)
+        if self.datespan.is_valid():
+            self.sort_col = self.request_params.get('iSortCol_0', 0)
+            totals_col = self.column_count - 1
+            order = self.request_params.get('sSortDir_0')
+            if self.sort_col == totals_col:
+                users = self.users_by_range(self.startdate, self.enddate, order)
+            elif 0 < self.sort_col < totals_col:
+                start = self.dates[self.sort_col-1]
+                end = start + datetime.timedelta(days=1)
+                users = self.users_by_range(start, end, order)
+            else:
+                users = self.users_by_username(order)
 
-        rows = [self.get_row(user) for user in users]
-        self.total_row = self.get_row()
-        return rows
+            rows = [self.get_row(user) for user in users]
+            self.total_row = self.get_row()
+            return rows
+        return [[self.datespan.get_validation_reason()]]
 
     @property
     def get_all_rows(self):
@@ -649,12 +655,14 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
     @property
     @memoized
-    def selected_xmlns(self):
-        return SingleFormByApplicationFilter.get_value(self.request, self.domain)
+    def selected_form_data(self):
+        data = FormsByApplicationFilter.get_value(self.request, self.domain)
+        if len(data) == 1 and data.values()[0]['xmlns']:
+            return data.values()[0]
 
     @property
     def headers(self):
-        if self.selected_xmlns['xmlns'] is None:
+        if not self.selected_form_data:
             return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
             DataTablesColumn(_("Average"), sort_type=DTSortType.NUMERIC),
@@ -666,7 +674,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     def rows(self):
         rows = []
-        if self.selected_xmlns['xmlns'] is None:
+        if not self.selected_form_data:
             rows.append([_("You must select a specific form to view data.")])
             return rows
 
@@ -701,7 +709,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
         def get_data(users, group_by_user=True):
-            query = FormData.objects.filter(xmlns=self.selected_xmlns['xmlns'])
+            query = FormData.objects.filter(xmlns=self.selected_form_data['xmlns'])
 
             date_field = 'received_on' if self.by_submission_time else 'time_end'
             date_filter = {
@@ -712,8 +720,8 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             if users:
                 query = query.filter(user_id__in=users)
 
-            if self.selected_xmlns['app_id'] is not None:
-                query = query.filter(app_id=self.selected_xmlns['app_id'])
+            if self.selected_form_data['app_id'] is not None:
+                query = query.filter(app_id=self.selected_form_data['app_id'])
 
             if group_by_user:
                 query = query.values('user_id')

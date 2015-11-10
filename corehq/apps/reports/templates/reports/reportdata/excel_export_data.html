@@ -55,6 +55,11 @@
             ga_track_event("Download Form Export", "Download Saved Form Export", exportName);
         });
 
+        $('.daily-saved-update').click(function(){
+            var exportName = $(this).attr("data-exportName");
+            ga_track_event("Update Form Export", "Update Saved Form Export", exportName);
+        });
+
         $(function () {
             // postGo is copied from main.js since that's now not being included, ever since the redesign
             function postGo (url, params) {

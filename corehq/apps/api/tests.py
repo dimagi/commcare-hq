@@ -6,6 +6,7 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django_prbac.models import Role
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
 from tastypie import fields
@@ -15,6 +16,14 @@ from corehq.pillows.reportxform import ReportXFormPillow
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 
+from corehq.apps.accounting import generator
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustment
+)
 from corehq.pillows.xform import XFormPillow
 from corehq.pillows.case import CasePillow
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -24,6 +33,7 @@ from corehq.apps.api.resources import v0_1, v0_4, v0_5
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api import es
 from corehq.apps.api.es import ESQuerySet, ESUserError
+from corehq.apps.users.analytics import update_analytics_indexes
 from django.conf import settings
 from custom.hope.models import CC_BIHAR_PREGNANCY
 
@@ -55,6 +65,13 @@ class FakeXFormES(object):
         }
 
 
+def set_up_subscription(cls):
+    cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
+    plan = DefaultProductPlan.get_default_plan_by_domain(cls.domain.name, edition=SoftwarePlanEdition.ADVANCED)
+    cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
+    cls.subscription.is_active = True
+    cls.subscription.save()
+
 class APIResourceTest(TestCase):
     """
     Base class for shared API tests. Sets up a domain and user and provides
@@ -66,6 +83,8 @@ class APIResourceTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        Role.get_cache().clear()
+        generator.instantiate_accounting_for_tests()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = reverse('api_dispatch_list',
                 kwargs=dict(domain=cls.domain.name,
@@ -76,11 +95,23 @@ class APIResourceTest(TestCase):
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
+        set_up_subscription(cls)
+        cls.domain = Domain.get(cls.domain._id)
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
-        cls.domain.delete()
+
+        SubscriptionAdjustment.objects.all().delete()
+
+        if cls.subscription:
+            cls.subscription.delete()
+
+        if cls.account:
+            cls.account.delete()
+
+        for domain in Domain.get_all():
+            domain.delete()
 
     def single_endpoint(self, id):
         return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
@@ -273,6 +304,36 @@ class TestCommCareCaseResource(APIResourceTest):
 
         backend_case.delete()
 
+    def test_no_subscription(self):
+        """
+        Tests authorization function properly blocks domains without proper subscription
+        :return:
+        """
+        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(community_domain.name, 'test', 'testpass')
+        new_user.save()
+        self.client.login(username='test', password='testpass')
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 401)
+
+        community_domain.delete()
+        new_user.delete()
+
+    def test_superuser(self):
+        """
+        Tests superuser overrides authorization
+        :return:
+        """
+        community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(community_domain.name, 'test', 'testpass', is_superuser=True)
+        new_user.save()
+        self.client.login(username='test', password='testpass')
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        community_domain.delete()
+        new_user.delete()
+
 class TestHOPECaseResource(APIResourceTest):
     """
     Tests the HOPECaseREsource, currently only v0_4, just to make sure
@@ -329,13 +390,14 @@ class TestCommCareUserResource(APIResourceTest):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
         backend_id = commcare_user.get_id
+        update_analytics_indexes()
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
-        self.assertEqual(api_users[0]['id'], backend_id)    
+        self.assertEqual(api_users[0]['id'], backend_id)
 
         commcare_user.delete()
 
@@ -1015,12 +1077,21 @@ class TestSingleSignOnResource(APIResourceTest):
         If correct credentials for a user in a different domain are submitted, the response is forbidden
         '''
         wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+
+        # have to set up subscription for the bad domain or it will fail on authorization
+        new_account = BillingAccount.get_or_create_account_by_domain(wrong_domain.name,
+                                                                     created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(wrong_domain.name,
+                                                             edition=SoftwarePlanEdition.ADVANCED)
+        new_subscription = Subscription.new_domain_subscription(new_account, wrong_domain.name, plan)
+        new_subscription.is_active = True
+        new_subscription.save()
         wrong_list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=wrong_domain.name,
                                                                        api_name=self.api_name,
                                                                        resource_name=self.resource.Meta.resource_name))
         response = self.client.post(wrong_list_endpoint, {'username': self.username, 'password': self.password})
         self.assertEqual(response.status_code, 403)
-        wrong_domain.delete() 
+        wrong_domain.delete()
 
     def test_wrong_credentials(self):
         '''
@@ -1152,6 +1223,8 @@ class TestBulkUserAPI(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
+        Role.get_cache().clear()
+        generator.instantiate_accounting_for_tests()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
@@ -1162,11 +1235,22 @@ class TestBulkUserAPI(APIResourceTest):
         cls.fake_user_es = FakeUserES()
         v0_5.MOCK_BULK_USER_ES = cls.mock_es_wrapper
         cls.make_users()
+        set_up_subscription(cls)
+        cls.domain = Domain.get(cls.domain._id)
 
     @classmethod
     def tearDownClass(cls):
         cls.admin_user.delete()
-        cls.domain.delete()
+        SubscriptionAdjustment.objects.all().delete()
+
+        if cls.subscription:
+            cls.subscription.delete()
+
+        if cls.account:
+            cls.account.delete()
+
+        for domain in Domain.get_all():
+            domain.delete()
         v0_5.MOCK_BULK_USER_ES = None
 
     @classmethod

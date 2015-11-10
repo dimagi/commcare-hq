@@ -1,31 +1,31 @@
-import datetime, pytz
+import datetime
+from itertools import chain
 
 from celery.task import periodic_task
 from celery.schedules import crontab
 from django.conf import settings
 from xml.etree import ElementTree
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.importer.tasks import CASEBLOCK_CHUNKSIZE
 from dimagi.utils.decorators.memoized import memoized
+
 
 DOMAINS = ["hsph-dev", "hsph-betterbirth", "hsph-learning-sites", "hsph-test"]
 PAST_N_DAYS = 21
-GROUPS_TO_CHECK = ["cati", "cati-tl"]
-GROUP_SHOULD_BE = "fida"
 BIRTH_TYPE = "birth"
 CATI_FIDA_CHECK_TYPE = "cati_fida_check"
 OWNER_FIELD_MAPPINGS = {
-        "cati": "cati_assignment",
-        "fida": "field_follow_up_assignment"
-    }
+    "cati": "cati_assignment",
+    "fida": "field_follow_up_assignment"
+}
 INDEXED_GROUPS = dict((domain, {}) for domain in DOMAINS)
 GROUPS_BY_ID = dict((domain, {}) for domain in DOMAINS)
+
 
 @memoized
 def indexed_facilities():
@@ -58,7 +58,7 @@ def update_groups_index(domain):
 def setup_indices():
     for domain in DOMAINS:
         update_groups_index(domain)
-    facility_index = indexed_facilities()
+    indexed_facilities()
 
 
 def get_owner_username(domain, owner_type, facility_id):
@@ -78,8 +78,8 @@ def get_group_id(domain, owner_type, facility_id):
     except KeyError:
         return None
 
-past_x_date = lambda time_zone, past_x_days: (datetime.datetime.now(time_zone) - datetime.timedelta(past_x_days)).date()
-get_none_or_value = lambda _object, _attribute: getattr(_object, _attribute) if (hasattr(_object, _attribute)) else ''
+past_x_date = lambda tz, past_x_days: (datetime.datetime.now(tz) - datetime.timedelta(past_x_days)).date()
+get_none_or_value = lambda _obj, _attr: getattr(_obj, _attr) if (hasattr(_obj, _attr)) else ''
 
 
 @periodic_task(
@@ -87,6 +87,35 @@ get_none_or_value = lambda _object, _attribute: getattr(_object, _attribute) if 
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def new_update_case_properties():
+    """
+    Submits case blocks in chunks of up to importer CASEBLOCK_CHUNKSIZE
+    """
+    case_blocks = []
+    last_domain = None
+    for case, domain in iter_cases_to_modify():
+        if not last_domain:
+            last_domain = domain
+
+        if len(case_blocks) == CASEBLOCK_CHUNKSIZE or domain != last_domain:
+            submit_case_blocks(case_blocks, last_domain)
+            last_domain = domain
+            case_blocks = []
+
+        kwargs = {
+            'create': False,
+            'case_id': case['case_id'],
+            'update': case['update'],
+            'close': case['close'],
+        }
+        if case.get('owner_id', None):
+            kwargs['owner_id'] = case['owner_id']
+        case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
+
+    if case_blocks:
+        submit_case_blocks(case_blocks, last_domain)
+
+
+def iter_cases_to_modify():
     _domain = Domain.get_by_name(DOMAINS[0])
     if _domain is None:
         return
@@ -95,13 +124,15 @@ def new_update_case_properties():
     past_42_date = past_x_date(time_zone, 42)
     setup_indices()
     for domain in DOMAINS:
-        case_list = list(get_cases_in_domain(domain, type=BIRTH_TYPE))
-        case_list = case_list + list(get_cases_in_domain(domain, type=CATI_FIDA_CHECK_TYPE))
-        cases_to_modify = []
-        for case in case_list:
+        for case in chain(get_cases_in_domain(domain, type=BIRTH_TYPE),
+                          get_cases_in_domain(domain, type=CATI_FIDA_CHECK_TYPE)):
             if case.closed:
                 continue
-            if not get_none_or_value(case, "owner_id") or not get_none_or_value(case, "date_admission") or not get_none_or_value(case, "facility_id"):
+            if (
+                not get_none_or_value(case, "owner_id") or
+                not get_none_or_value(case, "date_admission") or
+                not get_none_or_value(case, "facility_id")
+            ):
                 continue
             curr_assignment = get_none_or_value(case, "current_assignment")
             next_assignment = get_none_or_value(case, "next_assignment")
@@ -116,7 +147,11 @@ def new_update_case_properties():
 
             # Assignment Directly from Registration ##
             # Assign Cases to Call Center
-            if case.date_admission >= past_21_date and (not curr_assignment) and (not next_assignment):
+            if (
+                not curr_assignment and
+                not next_assignment and
+                past_21_date <= case.date_admission
+            ):
                 owner_id = get_group_id(domain, "cati", facility_id)
                 if not owner_id:
                     continue
@@ -126,46 +161,53 @@ def new_update_case_properties():
                     "current_assignment": "cati",
                     "cati_name": cati_name
                 }
-                cases_to_modify.append({
+                yield {
                     "case_id": case._id,
                     "update": update,
                     "close": False,
                     "owner_id": owner_id,
-                })
+                }, domain
             # Assign Cases Directly To Field
-            elif (case.date_admission >= past_42_date) and (case.date_admission < past_21_date) and (not curr_assignment) and (not next_assignment):
+            elif (
+                not curr_assignment and
+                not next_assignment and
+                past_42_date <= case.date_admission < past_21_date
+            ):
                 if not fida_group:
                     continue
                 update = {
                     "current_assignment": "fida",
                     "cati_status": 'skipped',
                 }
-                cases_to_modify.append(
-                    {
-                        "case_id": case._id,
-                        "update": update,
-                        "close": False,
-                        "owner_id": fida_group,
-                    }
-                )
+                yield {
+                    "case_id": case._id,
+                    "update": update,
+                    "close": False,
+                    "owner_id": fida_group,
+                }, domain
             # Assign Cases Directly to Lost to Follow Up
-            elif case.date_admission < past_42_date and (not curr_assignment) and (not next_assignment):
+            elif (
+                not curr_assignment and
+                not next_assignment and
+                case.date_admission < past_42_date
+            ):
                 update = {
                     "cati_status": 'skipped',
                     "last_assignment": '',
                     "closed_status": "timed_out_lost_to_follow_up",
                 }
-                cases_to_modify.append(
-                    {
-                        "case_id": case._id,
-                        "update": update,
-                        "close": True,
-                    }
-                )
+                yield {
+                    "case_id": case._id,
+                    "update": update,
+                    "close": True,
+                }, domain
 
             ## Assignment from Call Center ##
             # Assign Cases to Field (manually by call center)
-            elif (case.date_admission >= past_42_date) and next_assignment == "fida":
+            elif (
+                next_assignment == "fida" and
+                past_42_date <= case.date_admission
+            ):
                 if not cati_owner_username or not fida_group:
                     continue
                 update = {
@@ -174,16 +216,17 @@ def new_update_case_properties():
                     "next_assignment": '',
                     "cati_status": 'manually_assigned_to_field'
                 }
-                cases_to_modify.append(
-                    {
-                        "case_id": case._id,
-                        "update": update,
-                        "close": False,
-                        "owner_id": fida_group,
-                    }
-                )
+                yield {
+                    "case_id": case._id,
+                    "update": update,
+                    "close": False,
+                    "owner_id": fida_group,
+                }, domain
             # Assign cases to field (automatically)
-            elif (case.date_admission >= past_42_date) and (case.date_admission < past_21_date) and (curr_assignment == "cati" or curr_assignment == "cati_tl"):
+            elif (
+                curr_assignment in ("cati", "cati_tl") and
+                past_42_date <= case.date_admission < past_21_date
+            ):
                 if not cati_owner_username or not fida_group:
                     continue
                 update = {
@@ -193,16 +236,17 @@ def new_update_case_properties():
                     "current_assignment": "fida",
                     "next_assignment": '',
                 }
-                cases_to_modify.append(
-                    {
-                        "case_id": case._id,
-                        "update": update,
-                        "close": False,
-                        "owner_id": fida_group,
-                    }
-                )
+                yield {
+                    "case_id": case._id,
+                    "update": update,
+                    "close": False,
+                    "owner_id": fida_group,
+                }, domain
             # Assign Cases to Lost to Follow Up
-            elif case.date_admission < past_42_date and (curr_assignment == "cati" or curr_assignment == "cati_tl"):
+            elif (
+                curr_assignment in ("cati", "cati_tl") and
+                case.date_admission < past_42_date
+            ):
                 if not get_owner_username(domain, curr_assignment, facility_id) or not cati_owner_username:
                     continue
                 update = {
@@ -215,17 +259,18 @@ def new_update_case_properties():
                     "closed_status": "timed_out_lost_to_follow_up",
                     "next_assignment": ''
                 }
-                cases_to_modify.append(
-                    {
-                        "case_id": case._id,
-                        "update": update,
-                        "close": True,
-                    }
-                )
+                yield {
+                    "case_id": case._id,
+                    "update": update,
+                    "close": True,
+                }, domain
 
             ## Assignment from Field ##
             # Assign Cases to Lost to Follow Up
-            elif case.date_admission < past_42_date and (curr_assignment == "fida" or curr_assignment == "fida_tl"):
+            elif (
+                curr_assignment in ("fida", "fida_tl") and
+                case.date_admission < past_42_date
+            ):
                 if not get_owner_username(domain, curr_assignment, facility_id):
                     continue
                 update = {
@@ -235,22 +280,8 @@ def new_update_case_properties():
                     "closed_status": "timed_out_lost_to_follow_up",
                     "next_assignment": '',
                 }
-                cases_to_modify.append(
-                    {
-                        "case_id": case._id,
-                        "update": update,
-                        "close": True,
-                    }
-                )
-        case_blocks = []
-        for case in cases_to_modify:
-            kwargs = {
-                "create": False,
-                "case_id": case["case_id"],
-                "update": case["update"],
-                "close": case["close"],
-            }
-            if case.get("owner_id", None):
-                kwargs["owner_id"] = case["owner_id"]
-            case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
-        submit_case_blocks(case_blocks, domain)
+                yield {
+                    "case_id": case._id,
+                    "update": update,
+                    "close": True,
+                }, domain

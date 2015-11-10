@@ -1,11 +1,17 @@
 from django.dispatch.dispatcher import Signal
+from casexml.apps.stock.models import StockTransaction
 from couchforms.signals import xform_archived, xform_unarchived
 
 
 def rebuild_form_cases(sender, xform, *args, **kwargs):
     from casexml.apps.case.xform import get_case_ids_from_form
     from casexml.apps.case.cleanup import rebuild_case_from_forms
-    for case_id in get_case_ids_from_form(xform):
+
+    case_ids = get_case_ids_from_form(xform)
+    transactions = StockTransaction.objects.filter(report__form_id=xform.form_id)
+    stock_case_ids = transactions.values_list('case_id', flat=True).distinct()
+    case_ids.update(stock_case_ids)
+    for case_id in case_ids:
         rebuild_case_from_forms(case_id)
 
 

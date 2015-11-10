@@ -122,6 +122,8 @@ class EWSScriptTest(TestScript):
         cls.region_user = bootstrap_user(username='regionuser', domain=domain.name, home_loc=region,
                                          first_name='test6', last_name='test6',
                                          phone_number='66666')
+        cls.without_location = bootstrap_user(username='withoutloc', domain=domain.name, first_name='test7',
+                                              last_name='test7', phone_number='77777')
         try:
             XFormInstance.get(docid='test-xform')
         except ResourceNotFound:

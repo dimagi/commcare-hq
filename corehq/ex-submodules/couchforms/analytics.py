@@ -180,7 +180,7 @@ def get_number_of_submissions(domain, user_id, xmlns, app_id, start, end,
     return data['value'] if data else 0
 
 
-@quickcache(['domain', 'xmlns', 'app_id'], memoize_timeout=0, timeout=5 * 60)
+@quickcache(['domain', 'app_id', 'xmlns'], memoize_timeout=0, timeout=5 * 60)
 def get_form_analytics_metadata(domain, app_id, xmlns):
     """
     Returns metadata about the form, or None if no info found.

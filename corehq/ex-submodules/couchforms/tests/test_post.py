@@ -5,7 +5,8 @@ from corehq.apps.tzmigration import phone_timezones_should_be_processed
 from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils
 
 
 class PostTest(TestCase):
@@ -13,7 +14,7 @@ class PostTest(TestCase):
     maxDiff = None
 
     def tearDown(self):
-        FormProcessorInterface.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms()
 
     def _test(self, name, any_id_ok=False, tz_differs=False):
         with open(os.path.join(os.path.dirname(__file__), 'data', '{name}.xml'.format(name=name))) as f:
@@ -26,27 +27,24 @@ class PostTest(TestCase):
 
         with open(os.path.join(os.path.dirname(__file__), 'data',
                                '{name}.json'.format(name=expected_name))) as f:
-            result = json.load(f)
+            expected = json.load(f)
 
-        xform = FormProcessorInterface.post_xform(instance)
+        xform = FormProcessorInterface().post_xform(instance)
         xform_json = json.loads(json.dumps(xform.to_json()))
-        for key in ['is_archived', 'is_deprecated', 'is_duplicate', 'is_error']:
-            del xform_json[key]
 
-        result['received_on'] = xform_json['received_on']
-        result['_rev'] = xform_json['_rev']
-        result['_attachments'] = None
+        expected['received_on'] = xform_json['received_on']
+        expected['_rev'] = xform_json['_rev']
+        expected['_attachments'] = None
         xform_json['_attachments'] = None
         if any_id_ok:
-            result['_id'] = xform_json['_id']
-            result['id'] = xform_json['id']
+            expected['_id'] = xform_json['_id']
 
-        self.assertDictEqual(xform_json, result)
+        self.assertDictEqual(xform_json, expected)
 
     @run_pre_and_post_timezone_migration
     def test_cloudant_template(self):
         self._test('cloudant-template', tz_differs=True)
-        FormProcessorInterface.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms()
 
     def test_decimalmeta(self):
         self._test('decimalmeta', any_id_ok=True)

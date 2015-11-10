@@ -9,7 +9,6 @@ from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIn
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
-from corehq.form_processor.interfaces import FormProcessorInterface
 
 
 class RetireUserTestCase(TestCase):
@@ -56,7 +55,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(1, len(child.xform_ids))
 
         # simulate parent deletion
-        FormProcessorInterface.soft_delete_case(parent_id)
+        parent.soft_delete()
 
         # call the remove index task
         remove_indices_from_deleted_cases(self.domain, [parent_id])

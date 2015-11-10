@@ -33,7 +33,7 @@ COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 LOCATIONS = 'locations'
 
 USER_CASE = 'user_case'
-DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, etc.
+DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, auto update cases, etc.
 
 TEMPLATED_INTENTS = 'templated_intents'
 CUSTOM_INTENTS = 'custom_intents'

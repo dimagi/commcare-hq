@@ -1,7 +1,13 @@
 import requests
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.sms.models import SMS
+from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
 from dimagi.ext.couchdbkit import StringProperty
+
+
+GHANA_COUNTRY_CODE = '233'
+GHANA_PHONE_LENGTH = 12
 
 
 class SMSGHException(Exception):
@@ -38,7 +44,11 @@ class SMSGHBackend(SMSBackend):
         except:
             return {}
 
-    def handle_error(self, response):
+    def handle_error(self, response, msg):
+        phone = strip_plus(msg.phone_number)
+        if not (phone.startswith(GHANA_COUNTRY_CODE) and len(phone) == GHANA_PHONE_LENGTH):
+            msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            return
         data = self.get_additional_data(response)
         raise SMSGHException("Error with the SMSGH backend. "
             "Response Code: %s, Subcode: %s. See "
@@ -49,7 +59,7 @@ class SMSGHBackend(SMSBackend):
         data = self.get_additional_data(response)
         msg.backend_message_id = data.get('MessageId')
 
-    def send_sms(self, msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         text = msg.text.encode('utf-8')
 
         params = {
@@ -62,6 +72,6 @@ class SMSGHBackend(SMSBackend):
         response = requests.get(self.get_url(), params=params)
 
         if self.response_is_error(response):
-            self.handle_error(response)
+            self.handle_error(response, msg)
         else:
             self.handle_success(response, msg)

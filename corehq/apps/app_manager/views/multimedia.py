@@ -39,21 +39,20 @@ def multimedia_ajax(request, domain, app_id, template='app_manager/partials/mult
     app = get_app(domain, app_id)
     if app.get_doc_type() == 'Application':
         try:
-            # todo remove get_media_references
-            multimedia = app.get_media_references()
+            multimedia_state = app.check_media_state()
         except ProcessTimedOut:
             notify_exception(request)
             messages.warning(request, (
                 "We were unable to check if your forms had errors. "
                 "Refresh the page and we will try again."
             ))
-            multimedia = {
-                'references': {},
-                'form_errors': True,
-                'missing_refs': False,
+            multimedia_state = {
+                'has_media': False,
+                'has_form_errors': True,
+                'has_missing_refs': False,
             }
         context = {
-            'multimedia': multimedia,
+            'multimedia_state': multimedia_state,
             'domain': domain,
             'app': app,
         }

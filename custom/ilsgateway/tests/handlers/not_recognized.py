@@ -1,5 +1,5 @@
 from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSNotRecognized(ILSTestScript):

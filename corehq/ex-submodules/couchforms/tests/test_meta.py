@@ -2,10 +2,12 @@ from decimal import Decimal
 import os
 from datetime import date, datetime
 from django.test import TestCase
+from django.conf import settings
 from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class TestMeta(TestCase):
@@ -14,18 +16,25 @@ class TestMeta(TestCase):
     def tearDown(self):
         XFormInstance.get_db().flush()
 
+    def _check_metadata(self, xform, expected):
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
+            del expected['doc_type']
+            del expected['deprecatedID']
+        self.assertEqual(xform.metadata.to_json(), expected)
+
+    @run_with_all_backends
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         xml_data = open(file_path, "rb").read()
-        xform_generic = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
-        self.assertNotEqual(None, xform_generic.metadata)
-        self.assertEqual(date(2010, 07, 22), xform_generic.metadata.timeStart.date())
-        self.assertEqual(date(2010, 07, 23), xform_generic.metadata.timeEnd.date())
-        self.assertEqual("admin", xform_generic.metadata.username)
-        self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform_generic.metadata.userID)
-        self.assertEqual("v1.2.3 (biz bazzle)", xform_generic.metadata.appVersion)
-        self.assertEqual(xform_generic.metadata.to_json(), {
+        self.assertNotEqual(None, xform.metadata)
+        self.assertEqual(date(2010, 07, 22), xform.metadata.timeStart.date())
+        self.assertEqual(date(2010, 07, 23), xform.metadata.timeEnd.date())
+        self.assertEqual("admin", xform.metadata.username)
+        self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.userID)
+        self.assertEqual("v1.2.3 (biz bazzle)", xform.metadata.appVersion)
+        result = {
             'username': u'admin',
             'doc_type': 'Metadata',
             'instanceID': None,
@@ -37,8 +46,10 @@ class TestMeta(TestCase):
             'deviceID': None,
             'clinic_id': u'5020280',
             'location': None,
-        })
+        }
+        self._check_metadata(xform, result)
 
+    @run_with_all_backends
     def testDecimalAppVersion(self):
         '''
         Tests that an appVersion that looks like a decimal:
@@ -48,10 +59,10 @@ class TestMeta(TestCase):
 
         file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
         xml_data = open(file_path, "rb").read()
-        xform_generic = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
-        self.assertEqual(xform_generic.metadata.appVersion, '2.0')
-        self.assertEqual(xform_generic.metadata.to_json(), {
+        self.assertEqual(xform.metadata.appVersion, '2.0')
+        result = {
             'username': u'admin',
             'doc_type': 'Metadata',
             'instanceID': None,
@@ -63,16 +74,17 @@ class TestMeta(TestCase):
             'deviceID': None,
             'clinic_id': u'5020280',
             'location': None,
-        })
+        }
+        self._check_metadata(xform, result)
 
+    @run_with_all_backends
     def testMetaBadUsername(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_bad_username.xml")
         xml_data = open(file_path, "rb").read()
-        xform_generic = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
-        self.assertEqual(xform_generic.metadata.appVersion, '2.0')
-
-        self.assertEqual(xform_generic.metadata.to_json(), {
+        self.assertEqual(xform.metadata.appVersion, '2.0')
+        result = {
             'username': u'2013-07-19',
             'doc_type': 'Metadata',
             'instanceID': u'e8afaec3c66745ef80e48062d4b91b56',
@@ -83,16 +95,17 @@ class TestMeta(TestCase):
             'deprecatedID': None,
             'deviceID': u'commconnect',
             'location': None,
-        })
+        }
+        self._check_metadata(xform, result)
 
+    @run_with_all_backends
     def testMetaAppVersionDict(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
         xml_data = open(file_path, "rb").read()
-        xform_generic = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
-        self.assertEqual(xform_generic.metadata.appVersion, '2.0')
-
-        self.assertEqual(xform_generic.metadata.to_json(), {
+        self.assertEqual(xform.metadata.appVersion, '2.0')
+        result = {
             'username': u'some_username@test.commcarehq.org',
             'doc_type': 'Metadata',
             'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
@@ -103,16 +116,18 @@ class TestMeta(TestCase):
             'deprecatedID': None,
             'deviceID': u'commconnect',
             'location': None,
-        })
+        }
+        self._check_metadata(xform, result)
 
+    @run_with_all_backends
     def test_gps_location(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "gps_location.xml")
         xml_data = open(file_path, "rb").read()
 
-        xform_generic = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual(
-            xform_generic.metadata.location,
+            xform.metadata.location,
             # '42.3739063 -71.1109113 0.0 886.0'
             GeoPoint(
                 latitude=Decimal('42.3739063'),
@@ -122,7 +137,7 @@ class TestMeta(TestCase):
             )
         )
 
-        self.assertEqual(xform_generic.metadata.to_json(), {
+        result = {
             'username': u'some_username@test.commcarehq.org',
             'doc_type': 'Metadata',
             'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
@@ -133,24 +148,35 @@ class TestMeta(TestCase):
             'deprecatedID': None,
             'deviceID': u'commconnect',
             'location': '42.3739063 -71.1109113 0.0 886.0',
-        })
+        }
+        self._check_metadata(xform, result)
 
+    @run_with_all_backends
     def test_empty_gps_location(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "gps_empty_location.xml")
         xml_data = open(file_path, "rb").read()
-        xform_generic = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual(
-            xform_generic.metadata.location,
+            xform.metadata.location,
             None
         )
 
-        self.assertEqual(xform_generic.metadata.to_json()['location'], None)
+        self.assertEqual(xform.metadata.to_json()['location'], None)
 
+    @run_with_all_backends
     def testMetaDateInDatetimeFields(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "date_in_meta.xml")
         xml_data = open(file_path, "rb").read()
-        xform_generic = FormProcessorInterface.post_xform(xml_data)
+        xform = FormProcessorInterface().post_xform(xml_data)
 
-        self.assertEqual(datetime(2014, 7, 10), xform_generic.metadata.timeStart)
-        self.assertEqual(datetime(2014, 7, 11), xform_generic.metadata.timeEnd)
+        self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
+        self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
+
+    @run_with_all_backends
+    def test_missing_meta_key(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "missing_date_in_meta.xml")
+        xml_data = open(file_path, "rb").read()
+        xform = FormProcessorInterface().post_xform(xml_data)
+        self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
+        self.assertIsNone(xform.metadata.timeEnd)

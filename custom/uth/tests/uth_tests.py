@@ -6,9 +6,9 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.domain.shortcuts import create_domain
 import os
-from corehq.form_processor.interfaces import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.uth import utils
-from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from casexml.apps.case.models import CommCareCase
 from custom.uth.const import UTH_DOMAIN, UTH_CASE_TYPE
 from couchdbkit import MultipleResultsFound
@@ -31,7 +31,7 @@ class UTHTests(TestCase):
                 'scan_time': scan_time
             }
         ).as_xml()
-        FormProcessorInterface.post_case_blocks([case_block], {'domain': UTH_DOMAIN})
+        FormProcessorInterface().post_case_blocks([case_block], {'domain': UTH_DOMAIN})
 
         return case_id
 

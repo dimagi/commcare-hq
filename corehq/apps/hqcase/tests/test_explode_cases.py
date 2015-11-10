@@ -5,9 +5,9 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2
-from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_cases_in_domain
 from corehq.apps.hqcase.tasks import explode_cases

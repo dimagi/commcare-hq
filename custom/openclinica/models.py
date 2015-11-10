@@ -1,7 +1,7 @@
 from collections import defaultdict
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
-from custom.openclinica.const import AUDIT_LOGS
+from custom.openclinica.const import AUDIT_LOGS, SINGLE_EVENT_FORM_EVENT_INDEX
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
     is_item_group_repeating,
@@ -10,7 +10,11 @@ from custom.openclinica.utils import (
     get_question_item,
     get_oc_user,
     get_study_event_name,
+    oc_format_date,
 )
+
+
+_reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
 
 
 class ItemGroup(object):
@@ -22,38 +26,48 @@ class ItemGroup(object):
     def __init__(self, domain, oid):
         self.oid = oid
         self.completed_cc_forms = set([])
-        self.is_repeating = is_item_group_repeating(domain, oid)
+        # self.is_repeating = is_item_group_repeating(domain, oid)  # Unused. We use use CommCare repeat groups
         self.items = defaultdict(dict)
 
 
 class StudyEvent(object):
     """
     Like item groups, study events can also be repeated. To make things
-    interesting, repeating study events can contain repeating item groups. To
-    tell whether to close a study event and open a new one, we use the date.
-    If the study event is repeating, and the date has changed, a new study
-    event will be opened.
+    interesting, repeating study events can contain repeating item groups.
+
+    We use SINGLE_EVENT_FORM_EVENT_INDEX to know whether to create a new
+    StudyEvent. In subsequent projects we should us a study_event subcase of
+    the subject case type.
     """
-    def __init__(self, domain, oid, date):
+    def __init__(self, domain, oid):
         self.oid = oid
-        self.date = date
-        self.is_repeating = is_study_event_repeating(domain, oid)
-        self.forms = defaultdict(dict)
+        # Unused. We use SINGLE_EVENT_FORM_EVENT_INDEX in this project.
+        # self.is_repeating = is_study_event_repeating(domain, oid)
+        self.forms = defaultdict(lambda: defaultdict(list))  # a dict of forms containing a dict of item groups
         self.name = get_study_event_name(domain, oid)
         self.start_datetime = None
         self.end_datetime = None
 
     @property
     def start_short(self):
-        return self.start_datetime.strftime('%Y-%m-%d %H:%M')
+        """
+        Format the start date and time for the UI.
+
+        Format the date and time so that the user to copy and paste into OpenClinica
+        """
+        return self.start_datetime.strftime('%d-%b-%Y %H:%M')  # e.g. 01-Jan-1970 00:00
 
     @property
     def end_short(self):
-        return self.end_datetime.strftime('%Y-%m-%d %H:%M')
+        return self.end_datetime.strftime('%d-%b-%Y %H:%M')
 
     @property
     def start_long(self):
-        # OpenClinica UI doesn't allow the user to set seconds, so theirs is always "%H:%M:00.0". Make ours match:
+        """
+        Format the start date and time for the ODM export.
+
+        OpenClinica UI doesn't allow the user to set seconds, so theirs is always "%H:%M:00.0". Make ours match:
+        """
         return self.start_datetime.strftime('%Y-%m-%d %H:%M:00.0')
 
     @property
@@ -68,13 +82,16 @@ class Subject(object):
     def __init__(self, subject_key, study_subject_id, domain):
         self.subject_key = subject_key
         self.study_subject_id = study_subject_id
+        self.enrollment_date = None
+        self.sex = None
+        self.dob = None
 
         # We need the domain to get study metadata for study events and item groups
         self._domain = domain
 
         # This subject's data. Stored as subject[study_event_oid][i][form_oid][item_group_oid][j][item_oid]
         # (Study events and item groups are lists because they can repeat.)
-        self.data = {}
+        self.data = defaultdict(list)
 
         # Tracks items in self.data by reference using form ID and question. We need this so that we can
         # update an item if its form has been edited on HQ, by looking it up with new_form.orig_id.
@@ -89,35 +106,33 @@ class Subject(object):
         """
         Return the current study event. Opens a new study event if necessary.
         """
-        date = form.form['meta']['timeStart'].date()
-        if item.study_event_oid not in self.data:
-            study_event = StudyEvent(self._domain, item.study_event_oid, date)
-            self.data[item.study_event_oid] = [study_event]  # A list because study events can repeat
-            return study_event
-        current_study_event = self.data[item.study_event_oid][-1]
-        if current_study_event.is_repeating and current_study_event.date != date:
-            new_study_event = StudyEvent(self._domain, item.study_event_oid, date)
-            self.data[item.study_event_oid].append(new_study_event)
-            return new_study_event
-        return current_study_event
+        count = len(self.data[item.study_event_oid])
+        if form.xmlns in SINGLE_EVENT_FORM_EVENT_INDEX:
+            # This is a bad way to determine whether to create a new event because it needs "special cases"
+            # TODO: Use an "event" subcase of subject
+            index = SINGLE_EVENT_FORM_EVENT_INDEX[form.xmlns]
+            if count < index + 1:
+                self.data[item.study_event_oid].extend([None] * (index + 1 - count))
+            if self.data[item.study_event_oid][index] is None:
+                self.data[item.study_event_oid][index] = StudyEvent(self._domain, item.study_event_oid)
+            return self.data[item.study_event_oid][index]
+        if not count:
+            self.data[item.study_event_oid].append(StudyEvent(self._domain, item.study_event_oid))
+        study_event = self.data[item.study_event_oid][-1]
+        return study_event
 
     def get_item_group(self, item, form):
         """
         Return the current item group and study event. Opens a new item group if necessary.
+
+        Item groups are analogous to CommCare question groups. Like question groups, they can repeat.
         """
         study_event = self.get_study_event(item, form)
         oc_form = study_event.forms[item.form_oid]
-        if item.item_group_oid not in oc_form:
-            item_group = ItemGroup(self._domain, item.item_group_oid)
-            oc_form[item.item_group_oid] = [item_group]  # A list because item groups can repeat
-            return item_group, study_event
-        current_item_group = oc_form[item.item_group_oid][-1]
-        if current_item_group.is_repeating and form.xmlns in current_item_group.completed_cc_forms:
-            new_item_group = ItemGroup(self._domain, item.item_group_oid)
-            oc_form[item.item_group_oid].append(new_item_group)
-            return new_item_group, study_event
-        # If a form is submitted more than once for a non-repeating item group, it is considered an edit.
-        return current_item_group, study_event
+        if not oc_form[item.item_group_oid]:
+            oc_form[item.item_group_oid].append(ItemGroup(self._domain, item.item_group_oid))
+        item_group = oc_form[item.item_group_oid][-1]
+        return item_group, study_event
 
     def get_item_dict(self, item, form, question):
         """
@@ -131,10 +146,11 @@ class Subject(object):
         return item_dict, study_event
 
     @staticmethod
-    def edit_item(item_dict, form, question, answer, audit_log_id, oc_user):
+    def edit_item(item_dict, form, question, answer, audit_log_id_ref, oc_user):
         if AUDIT_LOGS:
+            audit_log_id_ref['id'] += 1
             item_dict['audit_logs'].append({
-                'id': 'AL_{}'.format(audit_log_id),
+                'id': 'AL_{}'.format(audit_log_id_ref['id']),
                 'user_id': oc_user.user_id,
                 'username': oc_user.username,
                 'full_name': oc_user.full_name,
@@ -161,23 +177,24 @@ class Subject(object):
             self.mobile_workers[user_id] = oc_user
         return self.mobile_workers[user_id]
 
-    def add_item(self, item, form, question, answer, audit_log_id):
+    def add_item(self, item, form, question, answer, audit_log_id_ref):
         oc_user = self._get_oc_user(form.auth_context['user_id'])
         if getattr(form, 'deprecated_form_id', None) and question in self.question_items[form.deprecated_form_id]:
             # This form has been edited on HQ. Fetch original item
             item_dict, study_event = self.question_items[form.deprecated_form_id][question]
             if item_dict['value'] != answer:
-                self.edit_item(item_dict, form, question, answer, audit_log_id, oc_user)
+                self.edit_item(item_dict, form, question, answer, audit_log_id_ref, oc_user)
         else:
             item_dict, study_event = self.get_item_dict(item, form, question)
             if item_dict and item_dict['value'] != answer:
                 # This form has been submitted more than once for a non-repeating item group. This is an edit.
-                self.edit_item(item_dict, form, question, answer, audit_log_id, oc_user)
+                self.edit_item(item_dict, form, question, answer, audit_log_id_ref, oc_user)
             else:
                 item_dict['value'] = answer
                 if AUDIT_LOGS:
+                    audit_log_id_ref['id'] += 1
                     item_dict['audit_logs'] = [{
-                        'id': 'AL_{}'.format(audit_log_id),
+                        'id': 'AL_{}'.format(audit_log_id_ref['id']),
                         'user_id': oc_user.user_id,
                         'username': oc_user.username,
                         'full_name': oc_user.full_name,
@@ -196,21 +213,52 @@ class Subject(object):
         if study_event.end_datetime is None or form.form['meta']['timeEnd'] > study_event.end_datetime:
             study_event.end_datetime = form.form['meta']['timeEnd']
 
-    def close_form(self, form):
-        """
-        Add form to item groups' completed forms, so that if a form with the
-        same xmlns recurs, we know to open a new item group.
-        """
-        for question, answer in form.form['case'].get('update', {}).iteritems():
-            # A form can contribute to many item groups, so we have to loop through all the questions
-            item = get_question_item(self._domain, form.xmlns, question)
-            if item is None:
-                # This is a CommCare-only question or form
+    def add_item_group(self, item, form):
+        study_event = self.get_study_event(item, form)
+        oc_form = study_event.forms[item.form_oid]
+        item_group = ItemGroup(self._domain, item.item_group_oid)
+        oc_form[item.item_group_oid].append(item_group)
+
+    def add_data(self, data, form, audit_log_id_ref):
+        def get_next_item(question_list):
+            for question_ in question_list:
+                item_ = get_question_item(self._domain, form.xmlns, question_)
+                if item_:
+                    return item_
+            return None
+
+        # If a CommCare form is an OpenClinica repeating item group, then we would need to add a new item
+        # group. This isn't relevant for this project.
+        # if form.xmlns in REPEATING_ITEM_GROUP_FORMS:
+        #     pass
+        for key, value in data.iteritems():
+            if key in _reserved_keys:
                 continue
-            study_event = self.data[item.study_event_oid][-1]
-            oc_form_dict = study_event.forms[item.form_oid]
-            item_group = oc_form_dict[item.item_group_oid][-1]
-            item_group.completed_cc_forms.add(form.xmlns)
+            if isinstance(value, list):
+                # Repeat group
+                # NOTE: We need to assume that repeat groups can't be edited in later form submissions
+                item = get_next_item(value)
+                if item is None:
+                    # None of the questions in this group are OpenClinica items
+                    continue
+                self.add_item_group(item, form)
+                for v in value:
+                    # TODO: More testing
+                    if not isinstance(v, dict):
+                        raise OpenClinicaIntegrationError(
+                            'CommCare question value is an unexpected data type. Form XMLNS: "{}"'.format(
+                                form.xmlns))
+                    self.add_data(v, form, audit_log_id_ref)
+            elif isinstance(value, dict):
+                # Group
+                self.add_data(value, form, audit_log_id_ref)
+            else:
+                # key is a question and value is its answer
+                item = get_question_item(self._domain, form.xmlns, key)
+                if item is None:
+                    # This is a CommCare-only question or form
+                    continue
+                self.add_item(item, form, key, oc_format_date(value), audit_log_id_ref)
 
     def get_report_events(self):
         """

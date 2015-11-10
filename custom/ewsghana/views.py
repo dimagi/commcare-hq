@@ -16,20 +16,21 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
-from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension
+from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
+    EWSMigrationProblem
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     delete_last_migrated_stock_data, convert_user_data_fields_task, migrate_email_settings, \
-    fix_users_with_more_than_one_phone_number
+    delete_connections_field_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
@@ -274,8 +275,8 @@ def migrate_email_settings_view(request, domain):
 
 @domain_admin_required
 @require_POST
-def fix_sms_users(request, domain):
-    fix_users_with_more_than_one_phone_number.delay(domain)
+def delete_connections_field(request, domain):
+    delete_connections_field_task.delay(domain)
     return HttpResponse('OK')
 
 
@@ -371,3 +372,26 @@ def non_administrative_locations_for_select2(request, domain):
         locs = locs.filter(name__icontains=query)
 
     return json_response(map(loc_to_payload, locs[:10]))
+
+
+class BalanceMigrationView(BaseDomainView):
+
+    template_name = 'ewsghana/balance.html'
+    section_name = 'Balance'
+    section_url = ''
+
+    @property
+    def page_context(self):
+        return {
+            'stats': get_object_or_404(EWSMigrationStats, domain=self.domain),
+            'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
+            'locations_count': SQLLocation.objects.filter(
+                domain=self.domain, location_type__administrative=True
+            ).exclude(is_archived=True).count(),
+            'supply_points_count': SQLLocation.objects.filter(
+                domain=self.domain, location_type__administrative=False
+            ).exclude(is_archived=True).count(),
+            'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
+        }

@@ -1,56 +1,70 @@
 import os
 from django.test import TestCase
 
-from corehq.form_processor.interfaces import FormProcessorInterface
-from corehq.form_processor.generic import GenericXFormInstance
-from couchforms.models import XFormInstance
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.util.test_utils import TestFileMixin
 
 
-class DuplicateFormTest(TestCase):
+class DuplicateFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
+
+    def setUp(self):
+        self.interface = FormProcessorInterface()
 
     def tearDown(self):
-        FormProcessorInterface.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms()
 
-    def _get_file(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "duplicate.xml")
-        with open(file_path, "rb") as f:
-            return f.read()
-
+    @run_with_all_backends
     def test_basic_duplicate(self):
-        xml_data = self._get_file()
-        xform = FormProcessorInterface.post_xform(xml_data)
-        self.assertEqual(self.ID, xform.id)
-        self.assertEqual("XFormInstance", xform.doc_type)
+        xml_data = self.get_xml('duplicate')
+        xform = self.interface.post_xform(xml_data)
+        self.assertEqual(self.ID, xform.form_id)
+        self.assertTrue(xform.is_normal)
         self.assertEqual("test-domain", xform.domain)
 
-        xform = FormProcessorInterface.post_xform(xml_data, domain='test-domain')
-        self.assertNotEqual(self.ID, xform.id)
-        self.assertEqual("XFormDuplicate", xform.doc_type)
+        xform = self.interface.post_xform(xml_data, domain='test-domain')
+        self.assertNotEqual(self.ID, xform.form_id)
+        self.assertTrue(xform.is_duplicate)
         self.assertTrue(self.ID in xform.problem)
 
+    @run_with_all_backends
     def test_wrong_doc_type(self):
         domain = 'test-domain'
-        XFormInstance.get_db().save_doc({
-            '_id': self.ID,
-            'doc_type': 'Foo',
-            'domain': domain,
-        })
-        self.addCleanup(lambda: XFormInstance.get_db().delete_doc(self.ID))
+        instance = self.get_xml('duplicate')
 
-        instance = self._get_file()
-        xform = FormProcessorInterface.post_xform(instance, domain=domain)
-        self.assertNotEqual(xform.id, self.ID)
+        # Post an xform with an alternate doc_type
+        xform1 = self.interface.post_xform(
+            instance,
+            domain=domain,
+        )
 
+        # Change the doc_type of the form by archiving it
+        self.interface.xform_model.archive(xform1)
+        xform1 = self.interface.xform_model.get(xform1.form_id)
+        self.assertTrue(xform1.is_archived)
+
+        # Post an xform with that has different doc_type but same id
+        _, xform2, _ = self.interface.submit_form_locally(
+            instance,
+            domain=domain,
+        )
+
+        self.assertNotEqual(xform1.form_id, xform2.form_id)
+
+    @run_with_all_backends
     def test_wrong_domain(self):
         domain = 'test-domain'
-        generic_xform = GenericXFormInstance(
-            doc_type='XFormInstance',
+        instance = self.get_xml('duplicate')
+
+        _, xform1, _ = self.interface.submit_form_locally(
+            instance,
             domain='wrong-domain',
         )
-        xform = FormProcessorInterface.create_from_generic(generic_xform)
-
-        instance = self._get_file()
-        instance = instance.replace(self.ID, xform.id)
-        xform = FormProcessorInterface.post_xform(instance, domain=domain)
-        self.assertNotEqual(xform.id, self.ID)
+        _, xform2, _ = self.interface.submit_form_locally(
+            instance,
+            domain=domain,
+        )
+        self.assertNotEqual(xform1.form_id, xform2.form_id)

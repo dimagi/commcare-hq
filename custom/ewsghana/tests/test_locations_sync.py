@@ -11,7 +11,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.api import Location, EWSApi, Product
 from custom.ewsghana.models import FacilityInCharge
-from custom.ewsghana.tests import MockEndpoint
+from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 
 TEST_DOMAIN = 'ewsghana-commtrack-locations-test'
 

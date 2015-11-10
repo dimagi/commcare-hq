@@ -1,30 +1,32 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
-import logging
-import math
-import warnings
 from importlib import import_module
-
-from django.http import Http404
+import math
 import pytz
+import warnings
+
 from django.conf import settings
+from django.http import Http404
 from django.utils import html, safestring
 
+from couchexport.util import SerializableFunction
+from couchforms.analytics import (
+    get_all_user_ids_submitted,
+    get_first_form_submission_received,
+    get_username_in_last_form_user_id_submitted,
+)
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_request
+
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.util import SerializableFunction
-from couchforms.analytics import get_all_user_ids_submitted, \
-    get_username_in_last_form_user_id_submitted, get_first_form_submission_received
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.dates import DateSpan
-from corehq.apps.domain.models import Domain
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.web import json_request
+
+from .models import HQUserType, TempCommCareUser
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -426,3 +428,11 @@ def is_mobile_worker_with_report_access(couch_user, domain):
         and domain is not None
         and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
     )
+
+
+def get_INFilter_element_bindparam(base_name, index):
+    return '%s_%d' % (base_name, index)
+
+
+def get_INFilter_bindparams(base_name, values):
+    return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
