@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0016_index_case_attachment_uuid'),
+        ('form_processor', '0018_xforminstancesql_user_id'),
     ]
 
     operations = [

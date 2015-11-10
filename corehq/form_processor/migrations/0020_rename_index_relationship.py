@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0017_allow_closed_by_null'),
+        ('form_processor', '0019_allow_closed_by_null'),
     ]
 
     operations = [
