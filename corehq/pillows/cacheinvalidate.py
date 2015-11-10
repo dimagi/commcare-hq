@@ -65,7 +65,6 @@ class CacheInvalidatePillow(BasicPillow):
         else:
             pillow_logging.info("[CacheInvalidate]: Change %s (%s), no generation change" % (doc_id, doc.get('doc_type', 'unknown')))
 
-
     def change_transport(self, doc_dict):
         """
         Step three of the pillowtop processor:
