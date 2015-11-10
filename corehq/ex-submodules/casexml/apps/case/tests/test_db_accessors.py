@@ -71,15 +71,15 @@ class TestExtensionCaseIds(TestCase):
         returned_cases = get_extension_case_ids(self.domain, [host_id])
         self.assertItemsEqual(returned_cases, [extension_id])
 
-    def test_extension_of_multiple_cases_returned(self):
-        """ Should return all extensions if there are multiple """
+    def test_extension_of_multiple_hosts_returned(self):
+        """ Should return an extension from any host if there are multiple indices """
         host_id = uuid.uuid4().hex
         host_2_id = uuid.uuid4().hex
-        host_3_id = uuid.uuid4().hex
+        parent_id = uuid.uuid4().hex
         extension_id = uuid.uuid4().hex
         host = CaseStructure(case_id=host_id)
         host_2 = CaseStructure(case_id=host_2_id)
-        host_3 = CaseStructure(case_id=host_3_id)
+        parent = CaseStructure(case_id=parent_id)
 
         self.factory.create_or_update_case(
             CaseStructure(
@@ -87,7 +87,7 @@ class TestExtensionCaseIds(TestCase):
                 indices=[
                     CaseIndex(host, relationship=CASE_INDEX_EXTENSION, identifier="host"),
                     CaseIndex(host_2, relationship=CASE_INDEX_EXTENSION, identifier="host_2"),
-                    CaseIndex(host_3, relationship=CASE_INDEX_CHILD),
+                    CaseIndex(parent, relationship=CASE_INDEX_CHILD),
                 ]
             )
         )
@@ -96,6 +96,33 @@ class TestExtensionCaseIds(TestCase):
         self.assertItemsEqual(returned_cases, [extension_id])
         returned_cases = get_extension_case_ids(self.domain, [host_id])
         self.assertItemsEqual(returned_cases, [extension_id])
+
+    def test_host_with_multiple_extensions(self):
+        """ Return all extensions from a single host """
+        host_id = uuid.uuid4().hex
+        extension_id = uuid.uuid4().hex
+        extension_2_id = uuid.uuid4().hex
+
+        host = CaseStructure(case_id=host_id)
+
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=extension_id,
+                indices=[
+                    CaseIndex(host, relationship=CASE_INDEX_EXTENSION, identifier="host"),
+                ]
+            ),
+            CaseStructure(
+                case_id=extension_2_id,
+                indices=[
+                    CaseIndex(host, relationship=CASE_INDEX_EXTENSION, identifier="host"),
+                ]
+            ),
+        ]
+        )
+
+        returned_cases = get_extension_case_ids(self.domain, [host_id])
+        self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
 
     def test_extensions_from_list(self):
         """ Given a list of hosts, should return all extensions """
