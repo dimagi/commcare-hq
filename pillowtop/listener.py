@@ -261,7 +261,7 @@ class PythonPillow(BasicPillow):
 
     def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
                  checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
-                 couch_db=None, max_processing_wait=PYTHONPILLOW_MAX_WAIT_TIME):
+                 couch_db=None):
         """
         Use chunk_size = 0 to disable chunking
         """
@@ -271,7 +271,6 @@ class PythonPillow(BasicPillow):
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
         self.include_docs = not self.use_chunking
-        self.max_processing_wait = max_processing_wait
         self.last_processed_time = None
         if couch_db:
             self._couch_db = couch_db
@@ -324,7 +323,7 @@ class PythonPillow(BasicPillow):
             return False
 
         wait_time = datetime.utcnow() - self.last_processed_time
-        return wait_time > timedelta(seconds=self.max_processing_wait)
+        return wait_time > timedelta(seconds=PYTHONPILLOW_MAX_WAIT_TIME)
 
     def processor(self, change, context):
         if self.use_chunking:
