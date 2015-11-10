@@ -205,7 +205,11 @@ def _get_or_update_cases(xforms, case_db):
         unowned_host_cases = []
         for index in extension_indices:
             host_case = case_db.get(index.referenced_id)
-            if host_case and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID:
+            if (
+                host_case
+                and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID
+                and host_case not in unowned_host_cases
+            ):
                 unowned_host_cases.append(host_case)
 
         owner_ids = {case_db.get(index.referenced_id).owner_id
