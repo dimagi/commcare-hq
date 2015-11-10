@@ -713,6 +713,7 @@ cloudCare.AppView = Backbone.View.extend({
             }
         };
         var loadSession = function() {
+            console.log("Load Session")
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
             sess.load($('#webforms'), self.options.language, {
