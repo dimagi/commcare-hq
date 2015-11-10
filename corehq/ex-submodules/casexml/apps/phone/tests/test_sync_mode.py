@@ -937,26 +937,21 @@ class ExtensionCasesFirstSync(SyncBaseTest):
         self.restore_config = RestoreConfig(project=self.project, user=self.user)
         self.restore_state = self.restore_config.restore_state
 
-    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
-    def test_is_first_extension_sync_toggled(self):
-        """Before any syncs, this should return true"""
-        self.assertTrue(self.restore_state.is_first_extension_sync)
+    def test_is_first_extension_sync(self):
+        """Before any syncs, this should return true when the toggle is enabled, otherwise false"""
+        with flag_enabled('EXTENSION_CASES_SYNC_ENABLED'):
+            self.assertTrue(self.restore_state.is_first_extension_sync)
 
-    def test_is_first_extension_sync_no_toggle(self):
-        """Before any syncs, this should return false"""
         self.assertFalse(self.restore_state.is_first_extension_sync)
 
-    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
-    def test_is_first_extension_sync_false_after_sync(self):
+    def test_is_first_extension_sync_after_sync(self):
         """After a sync with the extension code in place, this should be false"""
         self.factory.create_case()
-        config = get_restore_config(self.project, self.user, restore_id=self.sync_log._id)
-        self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
-        self.assertFalse(config.restore_state.is_first_extension_sync)
+        with flag_enabled('EXTENSION_CASES_SYNC_ENABLED'):
+            config = get_restore_config(self.project, self.user, restore_id=self.sync_log._id)
+            self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
+            self.assertFalse(config.restore_state.is_first_extension_sync)
 
-    def test_is_first_extension_sync_false_after_sync_no_flag(self):
-        """After a sync with the extension code in place, this should be false"""
-        self.factory.create_case()
         config = get_restore_config(self.project, self.user, restore_id=self.sync_log._id)
         self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
         self.assertFalse(config.restore_state.is_first_extension_sync)
