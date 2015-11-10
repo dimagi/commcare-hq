@@ -455,7 +455,7 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     def __unicode__(self):
         return (
             "CaseIndex("
-            "case_id='{i.case.case_uuid}', "
+            "case_id='{i.case_id}', "
             "domain='{i.domain}', "
             "identifier='{i.identifier}', "
             "referenced_type='{i.referenced_type}', "
