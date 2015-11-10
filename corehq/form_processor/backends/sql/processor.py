@@ -1,4 +1,5 @@
 import datetime
+import logging
 import uuid
 import hashlib
 
@@ -66,6 +67,7 @@ class FormProcessorSQL(object):
     def bulk_save(cls, instance, xforms, cases=None):
         try:
             with transaction.atomic():
+                logging.debug('Beginning atomic commit\n')
                 # Ensure already saved forms get saved first to avoid ID conflicts
                 for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
                     xform.save()
@@ -75,19 +77,23 @@ class FormProcessorSQL(object):
 
                 if cases:
                     for case in cases:
+                        logging.debug('Saving case: %s', case)
                         case.save()
 
                         to_delete = case.get_tracked_models_to_delete(CommCareCaseIndexSQL)
                         if to_delete:
+                            logging.debug('Deleting indexes: %s', to_delete)
                             ids = [index.pk for index in to_delete]
                             CommCareCaseIndexSQL.objects.filter(pk__in=ids).delete()
 
                         to_update = case.get_tracked_models_to_update(CommCareCaseIndexSQL)
                         for index in to_update:
+                            logging.debug('Updating index: %s', index)
                             index.save()
 
                         to_create = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
                         if to_create:
+                            logging.debug('Creating indexes: %s', to_create)
                             case.index_set.bulk_create(to_create)
 
                         case.clear_tracked_models()
