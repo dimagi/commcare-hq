@@ -68,7 +68,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             if val:
                 setattr(self.case, k, val)
 
-        self.case.case_json['name'] = known_properties.get('name', '')
+        if 'name' in known_properties:
+            self.case.case_json['name'] = known_properties['name']
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
