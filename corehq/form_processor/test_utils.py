@@ -39,7 +39,12 @@ class FormProcessorTestUtils(object):
             view,
             **view_kwargs
         )
-        XFormInstanceSQL.objects.all().delete()
+        query = XFormInstanceSQL.objects
+        if domain is not None:
+            query = query.filter(domain=domain)
+        if user_id is not None:
+            query = query.filter(user_id=user_id)
+        query.all().delete()
 
     @classmethod
     @unit_testing_only

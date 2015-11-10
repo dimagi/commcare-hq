@@ -42,13 +42,15 @@ class AttachmentMixin(SaveStateMixin):
     ATTACHMENTS_RELATED_NAME = 'attachments'
 
     def get_attachment(self, attachment_name):
+        return self.get_attachment_meta(attachment_name).read_content()
+
+    def get_attachment_meta(self, attachment_name):
         if hasattr(self, 'unsaved_attachments'):
             for attachment in self.unsaved_attachments:
                 if attachment.name == attachment_name:
-                    return attachment.read_content()
+                    return attachment
         elif self.is_saved():
-            xform_attachment = self.attachments.filter(name=attachment_name).first()
-            return xform_attachment.read_content()
+            return self.attachments.filter(name=attachment_name).first()
 
 
 class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
@@ -75,6 +77,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, null=True)
 
     # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
     orig_id = models.CharField(max_length=255, null=True)
@@ -95,7 +98,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
-    problem = models.CharField(max_length=255, null=True)
+    problem = models.TextField(null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
@@ -157,9 +160,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     @property
     @memoized
     def form_data(self):
-        from .utils import convert_xform_to_json
+        from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
-        return convert_xform_to_json(xml)
+        form_json = convert_xform_to_json(xml)
+        adjust_datetimes(form_json)
+        return form_json
 
     @property
     def history(self):
@@ -202,7 +207,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         return self.get_attachment('form.xml')
 
     def xml_md5(self):
-        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
+        return self.get_attachment_meta('form.xml').md5
 
     def archive(self, user=None):
         if self.is_archived:
