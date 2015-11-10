@@ -620,6 +620,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
     extension_index_tree = SchemaProperty(IndexTree)  # index tree of extensions
     closed_cases = SetProperty(unicode)
+    extensions_checked = BooleanProperty(default=False)
 
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
