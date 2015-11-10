@@ -195,26 +195,29 @@ class PaymentMethodType(object):
 
 
 class SubscriptionType(object):
-    CONTRACTED = "CONTRACTED"
-    SELF_SERVICE = "SELF_SERVICE"
+    CONTRACTED = "IMPLEMENTATION"
+    SELF_SERVICE = "PRODUCT"
     NOT_SET = "NOT_SET"
+    TRIAL = "TRIAL"
+    SANDBOX = "SANDBOX"
+    INTERNAL = "INTERNAL"
     CHOICES = (
-        (CONTRACTED, "Contracted"),
-        (SELF_SERVICE, "Self-service"),
-        (NOT_SET, "Not Set"),
+        (CONTRACTED, "Implementation"),
+        (SELF_SERVICE, "Product"),
+        (TRIAL, "Trial"),
+        (SANDBOX, "Sandbox"),
+        (INTERNAL, "Internal"),
     )
 
 
 class ProBonoStatus(object):
-    YES = "YES"
-    NO = "NO"
+    YES = "PRO_BONO"
+    NO = "FULL_PRICE"
     DISCOUNTED = "DISCOUNTED"
-    NOT_SET = "NOT_SET"
     CHOICES = (
-        (YES, "Yes"),
-        (NO, "No"),
+        (NO, "Full Price"),
         (DISCOUNTED, "Discounted"),
-        (NOT_SET, "Not Set"),
+        (YES, "Pro Bono"),
     )
 
 
@@ -952,12 +955,11 @@ class Subscription(models.Model):
     service_type = models.CharField(
         max_length=25,
         choices=SubscriptionType.CHOICES,
-        default=SubscriptionType.NOT_SET,
     )
     pro_bono_status = models.CharField(
         max_length=25,
         choices=ProBonoStatus.CHOICES,
-        default=ProBonoStatus.NOT_SET,
+        default=ProBonoStatus.NO,
     )
     funding_source = models.CharField(
         max_length = 25,
@@ -1214,7 +1216,7 @@ class Subscription(models.Model):
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
-            pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT)
             **kwargs
         )

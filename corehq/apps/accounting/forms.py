@@ -352,7 +352,7 @@ class SubscriptionForm(forms.Form):
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Pro-Bono"),
+        label=ugettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
     )

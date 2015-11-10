@@ -1461,7 +1461,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
+        if self.edition == SoftwarePlanEdition.ENTERPRISE:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 

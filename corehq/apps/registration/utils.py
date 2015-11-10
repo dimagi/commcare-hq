@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
+    SubscriptionType
 )
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
@@ -276,6 +277,7 @@ def create_30_day_trial(domain_obj):
         date_end=expiration_date,
         adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
         is_trial=True,
+        service_type=SubscriptionType.TRIAL
     )
     trial_subscription.is_active = True
     trial_subscription.save()

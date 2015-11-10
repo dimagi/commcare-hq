@@ -1413,6 +1413,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
         fields.update({
             'do_not_invoice': True,
+            'service_type': SubscriptionType.INTERNAL,
         })
         return fields
 
@@ -1495,6 +1496,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
+            'service_type': SubscriptionType.TRIAL
         })
         return fields
 
