@@ -14,7 +14,7 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls):
-        cls._delete_all(CommCareCase.get_db(), 'case/get_lite')
+        cls._delete_all(CommCareCase.get_db(), 'cases_get_lite/get_lite')
 
     @classmethod
     @unit_testing_only
