@@ -6,6 +6,7 @@ from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
+from corehq.form_processor.unsaved import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
@@ -308,7 +309,8 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractCommCareCase):
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
+                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -370,13 +372,23 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
         serializer = CommCareCaseSQLSerializer(self)
         return serializer.data
 
-    @property
     @memoized
+    def _saved_indices(self):
+        return self.index_set.all() if self.is_saved() else []
+
+    @property
     def indices(self):
-        if self.is_saved():
-            return self.index_set.all()
-        else:
-            return getattr(self, 'unsaved_indices', [])
+        indices = self._saved_indices()
+
+        to_delete = [to_delete.identifier for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
+        indices = [index for index in indices if index.identifier not in to_delete]
+
+        indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
+
+        return indices
+
+    def on_tracked_models_cleared(self, model_class=None):
+        self._saved_indices.reset_cache(self)
 
     @classmethod
     def get(cls, case_id):

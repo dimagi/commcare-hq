@@ -91,7 +91,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             return
 
         case_indices = self.case.indices
-        self.case.unsaved_indices = []
 
         def has_index(index_id):
             return index_id in (i.identifier for i in case_indices)
@@ -108,15 +107,14 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 if not index_update.referenced_id:
                     # empty ID = delete
                     index = get_index(index_update.identifier)
-                    index.to_delete = True
-                    self.case.unsaved_indices.append(index)
+                    self.case.track_delete(index)
                 else:
                     # update
                     index = get_index(index_update.identifier)
                     index.referenced_type = index_update.referenced_type
                     index.referenced_id = index_update.referenced_id
                     index.relationship = index_update.relationship
-                    self.case.unsaved_indices.append(index)
+                    self.case.track_update(index)
             else:
                 # no id, no index
                 if index_update.referenced_id:
@@ -127,7 +125,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                         referenced_id=index_update.referenced_id,
                         relationship=index_update.relationship
                     )
-                    self.case.unsaved_indices.append(index)
+                    self.case.track_create(index)
 
     def _apply_attachments_action(self, attachment_action, xform=None):
         raise NotImplementedError()

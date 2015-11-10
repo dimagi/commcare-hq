@@ -77,18 +77,20 @@ class FormProcessorSQL(object):
                     for case in cases:
                         case.save()
 
-                    if getattr(case, 'unsaved_indices', None):
-                        to_delete = [index.identifier for index in case.unsaved_indices if getattr(index, 'to_delete', False)]
+                        to_delete = case.get_tracked_models_to_delete(CommCareCaseIndexSQL)
                         if to_delete:
-                            CommCareCaseIndexSQL.objects.filter(case=case, identifier__in=to_delete).delete()
+                            ids = [index.pk for index in to_delete]
+                            CommCareCaseIndexSQL.objects.filter(pk__in=ids).delete()
 
-                        to_update = [index for index in case.unsaved_indices if index.is_saved() and not getattr(index, 'to_delete', False)]
+                        to_update = case.get_tracked_models_to_update(CommCareCaseIndexSQL)
                         for index in to_update:
                             index.save()
 
-                        to_create = [index for index in case.unsaved_indices if not index.is_saved()]
+                        to_create = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
                         if to_create:
                             case.index_set.bulk_create(to_create)
+
+                        case.clear_tracked_models()
         except Exception as e:
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
