@@ -56,6 +56,7 @@
             workbook.activateSheetAsync(btn[0].textContent);
             $(".btn.btn-success").removeClass('btn-success').addClass('btn-default');
             btn.removeClass('btn-default').addClass('btn-success');
+            // TODO: This should handle resetting filters and setting view by to state as well
 
         })
 
@@ -142,11 +143,6 @@
                                 worksheet.getFiltersAsync().then(function(filters) {console.log(filters)})
                             })
                         });
-
-                        return last_worksheet;
-                    })
-                    .then(function() {
-                        //_.each(params, function(value, key, list) {
                         key = 'View By';
                         value = params[key];
 
@@ -154,6 +150,7 @@
                         return workbook.changeParameterValueAsync(key, value);
                         //});
 
+                        return last_worksheet;
                     }).otherwise(function(err){
                         console.log(err);
                     })
@@ -171,9 +168,5 @@
     }
 
     initializeViz()
-
-
-
-
 
 </script>
