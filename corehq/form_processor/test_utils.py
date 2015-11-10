@@ -1,5 +1,6 @@
 import functools
 from couchdbkit import ResourceNotFound
+from django.db.models.query_utils import Q
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
@@ -28,14 +29,14 @@ class FormProcessorTestUtils(object):
             **view_kwargs
         )
 
-        def _sql_delete(query):
+        def _sql_delete(query, domain_filter):
             if domain is not None:
-                query.filter(domain=domain)
+                query.filter(domain_filter)
             query.all().delete()
 
-        _sql_delete(CommCareCaseIndexSQL.objects)
-        _sql_delete(CaseAttachmentSQL.objects)
-        _sql_delete(CommCareCaseSQL.objects)
+        _sql_delete(CommCareCaseIndexSQL.objects, Q(case__domain=domain))
+        _sql_delete(CaseAttachmentSQL.objects, Q(case__domain=domain))
+        _sql_delete(CommCareCaseSQL.objects, Q(domain=domain))
 
     @classmethod
     @unit_testing_only
