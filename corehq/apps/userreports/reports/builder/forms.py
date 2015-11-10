@@ -675,35 +675,43 @@ class ConfigureNewReportBase(forms.Form):
         if self.existing_report:
             return [self._get_view_model(f) for f in self.existing_report.filters]
         if self.source_type == 'case':
-            return [
-                FilterViewModel(
-                    exists_in_current_version=True,
-                    property='closed',
-                    data_source_field=None,
-                    display_text='closed',
-                    format='Choice',
-                ),
-                # TODO: Allow users to filter by owner name, not just id.
-                # This will likely require implementing data source filters.
-                FilterViewModel(
-                    exists_in_current_version=True,
-                    property='computed/owner_name',
-                    data_source_field=None,
-                    display_text='owner name',
-                    format='Choice',
-                ),
-            ]
+            return self._default_case_report_filters
         else:
             # self.source_type == 'form'
-            return [
-                FilterViewModel(
-                    exists_in_current_version=True,
-                    property='timeEnd',
-                    data_source_field=None,
-                    display_text='Form completion time',
-                    format='Date',
-                ),
-            ]
+            return self._default_form_report_filters
+
+    @property
+    @memoized
+    def _default_case_report_filters(self):
+        return [
+            FilterViewModel(
+                exists_in_current_version=True,
+                property='closed',
+                data_source_field=None,
+                display_text='closed',
+                format='Choice',
+            ),
+            FilterViewModel(
+                exists_in_current_version=True,
+                property='computed/owner_name',
+                data_source_field=None,
+                display_text='owner name',
+                format='Choice',
+            ),
+        ]
+
+    @property
+    @memoized
+    def _default_form_report_filters(self):
+        return [
+            FilterViewModel(
+                exists_in_current_version=True,
+                property='timeEnd',
+                data_source_field=None,
+                display_text='Form completion time',
+                format='Date',
+            ),
+        ]
 
     def _get_view_model(self, filter):
         """
