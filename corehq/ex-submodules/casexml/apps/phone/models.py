@@ -790,22 +790,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
             _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
-
-            def _should_fail_softly():
-                def _sync_log_was_old():
-                    # todo: this here to avoid having to manually clean up after
-                    # http://manage.dimagi.com/default.asp?179664
-                    # it should be removed when there are no longer any instances of the assertion
-                    if self.date < datetime(2015, 8, 25):
-                        _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
-                            self._id, to_remove)
-                        )
-                        return True
-                    return False
-
-                return _domain_has_legacy_toggle_set() or _sync_log_was_old()
-
-            if _should_fail_softly():
+            should_fail_softly = _domain_has_legacy_toggle_set()
+            if should_fail_softly:
                 pass
             else:
                 # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
