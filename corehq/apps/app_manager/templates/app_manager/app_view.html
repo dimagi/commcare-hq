@@ -234,6 +234,17 @@
             ga_track_event('App Builder', 'Download Multimedia');
         });
     </script>
+    <script>
+        $(function() {
+            var $minThreshold=$('#minimum_use_threshold-input');
+            $minThreshold.change(function(e) {
+                if (!(0 < $minThreshold.val() && $minThreshold.val() < 100)) {
+                    alert("The minimum use threshold must be a number between 1 and 100");
+
+                }
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block title %}

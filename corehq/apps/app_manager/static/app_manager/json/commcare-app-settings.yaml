@@ -178,5 +178,5 @@
 - id: minimum_use_threshold
   name: 'Minimum Use Threshold'
   description: 'This field indicates the minimum number of forms in this application that a user should submit monthly in order to be considered using sufficiently to generate a WAM. The default value is 15. Please see confluence or the data team for further clarification.'
-  default: '15'
-  widget: text
+  widget: shorttext
+  preview: true

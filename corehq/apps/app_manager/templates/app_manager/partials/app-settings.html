@@ -92,6 +92,16 @@
     </span>
 </script>
 
+<script type="text/html" id="CommcareSettings.widgets.shorttext">
+    <span>
+        <input type="text" class="span3" data-bind="
+            value: visibleValue,
+            valueUpdate: 'textchange',
+            attr: {disabled: !enabled(), id: inputId}
+        " />
+    </span>
+</script>
+
 <script type="text/html" id="CommcareSettings.widgets.textarea">
     <span>
         <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
@@ -148,6 +158,18 @@ todo fix
     });
 </script>
 {% endcomment %}
+
+<script>
+    var validationText = {% trans "The minimum use threshold must be a number between 1 and 100" %}
+    $(function () {
+       $('#settings-save-btn').click(function (e) {
+           if (!(0 < $minThreshold.val() && $minThreshold.val() < 100)) {
+               e.preventDefault();
+               alert(validationText);
+           }
+       });
+    });
+</script>
 
 <div class="tab-pane" id="commcare-settings">
     <div class="clearfix" id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
