@@ -186,8 +186,6 @@ class FundamentalCaseTests(TestCase):
         case = self.interface.case_model.get(child_case_id)
         self.assertEqual(len(case.indices), 0)
 
-
-
     def test_case_with_attachment(self):
         # same as update, attachments
         pass
