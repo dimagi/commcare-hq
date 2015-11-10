@@ -4896,6 +4896,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return []
         return form.get_questions(self.langs)
 
+    def check_subscription(self):
+
+        def app_uses_usercase(app):
+            return any(m.uses_usercase() for m in app.get_modules())
+
+        errors = []
+        if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
+            errors.append({
+                'type': 'subscription',
+                'message': _('Your application is using User Case functionality. You can remove User Case '
+                             'functionality by opening the User Case Management tab in a form that uses it, and '
+                             'clicking "Remove User Case Properties".')
+            })
+        return errors
+
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []
@@ -4930,6 +4945,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.append({'type': 'parent cycle'})
 
         errors.extend(self._child_module_errors(modules_dict))
+        errors.extend(self.check_subscription())
 
         if not errors:
             errors = super(Application, self).validate_app()
