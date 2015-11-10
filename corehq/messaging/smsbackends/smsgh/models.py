@@ -59,7 +59,7 @@ class SMSGHBackend(SMSBackend):
         data = self.get_additional_data(response)
         msg.backend_message_id = data.get('MessageId')
 
-    def send_sms(self, msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         text = msg.text.encode('utf-8')
 
         params = {

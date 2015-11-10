@@ -4,9 +4,11 @@ from dimagi.ext.jsonobject import (
     JsonObject,
     ListProperty,
     StringProperty,
+    DictProperty,
 )
 from jsonobject.base import DefaultProperty
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
+from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN
 from corehq.apps.userreports.reports.filters.values import (
     DateFilterValue, NumericFilterValue, ChoiceListFilterValue
 )
@@ -84,6 +86,10 @@ class DynamicChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('dynamic_choice_list')
     show_all = BooleanProperty(default=True)
     datatype = DataTypeProperty(default='string')
+    choice_provider = DictProperty()
+
+    def get_choice_provider_spec(self):
+        return self.choice_provider or {'type': DATA_SOURCE_COLUMN}
 
     @property
     def choices(self):

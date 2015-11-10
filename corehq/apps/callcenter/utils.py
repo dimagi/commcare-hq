@@ -78,7 +78,7 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         caseblock = None
         if case:
-            props = dict(case.dynamic_case_properties())
+            props = case.dynamic_case_properties()
 
             changed = close != case.closed
             changed = changed or case.type != case_type

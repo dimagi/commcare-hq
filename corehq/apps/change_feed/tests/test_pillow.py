@@ -25,7 +25,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             bootstrap_servers=[settings.KAFKA_URL],
             consumer_timeout_ms=100,
         )
-        pillow = ChangeFeedPillow(self._fake_couch, kafka=get_kafka_client())
+        pillow = ChangeFeedPillow(self._fake_couch, kafka=get_kafka_client(), checkpoint=None)
         document = {
             'doc_type': 'CommCareCase',
             'type': 'mother',

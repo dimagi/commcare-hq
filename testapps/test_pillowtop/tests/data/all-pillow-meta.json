@@ -111,7 +111,7 @@
     }, 
     "DefaultChangeFeedPillow": {
         "advertised_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq", 
-        "checkpoint_id": "pillowtop_corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq", 
+        "checkpoint_id": "default-couch-change-feed",
         "couch_filter": null, 
         "document_class": null, 
         "extra_args": {}, 

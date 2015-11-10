@@ -27,7 +27,6 @@ class UserGenerationCache(GenerationCache):
         "users/web_users_by_domain",
         "users/by_default_phone",
         "users/admins_by_domain",
-        "users/by_org_and_team",
         "users/by_username",
         "users/mailing_list_emails",
         "domain/old_users",
@@ -101,7 +100,7 @@ class CommtrackConfigGenerationCache(GenerationCache):
     generation_key = '#gen#commtrackconfig#'
     doc_types = ['CommtrackConfig']
     views = [
-        'commtrack/domain_config',
+        'domain/docs',
     ]
 
 

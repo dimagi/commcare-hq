@@ -7,6 +7,7 @@ http://bitbucket.org/javarosa/javarosa/wiki/casexml
 from __future__ import absolute_import
 from StringIO import StringIO
 import base64
+from collections import OrderedDict
 from functools import cmp_to_key
 import re
 from datetime import datetime
@@ -22,6 +23,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueEr
 from PIL import Image
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
+from corehq.form_processor.abstract_models import AbstractCommCareCase
 from dimagi.ext.couchdbkit import *
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -129,7 +131,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
 
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CouchDocLockableMixIn):
+                   CouchDocLockableMixIn, AbstractCommCareCase):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -261,7 +263,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             "server_date_modified": self.server_modified_on,
             # renamed
             "server_date_opened": self.server_opened_on,
-            "properties": dict(self.dynamic_case_properties() + {
+            "properties": dict(self.dynamic_case_properties().items() + {
                 "external_id": self.external_id,
                 "owner_id": self.owner_id,
                 # renamed
@@ -322,17 +324,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 ids
             )
         ]
-
-    @classmethod
-    def get_with_rebuild(cls, id):
-        try:
-            return cls.get(id)
-        except ResourceNotFound:
-            from casexml.apps.case.cleanup import rebuild_case_from_forms
-            case = rebuild_case_from_forms(id)
-            if case is None:
-                raise
-            return case
 
     @classmethod
     def get_lite(cls, id, wrap=True):
@@ -532,8 +523,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if type(self) != CommCareCase:
             wrapped_case = CommCareCase.wrap(self._doc)
 
-        return sorted([(key, json[key]) for key in wrapped_case.dynamic_properties()
-                       if re.search(r'^[a-zA-Z]', key)])
+        items = [
+            (key, json[key])
+            for key in wrapped_case.dynamic_properties()
+            if re.search(r'^[a-zA-Z]', key)
+        ]
+        return OrderedDict(sorted(items))
 
     def save(self, **params):
         self.server_modified_on = datetime.utcnow()
