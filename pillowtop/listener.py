@@ -96,25 +96,19 @@ class BasicPillow(PillowBase):
             self.document_class = document_class
 
         self._checkpoint = checkpoint
-
-        # Explicitly check for None since a couch db class will evaluate to False
-        # if there are no docs in the database.
-        couch_to_use = couch_db if couch_db is not None else (
-            self._couch_db if self._couch_db is not None else (
-                self.document_class.get_db() if self.document_class else None
-            ))
-
-        # todo: add this back once it's actually required
-        # if couch_to_use is None:
-        #     raise ValueError('Pillows are currently required to supply couch_db')
-        self._couch_db = couch_to_use
+        self._couch_db = couch_db
 
         if self.use_locking:
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
     def get_couch_db(self):
+        if self._couch_db is None:
+            self._couch_db = self.get_default_couch_db()
         return self._couch_db
+
+    def get_default_couch_db(self):
+        return self.document_class.get_db() if self.document_class else None
 
     @property
     def couch_db(self):
@@ -272,20 +266,19 @@ class PythonPillow(BasicPillow):
         """
         Use chunk_size = 0 to disable chunking
         """
-        super(PythonPillow, self).__init__(document_class=document_class, checkpoint=checkpoint)
+        super(PythonPillow, self).__init__(document_class=document_class, checkpoint=checkpoint, couch_db=couch_db)
         self.change_queue = []
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
         self.include_docs = not self.use_chunking
         self.last_processed_time = None
-        if couch_db:
-            self._couch_db = couch_db
-        elif self.document_class:
-            if self.use_chunking:
-                self._couch_db = CachedCouchDB(self.document_class.get_db().uri, readonly=False)
-            else:
-                self._couch_db = self.document_class.get_db()
+
+    def get_default_couch_db(self):
+        if self.document_class and self.use_chunking:
+            return CachedCouchDB(self.document_class.get_db().uri, readonly=False)
+        else:
+            return super(PythonPillow, self).get_default_couch_db()
 
     def python_filter(self, doc):
         """
