@@ -6,7 +6,7 @@ from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 
 
 class FormProcessorTestUtils(object):
@@ -27,6 +27,11 @@ class FormProcessorTestUtils(object):
             'cases_by_server_date/by_server_modified_on',
             **view_kwargs
         )
+
+        query = CommCareCaseSQL.objects
+        if domain is not None:
+            query.filter(domain=domain)
+        query.all().delete()
 
     @classmethod
     @unit_testing_only
