@@ -31,7 +31,7 @@ from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
 try:
     from corehq.util.soft_assert import soft_assert
-    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
+    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
 except ImportError:
     # hack for dependency resolution if corehq not available
     _assert = lambda assertion, message: None
@@ -113,17 +113,22 @@ class BasicPillow(PillowBase):
             # document_class must be a CouchDocLockableMixIn
             assert hasattr(self.document_class, 'get_obj_lock_by_id')
 
+    def get_couch_db(self):
+        return self._couch_db
+
     @property
     def couch_db(self):
-        return self._couch_db
+        _assert(False, 'People should not be using the couch_db properties!')
+        return self.get_couch_db()
 
     @couch_db.setter
     def couch_db(self, value):
+        _assert(False, 'People should not be using the couch_db properties!')
         self._couch_db = value
 
     @property
     def document_store(self):
-        return CouchDocumentStore(self._couch_db)
+        return CouchDocumentStore(self.get_couch_db())
 
     @property
     def checkpoint(self):
@@ -139,7 +144,7 @@ class BasicPillow(PillowBase):
 
     def get_change_feed(self):
         return CouchChangeFeed(
-            couch_db=self._couch_db,
+            couch_db=self.get_couch_db(),
             couch_filter=self.couch_filter,
             include_docs=self.include_docs,
             extra_couch_view_params=self.extra_args
@@ -185,7 +190,7 @@ class BasicPillow(PillowBase):
         try:
             # This breaks the module boundary by using a show function defined in commcare-hq
             # but it was decided that it wasn't worth the effort to maintain the separation.
-            meta = self._couch_db.show('domain/domain_date', change['id'])
+            meta = self.get_couch_db().show('domain/domain_date', change['id'])
         except ResourceNotFound:
             # Show function does not exist
             meta = None
@@ -219,11 +224,11 @@ class BasicPillow(PillowBase):
         if self.use_locking:
             lock = self.document_class.get_obj_lock_by_id(id)
             lock.acquire()
-            return LockManager(self._couch_db.open_doc(id), lock)
+            return LockManager(self.get_couch_db().open_doc(id), lock)
         elif changes_dict.get('doc', None) is not None:
             return changes_dict['doc']
         else:
-            return self._couch_db.open_doc(id)
+            return self.get_couch_db().open_doc(id)
 
     def change_transform(self, doc_dict):
         """
@@ -298,11 +303,11 @@ class PythonPillow(BasicPillow):
             return True
 
         changes_to_process = filter(_assert_change_has_id, self.change_queue)
-        self._couch_db.bulk_load([change['id'] for change in changes_to_process],
+        self.get_couch_db().bulk_load([change['id'] for change in changes_to_process],
                                  purge_existing=True)
 
         for change in changes_to_process:
-            doc = self._couch_db.open_doc(change['id'], check_main=False)
+            doc = self.get_couch_db().open_doc(change['id'], check_main=False)
             if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
                 try:
                     change.document = doc
