@@ -323,7 +323,7 @@
     }, 
     "MalariaConsortiumFluffPillow": {
         "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.MalariaConsortiumFluffPillow.testhq", 
+        "checkpoint_id": "fluff.MalariaConsortiumFluffPillow.testhq",
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
