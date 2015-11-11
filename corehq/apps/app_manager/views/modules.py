@@ -26,6 +26,14 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties, commtrack_ledger_sections)
 
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.controller import (
+    MultimediaAudioUploadController,
+    MultimediaImageUploadController,
+)
+from corehq.apps.hqmedia.views import (
+    ProcessAudioFileUploadView,
+    ProcessImageFileUploadView,
+)
 from corehq.apps.userreports.models import ReportConfiguration
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -194,6 +202,32 @@ def _get_report_module_context(app, module):
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
         'warnings': warnings,
+        'multimedia': {
+            "references": app.get_references(),
+            "object_map": app.get_object_map(),
+            'upload_managers': {
+                'icon': MultimediaImageUploadController(
+                    "hqimage",
+                    reverse(
+                        ProcessImageFileUploadView.name,
+                        args=[app.domain, app.get_id]
+                    )
+                ),
+                'audio': MultimediaAudioUploadController(
+                    "hqaudio",
+                    reverse(
+                        ProcessAudioFileUploadView.name,
+                        args=[app.domain, app.get_id]
+                    )
+                ),
+            },
+            'menu': {
+                'menu_refs': app.get_menu_media(
+                    module, module.id
+                ),
+                'default_file_name': '{name}_{lang}'.format(name='module%d' % module.id, lang='en'), # todo - pass in request to get lang
+            },
+        }
     }
 
 
