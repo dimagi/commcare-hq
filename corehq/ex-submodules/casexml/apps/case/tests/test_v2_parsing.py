@@ -118,7 +118,7 @@ class Version2CaseParsingTest(TestCase):
 
     @run_with_all_backends
     def testParseWithIndices(self):
-        self._test_parse_createg()
+        self._test_parse_create()
 
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
