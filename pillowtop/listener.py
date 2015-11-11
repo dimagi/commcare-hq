@@ -291,7 +291,7 @@ class PythonPillow(BasicPillow):
         else:
             return super(PythonPillow, self).get_default_couch_db()
 
-    def python_filter(self, doc):
+    def python_filter(self, change):
         """
         Should return True if the doc is to be processed by your pillow
         """
@@ -313,7 +313,7 @@ class PythonPillow(BasicPillow):
         for change in changes_to_process:
             doc = self.get_couch_db().open_doc(change['id'], check_main=False)
             change.document = doc
-            if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
+            if (doc and self.python_filter(change)) or (change.get('deleted', None) and self.process_deletions):
                 try:
                     self.process_change(change)
                 except Exception:
@@ -341,7 +341,7 @@ class PythonPillow(BasicPillow):
             self.change_queue.append(change)
             if self.queue_full or self.wait_expired:
                 self.process_chunk()
-        elif self.python_filter(change['doc']) or (change.get('deleted', None) and self.process_deletions):
+        elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
