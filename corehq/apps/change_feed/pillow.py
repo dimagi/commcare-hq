@@ -1,5 +1,4 @@
 import json
-from django.conf import settings
 from kafka import KeyedProducer
 from kafka.common import KafkaUnavailableError
 from casexml.apps.case.models import CommCareCase
@@ -17,13 +16,12 @@ from pillowtop.listener import PythonPillow
 class ChangeFeedPillow(PythonPillow):
 
     def __init__(self, couch_db, kafka, checkpoint):
-        super(ChangeFeedPillow, self).__init__(couch_db=couch_db)
+        super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
         self._kafka = kafka
         self._producer = KeyedProducer(self._kafka)
-        self._checkpoint = checkpoint
 
     def get_db_name(self):
-        return self.couch_db.dbname
+        return self.get_couch_db().dbname
 
     def process_change(self, change, is_retry_attempt=False):
         document_type = _get_document_type(change.document)

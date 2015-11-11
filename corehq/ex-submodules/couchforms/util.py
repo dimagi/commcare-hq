@@ -370,7 +370,7 @@ class SubmissionPost(object):
                     # todo: this property is only used by the MVPFormIndicatorPillow
                     instance.initial_processing_complete = True
 
-                    cases = case_db.get_cases_for_saving(now)
+                    cases = case_db.get_cases_for_saving(instance.received_on)
 
                     self.interface.bulk_save(instance, xforms, cases)
 

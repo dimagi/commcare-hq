@@ -1,12 +1,13 @@
 import datetime
+import logging
 import uuid
 import hashlib
 
 from django.db import transaction
 from couchforms.util import process_xform
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL
-from corehq.form_processor.utils import extract_meta_instance_id
+from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL, CaseForms
+from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
 class FormProcessorSQL(object):
@@ -50,7 +51,8 @@ class FormProcessorSQL(object):
             # other properties can be set post-wrap
             form_uuid=form_id,
             xmlns=form_data.get('@xmlns'),
-            received_on=datetime.datetime.now()
+            received_on=datetime.datetime.utcnow(),
+            user_id=extract_meta_user_id(form_data),
         )
 
     @classmethod
@@ -59,13 +61,13 @@ class FormProcessorSQL(object):
 
     @classmethod
     def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        xform = XFormInstanceSQL.objects.get(form_uuid=xform_id)
-        return xform.domain == domain
+        return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
         try:
             with transaction.atomic():
+                logging.debug('Beginning atomic commit\n')
                 # Ensure already saved forms get saved first to avoid ID conflicts
                 for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
                     xform.save()
@@ -75,9 +77,15 @@ class FormProcessorSQL(object):
 
                 if cases:
                     for case in cases:
+                        logging.debug('Saving case: %s', case)
+                        if logging.root.isEnabledFor(logging.DEBUG):
+                            logging.debug(case.dumps(pretty=True))
+
                         case.save()
-                    if getattr(case, 'unsaved_indices', None):
-                        case.index_set.bulk_create(case.unsaved_indices)
+
+                        FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
+                        FormProcessorSQL.save_tracked_models(case, CaseForms)
+                        case.clear_tracked_models()
         except Exception as e:
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
@@ -87,6 +95,24 @@ class FormProcessorSQL(object):
             )
             # instance = _handle_unexpected_error(instance, error_message)
             raise
+
+    @staticmethod
+    def save_tracked_models(case, model_class):
+        to_delete = case.get_tracked_models_to_delete(model_class)
+        if to_delete:
+            logging.debug('Deleting %s: %s', model_class, to_delete)
+            ids = [index.pk for index in to_delete]
+            model_class.objects.filter(pk__in=ids).delete()
+
+        to_update = case.get_tracked_models_to_update(model_class)
+        for model in to_update:
+            logging.debug('Updating %s: %s', model_class, model)
+            model.save()
+
+        to_create = case.get_tracked_models_to_create(model_class)
+        for model in to_create:
+            logging.debug('Creating %s: %s', model_class, to_create)
+            model.save()
 
     @classmethod
     def process_stock(cls, xforms, case_db):

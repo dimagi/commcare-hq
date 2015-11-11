@@ -55,8 +55,6 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual("Edited Baby!", xform.form_data['assessment']['categories'])
 
         deprecated_xform = self.interface.xform_model.get(xform.deprecated_form_id)
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            deprecated_xform = XFormDeprecated.wrap(deprecated_xform.to_json())
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
         self.assertNotEqual(self.ID, deprecated_xform.form_id)
