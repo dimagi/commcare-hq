@@ -370,7 +370,7 @@ def _track_periodic_data_on_kiss(submit_json):
 def _log_response(data, response):
     try:
         response_text = json.dumps(response.json(), indent=2, sort_keys=True)
-    except:
+    except Exception:
         response_text = response.status_code
     logger.debug('Sent this data to HS: %s \nreceived: %s' %
                  (json.dumps(data, indent=2, sort_keys=True),
