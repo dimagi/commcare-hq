@@ -5,6 +5,7 @@ from django.conf import settings
 from pillow_retry.models import PillowError, Stub
 from django.test import TestCase
 from pillow_retry.tasks import process_pillow_retry
+from dimagi.utils.decorators.memoized import memoized
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
@@ -196,7 +197,7 @@ class PillowRetryTestCase(TestCase):
         see FakePillow.process_change
         """
         id = 'test_doc'
-        FakePillow.couch_db._docs[id] = {'id': id, 'property': 'value'}
+        FakePillow.get_couch_db()._docs[id] = {'id': id, 'property': 'value'}
         change_dict = {'id': id, 'seq': 54321}
         error = create_error(change_dict)
         error.save()
@@ -246,7 +247,11 @@ class PillowRetryTestCase(TestCase):
 
 
 class FakePillow(BasicPillow):
-    couch_db = CachedCouchDB(Stub.get_db().uri, readonly=True)
+
+    @staticmethod
+    @memoized
+    def get_couch_db():
+        return CachedCouchDB(Stub.get_db().uri, readonly=True)
 
     def process_change(self, change, is_retry_attempt=False):
         #  see test_include_doc
@@ -255,7 +260,11 @@ class FakePillow(BasicPillow):
 
 
 class FakePillow1(BasicPillow):
-    couch_db = CachedCouchDB(Stub.get_db().uri, readonly=True)
+
+    @staticmethod
+    @memoized
+    def get_couch_db(self):
+        return CachedCouchDB(Stub.get_db().uri, readonly=True)
 
 
 class ExceptionA(Exception):
