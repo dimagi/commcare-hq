@@ -28,5 +28,3 @@ def migrate_legacy_pillow_by_name(migration_apps, pillow_name):
         new_checkpoint.save()
     except Exception as e:
         logging.exception('Failed to update pillow checkpoint. {}'.format(e))
-
-
