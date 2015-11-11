@@ -666,6 +666,8 @@ def edit_report_module(request, domain, app_id, module_id):
     if (feature_previews.MODULE_FILTER.enabled(domain) and
             app.enable_module_filtering):
         module['module_filter'] = request.POST.get('module_filter')
+    module.media_image.update(params['multimediaUpdate'].get('mediaImage', {}))
+    module.media_audio.update(params['multimediaUpdate'].get('mediaAudio', {}))
     app.save()
     return json_response('success')
 
