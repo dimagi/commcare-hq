@@ -65,47 +65,37 @@ class FormProcessorSQL(object):
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
-        try:
-            with transaction.atomic():
-                logging.debug('Beginning atomic commit\n')
-                # Ensure already saved forms get saved first to avoid ID conflicts
-                for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
-                    xform.save()
-                for unsaved_attachment in instance.unsaved_attachments:
-                    unsaved_attachment.xform = instance
-                instance.attachments.bulk_create(instance.unsaved_attachments)
+        with transaction.atomic():
+            logging.debug('Beginning atomic commit\n')
+            # Ensure already saved forms get saved first to avoid ID conflicts
+            for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
+                xform.save()
+            for unsaved_attachment in instance.unsaved_attachments:
+                unsaved_attachment.xform = instance
+            instance.attachments.bulk_create(instance.unsaved_attachments)
 
-                if cases:
-                    for case in cases:
-                        logging.debug('Saving case: %s', case)
-                        case.save()
+            if cases:
+                for case in cases:
+                    logging.debug('Saving case: %s', case)
+                    case.save()
 
-                        to_delete = case.get_tracked_models_to_delete(CommCareCaseIndexSQL)
-                        if to_delete:
-                            logging.debug('Deleting indexes: %s', to_delete)
-                            ids = [index.pk for index in to_delete]
-                            CommCareCaseIndexSQL.objects.filter(pk__in=ids).delete()
+                    to_delete = case.get_tracked_models_to_delete(CommCareCaseIndexSQL)
+                    if to_delete:
+                        logging.debug('Deleting indexes: %s', to_delete)
+                        ids = [index.pk for index in to_delete]
+                        CommCareCaseIndexSQL.objects.filter(pk__in=ids).delete()
 
-                        to_update = case.get_tracked_models_to_update(CommCareCaseIndexSQL)
-                        for index in to_update:
-                            logging.debug('Updating index: %s', index)
-                            index.save()
+                    to_update = case.get_tracked_models_to_update(CommCareCaseIndexSQL)
+                    for index in to_update:
+                        logging.debug('Updating index: %s', index)
+                        index.save()
 
-                        to_create = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
-                        if to_create:
-                            logging.debug('Creating indexes: %s', to_create)
-                            case.index_set.bulk_create(to_create)
+                    to_create = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
+                    if to_create:
+                        logging.debug('Creating indexes: %s', to_create)
+                        case.index_set.bulk_create(to_create)
 
-                        case.clear_tracked_models()
-        except Exception as e:
-            xforms_being_saved = [xform.form_id for xform in xforms]
-            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
-                type(e).__name__,
-                unicode(e),
-                ', '.join(xforms_being_saved)
-            )
-            # instance = _handle_unexpected_error(instance, error_message)
-            raise
+                    case.clear_tracked_models()
 
     @classmethod
     def process_stock(cls, xforms, case_db):
@@ -148,3 +138,18 @@ class FormProcessorSQL(object):
         new_id = unicode(uuid.uuid4())
         xform.form_id = new_id
         return xform
+
+    @classmethod
+    def xformerror_from_xform_instance(cls, instance, error_message, with_new_id=False):
+        instance.state = XFormInstanceSQL.ERROR
+        instance.problem = error_message
+
+        if with_new_id:
+            orig_id = instance.form_id
+            cls.assign_new_id(instance)
+            instance.orig_id = orig_id
+            if instance.is_saved():
+                # clear the ID since we want to make a new doc
+                instance.id = None
+
+        return instance

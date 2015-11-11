@@ -288,7 +288,7 @@ class SubmissionPost(object):
         # errors we know about related to the content of the form
         # log the error and respond with a success code so that the phone doesn't
         # keep trying to send the form
-        instance = _transform_instance_to_error(error, instance)
+        instance = _transform_instance_to_error(self.interface, error, instance)
         xforms[0] = instance
         # this is usually just one document, but if an edit errored we want
         # to save the deprecated form as well
@@ -356,7 +356,7 @@ class SubmissionPost(object):
                         # note that in the case of edit submissions this won't flag the previous
                         # submission as having been edited. this is intentional, since we should treat
                         # this use case as if the edit "failed"
-                        _handle_unexpected_error(instance, e)
+                        _handle_unexpected_error(self.interface, instance, e)
                         raise
 
                     now = datetime.datetime.utcnow()
@@ -479,17 +479,17 @@ class SubmissionPost(object):
         ).response()
 
 
-def _transform_instance_to_error(e, instance):
+def _transform_instance_to_error(interface, e, instance):
     error_message = '{}: {}'.format(
         type(e).__name__, unicode(e))
     logging.exception((
         u"Warning in case or stock processing "
         u"for form {}: {}."
-    ).format(instance._id, error_message))
-    return XFormError.from_xform_instance(instance, error_message)
+    ).format(instance.form_id, error_message))
+    return interface.xformerror_from_xform_instance(instance, error_message)
 
 
-def _handle_unexpected_error(instance, e):
+def _handle_unexpected_error(interface, instance, e):
     # The following code saves the xform instance
     # as an XFormError, with a different ID.
     # That's because if you save with the original ID
@@ -497,7 +497,7 @@ def _handle_unexpected_error(instance, e):
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
     error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
-    instance = XFormError.from_xform_instance(instance, error_message, with_new_id=True)
+    instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
     notify_exception(None, (
         u"Error in case or stock processing "
         u"for form {}: {}. "
