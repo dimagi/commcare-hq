@@ -136,8 +136,8 @@ def get_pillow_json(pillow_config):
 
 
 def _get_current_seq_for_pillow(pillow):
-    if hasattr(pillow, 'couch_db'):
-        return get_current_seq(pillow.couch_db)
+    if hasattr(pillow, 'get_couch_db'):
+        return get_current_seq(pillow.get_couch_db())
 
 
 def get_current_seq(couch_db):
