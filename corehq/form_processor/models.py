@@ -422,7 +422,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
-        return CaseForms.objects.filter(case_uuid=case_id)
+        return CaseForms.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
 
     @classmethod
     def get_obj_id(cls, obj):
