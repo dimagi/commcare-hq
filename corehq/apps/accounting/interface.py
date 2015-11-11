@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.const import USER_DATE_FORMAT
+from corehq.const import SERVER_DATE_FORMAT
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
@@ -993,7 +993,7 @@ class PaymentRecordInterface(GenericTabularReport):
             account = applicable_credit_line.account
             rows.append([
                 format_datatables_data(
-                    text=record.date_created.strftime(USER_DATE_FORMAT),
+                    text=record.date_created.strftime(SERVER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
                 format_datatables_data(
