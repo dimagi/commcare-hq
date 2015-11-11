@@ -335,7 +335,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     external_id = models.CharField(max_length=255)
 
-    case_json = JSONField(lazy=True)
+    case_json = JSONField(lazy=True, default={})
 
     def __get_case_id(self):
         return self.case_uuid

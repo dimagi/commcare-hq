@@ -30,9 +30,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if xformdoc.is_deprecated:
             return
 
-        if not self.case.case_json:
-            self.case.case_json = {}
-
         for action in case_update.actions:
             self._apply_action(case_update, action, xformdoc)
 
