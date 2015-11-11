@@ -53,6 +53,8 @@
 {#            }));#}
 {#        }#}
 {#    </script>#}
+    {% include "app_manager/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
 {% endblock %}
 {% block form-view %}
     {% if warnings %}
@@ -65,6 +67,10 @@
     {% include 'app_manager/partials/module_view_heading.html' %}
     {% include 'app_manager/partials/mobile_report_configs.html' %}
 {% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endblock modals %}
 
 {% block breadcrumbs %}
     {{ block.super }}
