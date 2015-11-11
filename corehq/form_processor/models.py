@@ -346,6 +346,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     case_id = property(__get_case_id, __set_case_id)
 
     @property
+    def xform_ids(self):
+        return self.xform_set.values_list('form_uuid', flat=True)
+
+    @property
     def user_id(self):
         return self.modified_by
 
@@ -500,7 +504,10 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
 
 
 class CaseForms(models.Model):
-    case = models.ForeignKey('CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False)
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
+        related_name="xform_set", related_query_name="xform"
+    )
     form_uuid = models.CharField(max_length=255, null=False)  # can't be a foreign key due to partitioning
 
     class Meta:
