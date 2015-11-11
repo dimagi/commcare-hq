@@ -78,6 +78,9 @@ class FormProcessorSQL(object):
                 if cases:
                     for case in cases:
                         logging.debug('Saving case: %s', case)
+                        if logging.root.isEnabledFor(logging.DEBUG):
+                            logging.debug(case.dumps(pretty=True))
+
                         case.save()
 
                         to_delete = case.get_tracked_models_to_delete(CommCareCaseIndexSQL)

@@ -1,3 +1,4 @@
+import json
 import os
 import collections
 import hashlib
@@ -371,6 +372,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
         return serializer.data
+
+    def dumps(self, pretty=False):
+        indent = 4 if pretty else None
+        return json.dumps(self.to_json(), indent=indent)
+
+    def pprint(self):
+        print self.dumps(pretty=True)
 
     @memoized
     def _saved_indices(self):
