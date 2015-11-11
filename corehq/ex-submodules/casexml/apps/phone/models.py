@@ -687,7 +687,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         available = self._get_available_cases(relevant)
         live = self._get_live_cases(available)
         to_remove = relevant - live
-        self._remove_cases_purge_indices(to_remove)
+        self._remove_cases_purge_indices(to_remove, case_id)
 
     def _get_relevant_cases(self, case_id):
         """
@@ -756,34 +756,26 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         return live
 
-    def _remove_cases_purge_indices(self, to_remove):
-        """
-        Remove all cases marked for removal. Traverse child cases and try to purge those too.
-        """
-        logger.debug("cases to remove: {}".format(to_remove))
-        for remove in to_remove:
-            indices = self.index_tree.indices.get(remove, {})
-            self._remove_case(remove)
+    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id):
+        """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
+        logger.debug("cases to to_remove: {}".format(all_to_remove))
+        for to_remove in all_to_remove:
+            indices = self.index_tree.indices.get(to_remove, {})
+            self._remove_case(to_remove, all_to_remove, checked_case_id)
             for referenced_case in indices.values():
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
-                already_primed_for_removal = referenced_case in to_remove
-                if is_dependent_case and not already_primed_for_removal:
+                already_primed_for_removal = referenced_case in all_to_remove
+                if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
                     self.purge(referenced_case)
 
-    def _remove_case(self, to_remove):
-        # uses closures for assertions
+    def _remove_case(self, to_remove, all_to_remove, checked_case_id):
+        """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
         logger.debug('removing: {}'.format(to_remove))
-        # assert to_remove in self.dependent_case_ids_on_phone
-        indices = self.index_tree.indices.pop(to_remove, {})
-        indices.update(self.extension_index_tree.indices.pop(to_remove, {}))
-        # if the case had indexes they better also be in our removal list (except for ourselves)
-        for index in indices.values():
-            if not _domain_has_legacy_toggle_set():
-                # unblocking http://manage.dimagi.com/default.asp?185850#1039475
-                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True,
-                                      fail_if_debug=True)
-                _assert(index in to_remove,
-                        "expected {} in {} but wasn't".format(index, to_remove))
+
+        deleted_indices = self.index_tree.indices.pop(to_remove, {})
+        deleted_indices.update(self.extension_index_tree.indices.pop(to_remove, {}))
+
+        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id)
 
         try:
             self.case_ids_on_phone.remove(to_remove)
@@ -796,8 +788,22 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
                 # we should convert back to a real Exception when we stop getting any of these
                 _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
+
         if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
+
+    def _validate_case_removal(self, case_to_remove, all_to_remove, deleted_indices, checked_case_id):
+        """Traverse immediate outgoing indices. Validate that these are also candidates for removal."""
+        if case_to_remove == checked_case_id:
+            return
+
+        for index in deleted_indices.values():
+            if not _domain_has_legacy_toggle_set():
+                # unblocking http://manage.dimagi.com/default.asp?185850#1039475
+                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True,
+                                      fail_if_debug=True)
+                _assert(index in (all_to_remove | set([checked_case_id])),
+                        "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)
