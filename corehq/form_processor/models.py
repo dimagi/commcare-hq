@@ -395,6 +395,16 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
         return indices
 
+    def has_index(self, index_id):
+            return index_id in (i.identifier for i in self.indices)
+
+    def get_index(self, index_id):
+        found = filter(lambda i: i.identifier == index_id, self.indices)
+        if found:
+            assert(len(found) == 1)
+            return found[0]
+        return None
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 

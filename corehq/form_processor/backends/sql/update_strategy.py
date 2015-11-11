@@ -90,27 +90,15 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not action.indices:
             return
 
-        case_indices = self.case.indices
-
-        def has_index(index_id):
-            return index_id in (i.identifier for i in case_indices)
-
-        def get_index(index_id):
-            found = filter(lambda i: i.identifier == index_id, case_indices)
-            if found:
-                assert(len(found) == 1)
-                return found[0]
-            return None
-
         for index_update in action.indices:
-            if has_index(index_update.identifier):
+            if self.case.has_index(index_update.identifier):
                 if not index_update.referenced_id:
                     # empty ID = delete
-                    index = get_index(index_update.identifier)
+                    index = self.case.get_index(index_update.identifier)
                     self.case.track_delete(index)
                 else:
                     # update
-                    index = get_index(index_update.identifier)
+                    index = self.case.get_index(index_update.identifier)
                     index.referenced_type = index_update.referenced_type
                     index.referenced_id = index_update.referenced_id
                     index.relationship = index_update.relationship
