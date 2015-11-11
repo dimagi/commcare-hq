@@ -354,9 +354,9 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     def user_id(self):
         return self.modified_by
 
-    @property
-    def case_name(self):
-        return self.case_json.get('name', None)
+    @user_id.setter
+    def user_id(self, value):
+        self.modified_by = value
 
     def hard_delete(self):
         # see cleanup.safe_hard_delete
