@@ -780,7 +780,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         for index in indices.values():
             if not _domain_has_legacy_toggle_set():
                 # unblocking http://manage.dimagi.com/default.asp?185850#1039475
-                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True)
+                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True,
+                                      fail_if_debug=True)
                 _assert(index in to_remove,
                         "expected {} in {} but wasn't".format(index, to_remove))
 

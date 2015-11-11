@@ -216,6 +216,7 @@ var ReportModule = (function () {
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.description = ko.observable(description);
+        this.description.subscribe(changeSaveButton);
         this.uuid = uuid;
         this.reportId = ko.observable(report_id);
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);

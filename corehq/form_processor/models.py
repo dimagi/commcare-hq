@@ -6,6 +6,7 @@ from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
+from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
@@ -42,13 +43,15 @@ class AttachmentMixin(SaveStateMixin):
     ATTACHMENTS_RELATED_NAME = 'attachments'
 
     def get_attachment(self, attachment_name):
+        return self.get_attachment_meta(attachment_name).read_content()
+
+    def get_attachment_meta(self, attachment_name):
         if hasattr(self, 'unsaved_attachments'):
             for attachment in self.unsaved_attachments:
                 if attachment.name == attachment_name:
-                    return attachment.read_content()
+                    return attachment
         elif self.is_saved():
-            xform_attachment = self.attachments.filter(name=attachment_name).first()
-            return xform_attachment.read_content()
+            return self.attachments.filter(name=attachment_name).first()
 
 
 class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
@@ -75,6 +78,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, null=True)
 
     # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
     orig_id = models.CharField(max_length=255, null=True)
@@ -95,7 +99,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
-    problem = models.CharField(max_length=255, null=True)
+    problem = models.TextField(null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
@@ -157,9 +161,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     @property
     @memoized
     def form_data(self):
-        from .utils import convert_xform_to_json
+        from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
-        return convert_xform_to_json(xml)
+        form_json = convert_xform_to_json(xml)
+        adjust_datetimes(form_json)
+        return form_json
 
     @property
     def history(self):
@@ -202,7 +208,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         return self.get_attachment('form.xml')
 
     def xml_md5(self):
-        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
+        return self.get_attachment_meta('form.xml').md5
 
     def archive(self, user=None):
         if self.is_archived:
@@ -303,7 +309,8 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractCommCareCase):
+class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
+                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -321,7 +328,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
 
     closed = models.BooleanField(default=False, null=False)
     closed_on = models.DateTimeField(null=True)
-    closed_by = models.CharField(max_length=255, null=False)
+    closed_by = models.CharField(max_length=255, null=True)
 
     deleted = models.BooleanField(default=False, null=False)
 
@@ -340,6 +347,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
     @property
     def user_id(self):
         return self.modified_by
+
+    @property
+    def case_name(self):
+        return self.case_json.get('name', None)
 
     def hard_delete(self):
         # see cleanup.safe_hard_delete
@@ -361,13 +372,23 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, At
         serializer = CommCareCaseSQLSerializer(self)
         return serializer.data
 
-    @property
     @memoized
-    def indices(self):
-        if hasattr(self, 'unsaved_indices'):
-            return self.unsaved_indices
-
+    def _saved_indices(self):
         return self.index_set.all() if self.is_saved() else []
+
+    @property
+    def indices(self):
+        indices = self._saved_indices()
+
+        to_delete = [to_delete.identifier for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
+        indices = [index for index in indices if index.identifier not in to_delete]
+
+        indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
+
+        return indices
+
+    def on_tracked_models_cleared(self, model_class=None):
+        self._saved_indices.reset_cache(self)
 
     @classmethod
     def get(cls, case_id):
@@ -415,13 +436,15 @@ class CaseAttachmentSQL(AbstractAttachment):
     )
 
 
-class CommCareCaseIndexSQL(models.Model):
+class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
         (CHILD, 'child'),
         (EXTENSION, 'extension'),
     )
+    RELATIONSHIP_INVERSE_MAP = dict(RELATIONSHIP_CHOICES)
+    RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
@@ -431,12 +454,20 @@ class CommCareCaseIndexSQL(models.Model):
     identifier = models.CharField(max_length=255, null=False)
     referenced_id = models.CharField(max_length=255, null=False)
     referenced_type = models.CharField(max_length=255, null=False)
-    relationship = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+    relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
+
+    def __get_relationship(self):
+        return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
+
+    def __set_relationship(self, relationship):
+        self.relationship_id = self.RELATIONSHIP_MAP[relationship]
+
+    relationship = property(__get_relationship, __set_relationship)
 
     def __unicode__(self):
         return (
             "CaseIndex("
-            "case_id='{i.case_uuid}', "
+            "case_id='{i.case_id}', "
             "domain='{i.domain}', "
             "identifier='{i.identifier}', "
             "referenced_type='{i.referenced_type}', "

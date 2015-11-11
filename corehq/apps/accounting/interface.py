@@ -1,6 +1,7 @@
 import datetime
 
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
@@ -1159,13 +1160,13 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 (
                     credit_adj.credit_line.subscription.subscriber.domain
                     if credit_adj.credit_line.subscription is not None else (
-                        credit_adj.credit_line.invoice.subscription.subscriber.domain
-                        if credit_adj.credit_line.invoice else ''
+                        credit_adj.invoice.subscription.subscriber.domain
+                        if credit_adj.invoice else ''
                     )
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
                 credit_adj.note,
-                credit_adj.amount,
+                quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,
             ])
             for credit_adj in self.filtered_credit_adjustments
@@ -1181,7 +1182,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
-            query = query.filter(credit_line__subscription__subscriber__domain=domain)
+            query = query.filter(
+                Q(credit_line__subscription__subscriber__domain=domain)
+                | Q(invoice__subscription__subscriber__domain=domain)
+            )
 
         if DateFilter.use_filter(self.request):
             query = query.filter(

@@ -55,7 +55,6 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
-  - report-description-xpath # Nick P 11/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

@@ -191,7 +191,7 @@ def _get_or_update_cases(xforms, case_db):
                     # just log, don't raise an error or modify the index
                     logging.error(
                         "Case '%s' references non-existent case '%s'",
-                        case.get_id,
+                        case.case_id,
                         index.referenced_id,
                     )
 
