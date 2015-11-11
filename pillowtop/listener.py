@@ -312,9 +312,9 @@ class PythonPillow(BasicPillow):
 
         for change in changes_to_process:
             doc = self.get_couch_db().open_doc(change['id'], check_main=False)
+            change.document = doc
             if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
                 try:
-                    change.document = doc
                     self.process_change(change)
                 except Exception:
                     logging.exception('something went wrong processing change %s (%s)' %
