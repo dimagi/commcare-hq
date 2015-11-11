@@ -71,20 +71,29 @@ def get_case_wrapper(data):
     return wrapper
 
 
-def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Get the 'user case' for user_id. User cases are part of the call center feature.
-    """
-    cases = CommCareCase.view(
-        'hqcase/by_domain_hq_user_id',
-        key=[domain, user_id],
+def _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs):
+    return CommCareCase.view(
+        'hqcase/by_domain_hq_user_id_type',
+        key=[domain, user_id, case_type],
         reduce=False,
-        include_docs=True
+        include_docs=include_docs
     ).all()
 
-    for case in cases:
-        if case.type == case_type:
-            return case
+
+def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+    """
+    Return the first case of case_type owned by user_id
+    """
+    cases = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=True)
+    return cases[0] if cases else None
+
+
+def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
+    """
+    Return the ID of the first case of case_type owned by user_id
+    """
+    rows = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=False)
+    return rows[0]['id'] if rows else None
 
 
 def get_callcenter_case_mapping(domain, user_ids):

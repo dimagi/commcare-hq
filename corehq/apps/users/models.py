@@ -2024,9 +2024,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-        usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
-        return usercase.case_id if usercase else None
+        from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
+        return get_case_id_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
 
 
 class OrgMembershipMixin(DocumentSchema):
