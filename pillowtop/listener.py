@@ -91,12 +91,13 @@ class BasicPillow(PillowBase):
     include_docs = True
     use_locking = False
 
-    def __init__(self, couch_db=None, document_class=None, checkpoint=None):
+    def __init__(self, couch_db=None, document_class=None, checkpoint=None, change_feed=None):
         if document_class:
             self.document_class = document_class
 
-        self._checkpoint = checkpoint
         self._couch_db = couch_db
+        self._checkpoint = checkpoint
+        self._change_feed = change_feed
 
         if self.use_locking:
             # document_class must be a CouchDocLockableMixIn
@@ -137,6 +138,11 @@ class BasicPillow(PillowBase):
         )
 
     def get_change_feed(self):
+        if self._change_feed is None:
+            self._change_feed = self._get_default_change_feed()
+        return self._change_feed
+
+    def _get_default_change_feed(self):
         return CouchChangeFeed(
             couch_db=self.get_couch_db(),
             couch_filter=self.couch_filter,
