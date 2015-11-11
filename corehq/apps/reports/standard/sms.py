@@ -13,7 +13,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
-from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter, PhoneNumberFilter
+from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter, PhoneNumberFilter, EventStatusFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -626,6 +626,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        EventStatusFilter,
         PhoneNumberFilter,
     ]
     ajax_pagination = True
@@ -707,6 +708,12 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 Q(messagingsubevent__content_type__in=content_type_filter)),
         )
 
+        event_status = EventStatusFilter.get_value(self.request, self.domain)
+        if event_status is not None:
+            data = data.filter(
+                status=event_status,
+            )
+
         if self.phone_number_filter:
             data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
 
@@ -726,6 +733,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
             {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
         ]
 

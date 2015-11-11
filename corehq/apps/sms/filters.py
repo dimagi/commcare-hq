@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
@@ -55,6 +55,13 @@ class EventTypeFilter(BaseMultipleOptionFilter):
         MessagingEvent.SOURCE_REMINDER,
         MessagingEvent.CONTENT_SMS_SURVEY,
     ]
+
+
+class EventStatusFilter(BaseSingleOptionFilter):
+    slug = 'event_status'
+    label = ugettext_noop("Status")
+    default_text = ugettext_noop("All")
+    options = MessagingEvent.STATUS_CHOICES
 
 
 class PhoneNumberFilter(SearchFilter):
