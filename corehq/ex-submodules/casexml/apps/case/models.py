@@ -188,10 +188,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return self.type
 
     @property
-    def case_name(self):
-        return self.name
-
-    @property
     def modified_by(self):
         return self.user_id
 

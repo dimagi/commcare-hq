@@ -6,13 +6,6 @@ from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, 
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
-KNOWN_PROPERTIES_MAP = {
-    'external_id': 'external_id',
-    'case_type': 'type',
-    'owner_id': 'owner_id',
-    'opened_on': 'opened_on',
-}
-
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
@@ -61,14 +54,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             ))
 
     def _update_known_properties(self, action):
-        known_properties = action.get_known_properties()
-        for k, v in KNOWN_PROPERTIES_MAP.items():
-            val = known_properties.get(v, None)
-            if val:
-                setattr(self.case, k, val)
-
-        if 'name' in known_properties:
-            self.case.case_json['name'] = known_properties['name']
+        for k, v in action.get_known_properties().items():
+            if v:
+                setattr(self.case, k, v)
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)

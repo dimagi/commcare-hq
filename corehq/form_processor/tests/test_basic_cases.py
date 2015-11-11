@@ -35,7 +35,7 @@ class FundamentalCaseTests(TestCase):
         self.assertEqual(case.case_id, case_id)
         self.assertEqual(case.owner_id, 'owner1')
         self.assertEqual(case.case_type, 'demo')
-        self.assertEqual(case.case_name, 'create_case')
+        self.assertEqual(case.name, 'create_case')
         self.assertEqual(case.opened_on, modified_on)
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)
@@ -73,7 +73,7 @@ class FundamentalCaseTests(TestCase):
 
         case = self.interface.case_model.get(case_id)
         self.assertEqual(case.owner_id, 'owner2')
-        self.assertEqual(case.case_name, 'update_case')
+        self.assertEqual(case.name, 'update_case')
         self.assertEqual(case.opened_on, opened_on)
         self.assertEqual(case.opened_by, 'user1')
         self.assertEqual(case.modified_on, modified_on)

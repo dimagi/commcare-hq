@@ -40,7 +40,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("bar-user-id", case.opened_by)
         self.assertEqual(datetime(2011, 12, 6, 13, 42, 50), case.modified_on)
         self.assertEqual("v2_case_type", case.case_type)
-        self.assertEqual("test case name", case.case_name)
+        self.assertEqual("test case name", case.name)
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self.assertEqual(1, len(case.actions))
@@ -62,7 +62,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 42, 50), case.modified_on)
         self.assertEqual("updated_v2_case_type", case.case_type)
-        self.assertEqual("updated case name", case.case_name)
+        self.assertEqual("updated case name", case.name)
         self.assertEqual("something dynamic", case.dynamic_case_properties()['dynamic'])
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
@@ -111,7 +111,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("d5ce3a980b5b69e793445ec0e3b2138e", case.user_id)
         self.assertEqual(datetime(2011, 12, 27), case.modified_on)
         self.assertEqual("cc_bihar_pregnancy", case.case_type)
-        self.assertEqual("TEST", case.case_name)
+        self.assertEqual("TEST", case.name)
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self.assertEqual(2, len(case.actions))

@@ -317,6 +317,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     case_type = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, null=True)
 
     owner_id = models.CharField(max_length=255)
 
