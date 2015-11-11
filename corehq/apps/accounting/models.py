@@ -197,7 +197,6 @@ class PaymentMethodType(object):
 class SubscriptionType(object):
     CONTRACTED = "IMPLEMENTATION"
     SELF_SERVICE = "PRODUCT"
-    NOT_SET = "NOT_SET"
     TRIAL = "TRIAL"
     SANDBOX = "SANDBOX"
     INTERNAL = "INTERNAL"
@@ -1215,7 +1214,7 @@ class Subscription(models.Model):
             is_active=is_active_subscription(new_start_date, date_end),
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
-            service_type=(service_type or SubscriptionType.NOT_SET),
+            service_type=(service_type or SubscriptionType.CONTRACTED),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT)
             **kwargs

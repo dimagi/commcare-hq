@@ -112,7 +112,7 @@ def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
 def generate_domain_subscription_from_date(date_start, billing_account, domain,
                                            min_num_months=None, is_immediately_active=False,
                                            delay_invoicing_until=None, save=True,
-                                           service_type=SubscriptionType.NOT_SET,
+                                           service_type=SubscriptionType.CONTRACTED,
                                            subscription_length=None,
                                            plan_version=None,):
     # make sure the first month is never a full month (for testing)
