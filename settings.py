@@ -1346,7 +1346,11 @@ PILLOWTOPS = {
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+        {
+            'name': 'MalariaConsortiumFluffPillow',
+            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+            'instance': 'custom.reports.mc.models.get_pillow',
+        },
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
