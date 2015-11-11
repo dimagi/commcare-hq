@@ -4,7 +4,6 @@ import uuid
 import hashlib
 
 from django.db import transaction
-from casexml.apps.case.tests.test_from_xform import CaseFromXFormTest
 from couchforms.util import process_xform
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL, CaseForms
