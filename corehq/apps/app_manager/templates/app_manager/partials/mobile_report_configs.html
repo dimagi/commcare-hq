@@ -4,60 +4,53 @@
 <div id='report-module-edit' class="form-horizontal">
     <div data-bind="saveButton: saveButton"></div>
     <fieldset>
-        <div class="control-group">
-            <label class="control-label">{% trans "Module Name" %}</label>
-            <div class="controls">
-                <input type="text" data-bind="value: currentModuleName">
-            </div>
-        </div>
-        {% if request|feature_preview_enabled:"MODULE_FILTER" %}
-        <div class="control-group">
-            <label class="control-label">{% trans "Module Filter" %}</label>
-            <div class="controls">
-                <input type="text" data-bind="value: currentModuleFilter">
-            </div>
-        </div>
-        {% endif %}
-        <table class="table" id="report-list">
-            <thead>
-                <tr class="row control-group" >
-                    <th></th>
-                    <th>{% trans "Report" %}</th>
-                    <th>{% trans "Display" %}</th>
-                    <th>{% trans "Description (requires valid Xpath expression)" %}</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody data-bind="sortable: { data: reports, as: 'report' }">
-                <tr class="row control-group"
-                    data-bind="attr: {'data-order': _sortableOrder}">
-                    <td>
-                        <i class="grip sortable-handle" data-bind="css: COMMCAREHQ.icons.GRIP, style: {cursor: 'move'}"></i>
-                    </td>
-                    <td>
-                        <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
-                        {% include 'app_manager/partials/filter_configs.html' %}
-                        {% include 'app_manager/partials/graph_configs.html' %}
-                    </td>
-                    <td>
-                        <input type="text" data-bind="value: display">
-                    </td>
-                    <td>
-                        <input type="text" data-bind="value: description">
-                    </td>
-                    <td>
-                        <i title="{% trans 'Delete' %}" style="cursor: pointer;"
-                           data-bind="
-                            click: $root.removeReport,
-                            css: COMMCAREHQ.icons.DELETE
-                        "></i>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <button class="btn" data-bind="click: addReport">
-            <i class="icon-plus"></i>
-            {% trans "Add Report" %}
-        </button>
+{#        <div class="control-group">#}
+{#            <label class="control-label">{% trans "Module Name" %}</label>#}
+{#            <div class="controls">#}
+{#                <input type="text" data-bind="value: currentModuleName">#}
+{#            </div>#}
+{#        </div>#}
+        {% include 'app_manager/partials/nav_menu_media.html' %}
+{#        <table class="table" id="report-list">#}
+{#            <thead>#}
+{#                <tr class="row control-group" >#}
+{#                    <th></th>#}
+{#                    <th>{% trans "Report" %}</th>#}
+{#                    <th>{% trans "Display" %}</th>#}
+{#                    <th>{% trans "Description (requires valid Xpath expression)" %}</th>#}
+{#                    <th></th>#}
+{#                </tr>#}
+{#            </thead>#}
+{#            <tbody data-bind="sortable: { data: reports, as: 'report' }">#}
+{#                <tr class="row control-group"#}
+{#                    data-bind="attr: {'data-order': _sortableOrder}">#}
+{#                    <td>#}
+{#                        <i class="grip sortable-handle" data-bind="css: COMMCAREHQ.icons.GRIP, style: {cursor: 'move'}"></i>#}
+{#                    </td>#}
+{#                    <td>#}
+{#                        <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>#}
+{#                        {% include 'app_manager/partials/filter_configs.html' %}#}
+{#                        {% include 'app_manager/partials/graph_configs.html' %}#}
+{#                    </td>#}
+{#                    <td>#}
+{#                        <input type="text" data-bind="value: display">#}
+{#                    </td>#}
+{#                    <td>#}
+{#                        <input type="text" data-bind="value: description">#}
+{#                    </td>#}
+{#                    <td>#}
+{#                        <i title="{% trans 'Delete' %}" style="cursor: pointer;"#}
+{#                           data-bind="#}
+{#                            click: $root.removeReport,#}
+{#                            css: COMMCAREHQ.icons.DELETE#}
+{#                        "></i>#}
+{#                    </td>#}
+{#                </tr>#}
+{#            </tbody>#}
+{#        </table>#}
+{#        <button class="btn" data-bind="click: addReport">#}
+{#            <i class="icon-plus"></i>#}
+{#            {% trans "Add Report" %}#}
+{#        </button>#}
     </fieldset>
 </div>
