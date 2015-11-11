@@ -268,7 +268,7 @@ class PythonPillow(BasicPillow):
 
     def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
                  checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
-                 couch_db=None, checkpoint=None, change_feed=None):
+                 couch_db=None, checkpoint=None, change_feed=None, preload_docs=True):
         """
         Use chunk_size = 0 to disable chunking
         """
@@ -284,6 +284,7 @@ class PythonPillow(BasicPillow):
         self.checkpoint_frequency = checkpoint_frequency
         self.include_docs = not self.use_chunking
         self.last_processed_time = None
+        self.preload_docs = preload_docs
 
     def get_default_couch_db(self):
         if self.document_class and self.use_chunking:
@@ -307,13 +308,18 @@ class PythonPillow(BasicPillow):
             return True
 
         changes_to_process = filter(_assert_change_has_id, self.change_queue)
-        self.get_couch_db().bulk_load([change['id'] for change in changes_to_process],
-                                 purge_existing=True)
-
+        if self.preload_docs:
+            self.get_couch_db().bulk_load([change['id'] for change in changes_to_process],
+                                     purge_existing=True)
         for change in changes_to_process:
-            doc = self.get_couch_db().open_doc(change['id'], check_main=False)
-            change.document = doc
-            if (doc and self.python_filter(change)) or (change.get('deleted', None) and self.process_deletions):
+            if self.preload_docs:
+                doc = self.get_couch_db().open_doc(change['id'], check_main=False)
+                change.document = doc
+
+            # a valid change is either a non-preload situation or a valid doc + a filter match
+            valid_change = (not self.preload_docs or change.document) and self.python_filter(change)
+            valid_deletion = self.process_deletions and change.get('deleted', None)
+            if valid_change or valid_deletion:
                 try:
                     self.process_change(change)
                 except Exception:
