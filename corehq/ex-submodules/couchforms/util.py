@@ -154,10 +154,6 @@ def _handle_duplicate(new_doc, instance):
         ])
 
 
-def is_deprecation(xform):
-    return xform.doc_type == deprecation_type()
-
-
 def deprecation_type():
     return XFormDeprecated.__name__
 
@@ -417,7 +413,7 @@ class SubmissionPost(object):
         elif not instance.is_error:
             if len(xforms) > 1:
                 assert len(xforms) == 2
-                assert is_deprecation(xforms[1])
+                assert xforms[1].is_deprecated
             return True
 
     @staticmethod

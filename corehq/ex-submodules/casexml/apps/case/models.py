@@ -28,7 +28,7 @@ from dimagi.ext.couchdbkit import *
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.util.test_utils import unit_testing_only
-from couchforms.util import is_deprecation, is_override
+from couchforms.util import is_override
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
