@@ -51,4 +51,4 @@ class CachedCouchDB(Database):
             self._docs = {}
 
         docs = self.all_docs(keys=doc_ids, include_docs=True)
-        self._docs.update(dict((x['id'], x['doc']) for x in docs))
+        self._docs.update(dict((x['id'], x['doc']) for x in docs if 'id' in x))

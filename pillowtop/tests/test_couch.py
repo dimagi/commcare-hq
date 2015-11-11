@@ -1,15 +1,17 @@
-from unittest import skip
-from django.test import SimpleTestCase
-from pillowtop.listener import BasicPillow
+from couchdbkit import Database
+from django.conf import settings
+from django.test import TestCase
+from pillowtop.couchdb import CachedCouchDB
 
 
-class TestCouchPillow(BasicPillow):
-    pass
+class CachedCouchDbTest(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # this will ensure the database is created
+        Database(settings.COUCH_DATABASE, create=True)
 
-class CouchPillowTest(SimpleTestCase):
-
-    @skip('couch_db is not yet required')
-    def test_initialize_no_couch_fails(self):
-        with self.assertRaises(ValueError):
-            TestCouchPillow().couch_db
+    def test_bulk_load_missing(self):
+        db = CachedCouchDB(settings.COUCH_DATABASE, readonly=False)
+        # before this test was patched this used to fail
+        db.bulk_load(['missing1', 'missing2'])
