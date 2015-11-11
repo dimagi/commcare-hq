@@ -1,0 +1,23 @@
+{% extends "reports_core/base_template_new.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+{% block page_content %}
+    <div class="alert alert-warning">
+        {% blocktrans %}
+        This report is based on an application that has been deleted.
+        Therefore, it can not be edited in the report builder.
+        {% endblocktrans %}
+    </div>
+    <a class="btn btn-primary" href="{{ view_report_url }}">
+        {% trans 'View Report' %}
+    </a>
+    <a class="btn btn-danger pull-right" href="{{delete_report_url}}">
+        {% trans 'Delete Report' %}
+    </a>
+{% endblock %}

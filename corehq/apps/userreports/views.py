@@ -306,19 +306,52 @@ class EditReportInBuilder(View):
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
+
         if report.report_meta.created_by_builder:
-            view_class = {
-                'chart': ConfigureChartReport,
-                'list': ConfigureListReport,
-                'worker': ConfigureWorkerReport,
-                'table': ConfigureTableReport
-            }[report.report_meta.builder_report_type]
+
+            app_id = report.config.meta.build.app_id
+            app = Application.get(app_id)
+            if app.is_deleted():
+                view_class = ConfigureReportBasedOnDeletedApp
+            else:
+                view_class = {
+                    'chart': ConfigureChartReport,
+                    'list': ConfigureListReport,
+                    'worker': ConfigureWorkerReport,
+                    'table': ConfigureTableReport
+                }[report.report_meta.builder_report_type]
+
             try:
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
+
+
+class ConfigureReportBasedOnDeletedApp(ReportBuilderView):
+    template_name = "userreports/partials/edit_report_based_on_deleted_app.html"
+    existing_report = None
+
+    @property
+    def page_context(self, **kwargs):
+        context = {
+            "domain": self.domain,
+            'report': {
+                "title": self.page_name
+            },
+            'delete_report_url': reverse(
+                'delete_configurable_report', args=(self.domain, self.existing_report._id)
+            ) + "?{}".format(urlencode({'redirect': reverse('reports_home', args=[self.domain])})),
+            'view_report_url': reverse(ConfigurableReport.slug, args=[self.domain, self.existing_report._id])
+        }
+        return context
+
+    @property
+    def page_name(self):
+        if self.existing_report:
+            return self.existing_report.title
+        return ""
 
 
 class ConfigureChartReport(ReportBuilderView):
