@@ -4,9 +4,10 @@ import uuid
 import hashlib
 
 from django.db import transaction
+from casexml.apps.case.tests.test_from_xform import CaseFromXFormTest
 from couchforms.util import process_xform
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL, CaseForms
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -83,22 +84,8 @@ class FormProcessorSQL(object):
 
                         case.save()
 
-                        to_delete = case.get_tracked_models_to_delete(CommCareCaseIndexSQL)
-                        if to_delete:
-                            logging.debug('Deleting indexes: %s', to_delete)
-                            ids = [index.pk for index in to_delete]
-                            CommCareCaseIndexSQL.objects.filter(pk__in=ids).delete()
-
-                        to_update = case.get_tracked_models_to_update(CommCareCaseIndexSQL)
-                        for index in to_update:
-                            logging.debug('Updating index: %s', index)
-                            index.save()
-
-                        to_create = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
-                        if to_create:
-                            logging.debug('Creating indexes: %s', to_create)
-                            case.index_set.bulk_create(to_create)
-
+                        FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
+                        FormProcessorSQL.save_tracked_models(case, CaseForms)
                         case.clear_tracked_models()
         except Exception as e:
             xforms_being_saved = [xform.form_id for xform in xforms]
@@ -109,6 +96,24 @@ class FormProcessorSQL(object):
             )
             # instance = _handle_unexpected_error(instance, error_message)
             raise
+
+    @staticmethod
+    def save_tracked_models(case, model_class):
+        to_delete = case.get_tracked_models_to_delete(model_class)
+        if to_delete:
+            logging.debug('Deleting %s: %s', model_class, to_delete)
+            ids = [index.pk for index in to_delete]
+            model_class.objects.filter(pk__in=ids).delete()
+
+        to_update = case.get_tracked_models_to_update(model_class)
+        for model in to_update:
+            logging.debug('Updating %s: %s', model_class, model)
+            model.save()
+
+        to_create = case.get_tracked_models_to_create(model_class)
+        for model in to_create:
+            logging.debug('Creating %s: %s', model_class, to_create)
+            model.save()
 
     @classmethod
     def process_stock(cls, xforms, case_db):

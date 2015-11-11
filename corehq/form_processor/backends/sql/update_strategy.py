@@ -2,7 +2,7 @@ import logging
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xml import V2
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseForms
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -40,6 +40,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         modified_on = case_update.guess_modified_on()
         if self.case.modified_on is None or modified_on > self.case.modified_on:
             self.case.modified_on = modified_on
+
+        self.case.track_create(CaseForms(case=self.case, form_uuid=xformdoc.form_id))
 
     def _apply_action(self, case_update, action, xform):
         if action.action_type_slug == const.CASE_ACTION_CREATE:
