@@ -293,7 +293,7 @@ cloudCare.CaseListView = Backbone.View.extend({
                 "sSearch": "Filter cases:",
                 "sEmptyTable": "No cases available. You must register a case to access this form."
             },
-            sScrollX: 800,
+            sScrollX: +$('#case-list').css('width').replace('px', ''),
             bScrollCollapse: true
         });
         var $dataTablesFilter = $(".dataTables_filter");
