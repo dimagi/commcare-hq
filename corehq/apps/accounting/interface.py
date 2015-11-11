@@ -1005,7 +1005,7 @@ class PaymentRecordInterface(GenericTabularReport):
                     ),
                     sort_key=account.name,
                 ),
-                applicable_credit_line.subscription.subscriber.domain if applicable_credit_line.subscription else 'None',
+                applicable_credit_line.subscription.subscriber.domain if applicable_credit_line.subscription else '',
                 record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
