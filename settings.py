@@ -1385,7 +1385,13 @@ PILLOWTOPS = {
             'name': 'KafkaCaseConsumerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        }
+        },
+        {
+            'name': 'LoggingPythonDemoPillow',
+            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
+        },
+
     ]
 }
 
