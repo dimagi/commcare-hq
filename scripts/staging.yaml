@@ -56,6 +56,7 @@ branches:
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
   - pillow-to-kafka  # cz 11/11
+  - bower.json # ben 11/11
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
