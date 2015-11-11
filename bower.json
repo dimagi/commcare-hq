@@ -23,7 +23,7 @@
         "backbone": "~0.9.1",
         "bootstrap-daterangepicker": "~2.1.13",
         "datatables": "~1.10.9",
-        "datatables-bootstrap3": "~0.1",
+        "datatables-bootstrap3": "0.1",
         "d3": "~3.1",
         "nvd3": "1.1.10-beta"
     },
