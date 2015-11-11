@@ -1,0 +1,47 @@
+{% load hq_shared_tags %}
+
+{% include "app_manager/partials/nav_menu_media_js_common.html" %}
+{% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+
+<script>
+    var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
+    var reportModule = new ReportModule({
+        moduleName: {{ module.name|JSON }},
+        availableReports: {{ all_reports|JSON }}, // structure for all reports
+        currentReports: {{ current_reports|JSON }}, // config data for app reports
+        saveURL: saveURL,
+        lang: {{ lang|JSON }}
+    });
+    ko.applyBindings(reportModule, $("#save-button")[0]);
+    ko.applyBindings(reportModule, $("#module-name")[0]);
+    ko.applyBindings(reportModule, $("#report-list")[0]);
+    ko.applyBindings(reportModule, $("#add-report-btn")[0]);
+
+    var select2s = $('.choice_filter');
+    for(var i = 0; i < select2s.length; i++) {
+        var element = select2s.eq(i);
+        var separator = select2Separator;
+        var initialValues = element.val() !== "" ? element.val().split(separator) : [];
+        element.select2({
+            minimumInputLength: 0,
+            multiple: true,
+            separator: separator,
+            allowClear: true,
+            // allowClear only respected if there is a non empty placeholder
+            placeholder: " ",
+            ajax: {
+                // TODO - this is pretty hackish
+                url: ("{% url 'choice_list_api' domain 'report_id' 'filter_id' %}".split('report_id')[0]
+                      + element.parent()[0].lastElementChild.value + "/"),
+                dataType: 'json',
+                quietMillis: 250,
+                data: choiceListUtils.getApiQueryParams,
+                results: choiceListUtils.formatPageForSelect2,
+                cache: true
+            }
+        });
+        element.select2('data', _.map(initialValues, function(v){
+            return {id: v, text: v};
+        }));
+    }
+</script>
