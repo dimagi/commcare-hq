@@ -10,6 +10,7 @@ from django.db import models, transaction
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.ext import jsonobject
 from couchforms.signals import xform_archived, xform_unarchived
@@ -204,6 +205,13 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
                 payload = payload.encode('utf-8', errors='replace')
             return etree.fromstring(payload)
         return _to_xml_element(xml)
+
+    def get_data(self, path):
+        """
+        Evaluates an xpath expression like: path/to/node and returns the value
+        of that element, or None if there is no value.
+        """
+        return safe_index({'form': self.form_data}, path.split("/"))
 
     def get_xml(self):
         return self.get_attachment('form.xml')
