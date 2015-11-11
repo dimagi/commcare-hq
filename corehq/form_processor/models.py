@@ -410,6 +410,14 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
+    @memoized
+    def _saved_attachments(self):
+        return self.attachments.all()
+
+    @property
+    def case_attachments(self):
+        return {attachment.name: attachment for attachment in self._saved_attachments()}
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
