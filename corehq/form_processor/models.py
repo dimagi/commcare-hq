@@ -106,13 +106,13 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
 
-    def __get_form_id(self):
+    @property
+    def form_id(self):
         return self.form_uuid
 
-    def __set_form_id(self, _id):
+    @form_id.setter
+    def form_id(self, _id):
         self.form_uuid = _id
-
-    form_id = property(__get_form_id, __set_form_id)
 
     @classmethod
     def get(cls, xform_id):
@@ -336,13 +336,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     case_json = JSONField(lazy=True)
 
-    def __get_case_id(self):
+    @property
+    def case_id(self):
         return self.case_uuid
 
-    def __set_case_id(self, _id):
+    @case_id.setter
+    def case_id(self, _id):
         self.case_uuid = _id
-
-    case_id = property(__get_case_id, __set_case_id)
 
     @property
     def user_id(self):
@@ -456,13 +456,13 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     referenced_type = models.CharField(max_length=255, null=False)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
-    def __get_relationship(self):
+    @property
+    def relationship(self):
         return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
 
-    def __set_relationship(self, relationship):
+    @relationship.setter
+    def relationship(self, relationship):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
-
-    relationship = property(__get_relationship, __set_relationship)
 
     def __unicode__(self):
         return (
