@@ -12,6 +12,7 @@ from corehq.apps.accounting.models import (
     FeatureType,
     PaymentMethod,
     StripePaymentMethod,
+    LastPayment
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -94,6 +95,8 @@ class BaseStripePaymentHandler(object):
                 customer = self.payment_method.customer
 
             charge = self.create_charge(amount, card=card, customer=customer)
+            billing_account.last_payment_method = LastPayment.CC_ONE_TIME
+            billing_account.save()
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body

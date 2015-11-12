@@ -54,6 +54,7 @@ from corehq.apps.accounting.models import (
     FeatureType,
     FundingSource,
     Invoice,
+    LastPayment,
     ProBonoStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
@@ -100,6 +101,10 @@ class BillingAccountBasicForm(forms.Form):
         label=ugettext_lazy("Entry Point"),
         choices=EntryPoint.CHOICES,
     )
+    last_payment_method = forms.ChoiceField(
+        label=ugettext_lazy("Last Payment Method"),
+        choices=LastPayment.CHOICES
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -113,11 +118,13 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
+                'last_payment_method': account.last_payment_method
             }
         else:
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
                 'entry_point': EntryPoint.CONTRACTED,
+                'last_payment_method': LastPayment.NONE,
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
@@ -149,6 +156,7 @@ class BillingAccountBasicForm(forms.Form):
                 'salesforce_account_id',
                 'currency',
                 'entry_point',
+                'last_payment_method',
                 crispy.Div(*additional_fields),
             ),
             FormActions(
@@ -240,6 +248,7 @@ class BillingAccountBasicForm(forms.Form):
         )
         account.dimagi_contact = self.cleaned_data['dimagi_contact']
         account.entry_point = self.cleaned_data['entry_point']
+        account.last_payment_method = self.cleaned_data['last_payment_method']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(

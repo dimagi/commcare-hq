@@ -240,6 +240,24 @@ class EntryPoint(object):
         (NOT_SET, "Not Set"),
     )
 
+class LastPayment(object):
+    CC_ONE_TIME = "CC_ONE_TIME"
+    CC_AUTO = "CC_AUTO"
+    WIRE = "WIRE"
+    ACH = "ACH"
+    OTHER = "OTHER"
+    BU_PAYMENT = "BU_PAYMENT"
+    NONE = "NONE"
+    CHOICES = (
+        (CC_ONE_TIME, "Credit Card - One Time"),
+        (CC_AUTO, "Credit Card - Autopay"),
+        (WIRE, "Wire"),
+        (ACH, "ACH"),
+        (OTHER, "Other"),
+        (BU_PAYMENT, "Payment to local BU"),
+        (NONE, "None"),
+    )
+
 
 class Currency(models.Model):
     """
@@ -296,6 +314,11 @@ class BillingAccount(models.Model):
     )
     auto_pay_user = models.CharField(max_length=80, null=True)
     last_modified = models.DateTimeField(auto_now=True)
+    last_payment_method = models.CharField(
+        max_length=25,
+        default=LastPayment.NONE,
+        choices=LastPayment.CHOICES,
+    )
 
     class Meta:
         app_label = 'accounting'
@@ -313,7 +336,7 @@ class BillingAccount(models.Model):
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
                                         created_by_invoicing=False,
-                                        entry_point=None):
+                                        entry_point=None, last_payment_method=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -331,6 +354,7 @@ class BillingAccount(models.Model):
                 currency=Currency.get_default(),
                 account_type=account_type,
                 entry_point=entry_point,
+                last_payment_method=last_payment_method,
             )
             account.save()
         return account, is_new
@@ -954,6 +978,7 @@ class Subscription(models.Model):
     service_type = models.CharField(
         max_length=25,
         choices=SubscriptionType.CHOICES,
+        default=SubscriptionType.CONTRACTED
     )
     pro_bono_status = models.CharField(
         max_length=25,
@@ -1216,7 +1241,7 @@ class Subscription(models.Model):
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.CONTRACTED),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
-            funding_source=(funding_source or FundingSource.CLIENT)
+            funding_source=(funding_source or FundingSource.CLIENT),
             **kwargs
         )
         new_subscription.save()
