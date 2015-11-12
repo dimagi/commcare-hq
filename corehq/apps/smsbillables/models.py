@@ -40,6 +40,7 @@ class SmsGatewayFeeCriteria(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     country_code = models.IntegerField(max_length=5, null=True, blank=True, db_index=True)
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
 
     class Meta:
         app_label = 'smsbillables'
