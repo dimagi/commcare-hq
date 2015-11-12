@@ -13,7 +13,7 @@ from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, View
 from corehq.apps.analytics.tasks import track_workflow
@@ -161,7 +161,7 @@ class ReportBuilderView(BaseDomainView):
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/builder_report_type_select.html"
     urlname = 'report_builder_select_type'
-    page_title = ugettext_noop('Select Report Type')
+    page_title = ugettext_lazy('Select Report Type')
 
     @property
     def page_url(self):
@@ -249,7 +249,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/builder_data_source_select.html'
-    page_title = ugettext_noop('Create Report')
+    page_title = ugettext_lazy('Create Report')
 
     @property
     def report_type(self):
@@ -322,7 +322,7 @@ class EditReportInBuilder(View):
 
 
 class ConfigureChartReport(ReportBuilderView):
-    page_title = ugettext_noop("Configure Report")
+    page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = ugettext_noop("Chart Report: {}")
