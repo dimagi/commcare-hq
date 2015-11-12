@@ -355,7 +355,6 @@ class SmsBillable(models.Model):
                         "Gateway fee conversion rate for currency %s is 0" % currency.code
                     )
 
-        # Fetch usage_fee todo
         domain = message_log.domain
         billable.usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain
