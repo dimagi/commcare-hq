@@ -26,6 +26,11 @@ from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.quickcache import quickcache
 
 
+class SmsGatewayFeeCriteriaManager(models.Manager):
+    def get_queryset(self):
+        return super(SmsGatewayFeeCriteriaManager, self).get_queryset().filter(is_active=True)
+
+
 class SmsGatewayFeeCriteria(models.Model):
     """
     These are the parameters we'll use to try and calculate the cost of sending a message through
@@ -41,6 +46,8 @@ class SmsGatewayFeeCriteria(models.Model):
     country_code = models.IntegerField(max_length=5, null=True, blank=True, db_index=True)
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
+
+    objects = SmsGatewayFeeCriteriaManager()
 
     class Meta:
         app_label = 'smsbillables'
