@@ -66,7 +66,8 @@ submodules:
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - 2.24-validator  # Will 11/12
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
