@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Untitled Form</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/2429276b-0aab-4379-8ed7-58df94e29358" uiVersion="1" version="3" name="Untitled Form">
+          <name/>
+          <dob/>
+          <with_mother/>
+          <height/>
+          <weight/>
+          <time/>
+          <now/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="en" default="">
+          <text id="name-label">
+            <value>Child name</value>
+          </text>
+          <text id="dob-label">
+            <value>Child date of birth</value>
+          </text>
+          <text id="with_mother-label">
+            <value>Does child live with mother?</value>
+          </text>
+          <text id="height-label">
+            <value>Child height (cm)</value>
+          </text>
+          <text id="weight-label">
+            <value>Child weight (metric tonnes)</value>
+          </text>
+          <text id="time-label">
+            <value>Arrival time</value>
+          </text>
+          <text id="now-label">
+            <value>Current timestamp</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/name" type="xsd:string"/>
+      <bind nodeset="/data/dob" type="xsd:date"/>
+      <bind nodeset="/data/with_mother" type="xsd:boolean"/>
+      <bind nodeset="/data/height" type="xsd:int"/>
+      <bind nodeset="/data/weight" type="xsd:decimal"/>
+      <bind nodeset="/data/time" type="xsd:time"/>
+      <bind nodeset="/data/now" type="xsd:dateTime"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('name-label')"/>
+    </input>
+    <input ref="/data/dob">
+      <label ref="jr:itext('dob-label')"/>
+    </input>
+    <input ref="/data/with_mother">
+      <label ref="jr:itext('with_mother-label')"/>
+    </input>
+    <input ref="/data/height">
+      <label ref="jr:itext('height-label')"/>
+    </input>
+    <input ref="/data/weight">
+      <label ref="jr:itext('weight-label')"/>
+    </input>
+    <input ref="/data/time">
+      <label ref="jr:itext('time-label')"/>
+    </input>
+    <input ref="/data/now">
+      <label ref="jr:itext('now-label')"/>
+    </input>
+  </h:body>
+</h:html>

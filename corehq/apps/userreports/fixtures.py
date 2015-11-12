@@ -13,11 +13,12 @@ from corehq.apps.app_manager.models import (
     StaticChoiceListFilter,
     StaticDatespanFilter,
 )
-from corehq.apps.userreports.exceptions import UserReportsError
-from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.util import localize
 from corehq.util.xml import serialize
+
+from .exceptions import UserReportsError
 from .models import ReportConfiguration
+from .reports.factory import ReportFactory
+from .util import localize
 
 
 def wrap_by_filter_type(report_app_filter):
@@ -75,7 +76,6 @@ class ReportFixturesProvider(object):
         report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
         report = ReportConfiguration.get(report_config.report_id)
         report_elem.append(self._element('name', localize(report_config.header, user.language)))
-        report_elem.append(self._element('description', localize(report_config.description, user.language)))
         data_source = ReportFactory.from_spec(report)
 
         data_source.set_filter_values({

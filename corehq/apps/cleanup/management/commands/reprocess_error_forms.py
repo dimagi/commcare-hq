@@ -31,7 +31,7 @@ class Command(BaseCommand):
         for form in iter_problem_forms(domain, since):
             print "%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
                               form.xmlns,
-                              form.xpath('form/meta/username'),
+                              form.get_data('form/meta/username'),
                               form.problem.strip())
             if not options["dryrun"]:
                 try:

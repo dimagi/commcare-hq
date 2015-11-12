@@ -3,6 +3,7 @@ from sqlagg.filters import BETWEEN
 from corehq.apps.reports.datatables import DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.sql import get_table_name
+from corehq.db import UCR_ENGINE_ID
 from custom.apps.cvsu.mixins import FilterMixin, CVSUSqlDataMixin, DateColumnMixin
 from custom.apps.cvsu.sqldata import ChildProtectionData, ChildrenInHouseholdData, CVSUActivityData, \
     CVSUServicesData, CVSUIncidentResolutionData, make_trend
@@ -13,6 +14,10 @@ class NewChildProtectionData(ChildProtectionData):
     @property
     def filters(self):
         return [BETWEEN('date_reported', 'startdate', 'enddate')] + super(NewChildProtectionData, self).filters[1:]
+
+    @property
+    def engine_id(self):
+        return UCR_ENGINE_ID
 
     @property
     def table_name(self):
@@ -41,6 +46,10 @@ class NewChildrenInHouseholdData(ChildrenInHouseholdData):
                                                                           self).filters[1:]
 
     @property
+    def engine_id(self):
+        return UCR_ENGINE_ID
+
+    @property
     def table_name(self):
         return get_table_name(self.config['domain'], 'unicef_malawi')
 
@@ -58,6 +67,10 @@ class NewChildrenInHouseholdData(ChildrenInHouseholdData):
 
 
 class NewCVSUActivityData(FilterMixin, CVSUActivityData):
+
+    @property
+    def engine_id(self):
+        return UCR_ENGINE_ID
 
     @property
     def table_name(self):
@@ -87,6 +100,10 @@ class NewCVSUActivityData(FilterMixin, CVSUActivityData):
 
 
 class NewCVSUServicesData(FilterMixin, CVSUServicesData):
+
+    @property
+    def engine_id(self):
+        return UCR_ENGINE_ID
 
     @property
     def table_name(self):
@@ -139,6 +156,11 @@ class NewCVSUServicesData(FilterMixin, CVSUServicesData):
 
 
 class NewCVSUIncidentResolutionData(FilterMixin, CVSUIncidentResolutionData):
+
+    @property
+    def engine_id(self):
+        return UCR_ENGINE_ID
+
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], 'unicef_malawi')
@@ -310,6 +332,7 @@ class NewCVSUActivityDataTrend(DateColumnMixin, CVSUSqlDataMixin, make_trend(New
 
 class NewCVSUIncidentResolutionDataTrend(DateColumnMixin, CVSUSqlDataMixin,
                                          make_trend(NewCVSUIncidentResolutionData)):
+
     @property
     def columns(self):
         cols = [

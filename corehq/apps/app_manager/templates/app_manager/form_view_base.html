@@ -303,7 +303,7 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
-            {%  if allow_usercase and form.form_type == 'module_form' %}
+            {%  if allow_usercase or form.uses_usercase and form.form_type == 'module_form' %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
                     {% trans "User Case Management" %}
@@ -378,6 +378,32 @@
                     </header>
                     <div class="casexml" id="usercasexml_home">
                         {% block usercase_management_content %}
+                            {%  if form.uses_usercase and not allow_usercase %}
+                                <div class="container-fluid span6">
+                                <p>{% blocktrans %}
+                                    The User Case feature is no longer available because of the change in your
+                                    CommCare subscription. Although currently-deployed applications will still
+                                    function properly, it will not be possible to update or redeploy them unless
+                                    the User Case functionality is removed, or you upgrade your CommCare
+                                    subscription.
+                                {% endblocktrans %}</p>
+
+                                <p class="alert alert-danger">{% blocktrans %}
+                                    WARNING: By clicking "Remove User Case Properties" you will lose User Case
+                                    functionality if you redeploy your application. However, you will still be
+                                    able to see all previously collected data.
+                                {% endblocktrans %}</p>
+
+                                <p>
+                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary span6">
+                                        {% trans "Change your subscription" %}
+                                    </a>
+                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger span6">
+                                        {% trans "Remove User Case Properties" %}
+                                    </a>
+                                </p>
+                                </div>
+                            {% endif %}
                             {% include 'app_manager/partials/usercase_config.html' %}
                         {% endblock %}
                     </div>

@@ -9,46 +9,8 @@ class AbstractXFormInstance(object):
     def form_id(self):
         raise NotImplementedError()
 
-    def auth_context(self):
-        raise NotImplementedError()
-
     @property
     def form_data(self):
-        raise NotImplementedError()
-
-    def get_data(self, xpath):
-        raise NotImplementedError()
-
-    def get_attachment(self, attachment_name):
-        raise NotImplementedError()
-
-    def archive(self, user=None):
-        raise NotImplementedError()
-
-    def unarchive(self, user=None):
-        raise NotImplementedError()
-
-    def get_xml_element(self):
-        raise NotImplementedError()
-
-    def get_xml(self):
-        raise NotImplementedError()
-
-    @classmethod
-    def get(self, xform_id):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_with_attachments(slef, xform_id):
-        raise NotImplementedError()
-
-    def save(self, *args, **kwargs):
-        raise NotImplementedError()
-
-    def set_submission_properties(self, submission_post):
-        raise NotImplementedError()
-
-    def to_json(self):
         raise NotImplementedError()
 
     @property
@@ -79,6 +41,44 @@ class AbstractXFormInstance(object):
     def is_submission_error_log(self):
         raise NotImplementedError()
 
+    def auth_context(self):
+        raise NotImplementedError()
+
+    def get_data(self, xpath):
+        raise NotImplementedError()
+
+    def get_attachment(self, attachment_name):
+        raise NotImplementedError()
+
+    def archive(self, user=None):
+        raise NotImplementedError()
+
+    def unarchive(self, user=None):
+        raise NotImplementedError()
+
+    def get_xml_element(self):
+        raise NotImplementedError()
+
+    def get_xml(self):
+        raise NotImplementedError()
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def set_submission_properties(self, submission_post):
+        raise NotImplementedError()
+
+    def to_json(self):
+        raise NotImplementedError()
+
+    @classmethod
+    def get(self, xform_id):
+        raise NotImplementedError()
+
+    @classmethod
+    def get_with_attachments(slef, xform_id):
+        raise NotImplementedError()
+
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log
@@ -97,6 +97,10 @@ class AbstractCommCareCase(object):
 
     @property
     def case_id(self):
+        raise NotImplementedError()
+
+    @property
+    def case_name(self):
         raise NotImplementedError()
 
     def hard_delete(self):

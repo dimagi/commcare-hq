@@ -55,7 +55,7 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
-  - report-description-xpath # Nick P 11/8
+  #- bower.json # ben 11/11
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -66,7 +66,8 @@ submodules:
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - 2.24-validator  # Will 11/12
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:

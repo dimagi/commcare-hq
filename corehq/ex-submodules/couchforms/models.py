@@ -141,6 +141,11 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         # on the copy, to avoid race conditions
         extras = get_safe_read_kwargs()
         try:
+            if cls == XFormInstance:
+                doc = db.get(docid, rev=rev, **extras)
+                if doc['doc_type'] in doc_types():
+                    return doc_types()[doc['doc_type']].wrap(doc)
+                return XFormInstance.wrap(doc)
             return db.get(docid, rev=rev, wrapper=cls.wrap, **extras)
         except ResourceNotFound:
             raise XFormNotFound

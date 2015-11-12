@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Built by XFormBuilder</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/2fe65933-153c-4af0-9726-bc226971ab5f" name="Built by XFormBuilder" uiVersion="1" version="3">
+          <name/>
+          <personal>
+            <fav_color/>
+          </personal>
+        </data>
+      </instance>
+      <itext>
+        <translation default="" lang="en">
+          <text id="name-label">
+            <value>What is your name?</value>
+          </text>
+          <text id="personal-label">
+            <value>Personal Questions</value>
+          </text>
+          <text id="personal/fav_color-label">
+            <value>Quelle est ta couleur pr&#233;f&#233;r&#233;e?</value>
+          </text>
+          <text id="personal/fav_color-r-label">
+            <value>Rot</value>
+          </text>
+          <text id="personal/fav_color-b-label">
+            <value>Blau</value>
+          </text>
+          <text id="personal/fav_color-g-label">
+            <value>Gr&#252;n</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/name" type="xsd:string"/>
+      <bind nodeset="/data/personal/fav_color" type="xsd:string"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('name-label')"/>
+    </input>
+    <group ref="/data/personal">
+      <label ref="jr:itext('personal-label')"/>
+      <input ref="/data/personal/fav_color">
+        <label ref="jr:itext('personal/fav_color-label')"/>
+      </input>
+    </group>
+  </h:body>
+</h:html>
