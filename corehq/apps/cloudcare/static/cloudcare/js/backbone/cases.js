@@ -338,7 +338,7 @@ cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend
 
 
         if (self.model) {
-            var table = $("<table />").addClass("table table-striped datatable").appendTo($panelBody);
+            var table = $("<table />").addClass("table table-striped table-hover datatable").appendTo($panelBody);
             var thead = $("<thead />").appendTo(table);
             var theadrow = $("<tr />").appendTo(thead);
 	        $("<th />").attr("colspan", "2").text("Case Details for " + self.model.getProperty("name")).appendTo(theadrow);
