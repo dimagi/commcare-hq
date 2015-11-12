@@ -6,7 +6,10 @@ import hashlib
 from django.db import transaction
 from couchforms.util import process_xform
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL, XFormOperationSQL
+from corehq.form_processor.models import (
+    XFormInstanceSQL, XFormAttachmentSQL,
+    CommCareCaseIndexSQL, XFormOperationSQL
+)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
