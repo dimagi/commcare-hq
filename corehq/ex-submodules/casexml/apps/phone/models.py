@@ -590,7 +590,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 for index in indices.values():
                     if not _domain_has_legacy_toggle_set():
                         # unblocking http://manage.dimagi.com/default.asp?185850#1039475
-                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True)
+                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False,
+                                              fail_if_debug=True)
                         _assert(index in candidates_to_remove,
                             "expected {} in {} but wasn't".format(index, candidates_to_remove))
             try:
@@ -633,9 +634,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                         this_case_index not in candidates_to_remove):
                     self.prune_case(this_case_index)
         else:
-            # we have some possible candidates for removal. we should check each of them.
-            candidates_to_remove.remove(case_id)  # except ourself
-            for candidate in candidates_to_remove:
+            # we have some possible candidates for removal. we should check each of them except ourself
+            candidates_to_also_check = candidates_to_remove - set(case_id)
+            for candidate in candidates_to_also_check:
                 candidate_dependencies = self.index_tree.get_all_cases_that_depend_on_case(
                     candidate, cached_map=reverse_index_map
                 )

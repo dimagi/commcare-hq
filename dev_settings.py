@@ -46,3 +46,8 @@ CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
+
+#  make celery synchronous
+CELERY_ALWAYS_EAGER = True
+# Fail hard in tasks so you get a traceback
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = True

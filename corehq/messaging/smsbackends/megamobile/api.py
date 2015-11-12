@@ -33,7 +33,7 @@ class MegamobileBackend(SMSBackend):
     def get_form_class(cls):
         return MegamobileBackendForm
 
-    def send_sms(self, msg, delay=True, *args, **kwargs):
+    def send(self, msg, delay=True, *args, **kwargs):
         phone_number = strip_plus(msg.phone_number)
         if not phone_number.startswith("63"):
             raise MegamobileException("Only Filipino phone numbers are supported")

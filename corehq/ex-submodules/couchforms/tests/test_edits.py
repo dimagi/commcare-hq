@@ -2,15 +2,12 @@ from datetime import datetime, timedelta
 import os
 import uuid
 from django.test import TestCase
-from django.conf import settings
-from mock import MagicMock
+from mock import patch
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms.models import (
-    XFormInstance,
-    XFormDeprecated,
     UnfinishedSubmissionStub,
 )
 
@@ -31,6 +28,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
+        UnfinishedSubmissionStub.objects.all().delete()
 
     @run_with_all_backends
     def test_basic_edit(self):
@@ -55,8 +53,6 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual("Edited Baby!", xform.form_data['assessment']['categories'])
 
         deprecated_xform = self.interface.xform_model.get(xform.deprecated_form_id)
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            deprecated_xform = XFormDeprecated.wrap(deprecated_xform.to_json())
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
         self.assertNotEqual(self.ID, deprecated_xform.form_id)
@@ -74,6 +70,7 @@ class EditFormTest(TestCase, TestFileMixin):
         )
         self.assertEqual(xform.get_xml(), edit_xml)
 
+    @run_with_all_backends
     def test_broken_save(self):
         """
         Test that if the second form submission terminates unexpectedly
@@ -81,26 +78,12 @@ class EditFormTest(TestCase, TestFileMixin):
         such as the original having been marked as deprecated.
         """
 
-        class BorkDB(object):
-            """context manager for making a db's bulk_save temporarily fail"""
-            def __init__(self, db):
-                self.old = {}
-                self.db = db
-
-            def __enter__(self):
-                self.old['bulk_save'] = self.db.bulk_save
-                self.db.bulk_save = MagicMock(name='bulk_save',
-                                              side_effect=RequestFailed())
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                self.db.bulk_save = self.old['bulk_save']
-
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
 
         _, xform, _ = self.interface.submit_form_locally(original_xml, self.domain)
         self.assertEqual(self.ID, xform.form_id)
-        self.assertEqual("XFormInstance", xform.doc_type)
+        self.assertTrue(xform.is_normal)
         self.assertEqual(self.domain, xform.domain)
 
         self.assertEqual(
@@ -108,13 +91,12 @@ class EditFormTest(TestCase, TestFileMixin):
             0
         )
 
-        # This seems like a couch specific test util. Will likely need postgres test utils
-        with BorkDB(XFormInstance.get_db()):
+        with patch.object(self.interface.processor, 'bulk_save', side_effect=RequestFailed):
             with self.assertRaises(RequestFailed):
                 self.interface.submit_form_locally(edit_xml, self.domain)
 
         # it didn't go through, so make sure there are no edits still
-        self.assertFalse(hasattr(xform, 'deprecated_form_id'))
+        self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
 
         xform = self.interface.xform_model.get(self.ID)
         self.assertIsNotNone(xform)

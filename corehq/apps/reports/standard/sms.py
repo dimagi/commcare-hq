@@ -24,7 +24,8 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
-from corehq.apps.hqwebapp.doc_info import get_doc_info, get_doc_info_by_id, get_object_info
+from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
+    get_object_info, DomainMismatchException)
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
@@ -154,6 +155,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
                 username = '%s (%s %s)' % (username, _('Deleted'), _(doc_info.type_display))
         else:
             username, contact_type, url = (None, None, None)
+            recipient_id = None
 
         if username and extra_text:
             username = '%s %s' % (username, extra_text)
@@ -209,10 +211,16 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             except Exception:
                 pass
 
+        doc_info = None
         if doc:
-            doc_info = get_doc_info(doc.to_json(), self.domain)
-        else:
-            doc_info = None
+            try:
+                doc_info = get_doc_info(doc.to_json(), self.domain)
+            except DomainMismatchException:
+                # This can happen, for example, if a WebUser was sent an SMS
+                # and then they unsubscribed from the domain. If that's the
+                # case, we'll just leave doc_info as None and no contact link
+                # will be displayed.
+                pass
 
         contact_cache[recipient_id] = doc_info
 

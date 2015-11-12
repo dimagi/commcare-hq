@@ -79,10 +79,6 @@ class ConfigurableIndicatorPillow(PythonPillow):
             raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
         sql_adapter.rebuild_table()
 
-    def python_filter(self, doc):
-        # filtering is done manually per indicator see change_transport
-        return True
-
     def change_trigger(self, changes_dict):
         self.bootstrap_if_needed()
         if changes_dict.get('deleted', False):
