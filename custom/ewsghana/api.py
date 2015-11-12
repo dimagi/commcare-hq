@@ -850,7 +850,7 @@ class EmailSettingsSync(object):
             return
 
         try:
-            location = SQLLocation.objects.get(site_code=location_code, domain=self.domain)
+            location = SQLLocation.active_objects.get(site_code=location_code, domain=self.domain)
         except SQLLocation.DoesNotExist:
             return
 
@@ -858,7 +858,7 @@ class EmailSettingsSync(object):
         for n in notifications:
             if len(n.config_ids) == 1:
                 # Migrated reports have only one config
-                config = ReportConfig.get(doc_id=n.config_ids[0])
+                config = ReportConfig.get(n.config_ids[0])
                 location_id = config.filters.get('location_id')
                 slug = self.REPORT_MAP[report.report]
                 report_slug = config.report_slug
