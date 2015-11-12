@@ -55,7 +55,6 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
-  - pillow-to-kafka  # cz 11/11
   #- bower.json # ben 11/11
 submodules:
   submodules/touchforms-src:
@@ -73,8 +72,7 @@ submodules:
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
-    branches:
-      - change-feed-abstraction  # cz 11/11
+    branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
