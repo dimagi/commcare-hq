@@ -11,8 +11,6 @@ from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
 from custom.openclinica.const import MODULE_EVENTS, FORM_QUESTION_ITEM, FORM_EVENTS
 
-logger = logging.Logger(__name__)
-
 
 class OpenClinicaIntegrationError(Exception):
     pass
@@ -154,7 +152,7 @@ def get_question_item(domain, form_xmlns, question):
         return Item(se_oid, form_oid, ig_oid, item_oid)
     except KeyError:
         # Did an old form set the value of a question that no longer exists? Best to check that out.
-        logger.error('Unknown CommCare question "{}" found in form "{}"'.format(question, form_xmlns))
+        logging.error('Unknown CommCare question "{}" found in form "{}"'.format(question, form_xmlns))
         return None
     except TypeError:
         # CommCare question does not match an OpenClinica item. This is a CommCare-only question.
