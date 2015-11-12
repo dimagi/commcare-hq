@@ -2,15 +2,12 @@ from datetime import datetime, timedelta
 import os
 import uuid
 from django.test import TestCase
-from django.conf import settings
-from mock import MagicMock, patch
+from mock import patch
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms.models import (
-    XFormInstance,
-    XFormDeprecated,
     UnfinishedSubmissionStub,
 )
 
@@ -94,7 +91,6 @@ class EditFormTest(TestCase, TestFileMixin):
             0
         )
 
-        # This seems like a couch specific test util. Will likely need postgres test utils
         with patch.object(self.interface.processor, 'bulk_save', side_effect=RequestFailed):
             with self.assertRaises(RequestFailed):
                 self.interface.submit_form_locally(edit_xml, self.domain)
