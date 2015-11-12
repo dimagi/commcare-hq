@@ -7,9 +7,25 @@ from casexml.apps.phone.checksum import Checksum
 
 
 class Command(BaseCommand):
-    """
-    lets you download sync logs as json and then compare them.
-    useful for checking state issues.
+    """Compare sync logs to see mismatched case ids.
+    This is useful for debugging state mismatches
+
+    Can also pass in a hash to see which cases HQ is sending down that mobile has purged.
+
+    Usage:
+     ./manage.py sync_log_debugger <synclog1> [synclog2 synclog3]...
+        <synclog> is a json file of the synclog you are trying to compare. This
+        could also be a folder of synclogs and will compare all of them.
+
+    optional arguments:
+    --check <hash>
+        removes cases one by one in synclog1 until it matches <hash>
+    --index <index>
+        if you have more than one file passed in, <index> is the one that --check will be run on
+    --depth <depth>
+        specify the number of cases to try removing until you find a match in --check
+       (it's a N choose X problem so gets very slow after --depth > 1 if you
+        have a significant number of cases in the log)
     """
     option_list = BaseCommand.option_list + (
         make_option('--debugger',
@@ -38,7 +54,22 @@ class Command(BaseCommand):
         from casexml.apps.phone.models import properly_wrap_sync_log, SyncLog, SimplifiedSyncLog
 
         if len(args) < 1:
-            print 'Usage: ./manage.py sync_log_debugger <filename1> [<filename2>] [<filename3>]...'
+            print(
+                "Usage:\n"
+                "./manage.py sync_log_debugger <synclog1> [synclog2 synclog3]...\n"
+                "    <synclog> is a json file of the synclog you are trying to compare. Passing\n"
+                "    in a folder will compare all of the files in that folder.\n"
+                "\n"
+                "optional arguments:\n"
+                "--check <hash>\n"
+                "    removes cases one by one in synclog1 until it matches <hash>\n"
+                "--index <index>\n"
+                "    if you have more than one file passed in, <index> is the one that --check will be run on\n"
+                "--depth <depth>\n"
+                "    specify the number of cases to try removing until you find a match in --check\n"
+                "   (it's a N choose X problem so gets very slow after --depth > 1 if you\n"
+                "    have a significant number of cases in the log)\n"
+            )
             sys.exit(0)
 
         logs = []
