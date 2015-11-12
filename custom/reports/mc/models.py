@@ -621,14 +621,8 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         internal_adult_referral_given,
     ])
 
-
     class Meta:
         app_label = 'mc'
 
+
 MalariaConsortiumFluffPillow = MalariaConsortiumFluff.pillow()
-
-
-def get_pillow():
-    return MalariaConsortiumFluffPillow(
-        checkpoint=get_default_django_checkpoint_for_legacy_pillow_class(MalariaConsortiumFluffPillow)
-    )
