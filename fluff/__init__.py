@@ -10,6 +10,7 @@ from dimagi.utils.read_only import ReadOnlyObject
 from fluff import exceptions
 from fluff.exceptions import EmitterValidationError
 from fluff.signals import BACKEND_SQL, BACKEND_COUCH
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import PythonPillow
 from .signals import indicator_document_updated
 import fluff.util
@@ -687,6 +688,7 @@ class IndicatorDocument(schema.Document):
     class Meta:
         app_label = 'fluff'
 
+
 class FluffPillow(PythonPillow):
     document_filter = None
     wrapper = None
@@ -698,6 +700,12 @@ class FluffPillow(PythonPillow):
 
     # see explanation in IndicatorDocument for how this is used
     deleted_types = ()
+
+    def __init__(self):
+        # all fluff pillows should use SQL checkpoints
+        super(FluffPillow, self).__init__(
+            checkpoint=get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        )
 
     @classmethod
     def get_sql_engine(cls):
