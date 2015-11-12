@@ -11,7 +11,7 @@ from fluff import exceptions
 from fluff.exceptions import EmitterValidationError
 from fluff.signals import BACKEND_SQL, BACKEND_COUCH
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
-from pillowtop.listener import PythonPillow
+from pillowtop.listener import PythonPillow, PYTHONPILLOW_CHUNK_SIZE
 from .signals import indicator_document_updated
 import fluff.util
 
@@ -701,10 +701,15 @@ class FluffPillow(PythonPillow):
     # see explanation in IndicatorDocument for how this is used
     deleted_types = ()
 
-    def __init__(self):
-        # all fluff pillows should use SQL checkpoints
+    def __init__(self, chunk_size=None, checkpoint=None):
+        # the arguments to this function are just for tests.
+        # explicitly check against None since we want to pass chunk_size=0 through
+        chunk_size = chunk_size if chunk_size is not None else PYTHONPILLOW_CHUNK_SIZE
+        # fluff pillows should default to SQL checkpoints
+        checkpoint = checkpoint or get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(FluffPillow, self).__init__(
-            checkpoint=get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+            chunk_size=chunk_size,
+            checkpoint=checkpoint,
         )
 
     @classmethod
