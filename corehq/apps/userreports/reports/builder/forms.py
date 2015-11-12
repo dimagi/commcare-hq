@@ -384,12 +384,18 @@ class DataSourceForm(forms.Form):
             else:
                 report_source_crispy_fields.append(k)
 
+        top_fields = [
+            FieldWithHelpBubble(
+                'report_name',
+                help_bubble_text=_('Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report'))
+        ]
+        if chart_type_crispy_field:
+            top_fields.append(chart_type_crispy_field)
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('{} Report'.format(self.report_type.capitalize())),
-                FieldWithHelpBubble('report_name', help_bubble_text=_('Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report')),
-                chart_type_crispy_field
+                *top_fields
             ),
             crispy.Fieldset(
                 _('Data'), *report_source_crispy_fields
