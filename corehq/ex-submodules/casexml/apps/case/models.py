@@ -8,38 +8,31 @@ from __future__ import absolute_import
 from StringIO import StringIO
 import base64
 from collections import OrderedDict
-from functools import cmp_to_key
 import re
 from datetime import datetime
 import logging
-import copy
-import sys
 
 from django.core.cache import cache
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict, BadValueError
-from PIL import Image
+from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from corehq.form_processor.abstract_models import AbstractCommCareCase
 from dimagi.ext.couchdbkit import *
-from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.util.test_utils import unit_testing_only
-from couchforms.util import is_deprecation, is_override
-from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
+from dimagi.utils.django.cached_object import (
+    CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
+)
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import (
     get_case_xform_ids,
 )
 from casexml.apps.case import const
-from casexml.apps.case.exceptions import UsesReferrals
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
-from dimagi.utils import parsing, web
+from dimagi.utils import web
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX

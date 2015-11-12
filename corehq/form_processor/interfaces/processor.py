@@ -1,3 +1,7 @@
+import logging
+
+from couchdbkit.exceptions import BulkSaveError
+
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
 from casexml.apps.case.util import post_case_blocks
@@ -90,8 +94,26 @@ class FormProcessorInterface(object):
     def new_xform(self, instance_xml):
         return self.processor.new_xform(instance_xml)
 
+    def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
+        return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
+
     def bulk_save(self, instance, xforms, cases=None):
-        return self.processor.bulk_save(instance, xforms, cases=cases)
+        try:
+            return self.processor.bulk_save(instance, xforms, cases=cases)
+        except BulkSaveError as e:
+            logging.error('BulkSaveError saving forms', exc_info=1,
+                          extra={'details': {'errors': e.errors}})
+            raise
+        except Exception as e:
+            from couchforms.util import _handle_unexpected_error
+            xforms_being_saved = [xform.form_id for xform in xforms]
+            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
+                type(e).__name__,
+                unicode(e),
+                ', '.join(xforms_being_saved)
+            )
+            _handle_unexpected_error(self, instance, error_message)
+            raise
 
     def process_stock(self, xforms, case_db):
         return self.processor.process_stock(xforms, case_db)

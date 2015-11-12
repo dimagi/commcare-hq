@@ -3,6 +3,7 @@ import os
 import collections
 import hashlib
 
+from django.db.models import Prefetch
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
@@ -18,8 +19,7 @@ from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
-from .exceptions import XFormNotFound
-
+from .exceptions import XFormNotFound, AttachmentNotFound
 
 Attachment = collections.namedtuple('Attachment', 'name content content_type')
 
@@ -45,14 +45,22 @@ class AttachmentMixin(SaveStateMixin):
     ATTACHMENTS_RELATED_NAME = 'attachments'
 
     def get_attachment(self, attachment_name):
-        return self.get_attachment_meta(attachment_name).read_content()
+        attachment = self.get_attachment_meta(attachment_name)
+        if not attachment:
+            raise AttachmentNotFound(attachment_name)
+        return attachment.read_content()
 
     def get_attachment_meta(self, attachment_name):
-        if hasattr(self, 'unsaved_attachments'):
-            for attachment in self.unsaved_attachments:
+        def _get_attachment_from_list(attachments):
+            for attachment in attachments:
                 if attachment.name == attachment_name:
                     return attachment
-        elif self.is_saved():
+
+        for list_attr in ('unsaved_attachments', 'cached_attachments'):
+            if hasattr(self, list_attr):
+                return _get_attachment_from_list(getattr(self, list_attr))
+
+        if self.is_saved():
             return self.attachments.filter(name=attachment_name).first()
 
 
@@ -125,8 +133,12 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     @classmethod
     def get_with_attachments(cls, xform_id):
-        # NOOP for the SQL XFormInstance
-        return cls.get(xform_id)
+        try:
+            return XFormInstanceSQL.objects.prefetch_related(
+                Prefetch('attachments', to_attr='cached_attachments')
+            ).get(form_uuid=xform_id)
+        except XFormInstanceSQL.DoesNotExist:
+            raise XFormNotFound
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -180,15 +192,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
         return None
-
-    def save(self, *args, **kwargs):
-        super(XFormInstanceSQL, self).save(*args, **kwargs)
-        if getattr(self, 'initial_deprecation', False):
-            attachments = XFormAttachmentSQL.objects.filter(xform_id=self.orig_id)
-            attachments.update(xform_id=self.form_id)
-
-            operations = XFormOperationSQL.objects.filter(xform_id=self.orig_id)
-            operations.update(xform_id=self.form_id)
 
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer

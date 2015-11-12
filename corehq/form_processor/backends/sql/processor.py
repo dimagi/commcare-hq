@@ -6,7 +6,10 @@ import hashlib
 from django.db import transaction
 from couchforms.util import process_xform
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL, CaseForms
+from corehq.form_processor.models import (
+    XFormInstanceSQL, XFormAttachmentSQL,
+    XFormOperationSQL, CommCareCaseIndexSQL, CaseForms
+)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -65,36 +68,33 @@ class FormProcessorSQL(object):
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
-        try:
-            with transaction.atomic():
-                logging.debug('Beginning atomic commit\n')
-                # Ensure already saved forms get saved first to avoid ID conflicts
-                for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
-                    xform.save()
-                for unsaved_attachment in instance.unsaved_attachments:
-                    unsaved_attachment.xform = instance
-                instance.attachments.bulk_create(instance.unsaved_attachments)
+        with transaction.atomic():
+            logging.debug('Beginning atomic commit\n')
+            # Ensure already saved forms get saved first to avoid ID conflicts
+            for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
+                xform.save()
+                if xform.is_deprecated:
+                    attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
+                    attachments.update(xform_id=xform.form_id)
 
-                if cases:
-                    for case in cases:
-                        logging.debug('Saving case: %s', case)
-                        if logging.root.isEnabledFor(logging.DEBUG):
-                            logging.debug(case.dumps(pretty=True))
+                    operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
+                    operations.update(xform_id=xform.form_id)
 
-                        case.save()
+            for unsaved_attachment in instance.unsaved_attachments:
+                unsaved_attachment.xform = instance
+            instance.attachments.bulk_create(instance.unsaved_attachments)
 
-                        FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
-                        FormProcessorSQL.save_tracked_models(case, CaseForms)
-                        case.clear_tracked_models()
-        except Exception as e:
-            xforms_being_saved = [xform.form_id for xform in xforms]
-            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
-                type(e).__name__,
-                unicode(e),
-                ', '.join(xforms_being_saved)
-            )
-            # instance = _handle_unexpected_error(instance, error_message)
-            raise
+            if cases:
+                for case in cases:
+                    logging.debug('Saving case: %s', case)
+                    if logging.root.isEnabledFor(logging.DEBUG):
+                        logging.debug(case.dumps(pretty=True))
+
+                    case.save()
+
+                    FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
+                    FormProcessorSQL.save_tracked_models(case, CaseForms)
+                    case.clear_tracked_models()
 
     @staticmethod
     def save_tracked_models(case, model_class):
@@ -136,7 +136,6 @@ class FormProcessorSQL(object):
         # flag the old doc with metadata pointing to the new one
         existing_xform.state = XFormInstanceSQL.DEPRECATED
         existing_xform.orig_id = old_id
-        existing_xform.initial_deprecation = True
 
         # and give the new doc server data of the old one and some metadata
         new_xform.received_on = existing_xform.received_on
@@ -155,3 +154,18 @@ class FormProcessorSQL(object):
         new_id = unicode(uuid.uuid4())
         xform.form_id = new_id
         return xform
+
+    @classmethod
+    def xformerror_from_xform_instance(cls, instance, error_message, with_new_id=False):
+        instance.state = XFormInstanceSQL.ERROR
+        instance.problem = error_message
+
+        if with_new_id:
+            orig_id = instance.form_id
+            cls.assign_new_id(instance)
+            instance.orig_id = orig_id
+            if instance.is_saved():
+                # clear the ID since we want to make a new doc
+                instance.id = None
+
+        return instance
