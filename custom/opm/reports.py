@@ -16,6 +16,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from couchforms.models import XFormInstance
 from custom.opm.utils import numeric_fn
+from custom.utils.utils import clean_IN_filter_value
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -29,7 +30,10 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import (
+    get_INFilter_bindparams,
+    make_form_couch_key,
+)
 from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
@@ -521,10 +525,13 @@ class MetReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/met_report.html"
     slug = "met_report"
     model = ConditionsMet
-    exportable = False
     default_rows = 5
     cache_key = 'opm-report'
     show_total = True
+
+    @property
+    def exportable(self):
+        return self.request.couch_user.is_dimagi
 
     @property
     def row_objects(self):
@@ -833,13 +840,18 @@ class UsersIdsData(SqlData):
 
     @property
     def filters(self):
-        if self.config.get('awc'):
-            return [IN('awc', 'awc')]
-        elif self.config.get('gp'):
-            return [IN('gp', 'gp')]
-        elif self.config.get('block'):
-            return [IN('block', 'block')]
+        for column_name in ['awc', 'gp', 'block']:
+            if self.config.get(column_name):
+                return [IN(column_name, get_INFilter_bindparams(column_name, self.config[column_name]))]
         return []
+
+    @property
+    def filter_values(self):
+        filter_values = super(UsersIdsData, self).filter_values
+        for column_name in ['awc', 'gp', 'block']:
+            if filter_values.get(column_name):
+                return clean_IN_filter_value(filter_values, column_name)
+        return filter_values
 
     @property
     def columns(self):

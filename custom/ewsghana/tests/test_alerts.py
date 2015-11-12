@@ -8,6 +8,7 @@ from corehq.apps.sms.models import SMS
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
+from custom.ewsghana.tasks import on_going_non_reporting, on_going_stockout
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, bootstrap_web_user, make_loc, assign_products_to_location, \
     create_backend, set_sms_notifications
@@ -92,64 +93,36 @@ class TestAlerts(TestCase):
         StockState.objects.all().delete()
 
     def test_ongoing_non_reporting(self):
-        OnGoingNonReporting(TEST_DOMAIN).send()
+        now = datetime.utcnow()
+        on_going_non_reporting()
         self.assertEqual(SMS.objects.count(), 1)
 
         smses = SMS.objects.all()
         self.assertEqual(smses[0].text, ONGOING_NON_REPORTING % 'Test Facility, Test Facility 2')
 
-        create_stock_report(self.loc1, {'tp': 1})
-        now = datetime.utcnow()
-
-        OnGoingNonReporting(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses[0].text, ONGOING_NON_REPORTING % 'Test Facility 2')
-
-        create_stock_report(self.loc2, {'tp2': 1})
-
-        now = datetime.utcnow()
-
-        OnGoingNonReporting(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 0)
+        on_going_non_reporting()
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 1)
 
     def test_ongoing_stockouts(self):
-        OnGoingStockouts(TEST_DOMAIN).send()
-
+        on_going_stockout()
         self.assertEqual(SMS.objects.count(), 0)
 
+        now = datetime.utcnow()
         create_stock_report(self.loc1, {'tp': 0})
 
-        now = datetime.utcnow()
-
-        OnGoingStockouts(TEST_DOMAIN).send()
+        on_going_stockout()
         smses = SMS.objects.filter(date__gte=now)
 
         self.assertEqual(smses.count(), 1)
         self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_SDP % 'Test Facility')
 
-        create_stock_report(self.loc2, {'tp': 0})
-
-        now = datetime.utcnow()
-
-        OnGoingStockouts(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 1)
-        self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_SDP % 'Test Facility, Test Facility 2')
-
-        create_stock_report(self.loc1, {'tp': 10})
-        create_stock_report(self.loc2, {'tp': 10})
-
-        now = datetime.utcnow()
-
-        OnGoingStockouts(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-        self.assertEqual(smses.count(), 0)
+        on_going_stockout()
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 1)
 
     def test_ongoing_stockouts_rms(self):
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
+        on_going_stockout()
 
         self.assertEqual(SMS.objects.count(), 0)
 
@@ -157,23 +130,12 @@ class TestAlerts(TestCase):
         create_stock_report(self.rms2, {'tp': 0})
 
         now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
+        on_going_stockout()
         smses = SMS.objects.filter(date__gte=now)
 
         self.assertEqual(smses.count(), 2)
         self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_RMS % 'Test Medical Store, Test Medical Store 2')
 
-        create_stock_report(self.rms2, {'tp': 15})
-        now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 2)
-        self.assertEqual(smses[0].text, ONGOING_STOCKOUT_AT_RMS % 'Test Medical Store')
-
-        create_stock_report(self.rms, {'tp': 15})
-        now = datetime.utcnow()
-        OnGoingStockoutsRMS(TEST_DOMAIN).send()
-        smses = SMS.objects.filter(date__gte=now)
-
-        self.assertEqual(smses.count(), 0)
+        on_going_stockout()
+        # Shouldn't be send again
+        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 2)

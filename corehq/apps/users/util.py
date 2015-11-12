@@ -7,17 +7,19 @@ from django.utils import html, safestring
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges
 
-from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
 from django_prbac.utils import has_privilege
 
 
+# SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
+SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
 JAVA_ADMIN_USERNAME = 'admin'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
     DEMO_USER_ID,           # demo mode
     'demo_user_group_id',  # demo mode with case sharing enabled
+    SYSTEM_USER_ID,
 ]
 
 

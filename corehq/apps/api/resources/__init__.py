@@ -1,9 +1,13 @@
+import json
+
 from django.core.urlresolvers import NoReverseMatch
 from django.http import HttpResponse
 from tastypie import http
 from tastypie.resources import Resource
 from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 
 class dict_object(object):
     def __init__(self, dict):
@@ -85,7 +89,13 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     """
     Convenience class to allow easy adjustment of API resource base classes.
     """
-    pass
+    def dispatch(self, request_type, request, **kwargs):
+        if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
+            return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
+        else:
+            raise ImmediateHttpResponse(HttpResponse(json.dumps({"error": "not authorized"}),
+                                            content_type="application/json",
+                                            status=401))
 
 
 class SimpleSortableResourceMixin(object):

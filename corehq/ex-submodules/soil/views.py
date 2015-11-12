@@ -37,10 +37,11 @@ def heartbeat_status(request):
 
 @login_required
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
+    message = request.GET['message'] if 'message' in request.GET else None
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id, check_state=True, message=message)
     except TaskFailedError as e:
-        context = {'error': list(e)}
+        context = {'error': list(e.errors)}
         return HttpResponseServerError(render(request, template, context))
     return render(request, template, context)
 

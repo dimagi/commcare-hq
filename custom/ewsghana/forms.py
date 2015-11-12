@@ -35,7 +35,7 @@ class InputStockForm(forms.Form):
     stock_on_hand = forms.IntegerField(min_value=0, required=False)
     receipts = forms.IntegerField(min_value=0, initial=0, required=False)
     units = forms.CharField(required=False)
-    monthly_consumption = forms.IntegerField(required=False, widget=forms.HiddenInput())
+    monthly_consumption = forms.DecimalField(required=False, widget=forms.HiddenInput())
 
 
 class EWSBroadcastForm(BroadcastForm):
@@ -109,7 +109,7 @@ class EWSUserSettings(forms.Form):
         self.fields['facility'].widget = FacilitiesSelectWidget(domain=domain, id='facility')
 
     def save(self, user, domain):
-        ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id)[0]
+        ews_extension = EWSExtension.objects.get_or_create(user_id=user.get_id, domain=domain)[0]
         ews_extension.domain = domain
         ews_extension.location_id = self.cleaned_data['facility']
         ews_extension.sms_notifications = self.cleaned_data['sms_notifications']

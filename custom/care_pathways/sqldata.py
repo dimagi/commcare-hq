@@ -5,11 +5,14 @@ from sqlagg.filters import *
 from sqlalchemy.sql.expression import join, alias
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, TableDataFormat
+from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter
 from sqlalchemy import select
 import urllib
 import re
 from django.utils import html
+from custom.utils.utils import clean_IN_filter_value
+
 
 def _get_grouping(prop_dict):
         group = prop_dict['group']
@@ -45,12 +48,12 @@ class CareQueryMeta(QueryMeta):
         for fil in self.filters:
             if isinstance(fil, ANDFilter):
                 filter_cols.append(fil.filters[0].column_name)
-                having.append(fil.build_expression(table))
+                having.append(fil)
             elif fil.column_name not in ['group', 'gender', 'group_leadership', 'disaggregate_by',
                                          'table_card_group_by']:
                 if fil.column_name not in external_cols and fil.column_name != 'maxmin':
                     filter_cols.append(fil.column_name)
-                having.append(fil.build_expression(table))
+                having.append(fil)
 
         group_having = ''
         having_group_by = []
@@ -74,7 +77,7 @@ class CareQueryMeta(QueryMeta):
                                 group_by=['group_id'] + table_card_group + having_group_by, having=group_having), name='y')
         return select(['COUNT(x.doc_id) as %s' % self.key] + self.group_by,
                group_by=['maxmin'] + filter_cols + self.group_by,
-               having=" and ".join(having),
+               having=AND(having).build_expression(table),
                from_obj=join(s1, s2, s1.c.group_id==s2.c.group_id)).params(filter_values)
 
 
@@ -134,20 +137,25 @@ class CareSqlData(SqlData):
                                                                             NOTEQ("case_status", "test")])]
         for k, v in self.geography_config.iteritems():
             if k in self.config and self.config[k]:
-                filters.append(IN(k, k))
+                filters.append(IN(k, get_INFilter_bindparams(k, self.config[k])))
         if 'value_chain' in self.config and self.config['value_chain']:
             filters.append(EQ("value_chain", "value_chain"))
-        if 'domains' in self.config and self.config['domains'] and self.config['domains'] != ('0',):
-            filters.append(IN("domains", "domains"))
-        if 'practices' in self.config and self.config['practices'] and self.config['practices'] != ('0',):
-            filters.append(IN("practices", "practices"))
         if 'group_leadership' in self.config and self.config['group_leadership']:
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
-        if 'schedule' in self.config and self.config['schedule'] and self.config['schedule'] != ('0',):
-            filters.append(IN('schedule', 'schedule'))
+        for column_name in ['domains', 'practices', 'schedule']:
+            if column_name in self.config and self.config[column_name] and self.config[column_name] != ('0',):
+                filters.append(IN(column_name, get_INFilter_bindparams(column_name, self.config[column_name])))
         return filters
+
+    @property
+    def filter_values(self):
+        filter_values = super(CareSqlData, self).filter_values
+
+        for column_name in self.geography_config.keys() + ['domains', 'practices', 'schedule']:
+            clean_IN_filter_value(filter_values, column_name)
+        return filter_values
 
     def filter_request_params(self, request_params):
         if 'startdate' in request_params:

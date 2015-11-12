@@ -40,7 +40,7 @@ class DashboardReport(MultiReport):
             'case_id', 'product_id', 'report__date', 'stock_on_hand'
         )
         grouped_by_case = defaultdict(set)
-        all_locations_count = self.report_location.get_descendants().count()
+        all_locations_count = self.location.get_descendants().count()
 
         product_case_with_stock = defaultdict(set)
         product_case_without_stock = defaultdict(set)

@@ -13,3 +13,10 @@ class TestFormatter(SimpleTestCase):
         self.assertEqual(EWSFormatter().format('LF10.0-mc20- 0'), 'lf 10.0 mc 20.0')
         self.assertEqual(EWSFormatter().format('LF10-3mc20 0'), 'lf 10.3 mc 20.0')
         self.assertEqual(EWSFormatter().format('LF10----3mc20.0'), 'lf 10.3 mc 20.0')
+
+    def test_parse_messages_without_receipts(self):
+        self.assertEqual(EWSFormatter().format('lf10mc20'), 'lf 10.0 mc 20.0')
+
+    def test_mixed(self):
+        self.assertEqual(EWSFormatter().format('lf10.0mc20aak10.10'), 'lf 10.0 mc 20.0 aak 10.10')
+        self.assertEqual(EWSFormatter().format('lf10mc20.0aak10'), 'lf 10.0 mc 20.0 aak 10.0')

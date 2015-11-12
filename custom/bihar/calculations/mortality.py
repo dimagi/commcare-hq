@@ -28,9 +28,9 @@ def is_stillborn(case):
         if xform.form.get('has_delivered') != 'yes':
             continue
         for p in properties:
-            value = xform.xpath('form/child_info/%s' % p)
+            value = xform.get_data('form/child_info/%s' % p)
             if not value:
-                child_infos = xform.xpath('form/child_info')
+                child_infos = xform.get_data('form/child_info')
                 if not child_infos:
                     continue
                 for child_info in child_infos:

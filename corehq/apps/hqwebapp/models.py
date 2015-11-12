@@ -583,6 +583,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_use_data_cleanup(self):
+        return domain_has_privilege(self.domain, privileges.DATA_CLEANUP)
+
+    @property
+    @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_export_data())
@@ -616,7 +621,14 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
             from corehq.apps.data_interfaces.views \
-                import CaseGroupCaseManagementView, ArchiveFormView
+                import ArchiveFormView, AutomaticUpdateRuleListView
+
+            if self.can_use_data_cleanup and toggles.AUTOMATIC_CASE_CLOSURE.enabled(self.domain):
+                edit_section[0][1].append({
+                    'title': AutomaticUpdateRuleListView.page_title,
+                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                })
+
             if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
                 edit_section[0][1].append({
                     'title': ArchiveFormView.page_title,
@@ -1223,17 +1235,6 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
             })
 
-        can_view_orgs = (user_is_admin
-                         and self.project and self.project.organization
-                         and has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS))
-
-        if can_view_orgs:
-            from corehq.apps.domain.views import OrgSettingsView
-            project_info.append({
-                'title': _(OrgSettingsView.page_title),
-                'url': reverse(OrgSettingsView.urlname, args=[self.domain])
-            })
-
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
@@ -1626,55 +1627,6 @@ class ExchangeTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user and couch_user.can_edit_apps() and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
-
-
-class OrgTab(UITab):
-    @property
-    def is_viewable(self):
-        return (self.org and self.couch_user and
-                (self.couch_user.is_member_of_org(self.org) or
-                    self.couch_user.is_superuser))
-
-
-class OrgReportTab(OrgTab):
-    title = ugettext_noop("Reports")
-    view = "corehq.apps.orgs.views.base_report"
-
-    @property
-    def dropdown_items(self):
-        return [
-            dropdown_dict(
-                _("Projects Table"),
-                url=reverse("orgs_report", args=(self.org.name,))),
-            dropdown_dict(
-                _("Form Data"),
-                url=reverse("orgs_stats", args=(self.org.name, "forms"))),
-            dropdown_dict(
-                _("Case Data"),
-                url=reverse("orgs_stats", args=(self.org.name, "cases"))),
-            dropdown_dict(
-                _("User Data"),
-                url=reverse("orgs_stats", args=(self.org.name, "users"))),
-        ]
-
-
-class OrgSettingsTab(OrgTab):
-    title = ugettext_noop("Settings")
-    view = "corehq.apps.orgs.views.orgs_landing"
-
-    @property
-    def dropdown_items(self):
-        return [
-            dropdown_dict(
-                _("Projects"),
-                url=reverse("orgs_landing", args=(self.org.name,))),
-            dropdown_dict(
-                _("Teams"),
-                url=reverse("orgs_teams", args=(self.org.name,))),
-            dropdown_dict(
-                _("Members"),
-                url=reverse("orgs_members", args=(self.org.name,))),
-        ]
 
 
 class MaintenanceAlert(models.Model):

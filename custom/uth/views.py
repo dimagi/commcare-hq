@@ -1,3 +1,4 @@
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_basic
 from django.views.decorators.http import require_POST, require_GET
 import json
@@ -10,7 +11,6 @@ from custom.uth.utils import (
 from custom.uth.models import SonositeUpload, VscanUpload
 from custom.uth.tasks import async_create_case, async_find_and_attach
 from custom.uth.decorators import require_uth_domain
-from dimagi.utils.couch.database import get_db
 from custom.uth.const import UTH_DOMAIN
 
 
@@ -72,7 +72,7 @@ def pending_exams(request, domain, scanner_serial, **kwargs):
         response_data['message'] = 'Missing scanner serial'
         return HttpResponse(json.dumps(response_data), content_type="application/json")
 
-    results = get_db().view(
+    results = CommCareCase.get_db().view(
         'uth/uth_lookup',
         startkey=[UTH_DOMAIN, scanner_serial],
         endkey=[UTH_DOMAIN, scanner_serial, {}],

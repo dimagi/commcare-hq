@@ -4,7 +4,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
+from casexml.apps.case.xform import get_and_check_xform_domain, process_cases_with_casedb
+from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from couchforms.models import XFormError, XFormInstance
 
 
@@ -23,7 +24,7 @@ def _process_cases(xform, config=None):
     assert getattr(settings, 'UNIT_TESTING', False)
     domain = get_and_check_xform_domain(xform)
 
-    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
+    with CaseDbCacheCouch(domain=domain, lock=True, deleted_ok=True) as case_db:
         case_result = process_cases_with_casedb([xform], case_db, config=config)
 
     cases = case_result.cases

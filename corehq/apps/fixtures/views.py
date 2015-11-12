@@ -61,16 +61,22 @@ def strip_json(obj, disallow_basic=None, disallow=None):
 
     return ret
 
+
 def _to_kwargs(req):
     # unicode can mix this up so have a little utility to do it
     # was seeing this only locally, not sure if python / django
     # version dependent
     return dict((str(k), v) for k, v in json.load(req, object_pairs_hook=OrderedDict).items())
 
+
 @require_can_edit_fixtures
 def tables(request, domain):
     if request.method == 'GET':
-        return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
+        return json_response(
+            [strip_json(x) for x in
+             sorted(FixtureDataType.by_domain(domain), key=lambda data_type: data_type.tag)]
+        )
+
 
 @require_can_edit_fixtures
 def update_tables(request, domain, data_type_id, test_patch=None):

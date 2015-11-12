@@ -589,9 +589,14 @@ class ScheduleFormXPath(object):
         )
 
     def next_visits(self):
-        """last_visit_num_{form_unique_id} = '' or @id > last_visit_num_{form_unique_id}"""
-        next_visits = XPath(u'@id > {}'.format(self.last_visit))
+        """last_visit_num_{form_unique_id} = '' or if(@repeats = 'True',
+        @id >= last_visit_num_{form_unique_id}, @id > last_visit_num_{form_unique_id}
+        """
+        last_visit_repeat = XPath(u'@id >= {}'.format(self.last_visit))
+        last_visit_no_repeat = XPath(u'@id > {}'.format(self.last_visit))
+        next_visits = u"if(@repeats = 'True', {}, {})".format(last_visit_repeat, last_visit_no_repeat)
         first_visit = XPath(u"{} = ''".format(self.last_visit))
+
         return XPath.or_(first_visit, next_visits)
 
     def upcoming_scheduled_visits(self):
@@ -615,18 +620,31 @@ class ScheduleFormXPath(object):
 
     def due_first(self):
         """instance(...)/schedule/visit[before_window][1]/@due"""
+        # Only uses @due since we can't have a repeat visit on the first visit
         due = self.fixture.visit().select_raw(self.before_window()).select_raw("1").slash("@due")
         return u"coalesce({}, {} - {})".format(due, SCHEDULE_MAX_DATE, XPath.date(self.anchor))
 
     def due_later(self):
-        """coalesce(instance(...)/schedule/visit/[next_visits][before_window][1]/@due, [max_date]"""
-        due = (self.fixture.visit().
-               select_raw(self.next_visits()).
-               select_raw(self.before_window()).
-               select_raw("1").
-               slash("@due"))
-
-        return (u"coalesce({}, {} - {})".format(due, SCHEDULE_MAX_DATE, XPath.date(self.anchor)))
+        """if(visit/[next_visits][before_window][1]/@increment != '', @increment + last_visit_date_{form_id},
+              visit/[next_visits][before_window][1]/@due != '', @due + anchor_date, MAX_DATE)
+        """
+        due_visit = (self.fixture.visit().
+                     select_raw(self.next_visits()).
+                     select_raw(self.before_window()).
+                     select_raw("1"))
+        due_repeat = due_visit.slash("@increment")
+        due_regular = due_visit.slash("@due")
+        due = (
+            u"if({repeat} != '', {repeat} + date({last_visit}),"
+            " if({regular} != '', {regular} + date({anchor}),"
+            " {max_date}))".format(
+                repeat=due_repeat,
+                last_visit=self.last_visit_date,
+                regular=due_regular,
+                anchor=self.anchor,
+                max_date=SCHEDULE_MAX_DATE,)
+        )
+        return due
 
     def next_visit_id(self):
         """{visit}/[next_visits][within_window][1]/@id"""
@@ -638,7 +656,7 @@ class ScheduleFormXPath(object):
         return u"{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
 
     def due_date(self):
-        return u"{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_later()))
+        return u"coalesce({}, {})".format(self.due_later(), SCHEDULE_MAX_DATE)
 
 
 class QualifiedScheduleFormXPath(ScheduleFormXPath):

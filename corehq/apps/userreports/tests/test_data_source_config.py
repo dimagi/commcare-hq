@@ -89,6 +89,12 @@ class DataSourceConfigurationTest(SimpleTestCase):
         config = DataSourceConfiguration.wrap(source)
         config.validate()
 
+    def test_duplicate_columns(self):
+        bad_config = DataSourceConfiguration.wrap(self.config.to_json())
+        bad_config.configured_indicators.append(bad_config.configured_indicators[-1])
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
 
 class DataSourceConfigurationDbTest(TestCase):
 

@@ -56,7 +56,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         })
 
     def get_locations_query(self, query):
-        return SQLLocation.objects.filter_path_by_user_input(self.domain, query)
+        return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
 
     def get_locations(self, query, start, size):
         return map(self.utils.location_tuple,

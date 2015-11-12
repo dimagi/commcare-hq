@@ -57,7 +57,7 @@ class Complications(DoneDueCalculator):
                 continue
             else:
                 for p in complication_paths:
-                    if form.xpath('form/' + p) == 'yes':
+                    if form.get_data('form/' + p) == 'yes':
                         yield form, action.date
 
     def _calculate_both(self, case):
@@ -67,7 +67,7 @@ class Complications(DoneDueCalculator):
             for form, date in self.get_forms_with_complications(case):
                 complication_date = date
                 if form.xmlns == DELIVERY:
-                    add = form.xpath('form/case/update/add')
+                    add = form.get_data('form/case/update/add')
                 else:
                     add = get_add(case)
                 add = string_to_datetime(add).date()

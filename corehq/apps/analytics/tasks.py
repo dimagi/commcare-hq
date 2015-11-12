@@ -13,10 +13,14 @@ import json
 import requests
 import urllib
 import KISSmetrics
+import logging
 
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.accounting.models import SoftwarePlanEdition
+
+logger = logging.getLogger('analytics')
+logger.setLevel('DEBUG')
 
 HUBSPOT_SIGNUP_FORM_ID = "e86f8bea-6f71-48fc-a43b-5620a212b2a4"
 HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
@@ -81,13 +85,14 @@ def _hubspot_post(url, data):
         headers = {
             'content-type': 'application/json'
         }
-        req = requests.post(
+        response = requests.post(
             url,
             params={'hapikey': api_key},
             data=data,
             headers=headers
         )
-        req.raise_for_status()
+        _log_response(data, response)
+        response.raise_for_status()
 
 
 def _get_user_hubspot_id(webuser):
@@ -120,7 +125,7 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_ID')
+    hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
         url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
@@ -134,11 +139,12 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
 
-        req = requests.post(
+        response = requests.post(
             url,
             data=data
         )
-        req.raise_for_status()
+        _log_response(data, response)
+        response.raise_for_status()
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -359,3 +365,13 @@ def _track_periodic_data_on_kiss(submit_json):
         s3_connection.upload(filename, f, 'kiss-uploads')
 
     os.remove(filename)
+
+
+def _log_response(data, response):
+    try:
+        response_text = json.dumps(response.json(), indent=2, sort_keys=True)
+    except Exception:
+        response_text = response.status_code
+    logger.debug('Sent this data to HS: %s \nreceived: %s' %
+                 (json.dumps(data, indent=2, sort_keys=True),
+                  response_text))

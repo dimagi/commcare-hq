@@ -11,6 +11,7 @@ try:
     from corehq.apps.app_manager.tests.test_advanced_suite import *
     from corehq.apps.app_manager.tests.test_suite_formats import *
     from corehq.apps.app_manager.tests.test_suite_regex import *
+    from corehq.apps.app_manager.tests.test_suite_shadow_module import *
     from corehq.apps.app_manager.tests.test_suite_form_filter_errors import *
     from corehq.apps.app_manager.tests.test_media_suite import *
     from corehq.apps.app_manager.tests.test_profile import *
@@ -37,6 +38,7 @@ try:
     from corehq.apps.app_manager.tests.test_child_module import *
     from corehq.apps.app_manager.tests.test_report_config import *
     from corehq.apps.app_manager.tests.test_grid_menus import *
+    from corehq.apps.app_manager.tests.test_xform_builder import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain
@@ -47,10 +49,12 @@ except ImportError, e:
 from corehq.apps.app_manager.models import validate_property
 from corehq.apps.app_manager.util import is_valid_case_type, version_key
 from corehq.apps.app_manager.id_strings import _format_to_regex
+from corehq.apps.app_manager import xform_builder
 
 __test__ = {
     'is_valid_case_type': is_valid_case_type,
     'version_key': version_key,
     '_format_to_regex': _format_to_regex,
     'validate_property': validate_property,
+    'xform_builder': xform_builder,
 }

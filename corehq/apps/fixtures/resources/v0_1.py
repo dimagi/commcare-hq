@@ -1,5 +1,6 @@
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
+from tastypie.resources import Resource
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
@@ -61,4 +62,17 @@ class FixtureResource(HqBaseResource):
         authentication = RequirePermissionAuthentication(Permissions.edit_apps)
         object_class = FixtureDataItem
         resource_name = 'fixture'
+        limit = 0
+
+
+class InternalFixtureResource(FixtureResource):
+
+    # using the default resource dispatch function to bypass our authorization for internal use
+    def dispatch(self, request_type, request, **kwargs):
+        return Resource.dispatch(self, request_type, request, **kwargs)
+
+    class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
+        object_class = FixtureDataItem
+        resource_name = 'fixture_internal'
         limit = 0

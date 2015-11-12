@@ -165,7 +165,8 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'shadow-app-builder',
     'Shadow Modules',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
 BOOTSTRAP3_PREVIEW = StaticToggle(
@@ -290,7 +291,7 @@ REPORT_BUILDER = StaticToggle(
     'report_builder',
     'Report Builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 STOCK_TRANSACTION_EXPORT = StaticToggle(
@@ -620,13 +621,6 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EMAIL_IN_REMINDERS = StaticToggle(
-    'email_in_reminders',
-    'Send emails from reminders',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -660,6 +654,14 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+
+AUTOMATIC_CASE_CLOSURE = StaticToggle(
+    'automatic_case_closure',
+    'Automatically Close Cases',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
 

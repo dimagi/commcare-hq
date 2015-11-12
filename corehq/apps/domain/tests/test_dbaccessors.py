@@ -1,6 +1,8 @@
 import uuid
 from django.test import TestCase
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class, get_domain_ids_by_names
+from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class, get_domain_ids_by_names, \
+    get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
@@ -28,6 +30,19 @@ class DBAccessorsTest(TestCase):
         self.addCleanup(xform.delete)
         [doc_id] = get_doc_ids_in_domain_by_class(self.domain, UserRole)
         self.assertEqual(doc_id, user_role.get_id)
+
+    def test_get_docs_in_domain_by_class(self):
+        commtrack_config = CommtrackConfig(domain=self.domain)
+        group = Group(domain=self.domain)
+        xform = XFormInstance(domain=self.domain)
+        commtrack_config.save()
+        group.save()
+        xform.save()
+        self.addCleanup(commtrack_config.delete)
+        self.addCleanup(group.delete)
+        self.addCleanup(xform.delete)
+        [commtrack_config_2] = get_docs_in_domain_by_class(self.domain, CommtrackConfig)
+        self.assertEqual(commtrack_config_2.to_json(), commtrack_config.to_json())
 
     def test_get_doc_ids_in_domain_by_type_initial_empty(self):
         self.assertEqual(0, len(get_doc_ids_in_domain_by_type('some-domain', 'some-doc-type')))

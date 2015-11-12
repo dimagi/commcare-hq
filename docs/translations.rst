@@ -193,7 +193,7 @@ It will be quicker for testing during development to only build one language::
 After this command has run, your .po files will be up to date. To have content
 in this file show up on the website you still need to compile the strings.
 
-.. code-block:: python
+.. code-block:: bash
 
         $ django-admin.py compilemessages
 
@@ -209,3 +209,4 @@ Example::
         #, fuzzy
         msgid "Export Data"
         msgstr "Exporter des cas"
+

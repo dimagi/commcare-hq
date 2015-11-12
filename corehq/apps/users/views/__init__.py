@@ -47,7 +47,6 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRe
                                       DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
                                       DomainMembershipError)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
-from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
@@ -65,12 +64,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 def _users_context(request, domain):
     couch_user = request.couch_user
     web_users = WebUser.by_domain(domain)
-    teams = Team.get_by_domain(domain)
-    for team in teams:
-        for user in team.get_members():
-            if user.get_id not in [web_user.get_id for web_user in web_users]:
-                user.from_team = True
-                web_users.append(user)
 
     for user in [couch_user] + list(web_users):
         user.current_domain = domain
@@ -414,16 +407,6 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             size=limit, start_at=skip,
         )
 
-    def apply_teams_to_users(self, web_users):
-        teams = Team.get_by_domain(self.domain)
-        for team in teams:
-            for user in team.get_members():
-                if user.get_id not in [web_user.get_id for web_user in web_users]:
-                    user.from_team = True
-                    web_users.append(user)
-        for user in web_users:
-            user.current_domain = self.domain
-
     @allow_remote_invocation
     def get_users(self, in_data):
         if not isinstance(in_data, dict):
@@ -442,14 +425,13 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             results = web_users_query.get('hits', {}).get('hits', [])
 
             web_users = [WebUser.wrap(w['_source']) for w in results]
-            self.apply_teams_to_users(web_users)  # for roles
 
             def _fmt_result(domain, u):
                 return {
                     'email': u.get_email(),
                     'domain': domain,
                     'name': u.full_name,
-                    'role': u.role_label(),
+                    'role': u.role_label(domain),
                     'phoneNumbers': u.phone_numbers,
                     'id': u.get_id,
                     'editUrl': reverse('user_account', args=[domain, u.get_id]),

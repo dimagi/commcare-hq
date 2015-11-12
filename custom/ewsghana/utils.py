@@ -216,8 +216,8 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
         first_name=first_name,
         last_name=last_name
     )
-
-    user.set_location(home_loc)
+    if home_loc:
+        user.set_location(home_loc)
     dm = user.get_domain_membership(domain)
     dm.program_id = program_id
     user.save()

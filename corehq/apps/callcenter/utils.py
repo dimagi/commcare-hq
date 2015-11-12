@@ -42,7 +42,7 @@ class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type us
 CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
 
 
-def sync_user_case(commcare_user, case_type, owner_id):
+def sync_user_case(commcare_user, case_type, owner_id, case=None):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
@@ -73,11 +73,12 @@ def sync_user_case(commcare_user, case_type, owner_id):
             'phone_number': commcare_user.phone_number or ''
         })
 
-        case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
+        if not case:
+            case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         caseblock = None
         if case:
-            props = dict(case.dynamic_case_properties())
+            props = case.dynamic_case_properties()
 
             changed = close != case.closed
             changed = changed or case.type != case_type
@@ -118,18 +119,25 @@ def sync_user_case(commcare_user, case_type, owner_id):
 def sync_call_center_user_case(user):
     domain = user.project
     if domain and domain.call_center_config.enabled:
-        owner_id = call_center_case_owner(user, domain.call_center_config)
-        sync_user_case(user, domain.call_center_config.case_type, owner_id)
+        case, owner_id = _get_call_center_case_and_owner(user, domain)
+        sync_user_case(user, domain.call_center_config.case_type, owner_id, case)
 
 
-def call_center_case_owner(user, config):
+CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
+
+
+def _get_call_center_case_and_owner(user, domain):
     """
     Return the appropriate owner id for the given users call center case.
     """
-    if config.use_user_location_as_owner:
-        return call_center_location_owner(user, config.user_location_ancestor_level)
+    case = get_case_by_domain_hq_user_id(user.project.name, user._id, domain.call_center_config.case_type)
+    if domain.call_center_config.use_user_location_as_owner:
+        owner_id = call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
+    elif case and case.owner_id:
+        owner_id = case.owner_id
     else:
-        return config.case_owner_id
+        owner_id = domain.call_center_config.case_owner_id
+    return CallCenterCaseAndOwner(case, owner_id)
 
 
 def call_center_location_owner(user, ancestor_level):
