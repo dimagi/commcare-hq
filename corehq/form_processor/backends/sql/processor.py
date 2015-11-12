@@ -6,7 +6,7 @@ import hashlib
 from django.db import transaction
 from couchforms.util import process_xform
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseIndexSQL, XFormOperationSQL
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -70,6 +70,13 @@ class FormProcessorSQL(object):
             # Ensure already saved forms get saved first to avoid ID conflicts
             for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
                 xform.save()
+                if xform.is_deprecated:
+                    attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
+                    attachments.update(xform_id=xform.form_id)
+
+                    operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
+                    operations.update(xform_id=xform.form_id)
+
             for unsaved_attachment in instance.unsaved_attachments:
                 unsaved_attachment.xform = instance
             instance.attachments.bulk_create(instance.unsaved_attachments)
@@ -119,7 +126,6 @@ class FormProcessorSQL(object):
         # flag the old doc with metadata pointing to the new one
         existing_xform.state = XFormInstanceSQL.DEPRECATED
         existing_xform.orig_id = old_id
-        existing_xform.initial_deprecation = True
 
         # and give the new doc server data of the old one and some metadata
         new_xform.received_on = existing_xform.received_on

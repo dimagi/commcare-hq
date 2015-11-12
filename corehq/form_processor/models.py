@@ -191,15 +191,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
         return None
 
-    def save(self, *args, **kwargs):
-        super(XFormInstanceSQL, self).save(*args, **kwargs)
-        if getattr(self, 'initial_deprecation', False):
-            attachments = XFormAttachmentSQL.objects.filter(xform_id=self.orig_id)
-            attachments.update(xform_id=self.form_id)
-
-            operations = XFormOperationSQL.objects.filter(xform_id=self.orig_id)
-            operations.update(xform_id=self.form_id)
-
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self)
