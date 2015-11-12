@@ -14311,6 +14311,174 @@
       <LastName>User</LastName>
       <Organization>Akaza Research</Organization>
     </User>
+    <User OID="USR_2">
+      <FullName>Alice Nyasimi</FullName>
+      <FirstName>Alice</FirstName>
+      <LastName>Nyasimi</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_3">
+      <FullName>Alfred Muia</FullName>
+      <FirstName>Alfred</FirstName>
+      <LastName>Muia</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_4">
+      <FullName>Anne Mwenje</FullName>
+      <FirstName>Anne</FirstName>
+      <LastName>Mwenje</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_5">
+      <FullName>Beatrice Injugu</FullName>
+      <FirstName>Beatrice</FirstName>
+      <LastName>Injugu</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_6">
+      <FullName>Charles Magiri</FullName>
+      <FirstName>Charles</FirstName>
+      <LastName>Magiri</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_7">
+      <FullName>Daniel Njenga</FullName>
+      <FirstName>Daniel</FirstName>
+      <LastName>Njenga</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_8">
+      <FullName>Elizabeth Juma</FullName>
+      <FirstName>Elizabeth</FirstName>
+      <LastName>Juma</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_9">
+      <FullName>Emily Mulongo</FullName>
+      <FirstName>Emily</FirstName>
+      <LastName>Mulongo</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_10">
+      <FullName>Edith Mwangi</FullName>
+      <FirstName>Edith</FirstName>
+      <LastName>Mwangi</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_11">
+      <FullName>Elizabeth Ndegwa</FullName>
+      <FirstName>Elizabeth</FirstName>
+      <LastName>Ndegwa</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_12">
+      <FullName>Finnley Osuna</FullName>
+      <FirstName>Finnley</FirstName>
+      <LastName>Osuna</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_13">
+      <FullName>Irene Thuo</FullName>
+      <FirstName>Irene</FirstName>
+      <LastName>Thuo</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_14">
+      <FullName>Joseph Muita</FullName>
+      <FirstName>Joseph</FirstName>
+      <LastName>Muita</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_15">
+      <FullName>Kevin Omondi</FullName>
+      <FirstName>Kevin</FirstName>
+      <LastName>Omondi</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_16">
+      <FullName>Lukas Agura</FullName>
+      <FirstName>Lukas</FirstName>
+      <LastName>Agura</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_17">
+      <FullName>Mary Wambui Kamau</FullName>
+      <FirstName>Mary</FirstName>
+      <LastName>Wambui Kamau</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_18">
+      <FullName>Mary Muriu</FullName>
+      <FirstName>Mary</FirstName>
+      <LastName>Muriu</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_19">
+      <FullName>Pauline Mueni</FullName>
+      <FirstName>Pauline</FirstName>
+      <LastName>Mueni</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_20">
+      <FullName>Rose Nzioki</FullName>
+      <FirstName>Rose</FirstName>
+      <LastName>Nzioki</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_21">
+      <FullName>Rehema Mwachuo</FullName>
+      <FirstName>Rehema</FirstName>
+      <LastName>Mwachuo</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_22">
+      <FullName>Rose Kiage</FullName>
+      <FirstName>Rose</FirstName>
+      <LastName>Kiage</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_23">
+      <FullName>Sahara Hussein</FullName>
+      <FirstName>Sahara</FirstName>
+      <LastName>Hussein</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_24">
+      <FullName>Zipporah Amdany</FullName>
+      <FirstName>Zipporah</FirstName>
+      <LastName>Amdany</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_25">
+      <FullName>Nele Groosman</FullName>
+      <FirstName>Nele</FirstName>
+      <LastName>Groosman</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_26">
+      <FullName>Test McTest</FullName>
+      <FirstName>Test</FirstName>
+      <LastName>McTest</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_27">
+      <FullName>Betty Sizemore</FullName>
+      <FirstName>Betty</FirstName>
+      <LastName>Sizemore</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_28">
+      <FullName>Florence Nightingale</FullName>
+      <FirstName>Florence</FirstName>
+      <LastName>Nightingale</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
+    <User OID="USR_29">
+      <FullName>Justin Nurse</FullName>
+      <FirstName>Justin</FirstName>
+      <LastName>Nurse</LastName>
+      <Organization>KEMRI</Organization>
+    </User>
   </AdminData>
 </ODM>
 
