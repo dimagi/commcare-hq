@@ -2,6 +2,9 @@
     <div class="panel panel-dashboard panel-dashboard-medium">
         <div class="panel-heading">
             <a href="{{ url }}"
+               track-analytics
+               analytics-usage-label="{{ analytics.usage_label }}"
+               analytics-workflow-label="{{ analytics.workflow_label }}"
                popover-title="{{ title }}"
                popover="{{ helpText }}"
                popover-trigger="mouseenter"
@@ -11,7 +14,9 @@
         <div class="panel-body">
             <a href="{{ url }}"
                class="dashboard-link"
-               track-analytics=""
+               track-analytics
+               analytics-usage-label="{{ analytics.usage_label }}"
+               analytics-workflow-label="{{ analytics.workflow_label }}"
                process-external-link=""
                popover-title="{{ title }}"
                popover="{{ helpText }}"
