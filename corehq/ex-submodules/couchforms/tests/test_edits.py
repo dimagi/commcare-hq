@@ -31,6 +31,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
+        UnfinishedSubmissionStub.objects.all().delete()
 
     @run_with_all_backends
     def test_basic_edit(self):
