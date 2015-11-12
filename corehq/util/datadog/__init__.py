@@ -1,37 +1,9 @@
 from django.conf import settings
+from datadog.dogstatsd.base import DogStatsd
 import logging
 
-logger = logging.getLogger(__name__)
+datadog_logger = logging.getLogger('datadog')
 
-try:
-    from datadog.dogstatsd.base import DogStatsd
-    use_real_statsd = True
-except ImportError:
-    use_real_statsd = False
+COMMON_TAGS = ['environment:{}'.format(settings.SERVER_ENVIRONMENT)]
 
-
-class Callable(object):
-    def __init__(self, name, ret=None):
-        self.name = name
-        self.ret = ret
-
-    def __call__(self, *args, **kwargs):
-        logger.debug("mock call: statsd.%s(*%s, **%s)", self.name, args, kwargs)
-        return self.ret
-
-
-class MockStatsd(object):
-    def __getattribute__(self, item):
-        if item == 'timed':
-            def no_op_decorator(fn):
-                return fn
-            return Callable(item, ret=no_op_decorator)
-        return Callable(item)
-
-
-if use_real_statsd:
-    statsd = DogStatsd(constant_tags=[
-        'environment:{}'.format(settings.SERVER_ENVIRONMENT)
-    ])
-else:
-    statsd = MockStatsd()
+statsd = DogStatsd(constant_tags=COMMON_TAGS)
