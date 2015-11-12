@@ -279,13 +279,17 @@ class SmsBillable(models.Model):
     def gateway_charge(self):
         if self.gateway_fee is not None:
             try:
-                charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
-                if self.gateway_fee_conversion_rate is not None:
-                    return charge.amount / self.gateway_fee_conversion_rate
-                return charge.amount
+                amount = SmsGatewayFee.objects.get(id=self.gateway_fee.id).amount
             except ObjectDoesNotExist:
                 pass
-        return Decimal('0.0')
+        elif self.direct_gateway_fee is not None:
+            amount = self.direct_gateway_fee
+        else:
+            amount = Decimal('0.0')
+
+        if self.gateway_fee_conversion_rate is not None:
+            return amount / self.gateway_fee_conversion_rate
+        return amount
 
     @property
     def usage_charge(self):
