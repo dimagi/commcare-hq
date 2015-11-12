@@ -69,13 +69,13 @@ def get_module_template(module):
         return "app_manager/module_view.html"
 
 
-def get_module_view_context(app, module):
+def get_module_view_context(request, app, module):
     if isinstance(module, CareplanModule):
         return _get_careplan_module_view_context(app, module)
     elif isinstance(module, AdvancedModule):
         return _get_advanced_module_view_context(app, module)
     elif isinstance(module, ReportModule):
-        return _get_report_module_context(app, module)
+        return _get_report_module_context(request, app, module)
     else:
         return _get_basic_module_view_context(app, module)
 
@@ -177,7 +177,7 @@ def _get_basic_module_view_context(app, module):
     }
 
 
-def _get_report_module_context(app, module):
+def _get_report_module_context(request, app, module):
     def _report_to_config(report):
         return {
             'report_id': report._id,
@@ -225,7 +225,10 @@ def _get_report_module_context(app, module):
                 'menu_refs': app.get_menu_media(
                     module, module.id
                 ),
-                'default_file_name': '{name}_{lang}'.format(name='module%d' % module.id, lang='en'), # todo - pass in request to get lang
+                'default_file_name': '{name}_{lang}'.format(
+                    name='module%d' % module.id,
+                    lang=request.COOKIES.get('lang', app.langs[0])
+                ),
             },
         }
     }
