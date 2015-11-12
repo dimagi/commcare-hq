@@ -709,7 +709,8 @@ class FluffPillow(PythonPillow):
             cls._engine = engine
         return engine
 
-    def python_filter(self, doc):
+    def python_filter(self, change):
+        doc = change.document
         assert self.domains
         assert None not in self.domains
         assert self.doc_type is not None
