@@ -3,9 +3,6 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% new_static 'reports_core/js/choice-list-api.js' %}"></script>
     <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
