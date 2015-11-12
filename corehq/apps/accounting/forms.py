@@ -681,9 +681,14 @@ class ChangeSubscriptionForm(forms.Form):
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Pro-Bono"),
+        label=ugettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
+    )
+    funding_source = forms.ChoiceField(
+        label=ugettext_lazy("Funding Source"),
+        choices=FundingSource.CHOICES,
+        initial=FundingSource.CLIENT,
     )
 
     def __init__(self, subscription, web_user, *args, **kwargs):
@@ -708,6 +713,7 @@ class ChangeSubscriptionForm(forms.Form):
                 ),
                 'service_type',
                 'pro_bono_status',
+                'funding_source',
                 'subscription_change_note',
             ),
             FormActions(
