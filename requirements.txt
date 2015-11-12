@@ -7,5 +7,5 @@ alembic==0.6.4
 unittest2==0.5.1
 psycopg2>=2.4.1
 -e git+git://github.com/dimagi/fakecouch.git#egg=fakecouch
--e git+git://github.com/dimagi/pillowtop.git#egg=pillowtop
+-e git+git://github.com/dimagi/pillowtop.git@f08dbccfe9#egg=pillowtop
 -e git+git://github.com/dimagi/dimagi-utils.git#egg=dimagi-utils
