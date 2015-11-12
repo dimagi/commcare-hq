@@ -431,7 +431,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
                     'email': u.get_email(),
                     'domain': domain,
                     'name': u.full_name,
-                    'role': u.role_label(),
+                    'role': u.role_label(domain),
                     'phoneNumbers': u.phone_numbers,
                     'id': u.get_id,
                     'editUrl': reverse('user_account', args=[domain, u.get_id]),
