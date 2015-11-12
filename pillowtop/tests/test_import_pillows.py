@@ -12,7 +12,7 @@ from pillowtop.processor import LoggingProcessor
 
 
 class FakePillow(BasicPillow):
-    _couch_db = object()  # hack to make tests pass since this is required
+    pass
 
 
 @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.FakePillow']})

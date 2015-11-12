@@ -91,12 +91,13 @@ class BasicPillow(PillowBase):
     include_docs = True
     use_locking = False
 
-    def __init__(self, couch_db=None, document_class=None, checkpoint=None):
+    def __init__(self, couch_db=None, document_class=None, checkpoint=None, change_feed=None):
         if document_class:
             self.document_class = document_class
 
-        self._checkpoint = checkpoint
         self._couch_db = couch_db
+        self._checkpoint = checkpoint
+        self._change_feed = change_feed
 
         if self.use_locking:
             # document_class must be a CouchDocLockableMixIn
@@ -137,6 +138,11 @@ class BasicPillow(PillowBase):
         )
 
     def get_change_feed(self):
+        if self._change_feed is None:
+            self._change_feed = self._get_default_change_feed()
+        return self._change_feed
+
+    def _get_default_change_feed(self):
         return CouchChangeFeed(
             couch_db=self.get_couch_db(),
             couch_filter=self.couch_filter,
@@ -262,17 +268,23 @@ class PythonPillow(BasicPillow):
 
     def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
                  checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
-                 couch_db=None, checkpoint=None):
+                 couch_db=None, checkpoint=None, change_feed=None, preload_docs=True):
         """
         Use chunk_size = 0 to disable chunking
         """
-        super(PythonPillow, self).__init__(document_class=document_class, checkpoint=checkpoint, couch_db=couch_db)
+        super(PythonPillow, self).__init__(
+            document_class=document_class,
+            checkpoint=checkpoint,
+            couch_db=couch_db,
+            change_feed=change_feed,
+        )
         self.change_queue = []
         self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.checkpoint_frequency = checkpoint_frequency
         self.include_docs = not self.use_chunking
         self.last_processed_time = None
+        self.preload_docs = preload_docs
 
     def get_default_couch_db(self):
         if self.document_class and self.use_chunking:
@@ -280,7 +292,7 @@ class PythonPillow(BasicPillow):
         else:
             return super(PythonPillow, self).get_default_couch_db()
 
-    def python_filter(self, doc):
+    def python_filter(self, change):
         """
         Should return True if the doc is to be processed by your pillow
         """
@@ -296,14 +308,19 @@ class PythonPillow(BasicPillow):
             return True
 
         changes_to_process = filter(_assert_change_has_id, self.change_queue)
-        self.get_couch_db().bulk_load([change['id'] for change in changes_to_process],
-                                 purge_existing=True)
-
+        if self.preload_docs:
+            self.get_couch_db().bulk_load([change['id'] for change in changes_to_process],
+                                     purge_existing=True)
         for change in changes_to_process:
-            doc = self.get_couch_db().open_doc(change['id'], check_main=False)
-            if (doc and self.python_filter(doc)) or (change.get('deleted', None) and self.process_deletions):
+            if self.preload_docs:
+                doc = self.get_couch_db().open_doc(change['id'], check_main=False)
+                change.document = doc
+
+            # a valid change is either a non-preload situation or a valid doc + a filter match
+            valid_change = (not self.preload_docs or change.document) and self.python_filter(change)
+            valid_deletion = self.process_deletions and change.get('deleted', None)
+            if valid_change or valid_deletion:
                 try:
-                    change.document = doc
                     self.process_change(change)
                 except Exception:
                     logging.exception('something went wrong processing change %s (%s)' %
@@ -330,7 +347,7 @@ class PythonPillow(BasicPillow):
             self.change_queue.append(change)
             if self.queue_full or self.wait_expired:
                 self.process_chunk()
-        elif self.python_filter(change['doc']) or (change.get('deleted', None) and self.process_deletions):
+        elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
             self.process_change(change)
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             # if using chunking make sure we never allow the checkpoint to get in
