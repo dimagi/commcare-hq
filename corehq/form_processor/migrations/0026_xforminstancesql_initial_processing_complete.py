@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0025_auto_20151112_1830'),
+        ('form_processor', '0025_add_dict_defaults_for_xform'),
     ]
 
     operations = [
