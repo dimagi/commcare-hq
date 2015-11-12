@@ -232,7 +232,7 @@ cloudCare.CaseListView = Backbone.View.extend({
         $panel.append($panelBody);
         self.$el.append($panel);
 
-        var table = $("<table />").addClass("table table-striped table-hover datatable").css('clear', 'both').appendTo($panelBody);
+        var table = $("<table />").addClass("table table-striped table-hover datatable clearfix").appendTo($panelBody);
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         if (self.options.delegation) {
