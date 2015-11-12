@@ -498,7 +498,7 @@ def _handle_unexpected_error(interface, instance, e):
         u"Error in case or stock processing "
         u"for form {}: {}. "
         u"Error saved as {}"
-    ).format(instance.orig_id, error_message, instance._id))
+    ).format(instance.orig_id, error_message, instance.form_id))
     instance.save()
 
 
