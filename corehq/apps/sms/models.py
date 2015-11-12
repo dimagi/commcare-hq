@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
+import json
 import logging
 import uuid
 from dimagi.ext.couchdbkit import *
@@ -1437,8 +1438,20 @@ class SelfRegistrationInvitation(models.Model):
         return (success_numbers, invalid_format_numbers, numbers_in_use)
 
 
-class SMSBackend(models.Model):
+class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
+    SMS = 'SMS'
+    IVR = 'IVR'
+
+    TYPE_CHOICES = (
+        (SMS, ugettext_lazy('SMS')),
+        (IVR, ugettext_lazy('IVR')),
+    )
+
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    backend_type = models.CharField(max_length=3, choices=TYPE_CHOICES)
+
+    # This tells us which type of backend this is
+    hq_api_id = models.CharField(max_length=126)
 
     # Global backends are system owned and can be used by anyone
     is_global = models.BooleanField(default=False)
@@ -1460,23 +1473,88 @@ class SMSBackend(models.Model):
     # A JSON list of countries that this backend supports.
     # This information is displayed in the gateway list UI.
     # If this backend represents an international gateway,
-    # set this to: ['*']
+    # set this to: ["*"]
     supported_countries = models.CharField(max_length=126, null=True)
 
     # To avoid having many tables with so few records in them, all
     # SMS backends are stored in this same table. This field is a
     # JSON dict which stores any additional fields that the SMS
     # backend subclasses need.
-    additional_fields = models.TextField(default='{}')
+    extra_fields = models.TextField(default='{}')
+
+    # For a historical view of sms data, we can't delete backends.
+    # Instead, set a deleted flag when a backend should no longer be used.
+    deleted = models.BooleanField(default=False)
+
+    # If the backend uses load balancing, this is a JSON list of the
+    # phone numbers to load balance over.
+    load_balancing_numbers = models.TextField(default='[]')
 
     class Meta:
         unique_together = ('domain', 'name')
 
+    @classmethod
+    def get_available_extra_fields(cls):
+        """
+        Should return a list of field names that are the keys in
+        the extra_fields dict.
+        """
+        raise NotImplementedError("Please implement this method")
 
-class SMSBackendInvitation(models.Model):
+    def get_extra_fields(self):
+        result = {field: None for field in self.get_available_extra_fields()}
+        result.update(json.loads(self.extra_fields))
+        return result
+
+    def set_extra_fields(self, **kwargs):
+        """
+        Only updates the fields that are passed as kwargs, and leaves
+        the rest untouched.
+        """
+        result = self.get_extra_fields()
+        for k, v in kwargs.iteritems():
+            if k not in self.get_available_extra_fields():
+                raise Exception("Field %s is not an available extra field for %s"
+                    % (k, self.__class__.__name__))
+            result[k] = v
+
+        self.extra_fields = json.dumps(result)
+
+    def _migration_sync_to_couch(self, couch_obj):
+        couch_obj.domain = self.domain
+        couch_obj.name = self.name
+        couch_obj.display_name = self.display_name
+        couch_obj.authorized_domains = [
+            i.domain for i in self.mobilebackendinvitation_set.all()
+        ]
+        couch_obj.is_global = self.is_global
+        couch_obj.description = self.description
+        couch_obj.supported_countries = json.dumps(self.supported_countries)
+        couch_obj.reply_to_phone_number = self.reply_to_phone_number
+        couch_obj.backend_type = self.backend_type
+        for k, v in self.get_extra_fields():
+            setattr(couch_obj, k, v)
+
+        load_balancing_numbers = json.loads(self.load_balancing_numbers)
+        if load_balancing_numbers:
+            couch_obj.x_phone_numbers = load_balancing_numbers
+
+        if self.deleted:
+            if not couch_obj.doc_type.endswith('-Deleted'):
+                couch_obj.doc_type += '-Deleted'
+
+        couch_obj.save(sync_to_sql=False)
+
+
+class SQLSMSBackend(SQLMobileBackend):
+    class Meta:
+        proxy = True
+
+
+class MobileBackendInvitation(models.Model):
     # The domain that is being invited to share another domain's backend
     domain = models.CharField(max_length=126, null=True, db_index=True)
 
     # The backend that is being shared
-    backend = models.ForeignKey('SMSBackend')
+    backend = models.ForeignKey('SQLMobileBackend')
     invitation_accepted = models.BooleanField(default=False)
