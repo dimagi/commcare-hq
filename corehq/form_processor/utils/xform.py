@@ -38,6 +38,8 @@ def extract_meta_user_id(form):
     user_id = None
     if form.get('meta'):
         user_id = form.get('meta').get('userID', None)
+    elif form.get('Meta'):
+        user_id = form.get('Meta').get('user_id', None)
     return user_id
 
 
