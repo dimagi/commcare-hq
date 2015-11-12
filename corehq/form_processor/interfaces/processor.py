@@ -95,7 +95,7 @@ class FormProcessorInterface(object):
         return self.processor.new_xform(instance_xml)
 
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
-        return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=False)
+        return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     def bulk_save(self, instance, xforms, cases=None):
         try:
