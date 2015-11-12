@@ -37,17 +37,21 @@ class Command(BaseCommand):
                     action='store',
                     dest='check_hash',
                     default=None,
-                    help="Run a hash check"),
+                    help=("Run a hash check. Removes cases one by one from the passed-in synclog until "
+                          "they hash matches CHECK_HASH")),
         make_option('--index',
                     action='store',
                     dest='index',
                     default=0,
-                    help="Index of log to hash check"),
+                    help=("if you have more than one file passed in, <index> is the one "
+                          "that --check will be run on")),
         make_option('--depth',
                     action='store',
                     dest='depth',
                     default=1,
-                    help="Depth of hash check"),
+                    help=("specify the number of cases to try removing until you find a match in --check"
+                          "(it's a N choose X problem so gets very slow after --depth > 1 if you"
+                          "have a significant number of cases in the log)\n")),
     )
 
     def handle(self, *args, **options):
@@ -59,16 +63,6 @@ class Command(BaseCommand):
                 "./manage.py sync_log_debugger <synclog1> [synclog2 synclog3]...\n"
                 "    <synclog> is a json file of the synclog you are trying to compare. Passing\n"
                 "    in a folder will compare all of the files in that folder.\n"
-                "\n"
-                "optional arguments:\n"
-                "--check <hash>\n"
-                "    removes cases one by one in synclog1 until it matches <hash>\n"
-                "--index <index>\n"
-                "    if you have more than one file passed in, <index> is the one that --check will be run on\n"
-                "--depth <depth>\n"
-                "    specify the number of cases to try removing until you find a match in --check\n"
-                "   (it's a N choose X problem so gets very slow after --depth > 1 if you\n"
-                "    have a significant number of cases in the log)\n"
             )
             sys.exit(0)
 
