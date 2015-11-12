@@ -2,16 +2,9 @@ import logging
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xml import V2
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseForms
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
-
-KNOWN_PROPERTIES_MAP = {
-    'external_id': 'external_id',
-    'case_type': 'type',
-    'owner_id': 'owner_id',
-    'opened_on': 'opened_on',
-}
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
@@ -30,9 +23,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if xformdoc.is_deprecated:
             return
 
-        if not self.case.case_json:
-            self.case.case_json = {}
-
         for action in case_update.actions:
             self._apply_action(case_update, action, xformdoc)
 
@@ -43,6 +33,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         modified_on = case_update.guess_modified_on()
         if self.case.modified_on is None or modified_on > self.case.modified_on:
             self.case.modified_on = modified_on
+
+        self.case.track_create(CaseForms(case=self.case, form_uuid=xformdoc.form_id))
 
     def _apply_action(self, case_update, action, xform):
         if action.action_type_slug == const.CASE_ACTION_CREATE:
@@ -62,14 +54,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             ))
 
     def _update_known_properties(self, action):
-        known_properties = action.get_known_properties()
-        for k, v in KNOWN_PROPERTIES_MAP.items():
-            val = known_properties.get(v, None)
-            if val:
-                setattr(self.case, k, val)
-
-        if 'name' in known_properties:
-            self.case.case_json['name'] = known_properties['name']
+        for k, v in action.get_known_properties().items():
+            if v:
+                setattr(self.case, k, v)
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
@@ -90,27 +77,15 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not action.indices:
             return
 
-        case_indices = self.case.indices
-
-        def has_index(index_id):
-            return index_id in (i.identifier for i in case_indices)
-
-        def get_index(index_id):
-            found = filter(lambda i: i.identifier == index_id, case_indices)
-            if found:
-                assert(len(found) == 1)
-                return found[0]
-            return None
-
         for index_update in action.indices:
-            if has_index(index_update.identifier):
+            if self.case.has_index(index_update.identifier):
                 if not index_update.referenced_id:
                     # empty ID = delete
-                    index = get_index(index_update.identifier)
+                    index = self.case.get_index(index_update.identifier)
                     self.case.track_delete(index)
                 else:
                     # update
-                    index = get_index(index_update.identifier)
+                    index = self.case.get_index(index_update.identifier)
                     index.referenced_type = index_update.referenced_type
                     index.referenced_id = index_update.referenced_id
                     index.relationship = index_update.relationship

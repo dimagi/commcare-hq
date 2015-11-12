@@ -1,3 +1,4 @@
+import json
 import os
 import collections
 import hashlib
@@ -10,6 +11,7 @@ from django.db import models, transaction
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.ext import jsonobject
 from couchforms.signals import xform_archived, xform_unarchived
@@ -207,6 +209,13 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
             return etree.fromstring(payload)
         return _to_xml_element(xml)
 
+    def get_data(self, path):
+        """
+        Evaluates an xpath expression like: path/to/node and returns the value
+        of that element, or None if there is no value.
+        """
+        return safe_index({'form': self.form_data}, path.split("/"))
+
     def get_xml(self):
         return self.get_attachment('form.xml')
 
@@ -318,7 +327,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
-    case_type = models.CharField(max_length=255)
+    type = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, null=True)
 
     owner_id = models.CharField(max_length=255)
 
@@ -337,7 +347,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     external_id = models.CharField(max_length=255)
 
-    case_json = JSONField(lazy=True)
+    case_json = JSONField(lazy=True, default=dict)
 
     @property
     def case_id(self):
@@ -348,12 +358,16 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         self.case_uuid = _id
 
     @property
+    def xform_ids(self):
+        return self.xform_set.values_list('form_uuid', flat=True)
+
+    @property
     def user_id(self):
         return self.modified_by
 
-    @property
-    def case_name(self):
-        return self.case_json.get('name', None)
+    @user_id.setter
+    def user_id(self, value):
+        self.modified_by = value
 
     def hard_delete(self):
         # see cleanup.safe_hard_delete
@@ -375,6 +389,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         serializer = CommCareCaseSQLSerializer(self)
         return serializer.data
 
+    def dumps(self, pretty=False):
+        indent = 4 if pretty else None
+        return json.dumps(self.to_json(), indent=indent)
+
+    def pprint(self):
+        print self.dumps(pretty=True)
+
     @memoized
     def _saved_indices(self):
         return self.index_set.all() if self.is_saved() else []
@@ -390,6 +411,24 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
         return indices
 
+    def has_index(self, index_id):
+            return index_id in (i.identifier for i in self.indices)
+
+    def get_index(self, index_id):
+        found = filter(lambda i: i.identifier == index_id, self.indices)
+        if found:
+            assert(len(found) == 1)
+            return found[0]
+        return None
+
+    @memoized
+    def _saved_attachments(self):
+        return self.attachments.all()
+
+    @property
+    def case_attachments(self):
+        return {attachment.name: attachment for attachment in self._saved_attachments()}
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -403,7 +442,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
-        return CaseForms.objects.filter(case_uuid=case_id)
+        return CaseForms.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -485,7 +524,10 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
 
 
 class CaseForms(models.Model):
-    case = models.ForeignKey('CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False)
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
+        related_name="xform_set", related_query_name="xform"
+    )
     form_uuid = models.CharField(max_length=255, null=False)  # can't be a foreign key due to partitioning
 
     class Meta:

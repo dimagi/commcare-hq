@@ -2,6 +2,7 @@ import os
 from django.test import TestCase
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import run_with_all_backends
 
 
 class TestNamespaces(TestCase):
@@ -10,6 +11,7 @@ class TestNamespaces(TestCase):
         result = xform.get_data(xpath)
         self.assertEqual(xmlns, result['@xmlns'] if expect_xmlns_index else result)
 
+    @run_with_all_backends
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "namespaces.xml")
         xml_data = open(file_path, "rb").read()

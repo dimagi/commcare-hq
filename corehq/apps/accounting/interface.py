@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.const import USER_DATE_FORMAT
+from corehq.const import SERVER_DATE_FORMAT
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
@@ -969,7 +969,7 @@ class PaymentRecordInterface(GenericTabularReport):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             filters.update(
-                creditadjustment__credit_line__account__created_by_domain=subscriber,
+                creditadjustment__credit_line__subscription__subscriber__domain=subscriber
             )
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
@@ -993,7 +993,7 @@ class PaymentRecordInterface(GenericTabularReport):
             account = applicable_credit_line.account
             rows.append([
                 format_datatables_data(
-                    text=record.date_created.strftime(USER_DATE_FORMAT),
+                    text=record.date_created.strftime(SERVER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
                 format_datatables_data(
@@ -1005,7 +1005,7 @@ class PaymentRecordInterface(GenericTabularReport):
                     ),
                     sort_key=account.name,
                 ),
-                applicable_credit_line.subscription.subscriber.domain if applicable_credit_line.subscription else 'None',
+                applicable_credit_line.subscription.subscriber.domain if applicable_credit_line.subscription else '',
                 record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
