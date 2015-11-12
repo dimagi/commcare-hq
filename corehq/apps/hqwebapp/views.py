@@ -51,10 +51,13 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.toggles import TWO_FACTOR_AUTH
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
+from corehq.util.datadog.utils import create_datadog_event
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from corehq.apps.hqadmin.management.commands.celery_deploy_in_progress import CELERY_DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.domain.models import Domain
 from soil import heartbeat, DownloadBase
 from soil import views as soil_views
@@ -86,6 +89,11 @@ def couch_check():
         return isinstance(results, list), None
 
 
+def is_deploy_in_progress():
+    cache = get_redis_default_cache()
+    return cache.get(CELERY_DEPLOY_IN_PROGRESS_FLAG) is not None
+
+
 def celery_check():
     try:
         from celery import Celery
@@ -94,12 +102,15 @@ def celery_check():
         app.config_from_object(settings)
         i = app.control.inspect()
         ping = i.ping()
-        if not ping:
+        if not ping and not is_deploy_in_progress():
             chk = (False, 'No running Celery workers were found.')
         else:
             chk = (True, None)
     except IOError as e:
-        chk = (False, "Error connecting to the backend: " + str(e))
+        if is_deploy_in_progress():
+            chk = (True, None)
+        else:
+            chk = (False, "Error connecting to the backend: " + str(e))
     except ImportError as e:
         chk = (False, str(e))
 
@@ -111,22 +122,22 @@ def hb_check():
     if celery_monitoring:
         try:
             cresource = Resource(celery_monitoring, timeout=3)
-            t = cresource.get("api/workers").body_string()
+            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
             all_workers = json.loads(t)
             bad_workers = []
-            for hostname, w in all_workers.items():
-                if not w['status']:
+            for hostname, status in all_workers.items():
+                if not status:
                     bad_workers.append('* {} celery worker down'.format(hostname))
             if bad_workers:
                 return (False, '\n'.join(bad_workers))
             else:
                 hb = heartbeat.is_alive()
-        except:
-            hb = False
+        except Exception:
+            hb = is_deploy_in_progress()
     else:
         try:
             hb = heartbeat.is_alive()
-        except:
+        except Exception:
             hb = False
     return (hb, None)
 
@@ -302,6 +313,10 @@ def server_up(req):
                 else:
                     message.append(check_info['message'])
     if failed:
+        create_datadog_event(
+            'Serverup check failed', '\n'.join(message),
+            alert_type='error', aggregation_key='serverup',
+        )
         return HttpResponse('<br>'.join(message), status=500)
     else:
         return HttpResponse("success")

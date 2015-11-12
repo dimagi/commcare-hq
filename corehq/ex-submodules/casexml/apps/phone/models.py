@@ -5,7 +5,6 @@ import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.form_processor.utils import ToFromGeneric
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
@@ -90,7 +89,7 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
             })
 
         return cls(
-            case_id=case.get_id,
+            case_id=case.case_id,
             type=case.type,
             indices=case.indices,
         )
@@ -109,7 +108,7 @@ LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
 
 
-class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn, ToFromGeneric):
+class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     date = DateTimeProperty()
     # domain = StringProperty()
     user_id = StringProperty()
@@ -150,13 +149,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn, ToFromGeneric):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
-
-    @classmethod
-    def from_generic(cls, generic_sync_log):
-        sync_log = cls.wrap(generic_sync_log.to_json())
-        if generic_sync_log.id:
-            sync_log['_id'] = generic_sync_log.id
-        return sync_log
 
     def case_count(self):
         """
@@ -256,13 +248,6 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
-
-    def to_generic(self):
-        from corehq.form_processor.generic import GenericSyncLog
-        generic = GenericSyncLog(self.to_json())
-        if '_id' in self:
-            generic.id = self['_id']
-        return generic
 
     def case_count(self):
         return len(self.cases_on_phone)
@@ -372,32 +357,32 @@ class SyncLog(AbstractSyncLog):
         removed_states = {}
         new_indices = set()
         for case in case_list:
-            actions = case.get_actions_for_form(xform.get_id)
+            actions = case.get_actions_for_form(xform.form_id)
             for action in actions:
-                logger.debug('OLD {}: {}'.format(case._id, action.action_type))
+                logger.debug('OLD {}: {}'.format(case.case_id, action.action_type))
                 if action.action_type == const.CASE_ACTION_CREATE:
-                    self._assert(not self.phone_has_case(case._id),
-                                 'phone has case being created: %s' % case._id)
-                    starter_state = CaseState(case_id=case.get_id, indices=[])
+                    self._assert(not self.phone_has_case(case.case_id),
+                                 'phone has case being created: %s' % case.case_id)
+                    starter_state = CaseState(case_id=case.case_id, indices=[])
                     if self._phone_owns(action):
                         self.cases_on_phone.append(starter_state)
                         self._case_state_map.reset_cache(self)
                     else:
-                        removed_states[case._id] = starter_state
+                        removed_states[case.case_id] = starter_state
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     if not self._phone_owns(action):
                         # only action necessary here is in the case of
                         # reassignment to an owner the phone doesn't own
-                        state = self.archive_case(case.get_id)
+                        state = self.archive_case(case.case_id)
                         if state:
-                            removed_states[case._id] = state
+                            removed_states[case.case_id] = state
                 elif action.action_type == const.CASE_ACTION_INDEX:
                     # in the case of parallel reassignment and index update
                     # the phone might not have the case
-                    if self.phone_has_case(case.get_id):
-                        case_state = self.get_case_state(case.get_id)
+                    if self.phone_has_case(case.case_id):
+                        case_state = self.get_case_state(case.case_id)
                     else:
-                        case_state = self.get_dependent_case_state(case.get_id)
+                        case_state = self.get_dependent_case_state(case.case_id)
                     # reconcile indices
                     if case_state:
                         for index in action.indices:
@@ -405,10 +390,10 @@ class SyncLog(AbstractSyncLog):
                         case_state.update_indices(action.indices)
 
                 elif action.action_type == const.CASE_ACTION_CLOSE:
-                    if self.phone_has_case(case.get_id):
-                        state = self.archive_case(case.get_id)
+                    if self.phone_has_case(case.case_id):
+                        state = self.archive_case(case.case_id)
                         if state:
-                            removed_states[case._id] = state
+                            removed_states[case.case_id] = state
 
         # if we just removed a state and added an index to it
         # we have to put it back in our dependent case list
@@ -604,8 +589,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # if the case had indexes they better also be in our removal list (except for ourselves)
                 for index in indices.values():
                     if not _domain_has_legacy_toggle_set():
-                        assert index in candidates_to_remove, \
-                            "expected {} in {} but wasn't".format(index, candidates_to_remove)
+                        # unblocking http://manage.dimagi.com/default.asp?185850#1039475
+                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False,
+                                              fail_if_debug=True)
+                        _assert(index in candidates_to_remove,
+                            "expected {} in {} but wasn't".format(index, candidates_to_remove))
             try:
                 self.case_ids_on_phone.remove(to_remove)
             except KeyError:
@@ -646,9 +634,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
                         this_case_index not in candidates_to_remove):
                     self.prune_case(this_case_index)
         else:
-            # we have some possible candidates for removal. we should check each of them.
-            candidates_to_remove.remove(case_id)  # except ourself
-            for candidate in candidates_to_remove:
+            # we have some possible candidates for removal. we should check each of them except ourself
+            candidates_to_also_check = candidates_to_remove - set(case_id)
+            for candidate in candidates_to_also_check:
                 candidate_dependencies = self.index_tree.get_all_cases_that_depend_on_case(
                     candidate, cached_map=reverse_index_map
                 )
@@ -691,27 +679,27 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         all_updates = {}
         for case in case_list:
-            if case._id not in all_updates:
-                logger.debug('initializing update for case {}'.format(case._id))
-                all_updates[case._id] = CaseUpdate(case_id=case._id)
+            if case.case_id not in all_updates:
+                logger.debug('initializing update for case {}'.format(case.case_id))
+                all_updates[case.case_id] = CaseUpdate(case_id=case.case_id)
 
-            case_update = all_updates[case._id]
-            case_update.was_live_previously = case._id in self.primary_case_ids
-            actions = case.get_actions_for_form(xform.get_id)
+            case_update = all_updates[case.case_id]
+            case_update.was_live_previously = case.case_id in self.primary_case_ids
+            actions = case.get_actions_for_form(xform.form_id)
             for action in actions:
-                logger.debug('{}: {}'.format(case._id, action.action_type))
-                owner_id = get_latest_owner_id(case._id, action)
+                logger.debug('{}: {}'.format(case.case_id, action.action_type))
+                owner_id = get_latest_owner_id(case.case_id, action)
                 if owner_id is not None:
                     case_update.final_owner_id = owner_id
                 if action.action_type == const.CASE_ACTION_INDEX:
                     for index in action.indices:
                         if index.referenced_id:
                             case_update.indices_to_add.append(
-                                ShortIndex(case._id, index.identifier, index.referenced_id)
+                                ShortIndex(case.case_id, index.identifier, index.referenced_id)
                             )
                         else:
                             case_update.indices_to_delete.append(
-                                ShortIndex(case._id, index.identifier, None)
+                                ShortIndex(case.case_id, index.identifier, None)
                             )
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     case_update.is_closed = True
@@ -735,14 +723,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         non_live_updates = []
         for case in case_list:
-            case_update = all_updates[case._id]
+            case_update = all_updates[case.case_id]
             if _is_live(case_update, self.owner_ids_on_phone):
                 logger.debug('case {} is live.'.format(case_update.case_id))
-                if case._id not in self.case_ids_on_phone:
-                    self._add_primary_case(case._id)
+                if case.case_id not in self.case_ids_on_phone:
+                    self._add_primary_case(case.case_id)
                     made_changes = True
-                elif case._id in self.dependent_case_ids_on_phone:
-                    self.dependent_case_ids_on_phone.remove(case._id)
+                elif case.case_id in self.dependent_case_ids_on_phone:
+                    self.dependent_case_ids_on_phone.remove(case.case_id)
                     made_changes = True
 
                 for index in case_update.indices_to_add:

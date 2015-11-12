@@ -16,7 +16,7 @@ class TestSMSBackend(SMSBackend):
     def get_form_class(cls):
         return BackendForm
 
-    def send_sms(self, msg, *args, **kwargs):
+    def send(self, msg, *args, **kwargs):
         debug = getattr(settings, "DEBUG", False)
         if debug:
             print "***************************************************"

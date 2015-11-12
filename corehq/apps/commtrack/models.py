@@ -12,6 +12,7 @@ from django.db.models.signals import post_save
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.commtrack.exceptions import MissingProductId
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 
 from dimagi.ext.couchdbkit import *
 from dimagi.ext import jsonobject
@@ -27,7 +28,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
-from couchforms.util import is_deprecation
 from dimagi.utils import parsing as dateparse
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
@@ -229,10 +229,11 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def for_domain(cls, domain):
-        result = cls.view("commtrack/domain_config",
-                          key=[domain],
-                          include_docs=True).first()
-        return result
+        result = get_docs_in_domain_by_class(domain, cls)
+        try:
+            return result[0]
+        except IndexError:
+            return None
 
     @property
     def all_actions(self):
@@ -328,7 +329,7 @@ class StockReportHelper(jsonobject.JsonObject):
 
     @classmethod
     def make_from_form(cls, form, timestamp, tag, transactions):
-        deprecated = is_deprecation(form)
+        deprecated = form.is_deprecated
         return cls(
             domain=form.domain,
             form_id=form.get_id if not deprecated else form.orig_id,
@@ -782,7 +783,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    StockReport.objects.filter(form_id=xform._id).delete()
+    StockReport.objects.filter(form_id=xform.form_id).delete()
 
 
 @receiver(xform_unarchived)

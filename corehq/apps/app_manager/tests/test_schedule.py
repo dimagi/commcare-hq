@@ -314,7 +314,9 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
 
             upcoming_scheduled_visits = (
                 u"{visit}"
-                "[{case}/last_visit_number_{form_id} = '' or @id &gt; {case}/last_visit_number_{form_id}]"
+                "[{case}/last_visit_number_{form_id} = '' or "
+                    "if(@repeats = 'True', @id &gt;= {case}/last_visit_number_{form_id},"
+                        " @id &gt; {case}/last_visit_number_{form_id})]"
                 "[if(@repeats = 'True', "
                     "today() &gt;= (date({case}/last_visit_date_{form_id}) + int(@increment) + int(@starts)) and "  # noqa
                         "(@expires = '' or today() &lt;= (date({case}/last_visit_date_{form_id}) + int(@increment)"  # noqa

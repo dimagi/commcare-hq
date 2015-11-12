@@ -113,6 +113,7 @@ del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
+ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -284,6 +285,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
@@ -294,7 +296,6 @@ HQ_APPS = (
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
-    'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
@@ -383,6 +384,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
     'djangobower',
@@ -434,17 +436,6 @@ LOGIN_URL = "/accounts/login/"
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
-
-# domain syncs
-# e.g.
-#               { sourcedomain1: { "domain": targetdomain1,
-#                      "transform": path.to.transformfunction1 },
-#                 sourcedomain2: {...} }
-DOMAIN_SYNCS = {}
-# if you want to deidentify app names, put a dictionary in your settings
-# of source names to deidentified names
-DOMAIN_SYNC_APP_NAME_MAP = {}
-DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 
 
 ####### Release Manager App settings  #######
@@ -547,9 +538,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-SMS_GATEWAY_URL = "http://localhost:8001/"
-SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
-
 # celery
 BROKER_URL = 'django://'  # default django db based
 
@@ -607,17 +595,6 @@ COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_de
 
 # couchlog/case search
 LUCENE_ENABLED = False
-
-
-# unicel sms config
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "changeme",
-                 "sender": "Promo"}
-
-# mach sms config
-MACH_CONFIG = {"username": "Dimagi",
-               "password": "changeme",
-               "service_profile": "changeme"}
 
 ####### SMS Queue Settings #######
 
@@ -722,19 +699,19 @@ AUDIT_MODULES = [
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': '',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'GOOGLE_ANALYTICS_API_ID': '',
+    'PINGDOM_API_ID': '',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
-    'HUBSPOT_ID': '',
+    'HUBSPOT_API_ID': '',
 }
 
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-OPEN_EXCHANGE_RATES_ID = ''
+OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
@@ -852,6 +829,12 @@ LOGGING = {
             'formatter': 'verbose',
             'filename': ACCOUNTING_LOG_FILE
         },
+        'analytics': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'simple',
+            'filename': ANALYTICS_LOG_FILE
+        },
         'couchlog': {
             'level': 'WARNING',
             'class': 'couchlog.handlers.CouchHandler',
@@ -914,6 +897,11 @@ LOGGING = {
             'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'analytics': {
+            'handlers': ['analytics'],
+            'level': 'DEBUG',
+            'propagate': True,
         },
     }
 }
@@ -994,7 +982,8 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
-        if globals().get("FIX_LOGGER_ERROR_OBFUSCATION"):
+        _fix_logger_obfuscation = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
+        if _fix_logger_obfuscation:
             # this is here because the logging config cannot import
             # corehq.util.log.HqAdminEmailHandler, for example, if there
             # is a syntax error in any module imported by corehq/__init__.py
@@ -1004,10 +993,11 @@ try:
             # related to email logging.
             for handler in LOGGING["handlers"].values():
                 if handler["class"].startswith("corehq."):
-                    print "{} logger is being changed to {}".format(
-                        handler['class'],
-                        'logging.StreamHandler'
-                    )
+                    if _fix_logger_obfuscation != 'quiet':
+                        print "{} logger is being changed to {}".format(
+                            handler['class'],
+                            'logging.StreamHandler'
+                        )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
    # fallback in case nothing else is found - used for readthedocs
@@ -1076,7 +1066,6 @@ _dynamic_db_settings = get_dynamic_db_settings(
 )
 
 # create local server and database configs
-COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
 NEW_USERS_GROUPS_DB = 'users'
@@ -1089,7 +1078,6 @@ COUCHDB_APPS = [
     'api',
     'app_manager',
     'appstore',
-    'orgs',
     'builds',
     'case',
     'casegroups',
@@ -1204,6 +1192,7 @@ BOWER_CORE_APPS = (
     'jquery-form#3.45.0',
     'jquery.cookie#1.4.1',
     'jquery-timeago#1.2.0',
+    'jquery-ui#1.11.4',
     'angular#1.4.4',
     'angular-route#1.4.4',
     'angular-resource#1.4.4',
@@ -1217,6 +1206,10 @@ BOWER_CORE_APPS = (
     'less#1.7.3',
     'backbone#0.9.1',
     'bootstrap-daterangepicker#2.1.13',
+    'd3#3.1',
+    'nvd3#1.1.10-beta',
+    'datatables#1.10.9',
+    'datatables-bootstrap3#0.1',
 )
 
 BOWER_TEST_APPS = (
@@ -1297,6 +1290,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
     "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
     "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
+    "corehq.messaging.smsbackends.apposit.models.AppositBackend",
 ]
 
 IVR_BACKEND_MAP = {
@@ -1401,7 +1395,13 @@ PILLOWTOPS = {
             'name': 'KafkaCaseConsumerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        }
+        },
+        {
+            'name': 'LoggingPythonDemoPillow',
+            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
+        },
+
     ]
 }
 
@@ -1430,6 +1430,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
+    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
 ]
 
 
@@ -1440,11 +1441,9 @@ for k, v in LOCAL_PILLOWTOPS.items():
 
 COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserGenerationCache',
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
-    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
@@ -1492,6 +1491,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
+    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
 ]
 
 CUSTOM_MODULES = [

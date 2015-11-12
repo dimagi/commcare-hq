@@ -232,24 +232,22 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             if property_match_type not in valid_match_types:
                 raise ValidationError(_("Invalid match type given"))
 
-            property_value = None
-            if property_match_type != AutomaticUpdateRuleCriteria.MATCH_EXISTS:
-                property_value = obj.get('property_value')
-                if not isinstance(property_value, basestring):
-                    raise ValidationError(_("Please specify a property value."))
+            property_value = obj.get('property_value')
+            if not isinstance(property_value, basestring):
+                raise ValidationError(_("Please specify a property value."))
 
-                property_value = property_value.strip()
-                if not property_value:
-                    raise ValidationError(_("Please specify a property value."))
+            property_value = property_value.strip()
+            if not property_value:
+                raise ValidationError(_("Please specify a property value."))
 
-                if property_match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE:
-                    try:
-                        property_value = int(property_value)
-                    except:
-                        raise ValidationError(_("Please enter a number of days that is a number."))
+            if property_match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE:
+                try:
+                    property_value = int(property_value)
+                except:
+                    raise ValidationError(_("Please enter a number of days that is a number."))
 
-                    if property_value <= 0:
-                        raise ValidationError(_("Please enter a number of days that is positive."))
+                if property_value <= 0:
+                    raise ValidationError(_("Please enter a number of days that is positive."))
 
             result.append(dict(
                 property_name=property_name,

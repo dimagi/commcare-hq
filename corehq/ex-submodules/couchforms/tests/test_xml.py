@@ -5,12 +5,13 @@ import uuid
 import os
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from django.test import TestCase
-from corehq.form_processor.interfaces.xform import XFormInterface
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+from corehq.form_processor.test_utils import run_with_all_backends
 
 
 class XMLElementTest(TestCase):
 
+    @run_with_all_backends
     def test_various_encodings(self):
         tests = (
             ('utf-8', u'हिन्दी चट्टानों'),
@@ -28,6 +29,6 @@ class XMLElementTest(TestCase):
                 sample_value=value.encode(encoding),
             )
             xform = FormProcessorInterface().post_xform(xml_data)
-            self.assertEqual(value, xform.form['test'])
-            elem = XFormInterface(TEST_DOMAIN_NAME).get_xml_element(xform)
+            self.assertEqual(value, xform.form_data['test'])
+            elem = xform.get_xml_element()
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)

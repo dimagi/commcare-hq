@@ -1,6 +1,14 @@
-class CaseNotFound(Exception):
+from couchdbkit import ResourceNotFound
+from django.core.exceptions import ObjectDoesNotExist
+
+
+class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
 
-class XFormNotFound(Exception):
+class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
+    pass
+
+
+class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass

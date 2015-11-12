@@ -26,4 +26,5 @@
     <div id="broadcast-form">
         {% crispy form %}
     </div>
+    {% include 'reminders/partial/email_trial_message_modal.html' with email_trial_message=form.current_values.email_trial_message %}
 {% endblock %}

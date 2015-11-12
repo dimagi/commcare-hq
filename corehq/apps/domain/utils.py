@@ -13,7 +13,7 @@ DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
 
 new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
-new_org_re = r"(?:[a-z0-9]+\-)*[a-zA-Z0-9]+" # lowercase and uppercase letters, numbers, and '-' (at most one between "words")
+
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
 commcare_public_domain_url = '/a/public/'

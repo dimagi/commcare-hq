@@ -1,8 +1,8 @@
 from collections import namedtuple
 from datetime import datetime, time
-from corehq.apps.reports_core.exceptions import MissingParamException, FilterValueException
+from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, CHOICE_DELIMITER
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
 from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date
 
@@ -115,8 +115,8 @@ class DatespanFilter(BaseFilter):
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
 
     def default_value(self):
-        # default to a week's worth of data.
-        return DateSpan.since(7)
+        # default to "Show All Dates"
+        return None
 
     def filter_context(self):
         return {
@@ -206,7 +206,7 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, field, datatype, label, show_all, url_generator, css_id=None):
+    def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -221,6 +221,7 @@ class DynamicChoiceListFilter(BaseFilter):
         self.show_all = show_all
         self.css_id = css_id or self.name
         self.url_generator = url_generator
+        self.choice_provider = choice_provider
 
     def value(self, **kwargs):
         selection = unicode(kwargs.get(self.name, ""))

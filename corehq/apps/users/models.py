@@ -34,7 +34,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache
-from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -1939,8 +1938,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Submit the case blocks creating the delgate case access
         for the location(s).
         """
-        from corehq.apps.commtrack.models import SupplyPointCase
-
         if self.project.supports_multiple_locations_per_user:
             new_locs_set = set([loc._id for loc in locations])
             old_locs_set = set([loc._id for loc in self.locations])
@@ -2039,10 +2036,6 @@ class OrgMembershipMixin(DocumentSchema):
     def organizations(self):
         return [om.organization for om in self.org_memberships]
 
-    def get_organizations(self):
-        from corehq.apps.orgs.models import Organization
-        return filter(None, [Organization.get_by_name(org) for org in self.organizations])
-
     def is_member_of_org(self, org_name_or_model):
         """
         takes either a organization name or an organization object and returns whether the user is part of that org
@@ -2059,33 +2052,6 @@ class OrgMembershipMixin(DocumentSchema):
                 return om
         return None
 
-    def add_org_membership(self, org, **kwargs):
-        from corehq.apps.orgs.models import Organization
-        if self.get_org_membership(org):
-            return
-
-        organization = Organization.get_by_name(org, strict=True)
-        if not organization:
-            raise OrgMembershipError("Cannot add org membership -- Organization %s does not exist" % org)
-
-        kwargs.pop("organization", None) # prevents next line from raising an error due to two organization values being given to OrgMembership
-        self.org_memberships.append(OrgMembership(organization=org, **kwargs))
-
-    def delete_org_membership(self, org, create_record=False):
-        record = None
-        for i, om in enumerate(self.org_memberships):
-            if om.organization == org:
-                if create_record:
-                    record = OrgRemovalRecord(org_membership = om, user_id=self.user_id)
-                del self.org_memberships[i]
-                break
-        if create_record:
-            if record:
-                record.save()
-                return record
-            else:
-                raise OrgMembershipError("Cannot delete org membership -- Organization %s does not exist" % org)
-
     def is_org_admin(self, org):
         om = self.get_org_membership(org)
         return om and om.is_admin
@@ -2093,19 +2059,6 @@ class OrgMembershipMixin(DocumentSchema):
     def is_member_of_team(self, org, team_id):
         om = self.get_org_membership(org)
         return om and team_id in om.team_ids
-
-    def add_to_team(self, org, team_id):
-        om = self.get_org_membership(org)
-        if not om:
-            raise OrgMembershipError("Cannot add team -- %s is not a member of the %s organization" %
-                                     (self.username, org))
-
-        from corehq.apps.orgs.models import Team
-        team = Team.get(team_id)
-        if not team or team.organization != org:
-            raise OrgMembershipError("Cannot add team -- Team(%s) does not exist in organization %s" % (team_id, org))
-
-        om.team_ids.append(team_id)
 
     def remove_from_team(self, org, team_id):
         om = self.get_org_membership(org)
@@ -2135,17 +2088,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
         return self.is_superuser
-
-    @classmethod
-    def by_organization(cls, org, team_id=None):
-        key = [org] if team_id is None else [org, team_id]
-        users = cls.view("users/by_org_and_team",
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-        ).all()
-        # return a list of users with the duplicates removed
-        return dict([(u.get_id, u) for u in users]).values()
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
@@ -2182,33 +2124,8 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
     def get_language_code(self):
         return self.language
 
-    def get_teams(self, ids_only=False):
-        from corehq.apps.orgs.models import Team
-        teams = []
-
-        def get_valid_teams(team_ids):
-            team_db = Team.get_db()
-            for t_id in team_ids:
-                if team_db.doc_exist(t_id):
-                    yield Team.get(t_id)
-                else:
-                    logging.info("Note: team %s does not exist for %s" % (t_id, self))
-
-        for om in self.org_memberships:
-            if not ids_only:
-                teams.extend(list(get_valid_teams(om.team_ids)))
-            else:
-                teams.extend(om.team_ids)
-        return teams
-
     def get_domains(self):
-        domains = [dm.domain for dm in self.domain_memberships]
-        for team in self.get_teams():
-            team_domains = [dm.domain for dm in team.domain_memberships]
-            for domain in team_domains:
-                if domain not in domains:
-                    domains.append(domain)
-        return domains
+        return [dm.domain for dm in self.domain_memberships]
 
     @memoized
     def has_permission(self, domain, permission, data=None):
@@ -2224,11 +2141,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         if dm:
             dm_list.append([dm, ''])
 
-        for team in self.get_teams():
-            if team.get_domain_membership(domain) and team.get_domain_membership(domain).role:
-                dm_list.append([team.get_domain_membership(domain), '(' + team.name + ')'])
-
-        #now find out which dm has the highest permissions
+        # now find out which dm has the highest permissions
         if dm_list:
             role = self.total_domain_membership(dm_list, domain)
             dm = CustomDomainMembership(domain=domain, custom_role=role)
@@ -2258,11 +2171,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         if dm:
             dm_list.append([dm, ''])
 
-        for team in self.get_teams():
-            if team.get_domain_membership(domain) and team.get_domain_membership(domain).role:
-                dm_list.append([team.get_domain_membership(domain), ' (' + team.name + ')'])
-
-        #now find out which dm has the highest permissions
+        # now find out which dm has the highest permissions
         if dm_list:
             return self.total_domain_membership(dm_list, domain)
         else:
@@ -2525,15 +2434,6 @@ class DomainRemovalRecord(DeleteRecord):
         user.add_domain_membership(**self.domain_membership._doc)
         user.save()
 
-class OrgRemovalRecord(DeleteRecord):
-    user_id = StringProperty()
-    org_membership = SchemaProperty(OrgMembership)
-
-    def undo(self):
-        user = WebUser.get_by_user_id(self.user_id)
-        some_args = self.org_membership._doc
-        user.add_org_membership(some_args["organization"], **some_args)
-        user.save()
 
 class UserCache(object):
     def __init__(self):

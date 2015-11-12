@@ -8,7 +8,6 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 
 # from .filters.urls import urlpatterns as filter_urls
 from corehq.apps.example_reports.testreport import TestReport
-from corehq.apps.reports.views import AddSavedReportConfigView
 from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
@@ -23,6 +22,7 @@ from corehq.apps.userreports.views import (
     ReportBuilderTypeSelect,
 )
 from .filters import urls as filter_urls
+from .views import EditFormInstance, AddSavedReportConfigView
 
 
 custom_report_urls = patterns('',
@@ -62,7 +62,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', 'edit_form_instance', name='edit_form_instance'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', 'restore_edit', name='restore_edit'),
     url(r'^form_data/download/media/$',
         'form_multimedia_export', name='form_multimedia_export'),
@@ -114,6 +114,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
     url(r"^export/forms/all/async/$", 'export_all_form_metadata_async', name="export_all_form_metadata_async"),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),
+    url(r'^download/internal/cases/$', 'download_cases_internal', name='download_cases_internal'),
 
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),

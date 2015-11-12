@@ -140,6 +140,23 @@ class CallCenterUtilsTests(TestCase):
         cases = get_call_center_cases(TEST_DOMAIN, CASE_TYPE)
         self.assertEqual(len(cases), 3)
 
+    def test_call_center_not_default_case_owner(self):
+        """
+        call center case owner should not change on sync
+        """
+        factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
+            'user_id': self.user_id,
+            'owner_id': 'another_user',
+            'case_type': CASE_TYPE,
+            'update': {'hq_user_id': self.user_id}
+        })
+        cases = factory.create_or_update_cases([
+            CaseStructure(attrs={'create': True})
+        ])
+        sync_call_center_user_case(self.user)
+        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        self.assertEqual(case.owner_id, cases[0].owner_id)
+
 
 class CallCenterUtilsUserCaseTests(TestCase):
 

@@ -134,6 +134,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     return False
 
 
+@quickcache(['domain'], timeout=15 * 60)
+def domain_is_on_trial(domain):
+    from corehq.apps.accounting.models import Subscription
+    subscription = Subscription.get_subscribed_plan_by_domain(domain)[1]
+    return subscription.is_trial_or_internal_trial
+
+
 def is_active_subscription(date_start, date_end):
     today = datetime.date.today()
     return ((date_start is None or date_start <= today)
@@ -191,7 +198,7 @@ def get_dimagi_from_email_by_product(product):
 
 
 def quantize_accounting_decimal(decimal_value):
-    return decimal_value.quantize(Decimal(10) ** -2)
+    return "%0.2f" % decimal_value
 
 
 def fmt_dollar_amount(decimal_value):

@@ -1,11 +1,15 @@
 from __future__ import absolute_import
+import functools
 import json
+import logging
 import mock
 import os
 
 from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
+import sys
+from corehq.util.decorators import ContextDecorator
 
 
 class UnitTestingRequired(Exception):
@@ -60,16 +64,16 @@ class TestFileMixin(object):
         return cls.get_file(name, 'xml', override_path)
 
 
-def flag_enabled(toggle_class):
+def flag_enabled(toggle_class_string):
     """
     Decorate test methods with this to mock the lookup
 
-        @flag_enabled(toggles.MULTIPLE_LOCATIONS_PER_USER)
+        @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
         def test_something_fancy(self):
             something.which_depends(on.MULTIPLE_LOCATIONS_PER_USER)
     """
     return mock.patch(
-        '.'.join([toggle_class.__module__, toggle_class.__class__.__name__, 'enabled']),
+        '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
         new=lambda *args: True,
     )
 
@@ -105,3 +109,89 @@ def mock_out_couch(views=None, docs=None):
             super(FakeCouchDb_, self).__init__(views=views, docs=docs)
 
     return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=FakeCouchDb_)
+
+
+def NOOP(*args, **kwargs):
+    pass
+
+
+class RunConfig(object):
+
+    def __init__(self, settings, pre_run=None, post_run=None):
+        self.settings = settings
+        self.pre_run = pre_run or NOOP
+        self.post_run = post_run or NOOP
+
+
+class RunWithMultipleConfigs(object):
+    def __init__(self, fn, run_configs):
+        self.fn = fn
+        self.run_configs = run_configs
+
+    def __call__(self, *args, **kwargs):
+        for run_config in self.run_configs:
+
+            def fn_with_pre_and_post(*args, **kwargs):
+                # make sure the pre and post run also run with the right settings
+                run_config.pre_run(*args, **kwargs)
+                self.fn(*args, **kwargs)
+                run_config.post_run(*args, **kwargs)
+
+            try:
+                call_with_settings(fn_with_pre_and_post, run_config.settings, args, kwargs)
+            except Exception:
+                print self.fn, 'failed with the following settings:'
+                for key, value in run_config.settings.items():
+                    print 'settings.{} = {!r}'.format(key, value)
+                raise
+
+
+def call_with_settings(fn, settings_dict, args, kwargs):
+    keys = settings_dict.keys()
+    original_settings = {key: getattr(settings, key, None) for key in keys}
+    try:
+        # set settings to new values
+        for key, value in settings_dict.items():
+            setattr(settings, key, value)
+        fn(*args, **kwargs)
+    finally:
+        # set settings back to original values
+        for key, value in original_settings.items():
+            setattr(settings, key, value)
+
+
+def run_with_multiple_configs(fn, run_configs):
+    helper = RunWithMultipleConfigs(fn, run_configs)
+
+    @functools.wraps(fn)
+    def inner(*args, **kwargs):
+        return helper(*args, **kwargs)
+
+    return inner
+
+
+class log_sql_output(ContextDecorator):
+    """
+    Can be used as either a context manager or decorator.
+    """
+    def __init__(self):
+        self.logger = logging.getLogger('django.db.backends')
+        self.new_level = logging.DEBUG
+        self.original_level = self.logger.level
+        self.original_debug_value = settings.DEBUG
+        self.original_handlers = self.logger.handlers
+        for handler in self.original_handlers:
+            self.logger.removeHandler(handler)
+        self.logger.addHandler(logging.StreamHandler(sys.stdout))
+
+    def __enter__(self):
+        settings.DEBUG = True
+        self.logger.setLevel(self.new_level)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.logger.setLevel(self.original_level)
+        settings.DEBUG = self.original_debug_value
+        for handler in self.logger.handlers:
+            self.logger.removeHandler(handler)
+        for handler in self.original_handlers:
+            self.logger.addHandler(handler)

@@ -68,7 +68,7 @@ class BaseLocationView(BaseDomainView):
         context.update({
             'hierarchy': location_hierarchy_config(self.domain),
             'api_root': reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                             'resource_name': 'location',
+                                                             'resource_name': 'location_internal',
                                                              'api_name': 'v0.3'}),
         })
         return context

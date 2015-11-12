@@ -154,6 +154,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("question2-item1-label", "item1", "item1", "", "", "", "", "", ""),
           ("question2-item2-label", "item2", "item2", "", "", "", "", "", ""),
           ("question3-label", "question3", "question3&#39;s label", "", "", "", "", "", ""),
+          ("blank_value_node-label", "", "", "en-audio.mp3", "fra-audio.mp3", "", "", "", ""),
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
           ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", ""),
@@ -233,6 +234,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         self.assert_question_label("question3's label", 0, 0, "fra", "/data/question3")
         self.assert_question_label("question6: ____", 0, 0, "en", "/data/question3/question4")
         self.assert_question_label("question1: ____ < 5", 0, 0, "en", "/data/question7")
+        self.assert_question_label("", 0, 0, "en", "/data/blank_value_node")
 
         # Test markdown
         self.assert_question_label("add_markdown: ~~new \u0939\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
