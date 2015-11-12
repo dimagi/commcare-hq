@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import (
     SoftwareProductType,
     FeatureType,
     PaymentMethod,
+    PreOrPostPay,
     StripePaymentMethod,
     LastPayment
 )
@@ -67,6 +68,13 @@ class BaseStripePaymentHandler(object):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
+
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.POSTPAY
+        account.save()
+
+
     def process_request(self, request):
         customer = None
         amount = self.get_charge_amount(request)
@@ -95,8 +103,7 @@ class BaseStripePaymentHandler(object):
                 customer = self.payment_method.customer
 
             charge = self.create_charge(amount, card=card, customer=customer)
-            billing_account.last_payment_method = LastPayment.CC_ONE_TIME
-            billing_account.save()
+            self.update_payment_information(billing_account)
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body
@@ -335,6 +342,13 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for %s" % self.cost_item_name,
         )
+
+
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.PREPAY
+        account.save()
+
 
     def update_credits(self, payment_record):
         for feature in self.features:

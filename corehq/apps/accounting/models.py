@@ -364,6 +364,8 @@ class BillingAccount(models.Model):
             is_new = True
             account_type = account_type or BillingAccountType.INVOICE_GENERATED
             entry_point = entry_point or EntryPoint.NOT_SET
+            last_payment_method = last_payment_method or LastPayment.NONE
+            pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
             account = BillingAccount(
                 name="Account for Project %s" % domain,
                 created_by=created_by,
