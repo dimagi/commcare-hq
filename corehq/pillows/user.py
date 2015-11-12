@@ -48,8 +48,8 @@ class GroupToUserPillow(PythonPillow):
     def __init__(self, **kwargs):
         super(GroupToUserPillow, self).__init__(**kwargs)
 
-    def python_filter(self, doc):
-        return doc.get('doc_type', None) in ('Group', 'Group-Deleted')
+    def python_filter(self, change):
+        return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
 
     def change_transport(self, doc_dict):
         es = get_es()
@@ -78,8 +78,9 @@ class UnknownUsersPillow(PythonPillow):
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 
-    def python_filter(self, doc):
+    def python_filter(self, change):
         # designed to exactly mimic the behavior of couchforms/filters/xforms.js
+        doc = change.document
         return doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
     def get_fields_from_doc(self, doc):
