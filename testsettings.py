@@ -27,8 +27,6 @@ for key, value in {
     'NOSE_IGNORE_FILES': '^(localsettings|record_deploy_success\.py)',
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
-        'corehq/apps/cloudcare/tests/selenium',
-        'corehq/apps/reports/tests/selenium',
         'scripts',
         'testapps',
 

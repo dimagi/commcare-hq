@@ -505,18 +505,8 @@ To run a particular test or subset of tests
     $ ./manage.py test app_manager.SuiteTest
     $ ./manage.py test app_manager.SuiteTest.test_picture_format
 
-To run the selenium tests, you first need to install the
-[ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).
-
 If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database. 
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
-
-The tests for CloudCare currently expect the "Basic Tests" app from the
-`corpora` domain on CommCareHQ.org to be installed in the same domain locally.
-
-Make sure to edit the selenium user credentials in `localsettings.py`.  Then run
-
-    $ ./manage.py seltest
 
 ## Javascript tests
 
