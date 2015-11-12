@@ -17,6 +17,11 @@ Welcome to CommCareHQ's documentation!
 .. toctree::
    :maxdepth: 2
 
+   intended_audience
+   getting_started
+   diving_in
+   technical_overview
+   deploy
    reporting
    api
    maps
@@ -34,6 +39,7 @@ Welcome to CommCareHQ's documentation!
    test_coverage
    advanced_app_features
    nfs
+   export_api
 
 Tips for documenting
 --------------------
@@ -41,6 +47,18 @@ Tips for documenting
 .. toctree::
 
     documenting
+
+
+Mobile Development
+------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   common_commcare_mobile_dev_workspace_build_errors
+   source_control_usage_for_commcare_mobile_devs
+   installing_odk_application_offline_for_mobile_devs
+
 
 Indices and tables
 ==================
