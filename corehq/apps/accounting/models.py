@@ -230,6 +230,7 @@ class FundingSource(object):
         (EXTERNAL, "External Funding"),
     )
 
+
 class EntryPoint(object):
     CONTRACTED = "CONTRACTED"
     SELF_STARTED = "SELF_STARTED"
@@ -239,6 +240,7 @@ class EntryPoint(object):
         (SELF_STARTED, "Self-started"),
         (NOT_SET, "Not Set"),
     )
+
 
 class LastPayment(object):
     CC_ONE_TIME = "CC_ONE_TIME"
@@ -256,6 +258,15 @@ class LastPayment(object):
         (OTHER, "Other"),
         (BU_PAYMENT, "Payment to local BU"),
         (NONE, "None"),
+    )
+
+
+class PreOrPostPay(object):
+    PREPAY = "PREPAY"
+    POSTPAY = "POSTPAY"
+    CHOICES = (
+        (PREPAY, "Prepay"),
+        (POSTPAY, "Postpay"),
     )
 
 
@@ -319,6 +330,11 @@ class BillingAccount(models.Model):
         default=LastPayment.NONE,
         choices=LastPayment.CHOICES,
     )
+    pre_or_post_pay = models.CharField(
+        max_length=25,
+        default=PreOrPostPay.POSTPAY,
+        choices=PreOrPostPay.CHOICES,
+    )
 
     class Meta:
         app_label = 'accounting'
@@ -336,7 +352,8 @@ class BillingAccount(models.Model):
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
                                         created_by_invoicing=False,
-                                        entry_point=None, last_payment_method=None):
+                                        entry_point=None, last_payment_method=None,
+                                        pre_or_post_pay=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -355,6 +372,7 @@ class BillingAccount(models.Model):
                 account_type=account_type,
                 entry_point=entry_point,
                 last_payment_method=last_payment_method,
+                pre_or_post_pay=pre_or_post_pay
             )
             account.save()
         return account, is_new

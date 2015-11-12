@@ -55,6 +55,7 @@ from corehq.apps.accounting.models import (
     FundingSource,
     Invoice,
     LastPayment,
+    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
@@ -105,6 +106,10 @@ class BillingAccountBasicForm(forms.Form):
         label=ugettext_lazy("Last Payment Method"),
         choices=LastPayment.CHOICES
     )
+    pre_or_post_pay = forms.ChoiceField(
+        label=ugettext_lazy("Prepay or Postpay"),
+        choices=PreOrPostPay.CHOICES
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -118,13 +123,15 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
-                'last_payment_method': account.last_payment_method
+                'last_payment_method': account.last_payment_method,
+                'pre_or_post_pay': account.pre_or_post_pay,
             }
         else:
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
                 'entry_point': EntryPoint.CONTRACTED,
                 'last_payment_method': LastPayment.NONE,
+                'pre_or_post_pay': PreOrPostPay.POSTPAY,
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
@@ -157,6 +164,7 @@ class BillingAccountBasicForm(forms.Form):
                 'currency',
                 'entry_point',
                 'last_payment_method',
+                'pre_or_post_pay',
                 crispy.Div(*additional_fields),
             ),
             FormActions(
@@ -221,6 +229,8 @@ class BillingAccountBasicForm(forms.Form):
             salesforce_account_id=salesforce_account_id,
             currency=currency,
             entry_point=self.cleaned_data['entry_point'],
+            last_payment_medthod=self.cleaned_data['last_payment_method'],
+            pre_or_post_pay=self.cleaned_data['pre_or_post_pay']
         )
         account.save()
 
@@ -249,6 +259,7 @@ class BillingAccountBasicForm(forms.Form):
         account.dimagi_contact = self.cleaned_data['dimagi_contact']
         account.entry_point = self.cleaned_data['entry_point']
         account.last_payment_method = self.cleaned_data['last_payment_method']
+        account.pre_or_post_pay = self.cleaned_data['pre_or_post_pay']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
