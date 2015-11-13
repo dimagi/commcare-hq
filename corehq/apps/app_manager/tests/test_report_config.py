@@ -114,13 +114,13 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
     def test_filter_detail(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <detail id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0">
+          <detail id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1">
             <title>
-              <text>Username Filter</text>
+              <text>owner name</text>
             </title>
             <field>
               <header>
-                <text>Username</text>
+                <text>owner name</text>
               </header>
               <template>
                 <text>
@@ -130,7 +130,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
             </field>
           </detail>
         </partial>
-        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0']")
+        """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1']")
 
     def test_data_detail(self):
         self.assertXmlPartialEqual("""
