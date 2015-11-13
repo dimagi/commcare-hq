@@ -2,7 +2,10 @@ import json
 import os
 import collections
 
+from datetime import datetime
 from django.db.models import Prefetch
+from jsonobject import JsonObject
+from jsonobject import StringProperty
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
@@ -534,9 +537,11 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
 class CaseTransaction(models.Model):
     TYPE_FORM = 0
     TYPE_REBUILD = 1
+    TYPE_FORM_EDIT_REBUILD = 2
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
-        (TYPE_REBUILD, 'rebuild')
+        (TYPE_REBUILD, 'rebuild'),
+        (TYPE_FORM_EDIT_REBUILD, 'form_edit_rebuild'),
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
@@ -546,6 +551,7 @@ class CaseTransaction(models.Model):
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
+    details = JSONField(lazy=True, default=dict)
 
     @property
     def is_relevant(self):
@@ -560,6 +566,32 @@ class CaseTransaction(models.Model):
             self.cached_form = XFormAttachmentSQL.objects.get(self.form_uuid)
         return self.cached_form
 
+    @classmethod
+    def rebuild_transaction(cls, case):
+        return CaseTransaction(
+            case=case,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_REBUILD,
+        )
+
+    @classmethod
+    def rebuild_transaction_from_deprecated_form(cls, case, deprecated_form):
+        details = FormEditRebuild(
+            form_id=deprecated_form.orig_id,
+            deprecated_form_id=deprecated_form.form_id
+        ).to_json()
+        return CaseTransaction(
+            case=case,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_FORM_EDIT_REBUILD,
+            details=details
+        )
+
     class Meta:
         unique_together = ("case", "form_uuid")
         ordering = ['server_date']
+
+
+class FormEditRebuild(JsonObject):
+    form_id = StringProperty()
+    deprecated_form_id = StringProperty()

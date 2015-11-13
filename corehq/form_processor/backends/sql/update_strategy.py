@@ -140,7 +140,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.closed_by = ''
         self.case.opened_by = None
 
-    def rebuild_from_transactions(self, transactions):
+    def rebuild_from_transactions(self, transactions, rebuild_transaction):
         # TODO: handle case indices
         self._reset_case_state()
 
@@ -154,11 +154,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         self.case.deleted = not bool(real_transactions)
 
-        rebuild_transaction = CaseTransaction(
-            case=self.case,
-            server_date=datetime.utcnow(),
-            type=CaseTransaction.TYPE_REBUILD
-        )
         self.case.track_create(rebuild_transaction)
         self.case.modified_on = rebuild_transaction.server_date
 
