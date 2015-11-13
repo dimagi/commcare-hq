@@ -8,7 +8,7 @@ from corehq.util.test_utils import TestFileMixin
 
 class DuplicateFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
-    file_path = ('data',)
+    file_path = ('data', 'posts')
     root = os.path.dirname(__file__)
 
     def setUp(self):

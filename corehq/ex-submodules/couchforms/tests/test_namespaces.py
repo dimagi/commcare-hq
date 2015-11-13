@@ -3,9 +3,12 @@ from django.test import TestCase
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.util.test_utils import TestFileMixin
 
 
-class TestNamespaces(TestCase):
+class TestNamespaces(TestCase, TestFileMixin):
+    file_path = ('data', 'posts')
+    root = os.path.dirname(__file__)
 
     def _assert_xmlns(self, xmlns, xform, xpath, expect_xmlns_index=False):
         result = xform.get_data(xpath)
@@ -13,8 +16,7 @@ class TestNamespaces(TestCase):
 
     @run_with_all_backends
     def testClosed(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "namespaces.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('namespaces')
         xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
