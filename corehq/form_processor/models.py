@@ -365,7 +365,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def xform_ids(self):
-        return list(self.xform_set.values_list('form_uuid', flat=True))
+        return filter(None, self.xform_set.values_list('form_uuid', flat=True))
 
     @property
     def user_id(self):
