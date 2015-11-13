@@ -656,6 +656,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def get_filters(self):
         source_filter = []
         content_type_filter = []
+        event_status_filter = None
         event_type_filter = EventTypeFilter.get_value(self.request, self.domain)
 
         for source_type, x in MessagingEvent.SOURCE_CHOICES:
@@ -678,7 +679,28 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 else:
                     content_type_filter.append(content_type)
 
-        return (source_filter, content_type_filter)
+        event_status = EventStatusFilter.get_value(self.request, self.domain)
+        if event_status == MessagingEvent.STATUS_COMPLETED:
+            event_status_filter = Q(status=event_status)
+        elif event_status == MessagingEvent.STATUS_ERROR:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                Q(messagingsubevent__sms__error=True)
+            )
+        elif event_status == MessagingEvent.STATUS_IN_PROGRESS:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                Q(messagingsubevent__xforms_session__end_time__isnull=True)
+            )
+        elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
+            event_status_filter = (
+                Q(messagingsubevent__xforms_session__end_time__isnull=False) &
+                Q(messagingsubevent__xforms_session__submission_id__isnull=True)
+            )
+
+        return source_filter, content_type_filter, event_status_filter
 
     def _fmt_recipient(self, event, doc_info):
         if event.recipient_type in (
@@ -697,7 +719,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             )
 
     def get_queryset(self):
-        source_filter, content_type_filter = self.get_filters()
+        source_filter, content_type_filter, event_status_filter = self.get_filters()
 
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
@@ -708,11 +730,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 Q(messagingsubevent__content_type__in=content_type_filter)),
         )
 
-        event_status = EventStatusFilter.get_value(self.request, self.domain)
-        if event_status is not None:
-            data = data.filter(
-                status=event_status,
-            )
+        if event_status_filter:
+            data = data.filter(event_status_filter)
 
         if self.phone_number_filter:
             data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
