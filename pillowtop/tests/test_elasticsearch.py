@@ -117,3 +117,9 @@ class ElasticPillowTest(SimpleTestCase):
             es_doc = self.es.get_source(self.index, doc['_id'])
             for prop in doc.keys():
                 self.assertEqual(doc[prop], es_doc[prop])
+
+    def test_send_bulk_empty(self):
+        pillow = TestElasticPillow()
+        # this used to fail hard before this test was added
+        pillow.process_bulk([])
+        self.assertEqual(0, get_doc_count(self.es, self.index))
