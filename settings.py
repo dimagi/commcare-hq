@@ -169,6 +169,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
     'django.core.context_processors.static',
+    'ws4redis.context_processors.default',
     "corehq.util.context_processors.current_url_name",
     'corehq.util.context_processors.domain',
     # sticks the base template inside all responses
@@ -198,6 +199,7 @@ DEFAULT_APPS = (
     'compressor',
     'mptt',
     'tastypie',
+    'ws4redis'
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -406,6 +408,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
 
+
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 ####### Domain settings  #######
@@ -545,6 +548,14 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
+
+
+# websockets config
+WEBSOCKET_URL = '/ws/'
+WS4REDIS_PREFIX = 'ws'
+
+WSGI_APPLICATION = 'ws4redis.django_runserver.application'
+
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
@@ -1586,3 +1597,5 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
+
+from ws4redis.redis_store import SELF

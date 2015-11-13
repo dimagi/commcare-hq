@@ -1,7 +1,7 @@
 from django.conf.urls import *
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
-from .views import FlagBrokenBuilds, AuthenticateAs
+from .views import FlagBrokenBuilds, AuthenticateAs, BroadcastChatView
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -33,6 +33,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
     (r'^api/', include(admin_api_urlpatterns)),
     url(r'^download_malt/$', 'malt_as_csv', name='download_malt'),
+    url(r'^chat/$', BroadcastChatView.as_view(), name='broadcast_chat'),
 
     AdminReportDispatcher.url_pattern(),
 )

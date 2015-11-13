@@ -18,7 +18,7 @@ from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
@@ -32,6 +32,8 @@ from django.http import (
 from restkit import Resource
 from restkit.errors import Unauthorized
 from couchdbkit import ResourceNotFound, Database
+from ws4redis.publisher import RedisPublisher
+from ws4redis.redis_store import RedisMessage
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
@@ -845,3 +847,13 @@ def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+class BroadcastChatView(TemplateView):
+    template_name = 'hqadmin/chat_demo/broadcast_chat.html'
+
+    def get(self, request, *args, **kwargs):
+        print 'test'
+        welcome = RedisMessage('Hello everybody')  # create a welcome message to be sent to everybody
+        RedisPublisher(facility='foobar', broadcast=True).publish_message(welcome)
+        return super(BroadcastChatView, self).get(request, *args, **kwargs)
