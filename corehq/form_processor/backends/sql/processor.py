@@ -5,6 +5,7 @@ import hashlib
 
 from django.db import transaction
 
+from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.util import process_xform
@@ -176,6 +177,39 @@ class FormProcessorSQL(object):
         return instance
 
     @staticmethod
+    def get_cases_from_forms(case_db, xforms):
+        """Get all cases affected by the forms. Includes new cases, updated cases.
+        """
+        touched_cases = {}
+        if len(xforms) > 1:
+            domain = xforms[0].domain
+            affected_cases = set()
+            for xform in xforms:
+                affected_cases.update(case_update.id for case_update in get_case_updates(xform))
+
+            for case_id in affected_cases:
+                case = case_db.get(case_id)
+                if not case:
+                    case = CommCareCaseSQL(domain=domain, case_id=case_id)
+                    case_db.set(case_id, case)
+                case = FormProcessorSQL._rebuild_case_from_transactions(case, updated_xforms=xforms)
+                if case:
+                    touched_cases[case.case_id] = case
+        else:
+            xform = xforms[0]
+            for case_update in get_case_updates(xform):
+                case = case_db.get_case_from_case_update(case_update, xform)
+                if case:
+                    touched_cases[case.case_id] = case
+                else:
+                    logging.error(
+                        "XForm %s had a case block that wasn't able to create a case! "
+                        "This usually means it had a missing ID" % xform.get_id
+                    )
+
+        return touched_cases
+
+    @staticmethod
     def hard_rebuild_case(domain, case_id):
         try:
             case = CommCareCaseSQL.get(case_id)
@@ -185,28 +219,37 @@ class FormProcessorSQL(object):
             case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
             found = False
 
-        transactions = get_case_transactions(case_id)
-        strategy = SqlCaseUpdateStrategy(case)
-        strategy.rebuild_from_transactions(transactions)
-
+        case = FormProcessorSQL._rebuild_case_from_transactions(case)
         if case.is_deleted and not found:
             return None
-
         case.save()
+
+    @staticmethod
+    def _rebuild_case_from_transactions(case, updated_xforms=None):
+        transactions = get_case_transactions(case.case_id, updated_xforms=updated_xforms)
+        strategy = SqlCaseUpdateStrategy(case)
+        strategy.rebuild_from_transactions(transactions)
         return case
 
 
-def get_case_transactions(case_id):
-    transactions = CaseTransaction.objects.filter(case_id=case_id).all()
-    form_ids = [transaction.form_uuid for transaction in transactions]
-    forms = XFormInstanceSQL.get_forms_with_attachments(form_ids)
+def get_case_transactions(case_id, updated_xforms=None):
+    transactions = list(CaseTransaction.objects.filter(case_id=case_id).all())
+    form_ids = {transaction.form_uuid for transaction in transactions}
+    updated_xforms_map = {
+        xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
+    } if updated_xforms else {}
+
+    form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
+    xform_map = {form.form_id: form for form in XFormInstanceSQL.get_forms_with_attachments(form_ids_to_fetch)}
 
     def get_form(form_id):
-        for form in forms:
-            if form.form_id == form_id:
-                return form
+        if form_id in updated_xforms_map:
+            return updated_xforms_map[form_id]
 
-        raise XFormNotFound
+        try:
+            return xform_map[form_id]
+        except KeyError:
+            raise XFormNotFound
 
     for transaction in transactions:
         if transaction.form_uuid:

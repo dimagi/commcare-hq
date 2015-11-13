@@ -141,6 +141,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.opened_by = None
 
     def rebuild_from_transactions(self, transactions):
+        # TODO: handle case indices
         self._reset_case_state()
 
         real_transactions = []
@@ -151,13 +152,15 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
-        self.case.track_create(CaseTransaction(
+        self.case.deleted = bool(real_transactions)
+
+        rebuild_transaction = CaseTransaction(
             case=self.case,
             server_date=datetime.utcnow(),
-            type=CaseTransaction.TYPE_REBUILD)
+            type=CaseTransaction.TYPE_REBUILD
         )
-
-        self.case.deleted = bool(real_transactions)
+        self.case.track_create(rebuild_transaction)
+        self.case.modified_on = rebuild_transaction.server_date
 
     def _apply_form_transaction(self, transaction):
         form = transaction.form
