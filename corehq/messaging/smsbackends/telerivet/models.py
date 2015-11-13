@@ -75,6 +75,7 @@ class TelerivetBackend(SMSBackend):
 
 class SQLTelerivetBackend(SQLSMSBackend):
     class Meta:
+        app_label = 'sms'
         proxy = True
 
     @classmethod
