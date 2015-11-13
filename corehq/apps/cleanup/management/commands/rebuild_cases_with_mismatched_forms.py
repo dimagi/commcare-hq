@@ -6,6 +6,8 @@ from restkit import RequestFailed
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.const import CASE_ACTION_REBUILD
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchlog.models import ExceptionRecord
 
 
@@ -93,11 +95,11 @@ def archive_exception(exception):
         pass
 
 
-def should_rebuild(case_id):
+def should_rebuild(domain, case_id):
     try:
-        case = CommCareCase.get(case_id)
-        return case.actions[-1].action_type != CASE_ACTION_REBUILD
-    except ResourceNotFound:
+        case = FormProcessorInterface(domain).case_model.get(case_id)
+        return hasattr(case, 'actions') and case.actions[-1].action_type != CASE_ACTION_REBUILD
+    except CaseNotFound:
         return True
 
 
@@ -122,16 +124,17 @@ class Command(BaseCommand):
                 record = json.loads(line)
                 exception = ExceptionRecord.wrap(record['exception'])
                 case_id = record.get('case_id', None)
-                if not case_id or case_id in seen_cases:
+                domain = record.get('domain', None)
+                if not domain or not case_id or case_id in seen_cases:
                     count += 1
                     archive_exception(exception)
                     continue
 
                 try:
                     seen_cases.add(case_id)
-                    if should_rebuild(case_id):
+                    if should_rebuild(domain, case_id):
                         cases_rebuilt.add(case_id)
-                        rebuild_case_from_forms(case_id)
+                        rebuild_case_from_forms(domain, case_id)
                         print 'rebuilt case {}'.format(case_id)
                     archive_exception(exception)
                 except Exception, e:

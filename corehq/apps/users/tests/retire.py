@@ -85,7 +85,7 @@ class RetireUserTestCase(TestCase):
 
         self.other_user.retire()
 
-        rebuild_case.assert_called_once_with(case_id)
+        rebuild_case.assert_called_once_with(self.domain, case_id)
 
     @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_dont_rebuild(self, rebuild_case):
@@ -122,7 +122,7 @@ class RetireUserTestCase(TestCase):
 
         self.other_user.retire()
 
-        expected_call_args = [mock.call(case_id) for case_id in case_ids]
+        expected_call_args = [mock.call(self.domain, case_id) for case_id in case_ids]
 
         self.assertEqual(rebuild_case.call_count, len(case_ids))
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
@@ -149,7 +149,7 @@ class RetireUserTestCase(TestCase):
 
         self.other_user.retire()
 
-        expected_call_args = [mock.call(case_id) for case_id in case_ids[1:]]
+        expected_call_args = [mock.call(self.domain, case_id) for case_id in case_ids[1:]]
 
         self.assertEqual(rebuild_case.call_count, len(case_ids) - 1)
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)

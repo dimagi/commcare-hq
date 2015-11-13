@@ -93,7 +93,7 @@ class RebuildStockStateTest(TestCase):
         """
         form_id = self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         case_id = self.case.case_id
-        rebuild_case_from_forms(case_id)
+        rebuild_case_from_forms(self.domain, case_id)
         case = CommCareCase.get(case_id)
         self.assertEqual(case.xform_ids, [form_id])
         self.assertEqual(case.actions[0].xform_id, form_id)

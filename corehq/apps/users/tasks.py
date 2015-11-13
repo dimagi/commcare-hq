@@ -56,7 +56,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
-def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
+def tag_forms_as_deleted_rebuild_associated_cases(domain, form_id_list, deletion_id,
                                                   deleted_cases=None):
     """
     Upon user deletion, mark associated forms as deleted and prep cases
@@ -70,6 +70,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
     forms_to_check = get_docs(XFormInstance.get_db(), form_id_list)
     forms_to_save = []
     for form in forms_to_check:
+        assert form.domain == domain
         if not is_deleted(form):
             form['doc_type'] += DELETED_SUFFIX
             form['-deletion_id'] = deletion_id
@@ -80,7 +81,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
 
     XFormInstance.get_db().bulk_save(forms_to_save)
     for case in cases_to_rebuild - deleted_cases:
-        _rebuild_case_with_retries.delay(case)
+        _rebuild_case_with_retries.delay(domain, case)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -116,7 +117,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
 
 @task(bind=True, queue='background_queue', ignore_result=True,
       default_retry_delay=5 * 60, max_retries=3, acks_late=True)
-def _rebuild_case_with_retries(self, case_id):
+def _rebuild_case_with_retries(self, domain, case_id):
     """
     Rebuild a case with retries
     - retry in 5 min if failure occurs after (default_retry_delay)
@@ -124,7 +125,7 @@ def _rebuild_case_with_retries(self, case_id):
     """
     from casexml.apps.case.cleanup import rebuild_case_from_forms
     try:
-        rebuild_case_from_forms(case_id)
+        rebuild_case_from_forms(domain, case_id)
     except (UnexpectedDeletedXForm, ResourceConflict) as exc:
         try:
             self.retry(exc=exc)

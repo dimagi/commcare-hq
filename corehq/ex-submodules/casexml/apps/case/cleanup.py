@@ -11,6 +11,7 @@ from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms import fetch_and_wrap_form
 
 
@@ -72,7 +73,7 @@ def rebuild_case_from_actions(case, actions):
     strategy.soft_rebuild_case()
 
 
-def rebuild_case_from_forms(case_id):
+def rebuild_case_from_forms(domain, case_id):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
     referencing it. Useful when things go wrong or when you need to manually
