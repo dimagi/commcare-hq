@@ -11,7 +11,7 @@ from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.api import incoming, send_sms
 from corehq.apps.sms.models import PhoneNumber
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.domain.models import Domain
 
 

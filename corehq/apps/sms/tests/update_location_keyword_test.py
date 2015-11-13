@@ -9,7 +9,7 @@ from corehq.apps.sms.messages import get_message
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 import corehq.apps.sms.messages as messages
 
 
