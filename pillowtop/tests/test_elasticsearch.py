@@ -86,12 +86,7 @@ class ElasticPillowTest(SimpleTestCase):
         pillow = TestElasticPillow()
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
-        change = Change(
-            id=doc_id,
-            sequence_id=0,
-            document=doc
-        )
-        pillow.processor(change, PillowRuntimeContext(do_set_checkpoint=False))
+        _send_doc_to_pillow(pillow, doc_id, doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         es_doc = self.es.get_source(self.index, doc_id)
         for prop in doc:
@@ -117,3 +112,12 @@ class ElasticPillowTest(SimpleTestCase):
             es_doc = self.es.get_source(self.index, doc['_id'])
             for prop in doc.keys():
                 self.assertEqual(doc[prop], es_doc[prop])
+
+
+def _send_doc_to_pillow(pillow, doc_id, doc):
+    change = Change(
+        id=doc_id,
+        sequence_id=0,
+        document=doc
+    )
+    pillow.processor(change, PillowRuntimeContext(do_set_checkpoint=False))
