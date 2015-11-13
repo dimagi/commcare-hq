@@ -1,7 +1,7 @@
 from corehq.apps.users.models import CouchUser
 
 
-def get_user_id_by_username(self, username):
+def get_user_id_by_username(username):
     result = CouchUser.view(
         'users/by_username',
         key=username,

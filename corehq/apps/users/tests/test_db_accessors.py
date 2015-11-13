@@ -3,7 +3,12 @@ from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_commcare_users_by_domain,
     get_user_docs_by_username,
-    delete_all_users, get_all_user_ids)
+    delete_all_users,
+    get_all_user_ids,
+)
+from corehq.apps.users.dbaccessors.couch_users import (
+    get_user_id_by_username,
+)
 from corehq.apps.domain.models import Domain
 
 
@@ -79,3 +84,8 @@ class AllCommCareUsersTest(TestCase):
         self.assertEqual(4, len(all_ids))
         for id in [self.ccuser_1._id, self.ccuser_2._id, self.web_user._id, self.ccuser_other_domain._id]:
             self.assertTrue(id in all_ids)
+
+    def test_get_id_by_username(self):
+        user_id = get_user_id_by_username(self.ccuser_1.username)
+        self.assertEqual(user_id, self.ccuser_1._id)
+
