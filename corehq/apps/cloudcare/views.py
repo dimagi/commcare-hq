@@ -49,8 +49,12 @@ from xml2json.lib import xml2json
 import requests
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
-from corehq.apps.style.decorators import use_knockout_js, use_datatables, \
-    use_bootstrap3
+from corehq.apps.style.decorators import (
+    use_knockout_js,
+    use_datatables,
+    use_bootstrap3,
+    use_jquery_ui,
+)
 from django.shortcuts import get_object_or_404
 
 
@@ -71,6 +75,7 @@ class CloudcareMain(View):
     @use_knockout_js
     @use_bootstrap3
     @use_datatables
+    @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
