@@ -1329,9 +1329,6 @@ PILLOWTOPS = {
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
     ],
-    'phonelog': [
-        'corehq.pillows.log.PhoneLogPillow',
-    ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
