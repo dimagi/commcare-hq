@@ -776,6 +776,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-lg-2'
+        self.helper.field_class = 'col-lg-10'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -804,7 +806,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 StrictButton(
                     _("Update Project Information"),
                     type="submit",
-                    css_class='btn btn-primary',
+                    css_class='btn btn-primary col-lg-offset-2',
                 ),
             ),
         )

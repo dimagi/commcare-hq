@@ -34,7 +34,8 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
+    use_jquery_ui_multiselect
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -2165,6 +2166,14 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     page_title = ugettext_lazy("Project Information")
     template_name = 'domain/internal_settings.html'
     strict_domain_fetching = True
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_jquery_ui_multiselect
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def autocomplete_fields(self):
