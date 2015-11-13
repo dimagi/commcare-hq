@@ -73,8 +73,8 @@ class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMi
             doc = couchforms.fetch_and_wrap_form(doc_id)
             if doc and doc.domain == domain:
                 return doc
-        except ResourceNotFound:
-            pass # covered by the below
+        except (ResourceNotFound, couchforms.UnexpectedDeletedXForm):
+            pass  # covered by the below
         except AttributeError:
             # there's a weird edge case if you reference a form with a case id
             # that explodes on the "version" property. might as well swallow that
