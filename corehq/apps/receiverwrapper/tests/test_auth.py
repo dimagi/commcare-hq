@@ -139,19 +139,6 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
-    def test_noauth_devicelog(self):
-        self._test_post(
-            file_path=self.device_log,
-            authtype='noauth',
-            expected_status=201,
-            expected_auth_context={
-                'doc_type': 'WaivedAuthContext',
-                'domain': self.domain,
-                'authenticated': False,
-                'user_id': None,
-            },
-        )
-
     def test_bad_noauth(self):
         """
         if someone submits a form in noauth mode, but it creates or updates
