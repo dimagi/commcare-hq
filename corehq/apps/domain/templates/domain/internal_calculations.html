@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -39,7 +39,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="form form-horizontal">
         <p><button type="button" id="load-all-btn" class="btn btn-primary">{% trans 'Load EVERYTHING' %}</button></p>
         <hr />
