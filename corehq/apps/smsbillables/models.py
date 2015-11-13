@@ -9,7 +9,7 @@ from twilio.rest import TwilioRestClient
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
-from corehq.apps.sms.mixin import MobileBackend, SMSBackend
+from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
 from corehq.messaging.smsbackends.test.api import TestSMSBackend
@@ -321,16 +321,16 @@ class SmsBillable(models.Model):
         country_code, national_number = get_country_code_and_national_number(phone_number)
 
         if backend_instance is None or _sms_backend_is_global(backend_instance):
-            if backend_instance is None and backend_api_id == TwilioBackend.get_api_id():
-                def _get_twilio_client():
-                    twilio_backend = MobileBackend.load_by_name(None, "MOBILE_BACKEND_TWILIO")
+            if backend_api_id == TwilioBackend.get_api_id():
+                def _get_twilio_client(twilio_backend_id):
+                    twilio_backend = SMSBackend.get(twilio_backend_id)
                     account_sid = twilio_backend.account_sid
                     auth_token = twilio_backend.auth_token
                     return TwilioRestClient(account_sid, auth_token)
 
                 try:
                     if message_log.backend_message_id:
-                        twilio_message = _get_twilio_client().messages.get(message_log.backend_message_id)
+                        twilio_message = _get_twilio_client(backend_instance).messages.get(message_log.backend_message_id)
                         billable.direct_gateway_fee = Decimal(twilio_message.price) * -1
                         currency = Currency.objects.get(code=twilio_message.price_unit)
                     else:
