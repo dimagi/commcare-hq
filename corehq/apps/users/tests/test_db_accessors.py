@@ -88,4 +88,3 @@ class AllCommCareUsersTest(TestCase):
     def test_get_id_by_username(self):
         user_id = get_user_id_by_username(self.ccuser_1.username)
         self.assertEqual(user_id, self.ccuser_1._id)
-
