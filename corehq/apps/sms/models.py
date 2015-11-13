@@ -1491,6 +1491,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     load_balancing_numbers = models.TextField(default='[]')
 
     class Meta:
+        db_table = 'mobilebackend'
         unique_together = ('domain', 'name')
 
     @classmethod

@@ -334,7 +334,7 @@ class MobileBackend(SyncCouchToSQLMixin, Document):
     def _migration_sync_to_sql(self, sql_object):
         from corehq.apps.sms.models import MobileBackendInvitation
         sql_object.backend_type = self.backend_type
-        sql_object.hq_api_id = self.get_api_id()
+        sql_object.hq_api_id = getattr(self, 'incoming_api_id', None) or self.get_api_id()
         sql_object.is_global = self.is_global
         sql_object.domain = self.domain
         sql_object.name = self.name
