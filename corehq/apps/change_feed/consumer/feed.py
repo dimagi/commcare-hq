@@ -25,13 +25,7 @@ class KafkaChangeFeed(ChangeFeed):
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else 100
 
-        consumer = KafkaConsumer(
-            self._topic,
-            group_id=self._group_id,
-            bootstrap_servers=[settings.KAFKA_URL],
-            consumer_timeout_ms=timeout,
-            auto_offset_reset='smallest',
-        )
+        consumer = self._get_consumer(timeout)
         offset = int(since)  # coerce sequence IDs to ints
         # this is how you tell the consumer to start from a certain point in the sequence
         consumer.set_topic_partitions((self._topic, self._partition, offset))
@@ -41,6 +35,15 @@ class KafkaChangeFeed(ChangeFeed):
             except ConsumerTimeout:
                 assert not forever, 'Kafka pillow should not timeout when waiting forever!'
                 # no need to do anything since this is just telling us we've reached the end of the feed
+
+    def _get_consumer(self, timeout):
+        return KafkaConsumer(
+            self._topic,
+            group_id=self._group_id,
+            bootstrap_servers=[settings.KAFKA_URL],
+            consumer_timeout_ms=timeout,
+            auto_offset_reset='smallest',
+        )
 
 
 def change_from_kafka_message(message):
