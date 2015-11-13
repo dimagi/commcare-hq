@@ -18,6 +18,9 @@ class MockChangeFeed(ChangeFeed):
             for val in self._queue[since:]:
                 yield val
 
+    def get_latest_change_id(self):
+        return len(self._queue)
+
 
 class RandomChangeFeed(ChangeFeed):
     """
@@ -37,6 +40,9 @@ class RandomChangeFeed(ChangeFeed):
             while since < self._count:
                 yield self._change_generator(since)
                 since += 1
+
+    def get_latest_change_id(self):
+        return self._count
 
 
 def random_change(sequence_id):

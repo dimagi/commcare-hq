@@ -2,8 +2,10 @@ from __future__ import division
 from collections import namedtuple
 from datetime import datetime
 import importlib
+
 from django.conf import settings
 from dimagi.utils.parsing import string_to_utc_datetime
+
 from pillowtop.exceptions import PillowNotFoundError
 
 
@@ -129,16 +131,7 @@ def get_pillow_json(pillow_config):
         'name': pillow_config.name,
         'seq': force_seq_int(checkpoint.get('seq')),
         'old_seq': force_seq_int(checkpoint.get('old_seq')) or 0,
-        'db_seq': force_seq_int(_get_current_seq_for_pillow(pillow)),
+        'db_seq': force_seq_int(pillow.get_change_feed().get_latest_change_id()),
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
-
-
-def _get_current_seq_for_pillow(pillow):
-    if hasattr(pillow, 'get_couch_db'):
-        return get_current_seq(pillow.get_couch_db())
-
-
-def get_current_seq(couch_db):
-    return couch_db.info()['update_seq']

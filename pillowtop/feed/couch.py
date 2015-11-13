@@ -25,6 +25,9 @@ class CouchChangeFeed(ChangeFeed):
         for couch_change in changes_stream:
             yield change_from_couch_row(couch_change)
 
+    def get_latest_change_id(self):
+        return get_current_seq(self._couch_db)
+
 
 def change_from_couch_row(couch_change):
     return Change(
@@ -44,3 +47,7 @@ def force_to_change(dict_or_change):
         assert isinstance(dict_or_change, dict)
         return change_from_couch_row(dict_or_change)
     return dict_or_change
+
+
+def get_current_seq(couch_db):
+    return couch_db.info()['update_seq']
