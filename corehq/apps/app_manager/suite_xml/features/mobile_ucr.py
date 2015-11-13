@@ -145,7 +145,9 @@ def _get_summary_details(config):
 
                 def _column_to_series(column):
                     return Series(
-                        nodeset="instance('reports')/reports/report[@id='{}']/rows/row".format(config.uuid),
+                        nodeset=(
+                            "instance('reports')/reports/report[@id='{}']/rows/row{}"
+                            .format(config.uuid, _data_filter_xpath(config))),
                         x_function="column[@id='{}']".format(chart_config.x_axis_column),
                         y_function="column[@id='{}']".format(column),
                         configuration=ConfigurationGroup(configs=[
