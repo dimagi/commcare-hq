@@ -636,28 +636,14 @@ class AliasedElasticPillow(BasicPillow):
 
         This operation removes the alias from any other indices it might be assigned to
         """
-        es = self.get_es()
-        if self.get_es_new().indices.exists_alias(self.es_alias):
+        es_new = self.get_es_new()
+        if es_new.indices.exists_alias(self.es_alias):
             # this part removes the conflicting aliases
-            alias_indices = es[self.es_alias].get('_status')['indices'].keys()
-            remove_actions = [{"remove": {"index": x, "alias": self.es_alias}} for x in
-                              alias_indices]
-            remove_data = {"actions": remove_actions}
-            es.post('_aliases', data=remove_data)
+            alias_indices = es_new.indices.get_alias(self.es_alias).keys()
+            for aliased_index in alias_indices:
+                es_new.indices.delete_alias(aliased_index, self.es_alias)
 
-        es.post(
-            '_aliases',
-            data={
-                "actions": [
-                    {
-                        "add": {
-                            "index": self.es_index,
-                            "alias": self.es_alias
-                        }
-                    }
-                ]
-            }
-        )
+        es_new.indices.put_alias(self.es_index, self.es_alias)
 
     @staticmethod
     def calc_mapping_hash(mapping):
