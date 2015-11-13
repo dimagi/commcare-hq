@@ -667,7 +667,8 @@ class AliasedElasticPillow(BasicPillow):
             }
         )
 
-    def calc_mapping_hash(self, mapping):
+    @staticmethod
+    def calc_mapping_hash(mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
     def get_unique_id(self):
