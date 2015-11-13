@@ -608,21 +608,21 @@
         "name": "UnknownUsersPillow"
     }, 
     "UserPillow": {
-        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_20150430_1821.testhq", 
+        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq",
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_20150430_1821.testhq", 
+        "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq",
         "couch_filter": "users/all_users", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__users_test", 
         "document_class": "CommCareUser", 
         "es_alias": "hqusers", 
-        "es_index": "hqusers_20150430_1821", 
+        "es_index": "hqusers_2015-11-12_1638",
         "es_type": "user", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.user.UserPillow", 
         "include_docs": true, 
         "name": "UserPillow", 
-        "unique_id": "hqusers_20150430_1821"
+        "unique_id": "hqusers_2015-11-12_1638"
     }, 
     "WorldVisionChildFluffPillow": {
         "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq", 
