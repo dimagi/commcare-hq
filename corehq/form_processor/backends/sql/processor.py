@@ -8,7 +8,7 @@ from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
-    XFormOperationSQL, CommCareCaseIndexSQL, CaseForms
+    XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction
 )
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
@@ -80,7 +80,7 @@ class FormProcessorSQL(object):
                     operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
                     operations.update(xform_id=xform.form_id)
 
-                    CaseForms.objects.filter(form_uuid=xform.orig_id).delete()
+                    CaseTransaction.objects.filter(form_uuid=xform.orig_id).delete()
 
             for unsaved_attachment in instance.unsaved_attachments:
                 unsaved_attachment.xform = instance
@@ -95,7 +95,7 @@ class FormProcessorSQL(object):
                     case.save()
 
                     FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
-                    FormProcessorSQL.save_tracked_models(case, CaseForms)
+                    FormProcessorSQL.save_tracked_models(case, CaseTransaction)
                     case.clear_tracked_models()
 
     @staticmethod

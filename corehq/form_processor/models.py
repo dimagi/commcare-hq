@@ -442,7 +442,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
-        return CaseForms.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
+        return CaseTransaction.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -523,13 +523,20 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
         ]
 
 
-class CaseForms(models.Model):
+class CaseTransaction(models.Model):
+    TYPE_FORM = 0
+    TYPE_REBUILD = 1
+    TYPE_CHOICES = (
+        (TYPE_FORM, 'form'),
+        (TYPE_REBUILD, 'rebuild')
+    )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
         related_name="xform_set", related_query_name="xform"
     )
     form_uuid = models.CharField(max_length=255, null=False)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
+    type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
 
     class Meta:
         unique_together = ("case", "form_uuid")

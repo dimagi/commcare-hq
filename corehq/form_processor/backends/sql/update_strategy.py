@@ -2,7 +2,7 @@ import logging
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xml import V2
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseForms
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -11,6 +11,16 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
 
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+        self._apply_case_update(case_update, xformdoc)
+
+        self.case.track_create(CaseTransaction(
+            case=self.case,
+            form_uuid=xformdoc.form_id,
+            server_date=xformdoc.received_on,
+            type=CaseTransaction.TYPE_FORM)
+        )
+
+    def _apply_case_update(self, case_update, xformdoc):
         if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
@@ -33,12 +43,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         modified_on = case_update.guess_modified_on()
         if self.case.modified_on is None or modified_on > self.case.modified_on:
             self.case.modified_on = modified_on
-
-        self.case.track_create(CaseForms(
-            case=self.case,
-            form_uuid=xformdoc.form_id,
-            server_date=xformdoc.received_on)
-        )
 
     def _apply_action(self, case_update, action, xform):
         if action.action_type_slug == const.CASE_ACTION_CREATE:
