@@ -653,9 +653,19 @@ class AliasedElasticPillow(BasicPillow):
             remove_data = {"actions": remove_actions}
             es.post('_aliases', data=remove_data)
 
-        es.post('_aliases', data={"actions": [{"add":
-                                                   {"index": self.es_index,
-                                                    "alias": self.es_alias}}]})
+        es.post(
+            '_aliases',
+            data={
+                "actions": [
+                    {
+                        "add": {
+                            "index": self.es_index,
+                            "alias": self.es_alias
+                        }
+                    }
+                ]
+            }
+        )
 
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
