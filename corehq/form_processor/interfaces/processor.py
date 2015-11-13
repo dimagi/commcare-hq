@@ -132,3 +132,6 @@ class FormProcessorInterface(object):
 
     def hard_rebuild_case(self, case_id):
         return self.processor.hard_rebuild_case(self.domain, case_id)
+
+    def get_cases_from_forms(self, xforms, case_db):
+        return self.processor.get_cases_from_forms(xforms, case_db)

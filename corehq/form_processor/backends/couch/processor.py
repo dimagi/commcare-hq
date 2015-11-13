@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import get_case_forms, rebuild_case_from_actions
@@ -119,6 +120,26 @@ class FormProcessorCouch(object):
     @classmethod
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
+
+    @staticmethod
+    def get_cases_from_forms(case_db, xforms):
+        """Get all cases affected by the forms. Includes new cases, updated cases.
+        """
+        # have to apply the deprecations before the updates
+        sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
+        touched_cases = {}
+        for xform in sorted_forms:
+            for case_update in get_case_updates(xform):
+                case_doc = case_db.get_case_from_case_update(case_update, xform)
+                if case_doc:
+                    touched_cases[case_doc.case_id] = case_doc
+                else:
+                    logging.error(
+                        "XForm %s had a case block that wasn't able to create a case! "
+                        "This usually means it had a missing ID" % xform.get_id
+                    )
+
+        return touched_cases
 
     @staticmethod
     def hard_rebuild_case(domain, case_id):
