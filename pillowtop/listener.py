@@ -640,24 +640,19 @@ class AliasedElasticPillow(BasicPillow):
     # todo: remove from class - move to the ptop_es_manage command
     def assume_alias(self):
         """
-        For this instance, have the index that represents this index receive the alias itself.
-        This presents a management issue later if we route out additional
-        indexes/aliases that we automate this carefully. But for now, 1 alias to 1 index.
-        Routing will need a refactor anyway
-        """
+        Assigns the pillow's `es_alias` to its index in elasticsearch.
 
+        This operation removes all other aliases assigned to the index.
+        """
         es = self.get_es()
         if es.head(self.es_alias):
-            #remove all existing aliases - this is destructive and could be harmful, but for current
-            #uses, it is legal - in a more delicate routing arrangement, a configuration file of
-            # some sort should be in use.
+            # this part removes the old aliases
             alias_indices = es[self.es_alias].get('_status')['indices'].keys()
-
             remove_actions = [{"remove": {"index": x, "alias": self.es_alias}} for x in
                               alias_indices]
             remove_data = {"actions": remove_actions}
             es.post('_aliases', data=remove_data)
-            #now reapply HEAD/master index
+
         es.post('_aliases', data={"actions": [{"add":
                                                    {"index": self.es_index,
                                                     "alias": self.es_alias}}]})
