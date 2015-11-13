@@ -465,15 +465,19 @@ class AliasedElasticPillow(BasicPillow):
         """
         Initializes the elasticsearch mapping for this pillow if it is not found.
         """
-        mapping = self.get_index_mapping()
-        if not mapping:
+        try:
+            mapping = self.get_index_mapping()
+        except ElasticException:
             pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
             mapping = copy(self.default_mapping)
             mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-            mapping_res = self.set_mapping(self.es_type, {self.es_type: mapping})
-            if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
-                # API confirms OK, trust it.
-                pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
+            try:
+                mapping_res = self.set_mapping(self.es_type, {self.es_type: mapping})
+                if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
+                    # API confirms OK, trust it.
+                    pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
+            except ElasticException:
+                pass
         else:
             pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
 
