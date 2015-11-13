@@ -328,7 +328,7 @@
     "MVPCaseIndicatorPillow": {
         "advertised_name": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
+        "checkpoint_id": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -344,7 +344,7 @@
     "MVPFormIndicatorPillow": {
         "advertised_name": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
+        "checkpoint_id": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
