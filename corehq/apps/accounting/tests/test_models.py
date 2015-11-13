@@ -17,6 +17,10 @@ from corehq.apps.accounting.models import (
     SMALL_INVOICE_THRESHOLD,
     StripePaymentMethod,
 )
+from corehq.apps.smsbillables.models import (
+    SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
+    SmsBillable,
+)
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.utils import get_previous_month_date_range
 
@@ -55,6 +59,11 @@ class TestBillingAccount(BaseAccountingTest):
     def tearDown(self):
         self.billing_contact.delete()
         self.dimagi_user.delete()
+        SmsBillable.objects.all().delete()
+        SmsGatewayFee.objects.all().delete()
+        SmsGatewayFeeCriteria.objects.all().delete()
+        SmsUsageFee.objects.all().delete()
+        SmsUsageFeeCriteria.objects.all().delete()
         BillingAccount.objects.all().delete()
         Currency.objects.all().delete()
         super(TestBillingAccount, self).tearDown()
