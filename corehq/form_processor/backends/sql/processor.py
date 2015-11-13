@@ -4,12 +4,15 @@ import uuid
 import hashlib
 
 from django.db import transaction
+
+from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
-    XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction
-)
+    XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
+    CommCareCaseSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -171,3 +174,45 @@ class FormProcessorSQL(object):
                 instance.id = None
 
         return instance
+
+    @staticmethod
+    def hard_rebuild_case(domain, case_id):
+        try:
+            case = CommCareCaseSQL.get(case_id)
+            assert case.domain == domain
+            found = True
+        except CaseNotFound:
+            case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
+            found = False
+
+        transactions = get_case_transactions(case_id)
+        strategy = SqlCaseUpdateStrategy(case)
+        strategy.rebuild_from_transactions(transactions)
+
+        if case.is_deleted and not found:
+            return None
+
+        case.save()
+        return case
+
+
+def get_case_transactions(case_id):
+    transactions = CaseTransaction.objects.filter(case_id=case_id).all()
+    form_ids = [transaction.form_uuid for transaction in transactions]
+    forms = XFormInstanceSQL.get_forms_with_attachments(form_ids)
+
+    def get_form(form_id):
+        for form in forms:
+            if form.form_id == form_id:
+                return form
+
+        raise XFormNotFound
+
+    for transaction in transactions:
+        if transaction.form_uuid:
+            try:
+                transaction.cached_form = get_form(transaction.form_uuid)
+            except XFormNotFound:
+                logging.error('Form not found during rebuild: %s', transaction.form_uuid)
+
+    return transactions

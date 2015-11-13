@@ -1,7 +1,12 @@
 import logging
+
+from datetime import datetime
+
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
+from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
+from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
@@ -117,3 +122,53 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.closed = True
         self.case.closed_on = case_update.guess_modified_on()
         self.case.closed_by = case_update.user_id
+
+    def _reset_case_state(self):
+        """
+        Clear known case properties, and all dynamic properties
+        """
+        self.case.case_json = {}
+        self.case.deleted = False
+
+        # hard-coded normal properties (from a create block)
+        for prop, default_value in KNOWN_PROPERTIES.items():
+            setattr(self.case, prop, default_value)
+
+        self.case.closed = False
+        self.case.modified_on = None
+        self.case.closed_on = None
+        self.case.closed_by = ''
+        self.case.opened_by = None
+
+    def rebuild_from_transactions(self, transactions):
+        self._reset_case_state()
+
+        real_transactions = []
+        for transaction in transactions:
+            if not transaction.is_relevant:
+                self.case.track_delete(transaction)
+            elif transaction.type == CaseTransaction.TYPE_FORM:
+                self._apply_form_transaction(transaction)
+                real_transactions.append(transaction)
+
+        self.case.track_create(CaseTransaction(
+            case=self.case,
+            server_date=datetime.utcnow(),
+            type=CaseTransaction.TYPE_REBUILD)
+        )
+
+        self.case.deleted = bool(real_transactions)
+
+    def _apply_form_transaction(self, transaction):
+        form = transaction.form
+        if form:
+            assert form.domain == self.case.domain
+            case_updates = get_case_updates(form)
+            filtered_updates = [u for u in case_updates if u.id == self.case.case_id]
+            # TODO: stock
+            # stock_actions = get_stock_actions(form)
+            # case_actions.extend([intent.action
+            #                      for intent in stock_actions.case_action_intents
+            #                      if not intent.is_deprecation])
+            for case_update in filtered_updates:
+                self._apply_case_update(case_update, form)

@@ -141,6 +141,12 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
             raise XFormNotFound
 
     @classmethod
+    def get_forms_with_attachments(cls, xform_ids):
+        return XFormInstanceSQL.objects.prefetch_related(
+            Prefetch('attachments', to_attr='cached_attachments')
+        ).filter(form_uuid__in=xform_ids)
+
+    @classmethod
     def get_obj_id(cls, obj):
         return obj.form_uuid
 
@@ -534,9 +540,20 @@ class CaseTransaction(models.Model):
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
         related_name="xform_set", related_query_name="xform"
     )
-    form_uuid = models.CharField(max_length=255, null=False)  # can't be a foreign key due to partitioning
+    form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
+
+    @property
+    def is_relevant(self):
+        return self.form.is_normal
+
+    @property
+    def form(self):
+        form = getattr(self, 'cached_form', None)
+        if not form:
+            self.cached_form = XFormAttachmentSQL.get(self.form_uuid)
+        return self.cached_form
 
     class Meta:
         unique_together = ("case", "form_uuid")
