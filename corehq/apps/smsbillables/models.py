@@ -281,7 +281,7 @@ class SmsBillable(models.Model):
             try:
                 amount = SmsGatewayFee.objects.get(id=self.gateway_fee.id).amount
             except ObjectDoesNotExist:
-                pass
+                amount = Decimal('0.0')
         elif self.direct_gateway_fee is not None:
             amount = self.direct_gateway_fee
         else:
