@@ -328,9 +328,23 @@ class SmsBillable(models.Model):
                     auth_token = twilio_backend.auth_token
                     return TwilioRestClient(account_sid, auth_token)
 
-                twilio_message = _get_twilio_client().messages.get(message_log.backend_message_id)
-                billable.direct_gateway_fee = Decimal(twilio_message.price) * -1
-                currency = Currency.objects.get(code=twilio_message.price_unit)
+                try:
+                    if message_log.backend_message_id:
+                        twilio_message = _get_twilio_client().messages.get(message_log.backend_message_id)
+                        billable.direct_gateway_fee = Decimal(twilio_message.price) * -1
+                        currency = Currency.objects.get(code=twilio_message.price_unit)
+                    else:
+                        smsbillables_logging.error(
+                            "Could not create gateway fee for Twilio message %s: no backend_message_id" % (
+                                message_log._id,
+                            )
+                        )
+                except Exception as e:
+                    smsbillables_logging.error(
+                        "Error looking up Twilio gateway fee for SMSLog %s: %s" % (
+                            message_log._id, e.message
+                        )
+                    )
             else:
                 billable.gateway_fee = SmsGatewayFee.get_by_criteria(
                     backend_api_id,
