@@ -32,6 +32,7 @@ def format_angular_error(error_msg, additional_data=None,
         <...additional_data...>,
     }
     """
+    # todo log error
     resp = {
         'error': error_msg,
     }
