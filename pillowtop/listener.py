@@ -482,15 +482,7 @@ class AliasedElasticPillow(BasicPillow):
             # If offline, just say the index is there and proceed along
             return True
 
-        es = self.get_es()
-        try:
-            res = es.head(self.es_index)
-        except ElasticException as e:
-            if e.status_code == 404:
-                return False
-            else:
-                raise
-        return res
+        return self.get_es_new().indices.exists(self.es_index)
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
