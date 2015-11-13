@@ -200,6 +200,7 @@ class SubscriptionType(object):
     TRIAL = "TRIAL"
     SANDBOX = "SANDBOX"
     INTERNAL = "INTERNAL"
+    NOT_SET = "NOT_SET"
     CHOICES = (
         (CONTRACTED, "Implementation"),
         (SELF_SERVICE, "Product"),
@@ -264,6 +265,7 @@ class LastPayment(object):
 class PreOrPostPay(object):
     PREPAY = "PREPAY"
     POSTPAY = "POSTPAY"
+    NOT_SET = "NOT_SET"
     CHOICES = (
         (PREPAY, "Prepay"),
         (POSTPAY, "Postpay"),
@@ -332,7 +334,7 @@ class BillingAccount(models.Model):
     )
     pre_or_post_pay = models.CharField(
         max_length=25,
-        default=PreOrPostPay.POSTPAY,
+        default=PreOrPostPay.NOT_SET,
         choices=PreOrPostPay.CHOICES,
     )
 
@@ -998,7 +1000,7 @@ class Subscription(models.Model):
     service_type = models.CharField(
         max_length=25,
         choices=SubscriptionType.CHOICES,
-        default=SubscriptionType.CONTRACTED
+        default=SubscriptionType.NOT_SET
     )
     pro_bono_status = models.CharField(
         max_length=25,
@@ -1259,7 +1261,7 @@ class Subscription(models.Model):
             is_active=is_active_subscription(new_start_date, date_end),
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
-            service_type=(service_type or SubscriptionType.CONTRACTED),
+            service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
             **kwargs

@@ -422,6 +422,8 @@ class AutoPayInvoicePaymentHandler(object):
                 continue
             else:
                 invoice.pay_invoice(payment_record)
+                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                invoice.account.save()
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
