@@ -84,8 +84,6 @@ class FormProcessorSQL(object):
                     operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
                     operations.update(xform_id=xform.form_id)
 
-                    CaseTransaction.objects.filter(form_uuid=xform.orig_id).delete()
-
             for unsaved_attachment in instance.unsaved_attachments:
                 unsaved_attachment.xform = instance
             instance.attachments.bulk_create(instance.unsaved_attachments)
