@@ -637,7 +637,7 @@ class AliasedElasticPillow(BasicPillow):
         This operation removes all other aliases assigned to the index.
         """
         es = self.get_es()
-        if es.head(self.es_alias):
+        if self.get_es_new().indices.exists_alias(self.es_alias):
             # this part removes the old aliases
             alias_indices = es[self.es_alias].get('_status')['indices'].keys()
             remove_actions = [{"remove": {"index": x, "alias": self.es_alias}} for x in

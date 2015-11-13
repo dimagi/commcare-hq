@@ -113,6 +113,23 @@ class ElasticPillowTest(SimpleTestCase):
             for prop in doc.keys():
                 self.assertEqual(doc[prop], es_doc[prop])
 
+    def test_send_bulk_empty(self):
+        pillow = TestElasticPillow()
+        # this used to fail hard before this test was added
+        pillow.process_bulk([])
+        self.assertEqual(0, get_doc_count(self.es, self.index))
+
+    def test_assume_alias(self):
+        pillow = TestElasticPillow()
+        doc_id = uuid.uuid4().hex
+        doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
+        _send_doc_to_pillow(pillow, doc_id, doc)
+        self.assertEqual(1, get_doc_count(self.es, self.index))
+        pillow.assume_alias()
+        es_doc = self.es.get_source(pillow.es_alias, doc_id)
+        for prop in doc:
+            self.assertEqual(doc[prop], es_doc[prop])
+
 
 def _send_doc_to_pillow(pillow, doc_id, doc):
     change = Change(
