@@ -7,6 +7,7 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from couchforms.models import XFormInstance
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -37,8 +38,8 @@ def rebuild_indicators(indicator_config_id):
         adapter.rebuild_table()
         relevant_ids = get_doc_ids_in_domain_by_type(config.domain, config.referenced_doc_type,
                                    database=couchdb)
-        if relevant_ids:
-            client.sadd(redis_key, *relevant_ids)
+        for docs in chunked(relevant_ids, 1000):
+            client.sadd(redis_key, *docs)
 
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
         try:
