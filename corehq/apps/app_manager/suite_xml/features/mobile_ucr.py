@@ -1,5 +1,6 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig
+from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
+    MobileSelectFilter
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
@@ -193,9 +194,24 @@ def _get_data_detail(config):
 
     return Detail(
         id='reports.{}.data'.format(config.uuid),
-        nodeset='rows/row',
+        nodeset='rows/row{}'.format(_data_filter_xpath(config)),
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
         fields=[_column_to_field(c) for c in config.report.report_columns]
     )
+
+
+def _data_filter_xpath(config):
+    mobile_select_filters = [(slug, f) for slug, f in config.filters.items()
+                             if isinstance(f, MobileSelectFilter)]
+    return ''.join([
+        "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
+            column_id=config.report.get_ui_filter(slug).field,
+            datum_id=_mobile_select_filter_datum_id(config, slug))
+        for slug, f in mobile_select_filters])
+
+
+def _mobile_select_filter_datum_id(config, filter_slug):
+    return 'report_filter_{report_id}_{column_id}'.format(
+        report_id=config.uuid, column_id=filter_slug)
