@@ -634,11 +634,11 @@ class AliasedElasticPillow(BasicPillow):
         """
         Assigns the pillow's `es_alias` to its index in elasticsearch.
 
-        This operation removes all other aliases assigned to the index.
+        This operation removes the alias from any other indices it might be assigned to
         """
         es = self.get_es()
         if self.get_es_new().indices.exists_alias(self.es_alias):
-            # this part removes the old aliases
+            # this part removes the conflicting aliases
             alias_indices = es[self.es_alias].get('_status')['indices'].keys()
             remove_actions = [{"remove": {"index": x, "alias": self.es_alias}} for x in
                               alias_indices]

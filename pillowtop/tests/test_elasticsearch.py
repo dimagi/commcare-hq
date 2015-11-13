@@ -130,6 +130,24 @@ class ElasticPillowTest(SimpleTestCase):
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
 
+    def test_assume_alias_deletes_old_aliases(self):
+        # create a different index and set the alias for it
+        pillow = TestElasticPillow()
+        new_index = 'test-index-with-duplicate-alias'
+        if not self.es.indices.exists(new_index):
+            self.es.indices.create(index=new_index)
+        self.es.indices.put_alias(new_index, pillow.es_alias)
+
+        # make sure it's there in the other index
+        aliases = self.es.indices.get_aliases()
+        self.assertEqual([pillow.es_alias], aliases[new_index]['aliases'].keys())
+
+        # assume alias and make sure it's removed (and added to the right index)
+        pillow.assume_alias()
+        aliases = self.es.indices.get_aliases()
+        self.assertEqual(0, len(aliases[new_index]['aliases']))
+        self.assertEqual([pillow.es_alias], aliases[self.index]['aliases'].keys())
+
 
 def _send_doc_to_pillow(pillow, doc_id, doc):
     change = Change(
