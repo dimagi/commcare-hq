@@ -108,6 +108,9 @@ class BasicPillow(PillowBase):
             self._couch_db = self.get_default_couch_db()
         return self._couch_db
 
+    def set_couch_db(self, couch_db):
+        self._couch_db = couch_db
+
     def get_default_couch_db(self):
         return self.document_class.get_db() if self.document_class else None
 
