@@ -51,11 +51,10 @@ class DomainFilter(BaseAccountingSingleOptionFilter):
 
 
 def clean_options(options):
-    cleaned_options = []
-    for option in options:
-        if option[1] is not None and option[1].strip() != '':
-            cleaned_options.append(option)
-    return sorted([_ for _ in set(cleaned_options)])
+    return sorted(list(set(filter(
+        lambda option: option[1] and option[1].strip(),
+        options
+    ))))
 
 
 class SalesforceAccountIDFilter(BaseAccountingSingleOptionFilter):
