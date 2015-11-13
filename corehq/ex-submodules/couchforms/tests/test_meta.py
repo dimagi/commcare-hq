@@ -3,6 +3,8 @@ import os
 from datetime import date, datetime
 from django.test import TestCase
 from django.conf import settings
+
+from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
@@ -10,7 +12,9 @@ from corehq.form_processor.test_utils import run_with_all_backends
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
-class TestMeta(TestCase):
+class TestMeta(TestCase, TestFileMixin):
+    file_path = ('data', 'posts')
+    root = os.path.dirname(__file__)
     maxDiff = None
 
     def tearDown(self):
@@ -24,8 +28,7 @@ class TestMeta(TestCase):
 
     @run_with_all_backends
     def testClosed(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('meta')
         xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertNotEqual(None, xform.metadata)
@@ -56,9 +59,7 @@ class TestMeta(TestCase):
         (a) is not converted to a Decimal by couchdbkit
         (b) does not crash anything
         '''
-
-        file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('decimalmeta')
         xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
@@ -79,8 +80,7 @@ class TestMeta(TestCase):
 
     @run_with_all_backends
     def testMetaBadUsername(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "meta_bad_username.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('meta_bad_username')
         xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
@@ -100,8 +100,7 @@ class TestMeta(TestCase):
 
     @run_with_all_backends
     def testMetaAppVersionDict(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('meta_dict_appversion')
         xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
@@ -121,8 +120,7 @@ class TestMeta(TestCase):
 
     @run_with_all_backends
     def test_gps_location(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "gps_location.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('gps_location', override_path=('data',))
 
         xform = FormProcessorInterface().post_xform(xml_data)
 
@@ -153,8 +151,7 @@ class TestMeta(TestCase):
 
     @run_with_all_backends
     def test_empty_gps_location(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "gps_empty_location.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('gps_empty_location', override_path=('data',))
         xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual(
@@ -166,8 +163,7 @@ class TestMeta(TestCase):
 
     @run_with_all_backends
     def testMetaDateInDatetimeFields(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "date_in_meta.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('date_in_meta', override_path=('data',))
         xform = FormProcessorInterface().post_xform(xml_data)
 
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
@@ -175,8 +171,7 @@ class TestMeta(TestCase):
 
     @run_with_all_backends
     def test_missing_meta_key(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "missing_date_in_meta.xml")
-        xml_data = open(file_path, "rb").read()
+        xml_data = self.get_xml('missing_date_in_meta', override_path=('data',))
         xform = FormProcessorInterface().post_xform(xml_data)
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertIsNone(xform.metadata.timeEnd)
