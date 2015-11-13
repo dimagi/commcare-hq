@@ -455,7 +455,7 @@ class AliasedElasticPillow(BasicPillow):
         index_exists = self.index_exists()
         if create_index and not index_exists:
             self.create_index()
-        if self.online:
+        if self.online and (index_exists or create_index):
             pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
             self.initialize_mapping_if_necessary()
         else:
