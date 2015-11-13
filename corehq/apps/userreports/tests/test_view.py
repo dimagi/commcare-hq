@@ -153,9 +153,9 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         """
         # Create a configurable report
         view = ConfigurableReport()
-        view.domain = self.domain
-        view.lang = "en"
-        view.report_config_id = self.report._id
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = self.report._id
 
         self.assertEqual(
             view.export_table,

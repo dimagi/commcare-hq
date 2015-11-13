@@ -240,6 +240,10 @@
                             {% if not not_actual_build %}in form {% include "app_manager/partials/form_error_message.html" %}{% endif %}.
                         {% case "error" %}
                             <p>Details: {{ error.message }}</p>
+                        {% case "subscription" %}
+                            Your application uses a feature that is not available in your current subscription. You
+                            can <a href="{% url 'domain_select_plan' domain %}">change your subscription</a>, or
+                            remove the feature as follows.
                         {% else %}
                             Unknown error: {{ error.type }}
                             <p>Details: {{ error }}</p>

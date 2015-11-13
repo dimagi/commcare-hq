@@ -1,20 +1,42 @@
 import functools
 from couchdbkit import ResourceNotFound
+from django.db.models.query_utils import Q
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseAttachmentSQL
 
 
 class FormProcessorTestUtils(object):
 
     @classmethod
     @unit_testing_only
-    def delete_all_cases(cls):
-        cls._delete_all(CommCareCase.get_db(), 'case/get_lite')
+    def delete_all_cases(cls, domain=None):
+        view_kwargs = {}
+
+        if domain:
+            view_kwargs = {
+                'startkey': [domain],
+                'endkey': [domain, {}],
+            }
+
+        cls._delete_all(
+            CommCareCase.get_db(),
+            'cases_by_server_date/by_server_modified_on',
+            **view_kwargs
+        )
+
+        def _sql_delete(query, domain_filter):
+            if domain is not None:
+                query.filter(domain_filter)
+            query.all().delete()
+
+        _sql_delete(CommCareCaseIndexSQL.objects, Q(case__domain=domain))
+        _sql_delete(CaseAttachmentSQL.objects, Q(case__domain=domain))
+        _sql_delete(CommCareCaseSQL.objects, Q(domain=domain))
 
     @classmethod
     @unit_testing_only

@@ -129,7 +129,9 @@ from .models import (
     DefaultFormExportSchema,
     HQGroupExportConfiguration
 )
+
 from .standard import inspect, export, ProjectReport
+from corehq.apps.style.decorators import use_knockout_js, use_bootstrap3
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -180,6 +182,7 @@ def default(request, domain):
     if hasattr(module, 'DEFAULT_REPORT_CLASS'):
         return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
     return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
+
 
 @login_and_domain_required
 def old_saved_reports(request, domain):
@@ -334,7 +337,6 @@ def export_data_async(request, domain):
     )
 
 
-
 @login_or_digest
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
@@ -348,13 +350,16 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     else:
         return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
 
+
 @require_permission('view_report', 'corehq.apps.reports.standard.export.DeidExportReport', login_decorator=None)
 def _export_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
 
+
 @require_form_export_permission
 def _export_no_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
+
 
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
     req = request.POST if request.method == 'POST' else request.GET
@@ -710,6 +715,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     return HttpResponse()
 
+
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
@@ -724,6 +730,7 @@ def delete_config(request, domain, config_id):
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
+
 def normalize_hour(hour):
     day_change = 0
     if hour < 0:
@@ -735,6 +742,7 @@ def normalize_hour(hour):
 
     assert 0 <= hour < 24
     return (hour, day_change)
+
 
 def calculate_hour(hour, hour_difference, minute_difference):
     hour -= hour_difference
@@ -882,6 +890,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     return render(request, template, context)
 
+
 @login_and_domain_required
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
@@ -898,6 +907,7 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
         rep.delete()
         messages.success(request, "Scheduled report deleted!")
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
 
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
@@ -1413,52 +1423,60 @@ def _form_instance_to_context_url(domain, instance):
     )
 
 
-@require_form_view_permission
-@require_permission(Permissions.edit_data)
-@require_GET
-def edit_form_instance(request, domain, instance_id):
-    if not (has_privilege(request, privileges.DATA_CLEANUP)):
-        raise Http404()
+class EditFormInstance(View):
 
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
-    context = _get_form_context(request, domain, instance)
-    if not instance.app_id or not instance.build_id:
-        messages.error(request, _('Could not detect the application/form for this submission.'))
-        return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+    @use_bootstrap3
+    @use_knockout_js
+    @method_decorator(require_form_view_permission)
+    @method_decorator(require_permission(Permissions.edit_data))
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditFormInstance, self).dispatch(request, args, kwargs)
 
-    user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
-    edit_session_data = get_user_contributions_to_touchforms_session(user)
+    def get(self, request, *args, **kwargs):
+        domain = request.domain
+        instance_id = self.kwargs.get('instance_id', None)
+        if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
+            raise Http404()
 
-    case_blocks = extract_case_blocks(instance, include_path=True)
-    # a bit hacky - the app manager puts the main case directly in the form, so it won't have
-    # any other path associated with it. This allows us to differentiat from parent cases.
-    # One thing this definitely does not do is support advanced modules or forms with case-management
-    # done by hand.
-    # You might think that you need to populate other session variables like parent_id, but those
-    # are never actually used in the form.
-    non_parents = filter(lambda cb: cb.path == [], case_blocks)
-    if len(non_parents) == 1:
-        edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+        instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+        context = _get_form_context(request, domain, instance)
+        if not instance.app_id or not instance.build_id:
+            messages.error(request, _('Could not detect the application/form for this submission.'))
+            return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
-    edit_session_data['function_context'] = {
-        'static-date': [
-            {'name': 'now', 'value': instance.metadata.timeEnd},
-            {'name': 'today', 'value': instance.metadata.timeEnd.date()},
-        ]
-    }
+        user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
+        edit_session_data = get_user_contributions_to_touchforms_session(user)
 
-    context.update({
-        'domain': domain,
-        'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
-        'form_name': _('Edit Submission'),  # used in breadcrumbs
-        'edit_context': {
-            'formUrl': _form_instance_to_context_url(domain, instance),
-            'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
-            'sessionData': edit_session_data,
-            'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+        case_blocks = extract_case_blocks(instance, include_path=True)
+        # a bit hacky - the app manager puts the main case directly in the form, so it won't have
+        # any other path associated with it. This allows us to differentiat from parent cases.
+        # One thing this definitely does not do is support advanced modules or forms with case-management
+        # done by hand.
+        # You might think that you need to populate other session variables like parent_id, but those
+        # are never actually used in the form.
+        non_parents = filter(lambda cb: cb.path == [], case_blocks)
+        if len(non_parents) == 1:
+            edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+
+        edit_session_data['function_context'] = {
+            'static-date': [
+                {'name': 'now', 'value': instance.metadata.timeEnd},
+                {'name': 'today', 'value': instance.metadata.timeEnd.date()},
+            ]
         }
-    })
-    return render(request, 'reports/form/edit_submission.html', context)
+
+        context.update({
+            'domain': domain,
+            'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
+            'form_name': _('Edit Submission'),  # used in breadcrumbs
+            'edit_context': {
+                'formUrl': _form_instance_to_context_url(domain, instance),
+                'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
+                'sessionData': edit_session_data,
+                'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+            }
+        })
+        return render(request, 'reports/form/edit_submission.html', context)
 
 
 @require_form_view_permission

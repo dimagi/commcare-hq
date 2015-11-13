@@ -438,7 +438,8 @@ class Location(CachedCouchDocumentMixin, Document):
             self.location_type = location_type
 
     def __repr__(self):
-        return "%s (%s)" % (self.name, self.location_type)
+        val = u"%s (%s)" % (self.name, self.location_type)
+        return val.encode('utf-8')
 
     def __eq__(self, other):
         if isinstance(other, Location):

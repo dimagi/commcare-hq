@@ -2,8 +2,8 @@ import uuid
 from django.test import TestCase
 from mock import MagicMock
 from couchforms.models import XFormInstance
+from pillowtop.feed.couch import get_current_seq
 from pillowtop.listener import BasicPillow
-from pillowtop.utils import get_current_seq
 
 
 class ChangeFeedDbTest(TestCase):

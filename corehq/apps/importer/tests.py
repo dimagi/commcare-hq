@@ -91,12 +91,12 @@ class ImporterTest(TestCase):
 
     def testImportNone(self):
         res = do_import(None, self._config(), self.domain)
-        self.assertEqual('EXPIRED', res['error'])
+        self.assertEqual('EXPIRED', res['errors'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImporterErrors(self):
         res = do_import(MockExcelFile(has_errors=True), self._config(), self.domain)
-        self.assertEqual('HAS_ERRORS', res['error'])
+        self.assertEqual('HAS_ERRORS', res['errors'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImportBasic(self):

@@ -6,7 +6,7 @@ CommCare HQ
 https://github.com/dimagi/commcare-hq
 
 [![Build Status](https://travis-ci.org/dimagi/commcare-hq.png)](https://travis-ci.org/dimagi/commcare-hq)
-[![Test coverage](https://coveralls.io/repos/dimagi/commcare-hq/badge.png?branch=master)](https://coveralls.io/r/dimagi/commcare-hq)
+[![Test Coverage](https://coveralls.io/repos/dimagi/commcare-hq/badge.svg?branch=master&service=github)](https://coveralls.io/github/dimagi/commcare-hq?branch=master)
 
 CommCare HQ is a server-side tool to help manage community health workers.
 It seamlessly integrates with CommCare mobile and CommCare ODK, as well as
@@ -505,18 +505,8 @@ To run a particular test or subset of tests
     $ ./manage.py test app_manager.SuiteTest
     $ ./manage.py test app_manager.SuiteTest.test_picture_format
 
-To run the selenium tests, you first need to install the
-[ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver).
-
 If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database. 
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
-
-The tests for CloudCare currently expect the "Basic Tests" app from the
-`corpora` domain on CommCareHQ.org to be installed in the same domain locally.
-
-Make sure to edit the selenium user credentials in `localsettings.py`.  Then run
-
-    $ ./manage.py seltest
 
 ## Javascript tests
 

@@ -1,12 +1,13 @@
 import os
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 import json
 from corehq.util.test_utils import TestFileMixin
 from pillowtop.listener import AliasedElasticPillow, BasicPillow
 from pillowtop.utils import get_all_pillow_configs
 
 
+@override_settings(DEBUG=True)
 class PillowtopSettingsTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
@@ -54,9 +55,10 @@ def _pillow_meta_from_config(pillow_config):
         'advertised_name': pillow_instance.get_name(),
         'full_class_name': pillow_config.class_name,
         'checkpoint_id': pillow_instance.checkpoint.checkpoint_id,
+        'change_feed_type': type(pillow_instance.get_change_feed()).__name__,
     }
     if issubclass(pillow_class, BasicPillow):
-        couchdb = pillow_instance.couch_db
+        couchdb = pillow_instance.get_couch_db()
         props.update({
             'document_class': pillow_instance.document_class.__name__ if pillow_instance.document_class else None,
             'couch_filter': getattr(pillow_instance, 'couch_filter'),

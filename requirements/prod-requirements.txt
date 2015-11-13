@@ -1,5 +1,4 @@
 flower==0.8.3
 newrelic
 errand-boy==0.3.8
-datadog==0.10.0
 setproctitle==1.1.9
