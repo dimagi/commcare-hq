@@ -106,7 +106,7 @@ class SmsGatewayFee(models.Model):
     Once an SmsFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
-    amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
+    amount = models.DecimalField(max_digits=10, decimal_places=4, null=True)
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
 
@@ -281,11 +281,9 @@ class SmsBillable(models.Model):
             try:
                 amount = SmsGatewayFee.objects.get(id=self.gateway_fee.id).amount
             except ObjectDoesNotExist:
-                amount = Decimal('0.0')
-        elif self.direct_gateway_fee is not None:
-            amount = self.direct_gateway_fee
-        else:
-            amount = Decimal('0.0')
+                amount = None
+        if amount is None:
+            amount = self.direct_gateway_fee or Decimal('0.0')
 
         if self.gateway_fee_conversion_rate is not None:
             return amount / self.gateway_fee_conversion_rate
@@ -333,6 +331,10 @@ class SmsBillable(models.Model):
                         twilio_message = _get_twilio_client(backend_instance).messages.get(message_log.backend_message_id)
                         billable.direct_gateway_fee = Decimal(twilio_message.price) * -1
                         currency = Currency.objects.get(code=twilio_message.price_unit)
+                        billable.gateway_fee = SmsGatewayFee.get_by_criteria(
+                            TwilioBackend.get_api_id(),
+                            message_log.direction,
+                        )
                     else:
                         smsbillables_logging.error(
                             "Could not create gateway fee for Twilio message %s: no backend_message_id" % (
