@@ -92,7 +92,6 @@ LOCALE_PATHS = (
 # Do not change, there's a weird bug with Django 1.7 that requires this to be bower_components when using
 # collectstatic
 BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
-
 BOWER_PATH = '/usr/local/bin/bower'
 
 STATICFILES_FINDERS = (
@@ -1381,7 +1380,13 @@ PILLOWTOPS = {
             'name': 'KafkaCaseConsumerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        }
+        },
+        {
+            'name': 'LoggingPythonDemoPillow',
+            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
+        },
+
     ]
 }
 

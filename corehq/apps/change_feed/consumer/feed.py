@@ -6,6 +6,9 @@ from corehq.apps.change_feed.models import ChangeMeta
 from pillowtop.feed.interface import ChangeFeed, Change
 
 
+MIN_TIMEOUT = 100
+
+
 class KafkaChangeFeed(ChangeFeed):
     """
     Kafka-based implementation of a ChangeFeed
@@ -23,15 +26,9 @@ class KafkaChangeFeed(ChangeFeed):
 
     def iter_changes(self, since, forever):
         # in milliseconds, -1 means wait forever for changes
-        timeout = -1 if forever else 100
+        timeout = -1 if forever else MIN_TIMEOUT
 
-        consumer = KafkaConsumer(
-            self._topic,
-            group_id=self._group_id,
-            bootstrap_servers=[settings.KAFKA_URL],
-            consumer_timeout_ms=timeout,
-            auto_offset_reset='smallest',
-        )
+        consumer = self._get_consumer(timeout)
         offset = int(since)  # coerce sequence IDs to ints
         # this is how you tell the consumer to start from a certain point in the sequence
         consumer.set_topic_partitions((self._topic, self._partition, offset))
@@ -41,6 +38,21 @@ class KafkaChangeFeed(ChangeFeed):
             except ConsumerTimeout:
                 assert not forever, 'Kafka pillow should not timeout when waiting forever!'
                 # no need to do anything since this is just telling us we've reached the end of the feed
+
+    def get_latest_change_id(self):
+        consumer = self._get_consumer(MIN_TIMEOUT)
+        # we have to fetch one change to populate the highwater offset
+        consumer.next()
+        return consumer.offsets('highwater')[(self._topic, self._partition)]
+
+    def _get_consumer(self, timeout):
+        return KafkaConsumer(
+            self._topic,
+            group_id=self._group_id,
+            bootstrap_servers=[settings.KAFKA_URL],
+            consumer_timeout_ms=timeout,
+            auto_offset_reset='smallest',
+        )
 
 
 def change_from_kafka_message(message):

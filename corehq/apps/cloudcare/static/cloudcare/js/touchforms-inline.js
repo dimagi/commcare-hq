@@ -46,7 +46,7 @@ $.fn.inlineTouchform = function (options) {
                 onerror: function (resp) {
                     $target.html(alertHtml(
                         resp.human_readable_message || resp.message || 'An unexpected error occurred!',
-                        'alert-error'
+                        'alert-danger'
                     ));
                 },
                 onload: function (adapter, resp) {

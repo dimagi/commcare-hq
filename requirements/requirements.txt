@@ -41,7 +41,7 @@ python-dateutil==1.5
 python-magic==0.4.10
 pytz==2015.6
 PyYAML==3.11
-requests==2.0.0
+requests==2.8.1
 tropo-webapi-python==0.1.3
 xlutils==1.4.1
 Unidecode==0.04.18
@@ -76,6 +76,7 @@ pip>=6.1.1
 git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e23aee3983ec4
 Pygments==2.0.2
 tinys3==0.1.11
+datadog==0.10.0
 
 # required by ctable
 SQLAlchemy==0.8.2

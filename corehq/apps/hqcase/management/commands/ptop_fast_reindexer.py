@@ -160,7 +160,7 @@ class PtopReindexer(NoArgsCommand):
         # that happen to cases while we're doing our reindexing would not get skipped once we
         # finish.
 
-        current_db_seq = self.pillow.couch_db.info()['update_seq']
+        current_db_seq = self.pillow.get_couch_db().info()['update_seq']
 
         # Write sequence file to disk
         seq_filename = self.get_seq_filename()
@@ -246,8 +246,9 @@ class PtopReindexer(NoArgsCommand):
             self.pillow.set_checkpoint({'seq': seq})
 
         self.post_load_hook()
-        self.pillow.couch_db = CachedCouchDB(self.pillow.document_class.get_db().uri,
-                                             readonly=True)
+        self.pillow.set_couch_db(
+            CachedCouchDB(self.pillow.document_class.get_db().uri, readonly=True)
+        )
         if self.bulk:
             self.log("Preparing Bulk Payload")
             self.load_bulk()
@@ -306,8 +307,8 @@ class PtopReindexer(NoArgsCommand):
 
     def send_bulk(self, slice, start, end):
         doc_ids = [x['id'] for x in slice]
-        self.pillow.couch_db.bulk_load(doc_ids, purge_existing=True)
-        filtered_ids = set([d['_id'] for d in filter(self.custom_filter, self.pillow.couch_db.get_all())])
+        self.pillow.get_couch_db().bulk_load(doc_ids, purge_existing=True)
+        filtered_ids = set([d['_id'] for d in filter(self.custom_filter, self.pillow.get_couch_db().get_all())])
         filtered_slice = filter(lambda change: change['id'] in filtered_ids, slice)
 
         retries = 0
