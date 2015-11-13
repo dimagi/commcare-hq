@@ -34,7 +34,7 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
-from touchforms.formplayer.api import DjangoAuth
+from touchforms.formplayer.api import DjangoAuth, get_raw_instance
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.case.xml import V2
@@ -46,7 +46,6 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
 from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
-import requests
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
 from corehq.apps.style.decorators import (
@@ -493,18 +492,13 @@ def render_form(request, domain):
 
     session = get_object_or_404(EntrySession, session_id=session_id)
 
-    response = requests.post("{base_url}/webforms/get-xml/{session_id}".format(
-        base_url=get_url_base(),
-        session_id=session_id)
-    )
+    try:
+        raw_instance = get_raw_instance(session_id)
+    except Exception, e:
+        return HttpResponse(e, status=500, content_type="text/plain")
 
-    if response.status_code is not 200:
-        err = "Session XML could not be found"
-        return HttpResponse(err, status=500, content_type="text/plain")
-
-    response_json = json.loads(response.text)
-    xmlns = response_json["xmlns"]
-    form_data_xml = response_json["output"]
+    xmlns = raw_instance["xmlns"]
+    form_data_xml = raw_instance["output"]
 
     _, form_data_json = xml2json(form_data_xml)
     pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
