@@ -89,8 +89,18 @@ class AutomaticUpdateRule(models.Model):
         if self.deleted:
             raise Exception("Attempted to call apply_rule on a deleted rule")
 
+        if not self.active:
+            raise Exception("Attempted to call apply_rule on an inactive rule")
+
         if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise Exception("Invalid case given")
+
+        if case.doc_type != 'CommCareCase':
+            # Exclude deleted cases
+            return False
+
+        if case.closed:
+            return False
 
         if self.rule_matches_case(case, now):
             return self.apply_actions(case)
