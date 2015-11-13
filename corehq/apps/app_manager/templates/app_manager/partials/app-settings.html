@@ -159,17 +159,6 @@ todo fix
 </script>
 {% endcomment %}
 
-<script>
-    var validationText = {% trans "The minimum use threshold must be a number between 1 and 100" %}
-    $(function () {
-       $('#settings-save-btn').click(function (e) {
-           if (!(0 < $minThreshold.val() && $minThreshold.val() < 100)) {
-               e.preventDefault();
-               alert(validationText);
-           }
-       });
-    });
-</script>
 
 <div class="tab-pane" id="commcare-settings">
     <div class="clearfix" id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
@@ -185,7 +174,8 @@ todo fix
                 <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
                     <div class="control-group" data-bind="
                         visible: visible,
-                        css: {error: hasError()}
+                        css: {error: hasError()},
+                        attr: {id: id + '-control'}
                     ">
                         <div class="control-label">
                             <label data-bind="text: name, attr: {for: inputId}" class="inner-control-label"></label>
@@ -215,6 +205,7 @@ todo fix
                                 {% endblocktrans %}
                             </p>
                             <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+                            <span class="help-inline" data-bind="text: $data.warning, attr: {id: id + '-warning'}"></span>
                         </div>
                     </div>
                 </div>

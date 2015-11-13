@@ -235,15 +235,18 @@
         });
     </script>
     <script>
-        $(function() {
-            var $minThreshold=$('#minimum_use_threshold-input');
-            $minThreshold.change(function(e) {
-                if (!(0 < $minThreshold.val() && $minThreshold.val() < 100)) {
-                    alert("The minimum use threshold must be a number between 1 and 100");
-
+        $(function () {
+            $('#minimum_use_threshold-warning').hide();
+            $('#minimum_use_threshold-input').change(function () {
+                if ($(this).val() > 0 && $(this).val() < 100) {
+                    $('#minimum_use_threshold-warning').hide();
+                    $('#minimum_use_threshold-control').removeClass("error");
+                } else {
+                    $('#minimum_use_threshold-warning').show();
+                    $('#minimum_use_threshold-control').addClass("error");
                 }
             });
-        });
+        })
     </script>
 {% endblock %}
 
