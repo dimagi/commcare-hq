@@ -461,23 +461,24 @@ class AliasedElasticPillow(BasicPillow):
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 
+    def _mapping_exists(self):
+        try:
+            return bool(self.get_index_mapping())
+        except ElasticException:
+            return False
+
     def initialize_mapping_if_necessary(self):
         """
         Initializes the elasticsearch mapping for this pillow if it is not found.
         """
-        try:
-            mapping = self.get_index_mapping()
-        except ElasticException:
+        if not self._mapping_exists():
             pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
             mapping = copy(self.default_mapping)
             mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-            try:
-                mapping_res = self.set_mapping(self.es_type, {self.es_type: mapping})
-                if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
-                    # API confirms OK, trust it.
-                    pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
-            except ElasticException:
-                pass
+            mapping_res = self.set_mapping(self.es_type, {self.es_type: mapping})
+            if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
+                # API confirms OK, trust it.
+                pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
         else:
             pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
 
