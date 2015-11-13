@@ -226,7 +226,14 @@ class FormProcessorSQL(object):
     def _rebuild_case_from_transactions(case, updated_xforms=None):
         transactions = get_case_transactions(case.case_id, updated_xforms=updated_xforms)
         strategy = SqlCaseUpdateStrategy(case)
-        strategy.rebuild_from_transactions(transactions)
+
+        if updated_xforms:
+            deprecated_form = [f for f in updated_xforms if f.is_deprecated][0]
+            rebuild_transaction = CaseTransaction.rebuild_transaction_from_deprecated_form(case, deprecated_form)
+        else:
+            rebuild_transaction = CaseTransaction.rebuild_transaction(case)
+
+        strategy.rebuild_from_transactions(transactions, rebuild_transaction)
         return case
 
 
