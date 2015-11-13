@@ -88,7 +88,7 @@ def get_pillow_config_by_name(pillow_name):
 
 
 def force_seq_int(seq):
-    if seq is None:
+    if seq is None or seq == '':
         return None
     elif isinstance(seq, basestring):
         return int(seq.split('-')[0])
