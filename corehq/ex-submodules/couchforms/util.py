@@ -2,7 +2,6 @@
 from __future__ import absolute_import
 import hashlib
 import datetime
-import dateutil.parser
 import logging
 from StringIO import StringIO
 
@@ -25,7 +24,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LockManager
-from dimagi.utils.parsing import string_to_utc_datetime
 import couchforms
 from .const import BadRequest, DEVICE_LOG_XMLNS
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
