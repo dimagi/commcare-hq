@@ -7,7 +7,6 @@ from django.test import TestCase
 from mock import patch
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms.models import (
     UnfinishedSubmissionStub,
@@ -26,10 +25,11 @@ class EditFormTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
-        self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
+        self.interface = FormProcessorInterface(self.domain)
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         UnfinishedSubmissionStub.objects.all().delete()
 
     @run_with_all_backends
