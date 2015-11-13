@@ -110,7 +110,7 @@
     "ConfigurableIndicatorPillow": {
         "advertised_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq", 
+        "checkpoint_id": "pillow-checkpoint-ucr-main", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -520,7 +520,7 @@
     "StaticDataSourcePillow": {
         "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq", 
+        "checkpoint_id": "pillow-checkpoint-ucr-static", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -608,15 +608,15 @@
         "name": "UnknownUsersPillow"
     }, 
     "UserPillow": {
-        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq",
+        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq",
+        "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq", 
         "couch_filter": "users/all_users", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__users_test", 
         "document_class": "CommCareUser", 
         "es_alias": "hqusers", 
-        "es_index": "hqusers_2015-11-12_1638",
+        "es_index": "hqusers_2015-11-12_1638", 
         "es_type": "user", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.user.UserPillow", 
