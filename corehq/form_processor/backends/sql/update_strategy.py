@@ -34,7 +34,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if self.case.modified_on is None or modified_on > self.case.modified_on:
             self.case.modified_on = modified_on
 
-        self.case.track_create(CaseForms(case=self.case, form_uuid=xformdoc.form_id))
+        self.case.track_create(CaseForms(
+            case=self.case,
+            form_uuid=xformdoc.form_id,
+            server_date=xformdoc.received_on)
+        )
 
     def _apply_action(self, case_update, action, xform):
         if action.action_type_slug == const.CASE_ACTION_CREATE:

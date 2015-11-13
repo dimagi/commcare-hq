@@ -529,6 +529,8 @@ class CaseForms(models.Model):
         related_name="xform_set", related_query_name="xform"
     )
     form_uuid = models.CharField(max_length=255, null=False)  # can't be a foreign key due to partitioning
+    server_date = models.DateTimeField(null=False)
 
     class Meta:
         unique_together = ("case", "form_uuid")
+        ordering = ['server_date']
