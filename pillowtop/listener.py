@@ -613,6 +613,8 @@ class AliasedElasticPillow(BasicPillow):
             return None
 
     def process_bulk(self, changes):
+        if not changes:
+            return
         self.allow_updates = False
         self.bulk = True
         bstart = datetime.utcnow()
