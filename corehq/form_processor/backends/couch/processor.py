@@ -121,17 +121,19 @@ class FormProcessorCouch(object):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     @staticmethod
-    def hard_rebuild_case(case_id):
+    def hard_rebuild_case(domain, case_id):
         try:
             case = CommCareCase.get(case_id)
+            assert case.domain == domain
             found = True
         except CaseNotFound:
             case = CommCareCase()
             case.case_id = case_id
+            case.domain = domain
             found = False
 
         forms = get_case_forms(case_id)
-        filtered_forms = [f for f in forms if f.doc_type == "XFormInstance"]
+        filtered_forms = [f for f in forms if f.is_normal]
         sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
 
         actions, domain = _get_actions_from_forms(sorted_forms, case_id)
@@ -153,13 +155,10 @@ class FormProcessorCouch(object):
         return case
 
 
-def _get_actions_from_forms(sorted_forms, case_id):
+def _get_actions_from_forms(domain, sorted_forms, case_id):
     from corehq.apps.commtrack.processing import get_stock_actions
     case_actions = []
-    domain = None
     for form in sorted_forms:
-        if domain is None:
-            domain = form.domain
         assert form.domain == domain
 
         case_updates = get_case_updates(form)
@@ -170,7 +169,7 @@ def _get_actions_from_forms(sorted_forms, case_id):
         case_actions.extend([intent.action
                              for intent in stock_actions.case_action_intents
                              if not intent.is_deprecation])
-    return case_actions, domain
+    return case_actions
 
 
 def _rebuild_action():
