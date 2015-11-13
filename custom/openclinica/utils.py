@@ -41,6 +41,10 @@ def get_question_items(domain):
         OpenClinica item OIDs are prefixed with "I_<prefix>_" where <prefix> is derived from the item's form
         OID. Dropping "I_<prefix>_" will give us the CommCare question name in upper case for human-built apps
         (i.e. the KEMRI app)
+
+        >>> get_item_prefix('F_AE_AND_CONCO_7472_VERSION1', 'IG_AE_AN_AELOG_8290')
+        'AE_AN'
+
         """
         form_name = form_oid[2:]  # Drop "F_"
         ig_name = ig_oid[3:]  # Drop "IG_"
@@ -50,6 +54,16 @@ def get_question_items(domain):
         return prefix
 
     def filter_items(items, module, form, question):
+        """
+        Filter a CommCare question's list of possible matching OpenClinica items, based on its module and form
+
+        :param items: Candidate OpenClinica items
+        :param module: The name of the CommCare question's module
+        :param form: The XMLNS of the CommCare question's form
+        :param question: The name of the question
+        :return: an Item tuple
+        :raise OpenClinicaIntegrationError: Unable to filter items
+        """
         if not items:
             return None  # This is a CommCare-only question
         if len(items) == 1:
@@ -78,7 +92,10 @@ def get_question_items(domain):
 
     def read_question_item_map(odm, imported=True):
         """
-        Return a dictionary of {question: (study_event_oid, form_oid, item_group_oid, item_oid)}
+        Return a dictionary of {question: [(study_event_oid, form_oid, item_group_oid, item_oid)]}
+
+        Map CommCare questions to OpenClinica items, and append possible candidates to a list. That list will then
+        be filtered based on the question's module and form in filter_items()
 
         :param odm: An ElementTree of the CISC ODM study metadata document
         :param imported: Whether the CommCare app was originally imported from the ODM doc. (Question names of
@@ -113,6 +130,9 @@ def get_question_items(domain):
         return question_item_map
 
     def read_forms(question_item_map):
+        """
+        Return a dictionary that allows us to look up an OpenClinica item given a form XMLNS and question name
+        """
         data = defaultdict(dict)
         openclinica_domains = (d for d, m in settings.DOMAIN_MODULE_MAP.iteritems() if m == 'custom.openclinica')
         for domain_ in openclinica_domains:
