@@ -7,6 +7,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.pillows.utils import get_deleted_doc_types
 from couchforms.models import XFormInstance
 from mvp_docs.models import IndicatorXForm, IndicatorCase
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import BasicPillow
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -15,6 +16,10 @@ pillow_logging = logging.getLogger("pillowtop")
 class MVPIndicatorPillowBase(BasicPillow):
     indicator_class = None
     couch_filter = 'hqadmin/domains_and_doc_types'
+
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(MVPIndicatorPillowBase, self).__init__(checkpoint=checkpoint)
 
     @property
     def extra_args(self):
