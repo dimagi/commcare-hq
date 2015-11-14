@@ -89,7 +89,7 @@ class BaseStripePaymentHandler(object):
                 self.payment_method.remove_card(card)
                 return {'success': True, 'removedCard': card, }
             if save_card:
-                card = self.payment_method.create_card(card, billing_account, autopay=autopay)
+                card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
             if save_card or is_saved_card:
                 customer = self.payment_method.customer
 
