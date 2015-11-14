@@ -412,7 +412,7 @@ class AutoPayInvoicePaymentHandler(object):
         receipt_email_template = 'accounting/invoice_receipt_email.html'
         receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
         try:
-            domain = invoice.subscription.account.created_by_domain
+            domain = invoice.subscription.subscriber.domain
             product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
 
             context = {
