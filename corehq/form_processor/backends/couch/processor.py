@@ -1,11 +1,8 @@
-import logging
 import datetime
 
-from couchdbkit import BulkSaveError
-
 from casexml.apps.case.models import CommCareCase
-from couchforms.util import process_xform, _handle_unexpected_error, deprecation_type
-from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types
+from couchforms.util import process_xform, deprecation_type
+from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
@@ -63,21 +60,7 @@ class FormProcessorCouch(object):
     def bulk_save(cls, instance, xforms, cases=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-        try:
-            XFormInstance.get_db().bulk_save(docs)
-        except BulkSaveError as e:
-            logging.error('BulkSaveError saving forms', exc_info=1,
-                          extra={'details': {'errors': e.errors}})
-            raise
-        except Exception as e:
-            docs_being_saved = [doc['_id'] for doc in docs]
-            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
-                type(e).__name__,
-                unicode(e),
-                ', '.join(docs_being_saved)
-            )
-            instance = _handle_unexpected_error(instance, error_message)
-            raise
+        XFormInstance.get_db().bulk_save(docs)
 
     @classmethod
     def process_stock(cls, xforms, case_db):
@@ -128,3 +111,7 @@ class FormProcessorCouch(object):
     def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
         existing_doc = XFormInstance.get_db().get(xform_id)
         return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
+
+    @classmethod
+    def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
+        return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)

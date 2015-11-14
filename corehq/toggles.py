@@ -291,7 +291,7 @@ REPORT_BUILDER = StaticToggle(
     'report_builder',
     'Report Builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 STOCK_TRANSACTION_EXPORT = StaticToggle(

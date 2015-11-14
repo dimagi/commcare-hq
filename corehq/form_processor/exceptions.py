@@ -8,3 +8,7 @@ class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
 
 class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
+
+
+class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
+    pass

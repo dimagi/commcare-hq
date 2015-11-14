@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ODM FileOID="Study-MetaD20151109150615+0300"
+     Description="Study Metadata"
+     CreationDateTime="2015-11-09T15:06:15+03:00"
+     FileType="Snapshot"
+     ODMVersion="1.3"
+     xmlns="http://www.cdisc.org/ns/odm/v1.3"
+     xmlns:OpenClinica="http://www.openclinica.org/ns/odm_ext_v130/v3.1"
+     xmlns:OpenClinicaRules="http://www.openclinica.org/ns/rules/v3.1"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.cdisc.org/ns/odm/v1.3 OpenClinica-ODM1-3-0-OC2-0.xsd" >
+    <Study OID="S_DEFAULTS1">
+        <GlobalVariables>
+            <StudyName>An open-label, non-randomized study on Captopril</StudyName>
+            <StudyDescription>
+                Researcher KEMRI/ CREATES Director
+            </StudyDescription>
+            <ProtocolName>BE 01/2014</ProtocolName>
+        </GlobalVariables>
+        <MetaDataVersion OID="v1.0.0" Name="MetaDataVersion_v1.0.0">
+            <Protocol>
+                <StudyEventRef StudyEventOID="SE_VISIT1A" OrderNumber="1" Mandatory="Yes"/>
+            </Protocol>
+            <StudyEventDef OID="SE_VISIT1A" Name="Visit 1A" Repeating="No" Type="Scheduled">
+                <FormRef FormOID="F_VISIT1AV4_VERSION_4" Mandatory="Yes"/>
+            </StudyEventDef>
+            <FormDef OID="F_VISIT1AV4_VERSION_4" Name="Visit 1A V4 - Version_4" Repeating="No">
+                <ItemGroupRef ItemGroupOID="IG_VISIT_UNGROUPED_3229" Mandatory="Yes"/>
+            </FormDef>
+            <ItemGroupDef OID="IG_VISIT_UNGROUPED_3229" Name="IG_VISIT_UNGROUPED_3229" Repeating="No"
+                          SASDatasetName="UNGROUPE">
+                <ItemRef ItemOID="I_VISIT_PT_INIT_7" OrderNumber="1" Mandatory="Yes"/>
+                <ItemRef ItemOID="I_VISIT_PT_NO_1784" OrderNumber="2" Mandatory="Yes"/>
+                <ItemRef ItemOID="I_VISIT_ASSD1_664" OrderNumber="3" Mandatory="Yes"/>
+            </ItemGroupDef>
+            <ItemDef OID="I_VISIT_PT_INIT_7" Name="pt_init" DataType="text" Length="200" SASFieldName="pt_init"
+                     Comment="Patient initials">
+                <Question>
+                    <TranslatedText>
+                    Patient initials
+                    </TranslatedText>
+                </Question>
+            </ItemDef>
+            <ItemDef OID="I_VISIT_PT_NO_1784" Name="pt_no" DataType="text" Length="200" SASFieldName="pt_no"
+                     Comment="Patient number">
+                <Question>
+                    <TranslatedText>
+                    Patient number
+                    </TranslatedText>
+                </Question>
+            </ItemDef>
+            <ItemDef OID="I_VISIT_ASSD1_664" Name="assd1" DataType="date" SASFieldName="assd1"
+                     Comment="Date of Assessment (Demography)">
+                <Question OpenClinica:QuestionNumber="1">
+                    <TranslatedText>
+                    Date of Assessment
+                    </TranslatedText>
+                </Question>
+            </ItemDef>
+        </MetaDataVersion>
+    </Study>
+</ODM>

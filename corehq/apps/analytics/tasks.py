@@ -91,9 +91,7 @@ def _hubspot_post(url, data):
             data=data,
             headers=headers
         )
-        logger.debug('Sent this data to HS: %s \nreceived: %s' %
-                     (json.dumps(data, indent=2, sort_keys=True),
-                      json.dumps(response.json(), indent=2, sort_keys=True)))
+        _log_response(data, response)
         response.raise_for_status()
 
 
@@ -145,9 +143,7 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             url,
             data=data
         )
-        logger.debug('Sent this data to HS: %s \nreceived: %s',
-                     (json.dumps(data, indent=2, sort_keys=True),
-                      json.dumps(response.json(), indent=2, sort_keys=True)))
+        _log_response(data, response)
         response.raise_for_status()
 
 
@@ -369,3 +365,13 @@ def _track_periodic_data_on_kiss(submit_json):
         s3_connection.upload(filename, f, 'kiss-uploads')
 
     os.remove(filename)
+
+
+def _log_response(data, response):
+    try:
+        response_text = json.dumps(response.json(), indent=2, sort_keys=True)
+    except Exception:
+        response_text = response.status_code
+    logger.debug('Sent this data to HS: %s \nreceived: %s' %
+                 (json.dumps(data, indent=2, sort_keys=True),
+                  response_text))

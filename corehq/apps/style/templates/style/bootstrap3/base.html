@@ -68,6 +68,15 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_nvd3 %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'nvd3/src/nv.d3.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
         {% if request.use_daterangepicker %}
         {% compress css %}
             <link type="text/css"
@@ -83,15 +92,6 @@
                   rel="stylesheet"
                   media="screen"
                   href="{% new_static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_nvd3 %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% new_static 'nvd3/src/nv.d3.css' %}" />
         {% endcompress %}
         {% endif %}
 

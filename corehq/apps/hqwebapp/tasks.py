@@ -1,7 +1,7 @@
 from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail, mail_admins
 from dimagi.utils.django.email import send_HTML_email
 
 logger = get_task_logger(__name__)
@@ -54,6 +54,22 @@ def send_html_email_async(self, subject, recipient, html_content,
             "to %(recipients)s: %(error)s" % {
                 'subject': subject,
                 'recipients': ', '.join(recipient),
+                'error': e,
+            })
+        self.retry(exc=e)
+
+
+@task(queue="email_queue",
+      bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def mail_admins_async(self, subject, message, fail_silently=False, connection=None,
+                      html_message=None):
+    try:
+        mail_admins(subject, message, fail_silently, connection, html_message)
+    except Exception as e:
+        logger.error(
+            "Encountered error while sending email titled %(subject)s"
+            "to admins: %(error)s" % {
+                'subject': subject,
                 'error': e,
             })
         self.retry(exc=e)

@@ -14,11 +14,12 @@
 <div id="usercase-config-ko">
     <div class="row-fluid">
         <div class="span12">
+            {% if allow_usercase %}
             <div data-bind="saveButton: saveUsercaseButton"></div>
+            {% endif %}
         </div>
     </div>
     <div data-bind="with: caseConfigViewModel">
         <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
-        {% comment %} subcases removed for now {% endcomment %}
     </div>
 </div>

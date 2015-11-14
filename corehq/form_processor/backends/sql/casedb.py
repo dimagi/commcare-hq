@@ -46,13 +46,13 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
 
         for case in cases:
             if case.is_saved():
-                rev = CommCareCaseSQL.objects.filter(
+                unchanged_case = CommCareCaseSQL.objects.filter(
                     case_uuid=case.case_id,
                     server_modified_on=case.server_modified_on
                 )
-                assert rev.exists(), (
-                    "Aborting because there would have been "
-                    "a document update conflict. {}".format(case.case_id)
+                assert unchanged_case.exists(), (
+                    "Aborting because the case has been modified"
+                    " by another process. {}".format(case.case_id)
                 )
             case.server_modified_on = now
         return cases

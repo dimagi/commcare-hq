@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {

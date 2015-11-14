@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Visit 1A V4 - Version_4</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/a699308a-1965-464c-b7ee-19efa51981a9" uiVersion="1" version="3" name="Visit 1A V4 - Version_4">
+          <ig_visit_ungrouped_3229>
+            <i_visit_pt_init_7/>
+            <i_visit_pt_no_1784/>
+            <i_visit_assd1_664/>
+          </ig_visit_ungrouped_3229>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="en" default="">
+          <text id="ig_visit_ungrouped_3229-label">
+            <value>IG_VISIT_UNGROUPED_3229</value>
+          </text>
+          <text id="ig_visit_ungrouped_3229/i_visit_pt_init_7-label">
+            <value>Patient initials</value>
+          </text>
+          <text id="ig_visit_ungrouped_3229/i_visit_pt_no_1784-label">
+            <value>Patient number</value>
+          </text>
+          <text id="ig_visit_ungrouped_3229/i_visit_assd1_664-label">
+            <value>Date of Assessment</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/ig_visit_ungrouped_3229/i_visit_pt_init_7" type="xsd:string"/>
+      <bind nodeset="/data/ig_visit_ungrouped_3229/i_visit_pt_no_1784" type="xsd:string"/>
+      <bind nodeset="/data/ig_visit_ungrouped_3229/i_visit_assd1_664" type="xsd:date"/>
+    </model>
+  </h:head>
+  <h:body>
+    <group ref="/data/ig_visit_ungrouped_3229">
+      <label ref="jr:itext('ig_visit_ungrouped_3229-label')"/>
+      <input ref="/data/ig_visit_ungrouped_3229/i_visit_pt_init_7">
+        <label ref="jr:itext('ig_visit_ungrouped_3229/i_visit_pt_init_7-label')"/>
+      </input>
+      <input ref="/data/ig_visit_ungrouped_3229/i_visit_pt_no_1784">
+        <label ref="jr:itext('ig_visit_ungrouped_3229/i_visit_pt_no_1784-label')"/>
+      </input>
+      <input ref="/data/ig_visit_ungrouped_3229/i_visit_assd1_664">
+        <label ref="jr:itext('ig_visit_ungrouped_3229/i_visit_assd1_664-label')"/>
+      </input>
+    </group>
+  </h:body>
+</h:html>

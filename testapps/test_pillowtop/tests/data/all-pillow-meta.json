@@ -1,7 +1,8 @@
 {
     "AllHmisCaseFluffPillow": {
         "advertised_name": "fluff.AllHmisCaseFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.AllHmisCaseFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.AllHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -16,7 +17,8 @@
     }, 
     "AncHmisCaseFluffPillow": {
         "advertised_name": "fluff.AncHmisCaseFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.AncHmisCaseFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.AncHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -31,6 +33,7 @@
     }, 
     "AppPillow": {
         "advertised_name": "corehq.pillows.application.AppPillow.93d8007a66254463abc4f8938811eea9.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.application.AppPillow.93d8007a66254463abc4f8938811eea9.testhq", 
         "couch_filter": "app_manager/all_apps", 
         "couchdb_type": "Database", 
@@ -47,6 +50,7 @@
     }, 
     "CacheInvalidatePillow": {
         "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq", 
         "couch_filter": "hqadmin/not_case_form", 
         "couchdb_type": "Database", 
@@ -59,7 +63,8 @@
     }, 
     "CareBiharFluffPillow": {
         "advertised_name": "fluff.CareBiharFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.CareBiharFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.CareBiharFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -74,6 +79,7 @@
     }, 
     "CaseDataPillow": {
         "advertised_name": "corehq.pillows.sofabed.CaseDataPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.sofabed.CaseDataPillow.testhq", 
         "couch_filter": "case/casedocs", 
         "couchdb_type": "Database", 
@@ -86,6 +92,7 @@
     }, 
     "CasePillow": {
         "advertised_name": "corehq.pillows.case.CasePillow.d94ad23a98ddd2e9c36a9dc73bb58bac.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.case.CasePillow.d94ad23a98ddd2e9c36a9dc73bb58bac.testhq", 
         "couch_filter": "case/casedocs", 
         "couchdb_type": "Database", 
@@ -102,7 +109,8 @@
     }, 
     "ConfigurableIndicatorPillow": {
         "advertised_name": "corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq", 
-        "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.ConfigurableIndicatorPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "pillow-checkpoint-ucr-main", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -114,7 +122,8 @@
     }, 
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.CouvertureFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.CouvertureFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -129,6 +138,7 @@
     }, 
     "DefaultChangeFeedPillow": {
         "advertised_name": "corehq.apps.change_feed.pillow.ChangeFeedPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "default-couch-change-feed", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
@@ -141,6 +151,7 @@
     }, 
     "DomainPillow": {
         "advertised_name": "corehq.pillows.domain.DomainPillow.hqdomains_20150909_1150.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.domain.DomainPillow.hqdomains_20150909_1150.testhq", 
         "couch_filter": "domain/domains_inclusive", 
         "couchdb_type": "Database", 
@@ -157,7 +168,8 @@
     }, 
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.FarmerRecordFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.FarmerRecordFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -172,6 +184,7 @@
     }, 
     "FormDataPillow": {
         "advertised_name": "corehq.pillows.sofabed.FormDataPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.sofabed.FormDataPillow.testhq", 
         "couch_filter": "couchforms/xforms", 
         "couchdb_type": "Database", 
@@ -184,7 +197,8 @@
     }, 
     "GeographyFluffPillow": {
         "advertised_name": "fluff.GeographyFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.GeographyFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.GeographyFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -199,6 +213,7 @@
     }, 
     "GroupPillow": {
         "advertised_name": "corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
         "couch_filter": "groups/all_groups", 
         "couchdb_type": "Database", 
@@ -215,6 +230,7 @@
     }, 
     "GroupToUserPillow": {
         "advertised_name": "corehq.pillows.user.GroupToUserPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.user.GroupToUserPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
@@ -227,7 +243,8 @@
     }, 
     "ImmunizationHmisCaseFluffPillow": {
         "advertised_name": "fluff.ImmunizationHmisCaseFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.ImmunizationHmisCaseFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.ImmunizationHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -242,7 +259,8 @@
     }, 
     "IntraHealthFluffPillow": {
         "advertised_name": "fluff.IntraHealthFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.IntraHealthFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.IntraHealthFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -257,13 +275,15 @@
     }, 
     "KafkaCaseConsumerPillow": {
         "advertised_name": "KafkaCaseConsumerPillow", 
+        "change_feed_type": "KafkaChangeFeed", 
         "checkpoint_id": "kafka-demo-case-pillow-checkpoint", 
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow", 
         "name": "KafkaCaseConsumerPillow"
     }, 
     "LdHmisCaseFluffPillow": {
         "advertised_name": "fluff.LdHmisCaseFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.LdHmisCaseFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.LdHmisCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -278,7 +298,8 @@
     }, 
     "LivraisonFluffPillow": {
         "advertised_name": "fluff.LivraisonFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.LivraisonFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.LivraisonFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -291,9 +312,23 @@
         "include_docs": false, 
         "name": "LivraisonFluffPillow"
     }, 
+    "LoggingPythonDemoPillow": {
+        "advertised_name": "corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow.testhq", 
+        "change_feed_type": "KafkaChangeFeed", 
+        "checkpoint_id": "kafka-demo-python-pillow-checkpoint", 
+        "couch_filter": null, 
+        "couchdb_type": "CachedCouchDB", 
+        "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
+        "document_class": null, 
+        "extra_args": {}, 
+        "full_class_name": "corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow", 
+        "include_docs": false, 
+        "name": "LoggingPythonDemoPillow"
+    }, 
     "MVPCaseIndicatorPillow": {
         "advertised_name": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
-        "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -308,7 +343,8 @@
     }, 
     "MVPFormIndicatorPillow": {
         "advertised_name": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
-        "checkpoint_id": "pillowtop_mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "mvp_docs.pillows.MVPFormIndicatorPillow.testhq", 
         "couch_filter": "hqadmin/domains_and_doc_types", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -323,7 +359,8 @@
     }, 
     "MalariaConsortiumFluffPillow": {
         "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.MalariaConsortiumFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.MalariaConsortiumFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -338,7 +375,8 @@
     }, 
     "McctMonthlyAggregateFormFluffPillow": {
         "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.McctMonthlyAggregateFormFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.McctMonthlyAggregateFormFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -353,7 +391,8 @@
     }, 
     "OpmUserFluffPillow": {
         "advertised_name": "fluff.OpmUserFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.OpmUserFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.OpmUserFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__users_test", 
@@ -368,6 +407,7 @@
     }, 
     "PhoneLogPillow": {
         "advertised_name": "corehq.pillows.log.PhoneLogPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.log.PhoneLogPillow.testhq", 
         "couch_filter": "phonelog/all_logs", 
         "couchdb_type": "Database", 
@@ -380,7 +420,8 @@
     }, 
     "ProjectIndicatorsCaseFluffPillow": {
         "advertised_name": "fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -395,7 +436,8 @@
     }, 
     "RecapPassageFluffPillow": {
         "advertised_name": "fluff.RecapPassageFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.RecapPassageFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.RecapPassageFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -410,7 +452,8 @@
     }, 
     "RecouvrementFluffPillow": {
         "advertised_name": "fluff.RecouvrementFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.RecouvrementFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.RecouvrementFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -425,6 +468,7 @@
     }, 
     "ReportCasePillow": {
         "advertised_name": "corehq.pillows.reportcase.ReportCasePillow.8c10a7564b6af5052f8b86693bf6ac07.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.reportcase.ReportCasePillow.8c10a7564b6af5052f8b86693bf6ac07.testhq", 
         "couch_filter": "case/casedocs", 
         "couchdb_type": "Database", 
@@ -441,6 +485,7 @@
     }, 
     "ReportXFormPillow": {
         "advertised_name": "corehq.pillows.reportxform.ReportXFormPillow.report_xforms_20150406_1136.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.reportxform.ReportXFormPillow.report_xforms_20150406_1136.testhq", 
         "couch_filter": "couchforms/xforms", 
         "couchdb_type": "Database", 
@@ -457,6 +502,7 @@
     }, 
     "SMSPillow": {
         "advertised_name": "corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq", 
         "couch_filter": "sms/all_logs", 
         "couchdb_type": "Database", 
@@ -473,7 +519,8 @@
     }, 
     "StaticDataSourcePillow": {
         "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq", 
-        "checkpoint_id": "pillowtop_corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "pillow-checkpoint-ucr-static", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -485,7 +532,8 @@
     }, 
     "TauxDeRuptureFluffPillow": {
         "advertised_name": "fluff.TauxDeRuptureFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.TauxDeRuptureFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.TauxDeRuptureFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -500,7 +548,8 @@
     }, 
     "TauxDeSatisfactionFluffPillow": {
         "advertised_name": "fluff.TauxDeSatisfactionFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.TauxDeSatisfactionFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.TauxDeSatisfactionFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -515,7 +564,8 @@
     }, 
     "UCLAPatientFluffPillow": {
         "advertised_name": "fluff.UCLAPatientFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.UCLAPatientFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.UCLAPatientFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -530,7 +580,8 @@
     }, 
     "UnicefMalawiFluffPillow": {
         "advertised_name": "fluff.UnicefMalawiFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.UnicefMalawiFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.UnicefMalawiFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -545,6 +596,7 @@
     }, 
     "UnknownUsersPillow": {
         "advertised_name": "corehq.pillows.user.UnknownUsersPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.user.UnknownUsersPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
@@ -556,24 +608,26 @@
         "name": "UnknownUsersPillow"
     }, 
     "UserPillow": {
-        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_20150430_1821.testhq", 
-        "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_20150430_1821.testhq", 
+        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "pillowtop_corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq", 
         "couch_filter": "users/all_users", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__users_test", 
         "document_class": "CommCareUser", 
         "es_alias": "hqusers", 
-        "es_index": "hqusers_20150430_1821", 
+        "es_index": "hqusers_2015-11-12_1638", 
         "es_type": "user", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.user.UserPillow", 
         "include_docs": true, 
         "name": "UserPillow", 
-        "unique_id": "hqusers_20150430_1821"
+        "unique_id": "hqusers_2015-11-12_1638"
     }, 
     "WorldVisionChildFluffPillow": {
         "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.WorldVisionChildFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.WorldVisionChildFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -588,7 +642,8 @@
     }, 
     "WorldVisionHierarchyFluffPillow": {
         "advertised_name": "fluff.WorldVisionHierarchyFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.WorldVisionHierarchyFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.WorldVisionHierarchyFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__users_test", 
@@ -603,7 +658,8 @@
     }, 
     "WorldVisionMotherFluffPillow": {
         "advertised_name": "fluff.WorldVisionMotherFluffPillow.testhq", 
-        "checkpoint_id": "pillowtop_fluff.WorldVisionMotherFluffPillow.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
+        "checkpoint_id": "fluff.WorldVisionMotherFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -618,6 +674,7 @@
     }, 
     "XFormPillow": {
         "advertised_name": "corehq.pillows.xform.XFormPillow.xforms_20150403-1728.testhq", 
+        "change_feed_type": "CouchChangeFeed", 
         "checkpoint_id": "pillowtop_corehq.pillows.xform.XFormPillow.xforms_20150403-1728.testhq", 
         "couch_filter": "couchforms/xforms", 
         "couchdb_type": "Database", 

@@ -43,11 +43,18 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 import HTMLParser
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.generic import View
 from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 import requests
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
+from corehq.apps.style.decorators import (
+    use_knockout_js,
+    use_datatables,
+    use_bootstrap3,
+    use_jquery_ui,
+)
 from django.shortcuts import get_object_or_404
 
 
@@ -62,116 +69,130 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
     return render(request, "cloudcare/insufficient_privilege.html", context)
 
-@require_cloudcare_access
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
-def cloudcare_main(request, domain, urlPath):
-    try:
-        preview = string_to_boolean(request.REQUEST.get("preview", "false"))
-    except ValueError:
-        # this is typically only set at all if it's intended to be true so this
-        # is a reasonable default for "something went wrong"
-        preview = True
 
-    app_access = ApplicationAccess.get_by_domain(domain)
+class CloudcareMain(View):
 
-    if not preview:
-        apps = get_cloudcare_apps(domain)
-        if request.project.use_cloudcare_releases:
-            # replace the apps with the last starred build of each app, removing the ones that aren't starred
-            apps = filter(lambda app: app.is_released, [get_app(domain, app['_id'], latest=True) for app in apps])
-            # convert to json
-            apps = [get_app_json(app) for app in apps]
-        else:
-            # legacy functionality - use the latest build regardless of stars
-            apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
+    @use_knockout_js
+    @use_bootstrap3
+    @use_datatables
+    @use_jquery_ui
+    @method_decorator(require_cloudcare_access)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, request, *args, **kwargs):
+        return super(CloudcareMain, self).dispatch(request, *args, **kwargs)
 
-    else:
-        apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
-        apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
+    def get(self, request, domain, urlPath):
+        try:
+            preview = string_to_boolean(request.REQUEST.get("preview", "false"))
+        except ValueError:
+            # this is typically only set at all if it's intended to be true so this
+            # is a reasonable default for "something went wrong"
+            preview = True
 
-    # trim out empty apps
-    apps = filter(lambda app: app, apps)
-    apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
-    
-    def _default_lang():
-        if apps:
-            # unfortunately we have to go back to the DB to find this
-            return Application.get(apps[0]["_id"]).build_langs[0]
-        else:
-            return "en"
+        app_access = ApplicationAccess.get_by_domain(domain)
 
-    # default language to user's preference, followed by 
-    # first app's default, followed by english
-    language = request.couch_user.language or _default_lang()
-    
-    def _url_context():
-        # given a url path, returns potentially the app, parent, and case, if
-        # they're selected. the front end optimizes with these to avoid excess
-        # server calls
-
-        # there's an annoying dependency between this logic and backbone's
-        # url routing that seems hard to solve well. this needs to be synced
-        # with apps.js if anything changes
-
-        # for apps anything with "view/app/" works
-
-        # for cases it will be:
-        # "view/:app/:module/:form/case/:case/"
-
-        # if there are parent cases, it will be:
-        # "view/:app/:module/:form/parent/:parent/case/:case/
-        
-        # could use regex here but this is actually simpler with the potential
-        # absence of a trailing slash
-        split = urlPath.split('/')
-        app_id = split[1] if len(split) >= 2 else None
-
-        if len(split) >= 5 and split[4] == "parent":
-            parent_id = split[5]
-            case_id = split[7] if len(split) >= 7 else None
-        else:
-            parent_id = None
-            case_id = split[5] if len(split) >= 6 else None
-
-        app = None
-        if app_id:
-            if app_id in [a['_id'] for a in apps]:
-                app = look_up_app_json(domain, app_id)
+        if not preview:
+            apps = get_cloudcare_apps(domain)
+            if request.project.use_cloudcare_releases:
+                # replace the apps with the last starred build of each app, removing the ones that aren't starred
+                apps = filter(
+                    lambda app: app.is_released,
+                    [get_app(domain, app['_id'], latest=True) for app in apps]
+                )
+                # convert to json
+                apps = [get_app_json(app) for app in apps]
             else:
-                messages.info(request, _("That app is no longer valid. Try using the "
-                                         "navigation links to select an app."))
-        if app is None and len(apps) == 1:
-            app = look_up_app_json(domain, apps[0]['_id'])
+                # legacy functionality - use the latest build regardless of stars
+                apps = [get_app_json(ApplicationBase.get_latest_build(domain, app['_id'])) for app in apps]
 
-        def _get_case(domain, case_id):
-            case = CommCareCase.get(case_id)
-            assert case.domain == domain, "case %s not in %s" % (case_id, domain)
-            return case.get_json()
+        else:
+            apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
+            apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
 
-        case = _get_case(domain, case_id) if case_id else None
-        if parent_id is None and case is not None:
-            parent_id = case.get('indices',{}).get('parent', {}).get('case_id', None)
-        parent = _get_case(domain, parent_id) if parent_id else None
+        # trim out empty apps
+        apps = filter(lambda app: app, apps)
+        apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
 
-        return {
-            "app": app,
-            "case": case,
-            "parent": parent
+        def _default_lang():
+            if apps:
+                # unfortunately we have to go back to the DB to find this
+                return Application.get(apps[0]["_id"]).build_langs[0]
+            else:
+                return "en"
+
+        # default language to user's preference, followed by
+        # first app's default, followed by english
+        language = request.couch_user.language or _default_lang()
+
+        def _url_context():
+            # given a url path, returns potentially the app, parent, and case, if
+            # they're selected. the front end optimizes with these to avoid excess
+            # server calls
+
+            # there's an annoying dependency between this logic and backbone's
+            # url routing that seems hard to solve well. this needs to be synced
+            # with apps.js if anything changes
+
+            # for apps anything with "view/app/" works
+
+            # for cases it will be:
+            # "view/:app/:module/:form/case/:case/"
+
+            # if there are parent cases, it will be:
+            # "view/:app/:module/:form/parent/:parent/case/:case/
+
+            # could use regex here but this is actually simpler with the potential
+            # absence of a trailing slash
+            split = urlPath.split('/')
+            app_id = split[1] if len(split) >= 2 else None
+
+            if len(split) >= 5 and split[4] == "parent":
+                parent_id = split[5]
+                case_id = split[7] if len(split) >= 7 else None
+            else:
+                parent_id = None
+                case_id = split[5] if len(split) >= 6 else None
+
+            app = None
+            if app_id:
+                if app_id in [a['_id'] for a in apps]:
+                    app = look_up_app_json(domain, app_id)
+                else:
+                    messages.info(request, _("That app is no longer valid. Try using the "
+                                             "navigation links to select an app."))
+            if app is None and len(apps) == 1:
+                app = look_up_app_json(domain, apps[0]['_id'])
+
+            def _get_case(domain, case_id):
+                case = CommCareCase.get(case_id)
+                assert case.domain == domain, "case %s not in %s" % (case_id, domain)
+                return case.get_json()
+
+            case = _get_case(domain, case_id) if case_id else None
+            if parent_id is None and case is not None:
+                parent_id = case.get('indices', {}).get('parent', {}).get('case_id', None)
+            parent = _get_case(domain, parent_id) if parent_id else None
+
+            return {
+                "app": app,
+                "case": case,
+                "parent": parent
+            }
+
+        context = {
+            "domain": domain,
+            "language": language,
+            "apps": apps,
+            "apps_raw": apps,
+            "preview": preview,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "offline_enabled": toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
+            "sessions_enabled": request.couch_user.is_commcare_user(),
+            "use_cloudcare_releases": request.project.use_cloudcare_releases,
         }
+        context.update(_url_context())
+        return render(request, "cloudcare/cloudcare_home.html", context)
 
-    context = {
-       "domain": domain,
-       "language": language,
-       "apps": apps,
-       "apps_raw": apps,
-       "preview": preview,
-       "maps_api_key": settings.GMAPS_API_KEY,
-       'offline_enabled': toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
-       'sessions_enabled': request.couch_user.is_commcare_user(),
-       'use_cloudcare_releases': request.project.use_cloudcare_releases,
-    }
-    context.update(_url_context())
-    return render(request, "cloudcare/cloudcare_home.html", context)
 
 @login_and_domain_required
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)

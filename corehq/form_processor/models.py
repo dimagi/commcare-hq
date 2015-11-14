@@ -1,7 +1,9 @@
+import json
 import os
 import collections
 import hashlib
 
+from django.db.models import Prefetch
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
@@ -9,6 +11,7 @@ from django.db import models, transaction
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
+from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.ext import jsonobject
 from couchforms.signals import xform_archived, xform_unarchived
@@ -16,8 +19,7 @@ from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
-from .exceptions import XFormNotFound
-
+from .exceptions import XFormNotFound, AttachmentNotFound
 
 Attachment = collections.namedtuple('Attachment', 'name content content_type')
 
@@ -43,14 +45,22 @@ class AttachmentMixin(SaveStateMixin):
     ATTACHMENTS_RELATED_NAME = 'attachments'
 
     def get_attachment(self, attachment_name):
-        return self.get_attachment_meta(attachment_name).read_content()
+        attachment = self.get_attachment_meta(attachment_name)
+        if not attachment:
+            raise AttachmentNotFound(attachment_name)
+        return attachment.read_content()
 
     def get_attachment_meta(self, attachment_name):
-        if hasattr(self, 'unsaved_attachments'):
-            for attachment in self.unsaved_attachments:
+        def _get_attachment_from_list(attachments):
+            for attachment in attachments:
                 if attachment.name == attachment_name:
                     return attachment
-        elif self.is_saved():
+
+        for list_attr in ('unsaved_attachments', 'cached_attachments'):
+            if hasattr(self, list_attr):
+                return _get_attachment_from_list(getattr(self, list_attr))
+
+        if self.is_saved():
             return self.attachments.filter(name=attachment_name).first()
 
 
@@ -94,8 +104,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
-    auth_context = JSONField(lazy=True)
-    openrosa_headers = JSONField(lazy=True)
+    auth_context = JSONField(lazy=True, default=dict)
+    openrosa_headers = JSONField(lazy=True, default=dict)
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
@@ -105,14 +115,15 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     build_id = models.CharField(max_length=255, null=True)
     # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
+    initial_processing_complete = models.BooleanField(default=False)
 
-    def __get_form_id(self):
+    @property
+    def form_id(self):
         return self.form_uuid
 
-    def __set_form_id(self, _id):
+    @form_id.setter
+    def form_id(self, _id):
         self.form_uuid = _id
-
-    form_id = property(__get_form_id, __set_form_id)
 
     @classmethod
     def get(cls, xform_id):
@@ -123,8 +134,12 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     @classmethod
     def get_with_attachments(cls, xform_id):
-        # NOOP for the SQL XFormInstance
-        return cls.get(xform_id)
+        try:
+            return XFormInstanceSQL.objects.prefetch_related(
+                Prefetch('attachments', to_attr='cached_attachments')
+            ).get(form_uuid=xform_id)
+        except XFormInstanceSQL.DoesNotExist:
+            raise XFormNotFound
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -179,15 +194,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
         return None
 
-    def save(self, *args, **kwargs):
-        super(XFormInstanceSQL, self).save(*args, **kwargs)
-        if getattr(self, 'initial_deprecation', False):
-            attachments = XFormAttachmentSQL.objects.filter(xform_id=self.orig_id)
-            attachments.update(xform_id=self.form_id)
-
-            operations = XFormOperationSQL.objects.filter(xform_id=self.orig_id)
-            operations.update(xform_id=self.form_id)
-
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self)
@@ -203,6 +209,13 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
                 payload = payload.encode('utf-8', errors='replace')
             return etree.fromstring(payload)
         return _to_xml_element(xml)
+
+    def get_data(self, path):
+        """
+        Evaluates an xpath expression like: path/to/node and returns the value
+        of that element, or None if there is no value.
+        """
+        return safe_index({'form': self.form_data}, path.split("/"))
 
     def get_xml(self):
         return self.get_attachment('form.xml')
@@ -315,7 +328,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
-    case_type = models.CharField(max_length=255)
+    type = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, null=True)
 
     owner_id = models.CharField(max_length=255)
 
@@ -334,23 +348,27 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     external_id = models.CharField(max_length=255)
 
-    case_json = JSONField(lazy=True)
+    case_json = JSONField(lazy=True, default=dict)
 
-    def __get_case_id(self):
+    @property
+    def case_id(self):
         return self.case_uuid
 
-    def __set_case_id(self, _id):
+    @case_id.setter
+    def case_id(self, _id):
         self.case_uuid = _id
 
-    case_id = property(__get_case_id, __set_case_id)
+    @property
+    def xform_ids(self):
+        return self.xform_set.values_list('form_uuid', flat=True)
 
     @property
     def user_id(self):
         return self.modified_by
 
-    @property
-    def case_name(self):
-        return self.case_json.get('name', None)
+    @user_id.setter
+    def user_id(self, value):
+        self.modified_by = value
 
     def hard_delete(self):
         # see cleanup.safe_hard_delete
@@ -372,6 +390,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         serializer = CommCareCaseSQLSerializer(self)
         return serializer.data
 
+    def dumps(self, pretty=False):
+        indent = 4 if pretty else None
+        return json.dumps(self.to_json(), indent=indent)
+
+    def pprint(self):
+        print self.dumps(pretty=True)
+
     @memoized
     def _saved_indices(self):
         return self.index_set.all() if self.is_saved() else []
@@ -387,6 +412,24 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
         return indices
 
+    def has_index(self, index_id):
+            return index_id in (i.identifier for i in self.indices)
+
+    def get_index(self, index_id):
+        found = filter(lambda i: i.identifier == index_id, self.indices)
+        if found:
+            assert(len(found) == 1)
+            return found[0]
+        return None
+
+    @memoized
+    def _saved_attachments(self):
+        return self.attachments.all()
+
+    @property
+    def case_attachments(self):
+        return {attachment.name: attachment for attachment in self._saved_attachments()}
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -400,7 +443,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
-        return CaseForms.objects.filter(case_uuid=case_id)
+        return CaseForms.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -456,13 +499,13 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     referenced_type = models.CharField(max_length=255, null=False)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
-    def __get_relationship(self):
+    @property
+    def relationship(self):
         return self.RELATIONSHIP_INVERSE_MAP[self.relationship_id]
 
-    def __set_relationship(self, relationship):
+    @relationship.setter
+    def relationship(self, relationship):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
-
-    relationship = property(__get_relationship, __set_relationship)
 
     def __unicode__(self):
         return (
@@ -482,7 +525,10 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
 
 
 class CaseForms(models.Model):
-    case = models.ForeignKey('CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False)
+    case = models.ForeignKey(
+        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
+        related_name="xform_set", related_query_name="xform"
+    )
     form_uuid = models.CharField(max_length=255, null=False)  # can't be a foreign key due to partitioning
 
     class Meta:
