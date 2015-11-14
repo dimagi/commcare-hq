@@ -26,9 +26,9 @@ class ReportModuleSuiteHelper(object):
     def get_details(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            for filter_slug, f in _mobile_select_filters(config):
-                yield (_mobile_select_filter_select_detail_id(config, filter_slug),
-                       _mobile_select_filter_select_details(config, filter_slug), True)
+            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config):
+                yield (_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                       _MobileSelectFilterHelpers.get_select_details(config, filter_slug), True)
             yield (_get_select_detail_id(config), _get_select_details(config), True)
             yield (_get_summary_detail_id(config), _get_summary_details(config), True)
 
@@ -48,12 +48,12 @@ def _get_config_entry(config):
         ),
         datums=[
             SessionDatum(
-                detail_select=_mobile_select_filter_select_detail_id(config, filter_slug),
-                id=_mobile_select_filter_datum_id(config, filter_slug),
-                nodeset=_mobile_select_filter_choice_nodeset(config, filter_slug),
+                detail_select=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                id=_MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
+                nodeset=_MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
                 value='./@value',
             )
-            for filter_slug, f in _mobile_select_filters(config)
+            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config)
         ] + [
             SessionDatum(
                 detail_confirm=_get_summary_detail_id(config),
@@ -64,44 +64,6 @@ def _get_config_entry(config):
             ),
         ]
     )
-
-
-def _mobile_select_filter_choice_nodeset(config, filter_slug):
-    return (
-        "instance('reports')/reports/report[@id='{report_id}']/filters/filter[@field='{filter_slug}']/option"
-        .format(report_id=config.uuid, filter_slug=filter_slug))
-
-
-def _mobile_select_filters(config):
-    return [(slug, f) for slug, f in config.filters.items()
-            if isinstance(f, MobileSelectFilter)]
-
-
-def _mobile_select_filter_datum_id(config, filter_slug):
-    return 'report_filter_{report_id}_{column_id}'.format(
-        report_id=config.uuid, column_id=filter_slug)
-
-
-def _mobile_select_filter_select_detail_id(config, filter_slug):
-    return "reports.{report_id}.filter.{filter_slug}".format(
-        report_id=config.uuid, filter_slug=filter_slug)
-
-
-def _mobile_select_filter_select_details(config, filter_slug):
-    return models.Detail(custom_xml=Detail(
-        id=_mobile_select_filter_select_detail_id(config, filter_slug),
-        title=Text(config.report.get_ui_filter(filter_slug).label),
-        fields=[
-            Field(
-                header=Header(
-                    text=Text(config.report.get_ui_filter(filter_slug).label)
-                ),
-                template=Template(
-                    text=Text(xpath_function='.')
-                ),
-            )
-        ]
-    ).serialize())
 
 
 def _get_select_detail_id(config):
@@ -147,7 +109,7 @@ def _get_summary_details(config):
                     return Series(
                         nodeset=(
                             "instance('reports')/reports/report[@id='{}']/rows/row{}"
-                            .format(config.uuid, _data_filter_xpath(config))),
+                            .format(config.uuid, _MobileSelectFilterHelpers.get_data_filter_xpath(config))),
                         x_function="column[@id='{}']".format(chart_config.x_axis_column),
                         y_function="column[@id='{}']".format(column),
                         configuration=ConfigurationGroup(configs=[
@@ -245,7 +207,7 @@ def _get_data_detail(config):
 
     return Detail(
         id='reports.{}.data'.format(config.uuid),
-        nodeset='rows/row{}'.format(_data_filter_xpath(config)),
+        nodeset='rows/row{}'.format(_MobileSelectFilterHelpers.get_data_filter_xpath(config)),
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
@@ -253,9 +215,49 @@ def _get_data_detail(config):
     )
 
 
-def _data_filter_xpath(config):
-    return ''.join([
-        "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
-            column_id=config.report.get_ui_filter(slug).field,
-            datum_id=_mobile_select_filter_datum_id(config, slug))
-        for slug, f in _mobile_select_filters(config)])
+class _MobileSelectFilterHelpers(object):
+    @staticmethod
+    def get_options_nodeset(config, filter_slug):
+        return (
+            "instance('reports')/reports/report[@id='{report_id}']/filters/filter[@field='{filter_slug}']/option"
+            .format(report_id=config.uuid, filter_slug=filter_slug))
+
+    @staticmethod
+    def get_filters(config):
+        return [(slug, f) for slug, f in config.filters.items()
+                if isinstance(f, MobileSelectFilter)]
+
+    @staticmethod
+    def get_datum_id(config, filter_slug):
+        return 'report_filter_{report_id}_{column_id}'.format(
+            report_id=config.uuid, column_id=filter_slug)
+
+    @staticmethod
+    def get_select_detail_id(config, filter_slug):
+        return "reports.{report_id}.filter.{filter_slug}".format(
+            report_id=config.uuid, filter_slug=filter_slug)
+
+    @staticmethod
+    def get_select_details(config, filter_slug):
+        return models.Detail(custom_xml=Detail(
+            id=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+            title=Text(config.report.get_ui_filter(filter_slug).label),
+            fields=[
+                Field(
+                    header=Header(
+                        text=Text(config.report.get_ui_filter(filter_slug).label)
+                    ),
+                    template=Template(
+                        text=Text(xpath_function='.')
+                    ),
+                )
+            ]
+        ).serialize())
+
+    @staticmethod
+    def get_data_filter_xpath(config):
+        return ''.join([
+            "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
+                column_id=config.report.get_ui_filter(slug).field,
+                datum_id=_MobileSelectFilterHelpers.get_datum_id(config, slug))
+            for slug, f in _MobileSelectFilterHelpers.get_filters(config)])
