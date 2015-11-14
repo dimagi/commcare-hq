@@ -3,6 +3,7 @@ import logging
 
 from couchdbkit import ResourceNotFound
 from django.db.models import Q
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
 from casexml.apps.case.signals import cases_received
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
@@ -181,8 +182,6 @@ def _get_or_update_cases(xforms, case_db):
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
     def _validate_indices(case):
-        dirtiness_flags = []
-        is_dirty = False
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
@@ -195,12 +194,46 @@ def _get_or_update_cases(xforms, case_db):
                         case.case_id,
                         index.referenced_id,
                     )
-                else:
-                    if referenced_case.owner_id != case.owner_id:
-                        is_dirty = True
-        if is_dirty:
-            dirtiness_flags.append(DirtinessFlag(case.case_id, case.owner_id))
-        return dirtiness_flags
+
+    def _get_dirtiness_flags_for_outgoing_indices(case, tree_owners=None):
+        """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
+        if tree_owners is None:
+            tree_owners = set()
+
+        extension_indices = [index for index in case.indices if index.relationship == CASE_INDEX_EXTENSION]
+
+        unowned_host_cases = []
+        for index in extension_indices:
+            host_case = case_db.get(index.referenced_id)
+            if (
+                host_case
+                and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID
+                and host_case not in unowned_host_cases
+            ):
+                unowned_host_cases.append(host_case)
+
+        owner_ids = {case_db.get(index.referenced_id).owner_id
+                     for index in case.indices if case_db.get(index.referenced_id)} | tree_owners
+        potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
+        more_than_one_owner_touched = len(owner_ids) > 1
+        touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
+
+        if (more_than_one_owner_touched or touches_different_owner):
+            yield DirtinessFlag(case._id, case.owner_id)
+            if extension_indices:
+                # If this case is an extension, each of the touched cases is also dirty
+                for index in case.indices:
+                    referenced_case = case_db.get(index.referenced_id)
+                    yield DirtinessFlag(referenced_case._id, referenced_case.owner_id)
+
+        if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
+            tree_owners.add(case.owner_id)
+        for unowned_host_case in unowned_host_cases:
+            # A host case of this extension is unowned, which means it could potentially touch an owned case
+            # Check these unowned cases' outgoing indices and mark dirty if appropriate
+            for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(unowned_host_case,
+                                                                            tree_owners=tree_owners):
+                yield dirtiness_flag
 
     def _get_dirtiness_flags_for_child_cases(cases):
         child_cases = case_db.get_reverse_indexed_cases([c.case_id for c in cases])
@@ -211,15 +244,13 @@ def _get_or_update_cases(xforms, case_db):
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
                     yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
-    dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
     domain = getattr(case_db, 'domain', None)
-    track_cleanliness = should_track_cleanliness(domain)
-    if track_cleanliness:
-        # only do this extra step if the toggle is enabled since we know we aren't going to
-        # care about the dirtiness flags otherwise.
-        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
+    dirtiness_flags = []
+    for case in touched_cases.values():
+        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case))
+    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
 
-    return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
+    return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, True)
 
 
 def is_device_report(doc):
