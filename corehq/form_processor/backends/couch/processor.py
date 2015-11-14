@@ -194,7 +194,7 @@ def _get_actions_from_forms(domain, sorted_forms, case_id):
 
 
 def _rebuild_action():
-    now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
     return CommCareCaseAction(
         action_type=const.CASE_ACTION_REBUILD,
         date=now,
