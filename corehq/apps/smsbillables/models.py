@@ -356,7 +356,7 @@ class SmsBillable(models.Model):
                     national_number=national_number,
                 )
                 if billable.gateway_fee is not None:
-                    currency = billable.gateway_fee
+                    currency = billable.gateway_fee.currency
                 else:
                     smsbillables_logging.error(
                         "No matching gateway fee criteria for SMSLog %s" % message_log._id
