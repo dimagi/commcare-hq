@@ -4,7 +4,7 @@
 <script type="text/javascript">
 jQuery(document).ready(function($) {
 	var ws4redis = WS4Redis({
-		uri: '{{ WEBSOCKET_URI }}foobar?subscribe-broadcast&publish-broadcast&echo',
+		uri: '{{ WEBSOCKET_URI }}chat?subscribe-broadcast&publish-broadcast&echo',
 		receive_message: receiveMessage,
 		heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
 	});
@@ -13,8 +13,12 @@ jQuery(document).ready(function($) {
     // send message though the Websocket to the server
 
     var sendMessage = function(text) {
-        var formatted = username + ': ' + text;
-        ws4redis.send_message(formatted);
+        // var formatted = username + ': ' + text;
+        var formatted = {
+            'username': username,
+            'message': text
+        };
+        ws4redis.send_message(JSON.stringify(formatted));
     };
 	$("#text_message").keydown(function(event) {
 		if (event.keyCode === 13) {
@@ -29,7 +33,9 @@ jQuery(document).ready(function($) {
 
 	// receive a message though the Websocket from the server
 	function receiveMessage(msg) {
-        billboard.append('<br/>' + msg);
+        var msgObj = JSON.parse(msg);
+        var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
+        billboard.append('<br/>' + renderedMsg);
 		billboard.scrollTop(billboard.scrollTop() + 25);
 	}
 });

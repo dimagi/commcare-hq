@@ -853,6 +853,7 @@ class BroadcastChatView(TemplateView):
     template_name = 'hqadmin/chat_demo/broadcast_chat.html'
 
     def get(self, request, *args, **kwargs):
-        welcome = RedisMessage('Hello everybody')  # create a welcome message to be sent to everybody
-        RedisPublisher(facility='foobar', broadcast=True).publish_message(welcome)
+        msg = json.dumps({'username': '[system]', 'message': '{} has joined'.format(request.user.username)})
+        welcome = RedisMessage(msg)
+        RedisPublisher(facility='chat', broadcast=True).publish_message(welcome)
         return super(BroadcastChatView, self).get(request, *args, **kwargs)
