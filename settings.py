@@ -1598,5 +1598,3 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
-
-from ws4redis.redis_store import SELF
