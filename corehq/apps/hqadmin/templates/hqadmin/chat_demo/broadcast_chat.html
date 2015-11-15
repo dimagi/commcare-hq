@@ -9,17 +9,22 @@ jQuery(document).ready(function($) {
 		heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
 	});
 	var billboard = $('#billboard');
+    var username = '{{ request.user.username }}' || '[anonymous]';
+    // send message though the Websocket to the server
 
-	// send message though the Websocket to the server
+    var sendMessage = function(text) {
+        var formatted = username + ': ' + text;
+        ws4redis.send_message(formatted);
+    };
 	$("#text_message").keydown(function(event) {
 		if (event.keyCode === 13) {
 			event.preventDefault();
-			ws4redis.send_message($('#text_message').val());
+            sendMessage($('#text_message').val());
 		}
 	});
 
 	$('#send_message').click(function() {
-		ws4redis.send_message($('#text_message').val());
+        sendMessage($('#text_message').val());
 	});
 
 	// receive a message though the Websocket from the server
