@@ -1,0 +1,84 @@
+{% load hq_shared_tags %}{% load compress %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>CommCare HQ Form Feed</title>
+	{% compress css %}
+        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'nvd3/src/nv.d3.css' %}" />
+    {% endcompress %}
+</head>
+<body>
+	<div class="container">
+		{% block main_content %}
+            <h1>Incoming Forms by domain <small>This should update in real time.</small></h1>
+            <div id="chart"><svg style='height:500px'></svg></div>
+		{% endblock main_content %}
+	</div>
+    {% compress js %}
+        <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
+    {% endcompress %}
+
+	{% block script_panel %}
+        <script type="text/javascript">
+jQuery(document).ready(function($) {
+    var ws4redis = WS4Redis({
+        uri: '{{ WEBSOCKET_URI }}form-feed?subscribe-broadcast',
+        receive_message: receiveMessage,
+        heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
+    });
+
+    var formCounts = {};
+
+    // receive a message though the Websocket from the server
+    function receiveMessage(msg) {
+        var msgObj = JSON.parse(msg);
+        // var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
+        var currentCount =formCounts[msgObj.domain] || 0;
+        currentCount += 1;
+        formCounts[msgObj.domain] = currentCount;
+        if (chart !== undefined) {
+            // chartData.datum(formatChartData(formCounts)).transition().duration(50).call(chart);
+            chartData.datum(formatChartData(formCounts)).call(chart);
+            try {
+                nv.utils.windowResize(chart.update);
+            } catch (err) {
+                // if the chart is being updated frequently then this can fail so just ignore it for now
+            }
+        }
+    }
+
+    // charts
+    var chart, chartData;
+    nv.addGraph(function() {
+        chart = nv.models.discreteBarChart()
+          .x(function(d) { return d.domain })
+          .y(function(d) { return d.count })
+          .staggerLabels(true)
+          .tooltips(false)
+          .showValues(true)
+          .transitionDuration(350)
+        ;
+        chartData = d3.select('#chart svg').datum(formatChartData(formCounts));
+        chartData.call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
+    function formatChartData(data) {
+        return [{
+            key: "Submissions by Domain",
+            values: $.map(data, function (count, domain) { return {'domain': domain, 'count': count}; })
+        }];
+    }
+});
+</script>
+	{% endblock %}
+</body>
+</html>

@@ -857,3 +857,11 @@ class BroadcastChatView(TemplateView):
         welcome = RedisMessage(msg)
         RedisPublisher(facility='chat', broadcast=True).publish_message(welcome)
         return super(BroadcastChatView, self).get(request, *args, **kwargs)
+
+
+class FormFeedView(TemplateView):
+    # todo: can remove this class if truly no customizations needed
+    template_name = 'hqadmin/dimagisphere/form_feed.html'
+
+    def get(self, request, *args, **kwargs):
+        return super(FormFeedView, self).get(request, *args, **kwargs)
