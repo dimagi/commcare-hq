@@ -169,12 +169,12 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
     'django.core.context_processors.static',
-    'ws4redis.context_processors.default',
     "corehq.util.context_processors.current_url_name",
     'corehq.util.context_processors.domain',
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
+    'corehq.util.context_processors.websockets_override',
 ]
 
 TEMPLATE_DIRS = []
