@@ -850,7 +850,7 @@ def _malt_csv_response(month, year):
 
 
 class BroadcastChatView(TemplateView):
-    template_name = 'hqadmin/chat_demo/broadcast_chat.html'
+    template_name = 'hqadmin/chat_demo.html'
 
     def get(self, request, *args, **kwargs):
         msg = json.dumps({'username': '[system]', 'message': '{} has joined'.format(request.user.username)})

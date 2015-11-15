@@ -39,6 +39,45 @@
         <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
     {% endcompress %}
-	{% block script_panel %}{% endblock %}
+    <script>
+	jQuery(document).ready(function($) {
+        var ws4redis = WS4Redis({
+            uri: '{{ WEBSOCKET_URI }}chat?subscribe-broadcast&publish-broadcast&echo',
+            receive_message: receiveMessage,
+            heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
+        });
+        var billboard = $('#billboard');
+        var username = '{{ request.user.username }}' || '[anonymous]';
+        // send message though the Websocket to the server
+
+        var sendMessage = function(text) {
+            // var formatted = username + ': ' + text;
+            var formatted = {
+                'username': username,
+                'message': text
+            };
+            ws4redis.send_message(JSON.stringify(formatted));
+        };
+        $("#text_message").keydown(function(event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                sendMessage($('#text_message').val());
+            }
+        });
+
+        $('#send_message').click(function() {
+            sendMessage($('#text_message').val());
+        });
+
+        // receive a message though the Websocket from the server
+        function receiveMessage(msg) {
+            var msgObj = JSON.parse(msg);
+            var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
+            billboard.append('<br/>' + renderedMsg);
+            billboard.scrollTop(billboard.scrollTop() + 25);
+            $('#text_message').val('');
+        }
+    });
+    </script>
 </body>
 </html>
