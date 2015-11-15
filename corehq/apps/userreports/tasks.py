@@ -14,27 +14,38 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
 def rebuild_indicators(indicator_config_id):
-    is_static = indicator_config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+    def _is_static(config_id):
+        return config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+
+    def _get_redis_key_for_config(config):
+        if _is_static(config._id):
+            rev = 'static'
+        else:
+            rev = config._rev
+        return 'ucr_queue-{}:{}'.format(config._id, rev)
+
+    is_static = _is_static(indicator_config_id)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(indicator_config_id)
-        rev = 'static'
     else:
         config = DataSourceConfiguration.get(indicator_config_id)
-        rev = config._rev
-        # Save the start time now in case anything goes wrong. This way we'll be
-        # able to see if the rebuild started a long time ago without finishing.
-        config.meta.build.initiated = datetime.datetime.utcnow()
-        config.save()
 
     adapter = IndicatorSqlAdapter(config)
 
     couchdb = _get_db(config.referenced_doc_type)
     client = get_redis_client().client.get_client()
-    redis_key = 'ucr_queue-{}:{}'.format(indicator_config_id, rev)
+    redis_key = _get_redis_key_for_config(config)
 
     if len(client.smembers(redis_key)) > 0:
         relevant_ids = client.smembers(redis_key)
     else:
+        if not is_static:
+            # Save the start time now in case anything goes wrong. This way we'll be
+            # able to see if the rebuild started a long time ago without finishing.
+            config.meta.build.initiated = datetime.datetime.utcnow()
+            config.save()
+            redis_key = _get_redis_key_for_config(config)
+
         adapter.rebuild_table()
         relevant_ids = get_doc_ids_in_domain_by_type(config.domain, config.referenced_doc_type,
                                    database=couchdb)
