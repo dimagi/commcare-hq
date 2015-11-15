@@ -21,10 +21,6 @@ def rebuild_indicators(indicator_config_id):
     else:
         config = DataSourceConfiguration.get(indicator_config_id)
         rev = config._rev
-        # Save the start time now in case anything goes wrong. This way we'll be
-        # able to see if the rebuild started a long time ago without finishing.
-        config.meta.build.initiated = datetime.datetime.utcnow()
-        config.save()
 
     adapter = IndicatorSqlAdapter(config)
 
@@ -35,6 +31,14 @@ def rebuild_indicators(indicator_config_id):
     if len(client.smembers(redis_key)) > 0:
         relevant_ids = client.smembers(redis_key)
     else:
+        if not is_static:
+            # Save the start time now in case anything goes wrong. This way we'll be
+            # able to see if the rebuild started a long time ago without finishing.
+            config.meta.build.initiated = datetime.datetime.utcnow()
+            config.save()
+            rev = config._rev
+            redis_key = 'ucr_queue-{}:{}'.format(indicator_config_id, rev)
+
         adapter.rebuild_table()
         relevant_ids = get_doc_ids_in_domain_by_type(config.domain, config.referenced_doc_type,
                                    database=couchdb)
