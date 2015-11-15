@@ -1,11 +1,14 @@
 from optparse import make_option
 from django.core.management import BaseCommand
+from django_countries.data import COUNTRIES
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from ws4redis.publisher import RedisPublisher
 from ws4redis.redis_store import RedisMessage
 import json
 import time
+from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
 
 
 class Command(BaseCommand):
@@ -19,7 +22,12 @@ class Command(BaseCommand):
                     action='store',
                     dest='sleep',
                     default=None,
-                    help="Start at this point in the changes feed (defaults to the end)"),
+                    help="Sleep this long between emissions (useful for demos)"),
+        make_option('--compact',
+                    action='store_true',
+                    dest='compact',
+                    default=False,
+                    help="Use 'compact' mode - don't include additional domain metadata (faster)"),
     )
 
     def handle(self, *args, **options):
@@ -34,6 +42,15 @@ class Command(BaseCommand):
                     last_domain = change.metadata.domain
                     print change.sequence_id, last_domain
 
-                message = RedisMessage(json.dumps(change.metadata.to_json()))
+                metadata = change.metadata.to_json()
+                if not options['compact']:
+                    metadata['country'] = _get_country(change.metadata.domain)
+                message = RedisMessage(json.dumps(metadata))
                 RedisPublisher(facility='form-feed', broadcast=True).publish_message(message)
                 time.sleep(sleep)
+
+@quickcache(vary_on=['domain'], timeout=600)
+def _get_country(domain):
+    project = Domain.get_by_name(domain)
+    if project and project.deployment.countries:
+        return unicode(COUNTRIES.get(project.deployment.countries[0], ''))
