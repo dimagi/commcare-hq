@@ -277,11 +277,12 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
+        amount = None
         if self.gateway_fee is not None:
             try:
                 amount = SmsGatewayFee.objects.get(id=self.gateway_fee.id).amount
             except ObjectDoesNotExist:
-                amount = None
+                pass
         if amount is None:
             amount = self.direct_gateway_fee or Decimal('0.0')
 
