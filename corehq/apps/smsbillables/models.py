@@ -330,7 +330,9 @@ class SmsBillable(models.Model):
 
                 try:
                     if message_log.backend_message_id:
-                        twilio_message = _get_twilio_client(backend_instance).messages.get(message_log.backend_message_id)
+                        twilio_message = _get_twilio_client(
+                            backend_instance
+                        ).messages.get(message_log.backend_message_id)
                         billable.direct_gateway_fee = Decimal(twilio_message.price) * -1
                         currency = Currency.objects.get(code=twilio_message.price_unit)
                         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
