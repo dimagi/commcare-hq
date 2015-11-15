@@ -35,6 +35,7 @@ class LoggingPythonPillow(PythonPillow):
             pillow_logging.info('Processed change {}: {}'.format(self._changes_processed, change))
         self._changes_processed += 1
 
+
 def get_demo_case_consumer_pillow():
     checkpoint = PillowCheckpoint(
         get_django_checkpoint_store(),
