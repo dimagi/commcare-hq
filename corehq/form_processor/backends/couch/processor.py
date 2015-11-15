@@ -157,7 +157,7 @@ class FormProcessorCouch(object):
         filtered_forms = [f for f in forms if f.is_normal]
         sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
 
-        actions, domain = _get_actions_from_forms(domain, sorted_forms, case_id)
+        actions = _get_actions_from_forms(domain, sorted_forms, case_id)
 
         if not found and case.domain is None:
             case.domain = domain
