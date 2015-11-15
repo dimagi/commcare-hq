@@ -199,7 +199,7 @@ DEFAULT_APPS = (
     'compressor',
     'mptt',
     'tastypie',
-    'ws4redis'
+    'ws4redis',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
