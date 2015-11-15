@@ -551,10 +551,11 @@ CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 
 # websockets config
+from settingshelper import get_allowed_websocket_channels
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
-
 WSGI_APPLICATION = 'ws4redis.django_runserver.application'
+WS4REDIS_ALLOWED_CHANNELS = get_allowed_websocket_channels
 
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
