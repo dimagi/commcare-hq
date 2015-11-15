@@ -319,6 +319,7 @@ class SmsBillable(models.Model):
         country_code, national_number = get_country_code_and_national_number(phone_number)
 
         if backend_instance is None or _sms_backend_is_global(backend_instance):
+            currency = None
             if backend_api_id == TwilioBackend.get_api_id():
                 def _get_twilio_client(twilio_backend_id):
                     twilio_backend = SMSBackend.get(twilio_backend_id)
@@ -361,7 +362,6 @@ class SmsBillable(models.Model):
                     smsbillables_logging.error(
                         "No matching gateway fee criteria for SMSLog %s" % message_log._id
                     )
-                    currency = None
             if currency:
                 conversion_rate = currency.rate_to_default
                 if conversion_rate != 0:
