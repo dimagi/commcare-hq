@@ -45,7 +45,6 @@ jQuery(document).ready(function($) {
         currentCount += 1;
         formCounts[msgObj.domain] = currentCount;
         if (chart !== undefined) {
-            // chartData.datum(formatChartData(formCounts)).transition().duration(50).call(chart);
             chartData.datum(formatChartData(formCounts)).call(chart);
             try {
                 nv.utils.windowResize(chart.update);
@@ -72,9 +71,12 @@ jQuery(document).ready(function($) {
         return chart;
     });
     function formatChartData(data) {
+        var values = $.map(data, function (count, domain) { return {'domain': domain, 'count': count}; });
+        // can uncomment the below line to sort by descending count (this causes colors to change over time)
+        // values.sort(function (a, b) { return b.count - a.count; });
         return [{
             key: "Submissions by Domain",
-            values: $.map(data, function (count, domain) { return {'domain': domain, 'count': count}; })
+            values: values
         }];
     }
 });
