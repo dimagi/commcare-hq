@@ -1,7 +1,8 @@
 from django.conf.urls import *
+from django.views.generic import TemplateView
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
-from .views import FlagBrokenBuilds, AuthenticateAs, BroadcastChatView, FormFeedView
+from .views import FlagBrokenBuilds, AuthenticateAs, BroadcastChatView
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -34,7 +35,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     (r'^api/', include(admin_api_urlpatterns)),
     url(r'^download_malt/$', 'malt_as_csv', name='download_malt'),
     url(r'^chat/$', BroadcastChatView.as_view(), name='broadcast_chat'),
-    url(r'^dimagisphere/$', FormFeedView.as_view(), name='dimagisphere'),
-
+    url(r'^dimagisphere/charts$', TemplateView.as_view(template_name='hqadmin/dimagisphere/form_feed.html'),
+        name='dimagisphere'),
     AdminReportDispatcher.url_pattern(),
 )
