@@ -9,6 +9,7 @@ see [Running the doctype migration](#run-the-doctype-migration) below.
 To `settings.py` add variables representing
 (1) the database you're currently using for the apps you're migrating, probably set to `None` (== main db),
 and (2) the database you _will_ be using.
+Add these variables to `COUCHDB_APPS` and `EXTRA_COUCHDB_DATABASES` in the manner described below.
 to start with:
 
 ```python
@@ -22,6 +23,11 @@ COUCHDB_APPS = [
     ('users', USERS_GROUPS_DB),
 ...
 ]
+...
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE, (
+    ...
+    NEW_USERS_GROUPS_DB,
+))
 ```
 
 Do a full-text search for each doc_type you're migrating across all `map.js` files
