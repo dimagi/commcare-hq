@@ -88,3 +88,16 @@ def get_reverse_indices(case):
 def get_reverse_indices_for_case_id(domain, case_id):
     return [CommCareCaseIndex.wrap(raw)
             for raw in get_reverse_indices_json(domain, case_id)]
+
+
+def get_extension_chain(cases, domain):
+    """given a list of cases, returns a list of all extensions of that case"""
+    extension_chain_ids = set()
+    incoming_extensions = set(get_extension_case_ids(domain, cases))
+    all_extension_ids = set(incoming_extensions)
+    new_extensions = set(incoming_extensions)
+    while new_extensions:
+        new_extensions = set(get_extension_case_ids(domain, list(new_extensions)))
+        all_extension_ids = all_extension_ids | new_extensions
+        extension_chain_ids = extension_chain_ids | all_extension_ids
+    return extension_chain_ids
