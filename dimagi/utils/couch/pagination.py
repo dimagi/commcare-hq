@@ -1,5 +1,5 @@
 from itertools import ifilter
-from dimagi.utils.couch.database import get_db, is_bigcouch
+from dimagi.utils.couch.database import is_bigcouch
 from django.http import HttpResponse
 import json
 from restkit.errors import RequestFailed
@@ -118,7 +118,8 @@ class CouchPaginator(object):
         self._search = search
         self._search_preprocessor = search_preprocessor
         self._view_args = view_args or {}
-        self.database = database or get_db()
+        assert bool(database), "You must provide a database"
+        self.database = database
         self.use_reduce_to_count = use_reduce_to_count
         
 
@@ -203,14 +204,14 @@ class LucenePaginator(object):
     """
     
     
-    def __init__(self, search_view_name, generator_func, database=None): 
+    def __init__(self, search_view_name, generator_func, database):
         """
         The generator function should be able to convert a couch 
         view results row into the appropriate json.
         """
         self._search_view = search_view_name
         self._generator_func = generator_func
-        self.database = database or get_db()
+        self.database = database
         
     def get_search_params(self):
         # the difference is:
