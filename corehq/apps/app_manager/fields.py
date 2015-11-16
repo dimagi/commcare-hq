@@ -396,9 +396,12 @@ class ApplicationDataRMIHelper(object):
             has_app = form['has_app']
             app_lang = form['app']['langs'][0] if 'langs' in form['app'] else 'en'
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
-            module_id = form['module']['id'] if has_app else self.UNKNOWN_SOURCE
-            module_name = (form['module']['name'][app_lang]
-                           if has_app else _("Unknown Module"))
+            module = form.get('module')
+            module_id = (module['id'] if has_app and module is not None
+                         else self.UNKNOWN_SOURCE)
+            module_name = (module['name'][app_lang]
+                           if has_app and module is not None
+                           else _("Unknown Module"))
             form_xmlns = form['xmlns']
             form_name = form_xmlns
             if not form.get('show_xmlns', False):
