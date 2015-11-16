@@ -2,7 +2,7 @@ Django==1.7.10
 jsonobject-couchdbkit==0.7.0.1
 pytz==2013b
 six>=1.5.0
-SQLAlchemy==0.8.2
+SQLAlchemy==1.0.9
 alembic==0.6.4
 unittest2==0.5.1
 psycopg2>=2.4.1
