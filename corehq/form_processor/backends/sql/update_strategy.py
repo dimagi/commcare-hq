@@ -152,7 +152,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
-        self.case.deleted = bool(real_transactions)
+        self.case.deleted = not bool(real_transactions)
 
         rebuild_transaction = CaseTransaction(
             case=self.case,
