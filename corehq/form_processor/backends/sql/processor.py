@@ -13,7 +13,7 @@ from couchforms.util import process_xform
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL)
+    CommCareCaseSQL, FormEditRebuild)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -182,15 +182,20 @@ class FormProcessorSQL(object):
         if len(xforms) > 1:
             domain = xforms[0].domain
             affected_cases = set()
+            deprecated_form_id = None
             for xform in xforms:
+                if xform.is_deprecated:
+                    deprecated_form_id = xform.form_id
                 affected_cases.update(case_update.id for case_update in get_case_updates(xform))
 
+            rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form_id)
             for case_id in affected_cases:
                 case = case_db.get(case_id)
                 if not case:
                     case = CommCareCaseSQL(domain=domain, case_id=case_id)
                     case_db.set(case_id, case)
-                case = FormProcessorSQL._rebuild_case_from_transactions(case, updated_xforms=xforms)
+
+                case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
                 if case:
                     touched_cases[case.case_id] = case
         else:
@@ -208,7 +213,7 @@ class FormProcessorSQL(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id):
+    def hard_rebuild_case(domain, case_id, detail):
         try:
             case = CommCareCaseSQL.get(case_id)
             assert case.domain == domain
@@ -217,22 +222,17 @@ class FormProcessorSQL(object):
             case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
             found = False
 
-        case = FormProcessorSQL._rebuild_case_from_transactions(case)
+        case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
         if case.is_deleted and not found:
             return None
         case.save()
 
     @staticmethod
-    def _rebuild_case_from_transactions(case, updated_xforms=None):
+    def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
         transactions = get_case_transactions(case.case_id, updated_xforms=updated_xforms)
         strategy = SqlCaseUpdateStrategy(case)
 
-        if updated_xforms:
-            deprecated_form = [f for f in updated_xforms if f.is_deprecated][0]
-            rebuild_transaction = CaseTransaction.rebuild_transaction_from_deprecated_form(case, deprecated_form)
-        else:
-            rebuild_transaction = CaseTransaction.rebuild_transaction(case)
-
+        rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
         strategy.rebuild_from_transactions(transactions, rebuild_transaction)
         return case
 

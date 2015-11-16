@@ -8,6 +8,7 @@ from casexml.apps.case.const import CASE_ACTION_REBUILD
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import RebuildWithReason
 from couchlog.models import ExceptionRecord
 
 
@@ -134,7 +135,7 @@ class Command(BaseCommand):
                     seen_cases.add(case_id)
                     if should_rebuild(domain, case_id):
                         cases_rebuilt.add(case_id)
-                        rebuild_case_from_forms(domain, case_id)
+                        rebuild_case_from_forms(domain, case_id, RebuildWithReason(reason='FB Case 158779'))
                         print 'rebuilt case {}'.format(case_id)
                     archive_exception(exception)
                 except Exception, e:

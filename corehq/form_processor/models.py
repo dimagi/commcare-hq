@@ -7,6 +7,7 @@ from datetime import datetime
 from django.db.models import Prefetch
 from jsonobject import JsonObject
 from jsonobject import StringProperty
+from jsonobject.properties import BooleanProperty
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
@@ -535,12 +536,18 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
 
 class CaseTransaction(models.Model):
     TYPE_FORM = 0
-    TYPE_REBUILD = 1
-    TYPE_FORM_EDIT_REBUILD = 2
+    TYPE_REBUILD_WITH_REASON = 1
+    TYPE_REBUILD_USER_REQUESTED = 2
+    TYPE_REBUILD_USER_ARCHIVED = 3
+    TYPE_REBUILD_FORM_ARCHIVED = 4
+    TYPE_REBUILD_FORM_EDIT = 5
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
-        (TYPE_REBUILD, 'rebuild'),
-        (TYPE_FORM_EDIT_REBUILD, 'form_edit_rebuild'),
+        (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
+        (TYPE_REBUILD_USER_REQUESTED, 'user_requested_rebuild'),
+        (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
+        (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
+        (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
@@ -563,24 +570,12 @@ class CaseTransaction(models.Model):
         return self.cached_form
 
     @classmethod
-    def rebuild_transaction(cls, case):
+    def rebuild_transaction(cls, case, detail):
         return CaseTransaction(
             case=case,
             server_date=datetime.utcnow(),
-            type=CaseTransaction.TYPE_REBUILD,
-        )
-
-    @classmethod
-    def rebuild_transaction_from_deprecated_form(cls, case, deprecated_form):
-        details = FormEditRebuild(
-            form_id=deprecated_form.orig_id,
-            deprecated_form_id=deprecated_form.form_id
-        ).to_json()
-        return CaseTransaction(
-            case=case,
-            server_date=datetime.utcnow(),
-            type=CaseTransaction.TYPE_FORM_EDIT_REBUILD,
-            details=details
+            type=detail.type,
+            details=detail.to_json()
         )
 
     class Meta:
@@ -588,6 +583,39 @@ class CaseTransaction(models.Model):
         ordering = ['server_date']
 
 
-class FormEditRebuild(JsonObject):
+class CaseTransactionDetail(JsonObject):
+    _type = None
+
+    @property
+    def type(self):
+        return self._type
+
+
+class RebuildWithReason(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_WITH_REASON
+    reason = StringProperty()
+
+    @property
+    def type(self):
+        return self._type
+
+
+class UserRequestedRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_USER_REQUESTED
+    user_id = StringProperty()
+
+
+class UserArchivedRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_USER_ARCHIVED
+    user_id = StringProperty()
+
+
+class FormArchiveRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED
     form_id = StringProperty()
+    archived = BooleanProperty()
+
+
+class FormEditRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
     deprecated_form_id = StringProperty()
