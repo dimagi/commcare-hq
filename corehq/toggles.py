@@ -307,6 +307,13 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
+    'extension_sync',
+    'Enable extension syncing',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
