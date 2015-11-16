@@ -199,7 +199,6 @@ class FormProcessorSQL(object):
                     case_db.set(case_id, case)
                 case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
                 if case:
-                    case.track_create(CaseTransaction.form_transaction(case, deprecated_form))
                     touched_cases[case.case_id] = case
         else:
             xform = xforms[0]
