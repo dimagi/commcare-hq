@@ -70,7 +70,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(domain, form_id_list, deletion
     forms_to_check = get_docs(XFormInstance.get_db(), form_id_list)
     forms_to_save = []
     for form in forms_to_check:
-        assert form.domain == domain
+        assert form['domain'] == domain
         if not is_deleted(form):
             form['doc_type'] += DELETED_SUFFIX
             form['-deletion_id'] = deletion_id
