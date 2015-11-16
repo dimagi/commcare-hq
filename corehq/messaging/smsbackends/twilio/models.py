@@ -1,5 +1,6 @@
 import logging
 from corehq.apps.sms.mixin import SMSBackend, SMSLoadBalancingMixin
+from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 from dimagi.ext.couchdbkit import *
@@ -68,3 +69,24 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         msg.system_phone_number = from_
         msg.backend_message_id = message.sid
         msg.save()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLTwilioBackend
+
+
+class SQLTwilioBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return TwilioBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'account_sid',
+            'auth_token',
+        ]

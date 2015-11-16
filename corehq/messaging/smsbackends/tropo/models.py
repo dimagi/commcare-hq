@@ -2,6 +2,7 @@ from urllib import urlencode
 from urllib2 import urlopen
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.sms.models import SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.tropo.forms import TropoBackendForm
 from django.conf import settings
@@ -42,3 +43,22 @@ class TropoBackend(SMSBackend):
         response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         return response
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLTropoBackend
+
+
+class SQLTropoBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return TropoBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'messaging_token',
+        ]

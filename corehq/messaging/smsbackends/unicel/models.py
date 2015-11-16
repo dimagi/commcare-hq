@@ -3,6 +3,7 @@ import logging
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.sms.models import SQLSMSBackend
 from corehq.util.timezones.conversions import UserTime
 from urllib2 import urlopen
 from urllib import urlencode
@@ -92,6 +93,28 @@ class UnicelBackend(SMSBackend):
 
         return data
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLUnicelBackend
+
+
+class SQLUnicelBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return UnicelBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'username',
+            'password',
+            'sender',
+        ]
+
 
 def create_from_request(request):
     """
@@ -114,4 +137,3 @@ def create_from_request(request):
     log = incoming(sender, message, UnicelBackend.get_api_id(), backend_message_id=backend_message_id)
 
     return log
-

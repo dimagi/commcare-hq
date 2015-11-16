@@ -9,6 +9,7 @@ from django.forms.fields import *
 from django.core.exceptions import ValidationError
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.fields import TrimmedCharField
+from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number, strip_plus
 from django.utils.translation import ugettext as _, ugettext_noop
 from crispy_forms import layout as crispy
@@ -143,3 +144,34 @@ class HttpBackend(SMSBackend):
         except Exception as e:
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.name, str(e))
             raise BackendProcessingException(msg), None, sys.exc_info()[2]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLHttpBackend
+
+
+class SQLHttpBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return HttpBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            # the url to send to
+            'url',
+            # the parameter which the gateway expects to represent the sms message
+            'message_param',
+            # the parameter which the gateway expects to represent the phone number to send to
+            'number_param',
+            # True to include the plus sign in front of the number, False not to (optional, defaults to False)
+            'include_plus',
+            # "GET" or "POST" (optional, defaults to "GET")
+            'method',
+            # a dictionary of additional parameters that will be sent in the request (optional)
+            'additional_params',
+        ]

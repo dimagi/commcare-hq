@@ -2,6 +2,7 @@ import urllib
 from django.conf import settings
 import urllib2
 from corehq.apps.sms.mixin import SMSBackend
+from corehq.apps.sms.models import SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.mach.forms import MachBackendForm
 
@@ -51,3 +52,28 @@ class MachBackend(SMSBackend):
         resp = urllib2.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
         return resp
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLMachBackend
+
+
+class SQLMachBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return MachBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'account_id',
+            'password',
+            'sender_id',
+            # Defines the maximum number of outgoing sms requests to be made per
+            # second. This is defined at the account level.
+            'max_sms_per_second',
+        ]
