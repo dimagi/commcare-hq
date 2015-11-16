@@ -8,7 +8,7 @@ import json_field.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0028_merge'),
+        ('form_processor', '0030_casetransaction_revoked'),
     ]
 
     operations = [
