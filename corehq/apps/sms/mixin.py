@@ -561,11 +561,28 @@ class SMSBackend(MobileBackend):
                 "unrecognized doc type." % self._id)
 
 
-class BackendMapping(Document):
+class BackendMapping(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     is_global = BooleanProperty()
     prefix = StringProperty()
+    backend_type = StringProperty(choices=['SMS', 'IVR'], default='SMS')
     backend_id = StringProperty() # Couch Document id of a MobileBackend
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.sms.models import SQLMobileBackendMapping
+        return SQLMobileBackendMapping
+
+    def _migration_sync_to_sql(self, sql_object):
+        from corehq.apps.sms.models import SQLMobileBackend
+        sql_object.couch_id = self._id
+        sql_object.is_global = self.is_global
+        sql_object.domain = self.domain
+        sql_object.backend_type = self.backend_type
+        sql_object.prefix = self.prefix
+        sql_object.backend = SQLMobileBackend.objects.get(couch_id=self._id)
+        sql_object.save(sync_to_couch=False)
+
 
 def apply_leniency(contact_phone_number):
     """

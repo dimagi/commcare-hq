@@ -18,7 +18,7 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
-    apply_leniency)
+    apply_leniency, BackendMapping)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
@@ -1550,6 +1550,42 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 class SQLSMSBackend(SQLMobileBackend):
     class Meta:
         proxy = True
+
+
+class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
+    """
+    A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
+    to a given backend based on phone prefix.
+    """
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # True if this mapping applies globally (system-wide). False if it only applies
+    # to a domain
+    is_global = models.BooleanField()
+
+    # The domain for which this mapping is valid; ignored if is_global is True
+    domain = models.CharField(max_length=126, null=True)
+
+    # Specifies whether this mapping is valid for SMS or IVR backends
+    backend_type = models.CharField(max_length=3, choices=SQLMobileBackend.TYPE_CHOICES)
+
+    # The phone prefix, or '*' for catch-all
+    prefix = models.CharField(max_length=25)
+
+    # The backend to use for the given phone prefix
+    backend = models.ForeignKey('SQLMobileBackend')
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return BackendMapping
+
+    def _migration_sync_to_couch(self, couch_obj):
+        couch_obj.domain = self.domain
+        couch_obj.is_global = self.is_global
+        couch_obj.prefix = self.prefix
+        couch_obj.backend_type = self.backend_type
+        couch_obj.backend_id = self.backend.couch_id
+        couch_obj.save(sync_to_sql=False)
 
 
 class MobileBackendInvitation(models.Model):
