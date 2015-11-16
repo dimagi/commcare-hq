@@ -1116,6 +1116,7 @@ def set_pillowtop_supervisorconf():
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_form_feed.conf')
 
 
 @roles(ROLES_DJANGO)
