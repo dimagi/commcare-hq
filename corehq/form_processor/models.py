@@ -556,7 +556,7 @@ class CaseTransaction(models.Model):
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
-        related_name="xform_set", related_query_name="xform"
+        related_name="transaction_set", related_query_name="transaction"
     )
     form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
