@@ -21,6 +21,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
     @run_with_all_backends
     def testArchive(self):
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
         response, xform, cases = self.interface.submit_form_locally(
             xml_data,
@@ -36,6 +37,9 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.interface.xform_model.get(xform.form_id)
         self.assertTrue(xform.is_archived)
+        case = self.interface.case_model.get(case_id)
+        self.assertTrue(case.is_deleted)
+        self.assertEqual(case.xform_ids, [])
 
         [archival] = xform.history
         self.assertTrue(lower_bound <= archival.date <= upper_bound)
@@ -48,12 +52,16 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.interface.xform_model.get(xform.form_id)
         self.assertTrue(xform.is_normal)
+        case = self.interface.case_model.get(case_id)
+        self.assertFalse(case.is_deleted)
+        self.assertEqual(case.xform_ids, [xform.form_id])
 
         [archival, restoration] = xform.history
         self.assertTrue(lower_bound <= restoration.date <= upper_bound)
         self.assertEqual('unarchive', restoration.operation)
         self.assertEqual('mr. researcher', restoration.user)
 
+    @run_with_all_backends
     def testSignal(self):
         global archive_counter, restore_counter
         archive_counter = 0
