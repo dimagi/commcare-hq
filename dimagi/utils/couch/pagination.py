@@ -265,37 +265,3 @@ class LucenePaginator(object):
         to_return.update(extras)
         
         return HttpResponse(json.dumps(to_return))
-
-
-class ReportBase(object):
-    extras = {}
-    def __init__(self, request):
-        self.request = request
-    @classmethod
-    def ajax_view(cls, *args, **kwargs):
-        return cls(*args, **kwargs).get_ajax_response()
-    def get_ajax_response(self):
-        """
-        From a datatables generated ajax request, return the appropriate
-        httpresponse containing the appropriate objects objects.
-
-        Extras allows you to override any individual paramater that gets
-        returned
-        """
-        params = DatatablesParams.from_request_dict(self.request.REQUEST)
-
-        count = self.count()
-        to_return = {
-            "sEcho": params.echo,
-            "iTotalDisplayRecords": count,
-            "iTotalRecords": count,
-            "aaData": self.rows(params.start, params.count)
-        }
-
-        to_return.update(self.extras)
-
-        return HttpResponse(json.dumps(to_return))
-    def count(self):
-        raise NotImplemented()
-    def rows(self, skip, limit):
-        raise NotImplemented()
