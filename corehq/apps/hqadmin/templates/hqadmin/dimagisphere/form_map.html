@@ -96,6 +96,14 @@ jQuery(document).ready(function($) {
         }
     }
 
+    function getOpacity(featureId) {
+        if (formCounts[featureId]) {
+            return .9;
+        } else {
+            return 0;
+        }
+    }
+
     function style(feature) {
         return {
             fillColor: getColor(feature.properties.name),
@@ -103,7 +111,7 @@ jQuery(document).ready(function($) {
             opacity: 1,
             color: 'white',
             dashArray: '3',
-            fillOpacity: 0.7
+            fillOpacity: getOpacity(feature.properties.name)
         };
     }
 
