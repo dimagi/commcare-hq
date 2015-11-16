@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <div id='report-module-edit' class="form-horizontal">
@@ -9,12 +10,14 @@
                 <input type="text" data-bind="value: currentModuleName">
             </div>
         </div>
+        {% if request|feature_preview_enabled:"MODULE_FILTER" %}
         <div class="control-group">
             <label class="control-label">{% trans "Module Filter" %}</label>
             <div class="controls">
                 <input type="text" data-bind="value: currentModuleFilter">
             </div>
         </div>
+        {% endif %}
         <table class="table" id="report-list">
             <thead>
                 <tr class="row control-group" >
