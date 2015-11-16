@@ -3238,6 +3238,27 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
+    @classmethod
+    def wrap(cls, data):
+        if cls is ReportAppFilter:
+            doc_type = data['doc_type']
+            doc_type_to_filter_class = {
+                'AutoFilter': AutoFilter,
+                'CustomDataAutoFilter': CustomDataAutoFilter,
+                'StaticChoiceFilter': StaticChoiceFilter,
+                'StaticChoiceListFilter': StaticChoiceListFilter,
+                'StaticDatespanFilter': StaticDatespanFilter,
+                'MobileSelectFilter': MobileSelectFilter,
+            }
+            try:
+                klass = doc_type_to_filter_class[doc_type]
+            except KeyError:
+                raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
+            else:
+                return klass.wrap(data)
+        else:
+            return super(ReportAppFilter, cls).wrap(data)
+
     def get_filter_value(self, user):
         raise NotImplementedError
 
