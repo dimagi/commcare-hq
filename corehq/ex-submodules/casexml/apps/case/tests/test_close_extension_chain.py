@@ -7,7 +7,6 @@ from casexml.apps.case.xform import get_extension_chain, \
 from casexml.apps.phone.models import User
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import flag_enabled
 
