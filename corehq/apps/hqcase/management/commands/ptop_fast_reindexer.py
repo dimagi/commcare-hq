@@ -7,7 +7,7 @@ from django.core.management.base import NoArgsCommand
 import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
-from pillowtop.listener import AliasedElasticPillow
+from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
 
 CHUNK_SIZE = 10000
@@ -256,7 +256,7 @@ class PtopReindexer(NoArgsCommand):
             self.log("Loading traditional method")
             self.load_traditional()
         end = datetime.utcnow()
-
+        self.finish_saving()
         self.pre_complete_hook()
         self.log("done in %s seconds" % (end - start).seconds)
 
@@ -304,6 +304,11 @@ class PtopReindexer(NoArgsCommand):
                     end += self.chunk_size
 
         self.send_bulk(bulk_slice, start, end)
+
+    def finish_saving(self):
+        # python pillows may have some chunked up changes so make sure they get processed
+        if isinstance(self.pillow, PythonPillow) and self.pillow.use_chunking:
+            self.pillow.process_chunk()
 
     def send_bulk(self, slice, start, end):
         doc_ids = [x['id'] for x in slice]
