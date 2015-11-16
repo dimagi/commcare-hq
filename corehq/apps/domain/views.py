@@ -2706,7 +2706,7 @@ class CardView(BaseCardView):
         try:
             card = self.payment_method.get_card(card_token)
             if request.POST.get("is_autopay") == 'true':
-                self.payment_method.set_autopay(card, self.account)
+                self.payment_method.set_autopay(card, self.account, domain)
             elif request.POST.get("is_autopay") == 'false':
                 self.payment_method.unset_autopay(card, self.account)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
@@ -2736,7 +2736,7 @@ class CardsView(BaseCardView):
         stripe_token = request.POST.get('token')
         autopay = request.POST.get('autopay') == 'true'
         try:
-            self.payment_method.create_card(stripe_token, self.account, autopay)
+            self.payment_method.create_card(stripe_token, self.account, domain, autopay)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
         except Exception as e:
