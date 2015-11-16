@@ -8,7 +8,7 @@ import json_field.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0027_allow_null_form_uuid_in_case_transaction'),
+        ('form_processor', '0028_merge'),
     ]
 
     operations = [
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='casetransaction',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild'), (2, b'form_edit_rebuild')]),
+            field=models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild_with_reason'), (2, b'user_requested_rebuild'), (3, b'user_archived_rebuild'), (4, b'form_archive_rebuild'), (5, b'form_edit_rebuild')]),
             preserve_default=True,
         ),
     ]
