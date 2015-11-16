@@ -18,12 +18,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 
-        self.case.track_create(CaseTransaction(
-            case=self.case,
-            form_uuid=xformdoc.form_id,
-            server_date=xformdoc.received_on,
-            type=CaseTransaction.TYPE_FORM)
-        )
+        self.case.track_create(CaseTransaction.form_transaction(self.case, xformdoc))
 
     def _apply_case_update(self, case_update, xformdoc):
         if case_update.has_referrals():

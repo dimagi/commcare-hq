@@ -574,6 +574,16 @@ class CaseTransaction(models.Model):
         return self.cached_form
 
     @classmethod
+    def form_transaction(cls, case, xform):
+        return CaseTransaction(
+            case=case,
+            form_uuid=xform.form_id,
+            server_date=xform.received_on,
+            type=CaseTransaction.TYPE_FORM,
+            revoked=not xform.is_normal
+        )
+
+    @classmethod
     def rebuild_transaction(cls, case, detail):
         return CaseTransaction(
             case=case,

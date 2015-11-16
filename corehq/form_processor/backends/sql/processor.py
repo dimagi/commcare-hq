@@ -185,21 +185,21 @@ class FormProcessorSQL(object):
         if len(xforms) > 1:
             domain = xforms[0].domain
             affected_cases = set()
-            deprecated_form_id = None
+            deprecated_form = None
             for xform in xforms:
                 if xform.is_deprecated:
-                    deprecated_form_id = xform.form_id
+                    deprecated_form = xform
                 affected_cases.update(case_update.id for case_update in get_case_updates(xform))
 
-            rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form_id)
+            rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
                 case = case_db.get(case_id)
                 if not case:
                     case = CommCareCaseSQL(domain=domain, case_id=case_id)
                     case_db.set(case_id, case)
-
                 case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
                 if case:
+                    case.track_create(CaseTransaction.form_transaction(case, deprecated_form))
                     touched_cases[case.case_id] = case
         else:
             xform = xforms[0]
