@@ -53,7 +53,6 @@ $.fn.inlineTouchform = function (options) {
                     options.onload();
                 }
             });
-              console.log("inline")
             var sess = new WebFormSession(data);
             sess.load($target, options.lang, {
                 onLoading: onLoading,
