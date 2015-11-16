@@ -724,7 +724,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return DataTablesHeader(*headers)
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         self.is_rendered_as_email = True
         self.use_datatables = False
