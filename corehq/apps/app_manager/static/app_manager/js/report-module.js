@@ -279,7 +279,7 @@ var ReportModule = (function () {
                 multimedia.mediaAudio[self.lang] = self.menuAudio.currentPath();
             }
             return multimedia;
-        }
+        };
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unsaved changes in your report list module",
