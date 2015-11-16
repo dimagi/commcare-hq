@@ -120,6 +120,7 @@ def format_env(current_env, extra=None):
     """
     ret = dict()
     important_props = [
+        'root',
         'environment',
         'code_root',
         'code_current',
