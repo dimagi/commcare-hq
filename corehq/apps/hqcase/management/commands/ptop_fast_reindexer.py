@@ -7,6 +7,8 @@ from django.core.management.base import NoArgsCommand
 import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.feed.couch import change_from_couch_row
+from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
 
@@ -267,6 +269,9 @@ class PtopReindexer(NoArgsCommand):
                 try:
                     if not self.custom_filter(row):
                         break
+                    if not isinstance(row, Change):
+                        assert isinstance(row, dict)
+                        row = change_from_couch_row(row)
                     self.pillow.processor(row, PillowRuntimeContext(do_set_checkpoint=False))
                     break
                 except Exception, ex:
