@@ -26,6 +26,14 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties, commtrack_ledger_sections)
 
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.controller import (
+    MultimediaAudioUploadController,
+    MultimediaImageUploadController,
+)
+from corehq.apps.hqmedia.views import (
+    ProcessAudioFileUploadView,
+    ProcessImageFileUploadView,
+)
 from corehq.apps.userreports.models import ReportConfiguration
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -61,13 +69,13 @@ def get_module_template(module):
         return "app_manager/module_view.html"
 
 
-def get_module_view_context(app, module):
+def get_module_view_context(request, app, module):
     if isinstance(module, CareplanModule):
         return _get_careplan_module_view_context(app, module)
     elif isinstance(module, AdvancedModule):
         return _get_advanced_module_view_context(app, module)
     elif isinstance(module, ReportModule):
-        return _get_report_module_context(app, module)
+        return _get_report_module_context(request, app, module)
     else:
         return _get_basic_module_view_context(app, module)
 
@@ -169,7 +177,7 @@ def _get_basic_module_view_context(app, module):
     }
 
 
-def _get_report_module_context(app, module):
+def _get_report_module_context(request, app, module):
     def _report_to_config(report):
         return {
             'report_id': report._id,
@@ -194,6 +202,35 @@ def _get_report_module_context(app, module):
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
         'warnings': warnings,
+        'multimedia': {
+            "references": app.get_references(),
+            "object_map": app.get_object_map(),
+            'upload_managers': {
+                'icon': MultimediaImageUploadController(
+                    "hqimage",
+                    reverse(
+                        ProcessImageFileUploadView.name,
+                        args=[app.domain, app.get_id]
+                    )
+                ),
+                'audio': MultimediaAudioUploadController(
+                    "hqaudio",
+                    reverse(
+                        ProcessAudioFileUploadView.name,
+                        args=[app.domain, app.get_id]
+                    )
+                ),
+            },
+            'menu': {
+                'menu_refs': app.get_menu_media(
+                    module, module.id
+                ),
+                'default_file_name': '{name}_{lang}'.format(
+                    name='module%d' % module.id,
+                    lang=request.COOKIES.get('lang', app.langs[0])
+                ),
+            },
+        }
     }
 
 
@@ -629,6 +666,8 @@ def edit_report_module(request, domain, app_id, module_id):
     assert isinstance(module, ReportModule)
     module.name = params['name']
     module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
+    module.media_image.update(params['multimediaUpdate'].get('mediaImage', {}))
+    module.media_audio.update(params['multimediaUpdate'].get('mediaAudio', {}))
     app.save()
     return json_response('success')
 
