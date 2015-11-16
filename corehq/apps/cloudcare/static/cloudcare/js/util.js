@@ -151,7 +151,7 @@ var tfLoadingComplete = function (isError) {
         $('#save-indicator').text(translatedStrings.saveAll).removeClass('alert-warning alert-danger').addClass('alert-success').show();
     }
 
-}
+};
 
 var tfSyncComplete = function (isError) {
     hideLoading();
@@ -161,7 +161,7 @@ var tfSyncComplete = function (isError) {
         $('#save-indicator').text(translatedStrings.synced).removeClass('alert-warning alert-danger').addClass('alert-success').show();
     }
 
-}
+};
 
 var hideLoading = function (selector) {
     selector = selector || "#loading";

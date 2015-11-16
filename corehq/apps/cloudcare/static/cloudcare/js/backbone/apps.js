@@ -495,10 +495,10 @@ cloudCare.AppView = Backbone.View.extend({
 
         self.syncButtonView = new cloudCare.SyncView({
             username: self.options.username
-        })
+        });
 
         cloudCare.dispatch.on("sync-db", function () {
-            self.syncDb(self.options.username)
+            self.syncDb(self.options.username);
         });
 
         cloudCare.dispatch.on("form:selected", function (form) {
@@ -622,7 +622,7 @@ cloudCare.AppView = Backbone.View.extend({
         return url;
     },
     getSyncUrl: function () {
-        return "/webforms/player_proxy"
+        return "/webforms/player_proxy";
     },
     playSession: function (session) {
         var self = this;
@@ -736,7 +736,6 @@ cloudCare.AppView = Backbone.View.extend({
             }
         };
         var loadSession = function() {
-            console.log("Load Session")
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
             sess.load($('#webforms'), self.options.language, {
@@ -867,7 +866,7 @@ cloudCare.AppView = Backbone.View.extend({
             type: 'POST',
         });
         resp.done(function (data) {
-            tfSyncComplete(data['status'] === "error")
+            tfSyncComplete(data.status === "error");
         });
 
     },
