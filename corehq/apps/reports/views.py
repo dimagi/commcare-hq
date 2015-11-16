@@ -51,6 +51,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
+from corehq.form_processor.models import UserRequestedRebuild
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
@@ -1096,7 +1097,7 @@ def case_xml(request, domain, case_id):
 @require_POST
 def rebuild_case_view(request, domain, case_id):
     case = get_document_or_404(CommCareCase, domain, case_id)
-    rebuild_case_from_forms(domain, case_id)
+    rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id=request.user.user_id))
     messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 

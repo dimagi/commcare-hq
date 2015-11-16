@@ -3,7 +3,11 @@ import os
 import collections
 import hashlib
 
+from datetime import datetime
 from django.db.models import Prefetch
+from jsonobject import JsonObject
+from jsonobject import StringProperty
+from jsonobject.properties import BooleanProperty
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
@@ -532,10 +536,18 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
 
 class CaseTransaction(models.Model):
     TYPE_FORM = 0
-    TYPE_REBUILD = 1
+    TYPE_REBUILD_WITH_REASON = 1
+    TYPE_REBUILD_USER_REQUESTED = 2
+    TYPE_REBUILD_USER_ARCHIVED = 3
+    TYPE_REBUILD_FORM_ARCHIVED = 4
+    TYPE_REBUILD_FORM_EDIT = 5
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
-        (TYPE_REBUILD, 'rebuild')
+        (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
+        (TYPE_REBUILD_USER_REQUESTED, 'user_requested_rebuild'),
+        (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
+        (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
+        (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
     )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
@@ -544,6 +556,7 @@ class CaseTransaction(models.Model):
     form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
+    details = JSONField(lazy=True, default=dict)
 
     @property
     def is_relevant(self):
@@ -556,6 +569,55 @@ class CaseTransaction(models.Model):
             self.cached_form = XFormAttachmentSQL.get(self.form_uuid)
         return self.cached_form
 
+    @classmethod
+    def rebuild_transaction(cls, case, detail):
+        return CaseTransaction(
+            case=case,
+            server_date=datetime.utcnow(),
+            type=detail.type,
+            details=detail.to_json()
+        )
+
     class Meta:
         unique_together = ("case", "form_uuid")
         ordering = ['server_date']
+
+
+class CaseTransactionDetail(JsonObject):
+    _type = None
+
+    @property
+    def type(self):
+        return self._type
+
+    def __eq__(self, other):
+        return self.type == other.type and self.to_json() == other.to_json()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+class RebuildWithReason(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_WITH_REASON
+    reason = StringProperty()
+
+
+class UserRequestedRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_USER_REQUESTED
+    user_id = StringProperty()
+
+
+class UserArchivedRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_USER_ARCHIVED
+    user_id = StringProperty()
+
+
+class FormArchiveRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED
+    form_id = StringProperty()
+    archived = BooleanProperty()
+
+
+class FormEditRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
+    deprecated_form_id = StringProperty()
