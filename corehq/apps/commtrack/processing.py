@@ -220,11 +220,19 @@ def process_stock(xforms, case_db=None):
         case_action_intents += actions_for_form.case_action_intents
 
     # omitted: normalize_transactions (used for bulk requisitions?)
-
     # validate the parsed transactions
     for stock_report_helper in stock_report_helpers:
         stock_report_helper.validate()
 
+    relevant_cases = mark_cases_changed(case_action_intents, case_db)
+    return StockProcessingResult(
+        xform=sorted_forms[-1],
+        relevant_cases=relevant_cases,
+        stock_report_helpers=stock_report_helpers,
+    )
+
+
+def mark_cases_changed(case_action_intents, case_db):
     relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved
     for action_intent in case_action_intents:
@@ -252,12 +260,6 @@ def process_stock(xforms, case_db=None):
                 case.xform_ids.append(action_intent.form_id)
 
         case_db.mark_changed(case)
-
-    return StockProcessingResult(
-        xform=sorted_forms[-1],
-        relevant_cases=relevant_cases,
-        stock_report_helpers=stock_report_helpers,
-    )
 
 
 def _compute_ledger_values(original_balance, stock_transaction):
