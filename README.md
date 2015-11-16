@@ -247,11 +247,9 @@ you'll need to run `./manage.py bower install` and install `bower`. Follow these
  
         $ `sudo npm -g install bower`
 
-3. Add `BOWER_PATH` to `localsettings.py`. Find your local bower path by using `which bower`
+3. Run bower with:
 
-4. Run bower with:
-
-        $ ./manage.py bower install
+        $ bower install
 
 
 ### Using LESS: 3 Options
