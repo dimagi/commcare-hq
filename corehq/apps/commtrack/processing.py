@@ -177,6 +177,10 @@ def get_stock_actions(xform):
     if not transaction_helpers:
         return _empty_actions()
 
+    case_action_intents = _get_case_action_intents(transaction_helpers)
+    return StockFormActions(stock_report_helpers, case_action_intents)
+
+def _get_case_action_intents(xform, transaction_helpers):
     # list of cases that had stock reports in the form
     case_ids = list(set(transaction_helper.case_id
                         for transaction_helper in transaction_helpers))
@@ -197,8 +201,7 @@ def get_stock_actions(xform):
             case_action_intents.append(CaseActionIntent(
                 case_id=case_id, form_id=xform.form_id, is_deprecation=False, action=case_action
             ))
-
-    return StockFormActions(stock_report_helpers, case_action_intents)
+    return case_action_intents
 
 
 @log_exception()
