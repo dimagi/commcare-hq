@@ -892,7 +892,7 @@ LOGGING = {
 
 # Django Compressor
 COMPRESS_PRECOMPILERS = (
-   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
 
@@ -984,8 +984,8 @@ try:
                         )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
-   # fallback in case nothing else is found - used for readthedocs
-   from dev_settings import *
+    # fallback in case nothing else is found - used for readthedocs
+    from dev_settings import *
 
 if DEBUG:
     try:
