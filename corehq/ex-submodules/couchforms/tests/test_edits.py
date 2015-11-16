@@ -154,6 +154,7 @@ class EditFormTest(TestCase, TestFileMixin):
         for a in case.actions:
             self.assertEqual(form_id, a.xform_id)
 
+    @run_with_all_backends
     def test_second_edit_fails(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
@@ -173,10 +174,10 @@ class EditFormTest(TestCase, TestFileMixin):
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         xform = self.interface.xform_model.get(form_id)
-        self.assertEqual('XFormError', xform.doc_type)
+        self.assertTrue(xform.is_error)
 
         deprecated_xform = self.interface.xform_model.get(xform.deprecated_form_id)
-        self.assertEqual('XFormDeprecated', deprecated_xform.doc_type)
+        self.assertTrue(deprecated_xform.is_deprecated)
 
     def test_case_management_ordering(self):
         case_id = uuid.uuid4().hex

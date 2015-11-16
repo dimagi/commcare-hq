@@ -1116,6 +1116,7 @@ def set_pillowtop_supervisorconf():
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_form_feed.conf')
 
 
 @roles(ROLES_DJANGO)
@@ -1146,6 +1147,11 @@ def set_reminder_queue_supervisorconf():
 def set_pillow_retry_queue_supervisorconf():
     if 'pillow_retry_queue' in get_celery_queues():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
+
+
+@roles(ROLES_STATIC)
+def set_pillow_retry_queue_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
 
 
 @task
