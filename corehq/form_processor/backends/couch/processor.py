@@ -142,7 +142,7 @@ class FormProcessorCouch(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id):
+    def hard_rebuild_case(domain, case_id, detail):
         try:
             case = CommCareCase.get(case_id)
             assert case.domain == domain
