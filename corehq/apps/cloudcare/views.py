@@ -189,6 +189,7 @@ class CloudcareMain(View):
             "offline_enabled": toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
+            "username": request.user.username,
         }
         context.update(_url_context())
         return render(request, "cloudcare/cloudcare_home.html", context)

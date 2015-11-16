@@ -330,6 +330,17 @@ cloudCare.Module = LocalizableModel.extend({
     }
 });
 
+cloudCare.SyncView = Backbone.View.extend({
+    el: $('#sync-container'),
+    events: {
+        "click #sync-button" : "sync"
+    },
+    sync: function (e) {
+        cloudCare.dispatch.trigger("sync-db");
+    }
+
+});
+
 cloudCare.ModuleView = Selectable.extend({
     tagName: 'li',
     initialize: function() {
@@ -482,6 +493,14 @@ cloudCare.AppView = Backbone.View.extend({
             language: self.options.language
         });
 
+        self.syncButtonView = new cloudCare.SyncView({
+            username: self.options.username
+        })
+
+        cloudCare.dispatch.on("sync-db", function () {
+            self.syncDb(self.options.username)
+        });
+
         cloudCare.dispatch.on("form:selected", function (form) {
             if (self.selectedForm !== form){
                 self.selectParent(null);
@@ -601,6 +620,9 @@ cloudCare.AppView = Backbone.View.extend({
         }
 
         return url;
+    },
+    getSyncUrl: function () {
+        return "/webforms/player_proxy"
     },
     playSession: function (session) {
         var self = this;
@@ -834,7 +856,21 @@ cloudCare.AppView = Backbone.View.extend({
         $('#webforms').html("");
         this.caseSelectionView.model.set("parentCase", null);
         this.caseSelectionView.model.set("childCase", null);
-    }
+    },
+    syncDb: function (username) {
+        var self = this;
+        var resp = $.ajax({
+            url: this.getSyncUrl(),
+            async: false,
+            dataType: "json",
+            data: JSON.stringify({"action": "sync-db", "username": username}),
+            type: 'POST',
+        });
+        resp.done(function (data) {
+            tfSyncComplete(data['status'] === "error")
+        });
+
+    },
 });
 
 cloudCare.AppMainView = Backbone.View.extend({
@@ -898,7 +934,8 @@ cloudCare.AppMainView = Backbone.View.extend({
             sessionUrlRoot: self.options.sessionUrlRoot,
             submitUrlRoot: self.options.submitUrlRoot,
             renderFormRoot: self.options.renderFormRoot,
-            instanceViewerEnabled: self.options.instanceViewerEnabled
+            instanceViewerEnabled: self.options.instanceViewerEnabled,
+            username: self.options.username,
         });
 
         // fetch session list here
