@@ -332,7 +332,7 @@ class StockReportHelper(jsonobject.JsonObject):
         deprecated = form.is_deprecated
         return cls(
             domain=form.domain,
-            form_id=form.get_id if not deprecated else form.orig_id,
+            form_id=form.form_id if not deprecated else form.orig_id,
             timestamp=timestamp,
             tag=tag,
             transactions=transactions,

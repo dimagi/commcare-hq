@@ -63,11 +63,6 @@ class FormProcessorCouch(object):
         XFormInstance.get_db().bulk_save(docs)
 
     @classmethod
-    def process_stock(cls, xforms, case_db):
-        from corehq.apps.commtrack.processing import process_stock
-        return process_stock(xforms, case_db)
-
-    @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
         # if the form contents are not the same:
         #  - "Deprecate" the old form by making a new document with the same contents
