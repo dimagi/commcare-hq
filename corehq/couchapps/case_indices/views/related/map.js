@@ -2,7 +2,14 @@ function(doc) {
     if(doc.doc_type == "CommCareCase") {
         if (doc.indices) {
             for (var i = 0; i < doc.indices.length; i++) {
-                emit([doc.domain, doc._id, "index"], doc.indices[i]);
+                var index = {};
+                for (var key in doc.indices[i]){
+                    if (doc.indices[i].hasOwnProperty(key)){
+                        index[key] = doc.indices[i][key];
+                    }
+                }
+                index.relationship = index.relationship || "child";
+                emit([doc.domain, doc._id, "index"], index);
 
                 var reverse_index = {};
                 for (var key in doc.indices[i]){
