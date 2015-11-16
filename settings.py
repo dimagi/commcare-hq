@@ -10,6 +10,8 @@ INSTALLED_APPS = (
     'django.contrib.auth',
 )
 
+MIDDLEWARE_CLASSES = ()
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
