@@ -5,8 +5,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq import privileges
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-from corehq.apps.reports.standard.export import ExcelExportReport
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import (
     TileConfiguration,
@@ -30,6 +29,11 @@ def dashboard_default(request, domain):
 
 def default_dashboard_url(request, domain):
     couch_user = getattr(request, 'couch_user', None)
+
+    module = Domain.get_module_by_name(domain)
+    if hasattr(module, 'CUSTOM_DASHBOARD_VIEW_NAME'):
+        return reverse(getattr(module, 'CUSTOM_DASHBOARD_VIEW_NAME'), args=[domain])
+
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return reverse('saved_reports', args=[domain])
 
