@@ -130,8 +130,8 @@ class FormProcessorInterface(object):
     def assign_new_id(self, xform):
         return self.processor.assign_new_id(xform)
 
-    def hard_rebuild_case(self, case_id):
-        return self.processor.hard_rebuild_case(self.domain, case_id)
+    def hard_rebuild_case(self, case_id, detail):
+        return self.processor.hard_rebuild_case(self.domain, case_id, detail)
 
     def get_cases_from_forms(self, xforms, case_db):
         return self.processor.get_cases_from_forms(xforms, case_db)

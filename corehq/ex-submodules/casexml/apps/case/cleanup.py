@@ -48,14 +48,17 @@ def rebuild_case_from_actions(case, actions):
     strategy.soft_rebuild_case()
 
 
-def rebuild_case_from_forms(domain, case_id):
+def rebuild_case_from_forms(domain, case_id, detail):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
     referencing it. Useful when things go wrong or when you need to manually
     rebuild a case after archiving / deleting it
+    :param domain: The domain the case belongs to
+    :param case_id: The ID of the case to be rebuilt
+    :param detail: A CaseTransactionDetail object
     """
 
-    return FormProcessorInterface(domain).hard_rebuild_case(case_id)
+    return FormProcessorInterface(domain).hard_rebuild_case(case_id, detail)
 
 
 def safe_hard_delete(case):

@@ -9,6 +9,7 @@ from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIn
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
+from corehq.form_processor.models import UserArchivedRebuild
 
 
 class RetireUserTestCase(TestCase):
@@ -85,7 +86,8 @@ class RetireUserTestCase(TestCase):
 
         self.other_user.retire()
 
-        rebuild_case.assert_called_once_with(self.domain, case_id)
+        detail = UserArchivedRebuild(user_id=self.other_user.user_id)
+        rebuild_case.assert_called_once_with(self.domain, case_id, detail)
 
     @mock.patch("casexml.apps.case.cleanup.rebuild_case_from_forms")
     def test_dont_rebuild(self, rebuild_case):
@@ -122,7 +124,8 @@ class RetireUserTestCase(TestCase):
 
         self.other_user.retire()
 
-        expected_call_args = [mock.call(self.domain, case_id) for case_id in case_ids]
+        detail = UserArchivedRebuild(user_id=self.other_user.user_id)
+        expected_call_args = [mock.call(self.domain, case_id, detail) for case_id in case_ids]
 
         self.assertEqual(rebuild_case.call_count, len(case_ids))
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
@@ -149,7 +152,8 @@ class RetireUserTestCase(TestCase):
 
         self.other_user.retire()
 
-        expected_call_args = [mock.call(self.domain, case_id) for case_id in case_ids[1:]]
+        detail = UserArchivedRebuild(user_id=self.other_user.user_id)
+        expected_call_args = [mock.call(self.domain, case_id, detail) for case_id in case_ids[1:]]
 
         self.assertEqual(rebuild_case.call_count, len(case_ids) - 1)
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
