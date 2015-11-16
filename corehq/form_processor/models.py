@@ -339,8 +339,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     owner_id = models.CharField(max_length=255)
 
-    opened_on = models.DateTimeField(null=False)
-    opened_by = models.CharField(max_length=255, null=False)
+    opened_on = models.DateTimeField(null=True)
+    opened_by = models.CharField(max_length=255, null=True)
 
     modified_on = models.DateTimeField(null=False)
     server_modified_on = models.DateTimeField(null=False)
