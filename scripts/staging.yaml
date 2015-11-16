@@ -57,6 +57,7 @@ branches:
   - bower.json # ben 11/11
   - extension-cases-sync-cleaned # Farid 11/14
   - websocket-demo  # cz 11/16
+  - icons-report-module # Nick P 11/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
