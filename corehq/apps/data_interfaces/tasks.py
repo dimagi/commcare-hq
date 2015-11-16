@@ -107,7 +107,10 @@ def run_case_update_rules_for_domain(domain, now=None):
         for doc in iter_docs(CommCareCase.get_db(), case_ids):
             case = CommCareCase.wrap(doc)
             for rule in rules:
-                rule.apply_rule(case, now)
+                closed = rule.apply_rule(case, now)
+                if closed:
+                    # If the case has been closed, stop processing further rules
+                    break
 
         for rule in rules:
             rule.last_run = now

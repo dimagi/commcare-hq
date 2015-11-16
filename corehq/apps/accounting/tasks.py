@@ -278,7 +278,7 @@ def create_wire_credits_invoice(domain_name,
 
 
 @task(ignore_result=True)
-def send_purchase_receipt(payment_record, core_product,
+def send_purchase_receipt(payment_record, core_product, domain,
                           template_html, template_plaintext,
                           additional_context):
     email = payment_record.payment_method.web_user
@@ -296,7 +296,7 @@ def send_purchase_receipt(payment_record, core_product,
     context = {
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
-        'project': payment_record.creditadjustment_set.last().credit_line.account.created_by_domain,
+        'project': domain,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'product': core_product,
         'transaction_id': payment_record.public_transaction_id,

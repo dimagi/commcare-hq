@@ -80,16 +80,31 @@ class AutomaticUpdateRule(models.Model):
                 close = True
 
         update_case(case.domain, case.get_id, case_properties=properties, close=close)
+        return close
 
     def apply_rule(self, case, now):
+        """
+        Returns True if the case was closed, False otherwise.
+        """
         if self.deleted:
             raise Exception("Attempted to call apply_rule on a deleted rule")
+
+        if not self.active:
+            raise Exception("Attempted to call apply_rule on an inactive rule")
 
         if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise Exception("Invalid case given")
 
+        if case.doc_type != 'CommCareCase':
+            # Exclude deleted cases
+            return False
+
+        if case.closed:
+            return False
+
         if self.rule_matches_case(case, now):
-            self.apply_actions(case)
+            return self.apply_actions(case)
+        return False
 
     def activate(self, active=True):
         self.active = active

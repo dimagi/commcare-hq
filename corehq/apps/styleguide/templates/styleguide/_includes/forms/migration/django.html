@@ -1,0 +1,158 @@
+<h3>Django Form Checklist</h3>
+<ul>
+    <li>
+        <h4>Make sure the Crispy Forms import statements exist in your file</h4>
+        <pre><code class="python">from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy</code></pre>
+    </li>
+    <li>
+        <h4>Load the <code>crispy_forms_tags</code> library at the top of your page's template.</h4>
+        <pre><code>{% verbatim %}{% load crispy_forms_tags %}{% endverbatim %}</code></pre>
+    </li>
+    <li>
+        <h4>Make sure the python code for your Django form implements <code>__init__</code></h4>
+        <pre><code>class MyForm(forms.Form):
+    ...
+
+    def __init__(self, *args, *kwargs):
+        super(MyForm, self).__init__(*args, **kwargs)</code></pre>
+    </li>
+    <li>
+        <h4>Instantiate <code>self.helper</code> and define the layout in <code>__init__</code>.</h4>
+        <p>Make sure to add the slugs (variable names)
+        of the fields in the order you want them in the layout.</p>
+        <pre><code>class MyForm(forms.Form):
+    first_name = forms.CharField(
+        label=ugettext_lazy("First Name"),
+    )
+    last_name = forms.CharField(
+        label=ugettext_lazy("Last Name"),
+    )
+    ...
+
+    def __init__(self, *args, **kwargs):
+        super(MyForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.layout = crispy.Layout(
+            crispy.Field('first_name'),</code></pre>
+        <p>Note that if you aren't adding any custom attributes or defining <code>css_class</code>
+        in <code>crispy.Field</code>, you can just include the field's slug here (e.g. <code>crispy.Layout('first_name', 'last_name')</code></p>
+<pre><code>            crispy.Field('last_name'),
+            hqcrispy.FormActions(</code></pre>
+       <p>Remember to add the submit button, and give it the appropriate css classes.</p>
+<pre><code>                twbscrispy.StrictButton(
+                    _("Submit Information"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),</code></pre>
+        <p>Remember to add the cancel button, too.</p>
+<pre><code>                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    '#',
+                    css_class="btn btn-default",
+                ),
+            ),
+        )</code></pre>
+        <p>If the fields had any sort of display attributes or special classes, add those
+        kwargs to the appropriate <code>crispy.Field()</code></p>
+    </li>
+    <li>
+        <h4>Add the form's <code>action</code>, <code>method</code>, and other
+            attributes to <code>self.helper</code>.</h4>
+        <p>Locate the point in the template where the form is being used. Generally, it will look something like.</p>
+        <pre><code>{% verbatim %}&lt;form action="/path/to/submit" method="POST" class="form-horizontal"&gt;
+    {{ form }}
+    &lt;input type="submit" value="Submit" /&gt;
+&lt;/form&gt;{% endverbatim %}</code></pre>
+        <p>This now becomes:</p>
+        <pre><code>self.helper = FormHelper()
+self.helper.form_action = "/path/to/submit"
+self.helper.form_method = "POST"
+self.helper.form_class = "form-horizontal"</code></pre>
+        <p>
+            Any other special attributes in the <code>&lt;form&gt;</code> tag can be
+            added with:
+        </p>
+        <pre><code>self.helper.attrs = {
+    'ng_submit': 'handleSubmit()'
+}</code></pre>
+        <p>Note that any underscores (<code>_</code>) will turn into hyphens (<code>-</code>)
+        in the attributes of the <code>&lt;form&gt;</code> tag, just as the names of the <code>kwargs</code>
+        will in <code>crispy.Field()</code>. Which leads into the next step...</p>
+    </li>
+    <li>
+        <h4>Do any of the form fields have special attributes? (Perhaps a knockout binding?)</h4>
+        <pre><code>&lt;input type="text" name="first_name" data-bind="if: showFirstName" /&gt;</code></pre>
+        <p>Now becomes</p>
+        <pre><code>self.helper.layout = crispy.Layout(
+    ...
+    crispy.Field(
+        'first_name',
+        data_bind="if: showFirstName",
+    ),
+    ...
+)</code></pre>
+    </li>
+    <li>
+        <h4>Are there any <code>&lt;div&gt;</code> tags surrounding parts of the form with special attributes?</h4>
+        <pre><code>&lt;div data-bind="if: showFavoriteColors"&gt;
+    {% verbatim %}{{ form.favorite_colors }}{% endverbatim %}
+&lt;/div&gt;</code></pre>
+        <p>Now becomes...</p>
+        <pre><code>self.helper.layout = crispy.Layout(
+    ...
+    crispy.Div(
+        crispy.Field('favorite_colors'),
+        data_bind="if: showFavoriteColors",
+    ),
+    ...
+)</code></pre>
+    </li>
+    <li>
+        <h4>Are there any <code>&lt;fieldset&gt;</code>s separating the form into
+        different sections?</h4>
+        <pre><code>&lt;fieldset&gt;
+    &lt;legend&gt;Basic Information&lt;/legend&gt;
+    {% verbatim %}{{ form.first_name }}
+    {{ form.last_name }}{% endverbatim %}
+&lt;/fieldset&gt;</code></pre>
+        <p>Now becomes</p>
+        <pre><code>self.helper.layout = crispy.Layout(
+    ...
+    crispy.Fieldset(
+        _("Basic Information"),
+        crispy.Field('first_name'),
+        crispy.Field('last_name'),
+    ),
+    ...
+)</code></pre>
+    </li>
+    <li>
+        <h4>Is there any custom HTML sprinkled into the form?</h4>
+        <p>Then use:</p>
+        <pre><code>self.helper.layout = crispy.Layout(
+    ...
+    crispy.HTML(render_to_string(template_path, template_context)),
+    ...
+)</code></pre>
+    </li>
+    <li>
+        <h4>Find the form in your template and replace it with the
+        <code>{% verbatim %}{% crispy %}{% endverbatim %}</code> tag</h4>
+        <pre><code>{% verbatim %}&lt;form action="/path/to/submit" method="POST" class="form-horizontal"&gt;
+    {{ form }}
+    &lt;input type="submit" value="Submit" /&gt;
+&lt;/form&gt;{% endverbatim %}</code></pre>
+        <p>Should now become something like...</p>
+        <pre><code>{% verbatim %}{% crispy my_form %}{% endverbatim %}</code></pre>
+    </li>
+</ul>
+<div class="alert alert-info">
+    <p class="lead text-center">
+        Whew! Outside of that, you're done.
+    </p>
+</div>

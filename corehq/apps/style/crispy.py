@@ -36,6 +36,7 @@ class Field(OldField):
     """Overrides the logic behind choosing the offset class for the field to
     actually be responsive (col-lg-offset-*, col-md-offset-*, etc). Also includes
     support for static controls.
+    todo since we forked crispy forms, this class is no longer necessary. http://manage.dimagi.com/default.asp?186372
     """
     template = 'style/crispy/field.html'
 
