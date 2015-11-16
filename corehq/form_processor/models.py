@@ -594,14 +594,16 @@ class CaseTransactionDetail(JsonObject):
     def type(self):
         return self._type
 
+    def __eq__(self, other):
+        return self.type == other.type and self.to_json() == other.to_json()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 class RebuildWithReason(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_WITH_REASON
     reason = StringProperty()
-
-    @property
-    def type(self):
-        return self._type
 
 
 class UserRequestedRebuild(CaseTransactionDetail):
