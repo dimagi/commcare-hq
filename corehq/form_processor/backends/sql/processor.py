@@ -239,7 +239,7 @@ class FormProcessorSQL(object):
 
 def get_case_transactions(case_id, updated_xforms=None):
     transactions = list(CaseTransaction.objects.filter(case_id=case_id).all())
-    form_ids = {transaction.form_uuid for transaction in transactions}
+    form_ids = {tx.form_uuid for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}

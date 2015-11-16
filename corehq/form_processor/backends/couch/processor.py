@@ -157,7 +157,7 @@ class FormProcessorCouch(object):
         filtered_forms = [f for f in forms if f.is_normal]
         sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
 
-        actions, domain = _get_actions_from_forms(sorted_forms, case_id)
+        actions = _get_actions_from_forms(domain, sorted_forms, case_id)
 
         if not found and case.domain is None:
             case.domain = domain
@@ -194,7 +194,7 @@ def _get_actions_from_forms(domain, sorted_forms, case_id):
 
 
 def _rebuild_action():
-    now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
     return CommCareCaseAction(
         action_type=const.CASE_ACTION_REBUILD,
         date=now,
