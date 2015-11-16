@@ -36,7 +36,6 @@ from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
