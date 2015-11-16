@@ -90,15 +90,18 @@ class FormProcessorSQL(object):
 
             if cases:
                 for case in cases:
-                    logging.debug('Saving case: %s', case)
-                    if logging.root.isEnabledFor(logging.DEBUG):
-                        logging.debug(case.dumps(pretty=True))
+                    cls.save_case(case)
 
-                    case.save()
-
-                    FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
-                    FormProcessorSQL.save_tracked_models(case, CaseTransaction)
-                    case.clear_tracked_models()
+    @classmethod
+    def save_case(cls, case):
+        with transaction.atomic():
+            logging.debug('Saving case: %s', case)
+            if logging.root.isEnabledFor(logging.DEBUG):
+                logging.debug(case.dumps(pretty=True))
+            case.save()
+            FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
+            FormProcessorSQL.save_tracked_models(case, CaseTransaction)
+            case.clear_tracked_models()
 
     @staticmethod
     def save_tracked_models(case, model_class):
@@ -220,7 +223,7 @@ class FormProcessorSQL(object):
         case = FormProcessorSQL._rebuild_case_from_transactions(case)
         if case.is_deleted and not found:
             return None
-        case.save()
+        FormProcessorSQL.save_case(case)
 
     @staticmethod
     def _rebuild_case_from_transactions(case, updated_xforms=None):
