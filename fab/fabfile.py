@@ -1149,6 +1149,11 @@ def set_pillow_retry_queue_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
 
+@roles(ROLES_STATIC)
+def set_pillow_retry_queue_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
+
+
 @task
 def set_supervisor_config():
     setup_release()
