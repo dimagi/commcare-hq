@@ -147,7 +147,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         real_transactions = []
         for transaction in transactions:
             if not transaction.is_relevant:
-                self.case.track_delete(transaction)
+                continue
             elif transaction.type == CaseTransaction.TYPE_FORM:
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)

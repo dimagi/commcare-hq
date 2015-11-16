@@ -1,7 +1,6 @@
 import json
 import os
 import collections
-import hashlib
 
 from django.db.models import Prefetch
 from lxml import etree
@@ -239,6 +238,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
                 operation=XFormOperationSQL.ARCHIVE,
             )
             self.save()
+            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=True)
         xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user=None):
@@ -251,7 +251,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
                 operation=XFormOperationSQL.UNARCHIVE,
             )
             self.save()
-        # xform_unarchived.send(sender="form_processor", xform=self)
+            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=False)
+        xform_unarchived.send(sender="form_processor", xform=self)
 
 
 class AbstractAttachment(models.Model):
@@ -366,7 +367,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def xform_ids(self):
-        return filter(None, self.xform_set.values_list('form_uuid', flat=True))
+        return self.xform_set.filter(revoked=False, form_uuid__isnull=False).values_list('form_uuid', flat=True)
 
     @property
     def user_id(self):
@@ -544,16 +545,19 @@ class CaseTransaction(models.Model):
     form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
+    revoked = models.BooleanField(default=False, null=False)
 
     @property
     def is_relevant(self):
-        return self.form.is_normal
+        return not self.revoked or not self.form or self.form.is_normal
 
     @property
     def form(self):
+        if not self.form_uuid:
+            return None
         form = getattr(self, 'cached_form', None)
         if not form:
-            self.cached_form = XFormAttachmentSQL.get(self.form_uuid)
+            self.cached_form = XFormAttachmentSQL.objects.get(self.form_uuid)
         return self.cached_form
 
     class Meta:
