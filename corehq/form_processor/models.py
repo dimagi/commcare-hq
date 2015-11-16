@@ -371,11 +371,11 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def xform_ids(self):
-        return self.xform_set.filter(
+        return list(self.transaction_set.filter(
             revoked=False,
             form_uuid__isnull=False,
             type=CaseTransaction.TYPE_FORM
-        ).values_list('form_uuid', flat=True)
+        ).values_list('form_uuid', flat=True))
 
     @property
     def user_id(self):
