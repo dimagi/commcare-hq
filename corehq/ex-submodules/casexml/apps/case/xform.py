@@ -208,9 +208,9 @@ def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
     def _from_form_dict(doc):
-        return "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+        return isinstance(doc, dict) and "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
     def _from_xform_instance(doc):
-        return "xmlns" in doc and doc["xmlns"] == device_report_xmlns
+        return getattr(doc, 'xmlns', None) == device_report_xmlns
 
     return _from_form_dict(doc) or _from_xform_instance(doc)
 
