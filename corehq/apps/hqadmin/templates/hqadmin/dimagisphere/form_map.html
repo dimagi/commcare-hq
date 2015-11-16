@@ -126,6 +126,8 @@ jQuery(document).ready(function($) {
             countriesGeo.setStyle(style);
         }
     }
+    // update all every 5 seconds in case no activity (this is just to clear active state)
+    window.setInterval(colorAll, 5000);
 });
 </script>
 	{% endblock %}
