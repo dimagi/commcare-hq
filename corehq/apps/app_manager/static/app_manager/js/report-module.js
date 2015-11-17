@@ -243,6 +243,8 @@ var ReportModule = (function () {
         self.lang = options.lang;
         self.moduleName = options.moduleName;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
+        self.menuImage = options.menuImage;
+        self.menuAudio = options.menuAudio;
         self.reportTitles = {};
         self.reportDescriptions = {};
         self.reportCharts = {};
@@ -266,6 +268,19 @@ var ReportModule = (function () {
             return self.reportDescriptions[reportId];
         };
 
+        self.multimediaUpdate = function () {
+            var multimedia = {};
+            if(self.menuImage.isMediaMatched()) {
+                multimedia.mediaImage = {};
+                multimedia.mediaImage[self.lang] = self.menuImage.currentPath();
+            }
+            if(self.menuAudio.isMediaMatched()) {
+                multimedia.mediaAudio = {};
+                multimedia.mediaAudio[self.lang] = self.menuAudio.currentPath();
+            }
+            return multimedia;
+        };
+
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unsaved changes in your report list module",
             save: function () {
@@ -283,7 +298,8 @@ var ReportModule = (function () {
                     dataType: 'json',
                     data: {
                         name: JSON.stringify(self.moduleName),
-                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); }))
+                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
+                        multimediaUpdate: JSON.stringify(self.multimediaUpdate())
                     }
                 });
             }
