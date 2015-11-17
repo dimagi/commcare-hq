@@ -53,14 +53,15 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - upgrade-sqlalchemy # Nick P 11/5
-  - bower.json # ben 11/11
   - extension-cases-sync-cleaned # Farid 11/14
   - websocket-demo  # cz 11/16
+  - fix-toggle #wsp 11/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - sqlite-backend #wsp 1117
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
