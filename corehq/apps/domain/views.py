@@ -1691,6 +1691,11 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     urlname = 'domain_snapshot_settings'
     page_title = ugettext_lazy("CommCare Exchange")
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         return {
@@ -1705,6 +1710,12 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     urlname = 'domain_create_snapshot'
     page_title = ugettext_lazy("Publish New Version")
     strict_domain_fetching = True
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):

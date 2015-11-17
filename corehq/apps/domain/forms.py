@@ -144,14 +144,18 @@ class SnapshotApplicationForm(forms.Form):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
-            'publish',
-            'name',
-            'description',
-            'deployment_date',
-            'phone_model',
-            'user_type',
-            'attribution_notes',
+            twbscrispy.PrependedText('publish', ''),
+            crispy.Div(
+                'name',
+                'description',
+                'deployment_date',
+                'phone_model',
+                'user_type',
+                'attribution_notes'
+            )
         )
 
 
@@ -165,7 +169,7 @@ class SnapshotFixtureForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            'publish',
+            twbscrispy.PrependedText('publish', ''),
             'description',
         )
 
@@ -208,6 +212,8 @@ class SnapshotSettingsForm(forms.Form):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -233,19 +239,20 @@ class SnapshotSettingsForm(forms.Form):
             ),
             crispy.Fieldset(
                 'Content',
-                'share_multimedia',
-                'share_reminders',
+                twbscrispy.PrependedText('share_multimedia', ''),
+                twbscrispy.PrependedText('share_reminders', '')
             ),
             crispy.Fieldset(
                 'Licensing',
                 'license',
-                'cda_confirmed',
+                twbscrispy.PrependedText('cda_confirmed', ''),
             ),
         )
 
         if self.is_superuser:
-            self.helper.layout.append(crispy.Fieldset('Starter App', 'is_starter_app',),)
-
+            self.helper.layout.append(
+                crispy.Fieldset('Starter App', twbscrispy.PrependedText('is_starter_app', ''))
+            )
 
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
