@@ -389,6 +389,13 @@ class ApplicationDataRMIHelper(object):
             chosen_by_choice[k] = map(lambda f: f._asdict(), v)
         return chosen_by_choice
 
+    @staticmethod
+    def _get_item_name(item, has_app, app_lang, default_name):
+        item_name = None
+        if has_app and item is not None:
+            item_name = item['name'].get(app_lang) or item['name'].get('en')
+        return item_name or default_name
+
     def _get_modules_and_forms(self, as_dict=True):
         modules_by_app = collections.defaultdict(list)
         forms_by_app_by_module = {}
@@ -399,15 +406,15 @@ class ApplicationDataRMIHelper(object):
             module = form.get('module')
             module_id = (module['id'] if has_app and module is not None
                          else self.UNKNOWN_SOURCE)
-            module_name = (module['name'][app_lang]
-                           if has_app and module is not None
-                           else _("Unknown Module"))
+            module_name = self._get_item_name(
+                module, has_app, app_lang, _("Unknown Module")
+            )
             form_xmlns = form['xmlns']
             form_name = form_xmlns
             if not form.get('show_xmlns', False):
-                form_name = (
-                    form['form']['name'][app_lang]
-                    if 'form' in form else "{} (potential matches)".format(form_xmlns)
+                form_name = self._get_item_name(
+                    form.get('form'), has_app, app_lang,
+                    "{} (potential matches)".format(form_xmlns)
                 )
             module_choice = RMIDataChoice(
                 module_id,
