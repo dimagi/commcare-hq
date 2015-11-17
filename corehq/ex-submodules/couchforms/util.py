@@ -379,6 +379,7 @@ class SubmissionPost(object):
 
                 errors = self.process_signals(instance)
                 unfinished_submission_stub.delete()
+                case_result.close_extensions()
 
         return instance, cases, errors
 
