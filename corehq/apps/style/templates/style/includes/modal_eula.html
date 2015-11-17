@@ -28,7 +28,7 @@
         </div>
     </div>
     {% url "eula_basic" as eula_url %}
-    {% include 'style/includes/load_into_modal.html' with modal_id="modal-eula" load_from=eula_url %}
+    {% include 'style/includes/load_into_modal.html' with modal_id="modalEula" load_from=eula_url %}
     <script type="text/javascript">
         $(window).load(function(){
             $('#modalEula').modal('show');
