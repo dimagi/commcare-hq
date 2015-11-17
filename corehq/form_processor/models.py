@@ -347,6 +347,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     deleted = models.BooleanField(default=False, null=False)
 
     external_id = models.CharField(max_length=255)
+    location_uuid = models.CharField(max_length=255, null=True)
 
     case_json = JSONField(lazy=True, default=dict)
 
@@ -357,6 +358,14 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @case_id.setter
     def case_id(self, _id):
         self.case_uuid = _id
+
+    @property
+    def location_id(self):
+        return self.location_uuid
+
+    @location_id.setter
+    def location_id(self, _id):
+        self.location_uuid = _id
 
     @property
     def xform_ids(self):
