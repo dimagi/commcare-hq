@@ -8,8 +8,8 @@
 	<title>CommCare HQ Map</title>
 	{% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'reports/css/leaflet/leaflet.css' %}" />
     {% endcompress %}
-    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
     <style>
         #map { height: 800px; }
     </style>
@@ -26,8 +26,8 @@
         <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'reports/javascripts/leaflet.js' %}"></script>
     {% endcompress %}
-    <script type="text/javascript" src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
     {% block script_panel %}
         <script type="text/javascript">
 jQuery(document).ready(function($) {
