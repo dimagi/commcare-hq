@@ -73,7 +73,7 @@ def get_case_wrapper(data):
 
 def _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs):
     return CommCareCase.view(
-        'hqcase/by_domain_hq_user_id_type',
+        'case_by_domain_hq_user_id_type/view',
         key=[domain, user_id, case_type],
         reduce=False,
         include_docs=include_docs
