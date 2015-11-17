@@ -1,0 +1,309 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load djangular_tags %}
+
+{% block stylesheets %}
+<style type="text/css">
+    .form-notice-container {
+        position: relative;
+        height: 80px;
+    }
+    .form-notice-container-tall {
+        height: 145px;
+    }
+    @media (max-width: 767px) {
+        .form-notice-container {
+            height: 125px;
+        }
+        .form-notice-container-tall {
+            height: 217px;
+        }
+    }
+    .form-notice {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.6);
+        z-index: 4999;
+
+    }
+    .form-notice .label {
+        display: block;
+        z-index: 5000;
+    }
+    .progress-exports {
+        margin-bottom: 2px;
+        margin-top: 6px;
+    }
+    .form-actions-exports {
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block js %}
+<script type="text/javascript" src="{% new_static 'export/js/download_export.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script type="text/javascript">
+(function (angular, undefined) {
+   'use strict';
+    var downloadExportsApp = angular.module('downloadExportsApp', ['hq.download_export']);
+    downloadExportsApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    downloadExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+    downloadExportsApp.constant('exportList', {{ export_list|JSON }});
+    downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
+    downloadExportsApp.constant('defaultDateRange', '{{ default_date_range }}');
+    downloadExportsApp.constant('checkForMultimedia', {{ check_for_multimedia|BOOL }});
+}(window.angular));
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <div ng-app="downloadExportsApp">
+        <div ng-controller="DownloadExportFormController"
+             ng-cloak>
+            <div class="alert alert-info">
+                {% blocktrans %}
+                    You are downloading the following exports:
+                {% endblocktrans %}
+                <ul>
+                    {% angularjs %}
+                    <li ng-repeat="export in exportList">
+                        <a href="{{ export.edit_url }}" target="_blank">
+                            <i class="fa fa-file-text"></i>
+                            {{ export.name }}</a>
+                    </li>
+                    {% endangularjs %}
+                </ul>
+            </div>
+        {% if show_no_submissions_warning %}
+            <div class="alert alert-warning">
+                <h4>
+                    <i class="fa fa-exclamation-triangle"></i>
+                    {% trans "No submissions available." %}
+                </h4>
+                <p>
+                    {% blocktrans %}
+                        It seems your project doesn't have any submissions
+                        from its applications. Please submit data before
+                        using the export tool.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                        To get started, please
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/Deploy+and+Install+an+Application+on+CommCareHQ"
+                           target="_blank">deploy</a>
+                        your application and submit data from a phone. You may also
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/CloudCare+-+Web+Data+Entry"
+                           target="_blank">submit data via CloudCare</a>, depending on your project's
+                        <a href="https://www.commcarehq.org/pricing/" target="_blank">plan level</a>.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        {% else %}
+            <form class="form form-horizontal form-notice-container"
+                  name="exportFiltersForm"
+                  ng-submit="prepareExport()"
+                  novalidate="novalidate">
+                <div class="form-notice-container{% if show_date_range %} form-notice-container-tall{% endif %}">
+                    {% crispy download_export_form %}
+                    <div class="form-notice"
+                         ng-show="downloadInProgress">
+                        <div class="row">
+                            <div class="col-sm-9 col-lg-5 col-sm-offset-3">
+                                <div class="label label-default label-lg">
+                                    <i class="fa fa-info-circle"></i>
+                                    {% trans "Filters inactive while download in progress. " %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions form-actions-exports" ng-show="!downloadInProgress">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        {% angularjs %}
+                        <div class="alert alert-warning"
+                             ng-show="!!prepareExportError">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            <span ng-if="prepareExportError === 'default'">
+                                {% blocktrans %}
+                                Sorry, there was a problem reaching the server.
+                                Please try again or
+                                <a href="#reportIssueModal"
+                                   data-toggle="modal">Report an Issue</a>.
+                                {% endblocktrans %}
+                            </span>
+                            <span ng-if="prepareExportError !== 'default'">
+                                {{ prepareExportError }}
+                            </span>
+                        </div>
+                        {% endangularjs %}
+                        <div class="row">
+                            <div class="col-xs-6 col-sm-4 col-md-3">
+                                <button type="submit"
+                                        class="btn btn-primary btn-full-width"
+                                        ng-show="!preparingExport"
+                                        ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingExport">
+                                    <i class="fa fa-download"></i>
+                                    {% trans "Prepare Export" %}
+                                </button>
+                                <button type="submit"
+                                        class="btn btn-primary btn-full-width btn-disabled"
+                                        ng-show="preparingExport"
+                                        disabled="disabled">
+                                    <i class="fa-spin fa fa-spinner"></i>
+                                    {% trans "Preparing Export" %}
+                                </button>
+                            </div>
+                            <div class="col-xs-6 col-sm-4 col-md-3"
+                                 ng-show="hasMultimedia">
+                                <button type="button"
+                                        class="btn btn-info btn-full-width"
+                                        ng-click="prepareMultimediaExport()"
+                                        ng-show="!preparingMultimediaExport"
+                                        ng-disabled="(!!exportFiltersForm.$invalid || isFormInvalid()) && !preparingMultimediaExport">
+                                    <i class="fa fa-download"></i>
+                                    {% trans "Prepare Multimedia" %}
+                                </button>
+                                <button type="button"
+                                        class="btn btn-info btn-full-width btn-disabled"
+                                        ng-show="preparingMultimediaExport"
+                                        disabled="disabled">
+                                    <i class="fa-spin fa fa-spinner"></i>
+                                    {% trans "Preparing Multimedia" %}
+                                </button>
+                            </div>
+                            <div class="col-xs-12 col-sm-4 col-md-5">
+                                <a href="{{ export_list_url }}"
+                                   class="btn btn-default">
+                                    {% trans "Cancel" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+        </div>
+        <div ng-controller="DownloadProgressController"
+             ng-cloak>
+            <div class="form-actions form-actions-exports"
+                 ng-show="!!showDownloadStatus">
+                <div class="col-sm-9 col-sm-offset-3">
+                    <div class="row"
+                         ng-show="!!showCeleryError">
+                        <div class="col-sm-12">
+                            <div class="alert alert-warning">
+                                <i class="fa fa-cog fa-spin"></i>
+                                <strong>{% trans "Server maintenance in progress. Please try again later." %}</strong>
+                                <p>
+                                    {% blocktrans %}
+                                        If the problem persists, please
+                                        <a href="#reportIssueModal"
+                                           data-toggle="modal">
+                                            Report an Issue</a>.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row"
+                         ng-show="!showCeleryError">
+                        <div class="col-xs-6 col-sm-4 col-md-3">
+                            {% angularjs %}
+                            <form class="form-inline download-form"
+                                  method="POST"
+                                  action="{{ dropboxUrl }}">
+                                <a href="{{ downloadUrl }}"
+                                   class="btn btn-success btn-full-width"
+                                   ng-show="!!isDownloadReady"
+                                   ng-disabled="!isDownloadReady"
+                                   ng-click="isDownloaded = true;">
+                                        <i class="fa fa-download"></i>
+                                        <span ng-show="!isMultimediaDownload">{% trans "Download" %}</span>
+                                        <span ng-show="isMultimediaDownload">{% trans "Download Multimedia" %}</span>
+                                </a>
+                                <button type="button"
+                                        class="btn btn-primary btn-disabled btn-full-width"
+                                        ng-show="!isDownloadReady"
+                                        disabled="disabled">
+                                        <i class="fa-spin fa fa-spinner"></i>
+                                        <span ng-show="!isMultimediaDownload">{% trans "Collecting Data" %}</span>
+                                        <span ng-show="isMultimediaDownload">{% trans "Collecting Multimedia" %}</span>
+                                </button>
+                                {% if show_sync_to_dropbox %}
+                                <button button="submit"
+                                        class="btn btn-default btn-full-width"
+                                        style="margin-top: 5px; width: 100%;"
+                                        ng-disabled="!isDownloadReady && !isMultimediaDownload"
+                                        ng-click="isDownloaded = true;">
+                                    <i class="fa fa-dropbox"></i>
+                                    {% trans "Sync to Dropbox" %}
+                                </button>
+                                {% endif %}
+                            </form>
+                            {% endangularjs %}
+                        </div>
+                        <div class="col-xs-6 col-md-4"
+                             ng-show="!isDownloaded && !showCeleryError">
+                            <div class="progress progress-exports">
+                                <div id="download-progress-bar"
+                                     class="progress-bar"
+                                     role="progressbar"
+                                     aria-valuenow="60"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    {% angularjs %}
+                                    <span class="sr-only">{{ progress.percent }}% {% trans 'Complete' %}</span>
+                                    {% endangularjs %}
+                                </div>
+                            </div>
+                            <div class="label label-danger label-lg"
+                                 ng-show="!!progress.error">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                <strong>{% trans "Something went wrong!" %}</strong>
+                                {{ progress.error_message }}
+                            </div>
+                        </div>
+                        <div class="col-sm-9 col-md-8"
+                             ng-show="!!isDownloaded">
+                            <button type="button"
+                                    class="btn btn-default"
+                                    ng-click="resetDownload()">
+                                {% trans "Update Filters" %}
+                            </button>
+                        </div>
+                    </div>
+                    {% if show_sync_to_dropbox %}
+                    <p class="alert alert-info"
+                       style="margin-top: 10px;"
+                       ng-show="!showCeleryError && !isMultimediaDownload">
+                        <i class="fa fa-info-circle"></i>
+                        {% blocktrans %}
+                            If you are downloading a large file over
+                            a slow or unstable connection, we
+                            recommend syncing to Dropbox.
+                        {% endblocktrans %}
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox"
+                           target="_blank">
+                            {% trans 'Learn more about Sync to Dropbox' %}</a>.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock page_content %}
