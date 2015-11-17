@@ -40,11 +40,11 @@ def send_for_day(date, cutoff, reminder_class, **kwargs):
         send_for_all_domains(cutoff, reminder_class, **kwargs)
 
 
-def supply_points_with_latest_status_by_datespan(sps, status_type, status_value, datespan):
+def supply_points_with_latest_status_by_datespan(locations, status_type, status_value, datespan):
     """
     This very similar method is used by the reminders.
     """
-    ids = [sp._id for sp in sps]
+    ids = [loc.location_id for loc in locations]
     inner = SupplyPointStatus.objects.filter(location_id__in=ids,
                                              status_type=status_type,
                                              status_date__gte=datespan.startdate,
