@@ -554,17 +554,17 @@ def update_historical_data(domain, locations=None):
         else:
             locations = Location.by_domain(domain)
 
-    for sp in locations:
+    for loc in locations:
         try:
-            SupplyPointWarehouseRecord.objects.get(supply_point=sp._id)
+            SupplyPointWarehouseRecord.objects.get(supply_point=loc.location_id)
         except SupplyPointWarehouseRecord.DoesNotExist:
             # we didn't have a record so go through and historically update
             # anything we maybe haven't touched
-            for year, month in months_between(start_date, sp.sql_location.created_at):
+            for year, month in months_between(start_date, loc.sql_location.created_at):
                 window_date = datetime(year, month, 1)
                 for cls in [OrganizationSummary, ProductAvailabilityData, GroupSummary]:
-                    _init_warehouse_model(cls, sp, window_date)
-            SupplyPointWarehouseRecord.objects.create(supply_point=sp._id,
+                    _init_warehouse_model(cls, loc, window_date)
+            SupplyPointWarehouseRecord.objects.create(supply_point=loc.location_id,
                                                       create_date=datetime.utcnow())
 
 
