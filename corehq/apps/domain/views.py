@@ -2419,6 +2419,11 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Feature Previews")
     template_name = 'domain/admin/feature_previews.html'
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @memoized
     def features(self):
         features = []
