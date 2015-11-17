@@ -3,6 +3,7 @@ import json
 import logging
 
 from django.template.loader import render_to_string
+from django.utils.html import escape
 from django.utils.translation import ugettext as _, gettext_lazy
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
@@ -169,12 +170,16 @@ def _get_basic_module_view_context(app, module):
     }
 
 
+def _get_report_description_as_xpath(description):
+    return '"%s"' % escape(description)
+
+
 def _get_report_module_context(app, module):
     def _report_to_config(report):
         return {
             'report_id': report._id,
             'title': report.title,
-            'description': report.description,
+            'description': _get_report_description_as_xpath(report.description),
             'charts': [chart for chart in report.charts if
                        chart.type == 'multibar'],
             'filter_structure': report.filters,
@@ -491,7 +496,7 @@ def _new_report_module(request, domain, app, name, lang):
         ReportAppConfig(
             report_id=report._id,
             header={lang: report.title},
-            description=report.description,
+            description=_get_report_description_as_xpath(report.description),
         )
         for report in ReportConfiguration.by_domain(domain)
     ]
