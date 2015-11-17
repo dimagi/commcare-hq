@@ -721,3 +721,10 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+TWO_FACTOR_AUTH = StaticToggle(
+    'two_factor_auth',
+    "Enforce two factor auth before accessing the domain",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
