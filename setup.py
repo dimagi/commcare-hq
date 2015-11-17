@@ -17,7 +17,7 @@ setup(
         'pillowtop>=0.1.8',
         'dimagi-utils>=1.2.3',
         'pytz',
-        'SQLAlchemy==0.8.2',
+        'SQLAlchemy==1.0.9',
         'alembic==0.6.0'
     ],
     tests_require=[
