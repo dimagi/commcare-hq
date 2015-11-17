@@ -1097,8 +1097,11 @@ class FormExportListView(BaseExportListView):
             rmi_helper = ApplicationDataRMIHelper(self.domain)
             response = rmi_helper.get_form_rmi_response()
         except Exception as e:
+
             return format_angular_error(
-                _("Problem getting Create Export Form: {}").format(e),
+                _("Problem getting Create Export Form: {} {}").format(
+                    e.__class__, e
+                ),
             )
         return format_angular_success(response)
 
