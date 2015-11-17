@@ -49,6 +49,7 @@ branches:
   - vellum-staging # J$ 11/13
   - exports-ui-changes  # biyeun 9/28
   - two-factor+websockets
+  - fix-toggle+two-factor-otp-only #wsp 11/17
   - two-factor-otp-only # j$ 10/2
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
