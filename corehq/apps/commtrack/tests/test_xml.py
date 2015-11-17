@@ -14,7 +14,6 @@ from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, 
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.test_utils import run_with_all_backends
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
@@ -214,7 +213,6 @@ class CommTrackSubmissionTest(CommTrackTest):
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
-    @run_with_all_backends
     def test_balance_submit(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts))
