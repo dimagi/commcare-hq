@@ -1,0 +1,83 @@
+{% load hq_shared_tags %}{% load compress %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Chat on CommCare HQ</title>
+	<link type="text/css" rel="stylesheet" media="all" href="{% static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
+</head>
+<body>
+	<div class="container">
+		{% block main_content %}
+		<div class="row">
+			<div class="col-xs-12">
+				<h1>HQ chat demo</h1>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12 col-md-11 col-lg-10">
+				<p>Point a second browser onto this URL and check for message synchronization.</p>
+				<pre id="billboard" style="overflow-y: auto; height: 24em; margin-top: 1em;"></pre>
+			</div>
+		</div>
+		<div class="row">
+			<div "form-inline">
+				<div class="form-group col-xs-12 col-sm-7">
+					<input class="form-control" type="text" id="text_message" />
+				</div>
+				<div class="form-group col-xs-12 col-sm-5 col-md-4">
+					<button class="btn btn-primary" id="send_message">Send message</button>
+				</div>
+			</div>
+		</div>
+		{% endblock main_content %}
+	</div>
+    {% compress js %}
+        <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
+    {% endcompress %}
+    <script>
+	jQuery(document).ready(function($) {
+        var ws4redis = WS4Redis({
+            uri: '{{ WEBSOCKET_URI }}chat?subscribe-broadcast&publish-broadcast&echo',
+            receive_message: receiveMessage,
+            heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
+        });
+        var billboard = $('#billboard');
+        var username = '{{ request.user.username }}' || '[anonymous]';
+        // send message though the Websocket to the server
+
+        var sendMessage = function(text) {
+            // var formatted = username + ': ' + text;
+            var formatted = {
+                'username': username,
+                'message': text
+            };
+            ws4redis.send_message(JSON.stringify(formatted));
+        };
+        $("#text_message").keydown(function(event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                sendMessage($('#text_message').val());
+            }
+        });
+
+        $('#send_message').click(function() {
+            sendMessage($('#text_message').val());
+        });
+
+        // receive a message though the Websocket from the server
+        function receiveMessage(msg) {
+            var msgObj = JSON.parse(msg);
+            var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
+            billboard.append('<br/>' + renderedMsg);
+            billboard.scrollTop(billboard.scrollTop() + 25);
+            $('#text_message').val('');
+        }
+    });
+    </script>
+</body>
+</html>
