@@ -569,7 +569,11 @@ class CaseTransaction(models.Model):
 
     @property
     def is_relevant(self):
-        return not self.revoked and self.type in CaseTransaction.TYPES_TO_PROCESS
+        relevant = not self.revoked and self.type in CaseTransaction.TYPES_TO_PROCESS
+        if relevant and self.form:
+            relevant = self.form.is_normal
+
+        return relevant
 
     @property
     def form(self):
