@@ -335,8 +335,28 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
+class SupplyPointCaseMixin(object):
+    @property
+    @memoized
+    def location(self):
+        from corehq.apps.locations.models import Location
+        from couchdbkit.exceptions import ResourceNotFound
+        if self.location_id is None:
+            return None
+        try:
+            return Location.get(self.location_id)
+        except ResourceNotFound:
+            return None
+
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.get(location_id=self.location_id)
+
+
 class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges):
+                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                      SupplyPointCaseMixin):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)

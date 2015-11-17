@@ -24,13 +24,13 @@ class SupplyInterface(object):
 
     @property
     @memoized
-    def case_model(self):
-        from casexml.apps.case.models import CommCareCase
+    def supply_model(self):
+        from corehq.apps.commtrack.models import SupplyPointCase
         from corehq.form_processor.models import CommCareCaseSQL
         if should_use_sql_backend(self.domain):
             return CommCareCaseSQL
         else:
-            return CommCareCase
+            return SupplyPointCase
 
     def get_or_create_by_location(self, location):
         return self.supply_point.get_or_create_by_location(location)
@@ -39,4 +39,4 @@ class SupplyInterface(object):
         return self.supply_point.get_by_location(location)
 
     def get_supply_point(self, supply_point_id):
-        return self.case_model.get(supply_point_id)
+        return self.supply_model.get(supply_point_id)
