@@ -88,7 +88,7 @@ class TestLocationTypeOwnership(TestCase):
         self.user.set_location(location)
         location_groups = self.user.get_case_sharing_groups()
         self.assertEqual(1, len(location_groups))
-        self.assertEqual(location._id, location_groups[0]._id)
+        self.assertEqual(location.location_id, location_groups[0]._id)
 
     def test_assigned_loc_included_with_descendants(self):
         parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)

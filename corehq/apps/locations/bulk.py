@@ -288,7 +288,7 @@ class LocationImporter(object):
                 message = 'created %s %s' % (location_type, loc.name)
 
             return {
-                'id': loc._id,
+                'id': loc.location_id,
                 'message': message
             }
         else:

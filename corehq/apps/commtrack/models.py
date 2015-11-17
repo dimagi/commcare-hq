@@ -675,7 +675,7 @@ def sync_location_supply_point(loc):
         # need to sync this sp change to the sql location
         # but saving the doc will trigger a loop
         try:
-            sql_loc = SQLLocation.objects.get(location_id=loc._id)
+            sql_loc = SQLLocation.objects.get(location_id=loc.location_id)
             sql_loc.supply_point_id = updated_supply_point._id
             sql_loc.save()
         except SQLLocation.DoesNotExist:

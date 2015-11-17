@@ -698,7 +698,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if not parent:
             parent = self.parent
         locs = (parent.children if parent else self.root_locations(self.domain))
-        return [loc for loc in locs if loc._id != self._id]
+        return [loc for loc in locs if loc.location_id != self._id]
 
     @property
     def path(self):

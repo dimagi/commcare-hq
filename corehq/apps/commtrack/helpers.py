@@ -35,7 +35,7 @@ def make_supply_point(domain, location):
         owner_id=owner_id,
         case_type=const.SUPPLY_POINT_CASE_TYPE,
         update={
-            'location_id': location._id,
+            'location_id': location.location_id,
         },
         **kwargs
     )
@@ -50,7 +50,7 @@ def update_supply_point_from_location(supply_point, location):
     are_different = (
         supply_point.external_id != location.external_id or
         supply_point.name != location.name or
-        supply_point.location_id != location._id
+        supply_point.location_id != location.location_id
     )
 
     if are_different:
@@ -61,7 +61,7 @@ def update_supply_point_from_location(supply_point, location):
             case_name=location.name,
             user_id=const.get_commtrack_user_id(location.domain),
             update={
-                'location_id': location._id,
+                'location_id': location.location_id,
             },
             **kwargs
         )

@@ -1781,7 +1781,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         from corehq.apps.fixtures.models import UserFixtureType
 
-        self.user_data['commcare_location_id'] = location._id
+        self.user_data['commcare_location_id'] = location.location_id
 
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
@@ -1805,10 +1805,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
-            location._id
+            location.location_id
         })
 
-        self.location_id = location._id
+        self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
         self.save()
 
@@ -1914,7 +1914,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         mapping = self.get_location_map_case()
 
         if not location.location_type_object.administrative:
-            if mapping and location._id in [loc._id for loc in self.locations]:
+            if mapping and location.location_id in [loc.location_id for loc in self.locations]:
                 caseblock = CaseBlock(
                     create=False,
                     case_id=mapping._id,
@@ -1938,8 +1938,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for the location(s).
         """
         if self.project.supports_multiple_locations_per_user:
-            new_locs_set = set([loc._id for loc in locations])
-            old_locs_set = set([loc._id for loc in self.locations])
+            new_locs_set = set([loc.location_id for loc in locations])
+            old_locs_set = set([loc.location_id for loc in self.locations])
 
             if new_locs_set == old_locs_set:
                 # don't do anything if the list passed is the same

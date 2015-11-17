@@ -450,7 +450,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     user.save()
                     if can_access_locations and location_code:
                         loc = location_cache.get(location_code)
-                        if user.location_id != loc._id:
+                        if user.location_id != loc.location_id:
                             # this triggers a second user save so
                             # we want to avoid doing it if it isn't
                             # needed

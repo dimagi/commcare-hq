@@ -152,8 +152,8 @@ class LocationExporter(object):
             not self.consumption_dict
         ):
             return {}
-        if loc._id in self.supply_point_map:
-            sp_id = self.supply_point_map[loc._id]
+        if loc.location_id in self.supply_point_map:
+            sp_id = self.supply_point_map[loc.location_id]
         else:
             # this only happens if the supply point case did
             # not already exist

@@ -26,7 +26,7 @@ class SupplyPointDBAccessorsTest(TestCase):
             CommCareCase(domain=cls.domain, type='supply-point',
                          location_id=cls.locations[2]._id),
         ]
-        locations_by_id = {location._id: location
+        locations_by_id = {location.location_id: location
                            for location in cls.locations}
         cls.location_supply_point_pairs = [
             (locations_by_id[supply_point.location_id], supply_point)
@@ -41,14 +41,14 @@ class SupplyPointDBAccessorsTest(TestCase):
     def test_get_supply_point_ids_in_domain_by_location(self):
         self.assertEqual(
             get_supply_point_ids_in_domain_by_location(self.domain),
-            {location._id: supply_point._id
+            {location.location_id: supply_point._id
              for location, supply_point in self.location_supply_point_pairs}
         )
 
     def test_get_supply_points_json_in_domain_by_location(self):
         self.assertItemsEqual(
             get_supply_points_json_in_domain_by_location(self.domain),
-            [(location._id, supply_point.to_json())
+            [(location.location_id, supply_point.to_json())
              for location, supply_point in self.location_supply_point_pairs]
         )
 
