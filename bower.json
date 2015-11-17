@@ -29,10 +29,10 @@
         "nvd3": "1.1.10-beta"
     },
     "devDependencies": {
-        "chai": "~3.3.0",
-        "mocha": "~2.3.3",
+        "chai": "3.3.0",
+        "mocha": "2.3.3",
         "sinon": "http://sinonjs.org/releases/sinon-1.17.0.js",
-        "angular-mocks": "~1.4.4"
+        "angular-mocks": "1.4.4"
     },
     "private": true
 }
