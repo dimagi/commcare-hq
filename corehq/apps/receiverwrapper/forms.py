@@ -1,6 +1,12 @@
-from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator
+from corehq.apps.receiverwrapper.models import RegisterGenerator
 
 from django import forms
+from django.utils.translation import ugettext_lazy as _
+
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
 
 
 class GenericRepeaterForm(forms.Form):
@@ -17,6 +23,22 @@ class GenericRepeaterForm(forms.Form):
                 label='Payload Format',
                 choices=self.formats,
             )
+
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[1] = twbscrispy.PrependedText('use_basic_auth', '')
+        self.helper.all().wrap_together(crispy.Fieldset, 'Forwarding Settings')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Start Forwarding"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
 
     def clean(self):
         cleaned_data = super(GenericRepeaterForm, self).clean()
@@ -57,3 +79,22 @@ class FormRepeaterForm(GenericRepeaterForm):
         label="Include 'app_id' URL query parameter.",
         initial=True
     )
+
+    def __init__(self, *args, **kwargs):
+        super(FormRepeaterForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[1] = twbscrispy.PrependedText('use_basic_auth', '')
+        self.helper[4] = twbscrispy.PrependedText('exclude_device_reports', '')
+        self.helper[5] = twbscrispy.PrependedText('include_app_id_param', '')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Start Forwarding"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )

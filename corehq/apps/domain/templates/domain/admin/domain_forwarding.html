@@ -1,7 +1,7 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="pull-right label {% if pending_record_count <= 5 %}label-success{% elif pending_record_count <= 20 %}label-warning{% else %}label-important{% endif %}">
     {% blocktrans %}
         {{ pending_record_count }} pending items to be forwarded
@@ -15,10 +15,10 @@
             {% if form_repeaters %}
             <thead>
                 <tr>
-                    <th class="span6">
+                    <th class="col-sm-6">
                         {% trans 'Url' %}
                     </th>
-                    <th class="span6">
+                    <th class="col-sm-6">
                         {% trans 'Action' %}
                     </th>
                 </tr>
