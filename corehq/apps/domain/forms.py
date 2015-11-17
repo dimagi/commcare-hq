@@ -27,6 +27,7 @@ from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from corehq.apps.style import crispy as hqcrispy
+from crispy_forms import bootstrap as twbscrispy
 
 from django.core.urlresolvers import reverse
 
@@ -92,19 +93,55 @@ class ProjectSettingsForm(forms.Form):
     global_timezone = forms.CharField(
         initial="UTC",
         label="Project Timezone",
-        widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
+        widget=BootstrapDisabledInput
+    )
     override_global_tz = forms.BooleanField(
         initial=False,
         required=False,
         label="",
         widget=BootstrapCheckboxInput(
-            attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
-            inline_label=ugettext_noop("Override project's timezone setting just for me.")))
+            inline_label=ugettext_noop("Override project's timezone setting just for me.")
+        )
+    )
     user_timezone = TimeZoneChoiceField(
         label="My Timezone",
-        initial=global_timezone.initial,
-        widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
-                                   'data-bind': 'event: {change: updateForm}'}))
+        initial=global_timezone.initial
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'my-project-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.all().wrap_together(crispy.Fieldset, 'Override Project Timezone')
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Override Project Timezone',
+                crispy.Field('global_timezone', css_class='input-xlarge'),
+                twbscrispy.PrependedText(
+                    'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'user_timezone',
+                        css_class='input-xlarge',
+                        data_bind='event: {change: updateForm}'
+                    ),
+                    data_bind='visible: override_tz'
+                )
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update My Settings"),
+                    type="submit",
+                    css_id="update-proj-settings",
+                    css_class='btn-primary disabled',
+                    data_bind="hqbSubmitReady: form_is_ready"
+                )
+            )
+        )
 
     def clean_user_timezone(self):
         data = self.cleaned_data['user_timezone']

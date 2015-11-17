@@ -1,10 +1,11 @@
-{% extends 'settings/bootstrap2/base_template.html' %}
+{% extends 'settings/bootstrap3/base_template.html' %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-<script src="{% static 'users/ko/project_settings.js' %}"></script>
+<script src="{% new_static 'users/ko/project_settings.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -56,17 +57,6 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
-    <form id="my-project-settings-form" class="form form-horizontal" name="update_project_settings" method="post">
-        {% bootstrap_form_errors my_project_settings_form %}
-        {% bootstrap_fieldset my_project_settings_form "Override Project Timezone" %}
-        <div class="form-actions">
-            <button type="submit"
-                    id="update-proj-settings"
-                    data-bind="hqbSubmitReady: form_is_ready"
-                    class="btn disabled">
-                {% trans 'Update My Settings' %}
-            </button>
-        </div>
-    </form>
+{% block page_content %}
+    {% crispy my_project_settings_form %}
 {% endblock %}

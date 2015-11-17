@@ -35,7 +35,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect
+    use_jquery_ui_multiselect, use_knockout_js
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -436,6 +436,12 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/my_project_settings.html'
     urlname = 'my_project_settings'
     page_title = ugettext_lazy("My Timezone")
+
+    @method_decorator(login_and_domain_required)
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
