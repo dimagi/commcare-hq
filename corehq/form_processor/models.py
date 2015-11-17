@@ -554,6 +554,9 @@ class CaseTransaction(models.Model):
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
     )
+    TYPES_TO_PROCESS = (
+        TYPE_FORM,
+    )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
@@ -566,7 +569,11 @@ class CaseTransaction(models.Model):
 
     @property
     def is_relevant(self):
-        return not self.revoked or not self.form or self.form.is_normal
+        relevant = not self.revoked and self.type in CaseTransaction.TYPES_TO_PROCESS
+        if relevant and self.form:
+            relevant = self.form.is_normal
+
+        return relevant
 
     @property
     def form(self):
@@ -595,6 +602,14 @@ class CaseTransaction(models.Model):
             type=detail.type,
             details=detail.to_json()
         )
+
+    @classmethod
+    def get_transactions_for_case_rebuild(cls, case_id):
+        return list(CaseTransaction.objects.filter(
+            case_id=case_id,
+            revoked=False,
+            type__in=CaseTransaction.TYPES_TO_PROCESS
+        ).all())
 
     class Meta:
         unique_together = ("case", "form_uuid")
