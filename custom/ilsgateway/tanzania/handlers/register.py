@@ -2,11 +2,11 @@ import re
 
 from django.contrib.auth.models import User
 
+from corehq.apps.locations.dbaccessors import get_location_from_site_code
 from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import REGISTER_HELP, Languages, \
@@ -24,8 +24,7 @@ class RegisterHandler(KeywordHandler):
         self.respond(REGISTER_HELP)
 
     def _get_facility_location(self, domain, msd_code):
-        sp = get_location(domain, None, msd_code)
-        return sp['location']
+        return get_location_from_site_code(domain, msd_code)
 
     def _get_district_location(self, domain, sp):
         return SQLLocation.objects.filter(

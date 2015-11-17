@@ -17,7 +17,7 @@ from soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
+from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -148,11 +148,11 @@ class SiteCodeToSupplyPointCache(BulkCacheBase):
     """
 
     def lookup(self, site_code):
-        supply_point = get_supply_point(
+        case_location = get_supply_point_and_location(
             self.domain,
             site_code
-        )['case']
-        return supply_point
+        )
+        return case_location.case
 
 
 class SiteCodeToLocationCache(BulkCacheBase):

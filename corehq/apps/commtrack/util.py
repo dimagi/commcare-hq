@@ -1,3 +1,4 @@
+from collections import namedtuple
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, feature_previews
@@ -22,6 +23,9 @@ import re
 from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
+CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
+
+
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
@@ -35,20 +39,18 @@ def all_sms_codes(domain):
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
 
 
-def get_supply_point(domain, site_code=None, loc=None):
-    if loc is None:
-        loc = Location.view('commtrack/locations_by_code',
-                            key=[domain, site_code.lower()],
-                            include_docs=True).first()
-    if loc:
-        case = SupplyInterface(domain).get_by_location(loc)
+def get_supply_point_and_location(domain, site_code):
+    location = Location.view(
+        'commtrack/locations_by_code',
+        key=[domain, site_code.lower()],
+        include_docs=True
+    ).first()
+    if location:
+        case = SupplyInterface(domain).get_by_location(location)
     else:
         case = None
 
-    return {
-        'case': case,
-        'location': loc,
-    }
+    return CaseLocationTuple(case=case, location=location)
 
 
 def make_program(domain, name, code, default=False):
