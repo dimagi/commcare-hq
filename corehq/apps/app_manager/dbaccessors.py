@@ -1,7 +1,6 @@
 from corehq.apps.app_manager.util import get_correct_app_class
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.couch.database import get_db
 from django.http import Http404
 
 
@@ -69,7 +68,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             app = original_app
     else:
         try:
-            app = get_db().get(app_id)
+            app = Application.get_db().get(app_id)
         except Exception:
             raise Http404()
     if domain and app['domain'] != domain:

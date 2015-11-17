@@ -7,14 +7,14 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0026_xforminstancesql_initial_processing_complete'),
+        ('form_processor', '0029_drop_not_null_from_opened_on_by'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='commcarecasesql',
-            name='location_uuid',
-            field=models.CharField(max_length=255, null=True),
+            model_name='casetransaction',
+            name='revoked',
+            field=models.BooleanField(default=False),
             preserve_default=True,
         ),
     ]

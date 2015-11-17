@@ -201,7 +201,7 @@ var ReportModule = (function () {
         };
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter'];
+        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
         this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
     }
@@ -242,7 +242,9 @@ var ReportModule = (function () {
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
+        self.moduleFilter = options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
+        self.currentModuleFilter = ko.observable(options.moduleFilter);
         self.reportTitles = {};
         self.reportDescriptions = {};
         self.reportCharts = {};
@@ -277,12 +279,14 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
+                self.moduleFilter = self.currentModuleFilter();
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
                     dataType: 'json',
                     data: {
                         name: JSON.stringify(self.moduleName),
+                        module_filter: self.moduleFilter,
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); }))
                     }
                 });
@@ -294,6 +298,7 @@ var ReportModule = (function () {
         };
 
         self.currentModuleName.subscribe(changeSaveButton);
+        self.currentModuleFilter.subscribe(changeSaveButton);
 
         function newReport(options) {
             options = options || {};

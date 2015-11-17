@@ -62,7 +62,6 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt

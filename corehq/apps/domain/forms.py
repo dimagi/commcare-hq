@@ -26,6 +26,8 @@ from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from corehq.apps.style import crispy as hqcrispy
+
 from django.core.urlresolvers import reverse
 
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
@@ -776,6 +778,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -800,11 +804,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'sf_account_id',
                 'services',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     _("Update Project Information"),
                     type="submit",
-                    css_class='btn btn-primary',
+                    css_class='btn-primary',
                 ),
             ),
         )

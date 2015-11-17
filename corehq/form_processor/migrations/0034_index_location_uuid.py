@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0027_commcarecasesql_location_uuid'),
+        ('form_processor', '0033_commcarecasesql_location_uuid'),
     ]
 
     operations = [

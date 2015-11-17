@@ -16,7 +16,6 @@ defusedxml==0.4.1
 diff-match-patch==20120106
 django-tastypie==0.12.2
 djangorestframework==3.3.1
-django-bower==5.0.4
 djtables==0.1.1
 elasticsearch==0.4.4
 #egenix-mx-base==3.2.8

@@ -23,7 +23,6 @@ import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 
-from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
