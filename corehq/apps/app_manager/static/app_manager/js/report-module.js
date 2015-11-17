@@ -270,7 +270,7 @@ var ReportModule = (function () {
             return self.reportDescriptions[reportId];
         };
 
-        self.multimediaUpdate = function () {
+        self.multimedia = function () {
             var multimedia = {};
             multimedia.mediaImage = {};
             multimedia.mediaImage[self.lang] = self.menuImage.ref().path;
@@ -299,7 +299,7 @@ var ReportModule = (function () {
                         name: JSON.stringify(self.moduleName),
                         module_filter: self.moduleFilter,
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
-                        multimediaUpdate: JSON.stringify(self.multimediaUpdate())
+                        multimedia: JSON.stringify(self.multimedia())
                     }
                 });
             }
