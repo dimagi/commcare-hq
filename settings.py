@@ -1586,3 +1586,8 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
+
+
+CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
+    'ews-ghana': 'dashboard_page'
+}
