@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import logging
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.utils.translation import ugettext as _
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
@@ -443,7 +444,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if language:
                         user.language = language
                     if email:
-                        user.email = email
+                        email_validator = EmailValidator()
+                        try:
+                            email_validator(email)
+                            user.email = email
+                        except ValidationError:
+                            raise UserUploadError(_("User has an invalid email address"))
                     if is_active is not None:
                         user.is_active = is_active
 
