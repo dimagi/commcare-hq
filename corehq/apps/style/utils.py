@@ -1,4 +1,6 @@
+import logging
 import threading
+
 
 _thread_local = threading.local()
 
@@ -23,7 +25,7 @@ def set_bootstrap_version2():
 
 
 def format_angular_error(error_msg, additional_data=None,
-                         log_error=False, exception=None, request=None):
+                         log_error=False, exception=None):
     """Gets the standard angular async error response.
     :param error_msg: A string that is the error message you'd like to return
     :param additional_data: a dictionary of additional data you'd like to pass
@@ -35,6 +37,8 @@ def format_angular_error(error_msg, additional_data=None,
     resp = {
         'error': error_msg,
     }
+    if log_error:
+        logging.error(exception or error_msg)
     if isinstance(additional_data, dict):
         resp.update(additional_data)
     return resp
