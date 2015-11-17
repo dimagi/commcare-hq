@@ -294,6 +294,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+REPORT_BUILDER_BETA_GROUP = StaticToggle(
+    'report_builder_beta_group',
+    'RB beta group',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
