@@ -7,11 +7,12 @@ from django.db.models import Prefetch
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
-from djorm_pguuid.fields import UUIDField
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
+from uuidfield import UUIDField
+
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
