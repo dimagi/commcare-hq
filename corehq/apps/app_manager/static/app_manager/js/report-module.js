@@ -270,14 +270,10 @@ var ReportModule = (function () {
 
         self.multimediaUpdate = function () {
             var multimedia = {};
-            if(self.menuImage.isMediaMatched()) {
-                multimedia.mediaImage = {};
-                multimedia.mediaImage[self.lang] = self.menuImage.currentPath();
-            }
-            if(self.menuAudio.isMediaMatched()) {
-                multimedia.mediaAudio = {};
-                multimedia.mediaAudio[self.lang] = self.menuAudio.currentPath();
-            }
+            multimedia.mediaImage = {};
+            multimedia.mediaImage[self.lang] = self.menuImage.ref().path;
+            multimedia.mediaAudio = {};
+            multimedia.mediaAudio[self.lang] = self.menuAudio.ref().path;
             return multimedia;
         };
 

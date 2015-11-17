@@ -666,8 +666,8 @@ def edit_report_module(request, domain, app_id, module_id):
     assert isinstance(module, ReportModule)
     module.name = params['name']
     module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
-    module.media_image.update(params['multimediaUpdate'].get('mediaImage', {}))
-    module.media_audio.update(params['multimediaUpdate'].get('mediaAudio', {}))
+    module.media_image.update(params['multimediaUpdate']['mediaImage'])
+    module.media_audio.update(params['multimediaUpdate']['mediaAudio'])
     app.save()
     return json_response('success')
 
