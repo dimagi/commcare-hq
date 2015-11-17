@@ -511,6 +511,10 @@ class Location(CachedCouchDocumentMixin, Document):
     def location_type(self):
         return self.location_type_object.name
 
+    @property
+    def location_id(self):
+        return self._id
+
     _sql_location_type = None
     @location_type.setter
     def location_type(self, value):
