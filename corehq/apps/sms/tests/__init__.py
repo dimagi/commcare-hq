@@ -3,6 +3,7 @@ from .opt_tests import *
 from .migration import *
 from .test_dbaccessors import *
 from .test_all_backends import *
+from .test_backend_migration import *
 from .update_location_keyword_test import *
 
 from corehq.apps.domain.calculations import num_mobile_users

@@ -6,7 +6,7 @@ import uuid
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
-from django.db import models
+from django.db import models, transaction
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.apps.users.models import CouchUser
@@ -1491,7 +1491,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     load_balancing_numbers = models.TextField(default='[]')
 
     class Meta:
-        db_table = 'mobilebackend'
+        db_table = 'messaging_mobilebackend'
         unique_together = ('domain', 'name')
 
     @classmethod
@@ -1521,6 +1521,12 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
         self.extra_fields = json.dumps(result)
 
+    def soft_delete(self):
+        with transaction.atomic():
+            self.deleted = True
+            self.mobilebackendinvitation_set.all().delete()
+            self.save()
+
     def _migration_sync_to_couch(self, couch_obj):
         couch_obj.domain = self.domain
         couch_obj.name = self.name
@@ -1541,8 +1547,8 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
             couch_obj.x_phone_numbers = load_balancing_numbers
 
         if self.deleted:
-            if not couch_obj.doc_type.endswith('-Deleted'):
-                couch_obj.doc_type += '-Deleted'
+            if not couch_obj.base_doc.endswith('-Deleted'):
+                couch_obj.base_doc += '-Deleted'
 
         couch_obj.save(sync_to_sql=False)
 
@@ -1557,11 +1563,14 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
     A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
     to a given backend based on phone prefix.
     """
+    class Meta:
+        db_table = 'messaging_mobilebackendmapping'
+
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     # True if this mapping applies globally (system-wide). False if it only applies
     # to a domain
-    is_global = models.BooleanField()
+    is_global = models.BooleanField(default=False)
 
     # The domain for which this mapping is valid; ignored if is_global is True
     domain = models.CharField(max_length=126, null=True)
@@ -1589,9 +1598,12 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
 
 
 class MobileBackendInvitation(models.Model):
+    class Meta:
+        db_table = 'messaging_mobilebackendinvitation'
+
     # The domain that is being invited to share another domain's backend
     domain = models.CharField(max_length=126, null=True, db_index=True)
 
     # The backend that is being shared
     backend = models.ForeignKey('SQLMobileBackend')
-    invitation_accepted = models.BooleanField(default=False)
+    accepted = models.BooleanField(default=False)
