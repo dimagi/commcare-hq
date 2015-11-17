@@ -668,6 +668,9 @@ def edit_report_module(request, domain, app_id, module_id):
     module.report_configs = [ReportAppConfig.wrap(spec) for spec in params['reports']]
     module.media_image.update(params['multimediaUpdate']['mediaImage'])
     module.media_audio.update(params['multimediaUpdate']['mediaAudio'])
+    if (feature_previews.MODULE_FILTER.enabled(domain) and
+            app.enable_module_filtering):
+        module['module_filter'] = request.POST.get('module_filter')
     app.save()
     return json_response('success')
 

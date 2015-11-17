@@ -242,9 +242,11 @@ var ReportModule = (function () {
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
+        self.moduleFilter = options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
         self.menuImage = options.menuImage;
         self.menuAudio = options.menuAudio;
+        self.currentModuleFilter = ko.observable(options.moduleFilter);
         self.reportTitles = {};
         self.reportDescriptions = {};
         self.reportCharts = {};
@@ -288,6 +290,7 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
+                self.moduleFilter = self.currentModuleFilter();
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
@@ -295,7 +298,8 @@ var ReportModule = (function () {
                     data: {
                         name: JSON.stringify(self.moduleName),
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
-                        multimediaUpdate: JSON.stringify(self.multimediaUpdate())
+                        multimediaUpdate: JSON.stringify(self.multimediaUpdate()),
+                        module_filter: self.moduleFilter
                     }
                 });
             }
@@ -306,6 +310,7 @@ var ReportModule = (function () {
         };
 
         self.currentModuleName.subscribe(self.changeSaveButton);
+        self.currentModuleFilter.subscribe(self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};

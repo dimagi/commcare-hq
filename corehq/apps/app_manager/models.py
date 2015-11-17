@@ -55,7 +55,6 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
-from dimagi.utils.couch.database import get_db
 import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils

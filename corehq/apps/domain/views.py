@@ -34,7 +34,8 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
+    use_jquery_ui_multiselect
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -2166,6 +2167,14 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     template_name = 'domain/internal_settings.html'
     strict_domain_fetching = True
 
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_jquery_ui_multiselect
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def autocomplete_fields(self):
         return ['countries']
@@ -2697,7 +2706,7 @@ class CardView(BaseCardView):
         try:
             card = self.payment_method.get_card(card_token)
             if request.POST.get("is_autopay") == 'true':
-                self.payment_method.set_autopay(card, self.account)
+                self.payment_method.set_autopay(card, self.account, domain)
             elif request.POST.get("is_autopay") == 'false':
                 self.payment_method.unset_autopay(card, self.account)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
@@ -2727,7 +2736,7 @@ class CardsView(BaseCardView):
         stripe_token = request.POST.get('token')
         autopay = request.POST.get('autopay') == 'true'
         try:
-            self.payment_method.create_card(stripe_token, self.account, autopay)
+            self.payment_method.create_card(stripe_token, self.account, domain, autopay)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
         except Exception as e:
