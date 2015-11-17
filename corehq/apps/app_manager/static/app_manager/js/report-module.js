@@ -305,12 +305,12 @@ var ReportModule = (function () {
             }
         });
 
-        var changeSaveButton = function () {
+        self.changeSaveButton = function () {
             self.saveButton.fire('change');
         };
 
-        self.currentModuleName.subscribe(changeSaveButton);
-        self.currentModuleFilter.subscribe(changeSaveButton);
+        self.currentModuleName.subscribe(self.changeSaveButton);
+        self.currentModuleFilter.subscribe(self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};
@@ -325,10 +325,10 @@ var ReportModule = (function () {
                 options.filters,
                 self.reportFilters,
                 self.lang,
-                changeSaveButton
+                self.changeSaveButton
             );
-            report.display.subscribe(changeSaveButton);
-            report.reportId.subscribe(changeSaveButton);
+            report.display.subscribe(self.changeSaveButton);
+            report.reportId.subscribe(self.changeSaveButton);
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));
             });
@@ -343,7 +343,7 @@ var ReportModule = (function () {
         };
         this.removeReport = function (report) {
             self.reports.remove(report);
-            changeSaveButton();
+            self.changeSaveButton();
         };
 
         // add existing reports to UI

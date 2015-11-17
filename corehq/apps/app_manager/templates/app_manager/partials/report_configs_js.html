@@ -20,6 +20,12 @@
         ko.applyBindings(reportModule, $("#module-name")[0]);
         ko.applyBindings(reportModule, $("#report-list")[0]);
         ko.applyBindings(reportModule, $("#add-report-btn")[0]);
+        menuImage.ref.subscribe(function() {
+            reportModule.changeSaveButton();
+        });
+        menuAudio.ref.subscribe(function() {
+            reportModule.changeSaveButton();
+        });
 
         var select2s = $('.choice_filter');
         for(var i = 0; i < select2s.length; i++) {
