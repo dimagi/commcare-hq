@@ -106,6 +106,9 @@ class EWSData(object):
 
 
 class ReportingRatesData(EWSData):
+
+    default_rows = 50
+
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
 

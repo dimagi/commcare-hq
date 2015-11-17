@@ -89,7 +89,7 @@ class BaseStripePaymentHandler(object):
                 self.payment_method.remove_card(card)
                 return {'success': True, 'removedCard': card, }
             if save_card:
-                card = self.payment_method.create_card(card, billing_account, autopay=autopay)
+                card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
             if save_card or is_saved_card:
                 customer = self.payment_method.customer
 
@@ -152,7 +152,7 @@ class BaseStripePaymentHandler(object):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
-            payment_record, self.core_product, self.receipt_email_template,
+            payment_record, self.core_product, self.domain, self.receipt_email_template,
             self.receipt_email_template_plaintext, additional_context
         )
 
@@ -412,7 +412,7 @@ class AutoPayInvoicePaymentHandler(object):
         receipt_email_template = 'accounting/invoice_receipt_email.html'
         receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
         try:
-            domain = invoice.subscription.account.created_by_domain
+            domain = invoice.subscription.subscriber.domain
             product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
 
             context = {
@@ -423,7 +423,7 @@ class AutoPayInvoicePaymentHandler(object):
                 'invoice_num': invoice.invoice_number,
             }
             send_purchase_receipt.delay(
-                payment_record, product, receipt_email_template, receipt_email_template_plaintext, context,
+                payment_record, product, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
         except:
             self._handle_email_failure(invoice, payment_record)
