@@ -73,8 +73,7 @@
         navigateDirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' you can resume work on this form later." %}",
         sidebarDirty: "{% trans "You have not submitted this form. Click ‘Cancel’ to continue working on this form. If you click 'OK' you can resume work on this form later." %}",
         synced : "{% trans "User Data Successfully Synced" %}",
-        errSyncing : "{% trans "Could not sync user data. Please try again and report a bug if issue persists.
-        " %}"
+        errSyncing : "{% trans "Could not sync user data. Please try again and report a bug if issue persists." %}"
     };
 
     $(function () {
@@ -84,6 +83,7 @@
         var submitUrlRoot = "{% url "receiver_post" domain %}";
         var sessionUrlRoot = "{% url "cloudcare_get_sessions" domain %}";
         var renderFormRoot = "{% url "cloudcare_render_form" domain %}";
+        var syncDbUrl = "{% url "cloudcare_sync_db" domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|JSON }};
         var initialApp = {{ app|JSON }};
@@ -110,7 +110,8 @@
             sessionsEnabled: sessionsEnabled,
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled,
-            username: username
+            username: username,
+            syncDbUrl: syncDbUrl
         });
 
         // TODO: when we figure out what to do about get params, use this

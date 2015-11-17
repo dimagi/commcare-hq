@@ -857,13 +857,11 @@ cloudCare.AppView = Backbone.View.extend({
         this.caseSelectionView.model.set("childCase", null);
     },
     syncDb: function (username) {
-        var self = this;
+        self = this;
         var resp = $.ajax({
-            url: this.getSyncUrl(),
-            async: false,
+            url: self.options.syncDbUrl,
             dataType: "json",
-            data: JSON.stringify({"action": "sync-db", "username": username}),
-            type: 'POST',
+            data: {"username": username},
         });
         resp.done(function (data) {
             tfSyncComplete(data.status === "error");
@@ -935,6 +933,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             renderFormRoot: self.options.renderFormRoot,
             instanceViewerEnabled: self.options.instanceViewerEnabled,
             username: self.options.username,
+            syncDbUrl: self.options.syncDbUrl,
         });
 
         // fetch session list here

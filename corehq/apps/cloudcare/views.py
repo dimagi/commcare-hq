@@ -34,7 +34,7 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
-from touchforms.formplayer.api import DjangoAuth, get_raw_instance
+from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.case.xml import V2
@@ -484,6 +484,18 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
+
+@cloudcare_api
+def sync_db_api(request, domain):
+    auth_cookie = request.COOKIES.get('sessionid')
+    username = request.GET.get('username')
+    try:
+        sync_db(username, DjangoAuth(auth_cookie))
+        return json_response({
+            'status': 'OK'
+        })
+    except Exception, e:
+        return HttpResponse(e, status=500, content_type="text/plain")
 
 
 @cloudcare_api
