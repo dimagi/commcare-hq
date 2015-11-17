@@ -13,7 +13,7 @@ from django.db.models.signals import post_save
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.couchdbkit import *
 from dimagi.ext import jsonobject
 from casexml.apps.case.mock import CaseBlock
@@ -255,7 +255,7 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
             facility_type = None
             if self.consumption_config.use_supply_point_type_default_consumption:
                 try:
-                    supply_point = SupplyPointCase.get(case_id)
+                    supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
                     facility_type = supply_point.location.location_type
                 except ResourceNotFound:
                     pass
@@ -447,57 +447,9 @@ class SupplyPointCase(CommCareCase):
     def sql_location(self):
         return SQLLocation.objects.get(location_id=self.location_id)
 
-    @classmethod
-    def _from_caseblock(cls, domain, caseblock):
-        username = const.COMMTRACK_USERNAME
-        casexml = ElementTree.tostring(caseblock.as_xml())
-        submit_case_blocks(casexml, domain, username, const.get_commtrack_user_id(domain),
-                           xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS)
-        return cls.get(caseblock._id)
-
-    @classmethod
-    def create_from_location(cls, domain, location):
-        # a supply point is currently just a case with a special type
-        id = uuid.uuid4().hex
-        user_id = const.get_commtrack_user_id(domain)
-        owner_id = location.group_id
-        kwargs = {'external_id': location.external_id} if location.external_id else {}
-        caseblock = CaseBlock(
-            case_id=id,
-            create=True,
-            case_name=location.name,
-            user_id=user_id,
-            owner_id=owner_id,
-            case_type=const.SUPPLY_POINT_CASE_TYPE,
-            update={
-                'location_id': location._id,
-            },
-            **kwargs
-        )
-        return cls._from_caseblock(domain, caseblock)
-
     def update_from_location(self, location):
-        assert self.domain == location.domain
-        def _are_different(supply_point, loc):
-            return (supply_point.external_id != loc.external_id or
-                    supply_point.name != loc.name or
-                    supply_point.location_id != loc._id)
-
-        if _are_different(self, location):
-            kwargs = {'external_id': location.external_id} if location.external_id else {}
-            caseblock = CaseBlock(
-                case_id=self._id,
-                create=False,
-                case_name=location.name,
-                user_id=const.get_commtrack_user_id(location.domain),
-                update={
-                    'location_id': location._id,
-                },
-                **kwargs
-            )
-            return SupplyPointCase._from_caseblock(location.domain, caseblock)
-        else:
-            return self
+        from corehq.apps.commtrack.helpers import update_supply_point_from_location
+        return update_supply_point_from_location(self, location)
 
     def to_full_dict(self):
         data = super(SupplyPointCase, self).to_full_dict()
@@ -516,29 +468,6 @@ class SupplyPointCase(CommCareCase):
         #data['last_reported'] = None
 
         return data
-
-    @classmethod
-    def get_by_location(cls, location):
-        return get_supply_point_case_by_location(location)
-
-    @classmethod
-    def get_or_create_by_location(cls, location):
-        sp = get_supply_point_case_by_location(location)
-        if not sp:
-            sp = SupplyPointCase.create_from_location(
-                location.domain,
-                location
-            )
-            # todo: if you come across this after july 2015 go search couchlog
-            # and see how frequently this is happening.
-            # if it's not happening at all we should remove it.
-            logging.warning('supply_point_dynamically_created, {}, {}, {}'.format(
-                location.name,
-                sp._id,
-                location.domain,
-            ))
-
-        return sp
 
     @classmethod
     def get_display_config(cls):
@@ -741,7 +670,7 @@ def sync_location_supply_point(loc):
             supply_point.update_from_location(loc)
             updated_supply_point = supply_point
         else:
-            updated_supply_point = SupplyPointCase.create_from_location(loc.domain, loc)
+            updated_supply_point = SupplyInterface.create_from_location(loc.domain, loc)
 
         # need to sync this sp change to the sql location
         # but saving the doc will trigger a loop

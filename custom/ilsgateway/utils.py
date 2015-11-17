@@ -5,6 +5,7 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import LocationType, Location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
 from dimagi.utils.dates import get_business_day_of_month_before
@@ -78,7 +79,7 @@ def make_loc(code, name, domain, type, metadata=None, parent=None):
     loc.metadata = metadata or {}
     loc.save()
     if not location_type.administrative:
-        SupplyPointCase.create_from_location(domain, loc)
+        SupplyInterface.create_from_location(domain, loc)
         loc.save()
     return loc
 

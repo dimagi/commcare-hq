@@ -17,10 +17,11 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from corehq.elastic import es_wrapper
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
@@ -1777,7 +1778,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Set the location, and all important user data, for
         the user.
         """
-        from corehq.apps.commtrack.models import SupplyPointCase
         from corehq.apps.fixtures.models import UserFixtureType
 
         self.user_data['commcare_location_id'] = location._id
@@ -1785,7 +1785,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
-            SupplyPointCase.get_or_create_by_location(location)
+            SupplyInterface(self.domain).get_or_create_by_location(location)
 
             self.user_data.update({
                 'commtrack-supply-point': location.sql_location.supply_point_id
@@ -1885,9 +1885,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         This will dynamically create a supply point if the supply point isn't found.
         """
         # todo: the dynamic supply point creation is bad and should be removed.
-        from corehq.apps.commtrack.models import SupplyPointCase
-
-        sp = SupplyPointCase.get_or_create_by_location(location)
+        sp = SupplyInterface(self.domain).get_or_create_by_location(location)
 
         if not location.location_type_object.administrative:
             from corehq.apps.commtrack.util import submit_mapping_case_block
@@ -1910,7 +1908,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Remove a single location from the case delagate access.
         """
 
-        sp = get_supply_point_case_by_location(location)
+        sp = SupplyInterface(self.domain).get_by_location(location)
 
         mapping = self.get_location_map_case()
 
@@ -1956,7 +1954,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         index = {}
         for location in locations:
             if not location.location_type_object.administrative:
-                sp = get_supply_point_case_by_location(location)
+                sp = SupplyInterface(self.domain).get_by_location(location)
                 index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id

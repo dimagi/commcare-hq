@@ -1,9 +1,9 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers
 from dimagi.utils.couch.database import iter_bulk_delete
@@ -157,7 +157,7 @@ class LocationExporter(object):
         else:
             # this only happens if the supply point case did
             # not already exist
-            sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
+            sp_id = SupplyInterface(self.domain).get_or_create_by_location(loc).location_id
         return {
             p.code: get_loaded_default_monthly_consumption(
                 self.consumption_dict,
