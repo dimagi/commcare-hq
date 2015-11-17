@@ -16,6 +16,15 @@
   .controls {
      padding-left: 8px;
   }
+  .btn-default {
+    background-color: lighten(@cc-bg, 3%);
+  }
+  .btn {
+    margin-left: 5px;
+    &:first-child {
+      margin-left: 0;
+    }
+  }
 }
 
 legend .subtext {
@@ -86,5 +95,15 @@ legend .subtext {
   cursor: pointer;
   input {
     cursor: pointer;
+  }
+}
+
+.form-horizontal .form-group .checkbox {
+  margin-left: 20px;
+  font-weight: normal;
+  line-height: 18px;
+  input {
+    vertical-align: top;
+    margin-top: 3px;
   }
 }

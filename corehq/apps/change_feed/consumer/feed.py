@@ -25,13 +25,17 @@ class KafkaChangeFeed(ChangeFeed):
         self._partition = partition
 
     def iter_changes(self, since, forever):
+        # a special value of since=None will start from the end of the change stream
+
         # in milliseconds, -1 means wait forever for changes
         timeout = -1 if forever else MIN_TIMEOUT
 
-        consumer = self._get_consumer(timeout)
-        offset = int(since)  # coerce sequence IDs to ints
-        # this is how you tell the consumer to start from a certain point in the sequence
-        consumer.set_topic_partitions((self._topic, self._partition, offset))
+        reset = 'smallest' if since is not None else 'largest'
+        consumer = self._get_consumer(timeout, auto_offset_reset=reset)
+        if since is not None:
+            offset = int(since)  # coerce sequence IDs to ints
+            # this is how you tell the consumer to start from a certain point in the sequence
+            consumer.set_topic_partitions((self._topic, self._partition, offset))
         for message in consumer:
             try:
                 yield change_from_kafka_message(message)
@@ -45,13 +49,13 @@ class KafkaChangeFeed(ChangeFeed):
         consumer.next()
         return consumer.offsets('highwater')[(self._topic, self._partition)]
 
-    def _get_consumer(self, timeout):
+    def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         return KafkaConsumer(
             self._topic,
             group_id=self._group_id,
             bootstrap_servers=[settings.KAFKA_URL],
             consumer_timeout_ms=timeout,
-            auto_offset_reset='smallest',
+            auto_offset_reset=auto_offset_reset,
         )
 
 
