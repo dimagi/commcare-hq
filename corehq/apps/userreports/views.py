@@ -11,11 +11,10 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 from corehq.apps.analytics.tasks import track_workflow
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
@@ -27,11 +26,9 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import privileges, toggles
+from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_knockout_js,
@@ -82,11 +79,9 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from django_prbac.decorators import requires_privilege_raise404
 
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.memoized import memoized
-from django_prbac.utils import has_privilege
 
 
 def get_datasource_config_or_404(config_id, domain):
