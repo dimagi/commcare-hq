@@ -1,0 +1,135 @@
+{% load hq_shared_tags %}{% load compress %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>CommCare HQ Map</title>
+	{% compress css %}
+        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
+    {% endcompress %}
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <style>
+        #map { height: 800px; }
+    </style>
+</head>
+<body>
+	<div class="container-fluid">
+		{% block main_content %}
+            <h1>Incoming Forms by country <small>This should update in real time.</small></h1>
+            <div id="map"></div>
+            <div id="chart"><svg style='height:500px'></svg></div>
+		{% endblock main_content %}
+	</div>
+    {% compress js %}
+        <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
+    {% endcompress %}
+    <script type="text/javascript" src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    {% block script_panel %}
+        <script type="text/javascript">
+jQuery(document).ready(function($) {
+    var ws4redis = WS4Redis({
+        uri: '{{ WEBSOCKET_URI }}form-feed?subscribe-broadcast',
+        receive_message: receiveMessage,
+        heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
+    });
+
+    var formCounts = {};  // keeps track of totals per country
+    var maxCount = 0;
+    var activeCounts = {};  // keeps track of "active" per country - from the last second
+
+    // receive a message though the Websocket from the server
+    function receiveMessage(msg) {
+        var msgObj = JSON.parse(msg);
+        if (msgObj.country) {
+            // update totals
+            var currentCount = formCounts[msgObj.country] || 0;
+            currentCount += 1;
+            formCounts[msgObj.country] = currentCount;
+            if (currentCount > maxCount) {
+                maxCount = currentCount;
+            }
+
+            // update active
+            var activeCount = activeCounts[msgObj.country] || 0;
+            activeCounts[msgObj.country] = activeCount + 1;
+            colorAll();
+
+            // this removes from active after a bit of time
+            window.setTimeout(function () {
+                activeCounts[msgObj.country] -= 1;
+            }, 1000);
+        }
+    }
+
+    var map = L.map('map').setView([0, 0], 3)
+
+    var mapId = 'mapbox.dark';
+    // todo: move to config somewhere
+    var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
+    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        maxZoom: 10,
+        id: mapId,
+        accessToken: accessToken
+    }).addTo(map);
+
+    function getColor(featureId) {
+        // courtesy of http://colorbrewer2.org/
+        var colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
+        var count = formCounts[featureId];
+        if (!count) {
+            return colors[0];
+        }
+        var activeCount = activeCounts[featureId];
+        if (!activeCount) {
+            var pct = count / maxCount;
+            var index = Math.min(Math.ceil(pct * colors.length), colors.length - 1);
+            return colors[index];
+        }
+        else {
+            var activeColors = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+            var activeIndex = Math.min(activeCount, activeColors.length - 1);
+            return activeColors[activeIndex]
+        }
+    }
+
+    function getOpacity(featureId) {
+        if (formCounts[featureId]) {
+            return .9;
+        } else {
+            return 0;
+        }
+    }
+
+    function style(feature) {
+        return {
+            fillColor: getColor(feature.properties.name),
+            weight: 2,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: getOpacity(feature.properties.name)
+        };
+    }
+
+    // todo: should probably be getting this from somewhere else and possibly not on every page load.
+    var countriesGeo;
+    $.getJSON('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json', function (data) {
+        countriesGeo = L.geoJson(data, {style: style}).addTo(map);
+    });
+
+    function colorAll() {
+        if (countriesGeo !== undefined) {
+            countriesGeo.setStyle(style);
+        }
+    }
+    // update all every 5 seconds in case no activity (this is just to clear active state)
+    window.setInterval(colorAll, 5000);
+});
+</script>
+	{% endblock %}
+</body>
+</html>
