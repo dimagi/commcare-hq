@@ -35,7 +35,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect
+    use_jquery_ui_multiselect, use_knockout_js
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -1979,6 +1979,12 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     urlname = 'domain_manage_multimedia'
     page_title = ugettext_lazy("Multimedia Sharing")
     template_name = 'domain/admin/media_manager.html'
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def project_media_data(self):
