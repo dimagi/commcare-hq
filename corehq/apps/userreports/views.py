@@ -27,6 +27,7 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
@@ -84,6 +85,7 @@ from django_prbac.decorators import requires_privilege_raise404
 
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.memoized import memoized
+from django_prbac.utils import has_privilege
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -144,10 +146,14 @@ class ReportBuilderView(BaseDomainView):
     @use_select2
     @use_daterangepicker
     @use_datatables
-    @method_decorator(toggles.REPORT_BUILDER.required_decorator())
-    @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, *args, **kwargs):
-        return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+        builder_enabled = toggle_enabled(request, toggles.REPORT_BUILDER)
+        builder_privileges = has_privilege(request, privileges.REPORT_BUILDER)
+        beta_group_enabled = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
+        if ((builder_enabled and builder_privileges) or beta_group_enabled):
+            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
 
     @property
     def section_name(self):
@@ -446,7 +452,7 @@ def _edit_report_shared(request, domain, config, read_only=False):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER)
+@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER, toggles.REPORT_BUILDER_BETA_GROUP)
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 

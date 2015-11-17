@@ -295,8 +295,11 @@ class ProjectReportsTab(UITab):
         ])]
 
         user_reports = []
-        if (toggle_enabled(self._request, toggles.REPORT_BUILDER)
-                and has_privilege(self._request, privileges.REPORT_BUILDER)):
+
+        builder_enabled = toggle_enabled(self._request, toggles.REPORT_BUILDER)
+        builder_privileges = has_privilege(self._request, privileges.REPORT_BUILDER)
+        beta_group_enabled = toggle_enabled(self._request, toggles.REPORT_BUILDER_BETA_GROUP)
+        if ((builder_enabled and builder_privileges) or beta_group_enabled):
             user_reports = [(
                 _("Create Reports"),
                 [{
