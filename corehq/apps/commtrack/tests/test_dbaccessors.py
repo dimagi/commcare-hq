@@ -41,7 +41,7 @@ class SupplyPointDBAccessorsTest(TestCase):
     def test_get_supply_point_ids_in_domain_by_location(self):
         self.assertEqual(
             get_supply_point_ids_in_domain_by_location(self.domain),
-            {location.location_id: supply_point._id
+            {location.location_id: supply_point.case_id
              for location, supply_point in self.location_supply_point_pairs}
         )
 

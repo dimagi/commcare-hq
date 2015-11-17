@@ -273,7 +273,7 @@ class LocationImporter(object):
                             set_default_consumption_for_supply_point(
                                 self.domain,
                                 product._id,
-                                sp._id,
+                                sp.case_id,
                                 amount
                             )
                     except (TypeError, InvalidOperation):

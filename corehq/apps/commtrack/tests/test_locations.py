@@ -80,11 +80,11 @@ class LocationsTest(CommTrackTest):
 
         self.assertFalse(sp.closed)
         loc.archive()
-        sp = SupplyPointCase.get(sp._id)
+        sp = SupplyPointCase.get(sp.case_id)
         self.assertTrue(sp.closed)
 
         loc.unarchive()
-        sp = SupplyPointCase.get(sp._id)
+        sp = SupplyPointCase.get(sp.case_id)
         self.assertFalse(sp.closed)
 
 
@@ -122,7 +122,7 @@ class MultiLocationsTest(CommTrackTest):
 
         self.assertEqual(len(user.locations), 1)
         self.assertEqual(user.locations[0].name, 'loc1')
-        self.check_supply_point(user, self.sp._id)
+        self.check_supply_point(user, self.sp.case_id)
 
     def test_commtrack_user_has_multiple_locations(self):
         user = self.user
@@ -131,7 +131,7 @@ class MultiLocationsTest(CommTrackTest):
         sp = make_supply_point(self.domain.name, loc)
         user.add_location_delegate(loc)
 
-        self.check_supply_point(user, sp._id)
+        self.check_supply_point(user, sp.case_id)
         self.assertTrue(len(user.locations), 2)
         self.assertEqual(user.locations[1].name, 'secondloc')
 
@@ -143,11 +143,11 @@ class MultiLocationsTest(CommTrackTest):
         sp = make_supply_point(self.domain.name, loc)
         user.add_location_delegate(loc)
 
-        self.check_supply_point(user, sp._id)
+        self.check_supply_point(user, sp.case_id)
 
         user.remove_location_delegate(loc)
 
-        self.check_supply_point(user, sp._id, False)
+        self.check_supply_point(user, sp.case_id, False)
         self.assertEqual(len(user.locations), 1)
 
     def test_location_removal_only_submits_if_it_existed(self):
@@ -183,8 +183,8 @@ class MultiLocationsTest(CommTrackTest):
         self.assertEqual(len(user.locations), 2)
 
         # and will have access to these two
-        self.check_supply_point(user, sp1._id)
-        self.check_supply_point(user, sp2._id)
+        self.check_supply_point(user, sp1.case_id)
+        self.check_supply_point(user, sp2.case_id)
 
     def test_setting_new_list_causes_submit(self):
         """

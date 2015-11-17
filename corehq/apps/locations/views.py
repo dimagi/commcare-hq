@@ -436,7 +436,7 @@ class EditLocationView(NewLocationView):
                 self.location.location_type,
                 # FIXME accessing this value from the sql location
                 # would be faster
-                self.supply_point._id if self.supply_point else None,
+                self.supply_point.case_id if self.supply_point else None,
             )
             if consumption:
                 consumptions.append((product.name, consumption))

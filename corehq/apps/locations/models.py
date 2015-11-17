@@ -493,7 +493,7 @@ class Location(CachedCouchDocumentMixin, Document):
         # sync supply point id
         sp = self.linked_supply_point()
         if sp:
-            sql_location.supply_point_id = sp._id
+            sql_location.supply_point_id = sp.case_id
 
         # sync parent connection
         parent_id = self.parent_id
@@ -545,7 +545,7 @@ class Location(CachedCouchDocumentMixin, Document):
         # this is important because if you archive a child, then try
         # to archive the parent, we don't want to try to close again
         if sp and not sp.closed:
-            close_case(sp._id, self.domain, COMMTRACK_USERNAME)
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
 
         _unassign_users_from_location(self.domain, self._id)
 
