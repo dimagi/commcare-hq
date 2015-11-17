@@ -157,7 +157,7 @@ def get_number_of_cases_in_domain_by_owner(domain, owner_id):
 def iter_lite_cases_json(case_ids, chunksize=100):
     for case_id_chunk in chunked(case_ids, chunksize):
         rows = CommCareCase.get_db().view(
-            'case/get_lite',
+            'cases_get_lite/get_lite',
             keys=case_id_chunk,
             reduce=False,
         )
@@ -167,7 +167,7 @@ def iter_lite_cases_json(case_ids, chunksize=100):
 
 def get_lite_case_json(case_id):
     return CommCareCase.get_db().view(
-        "case/get_lite",
+        "cases_get_lite/get_lite",
         key=case_id,
         include_docs=False,
     ).one()

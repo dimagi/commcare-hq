@@ -77,7 +77,7 @@ def create_real_cases_from_dummy_cases(cases):
 
 
 def get_case_xform_ids(case_id):
-    results = XFormInstance.get_db().view('case/form_case_index',
+    results = XFormInstance.get_db().view('form_case_index/form_case_index',
                                           reduce=False,
                                           startkey=[case_id],
                                           endkey=[case_id, {}])
