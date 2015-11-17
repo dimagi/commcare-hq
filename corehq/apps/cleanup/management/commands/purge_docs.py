@@ -33,9 +33,8 @@ class Command(LabelCommand):
         for domain in domain_names:
             for doc_type in doc_types:
                 docs = [row['doc'] for row in database.view(
-                    'domain/docs',
-                    startkey=[domain, doc_type],
-                    endkey=[domain, doc_type, {}],
+                    'by_domain_doc_type/view',
+                    key=[domain, doc_type],
                     reduce=False,
                     include_docs=True,
                 )][:remaining]

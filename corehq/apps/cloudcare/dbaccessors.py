@@ -9,9 +9,8 @@ def get_application_access_for_domain(domain):
     if more than one is found, one is arbitrarily returned.
     """
     return ApplicationAccess.view(
-        'domain/docs',
-        startkey=[domain, 'ApplicationAccess'],
-        endkey=[domain, 'ApplicationAccess', {}],
+        'by_domain_doc_type/view',
+        key=[domain, 'ApplicationAccess'],
         include_docs=True,
         reduce=False,
     ).first()

@@ -5413,8 +5413,8 @@ class CareplanConfig(Document):
     def for_domain(cls, domain):
         res = cache_core.cached_view(
             cls.get_db(),
-            "domain/docs",
-            key=[domain, 'CareplanConfig', None],
+            "by_domain_doc_type/view",
+            key=[domain, 'CareplanConfig'],
             reduce=False,
             include_docs=True,
             wrapper=cls.wrap)
