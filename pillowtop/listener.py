@@ -455,18 +455,23 @@ class AliasedElasticPillow(BasicPillow):
         index_exists = self.index_exists()
         if create_index and not index_exists:
             self.create_index()
-        if self.online:
+        if self.online and (index_exists or create_index):
             pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
             self.initialize_mapping_if_necessary()
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 
+    def mapping_exists(self):
+        try:
+            return bool(self.get_index_mapping())
+        except ElasticException:
+            return False
+
     def initialize_mapping_if_necessary(self):
         """
         Initializes the elasticsearch mapping for this pillow if it is not found.
         """
-        mapping = self.get_index_mapping()
-        if not mapping:
+        if not self.mapping_exists():
             pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
             mapping = copy(self.default_mapping)
             mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
