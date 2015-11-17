@@ -45,7 +45,7 @@ from fabric.operations import require, local, prompt
 
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
-ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer']
+ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
 ROLES_CELERY = ['django_monolith', 'django_celery']
 ROLES_PILLOWTOP = ['django_monolith', 'django_pillowtop']
 ROLES_DJANGO = ['django_monolith', 'django_app']
@@ -120,6 +120,7 @@ def format_env(current_env, extra=None):
     """
     ret = dict()
     important_props = [
+        'root',
         'environment',
         'code_root',
         'code_current',
@@ -1146,7 +1147,7 @@ def set_pillow_retry_queue_supervisorconf():
 
 
 @roles(ROLES_STATIC)
-def set_pillow_retry_queue_supervisorconf():
+def set_websocket_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
 
 
@@ -1167,6 +1168,7 @@ def _set_supervisor_config():
     _execute_with_timing(set_sms_queue_supervisorconf)
     _execute_with_timing(set_reminder_queue_supervisorconf)
     _execute_with_timing(set_pillow_retry_queue_supervisorconf)
+    _execute_with_timing(set_websocket_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in
     # execute(set_elasticsearch_supervisorconf)
