@@ -4,6 +4,7 @@ import collections
 import hashlib
 
 from django.db.models import Prefetch
+from djorm_pguuid.fields import UUIDField
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
@@ -347,7 +348,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     deleted = models.BooleanField(default=False, null=False)
 
     external_id = models.CharField(max_length=255)
-    location_uuid = models.CharField(max_length=255, null=True)
+    location_uuid = UUIDField(null=True, unique=False)
 
     case_json = JSONField(lazy=True, default=dict)
 
@@ -361,7 +362,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def location_id(self):
-        return self.location_uuid
+        return str(self.location_uuid)
 
     @location_id.setter
     def location_id(self, _id):

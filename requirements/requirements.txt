@@ -77,6 +77,7 @@ git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e2
 Pygments==2.0.2
 tinys3==0.1.11
 datadog==0.10.0
+djorm-ext-pguuid==0.2
 
 # required by ctable
 SQLAlchemy==0.8.2
