@@ -26,6 +26,7 @@ from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 from django.core.urlresolvers import reverse
@@ -514,6 +515,23 @@ class DomainGlobalSettingsForm(forms.Form):
                     call_center_user_choices + \
                     call_center_group_choices
 
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[3] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[4] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Basic Info"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -664,6 +682,26 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
     )
+
+    def __init__(self, *args, **kwargs):
+        super(PrivacySecurityForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
+        self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
+        self.helper[2] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Privacy Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
 
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
