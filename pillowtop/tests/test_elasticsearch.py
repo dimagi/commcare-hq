@@ -57,6 +57,12 @@ class ElasticPillowTest(SimpleTestCase):
             mapping['properties']['doc_type']['index']
         )
 
+    def test_create_index_false_online_true(self):
+        # this test use to raise a hard error so doesn't actually test anything
+        pillow = TestElasticPillow(create_index=False)
+        self.assertFalse(pillow.index_exists())
+        self.assertFalse(pillow.mapping_exists())
+
     def test_refresh_index(self):
         pillow = TestElasticPillow()
         doc_id = uuid.uuid4().hex
