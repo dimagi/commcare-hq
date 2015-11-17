@@ -11,7 +11,10 @@
             saveURL: saveURL,
             lang: {{ lang|JSON }}
         });
-        ko.applyBindings(reportModule, $("#report-module-edit")[0]);
+        ko.applyBindings(reportModule, $("#save-button")[0]);
+        ko.applyBindings(reportModule, $("#module-name")[0]);
+        ko.applyBindings(reportModule, $("#report-list")[0]);
+        ko.applyBindings(reportModule, $("#add-report-btn")[0]);
 
         var select2s = $('.choice_filter');
         for(var i = 0; i < select2s.length; i++) {
