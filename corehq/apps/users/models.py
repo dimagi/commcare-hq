@@ -1867,10 +1867,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if supply_point:
             return {
-                'supply_point-' + supply_point._id:
+                'supply_point-' + supply_point.case_id:
                 (
                     supply_point.type,
-                    supply_point._id if not clear else ''
+                    supply_point.case_id if not clear else ''
                 )
             }
         else:
