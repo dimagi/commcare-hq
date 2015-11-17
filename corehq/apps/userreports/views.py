@@ -73,6 +73,7 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
+from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
@@ -147,10 +148,7 @@ class ReportBuilderView(BaseDomainView):
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        builder_enabled = toggle_enabled(request, toggles.REPORT_BUILDER)
-        builder_privileges = has_privilege(request, privileges.REPORT_BUILDER)
-        beta_group_enabled = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
-        if ((builder_enabled and builder_privileges) or beta_group_enabled):
+        if has_report_builder_access(request):
             return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
         else:
             raise Http404
