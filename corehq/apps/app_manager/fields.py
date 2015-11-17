@@ -265,7 +265,7 @@ class ApplicationDataRMIHelper(object):
     @staticmethod
     def _sorkey_form(form):
         app_id = form['app']['id']
-        if form['has_app']:
+        if form.get('has_app', False):
             order = 0 if not form.get('app_deleted') else 1
             app_name = form['app']['name']
             module = form.get('module')
@@ -311,18 +311,18 @@ class ApplicationDataRMIHelper(object):
     @property
     @memoized
     def _no_app_forms(self):
-        return filter(lambda f: not f['has_app'], self._all_forms)
+        return filter(lambda f: not f.get('has_app', False), self._all_forms)
 
     @property
     @memoized
     def _remote_app_forms(self):
-        return filter(lambda f: f['has_app'] and f.get('show_xmlns', False), self._all_forms)
+        return filter(lambda f: f.get('has_app', False) and f.get('show_xmlns', False), self._all_forms)
 
     @property
     @memoized
     def _deleted_app_forms(self):
         return filter(
-            lambda f: f['has_app'] and f['app_deleted'] and not f.get('show_xmlns', False),
+            lambda f: f.get('has_app', False) and f.get('app_deleted') and not f.get('show_xmlns', False),
             self._all_forms
         )
 
@@ -330,7 +330,7 @@ class ApplicationDataRMIHelper(object):
     @memoized
     def _available_app_forms(self):
         return filter(
-            lambda f: f['has_app'] and not f['app_deleted'] and not f.get('show_xmlns', False),
+            lambda f: f.get('has_app', False) and not f.get('app_deleted') and not f.get('show_xmlns', False),
             self._all_forms
         )
 
@@ -367,8 +367,8 @@ class ApplicationDataRMIHelper(object):
             (self.APP_TYPE_NONE, self._no_app_forms),
         )
         _app_fmt = lambda c: (c[0], map(lambda f: RMIDataChoice(
-            f['app']['id'] if f['has_app'] else self.UNKNOWN_SOURCE,
-            f['app']['name'] if f['has_app'] else _("Unknown Application"),
+            f['app']['id'] if f.get('has_app', False) else self.UNKNOWN_SOURCE,
+            f['app']['name'] if f.get('has_app', False) else _("Unknown Application"),
             f
         ), c[1]))
         apps_by_type = map(_app_fmt, apps_by_type)
@@ -393,7 +393,7 @@ class ApplicationDataRMIHelper(object):
         modules_by_app = collections.defaultdict(list)
         forms_by_app_by_module = {}
         for form in self._all_forms:
-            has_app = form['has_app']
+            has_app = form.get('has_app', False)
             app_lang = form['app']['langs'][0] if 'langs' in form['app'] else 'en'
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
             module = form.get('module')
