@@ -1,5 +1,8 @@
 {% load hq_shared_tags %}
 
+{% include "app_manager/partials/nav_menu_media_js_common.html" %}
+{% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+
 <script>
     $(function() {
         var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
