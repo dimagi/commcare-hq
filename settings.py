@@ -1485,6 +1485,10 @@ CUSTOM_MODULES = [
     'custom.ewsghana',
 ]
 
+CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
+    'ews-ghana': 'dashboard_page'
+}
+
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 # mapping of domains to modules for those that aren't identical
@@ -1586,8 +1590,3 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
-
-
-CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page'
-}
