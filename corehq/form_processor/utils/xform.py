@@ -2,7 +2,6 @@ import iso8601
 import pytz
 import xml2json
 
-from redis.exceptions import RedisError
 from dimagi.ext.jsonobject import re_loose_datetime
 from dimagi.utils.couch import LockManager, ReleaseOnError
 from dimagi.utils.parsing import json_format_datetime
@@ -79,7 +78,7 @@ def new_xform(domain, instance_xml, attachments=None, process=None):
     if process:
         process(xform)
 
-    lock = acquire_lock_for_xform(xform.form_id)
+    lock = interface.acquire_lock_for_xform(xform.form_id)
     with ReleaseOnError(lock):
         if interface.is_duplicate(xform):
             raise DuplicateError(xform)
@@ -135,15 +134,3 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
-
-
-def acquire_lock_for_xform(xform_id):
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
-
-    # this is high, but I want to test if MVP conflicts disappear
-    lock = FormProcessorInterface().xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
-    try:
-        lock.acquire()
-    except RedisError:
-        lock = None
-    return lock

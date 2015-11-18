@@ -1,6 +1,7 @@
 import logging
 
 from couchdbkit.exceptions import BulkSaveError
+from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
@@ -87,6 +88,14 @@ class FormProcessorInterface(object):
 
     def get_form_with_attachments(self, form_id):
         return self.xform_model.get_with_attachments(form_id)
+
+    def acquire_lock_for_xform(self, xform_id):
+        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
+        try:
+            lock.acquire()
+        except RedisError:
+            lock = None
+        return lock
 
     def get_case(self, case_id):
         return self.case_model.get(case_id)
