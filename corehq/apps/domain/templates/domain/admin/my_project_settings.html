@@ -8,6 +8,20 @@
 <script src="{% new_static 'users/ko/project_settings.js' %}"></script>
 {% endblock %}
 
+{% block stylesheets %}
+    <style>
+        #id_user_timezone {
+            width: 50%;
+            display: inline;
+        }
+
+        .matched-message {
+            display: inline;
+            padding-left: 1em;
+        }
+    </style>
+{% endblock %}
+
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
     $(function() {
@@ -19,10 +33,10 @@
                 $userTimezone = $('#id_user_timezone'),
                 $overrideGlobalTimezone = $('#id_override_global_tz');
 
-        var $matchMessage = $('<span class="matched-message help-inline" />');
+        var $matchMessage = $('<span class="matched-message help-block" />');
         $userTimezone.parent().append($matchMessage);
 
-        var $matchTzButton = $('<a href="#" class="btn" style="margin-left: 1em;" />').text("{% trans 'Reset to Default' %}");
+        var $matchTzButton = $('<a href="#" class="btn btn-default" style="margin-left: 1em;" />').text("{% trans 'Reset to Default' %}");
         $matchTzButton.click(function () {
             $userTimezone.val($globalTimezone.val());
             $userTimezone.change();
@@ -40,10 +54,10 @@
 
         function compare_global_user_timezones() {
             if($globalTimezone.val() == $userTimezone.val()) {
-                $userTimezone.parent().parent().addClass('success').removeClass('warning');
+                $userTimezone.parent().parent().addClass('has-success').removeClass('has-warning');
                 $matchMessage.html('{% blocktrans %}This matches the global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
             } else {
-                $userTimezone.parent().parent().addClass('warning').removeClass('success');
+                $userTimezone.parent().parent().addClass('has-warning').removeClass('has-success');
                 $matchMessage.html('{% blocktrans %}<strong>'+$userTimezone.val()+'</strong> does not match global setting of <strong>'+$globalTimezone.val()+'</strong>.{% endblocktrans %}');
             }
         }

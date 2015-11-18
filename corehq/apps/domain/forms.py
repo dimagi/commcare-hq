@@ -93,7 +93,7 @@ class ProjectSettingsForm(forms.Form):
     global_timezone = forms.CharField(
         initial="UTC",
         label="Project Timezone",
-        widget=BootstrapDisabledInput
+        widget=forms.HiddenInput
     )
     override_global_tz = forms.BooleanField(
         initial=False,
