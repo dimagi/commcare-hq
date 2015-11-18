@@ -19,7 +19,7 @@ class TestHardDelete(TestCase):
         self.assertIsNotNone(self.interface.get_case(case.case_id))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
-            self.assertIsNotNone(self.interface.xform_model.get(form_id))
+            self.assertIsNotNone(self.interface.get_xform(form_id))
         case.hard_delete()
 
         with self.assertRaises(CaseNotFound):
@@ -27,7 +27,7 @@ class TestHardDelete(TestCase):
 
         for form_id in case.xform_ids:
             with self.assertRaises(XFormNotFound):
-                self.interface.xform_model.get(form_id)
+                self.interface.get_xform(form_id)
 
     def test_delete_with_related(self):
         factory = CaseFactory()

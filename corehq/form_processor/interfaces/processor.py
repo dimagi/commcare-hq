@@ -82,6 +82,12 @@ class FormProcessorInterface(object):
     def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
+    def get_xform(self, form_id):
+        return self.xform_model.get(form_id)
+
+    def get_form_with_attachments(self, form_id):
+        return self.xform_model.get_with_attachments(form_id)
+
     def get_case(self, case_id):
         return self.case_model.get(case_id)
 

@@ -177,7 +177,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': token_id})
-        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
+        form = FormProcessorInterface(domain).get_xform(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_default(self):
@@ -188,7 +188,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         case = factory.create_case()
-        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
+        form = FormProcessorInterface(domain).get_xform(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_override_defaults(self):
@@ -197,5 +197,5 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': 'differenttoken'})
-        form = FormProcessorInterface(domain).xform_model.get(case.xform_ids[0])
+        form = FormProcessorInterface(domain).get_xform(case.xform_ids[0])
         self.assertEqual('differenttoken', form.last_sync_token)

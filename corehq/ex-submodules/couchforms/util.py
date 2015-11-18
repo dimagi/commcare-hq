@@ -128,8 +128,9 @@ def _handle_duplicate(new_doc, instance):
     and *must* include inline attachments
 
     """
+    interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = FormProcessorInterface().xform_model.get_with_attachments(conflict_id)
+    existing_doc = interface.get_form_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()

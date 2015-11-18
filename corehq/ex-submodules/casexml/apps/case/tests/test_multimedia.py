@@ -156,14 +156,14 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         _, _, [case] = self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
         for xform_id in case.xform_ids:
-            form = self.interface.xform_model.get(xform_id)
+            form = self.interface.get_xform(xform_id)
 
             form.archive()
-            form = self.interface.xform_model.get(xform_id)
+            form = self.interface.get_xform(xform_id)
             self.assertTrue(form.is_archived)
 
             form.unarchive()
-            form = self.interface.xform_model.get(xform_id)
+            form = self.interface.get_xform(xform_id)
             self.assertFalse(form.is_archived)
 
     def testAttachRemoveSingle(self):
