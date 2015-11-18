@@ -47,7 +47,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
             )
         db.save_doc(module_config)
 
-        cls.setup_subscription(TEST_DOMAIN, SoftwarePlanEdition.ADVANCED)
+        cls.setup_subscription(TEST_DOMAIN, SoftwarePlanEdition.ENTERPRISE)
 
         cls.endpoint = MockEndpoint('http://test-api.com/', 'dummy', 'dummy')
         cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
