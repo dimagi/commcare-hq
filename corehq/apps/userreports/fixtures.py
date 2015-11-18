@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
     StaticChoiceFilter,
     StaticChoiceListFilter,
     StaticDatespanFilter,
+    CustomDatespanFilter,
 )
 from corehq.util.xml import serialize
 
@@ -28,6 +29,7 @@ def wrap_by_filter_type(report_app_filter):
         'StaticChoiceFilter': StaticChoiceFilter,
         'StaticChoiceListFilter': StaticChoiceListFilter,
         'StaticDatespanFilter': StaticDatespanFilter,
+        'CustomDatespanFilter': CustomDatespanFilter,
     }
     filter_class = doc_type_to_filter_class.get(report_app_filter.doc_type)
     if not filter_class:
