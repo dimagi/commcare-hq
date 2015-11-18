@@ -3,8 +3,9 @@ from corehq.apps.facilities.models import FacilityRegistry
 
 def get_facility_registries_in_domain(domain):
     return FacilityRegistry.view(
-        'by_domain_doc_type/view',
+        'by_domain_doc_type_date/view',
         reduce=False,
-        key=[domain, 'FacilityRegistry'],
+        startkey=[domain, 'FacilityRegistry'],
+        endkey=[domain, 'FacilityRegistry', {}],
         include_docs=True,
     ).all()

@@ -15,7 +15,7 @@ def get_all_doc_ids_for_domain_grouped_by_db(domain):
     """
     for db in _get_all_docs_dbs():
         results = db.view(
-            'by_domain_doc_type/view',
+            'by_domain_doc_type_date/view',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=False,

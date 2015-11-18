@@ -14,8 +14,9 @@ def get_doc_ids_in_domain_by_type(domain, doc_type, database=None):
     """
     if not database:
         database = get_db_by_doc_type(doc_type)
-    return [row['id'] for row in database.view('by_domain_doc_type/view',
-        key=[domain, doc_type],
+    return [row['id'] for row in database.view('by_domain_doc_type_date/view',
+        startkey=[domain, doc_type],
+        endkey=[domain, doc_type, {}],
         reduce=False,
         include_docs=False,
     )]
@@ -32,8 +33,9 @@ def get_docs_in_domain_by_class(domain, doc_class):
     doc_type = doc_class.__name__
     assert doc_type in whitelist
     return doc_class.view(
-        'by_domain_doc_type/view',
-        key=[domain, doc_type],
+        'by_domain_doc_type_date/view',
+        startkey=[domain, doc_type],
+        endkey=[domain, doc_type, {}],
         reduce=False,
         include_docs=True,
     ).all()

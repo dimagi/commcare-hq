@@ -1,8 +1,9 @@
 def get_number_of_fixture_data_types_in_domain(domain):
     from corehq.apps.fixtures.models import FixtureDataType
     num_fixtures = FixtureDataType.get_db().view(
-        'by_domain_doc_type/view',
-        key=[domain, 'FixtureDataType'],
+        'by_domain_doc_type_date/view',
+        startkey=[domain, 'FixtureDataType'],
+        endkey=[domain, 'FixtureDataType', {}],
         reduce=True,
         group_level=2,
     ).first()
@@ -12,8 +13,9 @@ def get_number_of_fixture_data_types_in_domain(domain):
 def get_fixture_data_types_in_domain(domain):
     from corehq.apps.fixtures.models import FixtureDataType
     return FixtureDataType.view(
-        'by_domain_doc_type/view',
-        key=[domain, 'FixtureDataType'],
+        'by_domain_doc_type_date/view',
+        endkey=[domain, 'FixtureDataType'],
+        startkey=[domain, 'FixtureDataType', {}],
         reduce=False,
         include_docs=True,
         descending=True,
