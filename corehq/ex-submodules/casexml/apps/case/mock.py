@@ -333,6 +333,6 @@ class CaseFactory(object):
             form_extras,
         )
 
-        return FormProcessorInterface().case_model.get_cases(
+        return FormProcessorInterface().get_cases(
             [id for structure in case_structures for id in structure.walk_ids()]
         )

@@ -6,13 +6,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import (
     Application,
-    AutoFilter,
-    CustomDataAutoFilter,
     ReportModule,
-    StaticChoiceFilter,
-    StaticChoiceListFilter,
-    StaticDatespanFilter,
-    CustomDatespanFilter,
 )
 from corehq.util.xml import serialize
 
@@ -20,21 +14,6 @@ from .exceptions import UserReportsError
 from .models import ReportConfiguration
 from .reports.factory import ReportFactory
 from .util import localize
-
-
-def wrap_by_filter_type(report_app_filter):
-    doc_type_to_filter_class = {
-        'AutoFilter': AutoFilter,
-        'CustomDataAutoFilter': CustomDataAutoFilter,
-        'StaticChoiceFilter': StaticChoiceFilter,
-        'StaticChoiceListFilter': StaticChoiceListFilter,
-        'StaticDatespanFilter': StaticDatespanFilter,
-        'CustomDatespanFilter': CustomDatespanFilter,
-    }
-    filter_class = doc_type_to_filter_class.get(report_app_filter.doc_type)
-    if not filter_class:
-        raise Exception("Unknown saved filter type: %s " % report_app_filter.doc_type)
-    return filter_class.wrap(report_app_filter.to_json())
 
 
 class ReportFixturesProvider(object):
@@ -81,7 +60,7 @@ class ReportFixturesProvider(object):
         data_source = ReportFactory.from_spec(report)
 
         data_source.set_filter_values({
-            filter_slug: wrap_by_filter_type(filter).get_filter_value(user)
+            filter_slug: filter.get_filter_value(user)
             for filter_slug, filter in report_config.filters.items()
         })
 

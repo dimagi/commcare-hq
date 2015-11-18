@@ -78,7 +78,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._update_known_properties(update_action)
 
         for key, value in update_action.dynamic_properties.items():
-            if key not in const.CASE_TAGS:
+            if key == 'location_id':
+                # special treatment of location_id
+                self.case.location_uuid = value
+            elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
     def _apply_index_action(self, action):

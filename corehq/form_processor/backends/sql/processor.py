@@ -30,7 +30,7 @@ class FormProcessorSQL(object):
         if not process:
             def process(xform):
                 xform.domain = domain
-        xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
+        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
             cls.bulk_save(xforms[0], xforms)
             return xforms[0]
@@ -120,11 +120,6 @@ class FormProcessorSQL(object):
         for model in to_create:
             logging.debug('Creating %s: %s', model_class, to_create)
             model.save()
-
-    @classmethod
-    def process_stock(cls, xforms, case_db):
-        from corehq.apps.commtrack.processing import StockProcessingResult
-        return StockProcessingResult(xforms[0])
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
@@ -240,7 +235,7 @@ class FormProcessorSQL(object):
 
 
 def get_case_transactions(case_id, updated_xforms=None):
-    transactions = list(CaseTransaction.objects.filter(case_id=case_id, revoked=False).all())
+    transactions = CaseTransaction.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_uuid for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated

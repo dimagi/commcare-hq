@@ -7,6 +7,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
     this.json_payload = ko.observable();
 
     this.loc_types_error = ko.observable(false);
+    this.advanced_mode = ko.observable(false);
 
     this.loc_type_options = function(loc_type) {
         return this.loc_types().filter(function(type) {
@@ -120,13 +121,20 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
     this.tracks_stock = ko.observable(!loc_type.administrative);
     this.shares_cases = ko.observable(loc_type.shares_cases);
     this.view_descendants = ko.observable(loc_type.view_descendants);
+    this.code = ko.observable(loc_type.code);
 
     this.name_error = ko.observable(false);
+    this.code_error = ko.observable(false);
 
     this.validate = function() {
         this.name_error(false);
         if (!this.name()) {
             this.name_error(true);
+            return false;
+        }
+        this.code_error(false);
+        if (!this.code()) {
+            this.code_error(true);
             return false;
         }
         return true;
@@ -139,7 +147,8 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
             parent_type: this.parent_type() || null,
             administrative: commtrack_enabled ? !this.tracks_stock() : true,
             shares_cases: this.shares_cases() === true,
-            view_descendants: this.view_descendants() === true
+            view_descendants: this.view_descendants() === true,
+            code: this.code()
         };
     };
 }

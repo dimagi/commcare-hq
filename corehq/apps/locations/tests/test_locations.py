@@ -100,7 +100,7 @@ class LocationsTest(LocationTestBase):
         sql_loc = SQLLocation.objects.get(name=self.loc.name)
         self.assertEqual(
             sql_loc.couch_location._id,
-            self.loc._id
+            self.loc.location_id
         )
 
         self.assertEqual(
@@ -162,11 +162,11 @@ class LocationsTest(LocationTestBase):
 
         # parent and parent_id
         self.assertEqual(
-            self.user.location._id,
+            self.user.location.location_id,
             test_state1.parent_id
         )
         self.assertEqual(
-            self.user.location._id,
+            self.user.location.location_id,
             test_state1.parent._id
         )
 
@@ -207,7 +207,7 @@ class LocationsTest(LocationTestBase):
         )
 
         self.assertEqual(
-            {loc._id for loc in [self.user.location, test_state1, test_state2,
+            {loc.location_id for loc in [self.user.location, test_state1, test_state2,
                                  test_village1]},
             set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )

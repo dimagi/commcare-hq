@@ -24,7 +24,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self.fake_card = FakeStripeCard()
         self.fake_stripe_customer = FakeStripeCustomer(cards=[self.fake_card])
 
-        self.account.update_autopay_user(self.web_user.username)
+        self.account.update_autopay_user(self.web_user.username, self.domain)
         self.invoice_date = utils.months_from_date(self.subscription.date_start,
                                                    random.randint(2, self.subscription_length))
 
@@ -43,7 +43,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
         self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
                                                   customer_id=self.fake_stripe_customer.id)
-        self.payment_method.set_autopay(self.fake_card, self.account)
+        self.payment_method.set_autopay(self.fake_card, self.account, self.domain)
         self.payment_method.save()
         autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
         date_due = autopayable_invoice.first().date_due
@@ -58,7 +58,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
         self.payment_method = StripePaymentMethod(web_user=self.web_user.username,
                                                   customer_id=self.fake_stripe_customer.id)
-        self.payment_method.set_autopay(self.fake_card, self.account)
+        self.payment_method.set_autopay(self.fake_card, self.account, self.domain)
         self.payment_method.save()
         original_outbox_length = len(mail.outbox)
 

@@ -684,7 +684,6 @@ AUDIT_MODULES = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
-    'PINGDOM_API_ID': '',
     'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
@@ -1287,9 +1286,6 @@ PILLOWTOPS = {
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
     ],
-    'phonelog': [
-        'corehq.pillows.log.PhoneLogPillow',
-    ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
@@ -1442,6 +1438,10 @@ CUSTOM_MODULES = [
     'custom.ilsgateway',
     'custom.ewsghana',
 ]
+
+CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
+    'ews-ghana': 'dashboard_page'
+}
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 

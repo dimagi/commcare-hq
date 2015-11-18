@@ -25,7 +25,7 @@ class FormProcessorCouch(object):
         if not process:
             def process(xform):
                 xform.domain = domain
-        xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
+        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
             for xform in xforms:
                 xform.save()
@@ -66,11 +66,6 @@ class FormProcessorCouch(object):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
-
-    @classmethod
-    def process_stock(cls, xforms, case_db):
-        from corehq.apps.commtrack.processing import process_stock
-        return process_stock(xforms, case_db)
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):

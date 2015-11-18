@@ -8,7 +8,6 @@ from .xform import (
     new_xform,
     convert_xform_to_json,
     adjust_datetimes,
-    acquire_lock_for_xform,
 )
 
 from .metadata import (

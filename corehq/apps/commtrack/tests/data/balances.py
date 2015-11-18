@@ -8,7 +8,7 @@ def balance_ota_block(sp, section_id, product_amounts, datestring):
             {product_block}
         </ns0:balance>
     """.format(
-        sp_id=sp._id,
+        sp_id=sp.case_id,
         section_id=section_id,
         long_date=datestring,
         product_block=products_xml(product_amounts),

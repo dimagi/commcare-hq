@@ -249,7 +249,11 @@ var ReportModule = (function () {
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
+        self.moduleFilter = options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
+        self.currentModuleFilter = ko.observable(options.moduleFilter);
+        self.menuImage = options.menuImage;
+        self.menuAudio = options.menuAudio;
         self.reportTitles = {};
         self.reportDescriptions = {};
         self.reportCharts = {};
@@ -273,6 +277,15 @@ var ReportModule = (function () {
             return self.reportDescriptions[reportId];
         };
 
+        self.multimedia = function () {
+            var multimedia = {};
+            multimedia.mediaImage = {};
+            multimedia.mediaImage[self.lang] = self.menuImage.ref().path;
+            multimedia.mediaAudio = {};
+            multimedia.mediaAudio[self.lang] = self.menuAudio.ref().path;
+            return multimedia;
+        };
+
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unsaved changes in your report list module",
             save: function () {
@@ -284,23 +297,27 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
+                self.moduleFilter = self.currentModuleFilter();
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
                     dataType: 'json',
                     data: {
                         name: JSON.stringify(self.moduleName),
-                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); }))
+                        module_filter: self.moduleFilter,
+                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
+                        multimedia: JSON.stringify(self.multimedia())
                     }
                 });
             }
         });
 
-        var changeSaveButton = function () {
+        self.changeSaveButton = function () {
             self.saveButton.fire('change');
         };
 
-        self.currentModuleName.subscribe(changeSaveButton);
+        self.currentModuleName.subscribe(self.changeSaveButton);
+        self.currentModuleFilter.subscribe(self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};
@@ -315,10 +332,10 @@ var ReportModule = (function () {
                 options.filters,
                 self.reportFilters,
                 self.lang,
-                changeSaveButton
+                self.changeSaveButton
             );
-            report.display.subscribe(changeSaveButton);
-            report.reportId.subscribe(changeSaveButton);
+            report.display.subscribe(self.changeSaveButton);
+            report.reportId.subscribe(self.changeSaveButton);
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));
             });
@@ -333,7 +350,7 @@ var ReportModule = (function () {
         };
         this.removeReport = function (report) {
             self.reports.remove(report);
-            changeSaveButton();
+            self.changeSaveButton();
         };
 
         // add existing reports to UI

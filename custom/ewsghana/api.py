@@ -7,11 +7,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
     VerifiedNumber
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from corehq.apps.reports.models import ReportNotification, ReportConfig
 from dimagi.utils.dates import force_to_datetime
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser
 from custom.api.utils import apply_updates
@@ -272,8 +273,9 @@ class EWSApi(APISynchronization):
             return new_location
 
     def _create_supply_point_from_location(self, supply_point, location):
-        if not SupplyPointCase.get_by_location(location):
-            return SupplyPointCase.get_or_create_by_location(Loc(_id=location.get_id,
+        interface = SupplyInterface(location.domain)
+        if not interface.get_by_location(location):
+            return interface.get_or_create_by_location(Loc(_id=location.get_id,
                                                              name=supply_point.name,
                                                              external_id=str(supply_point.id),
                                                              domain=self.domain))
@@ -459,7 +461,7 @@ class EWSApi(APISynchronization):
                     external_id=str(supply_point.id),
                     domain=self.domain
                 )
-                case = SupplyPointCase.get_or_create_by_location(fake_location)
+                case = SupplyInterface(self.domain).get_or_create_by_location(fake_location)
                 sql_location = created_location.sql_location
                 sql_location.supply_point_id = case.get_id
                 sql_location.save()
@@ -501,7 +503,7 @@ class EWSApi(APISynchronization):
                 external_id=None,
                 domain=self.domain
             )
-            supply_point = SupplyPointCase.get_or_create_by_location(fake_location)
+            supply_point = SupplyInterface(self.domain).get_or_create_by_location(fake_location)
             sql_location = location.sql_location
             sql_location.supply_point_id = supply_point.get_id
             sql_location.save()

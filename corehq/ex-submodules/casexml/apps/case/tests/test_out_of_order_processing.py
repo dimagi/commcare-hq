@@ -19,7 +19,7 @@ class OutOfOrderCaseTest(TestCase):
                 xml_data = f.read()
             interface.submit_form_locally(xml_data)
 
-        case = interface.case_model.get('30bc51f6-3247-4966-b4ae-994f572e85fe')
+        case = interface.get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
         self.assertEqual('from the update form', case.pupdate)
         self.assertEqual('from the create form', case.pcreate)
         self.assertEqual('overridden by the update form', case.pboth)
