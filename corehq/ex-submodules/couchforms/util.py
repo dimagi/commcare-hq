@@ -21,8 +21,9 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LockManager
+from phonelog.utils import process_device_log
 import couchforms
-from .const import BadRequest
+from .const import BadRequest, DEVICE_LOG_XMLNS
 from .exceptions import DuplicateError, UnexpectedDeletedXForm, \
     PhoneDateValueError
 from .models import (
@@ -339,6 +340,9 @@ class SubmissionPost(object):
                         PhoneDateValueError)
         with xform_lock_manager as xforms:
             instance = xforms[0]
+            if instance.xmlns == DEVICE_LOG_XMLNS:
+                process_device_log(self.domain, instance)
+                return instance, [], []
             if self.validate_xforms_for_case_processing(xforms):
                 domain = get_and_check_xform_domain(instance)
                 with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:

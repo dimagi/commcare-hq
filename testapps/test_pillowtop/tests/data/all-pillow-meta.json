@@ -405,19 +405,6 @@
         "include_docs": false, 
         "name": "OpmUserFluffPillow"
     }, 
-    "PhoneLogPillow": {
-        "advertised_name": "corehq.pillows.log.PhoneLogPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_corehq.pillows.log.PhoneLogPillow.testhq", 
-        "couch_filter": "phonelog/all_logs", 
-        "couchdb_type": "Database", 
-        "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
-        "document_class": "XFormInstance", 
-        "extra_args": {}, 
-        "full_class_name": "corehq.pillows.log.PhoneLogPillow", 
-        "include_docs": true, 
-        "name": "PhoneLogPillow"
-    }, 
     "ProjectIndicatorsCaseFluffPillow": {
         "advertised_name": "fluff.ProjectIndicatorsCaseFluffPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
