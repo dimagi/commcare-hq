@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from cStringIO import StringIO
 from os.path import join
 
-from corehq.blobs.fsdb import FilesystemBlobDB, NotFound
+from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -117,12 +118,3 @@ class BlobMixin(Document):
         else:
             deleted = False
         return get_blob_db().delete(name, self._blobdb_bucket()) or deleted
-
-
-_blob_db = [] # singleton/global, stack for tests to push temporary dbs
-
-def get_blob_db():
-    if not _blob_db:
-        db = FilesystemBlobDB(settings.SHARED_DRIVE_CONF.blob_dir)
-        _blob_db.append(db)
-    return _blob_db[-1]

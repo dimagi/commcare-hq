@@ -8,7 +8,7 @@ from unittest import TestCase
 from StringIO import StringIO
 
 import corehq.blobs.mixin as mod
-from corehq.blobs.fsdb import FilesystemBlobDB
+from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.util.test_utils import generate_cases
 from dimagi.ext.couchdbkit import Document
 
@@ -19,24 +19,11 @@ class TestBlobMixin(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.rootdir = mkdtemp(prefix="blobdb")
-        cls.db = FilesystemBlobDB(cls.rootdir)
-        mod._blob_db.append(cls.db)
-        try:
-            # verify get_blob_db() returns our new db
-            assert mod.get_blob_db() is cls.db, 'got wrong blob db'
-        except:
-            rmtree(cls.rootdir)
-            raise
+        cls.db = TemporaryFilesystemBlobDB()
 
     @classmethod
     def tearDownClass(cls):
-        try:
-            mod._blob_db.remove(cls.db)
-        finally:
-            cls.db = None
-            rmtree(cls.rootdir)
-            cls.rootdir = None
+        cls.db.close()
 
     def make_doc(self, type_):
         return type_({
