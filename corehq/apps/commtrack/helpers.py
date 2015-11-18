@@ -40,7 +40,7 @@ def make_supply_point(domain, location):
         **kwargs
     )
     _submit_commtrack_caseblock(domain, caseblock)
-    return SupplyInterface(domain).supply_model.get(case_id)
+    return SupplyInterface(domain).get_supply_point(case_id)
 
 
 def update_supply_point_from_location(supply_point, location):
@@ -66,7 +66,7 @@ def update_supply_point_from_location(supply_point, location):
             **kwargs
         )
         _submit_commtrack_caseblock(domain, caseblock)
-        return SupplyInterface(domain).supply_model.get(supply_point.case_id)
+        return SupplyInterface(domain).get_supply_point(supply_point.case_id)
     else:
         return supply_point
 
