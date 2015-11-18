@@ -83,7 +83,7 @@
                             .find('.select2-chosen').text(self._placeholders[fieldSlug]);
                     }
                 }
-            }
+            };
         };
 
         var util = {
