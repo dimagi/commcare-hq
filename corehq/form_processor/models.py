@@ -11,6 +11,8 @@ from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
+from uuidfield import UUIDField
+
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
@@ -333,8 +335,28 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
+class SupplyPointCaseMixin(object):
+    @property
+    @memoized
+    def location(self):
+        from corehq.apps.locations.models import Location
+        from couchdbkit.exceptions import ResourceNotFound
+        if self.location_id is None:
+            return None
+        try:
+            return Location.get(self.location_id)
+        except ResourceNotFound:
+            return None
+
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.get(location_id=self.location_id)
+
+
 class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges):
+                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                      SupplyPointCaseMixin):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -358,6 +380,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     deleted = models.BooleanField(default=False, null=False)
 
     external_id = models.CharField(max_length=255)
+    location_uuid = UUIDField(null=True, unique=False)
 
     case_json = JSONField(lazy=True, default=dict)
 
@@ -368,6 +391,14 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @case_id.setter
     def case_id(self, _id):
         self.case_uuid = _id
+
+    @property
+    def location_id(self):
+        return str(self.location_uuid)
+
+    @location_id.setter
+    def location_id(self, _id):
+        self.location_uuid = _id
 
     @property
     def xform_ids(self):

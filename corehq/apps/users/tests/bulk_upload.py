@@ -77,7 +77,7 @@ class UserLocMapTest(CommTrackTest):
         self.mapping.to_add.add(self.loc.site_code)
         mapping2.to_add.add(self.loc.site_code)
 
-        with patch('corehq.apps.commtrack.util.SupplyPointCase.get_by_location') as get_supply_point:
+        with patch('corehq.form_processor.interfaces.supply.SupplyInterface.get_by_location') as get_supply_point:
             self.mapping.save()
             mapping2.save()
             self.assertEqual(get_supply_point.call_count, 1)

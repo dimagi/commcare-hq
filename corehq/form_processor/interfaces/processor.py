@@ -115,9 +115,6 @@ class FormProcessorInterface(object):
             _handle_unexpected_error(self, instance, error_message)
             raise
 
-    def process_stock(self, xforms, case_db):
-        return self.processor.process_stock(xforms, case_db)
-
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)
 

@@ -69,8 +69,8 @@ class RegistrationHandler(KeywordHandler):
                 })
 
                 dm = user.get_domain_membership(domain)
-                dm.location_id = loc._id
+                dm.location_id = loc.location_id
                 user.save()
-                add_location(user, loc._id)
+                add_location(user, loc.location_id)
 
         self.respond(REGISTRATION_CONFIRM, **params)
