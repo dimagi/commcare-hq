@@ -20,7 +20,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from corehq.elastic import es_wrapper
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
