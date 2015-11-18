@@ -79,7 +79,7 @@ def process_xform(instance, attachments=None, process=None, domain=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = new_xform(instance, process=process, attachments=attachments)
+        xform_lock = new_xform(domain, instance, attachments=attachments, process=process)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)

@@ -43,7 +43,7 @@ def extract_meta_user_id(form):
     return user_id
 
 
-def new_xform(instance_xml, attachments=None, process=None):
+def new_xform(domain, instance_xml, attachments=None, process=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -54,15 +54,17 @@ def new_xform(instance_xml, attachments=None, process=None):
 
     If xml_string is bad xml
       - raise couchforms.XMLSyntaxError
+      :param domain:
 
     """
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    interface = FormProcessorInterface(domain)
 
     assert attachments is not None
     form_data = convert_xform_to_json(instance_xml)
     adjust_datetimes(form_data)
 
-    xform = FormProcessorInterface().new_xform(form_data)
+    xform = interface.new_xform(form_data)
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = map(
@@ -70,7 +72,7 @@ def new_xform(instance_xml, attachments=None, process=None):
         attachments.items()
     )
     attachments.append(Attachment(name='form.xml', content=instance_xml, content_type='text/xml'))
-    FormProcessorInterface().store_attachments(xform, attachments)
+    interface.store_attachments(xform, attachments)
 
     # this had better not fail, don't think it ever has
     # if it does, nothing's saved and we get a 500
@@ -79,7 +81,7 @@ def new_xform(instance_xml, attachments=None, process=None):
 
     lock = acquire_lock_for_xform(xform.form_id)
     with ReleaseOnError(lock):
-        if FormProcessorInterface().is_duplicate(xform):
+        if interface.is_duplicate(xform):
             raise DuplicateError(xform)
 
     return LockManager(xform, lock)
