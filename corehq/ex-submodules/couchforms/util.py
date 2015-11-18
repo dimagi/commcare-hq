@@ -41,7 +41,7 @@ from .signals import (
 )
 from .xml import ResponseNature, OpenRosaResponse
 
-legacy_soft_assert = soft_assert('{}@{}'.format('skelly', 'dimagi.com'))
+legacy_notification_assert = soft_assert(notify_admins=True, exponential_backoff=False)
 
 class SubmissionError(Exception, UnicodeMixIn):
     """
@@ -313,7 +313,7 @@ class SubmissionPost(object):
             self._set_submission_properties(xform)
             if xform.is_submission_error_log:
                 found_old = scrub_meta(xform)
-                legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
+                legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
         try:
             lock_manager = process_xform(self.instance,

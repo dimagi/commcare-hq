@@ -71,7 +71,6 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
         xform_ids = get_ids_from_url(form_ids_or_query_string, domain, couch_user)
 
     if not xform_ids:
-        soft_assert(notify_admins=True, exponential_backoff=False)
         return {'messages': {'errors': [_('No Forms are supplied')]}}
 
     response = archive_or_restore_forms(domain, couch_user, xform_ids, mode, task)
