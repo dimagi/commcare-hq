@@ -211,7 +211,7 @@ class ApplicationDataRMIHelper(object):
                     self.domain = domain
 
                 def __getitem__(self, item):
-                    if not item in self:
+                    if item not in self:
                         try:
                             self[item] = get_app(app_id=item, domain=self.domain)
                         except Http404:
