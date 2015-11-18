@@ -345,6 +345,11 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     urlname = 'domain_basic_info'
     page_title = ugettext_lazy("Basic")
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def can_user_see_meta(self):
         return self.request.couch_user.is_previewer()
@@ -381,7 +386,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 domain=self.domain_object.name,
                 can_use_custom_logo=self.can_use_custom_logo
             )
-
         if self.can_user_see_meta:
             initial.update({
                 'is_test': self.domain_object.is_test,
@@ -1340,6 +1344,11 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     urlname = "privacy_info"
     page_title = ugettext_lazy("Privacy and Security")
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def privacy_form(self):
@@ -1688,6 +1697,11 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     urlname = 'domain_snapshot_settings'
     page_title = ugettext_lazy("CommCare Exchange")
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         return {
@@ -1702,6 +1716,12 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     urlname = 'domain_create_snapshot'
     page_title = ugettext_lazy("Publish New Version")
     strict_domain_fetching = True
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):

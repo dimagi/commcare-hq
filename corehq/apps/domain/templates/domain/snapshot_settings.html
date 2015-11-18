@@ -1,10 +1,20 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load i18n %}
 
+{% block stylesheets %}
+
+{% endblock %}
+
 {% block js-inline  %}{{ block.super }}
     {% url "cda_basic" as cda_url %}
-    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="contentDistributionAgreement" load_from=cda_url %}
+    <script type="application/javascript">
+        $(function() {
+            $("#contentDistributionAgreement").on("show.bs.modal", function() {
+                $(this).find(".modal-body").load("{{ cda_url }}");
+            });
+        });
+    </script>
 
     <script type="text/javascript">
         $(function() {
@@ -47,7 +57,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 <div>
     {% if published_snapshot %}
         {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
@@ -64,8 +74,8 @@
         {% endif %}
     {% endif %}
 </div>
-<button id="toggle-snapshots" class="btn">Show previous versions</button>
-<div id="snapshots" class="hide">
+<button id="toggle-snapshots" class="btn btn-default">Show previous versions</button>
+<div id="snapshots" style="display: none">
     <h3>This project has {{ snapshots|length }} unpublished versions</h3>
     <table class="table table-striped" id="snapshot-list">
         <thead>
@@ -199,22 +209,27 @@
 {% endblock %}>
 
 {% block modals %}{{ block.super }}
-    <div class="modal hide fade" id="contentDistributionAgreement">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h4>CommCare HQ Content Distribution Agreement</h4>
-        </div>
-        <div class="modal-body">
-            Loading Terms of Service...
-        </div>
-        <div class="modal-footer">
-            <div style="text-align: left; line-height: 2em;">
-                To publish this project, you must agree to our Content Distribution Agreement
+    <div class="modal fade" id="contentDistributionAgreement">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h4>CommCare HQ Content Distribution Agreement</h4>
+                </div>
+                <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
+                    Loading Terms of Service...
+                </div>
+                <div class="modal-footer">
+                    <div style="text-align: left; line-height: 2em;">
+                        To publish this project, you must agree to our Content Distribution Agreement
+                    </div>
+                    <form id="cda-agree" action="" method="POST">
+                        <button type="submit" href="#" class="btn btn-primary disable-on-submit">Agree</button>
+                        <a href="#" data-dismiss="modal" class="btn btn-default">Disagree</a>
+                    </form>
+                </div>
             </div>
-            <form id="cda-agree" action="" method="POST">
-                <button type="submit" href="#" class="btn btn-primary disable-on-submit">Agree</button>
-                <a href="#" data-dismiss="modal" class="btn">Disagree</a>
-            </form>
+
         </div>
     </div>
 {% endblock %}

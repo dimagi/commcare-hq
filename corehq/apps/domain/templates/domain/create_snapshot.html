@@ -4,13 +4,17 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-<script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"/>
-{% endblock %}
+{% block stylesheets %}
+    <style>
+        .form-actions {
+            margin-bottom: 60px;
+        }
 
-{% block head %}
-{{ block.super }}
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+        #hq-sidebar {
+           min-height: 1700px;
+        }
+    </style>
+
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -29,9 +33,9 @@
         _.each(ids, function (id) {
             var publish = $('#id_' + id + '-publish');
             publish.change(function () {
-                $(this).parent().parent().siblings().slideToggle();
+                $(this).parent().parent().parent().next().slideToggle();
             });
-            publish.parent().parent().siblings().toggle(publish.is(':checked'))
+            publish.parent().parent().parent().next().toggle(publish.is(':checked'));
             $('#id_' + id + '-deployment_date').datepicker({
                 changeMonth: true,
                 changeYear: true,
@@ -66,7 +70,7 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
         {% bootstrap_form_errors form %}
     <form
         id="snapshot-form"
@@ -76,10 +80,10 @@
         action="{% url "domain_create_snapshot" domain %}">
 
         {% crispy form %}
-        <div class="control-group{% if published_as_org %} hide{% endif %}" id="author-input">
-            <div class="control-label"><label>{% trans "Publishing on behalf of" %}</label></div>
-            <div class="controls">
-                <input type="text" name="author" value="{{ author|default:"" }}" placeholder="{% trans "Name to display as the author" %}" />
+        <div class="form-group{% if published_as_org %} hide{% endif %}" id="author-input">
+            <label class="control-label col-sm-3 col-md-4 col-lg-2">{% trans "Publishing on behalf of" %}</label>
+            <div class="controls col-sm-9 col-md-8 col-lg-6">
+                <input type="text" name="author" class="form-control" value="{{ author|default:"" }}" placeholder="{% trans "Name to display as the author" %}" />
             </div>
         </div>
         {% for app, app_form in app_forms %}
