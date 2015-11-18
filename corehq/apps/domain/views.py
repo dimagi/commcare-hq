@@ -1986,6 +1986,12 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Multimedia Sharing")
     template_name = 'domain/admin/media_manager.html'
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def project_media_data(self):
         return [{
