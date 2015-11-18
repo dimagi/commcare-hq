@@ -341,6 +341,7 @@ class MobileBackend(SyncCouchToSQLMixin, Document):
         sql_object.display_name = self.display_name
         sql_object.description = self.description
         sql_object.supported_countries = json.dumps(self.supported_countries)
+        sql_object.reply_to_phone_number = self.reply_to_phone_number
 
         extra_fields = {}
         for field in sql_object.get_available_extra_fields():
@@ -355,12 +356,13 @@ class MobileBackend(SyncCouchToSQLMixin, Document):
         with transaction.atomic():
             sql_object.save(sync_to_couch=False)
             sql_object.mobilebackendinvitation_set.all().delete()
-            sql_object.mobilebackendinvitation_set = [
-                MobileBackendInvitation(
-                    domain=domain,
-                    invitation_accepted=True,
-                ) for domain in self.authorized_domains
-            ]
+            if not self.base_doc.endswith('-Deleted'):
+                sql_object.mobilebackendinvitation_set = [
+                    MobileBackendInvitation(
+                        domain=domain,
+                        accepted=True,
+                    ) for domain in self.authorized_domains
+                ]
 
 
 class SMSLoadBalancingInfo(object):

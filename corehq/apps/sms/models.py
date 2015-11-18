@@ -1490,6 +1490,10 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     # phone numbers to load balance over.
     load_balancing_numbers = models.TextField(default='[]')
 
+    # The phone number which you can text to or call in order to reply
+    # to this backend
+    reply_to_phone_number = models.CharField(max_length=126, null=True)
+
     class Meta:
         db_table = 'messaging_mobilebackend'
         unique_together = ('domain', 'name')
@@ -1521,6 +1525,22 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
         self.extra_fields = json.dumps(result)
 
+    def set_shared_domains(self, domains):
+        if self.id is None:
+            raise Exception("Please call .save() on the backend before "
+                "calling set_shared_domains()")
+        with transaction.atomic():
+            self.mobilebackendinvitation_set.all().delete()
+            self.mobilebackendinvitation_set = [
+                MobileBackendInvitation(
+                    domain=domain,
+                    accepted=True,
+                ) for domain in domains
+            ]
+        # TODO: Remove the below line once the two-way sync with
+        # couch is no longer necessary.
+        self.save()
+
     def soft_delete(self):
         with transaction.atomic():
             self.deleted = True
@@ -1536,10 +1556,11 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         ]
         couch_obj.is_global = self.is_global
         couch_obj.description = self.description
-        couch_obj.supported_countries = json.dumps(self.supported_countries)
+        couch_obj.supported_countries = json.loads(self.supported_countries)
         couch_obj.reply_to_phone_number = self.reply_to_phone_number
         couch_obj.backend_type = self.backend_type
-        for k, v in self.get_extra_fields():
+        couch_obj.reply_to_phone_number = self.reply_to_phone_number
+        for k, v in self.get_extra_fields().iteritems():
             setattr(couch_obj, k, v)
 
         load_balancing_numbers = json.loads(self.load_balancing_numbers)
@@ -1600,6 +1621,7 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
 class MobileBackendInvitation(models.Model):
     class Meta:
         db_table = 'messaging_mobilebackendinvitation'
+        unique_together = ('backend', 'domain')
 
     # The domain that is being invited to share another domain's backend
     domain = models.CharField(max_length=126, null=True, db_index=True)

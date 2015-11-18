@@ -60,6 +60,64 @@ class BackendMigrationTestCase(TestCase):
         couch_obj.save()
         return couch_obj
 
+    def _create_or_update_sql_backend(
+        self, cls, backend_type, hq_api_id, is_global, domain, name,
+        display_name, description, supported_countries, extra_fields,
+        reply_to_phone_number, load_balancing_numbers=None, shared_domains=None,
+        sql_obj=None, couch_class=None
+    ):
+        sql_obj = sql_obj or cls()
+        sql_obj.backend_type = backend_type
+        sql_obj.hq_api_id = hq_api_id
+        sql_obj.is_global = is_global
+        sql_obj.domain = domain
+        sql_obj.name = name
+        sql_obj.display_name = display_name
+        sql_obj.description = description
+        sql_obj.supported_countries = json.dumps(supported_countries)
+        sql_obj.set_extra_fields(**extra_fields)
+        sql_obj.reply_to_phone_number = reply_to_phone_number
+
+        if load_balancing_numbers:
+            sql_obj.load_balancing_numbers = json.dumps(load_balancing_numbers)
+
+        sql_obj.save()
+
+        shared_domains = shared_domains or []
+        if shared_domains:
+            sql_obj.set_shared_domains(shared_domains)
+
+        saved_domains = [i.domain for i in sql_obj.mobilebackendinvitation_set.all()]
+        self.assertEqual(len(shared_domains), len(saved_domains))
+        self.assertEqual(set(shared_domains), set(saved_domains))
+        self.assertEqual(sql_obj.get_extra_fields(), extra_fields)
+
+        return sql_obj
+
+    def _compare_couch_backend(self, couch_obj, sql_obj, expected_doc_type):
+        self.assertEqual(couch_obj.base_doc, 'MobileBackend')
+        self.assertEqual(couch_obj.doc_type, expected_doc_type)
+        self.assertEqual(couch_obj.domain, sql_obj.domain)
+        self.assertEqual(couch_obj.name, sql_obj.name)
+        self.assertEqual(couch_obj.display_name, sql_obj.display_name)
+
+        shared_domains = [i.domain for i in sql_obj.mobilebackendinvitation_set.all()]
+        self.assertEqual(len(couch_obj.authorized_domains), len(shared_domains))
+        self.assertEqual(set(couch_obj.authorized_domains), set(shared_domains))
+
+        self.assertEqual(couch_obj.is_global, sql_obj.is_global)
+        self.assertEqual(couch_obj.description, sql_obj.description)
+        self.assertEqual(couch_obj.supported_countries, json.loads(sql_obj.supported_countries))
+        self.assertEqual(couch_obj.reply_to_phone_number, sql_obj.reply_to_phone_number)
+        self.assertEqual(couch_obj.backend_type, sql_obj.backend_type)
+
+        for k, v in sql_obj.get_extra_fields().iteritems():
+            self.assertEqual(getattr(couch_obj, k), v)
+
+        load_balancing_numbers = json.loads(sql_obj.load_balancing_numbers)
+        if load_balancing_numbers:
+            self.assertEqual(couch_obj.x_phone_numbers, load_balancing_numbers)
+
     def _compare_sql_backend(self, couch_obj, sql_obj, extra_fields):
         self.assertEqual(sql_obj.backend_type, couch_obj.backend_type)
         self.assertEqual(sql_obj.hq_api_id, couch_obj.incoming_api_id or couch_obj.get_api_id())
@@ -71,6 +129,7 @@ class BackendMigrationTestCase(TestCase):
         self.assertEqual(json.loads(sql_obj.supported_countries), couch_obj.supported_countries)
         self.assertEqual(json.loads(sql_obj.extra_fields), extra_fields)
         self.assertEqual(sql_obj.deleted, False)
+        self.assertEqual(sql_obj.reply_to_phone_number, couch_obj.reply_to_phone_number)
         if isinstance(couch_obj, SMSLoadBalancingMixin):
             self.assertEqual(json.loads(sql_obj.load_balancing_numbers), couch_obj.phone_numbers)
         else:
@@ -117,6 +176,84 @@ class BackendMigrationTestCase(TestCase):
         self.assertTrue(couch_obj.base_doc.endswith('-Deleted'))
         sql_obj = SQLMobileBackend.objects.get(couch_id=couch_obj._id)
         self.assertTrue(sql_obj.deleted)
+
+    def _test_sql_backend_create(self, *args, **kwargs):
+        sql_obj = self._create_or_update_sql_backend(*args, **kwargs)
+
+        self.assertEqual(len(self._get_all_couch_backends()), 1)
+        self.assertEqual(self._count_all_sql_backends(), 1)
+
+        couch_class = kwargs.get('couch_class')
+        couch_obj = couch_class.get(sql_obj.couch_id)
+        self._compare_couch_backend(couch_obj, sql_obj, couch_class.__name__)
+
+        return sql_obj
+
+    def _test_sql_backend_update(self, *args, **kwargs):
+        sql_obj = kwargs.get('sql_obj')
+        self._create_or_update_sql_backend(*args, **kwargs)
+
+        self.assertEqual(len(self._get_all_couch_backends()), 1)
+        self.assertEqual(self._count_all_sql_backends(), 1)
+
+        couch_class = kwargs.get('couch_class')
+        couch_obj = couch_class.get(sql_obj.couch_id)
+        self._compare_couch_backend(couch_obj, sql_obj, couch_class.__name__)
+
+    def _test_sql_backend_retire(self, sql_obj):
+        sql_obj.soft_delete()
+
+        self.assertEqual(len(self._get_all_couch_backends()), 0)
+        self.assertEqual(self._count_all_sql_backends(), 1)
+        self.assertEqual(self._count_all_sql_backend_invitations(), 0)
+
+        self.assertTrue(sql_obj.deleted)
+        couch_obj = MobileBackend.get(sql_obj.couch_id)
+        self.assertTrue(couch_obj.base_doc.endswith('-Deleted'))
+
+    def test_apposit_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLAppositBackend,
+            'SMS',
+            'APPOSIT',
+            True,
+            None,
+            'MOBILE_BACKEND_APPOSIT',
+            "Apposit",
+            "Apposit Description",
+            ['251'],
+            {
+                'from_number': '1234',
+                'username': 'user',
+                'password': 'pass',
+                'service_id': 'sid',
+            },
+            'xxxx',
+            couch_class=AppositBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLAppositBackend,
+            'SMS',
+            'APPOSIT',
+            True,
+            None,
+            'MOBILE_BACKEND_APPOSIT2',
+            "Apposit2",
+            "Apposit Description2",
+            ['2519'],
+            {
+                'from_number': '12345',
+                'username': 'user2',
+                'password': 'pass2',
+                'service_id': 'sid2',
+            },
+            'xxxxx',
+            sql_obj=sql_obj,
+            couch_class=AppositBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
 
     def test_apposit_couch_to_sql(self):
         couch_obj = self._test_couch_backend_create(
