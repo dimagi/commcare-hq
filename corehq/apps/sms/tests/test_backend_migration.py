@@ -297,6 +297,84 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_grapevine_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLGrapevineBackend,
+            'SMS',
+            'GVI',
+            True,
+            None,
+            'MOBILE_BACKEND_GRAPEVINE',
+            "Grapevine",
+            "Grapevine Description",
+            ['27'],
+            {
+                'affiliate_code': 'abc',
+                'authentication_code': 'def',
+            },
+            'xxxx',
+            couch_class=GrapevineBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLGrapevineBackend,
+            'SMS',
+            'GVI',
+            True,
+            None,
+            'MOBILE_BACKEND_GRAPEVINE2',
+            "Grapevine2",
+            "Grapevine Description2",
+            ['27', '266'],
+            {
+                'affiliate_code': 'abc2',
+                'authentication_code': 'def2',
+            },
+            'xxxxx',
+            sql_obj=sql_obj,
+            couch_class=GrapevineBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_grapevine_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            GrapevineBackend,
+            None,
+            'MOBILE_BACKEND_GRAPEVINE',
+            "Grapevine",
+            None,
+            [],
+            True,
+            "Grapevine Description",
+            ['27'],
+            'xxxx',
+            extra_fields={
+                'affiliate_code': 'abc',
+                'authentication_code': 'def',
+            }
+        )
+
+        self._test_couch_backend_update(
+            GrapevineBackend,
+            None,
+            'MOBILE_BACKEND_GRAPEVINE2',
+            "Grapevine2",
+            None,
+            [],
+            True,
+            "Grapevine Description2",
+            ['27', '266'],
+            'xxxxx',
+            couch_obj=couch_obj,
+            extra_fields={
+                'affiliate_code': 'abc2',
+                'authentication_code': 'def2',
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
