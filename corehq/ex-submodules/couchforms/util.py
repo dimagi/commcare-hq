@@ -66,7 +66,7 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
-def process_xform(instance, attachments=None, process=None, domain=None):
+def process_xform(domain, instance, attachments=None, process=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -316,10 +316,12 @@ class SubmissionPost(object):
                 legacy_soft_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
         try:
-            lock_manager = process_xform(self.instance,
-                                         attachments=self.attachments,
-                                         process=process,
-                                         domain=self.domain)
+            lock_manager = process_xform(
+                self.domain,
+                self.instance,
+                attachments=self.attachments,
+                process=process
+            )
         except SubmissionError as e:
             return self.get_exception_response_and_log(e, self.path), None, []
         else:
