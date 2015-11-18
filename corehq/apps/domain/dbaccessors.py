@@ -1,5 +1,5 @@
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.database import get_db
+from corehq.util.couch import get_db_by_doc_type
 
 
 def get_doc_ids_in_domain_by_class(domain, doc_class):
@@ -13,7 +13,7 @@ def get_doc_ids_in_domain_by_type(domain, doc_type, database=None):
     Given a domain and doc type, get all docs matching that domain and type
     """
     if not database:
-        database = get_db()
+        database = get_db_by_doc_type(doc_type)
     return [row['id'] for row in database.view('by_domain_doc_type/view',
         key=[domain, doc_type],
         reduce=False,

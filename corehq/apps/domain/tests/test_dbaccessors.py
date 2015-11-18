@@ -45,7 +45,7 @@ class DBAccessorsTest(TestCase):
         self.assertEqual(commtrack_config_2.to_json(), commtrack_config.to_json())
 
     def test_get_doc_ids_in_domain_by_type_initial_empty(self):
-        self.assertEqual(0, len(get_doc_ids_in_domain_by_type('some-domain', 'some-doc-type')))
+        self.assertEqual(0, len(get_doc_ids_in_domain_by_type('some-domain', 'some-doc-type', self.db)))
 
     def test_get_doc_ids_in_domain_by_type_match(self):
         id = uuid.uuid4().hex
@@ -55,7 +55,7 @@ class DBAccessorsTest(TestCase):
             'doc_type': 'match-type',
         }
         self.db.save_doc(doc)
-        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
+        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type', self.db)
         self.assertEqual(1, len(ids))
         self.assertEqual(id, ids[0])
         self.db.delete_doc(doc)
@@ -68,7 +68,7 @@ class DBAccessorsTest(TestCase):
             'doc_type': 'nomatch-type',
         }
         self.db.save_doc(doc)
-        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type')
+        ids = get_doc_ids_in_domain_by_type('match-domain', 'match-type', self.db)
         self.assertEqual(0, len(ids))
         self.db.delete_doc(doc)
 
