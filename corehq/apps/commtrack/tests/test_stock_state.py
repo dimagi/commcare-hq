@@ -13,7 +13,7 @@ from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_fo
 class StockStateTest(CommTrackTest):
     def report(self, amount, days_ago):
         return _stock_report(
-            self.sp._id,
+            self.sp.case_id,
             self.products[0]._id,
             amount,
             days_ago
@@ -27,7 +27,7 @@ class StockStateBehaviorTest(StockStateTest):
 
         state = StockState.objects.get(
             section_id='stock',
-            case_id=self.sp._id,
+            case_id=self.sp.case_id,
             product_id=self.products[0]._id,
         )
 
@@ -40,7 +40,7 @@ class StockStateBehaviorTest(StockStateTest):
         # make sure that this StockState existed before archive
         StockState.objects.get(
             section_id='stock',
-            case_id=self.sp._id,
+            case_id=self.sp.case_id,
             product_id=self.products[0]._id,
         )
 
@@ -49,7 +49,7 @@ class StockStateBehaviorTest(StockStateTest):
         with self.assertRaises(StockState.DoesNotExist):
             StockState.objects.get(
                 section_id='stock',
-                case_id=self.sp._id,
+                case_id=self.sp.case_id,
                 product_id=self.products[0]._id,
             )
 
@@ -57,7 +57,7 @@ class StockStateBehaviorTest(StockStateTest):
         self.assertEqual(
             StockState.include_archived.get(
                 section_id='stock',
-                case_id=self.sp._id,
+                case_id=self.sp.case_id,
                 product_id=self.products[0]._id,
             ).product_id,
             self.products[0]._id
@@ -70,7 +70,7 @@ class StockStateBehaviorTest(StockStateTest):
         # make sure that this StockState existed before archive
         StockState.objects.get(
             section_id='stock',
-            case_id=self.sp._id,
+            case_id=self.sp.case_id,
             product_id=self.products[0]._id,
         )
 
@@ -79,7 +79,7 @@ class StockStateBehaviorTest(StockStateTest):
         with self.assertRaises(StockState.DoesNotExist):
             StockState.objects.get(
                 section_id='stock',
-                case_id=self.sp._id,
+                case_id=self.sp.case_id,
                 product_id=self.products[0]._id,
             )
 
@@ -87,7 +87,7 @@ class StockStateBehaviorTest(StockStateTest):
         self.assertEqual(
             StockState.include_archived.get(
                 section_id='stock',
-                case_id=self.sp._id,
+                case_id=self.sp.case_id,
                 product_id=self.products[0]._id,
             ).product_id,
             self.products[0]._id
@@ -96,11 +96,11 @@ class StockStateBehaviorTest(StockStateTest):
     def test_domain_mapping(self):
         # make sure there's a fake case setup for this
         with self.assertRaises(DocDomainMapping.DoesNotExist):
-            DocDomainMapping.objects.get(doc_id=self.sp._id)
+            DocDomainMapping.objects.get(doc_id=self.sp.case_id)
 
         StockState(
             section_id='stock',
-            case_id=self.sp._id,
+            case_id=self.sp.case_id,
             product_id=self.products[0]._id,
             last_modified_date=datetime.utcnow(),
             sql_product=SQLProduct.objects.get(product_id=self.products[0]._id),
@@ -108,7 +108,7 @@ class StockStateBehaviorTest(StockStateTest):
 
         self.assertEqual(
             self.domain.name,
-            DocDomainMapping.objects.get(doc_id=self.sp._id).domain_name
+            DocDomainMapping.objects.get(doc_id=self.sp.case_id).domain_name
         )
 
 
@@ -119,7 +119,7 @@ class StockStateConsumptionTest(StockStateTest):
 
         state = StockState.objects.get(
             section_id='stock',
-            case_id=self.sp._id,
+            case_id=self.sp.case_id,
             product_id=self.products[0]._id,
         )
 
@@ -130,7 +130,7 @@ class StockStateConsumptionTest(StockStateTest):
         self.report(25, 0)
         state = StockState.objects.get(
             section_id='stock',
-            case_id=self.sp._id,
+            case_id=self.sp.case_id,
             product_id=self.products[0]._id,
         )
 
@@ -142,7 +142,7 @@ class StockStateConsumptionTest(StockStateTest):
 
         state = StockState.objects.get(
             section_id='stock',
-            case_id=self.sp._id,
+            case_id=self.sp.case_id,
             product_id=self.products[0]._id,
         )
 
@@ -175,18 +175,18 @@ class StockStateConsumptionTest(StockStateTest):
         for consumption_params, test_result in tests:
             _reset()
             recalculate_domain_consumption(self.domain.name)
-            state = StockState.objects.get(section_id='stock', case_id=self.sp._id, product_id=self.products[0]._id)
+            state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
             self.assertEqual(expected_result, state.daily_consumption,
                              'reset state failed for arguments: {}'.format(consumption_params))
 
             # just changing the config shouldn't change the state
             _update_consumption_config(*consumption_params)
-            state = StockState.objects.get(section_id='stock', case_id=self.sp._id, product_id=self.products[0]._id)
+            state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
             self.assertEqual(expected_result, state.daily_consumption,
                              'update config failed for arguments: {}'.format(consumption_params))
 
             # recalculating should though
             recalculate_domain_consumption(self.domain.name)
-            state = StockState.objects.get(section_id='stock', case_id=self.sp._id, product_id=self.products[0]._id)
+            state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
             self.assertEqual(test_result, state.daily_consumption,
                              'test failed for arguments: {}'.format(consumption_params))

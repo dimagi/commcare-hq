@@ -68,6 +68,25 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_jquery_ui_multiselect %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css" %}" />
+        {% endcompress %}
+        {% endif %}
+
+
+        {% if request.use_nvd3 %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'nvd3/src/nv.d3.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
         {% if request.use_daterangepicker %}
         {% compress css %}
             <link type="text/css"
@@ -83,15 +102,6 @@
                   rel="stylesheet"
                   media="screen"
                   href="{% new_static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_nvd3 %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% new_static 'nvd3/src/nv.d3.css' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -337,6 +347,13 @@
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_jquery_ui_multiselect %}
+            {% compress js %}
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+            {% endcompress %}
         {% endif %}
 
         {% if request.use_nvd3 %}

@@ -71,7 +71,6 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
         xform_ids = get_ids_from_url(form_ids_or_query_string, domain, couch_user)
 
     if not xform_ids:
-        soft_assert(notify_admins=True, exponential_backoff=False)
         return {'messages': {'errors': [_('No Forms are supplied')]}}
 
     response = archive_or_restore_forms(domain, couch_user, xform_ids, mode, task)
@@ -107,7 +106,10 @@ def run_case_update_rules_for_domain(domain, now=None):
         for doc in iter_docs(CommCareCase.get_db(), case_ids):
             case = CommCareCase.wrap(doc)
             for rule in rules:
-                rule.apply_rule(case, now)
+                closed = rule.apply_rule(case, now)
+                if closed:
+                    # If the case has been closed, stop processing further rules
+                    break
 
         for rule in rules:
             rule.last_run = now

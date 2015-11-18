@@ -50,6 +50,13 @@ class HasGatewayFeeFilter(BaseSingleOptionFilter):
     )
 
 
+def get_criteria_property_options(property):
+    return map(
+        lambda value: (str(value), str(value)),
+        SmsGatewayFeeCriteria.objects.values_list(property, flat=True).distinct()
+    )
+
+
 class GatewayTypeFilter(BaseSingleOptionFilter):
     slug = 'gateway_type'
     label = _("Gateway Type")
@@ -57,12 +64,7 @@ class GatewayTypeFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return clean_options(
-            [
-                (criteria.backend_api_id, criteria.backend_api_id)
-                for criteria in SmsGatewayFeeCriteria.objects.all()
-            ]
-        )
+        return clean_options(get_criteria_property_options('backend_api_id'))
 
 
 class SpecificGateway(BaseSingleOptionFilter):
@@ -72,12 +74,7 @@ class SpecificGateway(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return clean_options(
-            [
-                (criteria.backend_instance, criteria.backend_instance)
-                for criteria in SmsGatewayFeeCriteria.objects.all()
-            ]
-        )
+        return clean_options(get_criteria_property_options('backend_instance'))
 
 
 class DirectionFilter(BaseSingleOptionFilter):
@@ -94,10 +91,4 @@ class CountryCodeFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return clean_options(
-            [
-                (str(criteria.country_code), str(criteria.country_code))
-                for criteria in SmsGatewayFeeCriteria.objects.all()
-                if criteria.country_code is not None
-            ]
-        )
+        return clean_options(get_criteria_property_options('country_code'))

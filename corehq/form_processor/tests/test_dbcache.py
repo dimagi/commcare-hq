@@ -74,7 +74,7 @@ class CaseDbCacheTest(TestCase):
             self.assertFalse(cache.in_cache(id))
 
         for id in case_ids:
-            cache.set(id, self.interface.case_model.get(id))
+            cache.set(id, self.interface.get_case(id))
 
         for i, id in enumerate(case_ids):
             self.assertTrue(cache.in_cache(id))

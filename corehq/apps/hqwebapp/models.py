@@ -33,10 +33,10 @@ from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.apps.userreports.util import has_report_builder_access
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
@@ -296,14 +296,14 @@ class ProjectReportsTab(UITab):
         ])]
 
         user_reports = []
-        if (toggle_enabled(self._request, toggles.REPORT_BUILDER)
-                and has_privilege(self._request, privileges.REPORT_BUILDER)):
+
+        if has_report_builder_access(self._request):
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
                     "url": reverse("report_builder_select_type", args=[self.domain]),
-                    "icon": "icon-plus"
+                    "icon": "icon-plus fa fa-plus"
                 }]
             )]
 

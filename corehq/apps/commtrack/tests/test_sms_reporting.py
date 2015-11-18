@@ -13,7 +13,7 @@ class SMSTests(CommTrackTest):
 
     def check_stock(self, code, amount, case_id=None, section_id='stock'):
         if not case_id:
-            case_id = self.sp._id
+            case_id = self.sp.case_id
 
         [product] = filter(lambda p: p.code_ == code, self.products)
 
@@ -61,7 +61,7 @@ class StockReportTest(SMSTests):
         for code, amt in amounts.items():
             [product] = filter(lambda p: p.code_ == code, self.products)
             trans = StockTransaction.objects.get(product_id=product._id)
-            self.assertEqual(self.sp._id, trans.case_id)
+            self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 
@@ -85,7 +85,7 @@ class StockReportTest(SMSTests):
         for code, amt in amounts.items():
             [product] = filter(lambda p: p.code_ == code, self.products)
             trans = StockTransaction.objects.get(product_id=product._id)
-            self.assertEqual(self.sp._id, trans.case_id)
+            self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 

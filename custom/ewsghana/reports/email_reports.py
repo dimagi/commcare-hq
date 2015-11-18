@@ -79,15 +79,16 @@ class StockSummaryReportData(EmailReportData):
 
         rows = []
         for k, v in row_data.iteritems():
-            rows.append([
-                k,
-                v['total_fac'],
-                v['reported_fac'],
-                percent(v['stockout'], v['reported_fac']),
-                percent(v['adequate'], v['reported_fac']),
-                percent(v['low'], v['reported_fac']),
-                percent(v['overstock'], v['reported_fac']),
-            ])
+            if v['total_fac'] > 0:
+                rows.append([
+                    k,
+                    v['total_fac'],
+                    v['reported_fac'],
+                    percent(v['stockout'], v['reported_fac']),
+                    percent(v['adequate'], v['reported_fac']),
+                    percent(v['low'], v['reported_fac']),
+                    percent(v['overstock'], v['reported_fac']),
+                ])
         return rows
 
     def get_locations(self, loc_id, domain):

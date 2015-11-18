@@ -1,16 +1,12 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
-from couchdbkit.exceptions import ResourceNotFound
-from datetime import datetime
-from casexml.apps.case import const
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
-from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms import fetch_and_wrap_form
 
 
@@ -39,26 +35,6 @@ def close_case(case_id, domain, user):
     return submit_case_blocks([case_block], domain, username, user_id)
 
 
-def _get_actions_from_forms(sorted_forms, case_id):
-    from corehq.apps.commtrack.processing import get_stock_actions
-    case_actions = []
-    domain = None
-    for form in sorted_forms:
-        if domain is None:
-            domain = form.domain
-        assert form.domain == domain
-
-        case_updates = get_case_updates(form)
-        filtered_updates = [u for u in case_updates if u.id == case_id]
-        for u in filtered_updates:
-            case_actions.extend(u.get_case_actions(form))
-        stock_actions = get_stock_actions(form)
-        case_actions.extend([intent.action
-                             for intent in stock_actions.case_action_intents
-                             if not intent.is_deprecation])
-    return case_actions, domain
-
-
 def rebuild_case_from_actions(case, actions):
     strategy = ActionsUpdateStrategy(case)
     strategy.reset_case_state()
@@ -72,42 +48,17 @@ def rebuild_case_from_actions(case, actions):
     strategy.soft_rebuild_case()
 
 
-def rebuild_case_from_forms(case_id):
+def rebuild_case_from_forms(domain, case_id, detail):
     """
     Given a case ID, rebuild the entire case state based on all existing forms
     referencing it. Useful when things go wrong or when you need to manually
     rebuild a case after archiving / deleting it
+    :param domain: The domain the case belongs to
+    :param case_id: The ID of the case to be rebuilt
+    :param detail: A CaseTransactionDetail object
     """
 
-    try:
-        case = CommCareCase.get(case_id)
-        found = True
-    except ResourceNotFound:
-        case = CommCareCase()
-        case._id = case_id
-        found = False
-
-    forms = get_case_forms(case_id)
-    filtered_forms = [f for f in forms if f.doc_type == "XFormInstance"]
-    sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
-
-    actions, domain = _get_actions_from_forms(sorted_forms, case_id)
-
-    if not found and case.domain is None:
-        case.domain = domain
-
-    rebuild_case_from_actions(case, actions)
-    # todo: should this move to case.rebuild?
-    if not case.xform_ids:
-        if not found:
-            return None
-        # there were no more forms. 'delete' the case
-        case.doc_type = 'CommCareCase-Deleted'
-
-    # add a "rebuild" action
-    case.actions.append(_rebuild_action())
-    case.save()
-    return case
+    return FormProcessorInterface(domain).hard_rebuild_case(case_id, detail)
 
 
 def safe_hard_delete(case):
@@ -139,12 +90,3 @@ def get_case_forms(case_id):
     """
     form_ids = get_case_xform_ids(case_id)
     return [fetch_and_wrap_form(id) for id in form_ids]
-
-
-def _rebuild_action():
-    now = datetime.utcnow()
-    return CommCareCaseAction(
-        action_type=const.CASE_ACTION_REBUILD,
-        date=now,
-        server_date=now,
-    )

@@ -177,7 +177,7 @@ to aggregate the data.
 This will produce a '.agg.prof' file which can be analysed with the `prof.py <https://gist.github.com/czue/4947238>`_ script.
 
 Line profiling
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 In addition to the above methods of profiling it is possible to do line profiling of code which attached profile
 data to individual lines of code as opposed to function names.

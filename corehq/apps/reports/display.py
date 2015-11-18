@@ -5,7 +5,6 @@ from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 from couchforms.analytics import get_form_analytics_metadata
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.users.models import CouchUser

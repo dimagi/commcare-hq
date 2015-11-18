@@ -48,6 +48,7 @@ from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
+from corehq.util.datadog.utils import create_datadog_event
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception, notify_js_exception
@@ -303,6 +304,10 @@ def server_up(req):
                 else:
                     message.append(check_info['message'])
     if failed:
+        create_datadog_event(
+            'Serverup check failed', '\n'.join(message),
+            alert_type='error', aggregation_key='serverup',
+        )
         return HttpResponse('<br>'.join(message), status=500)
     else:
         return HttpResponse("success")

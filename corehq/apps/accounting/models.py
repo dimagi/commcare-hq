@@ -414,19 +414,19 @@ class BillingAccount(models.Model):
 
         return StripePaymentMethod.objects.get(web_user=self.auto_pay_user).get_autopay_card(self)
 
-    def update_autopay_user(self, new_user):
+    def update_autopay_user(self, new_user, domain):
         if self.auto_pay_enabled and new_user != self.auto_pay_user:
-            self._send_autopay_card_removed_email(new_user=new_user)
+            self._send_autopay_card_removed_email(new_user=new_user, domain=domain)
 
         self.auto_pay_user = new_user
         self.save()
-        self._send_autopay_card_added_email()
+        self._send_autopay_card_added_email(domain)
 
     def remove_autopay_user(self):
         self.auto_pay_user = None
         self.save()
 
-    def _send_autopay_card_removed_email(self, new_user):
+    def _send_autopay_card_removed_email(self, new_user, domain):
         """Sends an email to the old autopayer for this account telling them {new_user} is now the autopayer"""
         from corehq.apps.domain.views import EditExistingBillingAccountView
         old_user = self.auto_pay_user
@@ -442,7 +442,7 @@ class BillingAccount(models.Model):
             'old_user_name': old_user_name,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
-                                                 args=[self.created_by_domain])
+                                                 args=[domain])
         }
 
         send_html_email_async(
@@ -452,7 +452,7 @@ class BillingAccount(models.Model):
             text_content=strip_tags(render_to_string('accounting/autopay_card_removed.html', context)),
         )
 
-    def _send_autopay_card_added_email(self):
+    def _send_autopay_card_added_email(self, domain):
         """Sends an email to the new autopayer for this account telling them they are now the autopayer"""
         from corehq.apps.domain.views import EditExistingBillingAccountView
         subject = _("Your card is being used to auto-pay for {billing_account}").format(
@@ -469,11 +469,11 @@ class BillingAccount(models.Model):
         context = {
             'name': new_user_name,
             'email': self.auto_pay_user,
-            'domain': self.created_by_domain,
+            'domain': domain,
             'last_4': last_4,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
-                                                 args=[self.created_by_domain])
+                                                 args=[domain])
         }
 
         send_html_email_async(
@@ -865,7 +865,7 @@ class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
     """
-    domain = models.CharField(max_length=256, null=True, db_index=True)
+    domain = models.CharField(max_length=256, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = SubscriberManager()
@@ -2627,12 +2627,12 @@ class StripePaymentMethod(PaymentMethod):
             if account.autopay_card == card:
                 account.remove_autopay_user()
 
-    def create_card(self, stripe_token, billing_account, autopay=False):
+    def create_card(self, stripe_token, billing_account, domain, autopay=False):
         customer = self.customer
         card = customer.cards.create(card=stripe_token)
         self.set_default_card(card)
         if autopay:
-            self.set_autopay(card, billing_account)
+            self.set_autopay(card, billing_account, domain)
         return card
 
     def set_default_card(self, card):
@@ -2640,7 +2640,7 @@ class StripePaymentMethod(PaymentMethod):
         self.customer.save()
         return card
 
-    def set_autopay(self, card, billing_account):
+    def set_autopay(self, card, billing_account, domain):
         """
         Sets the auto_pay status on the card for a billing account
 
@@ -2650,7 +2650,7 @@ class StripePaymentMethod(PaymentMethod):
             self._remove_other_auto_pay_cards(billing_account)
 
         self._update_autopay_status(card, billing_account, autopay=True)
-        billing_account.update_autopay_user(self.web_user)
+        billing_account.update_autopay_user(self.web_user, domain)
 
     def unset_autopay(self, card, billing_account):
         """

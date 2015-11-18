@@ -2,6 +2,7 @@
 
 import sys
 import os
+import mimetypes
 
 
 def _set_source_root_parent(source_root_parent):
@@ -63,6 +64,9 @@ if __name__ == "__main__":
         from restkit.session import set_session; set_session("gevent")
         from gevent.monkey import patch_all; patch_all(subprocess=True)
         from psycogreen.gevent import patch_psycopg; patch_psycopg()
+
+    # workaround for https://github.com/smore-inc/tinys3/issues/33
+    mimetypes.init()
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
     from django.core.management import execute_from_command_line

@@ -13,9 +13,13 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
 class XFormInstanceSQLSerializer(serializers.ModelSerializer):
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
+    form_id = serializers.CharField()
+    auth_context = serializers.DictField()
+    openrosa_headers = serializers.DictField()
 
     class Meta:
         model = XFormInstanceSQL
+        exclude = ('form_uuid', 'id')
 
 
 class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):

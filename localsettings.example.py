@@ -113,7 +113,6 @@ BASE_ADDRESS = 'localhost:8000'
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '*******',
-    'PINGDOM_API_ID': '*****',
     'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
     'HUBSPOT_API_KEY': '*****',
@@ -207,53 +206,6 @@ COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
                            '^south', '^djcelery', '^debug_toolbar']
-
-####### Selenium tests config ########
-
-SELENIUM_SETUP = {
-    # Firefox, Chrome, Ie, or Remote
-    'BROWSER': 'Chrome',
-    
-    # Necessary if using Remote selenium driver
-    'REMOTE_URL': None,
-    
-    # If not using Remote, allows you to open browsers in a hidden virtual X Server
-    'USE_XVFB': True,
-    'XVFB_DISPLAY_SIZE': (1024, 768),
-}
-
-SELENIUM_USERS = {
-    # 'WEB_USER' is optional; if not set, some tests that want a web user will
-    # try to use ADMIN instead
-    'ADMIN': {
-        'USERNAME': 'foo@example.com',
-        'PASSWORD': 'password',
-        'URL': 'http://localhost:8000',
-        'PROJECT': 'project_name',
-        'IS_SUPERUSER': False
-    },
-
-    'WEB_USER': {
-        'USERNAME': 'foo@example.com',
-        'PASSWORD': 'password',
-        'URL': 'http://localhost:8000',
-        'PROJECT': 'mike',
-        'IS_SUPERUSER': False
-    },
-
-    'MOBILE_WORKER': {
-        'USERNAME': 'user@project_name.commcarehq.org',
-        'PASSWORD': 'password',
-        'URL': 'http://localhost:8000'
-    }
-}
-
-SELENIUM_APP_SETTINGS = {
-    'reports': {
-        'MAX_PRELOAD_TIME': 20,
-        'MAX_LOAD_TIME': 30,
-    },
-}
 
 INTERNAL_DATA = {
     "business_unit": [],

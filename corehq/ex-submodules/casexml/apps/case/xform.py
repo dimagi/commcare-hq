@@ -7,6 +7,7 @@ from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
 from casexml.apps.case.signals import cases_received
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
@@ -151,32 +152,14 @@ def get_and_check_xform_domain(xform):
     return domain
 
 
-def get_cases_from_forms(case_db, xforms):
-    """Get all cases affected by the forms. Includes new cases, updated cases.
-    """
-    # have to apply the deprecations before the updates
-    sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
-    touched_cases = {}
-    for xform in sorted_forms:
-        for case_update in get_case_updates(xform):
-            case_doc = case_db.get_case_from_case_update(case_update, xform)
-            touched_cases[case_doc.case_id] = case_doc
-            if not case_doc:
-                logging.error(
-                    "XForm %s had a case block that wasn't able to create a case! "
-                    "This usually means it had a missing ID" % xform.get_id
-                )
-
-    return touched_cases
-
-
 def _get_or_update_cases(xforms, case_db):
     """
     Given an xform document, update any case blocks found within it,
     returning a dictionary mapping the case ids affected to the
     couch case document objects
     """
-    touched_cases = get_cases_from_forms(case_db, xforms)
+    domain = getattr(case_db, 'domain', None)
+    touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
 
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
@@ -192,7 +175,7 @@ def _get_or_update_cases(xforms, case_db):
                     # just log, don't raise an error or modify the index
                     logging.error(
                         "Case '%s' references non-existent case '%s'",
-                        case.get_id,
+                        case.case_id,
                         index.referenced_id,
                     )
                 else:
@@ -212,7 +195,6 @@ def _get_or_update_cases(xforms, case_db):
                     yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
     dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
-    domain = getattr(case_db, 'domain', None)
     track_cleanliness = should_track_cleanliness(domain)
     if track_cleanliness:
         # only do this extra step if the toggle is enabled since we know we aren't going to
@@ -226,9 +208,9 @@ def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
     def _from_form_dict(doc):
-        return "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+        return isinstance(doc, dict) and "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
     def _from_xform_instance(doc):
-        return "xmlns" in doc and doc["xmlns"] == device_report_xmlns
+        return getattr(doc, 'xmlns', None) == device_report_xmlns
 
     return _from_form_dict(doc) or _from_xform_instance(doc)
 

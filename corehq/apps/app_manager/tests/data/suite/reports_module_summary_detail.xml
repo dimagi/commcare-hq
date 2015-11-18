@@ -31,7 +31,7 @@
         </header>
         <template>
           <text>
-            <xpath function="description"/>
+            <xpath function="report description"/>
           </text>
         </template>
       </field>

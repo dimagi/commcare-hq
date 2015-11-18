@@ -32,9 +32,6 @@
         $scope.matchesDaysSince = function(condition) {
             return condition.property_match_type == 'DAYS';
         };
-        $scope.matchesExists = function(condition) {
-            return condition.property_match_type == 'EXISTS';
-        };
         $scope.showUpdateProperty = function() {
             return $scope.action == 'UPDATE_AND_CLOSE';
         };
@@ -87,7 +84,6 @@
                         <select class="select form-control"
                                 ng-model="condition.property_match_type">
                             <option value="DAYS">{% trans "after date by" %}</option>
-                            <option value="EXISTS">{% trans "exists" %}</option>
                             <option value="EQUAL">{% trans "equals" %}</option>
                             <option value="NOT_EQUAL">{% trans "does not equal" %}</option>
                         </select>
@@ -95,8 +91,7 @@
                     <td>
                         <input class="textinput textInput form-control"
                                type="text"
-                               ng-model="condition.property_value"
-                               ng-hide="matchesExists(condition)" />
+                               ng-model="condition.property_value" />
                     </td>
                     <td>
                         <span ng-show="matchesDaysSince(condition)">{% trans "days" %}</span>

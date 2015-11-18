@@ -136,13 +136,13 @@ class CaseAssignmentTest(TestCase):
     def _check_state(self, new_owner_id, expected_changed, update=None):
         expected_ids = set(c._id for c in expected_changed)
         for case in expected_changed:
-            expected = FormProcessorInterface().case_model.get(case._id)
+            expected = FormProcessorInterface().get_case(case._id)
             self.assertEqual(new_owner_id, expected.owner_id)
             if update:
                 for prop, value in update.items():
                     self.assertEqual(getattr(expected, prop), value)
         for case in (c for c in self.all if c._id not in expected_ids):
-            remaining = FormProcessorInterface().case_model.get(case._id)
+            remaining = FormProcessorInterface().get_case(case._id)
             self.assertEqual(self.original_owner._id, remaining.owner_id)
 
     def _new_case(self, index=None):

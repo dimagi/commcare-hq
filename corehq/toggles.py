@@ -244,7 +244,7 @@ GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
@@ -291,7 +291,14 @@ REPORT_BUILDER = StaticToggle(
     'report_builder',
     'Report Builder',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
+)
+
+REPORT_BUILDER_BETA_GROUP = StaticToggle(
+    'report_builder_beta_group',
+    'RB beta group',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
 )
 
 STOCK_TRANSACTION_EXPORT = StaticToggle(
