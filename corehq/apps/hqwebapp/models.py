@@ -669,7 +669,8 @@ class ProjectDataTab(UITab):
                 },
             ])
         from corehq.apps.export.views import DeIdFormExportListView
-        if (DeIdFormExportListView.has_deid_permissions(self._request, self.domain)
+        if (
+            DeIdFormExportListView.has_deid_permissions(self._request, self.domain)
             and toggle_enabled(self._request, toggles.REVAMPED_EXPORTS)
         ):
             from corehq.apps.export.views import DownloadFormExportView
