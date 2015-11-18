@@ -2041,6 +2041,11 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def repeaters(self):
         available_repeaters = [
@@ -2062,6 +2067,11 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     page_title = ugettext_lazy("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -2123,6 +2133,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         return repeater
 
     def post(self, request, *args, **kwargs):
+        print self.add_repeater_form.errors
         if self.add_repeater_form.is_valid():
             repeater = self.make_repeater()
             repeater.save()
