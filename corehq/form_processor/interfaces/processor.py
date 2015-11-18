@@ -85,6 +85,12 @@ class FormProcessorInterface(object):
     def get_case(self, case_id):
         return self.case_model.get(case_id)
 
+    def get_cases(self, case_ids):
+        return self.case_model.get_cases(case_ids)
+
+    def get_case_xform_ids(self, case_id):
+        return self.case_model.get_case_xform_ids(case_id)
+
     def store_attachments(self, xform, attachments):
         """
         Takes a list of Attachment namedtuples with content, name, and content_type and stores them to the XForm
