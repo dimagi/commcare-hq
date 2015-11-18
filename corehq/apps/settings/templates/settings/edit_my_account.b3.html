@@ -1,0 +1,49 @@
+{% extends 'settings/bootstrap3/base_template.html' %}
+{# This is for editing information for the currently logged in WebUser #}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block stylesheets %}
+    <style>
+
+
+        #phone-numbers-list form {
+            display: inline;
+            padding-left: .1em;
+        }
+    </style>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $('#id_language').select2();
+
+        $('form[name="user_information"]').on("change", null, null, function() {
+            $(":submit").prop("disabled", false);
+        }).on("input", null, null, function() {
+            $(":submit").prop("disabled", false);
+        })
+        
+        $('#generate-api-key').click(function() {
+            var apiDiv = $(this).parent().parent().parent();
+            $.post('{% url 'new_api_key' %}', '', function(data) {
+                apiDiv.find('.form-control-static').text(data);
+            });
+        });
+    </script>
+{% endblock %}
+b3
+{% block modals %}{{ block.super }}
+{% if user_type == 'web' %}
+    {% include 'users/partial/basic_info_modals.b3.html' %}
+{% endif %}
+{% endblock %}
+
+{% block page_content %}
+    {% crispy form form.new_helper %}
+    {% if user_type == 'web' %}
+        {% include 'users/partial/manage_phone_numbers.b3.html' %}
+    {% endif %}
+{% endblock %}
