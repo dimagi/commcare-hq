@@ -555,6 +555,84 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_megamobile_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLMegamobileBackend,
+            'SMS',
+            'MEGAMOBILE',
+            True,
+            None,
+            'MOBILE_BACKEND_MEGAMOBILE',
+            "Megamobile",
+            "Megamobile Description",
+            ['63'],
+            {
+                'api_account_name': 'a',
+                'source_identifier': 'b',
+            },
+            None,
+            couch_class=MegamobileBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLMegamobileBackend,
+            'SMS',
+            'MEGAMOBILE',
+            True,
+            None,
+            'MOBILE_BACKEND_MEGAMOBILE2',
+            "Megamobile2",
+            "Megamobile Description2",
+            ['63'],
+            {
+                'api_account_name': 'a2',
+                'source_identifier': 'b2',
+            },
+            None,
+            sql_obj=sql_obj,
+            couch_class=MegamobileBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_megamobile_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            MegamobileBackend,
+            None,
+            'MOBILE_BACKEND_MEGAMOBILE',
+            "Megamobile",
+            None,
+            [],
+            True,
+            "Megamobile Description",
+            ['63'],
+            None,
+            extra_fields={
+                'api_account_name': 'a',
+                'source_identifier': 'b',
+            }
+        )
+
+        self._test_couch_backend_update(
+            MegamobileBackend,
+            None,
+            'MOBILE_BACKEND_MEGAMOBILE2',
+            "Megamobile2",
+            None,
+            [],
+            True,
+            "Megamobile Description2",
+            ['63'],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={
+                'api_account_name': 'a2',
+                'source_identifier': 'b2',
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
