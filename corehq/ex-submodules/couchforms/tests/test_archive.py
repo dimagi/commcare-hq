@@ -37,7 +37,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.interface.xform_model.get(xform.form_id)
         self.assertTrue(xform.is_archived)
-        case = self.interface.case_model.get(case_id)
+        case = self.interface.get_case(case_id)
         self.assertTrue(case.is_deleted)
         self.assertEqual(case.xform_ids, [])
 
@@ -52,7 +52,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.interface.xform_model.get(xform.form_id)
         self.assertTrue(xform.is_normal)
-        case = self.interface.case_model.get(case_id)
+        case = self.interface.get_case(case_id)
         self.assertFalse(case.is_deleted)
         self.assertEqual(case.xform_ids, [xform.form_id])
 

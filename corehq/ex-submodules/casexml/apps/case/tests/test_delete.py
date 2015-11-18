@@ -16,14 +16,14 @@ class TestHardDelete(TestCase):
         factory = CaseFactory()
         case = factory.create_case()
         [case] = factory.create_or_update_case(CaseStructure(case_id=case._id, attrs={'update': {'foo': 'bar'}}))
-        self.assertIsNotNone(self.interface.case_model.get(case.case_id))
+        self.assertIsNotNone(self.interface.get_case(case.case_id))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
             self.assertIsNotNone(self.interface.xform_model.get(form_id))
         case.hard_delete()
 
         with self.assertRaises(CaseNotFound):
-            self.interface.case_model.get(case.case_id)
+            self.interface.get_case(case.case_id)
 
         for form_id in case.xform_ids:
             with self.assertRaises(XFormNotFound):
@@ -43,9 +43,9 @@ class TestHardDelete(TestCase):
 
         # deleting the child is ok
         child.hard_delete()
-        self.assertIsNotNone(self.interface.case_model.get(parent.case_id))
+        self.assertIsNotNone(self.interface.get_case(parent.case_id))
         with self.assertRaises(CaseNotFound):
-            self.interface.case_model.get(child.case_id)
+            self.interface.get_case(child.case_id)
 
     def test_delete_sharing_form(self):
         factory = CaseFactory()
@@ -59,5 +59,5 @@ class TestHardDelete(TestCase):
         with self.assertRaises(CommCareCaseError):
             c2.hard_delete()
 
-        self.assertIsNotNone(self.interface.case_model.get(c1.case_id))
-        self.assertIsNotNone(self.interface.case_model.get(c2.case_id))
+        self.assertIsNotNone(self.interface.get_case(c1.case_id))
+        self.assertIsNotNone(self.interface.get_case(c2.case_id))

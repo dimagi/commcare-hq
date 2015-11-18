@@ -203,7 +203,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self._validateOTARestore(case.case_id, restore_attachments)
 
     def _validateOTARestore(self, case_id, restore_attachments):
-        case_xml = self.interface.case_model.get(case_id).to_xml(V2)
+        case_xml = self.interface.get_case(case_id).to_xml(V2)
         root_node = lxml.etree.fromstring(case_xml)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))

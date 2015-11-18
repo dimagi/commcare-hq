@@ -103,7 +103,7 @@ class CaseFactoryTest(TestCase):
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
-        self.assertIsNotNone(FormProcessorInterface().case_model.get(case.case_id))
+        self.assertIsNotNone(FormProcessorInterface().get_case(case.case_id))
 
     def test_create_overrides(self):
         factory = CaseFactory()
