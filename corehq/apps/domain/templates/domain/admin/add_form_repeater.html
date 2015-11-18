@@ -17,7 +17,7 @@
                     data = {url: url, repeater_type: type, format: format};
                 jQuery.post("{% url "test_repeater" domain %}", data, function(data) {
                     json_res = JSON.parse(data);
-                    $testLabel.removeClass("hide label-important label-success");
+                    $testLabel.removeClass("hide label-danger label-success");
                     if (json_res.status) {
                         msg = json_res.status + ": " + json_res.response;
                     } else {
@@ -27,7 +27,7 @@
                         $testLabel.addClass("label-success");
                         $testLabel.text("{% trans 'Success! Response is' %}: " + msg);
                     } else {
-                        $testLabel.addClass("label-important");
+                        $testLabel.addClass("label-danger");
                         $testLabel.text("{% trans 'Failed! Response is' %}: " + msg);
                     }
                 });

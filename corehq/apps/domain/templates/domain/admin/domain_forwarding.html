@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block page_content %}
-    <div class="pull-right label {% if pending_record_count <= 5 %}label-success{% elif pending_record_count <= 20 %}label-warning{% else %}label-important{% endif %}">
+    <div class="pull-right label {% if pending_record_count <= 5 %}label-success{% elif pending_record_count <= 20 %}label-warning{% else %}label-danger{% endif %}">
     {% blocktrans %}
         {{ pending_record_count }} pending items to be forwarded
     {% endblocktrans %}
@@ -33,7 +33,7 @@
         {% else %}
             <p>{% blocktrans %}You haven't configured any urls to forward to yet.{% endblocktrans %}</p>
         {% endif %}
-        <a class="btn btn-success" href="{% url "add_repeater" domain cls %}"><i class="icon-plus"></i> {% trans 'Add a forwarding location' %}</a>
+        <a class="btn btn-success" href="{% url "add_repeater" domain cls %}"><i class="fa fa-plus"></i> {% trans 'Add a forwarding location' %}</a>
     </div>
     {% endfor %}
 {% endblock %}
