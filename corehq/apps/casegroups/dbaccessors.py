@@ -30,9 +30,12 @@ def get_case_group_meta_in_domain(domain):
 
     ideal for creating a user-facing dropdown menu, etc.
     """
-    return map(
-        lambda case_group: (case_group._id, case_group.name),
-        get_docs_in_domain_by_class(domain, CommCareCaseGroup)
+    return sorted(
+        map(
+            lambda case_group: (case_group._id, case_group.name),
+            get_docs_in_domain_by_class(domain, CommCareCaseGroup)
+        ),
+        key=lambda id_name_tuple: id_name_tuple[1]
     )
 
 
