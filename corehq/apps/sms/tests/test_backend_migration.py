@@ -727,6 +727,88 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_smsgh_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLSMSGHBackend,
+            'SMS',
+            'SMSGH',
+            False,
+            'smsgh-domain',
+            'MOBILE_BACKEND_SMSGH',
+            "Smsgh",
+            "Smsgh Description",
+            [],
+            {
+                'from_number': 'a',
+                'client_id': 'b',
+                'client_secret': 'c',
+            },
+            '0000',
+            couch_class=SMSGHBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLSMSGHBackend,
+            'SMS',
+            'SMSGH',
+            False,
+            'smsgh-domain',
+            'MOBILE_BACKEND_SMSGH2',
+            "Smsgh2",
+            "Smsgh Description2",
+            [],
+            {
+                'from_number': 'a2',
+                'client_id': 'b2',
+                'client_secret': 'c2',
+            },
+            '0000',
+            sql_obj=sql_obj,
+            couch_class=SMSGHBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_smsgh_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            SMSGHBackend,
+            'smsgh-domain',
+            'MOBILE_BACKEND_SMSGH',
+            "Smsgh",
+            None,
+            [],
+            False,
+            "Smsgh Description",
+            [],
+            '0000',
+            extra_fields={
+                'from_number': 'a',
+                'client_id': 'b',
+                'client_secret': 'c',
+            }
+        )
+
+        self._test_couch_backend_update(
+            SMSGHBackend,
+            'smsgh-domain',
+            'MOBILE_BACKEND_SMSGH2',
+            "Smsgh2",
+            None,
+            [],
+            False,
+            "Smsgh Description2",
+            [],
+            '0000',
+            couch_obj=couch_obj,
+            extra_fields={
+                'from_number': 'a2',
+                'client_id': 'b2',
+                'client_secret': 'c2',
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
