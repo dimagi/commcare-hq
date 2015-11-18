@@ -469,6 +469,92 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_mach_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLMachBackend,
+            'SMS',
+            'MACH',
+            True,
+            None,
+            'MOBILE_BACKEND_MACH',
+            "Mach",
+            "Mach Description",
+            ['*'],
+            {
+                'account_id': 'a',
+                'password': 'b',
+                'sender_id': 'c',
+                'max_sms_per_second': 1,
+            },
+            None,
+            couch_class=MachBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLMachBackend,
+            'SMS',
+            'MACH',
+            True,
+            None,
+            'MOBILE_BACKEND_MACH2',
+            "Mach2",
+            "Mach Description2",
+            ['*'],
+            {
+                'account_id': 'a2',
+                'password': 'b2',
+                'sender_id': 'c2',
+                'max_sms_per_second': 2,
+            },
+            None,
+            sql_obj=sql_obj,
+            couch_class=MachBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_mach_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            MachBackend,
+            None,
+            'MOBILE_BACKEND_MACH',
+            "Mach",
+            None,
+            [],
+            True,
+            "Mach Description",
+            ['*'],
+            None,
+            extra_fields={
+                'account_id': 'a',
+                'password': 'b',
+                'sender_id': 'c',
+                'max_sms_per_second': 1,
+            }
+        )
+
+        self._test_couch_backend_update(
+            MachBackend,
+            None,
+            'MOBILE_BACKEND_MACH2',
+            "Mach2",
+            None,
+            [],
+            True,
+            "Mach Description2",
+            ['*'],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={
+                'account_id': 'a2',
+                'password': 'b2',
+                'sender_id': 'c2',
+                'max_sms_per_second': 2,
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
