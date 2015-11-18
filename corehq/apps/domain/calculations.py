@@ -19,7 +19,6 @@ from couchforms.analytics import get_number_of_forms_per_domain, \
     get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
     get_first_form_submission_received, get_last_form_submission_received
 
-from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key

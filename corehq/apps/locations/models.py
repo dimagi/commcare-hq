@@ -493,7 +493,7 @@ class Location(CachedCouchDocumentMixin, Document):
         # sync supply point id
         sp = self.linked_supply_point()
         if sp:
-            sql_location.supply_point_id = sp._id
+            sql_location.supply_point_id = sp.case_id
 
         # sync parent connection
         parent_id = self.parent_id
@@ -510,6 +510,10 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type(self):
         return self.location_type_object.name
+
+    @property
+    def location_id(self):
+        return self._id
 
     _sql_location_type = None
     @location_type.setter
@@ -541,7 +545,7 @@ class Location(CachedCouchDocumentMixin, Document):
         # this is important because if you archive a child, then try
         # to archive the parent, we don't want to try to close again
         if sp and not sp.closed:
-            close_case(sp._id, self.domain, COMMTRACK_USERNAME)
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
 
         _unassign_users_from_location(self.domain, self._id)
 
@@ -694,7 +698,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if not parent:
             parent = self.parent
         locs = (parent.children if parent else self.root_locations(self.domain))
-        return [loc for loc in locs if loc._id != self._id]
+        return [loc for loc in locs if loc.location_id != self._id]
 
     @property
     def path(self):

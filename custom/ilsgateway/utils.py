@@ -5,6 +5,7 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import LocationType, Location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
 from dimagi.utils.dates import get_business_day_of_month_before
@@ -39,11 +40,11 @@ def send_for_day(date, cutoff, reminder_class, **kwargs):
         send_for_all_domains(cutoff, reminder_class, **kwargs)
 
 
-def supply_points_with_latest_status_by_datespan(sps, status_type, status_value, datespan):
+def supply_points_with_latest_status_by_datespan(locations, status_type, status_value, datespan):
     """
     This very similar method is used by the reminders.
     """
-    ids = [sp._id for sp in sps]
+    ids = [loc.location_id for loc in locations]
     inner = SupplyPointStatus.objects.filter(location_id__in=ids,
                                              status_type=status_type,
                                              status_date__gte=datespan.startdate,
@@ -78,7 +79,7 @@ def make_loc(code, name, domain, type, metadata=None, parent=None):
     loc.metadata = metadata or {}
     loc.save()
     if not location_type.administrative:
-        SupplyPointCase.create_from_location(domain, loc)
+        SupplyInterface.create_from_location(domain, loc)
         loc.save()
     return loc
 

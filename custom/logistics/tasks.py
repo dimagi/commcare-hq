@@ -8,11 +8,11 @@ from django.db import transaction
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.signals import update_stock_state_for_transaction
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from dimagi.utils.chunked import chunked
@@ -136,7 +136,7 @@ def locations_fix(domain):
                 name=loc.name,
                 domain=domain
             )
-            SupplyPointCase.get_or_create_by_location(fake_location)
+            SupplyInterface(domain).get_or_create_by_location(fake_location)
 
 
 @celery.task(ignore_result=True)

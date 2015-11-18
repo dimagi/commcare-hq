@@ -1,0 +1,47 @@
+<section class="hq-styleguide-article">
+    <header class="page-header">
+        <h1 id="b3-migration">Migration to Bootstrap 3</h1>
+    </header>
+    <p class="lead">
+        Forms requiring migration in CommCare HQ may come in the following formats:
+    </p>
+    <ol>
+        <li>
+            They are an existing Crispy Form, in which case, follow
+            the <strong>Crispy Form Migration Checklist</strong>.
+        </li>
+        <li>
+            They are a basic, regular Django form (either with lots of custom HTML additions, or just included as
+            <code>{% verbatim %}{{ form }}{% endverbatim %}</code> in the html template.
+            Follow the <strong>Django Form Checklist</strong>
+        </li>
+    </ol>
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <ul class="nav nav-tabs" id="FormOverviewTabs" role="tablist">
+                <li class="active">
+                  <a href="#migration-crispy" role="tab" data-toggle="tab">
+                      Crispy Form Migration Checklist
+                  </a>
+                </li>
+                <li>
+                  <a href="#migration-django" role="tab" data-toggle="tab">
+                      Django Form Checklist
+                  </a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade in active" id="migration-crispy">
+                    <div class="panel-body">
+                        {% include 'styleguide/_includes/forms/migration/crispy.html' %}
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="migration-django">
+                    <div class="panel-body">
+                        {% include 'styleguide/_includes/forms/migration/django.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

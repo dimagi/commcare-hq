@@ -17,6 +17,8 @@ urlpatterns = patterns('corehq.apps.styleguide.views',
         name=IconsStyleGuideView.urlname),
     url(r'^colors/$', ColorsStyleGuide.as_view(),
         name=ColorsStyleGuide.urlname),
+    url(r'^views/$', ClassBasedViewStyleGuideView.as_view(),
+        name=ClassBasedViewStyleGuideView.urlname),
     (r'^docs/', include(doc_urlpatterns)),
 )
 

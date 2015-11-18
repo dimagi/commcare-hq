@@ -100,6 +100,9 @@ def analytics_js(request):
 
 
 def websockets_override(request):
+    # for some reason our proxy setup doesn't properly detect these things, so manually override them
     context = default(request)
     context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace(request.get_host(), settings.BASE_ADDRESS)
+    if settings.DEFAULT_PROTOCOL == 'https':
+        context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace('ws://', 'wss://')
     return context

@@ -4,7 +4,6 @@ import urllib
 import uuid
 import datetime
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.couch.database import get_db
 from corehq.apps.users.models import CouchUser, CommCareUser
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template

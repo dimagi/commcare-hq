@@ -83,7 +83,7 @@ class LocationFixtureProvider(object):
 
             if user.project.supports_multiple_locations_per_user:
                 # this might add duplicate locations but we filter that out later
-                location_ids = [loc._id for loc in user.locations]
+                location_ids = [loc.location_id for loc in user.locations]
                 locations += SQLLocation.active_objects.filter(
                     location_id__in=location_ids
                 )

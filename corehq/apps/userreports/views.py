@@ -11,11 +11,10 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 from corehq.apps.analytics.tasks import track_workflow
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
@@ -28,9 +27,8 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import privileges, toggles
+from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_knockout_js,
@@ -72,6 +70,7 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
+from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
@@ -80,7 +79,6 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from django_prbac.decorators import requires_privilege_raise404
 
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.memoized import memoized
@@ -144,10 +142,11 @@ class ReportBuilderView(BaseDomainView):
     @use_select2
     @use_daterangepicker
     @use_datatables
-    @method_decorator(toggles.REPORT_BUILDER.required_decorator())
-    @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, *args, **kwargs):
-        return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+        if has_report_builder_access(request):
+            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
 
     @property
     def section_name(self):
@@ -446,7 +445,7 @@ def _edit_report_shared(request, domain, config, read_only=False):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER)
+@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER, toggles.REPORT_BUILDER_BETA_GROUP)
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 

@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 import os
 import uuid
+
+from django.conf import settings
 from django.test import TestCase
 from mock import patch
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.apps.hqcase.utils import submit_case_blocks
 from couchforms.models import (
     UnfinishedSubmissionStub,
@@ -24,10 +25,11 @@ class EditFormTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
-        self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
+        self.interface = FormProcessorInterface(self.domain)
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
         UnfinishedSubmissionStub.objects.all().delete()
 
     @run_with_all_backends
@@ -110,6 +112,7 @@ class EditFormTest(TestCase, TestFileMixin):
             1
         )
 
+    @run_with_all_backends
     def test_case_management(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
@@ -128,11 +131,13 @@ class EditFormTest(TestCase, TestFileMixin):
         # validate some assumptions
         case = self.interface.case_model.get(case_id)
         self.assertEqual(case.type, 'person')
-        self.assertEqual(case.property, 'original value')
+        self.assertEqual(case.dynamic_case_properties()['property'], 'original value')
         self.assertEqual([form_id], case.xform_ids)
-        self.assertEqual(2, len(case.actions))
-        for a in case.actions:
-            self.assertEqual(form_id, a.xform_id)
+
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(2, len(case.actions))
+            for a in case.actions:
+                self.assertEqual(form_id, a.xform_id)
 
         # submit a new form with a different case update
         case_block = CaseBlock(
@@ -148,11 +153,13 @@ class EditFormTest(TestCase, TestFileMixin):
 
         case = self.interface.case_model.get(case_id)
         self.assertEqual(case.type, 'newtype')
-        self.assertEqual(case.property, 'edited value')
+        self.assertEqual(case.dynamic_case_properties()['property'], 'edited value')
         self.assertEqual([form_id], case.xform_ids)
-        self.assertEqual(2, len(case.actions))
-        for a in case.actions:
-            self.assertEqual(form_id, a.xform_id)
+
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(2, len(case.actions))
+            for a in case.actions:
+                self.assertEqual(form_id, a.xform_id)
 
     @run_with_all_backends
     def test_second_edit_fails(self):
@@ -179,6 +186,7 @@ class EditFormTest(TestCase, TestFileMixin):
         deprecated_xform = self.interface.xform_model.get(xform.deprecated_form_id)
         self.assertTrue(deprecated_xform.is_deprecated)
 
+    @run_with_all_backends
     def test_case_management_ordering(self):
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
@@ -195,9 +203,11 @@ class EditFormTest(TestCase, TestFileMixin):
         # validate that worked
         case = self.interface.case_model.get(case_id)
         self.assertEqual([create_form_id], case.xform_ids)
-        self.assertEqual([create_form_id], [a.xform_id for a in case.actions])
-        for a in case.actions:
-            self.assertEqual(create_form_id, a.xform_id)
+
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual([create_form_id], [a.xform_id for a in case.actions])
+            for a in case.actions:
+                self.assertEqual(create_form_id, a.xform_id)
 
         edit_date = datetime.utcnow()
         # set some property value
@@ -213,9 +223,11 @@ class EditFormTest(TestCase, TestFileMixin):
 
         # validate that worked
         case = self.interface.case_model.get(case_id)
-        self.assertEqual(case.property, 'first value')
+        self.assertEqual(case.dynamic_case_properties()['property'], 'first value')
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
-        self.assertEqual([create_form_id, edit_form_id], [a.xform_id for a in case.actions])
+
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual([create_form_id, edit_form_id], [a.xform_id for a in case.actions])
 
         # submit a second (new) form updating the value
         case_block = CaseBlock(
@@ -229,10 +241,14 @@ class EditFormTest(TestCase, TestFileMixin):
 
         # validate that worked
         case = self.interface.case_model.get(case_id)
-        self.assertEqual(case.property, 'final value')
+        self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
-        self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], [a.xform_id for a in
-            case.actions])
+
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(
+                [create_form_id, edit_form_id, second_edit_form_id],
+                [a.xform_id for a in case.actions]
+            )
 
         # deprecate the middle edit
         case_block = CaseBlock(
@@ -249,8 +265,12 @@ class EditFormTest(TestCase, TestFileMixin):
         # ensure that the middle edit stays in the right place and is applied
         # before the final one
         case = self.interface.case_model.get(case_id)
-        self.assertEqual(case.property, 'final value')
-        self.assertEqual(case.added_property, 'added value')
+        self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
+        self.assertEqual(case.dynamic_case_properties()['added_property'], 'added value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
-        self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], [a.xform_id for a in
-            case.actions])
+
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(
+                [create_form_id, edit_form_id, second_edit_form_id],
+                [a.xform_id for a in case.actions]
+            )

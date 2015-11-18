@@ -392,7 +392,8 @@ class ScheduleFormXPath(object):
         returns the due date if there are valid upcoming schedules
         otherwise, returns a Really Big Number
         """
-        return XPath.if_(self.next_valid_schedules(), self.due_date(), SCHEDULE_MAX_DATE)
+        return XPath.if_(self.next_valid_schedules(include_beginning_of_relevancy_window=False),
+                         self.due_date(), SCHEDULE_MAX_DATE)
 
     @property
     def first_visit_phase_set(self):
@@ -482,22 +483,28 @@ class ScheduleFormXPath(object):
         (today() >= date({anchor}) + int({schedule}/@starts)
         and (today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = ''))
         """
-        expires = self.fixture.expires()
         starts = self.fixture.starts()
 
         return XPath.and_(
             XPath(u"today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
-            XPath.or_(
-                XPath(expires).eq(XPath.string('')),
-                u"today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
-            )
+            self.before_form_relevancy_expires()
         )
 
-    def next_valid_schedules(self, phase_id=None):
+    def before_form_relevancy_expires(self):
+        """(today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = '')"""
+        expires = self.fixture.expires()
+        return XPath.or_(
+            XPath(expires).eq(XPath.string('')),
+            u"today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
+        )
+
+    def next_valid_schedules(self, phase_id=None, include_beginning_of_relevancy_window=True):
         """
         [current_schedule_phase = '' or ]current_schedule_phase = phase.id and
         {anchor} != '' and
-        {within_form_relevancy_window}
+        {within_form_relevancy_window} | {before_form_relevancy_expires}
+
+        include_beginning_of_relevancy_window option either takes into account the form relevancy window
         """
 
         current_phase_query = XPath(self.current_schedule_phase).eq(self.phase.id)
@@ -509,7 +516,8 @@ class ScheduleFormXPath(object):
         valid_within_window = XPath.and_(
             current_phase_query,
             XPath(self.anchor).neq(XPath.string('')),
-            self.within_form_relevancy(),
+            (self.within_form_relevancy() if include_beginning_of_relevancy_window
+             else self.before_form_relevancy_expires()),
         )
 
         return valid_within_window

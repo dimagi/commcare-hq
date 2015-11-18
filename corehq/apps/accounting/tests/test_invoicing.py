@@ -197,7 +197,7 @@ class TestInvoice(BaseInvoiceTestCase):
             plan_version=plan
         )
 
-        autopay_subscription.account.update_autopay_user(self.billing_contact.username)
+        autopay_subscription.account.update_autopay_user(self.billing_contact.username, self.domain)
         invoice_date_autopay = utils.months_from_date(autopay_subscription.date_start, 1)
         tasks.generate_invoices(invoice_date_autopay)
 

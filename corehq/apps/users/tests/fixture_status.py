@@ -56,7 +56,7 @@ class TestFixtureStatus(TestCase):
 
     def test_update_status_set_location(self):
         fake_location = MagicMock()
-        fake_location._id = "the_depths_of_khazad_dum"
+        fake_location.location_id = "the_depths_of_khazad_dum"
         self.assertEqual(UserFixtureStatus.objects.all().count(), 0)
 
         self.couch_user.set_location(fake_location)
@@ -69,7 +69,7 @@ class TestFixtureStatus(TestCase):
 
     def test_update_status_unset_location(self):
         fake_location = MagicMock()
-        fake_location._id = "the_mines_of_moria"
+        fake_location.location_id = "the_mines_of_moria"
         self.couch_user.set_location(fake_location)
         previously_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified
 
@@ -80,11 +80,11 @@ class TestFixtureStatus(TestCase):
 
     def test_update_status_reset_location(self):
         fake_location = MagicMock()
-        fake_location._id = "misty_mountains"
+        fake_location.location_id = "misty_mountains"
         self.couch_user.set_location(fake_location)
         previously_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified
 
-        fake_location._id = "lonely_mountain"
+        fake_location.location_id = "lonely_mountain"
         self.couch_user.set_location(fake_location)
 
         new_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified

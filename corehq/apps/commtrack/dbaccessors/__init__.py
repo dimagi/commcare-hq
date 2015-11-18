@@ -42,4 +42,4 @@ def get_supply_point_case_by_location_id(domain, location_id):
 
 
 def get_supply_point_case_by_location(location):
-    return get_supply_point_case_by_location_id(location.domain, location._id)
+    return get_supply_point_case_by_location_id(location.domain, location.location_id)
