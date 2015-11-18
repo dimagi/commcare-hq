@@ -17,20 +17,26 @@ class GenericRepeaterForm(forms.Form):
         self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
         super(GenericRepeaterForm, self).__init__(*args, **kwargs)
 
+        self.form_fields = []
         if self.formats and len(self.formats) > 1:
+            self.form_fields = ['format']
             self.fields['format'] = forms.ChoiceField(
                 required=True,
                 label='Payload Format',
                 choices=self.formats,
             )
 
+        self.form_fields.extend(['url', twbscrispy.PrependedText('use_basic_auth', ''), 'username', 'password'])
+
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper[1] = twbscrispy.PrependedText('use_basic_auth', '')
-        self.helper.all().wrap_together(crispy.Fieldset, 'Forwarding Settings')
-        self.helper.layout.append(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Forwarding Settings',
+                *self.form_fields
+            ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Start Forwarding"),
@@ -86,10 +92,15 @@ class FormRepeaterForm(GenericRepeaterForm):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper[1] = twbscrispy.PrependedText('use_basic_auth', '')
-        self.helper[4] = twbscrispy.PrependedText('exclude_device_reports', '')
-        self.helper[5] = twbscrispy.PrependedText('include_app_id_param', '')
-        self.helper.layout.append(
+        self.form_fields.extend([
+            twbscrispy.PrependedText('exclude_device_reports', ''),
+            twbscrispy.PrependedText('include_app_id_param', '')
+        ])
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Forwarding Settings',
+                *self.form_fields
+            ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Start Forwarding"),
