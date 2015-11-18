@@ -12,7 +12,7 @@ POOL_SIZE = 15
 class FluffPtopReindexer(PtopReindexer):
     help = "Fast reindex of fluff docs"
 
-    view_name = 'by_domain_doc_type/view'
+    view_name = 'by_domain_doc_type_date/view'
 
     # override these
     domain = None
@@ -31,7 +31,8 @@ class FluffPtopReindexer(PtopReindexer):
 
     def get_extra_view_kwargs(self):
         return {
-            'key': [self.domain, self.doc_class.__name__],
+            'startkey': [self.domain, self.doc_class.__name__],
+            'endkey': [self.domain, self.doc_class.__name__, {}],
         }
 
     def handle(self, *args, **options):
