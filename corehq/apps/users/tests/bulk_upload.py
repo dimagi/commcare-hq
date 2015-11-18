@@ -1,4 +1,5 @@
 from django.test import TestCase
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
@@ -143,8 +144,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
 
     def setup_location(self):
-        from corehq.apps.accounting.models import SoftwarePlanEdition
         self.setup_subscription(self.domain_name, SoftwarePlanEdition.ADVANCED)
-        from corehq.apps.commtrack.tests.util import make_loc
         self.state_code = 'my_state'
         self.location = make_loc(self.state_code, type='state', domain=self.domain_name)
