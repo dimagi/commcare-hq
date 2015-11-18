@@ -170,8 +170,8 @@ def get_stock_actions(xform):
     case_ids = list(set(transaction_helper.case_id
                         for transaction_helper in transaction_helpers))
 
-    user_id = xform.form['meta']['userID']
-    submit_time = xform['received_on']
+    user_id = xform.metadata.userID
+    submit_time = xform.received_on
     case_action_intents = []
 
     for case_id in case_ids:
@@ -184,7 +184,7 @@ def get_stock_actions(xform):
                 submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
             )
             case_action_intents.append(CaseActionIntent(
-                case_id=case_id, form_id=xform._id, is_deprecation=False, action=case_action
+                case_id=case_id, form_id=xform.form_id, is_deprecation=False, action=case_action
             ))
 
     return StockFormActions(stock_report_helpers, case_action_intents)

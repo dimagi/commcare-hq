@@ -9,12 +9,13 @@ see [Running the doctype migration](#run-the-doctype-migration) below.
 To `settings.py` add variables representing
 (1) the database you're currently using for the apps you're migrating, probably set to `None` (== main db),
 and (2) the database you _will_ be using.
+Add these variables to `COUCHDB_APPS` and `EXTRA_COUCHDB_DATABASES` in the manner described below.
 to start with:
 
 ```python
 
 NEW_USERS_GROUPS_DB = 'users'  # the database we will be using
-USERS_GROUPS_DB = None  # the database to use
+USERS_GROUPS_DB = None  # the database to use (will later be changed to NEW_USERS_GROUPS_DB)
 ...
 COUCHDB_APPS = [
 ...
@@ -22,7 +23,18 @@ COUCHDB_APPS = [
     ('users', USERS_GROUPS_DB),
 ...
 ]
+...
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE, (
+    ...
+    NEW_USERS_GROUPS_DB,
+))
 ```
+
+Do a full-text search for each doc_type you're migrating across all `map.js` files
+```bash
+$ grep -r --include=map.js CommCareUser
+```
+Are each of those views going to work properly after the doctype is migrated to the new database?
 
 Do any work you need to in order make sure that the doc_types in the apps you're migrating are decoupled
 from other ones:
@@ -37,7 +49,7 @@ from other ones:
 
 ## Add your migrator instance
 
-To `corehq/doctypemigrations/migrator_instances.py` your an object representing your migration
+In `corehq/doctypemigrations/migrator_instances.py`, add an object representing your migration
 going off the following model:
 
 ```python
@@ -143,7 +155,7 @@ for a continuous topoff based on the couchdb changes feed.
 As that's running, you can check `--stats` to monitor whether you're fully caught up.
 `--continuous` will also output "All caught up" each time it reaches the end of the changes feed.
 
-If you're running this after the blocking migration has already been added to the code then you can go ahead and re-doploy which will flip the DB. Don't forget to clean up afterward (see below).
+If you're running this after the blocking migration has already been added to the code then you can go ahead and re-deploy which will flip the DB. Don't forget to clean up afterward (see below).
 
 
 ## Flipping the db

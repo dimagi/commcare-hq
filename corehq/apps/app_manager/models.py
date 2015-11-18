@@ -55,7 +55,6 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
-from dimagi.utils.couch.database import get_db
 import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
@@ -3238,7 +3237,28 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
-    def get_filter_value(self):
+    @classmethod
+    def wrap(cls, data):
+        if cls is ReportAppFilter:
+            doc_type = data['doc_type']
+            doc_type_to_filter_class = {
+                'AutoFilter': AutoFilter,
+                'CustomDataAutoFilter': CustomDataAutoFilter,
+                'StaticChoiceFilter': StaticChoiceFilter,
+                'StaticChoiceListFilter': StaticChoiceListFilter,
+                'StaticDatespanFilter': StaticDatespanFilter,
+                'MobileSelectFilter': MobileSelectFilter,
+            }
+            try:
+                klass = doc_type_to_filter_class[doc_type]
+            except KeyError:
+                raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
+            else:
+                return klass.wrap(data)
+        else:
+            return super(ReportAppFilter, cls).wrap(data)
+
+    def get_filter_value(self, user):
         raise NotImplementedError
 
 
@@ -3318,6 +3338,11 @@ class StaticDatespanFilter(ReportAppFilter):
     def get_filter_value(self, user):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
         return DateSpan(startdate=start_date, enddate=end_date)
+
+
+class MobileSelectFilter(ReportAppFilter):
+    def get_filter_value(self, user):
+        return []
 
 
 class ReportAppConfig(DocumentSchema):

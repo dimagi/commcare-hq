@@ -426,7 +426,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
             report_class = self._report_class(domain, report_config_id)
         except BadSpecError:
             raise Http404
-        return report_class().dispatch(request, domain, report_config_id, **kwargs)
+        return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 
     def get_report(self, domain, slug, config_id):
         try:

@@ -16,7 +16,7 @@ from corehq.apps.indicators.models import CaseIndicatorDefinition, \
     FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError, \
     FormLabelIndicatorDefinition
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db, iter_docs
+from dimagi.utils.couch.database import iter_docs
 from mvp.models import MVP
 
 POOL_SIZE = 10

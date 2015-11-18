@@ -106,6 +106,9 @@ class EWSData(object):
 
 
 class ReportingRatesData(EWSData):
+
+    default_rows = 50
+
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
 
@@ -201,6 +204,10 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             report__date__range=[self.report_config['startdate'], self.report_config['enddate']],
             report__domain=self.domain
         ).order_by('report__date', 'pk')
+
+    @classmethod
+    def get_raw_url(cls, domain=None, render_as=None, **kwargs):
+        return super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):

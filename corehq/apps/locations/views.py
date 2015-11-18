@@ -261,7 +261,7 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        selected = self.location._id or self.location.parent_id
+        selected = self.location.location_id or self.location.parent_id
         breadcrumbs = [{
             'title': LocationsListView.page_title,
             'url': reverse(
@@ -330,7 +330,7 @@ class NewLocationView(BaseLocationView):
         messages.success(self.request, _('Location saved!'))
         return HttpResponseRedirect(
             reverse(EditLocationView.urlname,
-                    args=[self.domain, self.location_form.location._id]),
+                    args=[self.domain, self.location_form.location.location_id]),
         )
 
     def settings_form_post(self, request, *args, **kwargs):
@@ -436,7 +436,7 @@ class EditLocationView(NewLocationView):
                 self.location.location_type,
                 # FIXME accessing this value from the sql location
                 # would be faster
-                self.supply_point._id if self.supply_point else None,
+                self.supply_point.case_id if self.supply_point else None,
             )
             if consumption:
                 consumptions.append((product.name, consumption))

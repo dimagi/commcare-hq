@@ -4,12 +4,16 @@ import uuid
 import hashlib
 
 from django.db import transaction
+
+from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
-    XFormOperationSQL, CommCareCaseIndexSQL, CaseForms
-)
+    XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
+    CommCareCaseSQL, FormEditRebuild)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -86,15 +90,18 @@ class FormProcessorSQL(object):
 
             if cases:
                 for case in cases:
-                    logging.debug('Saving case: %s', case)
-                    if logging.root.isEnabledFor(logging.DEBUG):
-                        logging.debug(case.dumps(pretty=True))
+                    cls.save_case(case)
 
-                    case.save()
-
-                    FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
-                    FormProcessorSQL.save_tracked_models(case, CaseForms)
-                    case.clear_tracked_models()
+    @classmethod
+    def save_case(cls, case):
+        with transaction.atomic():
+            logging.debug('Saving case: %s', case)
+            if logging.root.isEnabledFor(logging.DEBUG):
+                logging.debug(case.dumps(pretty=True))
+            case.save()
+            FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
+            FormProcessorSQL.save_tracked_models(case, CaseTransaction)
+            case.clear_tracked_models()
 
     @staticmethod
     def save_tracked_models(case, model_class):
@@ -113,11 +120,6 @@ class FormProcessorSQL(object):
         for model in to_create:
             logging.debug('Creating %s: %s', model_class, to_create)
             model.save()
-
-    @classmethod
-    def process_stock(cls, xforms, case_db):
-        from corehq.apps.commtrack.processing import StockProcessingResult
-        return StockProcessingResult(xforms[0])
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
@@ -169,3 +171,93 @@ class FormProcessorSQL(object):
                 instance.id = None
 
         return instance
+
+    @staticmethod
+    def get_cases_from_forms(case_db, xforms):
+        """Get all cases affected by the forms. Includes new cases, updated cases.
+        """
+        touched_cases = {}
+        if len(xforms) > 1:
+            domain = xforms[0].domain
+            affected_cases = set()
+            deprecated_form = None
+            for xform in xforms:
+                if xform.is_deprecated:
+                    deprecated_form = xform
+                affected_cases.update(case_update.id for case_update in get_case_updates(xform))
+
+            rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
+            for case_id in affected_cases:
+                case = case_db.get(case_id)
+                if not case:
+                    case = CommCareCaseSQL(domain=domain, case_id=case_id)
+                    case_db.set(case_id, case)
+                case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
+                if case:
+                    touched_cases[case.case_id] = case
+        else:
+            xform = xforms[0]
+            for case_update in get_case_updates(xform):
+                case = case_db.get_case_from_case_update(case_update, xform)
+                if case:
+                    touched_cases[case.case_id] = case
+                else:
+                    logging.error(
+                        "XForm %s had a case block that wasn't able to create a case! "
+                        "This usually means it had a missing ID" % xform.get_id
+                    )
+
+        return touched_cases
+
+    @staticmethod
+    def hard_rebuild_case(domain, case_id, detail):
+        try:
+            case = CommCareCaseSQL.get(case_id)
+            assert case.domain == domain
+            found = True
+        except CaseNotFound:
+            case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
+            found = False
+
+        case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
+        if case.is_deleted and not found:
+            return None
+        FormProcessorSQL.save_case(case)
+
+    @staticmethod
+    def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
+        transactions = get_case_transactions(case.case_id, updated_xforms=updated_xforms)
+        strategy = SqlCaseUpdateStrategy(case)
+
+        rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
+        strategy.rebuild_from_transactions(transactions, rebuild_transaction)
+        return case
+
+
+def get_case_transactions(case_id, updated_xforms=None):
+    transactions = CaseTransaction.get_transactions_for_case_rebuild(case_id)
+    form_ids = {tx.form_uuid for tx in transactions}
+    updated_xforms_map = {
+        xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
+    } if updated_xforms else {}
+
+    form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
+    xform_map = {form.form_id: form for form in XFormInstanceSQL.get_forms_with_attachments(form_ids_to_fetch)}
+
+    def get_form(form_id):
+        if form_id in updated_xforms_map:
+            return updated_xforms_map[form_id]
+
+        try:
+            return xform_map[form_id]
+        except KeyError:
+            raise XFormNotFound
+
+    for transaction in transactions:
+        if transaction.form_uuid:
+            try:
+                transaction.cached_form = get_form(transaction.form_uuid)
+            except XFormNotFound:
+                logging.error('Form not found during rebuild: %s', transaction.form_uuid)
+
+    return transactions

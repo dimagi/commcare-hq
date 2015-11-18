@@ -19,6 +19,8 @@ from unidecode import unidecode
 from django.utils.translation import ugettext as _
 import re
 
+from corehq.form_processor.interfaces.supply import SupplyInterface
+
 
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
@@ -39,7 +41,7 @@ def get_supply_point(domain, site_code=None, loc=None):
                             key=[domain, site_code.lower()],
                             include_docs=True).first()
     if loc:
-        case = SupplyPointCase.get_by_location(loc)
+        case = SupplyInterface(domain).get_by_location(loc)
     else:
         case = None
 

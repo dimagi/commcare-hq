@@ -1,29 +1,43 @@
 {% extends 'styleguide/base.html' %}
 
 {% block content %}
-<div class="jumbotron">
-    <div class="container">
-        <h1>CommCare Style Guide</h1>
-        <p class="lead">Improving usability by establishing consistency.</p>
-    </div>
+<div class="container">
+    <h1>The Official CommCare HQ Style Guide</h1>
+    <p class="lead">
+        The goal of this style guide is to provide you with patterns to reuse in your code,
+        demonstrate what UX features and libraries are available to use, and establish
+        consistency in design, colors, error handling, and other parts of the user interface
+        and overall user experience in CommCare HQ.
+    </p>
+    <h2>Views</h2>
+    <ul>
+        <li>How do I use class-based views?</li>
+        <li>what parent classes to inherit from</li>
+        <li>how to add permissions</li>
+        <li>how to designate what version of Bootstrap to use</li>
+        <li>which templates to extend and what context is required</li>
+    </ul>
+    <p><a href="{% url 'styleguide_views' %}">Read about Views in HQ</a></p>
+    <h2>Forms</h2>
+    <ul>
+        <li>How do I create a crispy form?</li>
+        <li>How do I migrate a form to Bootstrap 3?</li>
+        <li>How do I use my crispy form with angular.js?</li>
+        <li>How do I use my crispy form with knockout.js?</li>
+        <li>What custom components are available?</li>
+    </ul>
+    <p><a href="{% url 'styleguide_forms' %}">Read about Forms in HQ</a></p>
+    <h2>Icons</h2>
+    <ul>
+        <li>What icon library do we use?</li>
+        <li>What HQ-specific custom icons are available?</li>
+    </ul>
+    <p><a href="{% url 'styleguide_icons' %}">Read about Icons in HQ</a></p>
+    <h2>Colors</h2>
+    <ul>
+        <li>What are CommCare HQ's official colors?</li>
+        <li>Is there any advice as to when to use each color?</li>
+    </ul>
+    <p><a href="{% url 'styleguide_colors' %}">Read about Colors in HQ</a></p>
 </div>
-<article class="container">
-    <header class="page-header">
-        <h1>How to use the Style Guide</h1>
-    </header>
-    <ol>
-        <li>
-            Understand the Taxonomy of CommCare HQ
-            <ul>
-                <li>Read about HQ's user personas.</li>
-                <li>...</li>
-            </ul>
-        </li>
-        <li>
-            Follow style conventions for various components,
-            especially forms.
-        </li>
-        <li>...</li>
-    </ol>
-</article>
 {% endblock content %}

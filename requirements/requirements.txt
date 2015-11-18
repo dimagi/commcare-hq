@@ -16,7 +16,6 @@ defusedxml==0.4.1
 diff-match-patch==20120106
 django-tastypie==0.12.2
 djangorestframework==3.3.1
-django-bower==5.0.4
 djtables==0.1.1
 elasticsearch==0.4.4
 #egenix-mx-base==3.2.8
@@ -79,6 +78,7 @@ tinys3==0.1.11
 datadog==0.10.0
 django-websocket-redis==0.4.4
 django-redis-sessions==0.5.0
+django-uuidfield==0.5.0
 # required by ctable
 SQLAlchemy==0.8.2
 alembic==0.6.4

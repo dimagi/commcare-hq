@@ -680,9 +680,6 @@ def copy_tf_localsettings():
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
         sudo('cp -r {}/bower_components {}/bower_components'.format(env.code_current, env.code_root))
-    else:
-        # In the event that the folder doesn't exist, create it so that djangobower doesn't choke
-        sudo('mkdir -p {}/bower_components/bower_components'.format(env.code_root))
 
 
 def copy_release_files():
@@ -1003,9 +1000,8 @@ def _do_collectstatic(use_current_release=False):
 @parallel
 @roles(ROLES_STATIC)
 def _bower_install(use_current_release=False):
-    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{venv}/bin/python manage.py bower install'.format(venv=venv), user=env.sudo_user)
+        sudo('bower install --production')
 
 
 @roles(ROLES_DJANGO)

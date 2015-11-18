@@ -47,16 +47,17 @@ hqLayout.actions = {
             $content = $(hqLayout.selector.content);
         if ($content.length) {
             var availableHeight = hqLayout.utils.getAvailableContentHeight(),
-                contentHeight = $content.innerHeight();
+                contentHeight = $content.innerHeight(),
+                footerHeight = $(hqLayout.selector.footer).outerHeight();
             if (contentHeight > availableHeight) {
-                $content.css('padding-bottom',
-                        $(hqLayout.selector.footer).outerHeight() + 15 + 'px');
+                $content.css('padding-bottom', footerHeight + 15 + 'px');
                 contentHeight = $content.outerHeight();
             }
 
             if ($sidebar.length) {
                 var newSidebarHeight = Math.max(availableHeight, contentHeight);
                 $sidebar.css('min-height', newSidebarHeight + 'px');
+                $sidebar.css('padding-bottom', footerHeight + 15 + 'px');
             }
         }
     },

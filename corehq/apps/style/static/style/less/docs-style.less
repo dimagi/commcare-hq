@@ -2,7 +2,7 @@
 @import "bootstrap3/includes/mixins.less";
 
 // Other variables to override specifically for docs
-@navbar-height: 30px;
+@navbar-height: 40px;
 
 body, .docs-content {
   position: relative;
@@ -11,11 +11,14 @@ body, .docs-content {
 .navbar-docs {
   min-height: @navbar-height;
   .navbar-brand {
-    height: @navbar-height;
-    line-height: 0;
+    line-height: @navbar-height;
   }
   .navbar-nav > li > a {
-    line-height: 0;
+    line-height: @navbar-height;
+    color: #ffffff;
+    &:hover {
+      background-color: lighten(@cc-text, 20%);
+    }
   }
 }
 
