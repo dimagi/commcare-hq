@@ -178,6 +178,11 @@ class SMSSettingsView(BaseCommTrackManageView):
     page_title = ugettext_noop("SMS")
     template_name = 'domain/admin/sms_settings.html'
 
+    def get(self, *args, **kwargs):
+        if self.domain_object.commtrack_settings is None:
+            raise Http404()
+        return super(SMSSettingsView, self).get(*args, **kwargs)
+
     @property
     def page_context(self):
         return {
