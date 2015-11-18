@@ -201,6 +201,12 @@ class MyProjectsList(BaseMyAccountView):
     page_title = ugettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
 
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
     @property
     def all_domains(self):
         all_domains = self.request.couch_user.get_domains()
