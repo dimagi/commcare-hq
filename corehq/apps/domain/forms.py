@@ -486,42 +486,9 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        domain = kwargs.pop('domain', None)
+        self.domain = kwargs.pop('domain', None)
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
-        if not self.can_use_custom_logo:
-            del self.fields['logo']
-            del self.fields['delete_logo']
-
-        if domain:
-            if not CALLCENTER.enabled(domain):
-                self.fields['call_center_enabled'].widget = forms.HiddenInput()
-                self.fields['call_center_type'].widget = forms.HiddenInput()
-                self.fields['call_center_case_owner'].widget = forms.HiddenInput()
-                self.fields['call_center_case_type'].widget = forms.HiddenInput()
-            else:
-                groups = Group.get_case_sharing_groups(domain)
-                users = CommCareUser.by_domain(domain)
-
-                call_center_user_choices = [
-                    (user._id, user.raw_username + ' [user]') for user in users
-                ]
-                call_center_group_choices = [
-                    (group._id, group.name + ' [group]') for group in groups
-                ]
-                call_center_location_choices = []
-                if CALL_CENTER_LOCATION_OWNERS.enabled(domain):
-                    call_center_location_choices = [
-                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
-                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
-                    ]
-
-                self.fields["call_center_case_owner"].choices = \
-                    [('', '')] + \
-                    call_center_location_choices + \
-                    call_center_user_choices + \
-                    call_center_group_choices
-
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -538,6 +505,39 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
             )
         )
+
+        if not self.can_use_custom_logo:
+            del self.fields['logo']
+            del self.fields['delete_logo']
+
+        if self.domain:
+            if not CALLCENTER.enabled(self.domain):
+                del self.fields['call_center_enabled']
+                del self.fields['call_center_type']
+                del self.fields['call_center_case_owner']
+                del self.fields['call_center_case_type']
+            else:
+                groups = Group.get_case_sharing_groups(self.domain)
+                users = CommCareUser.by_domain(self.domain)
+
+                call_center_user_choices = [
+                    (user._id, user.raw_username + ' [user]') for user in users
+                ]
+                call_center_group_choices = [
+                    (group._id, group.name + ' [group]') for group in groups
+                ]
+                call_center_location_choices = []
+                if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
+                    call_center_location_choices = [
+                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
+                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
+                    ]
+
+                self.fields["call_center_case_owner"].choices = \
+                    [('', '')] + \
+                    call_center_location_choices + \
+                    call_center_user_choices + \
+                    call_center_group_choices
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -641,7 +641,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
         if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
-            self.fields['cloudcare_releases'].widget = forms.HiddenInput()
+            del self.fields['cloudcare_releases']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
