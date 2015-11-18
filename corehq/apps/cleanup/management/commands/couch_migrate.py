@@ -49,7 +49,7 @@ class Command(LabelCommand):
 def _copy(config):
     # unfortunately the only couch view we have for this needs to go by domain
     # will be a bit slow
-    database = Domain.get_db()
+    database = get_db()
     assert database.uri == config.source_db.uri, 'can only use "copy" with the main HQ DB as the source'
     domain_names = Domain.get_all_names()
     for domain in domain_names:
