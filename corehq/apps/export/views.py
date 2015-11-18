@@ -44,7 +44,6 @@ from corehq.apps.reports.standard.export import (
 )
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
-from corehq.apps.reports.views import require_can_view_all_reports
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import (
     use_bootstrap3,
@@ -856,7 +855,9 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions or (self.is_deid and self.has_deid_read_permissions and self.can_view_deid)):
+        if not (self.has_edit_permissions or (self.is_deid
+                                              and self.has_deid_read_permissions
+                                              and self.can_view_deid)):
             raise Http404()
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 

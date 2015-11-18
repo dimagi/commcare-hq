@@ -14,10 +14,19 @@ from dimagi.utils.decorators.memoized import memoized
 
 ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
-AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', ['app_types', 'apps_by_type', 'modules_by_app', 'forms_by_app_by_module', 'placeholders'])
-AppFormRMIPlaceholder = collections.namedtuple('AppFormRMIPlaceholder', ['application', 'module', 'form'])
-AppCaseRMIResponse = collections.namedtuple('AppCaseRMIResponse', ['app_types', 'apps_by_type', 'case_types_by_app', 'placeholders'])
-AppCaseRMIPlaceholder = collections.namedtuple('AppCaseRMIPlaceholder', ['application', 'case_type'])
+AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
+    'app_types', 'apps_by_type', 'modules_by_app',
+    'forms_by_app_by_module', 'placeholders'
+])
+AppFormRMIPlaceholder = collections.namedtuple('AppFormRMIPlaceholder', [
+    'application', 'module', 'form'
+])
+AppCaseRMIResponse = collections.namedtuple('AppCaseRMIResponse', [
+    'app_types', 'apps_by_type', 'case_types_by_app', 'placeholders'
+])
+AppCaseRMIPlaceholder = collections.namedtuple('AppCaseRMIPlaceholder', [
+    'application', 'case_type'
+])
 
 
 class ApplicationDataSourceUIHelper(object):
@@ -202,7 +211,7 @@ class ApplicationDataRMIHelper(object):
                     self.domain = domain
 
                 def __getitem__(self, item):
-                    if not self.has_key(item):
+                    if not item in self:
                         try:
                             self[item] = get_app(app_id=item, domain=self.domain)
                         except Http404:
