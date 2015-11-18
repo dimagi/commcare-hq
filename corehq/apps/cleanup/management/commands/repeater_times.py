@@ -2,7 +2,6 @@ from datetime import datetime
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
-from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.models import RepeatRecord
 
 
@@ -13,7 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         domain = args[0]
-        db = Domain.get_db()
+        db = RepeatRecord.get_db()
         doc_ids = get_doc_ids_in_domain_by_type(domain, 'RepeatRecord', db)
         count = len(doc_ids)
         print 'found %s doc ids' % count
