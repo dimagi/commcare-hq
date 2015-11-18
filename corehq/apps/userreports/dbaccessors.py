@@ -1,5 +1,7 @@
 from dimagi.utils.couch.database import iter_docs
 
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+
 
 def get_number_of_report_configs_by_data_source(domain, data_source_id):
     """
@@ -27,11 +29,6 @@ def get_all_report_configs():
 def get_report_configs_for_domain(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     return sorted(
-        ReportConfiguration.view(
-            'userreports/report_configs_by_domain',
-            key=domain,
-            reduce=False,
-            include_docs=True,
-        ),
+        get_docs_in_domain_by_class(domain, ReportConfiguration),
         key=lambda report: report.title,
     )
