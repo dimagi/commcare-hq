@@ -21,7 +21,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
 from casexml.apps.stock.models import StockReport, DocDomainMapping
 from casexml.apps.case.xml import V2
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.commtrack import const
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -36,6 +36,7 @@ from corehq.apps.commtrack.const import StockActions, RequisitionActions, DAYS_I
 from corehq.apps.commtrack.xmlutil import XML
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.decorators.memoized import memoized
+from corehq.util.quickcache import quickcache
 
 
 STOCK_ACTION_ORDER = [
@@ -192,7 +193,7 @@ class StockRestoreConfig(DocumentSchema):
         return super(StockRestoreConfig, cls).wrap(obj)
 
 
-class CommtrackConfig(CachedCouchDocumentMixin, Document):
+class CommtrackConfig(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -227,7 +228,12 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
     # configured on Subscribe Sms page
     alert_config = SchemaProperty(AlertConfig)
 
+    def clear_caches(self):
+        super(CommtrackConfig, self).clear_caches()
+        self.for_domain.clear(self.__class__, self.domain)
+
     @classmethod
+    @quickcache(vary_on=['domain'])
     def for_domain(cls, domain):
         result = get_docs_in_domain_by_class(domain, cls)
         try:
