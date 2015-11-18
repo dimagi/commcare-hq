@@ -14,7 +14,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from corehq.apps.tzmigration import timezone_migration_in_progress
-from corehq.form_processor.utils import new_xform, acquire_lock_for_xform
+from corehq.form_processor.utils import new_xform
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -66,7 +66,7 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
-def process_xform(instance, attachments=None, process=None, domain=None):
+def process_xform(domain, instance, attachments=None, process=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -79,7 +79,7 @@ def process_xform(instance, attachments=None, process=None, domain=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = new_xform(instance, process=process, attachments=attachments)
+        xform_lock = new_xform(domain, instance, attachments=attachments, process=process)
     except couchforms.XMLSyntaxError as e:
         xform = _log_hard_failure(instance, process, e)
         raise SubmissionError(xform)
@@ -108,15 +108,16 @@ def _handle_id_conflict(instance, xform, domain):
     assert domain
     conflict_id = xform.form_id
 
-    if FormProcessorInterface().should_handle_as_duplicate_or_edit(conflict_id, domain):
+    interface = FormProcessorInterface(domain)
+    if interface.should_handle_as_duplicate_or_edit(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
         return _handle_duplicate(xform, instance)
     else:
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
-        xform = FormProcessorInterface().assign_new_id(xform)
-        lock = acquire_lock_for_xform(xform.form_id)
+        xform = interface.assign_new_id(xform)
+        lock = interface.acquire_lock_for_xform(xform.form_id)
         return MultiLockManager([LockManager(xform, lock)])
 
 
@@ -128,8 +129,9 @@ def _handle_duplicate(new_doc, instance):
     and *must* include inline attachments
 
     """
+    interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = FormProcessorInterface().xform_model.get_with_attachments(conflict_id)
+    existing_doc = interface.get_form_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()
@@ -139,19 +141,19 @@ def _handle_duplicate(new_doc, instance):
         #  - "Deprecate" the old form by making a new document with the same contents
         #    but a different ID and a doc_type of XFormDeprecated
         #  - Save the new instance to the previous document to preserve the ID
-        existing_doc, new_doc = FormProcessorInterface().deprecate_xform(existing_doc, new_doc)
+        existing_doc, new_doc = interface.deprecate_xform(existing_doc, new_doc)
 
         # Lock docs with their original ID's (before they got switched during deprecation)
         return MultiLockManager([
-            LockManager(new_doc, acquire_lock_for_xform(existing_doc.form_id)),
-            LockManager(existing_doc, acquire_lock_for_xform(existing_doc.orig_id)),
+            LockManager(new_doc, interface.acquire_lock_for_xform(existing_doc.form_id)),
+            LockManager(existing_doc, interface.acquire_lock_for_xform(existing_doc.orig_id)),
         ])
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
-        duplicate = FormProcessorInterface().deduplicate_xform(new_doc)
+        duplicate = interface.deduplicate_xform(new_doc)
         return MultiLockManager([
-            LockManager(duplicate, acquire_lock_for_xform(duplicate.form_id)),
+            LockManager(duplicate, interface.acquire_lock_for_xform(duplicate.form_id)),
         ])
 
 
@@ -316,10 +318,12 @@ class SubmissionPost(object):
                 legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
         try:
-            lock_manager = process_xform(self.instance,
-                                         attachments=self.attachments,
-                                         process=process,
-                                         domain=self.domain)
+            lock_manager = process_xform(
+                self.domain,
+                self.instance,
+                attachments=self.attachments,
+                process=process
+            )
         except SubmissionError as e:
             return self.get_exception_response_and_log(e, self.path), None, []
         else:

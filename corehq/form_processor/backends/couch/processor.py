@@ -25,7 +25,7 @@ class FormProcessorCouch(object):
         if not process:
             def process(xform):
                 xform.domain = domain
-        xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
+        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
             for xform in xforms:
                 xform.save()

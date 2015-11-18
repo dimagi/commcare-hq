@@ -98,7 +98,7 @@ def archive_exception(exception):
 
 def should_rebuild(domain, case_id):
     try:
-        case = FormProcessorInterface(domain).case_model.get(case_id)
+        case = FormProcessorInterface(domain).get_case(case_id)
         return hasattr(case, 'actions') and case.actions[-1].action_type != CASE_ACTION_REBUILD
     except CaseNotFound:
         return True
