@@ -139,7 +139,10 @@ var ReportModule = (function () {
                     'custom_data_property',
                     'date_range',
                     'filter_type',
-                    'select_value'
+                    'select_value',
+                    'operator',
+                    'date_number',
+                    'date_number2'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
@@ -170,14 +173,17 @@ var ReportModule = (function () {
                     selectedFilterValues[filter.slug].doc_type = filter.selectedValue.doc_type();
                     // Depending on doc_type, pull the correct observables' values
                     var docTypeToField = {
-                        AutoFilter: 'filter_type',
-                        CustomDataAutoFilter: 'custom_data_property',
-                        StaticChoiceFilter: 'select_value',
-                        StaticDatespanFilter: 'date_range'
+                        AutoFilter: ['filter_type'],
+                        CustomDataAutoFilter: ['custom_data_property'],
+                        StaticChoiceFilter: ['select_value'],
+                        StaticDatespanFilter: ['date_range'],
+                        CustomDatespanFilter: ['operator', 'date_number', 'date_number2']
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
-                            selectedFilterValues[filter.slug][field] = filter.selectedValue[field]();
+                            _.each(field, function(value) {
+                                selectedFilterValues[filter.slug][value] = filter.selectedValue[value]();
+                            });
                         }
                     });
                     if(filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
@@ -201,9 +207,10 @@ var ReportModule = (function () {
         };
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
+        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
         this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
+        this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }
 
     function ReportConfig(report_id, display, description, uuid, availableReportIds,
