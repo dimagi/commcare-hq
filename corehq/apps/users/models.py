@@ -17,6 +17,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from corehq.elastic import es_wrapper
@@ -2402,12 +2403,10 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     def by_domain(cls, domain, is_active=True):
         key = [domain]
 
-        return cls.view("users/open_invitations_by_domain",
-            reduce=False,
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-        ).all()
+        return filter(
+            lambda domain_invitation: not domain_invitation.is_accepted,
+            get_docs_in_domain_by_class(domain, cls)
+        )
 
     @classmethod
     def by_email(cls, email, is_active=True):

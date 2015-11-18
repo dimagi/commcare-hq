@@ -92,7 +92,6 @@ class DomainInvitationGenerationCache(GenerationCache):
     doc_types = ['Invitation']
     views = [
         'users/open_invitations_by_email',
-        'users/open_invitations_by_domain',
     ]
 
 
