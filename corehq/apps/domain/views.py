@@ -2289,6 +2289,12 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     page_title = ugettext_lazy("Calculated Properties")
     template_name = 'domain/internal_calculations.html'
 
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         return {
