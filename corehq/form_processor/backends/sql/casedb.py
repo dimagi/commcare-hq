@@ -60,4 +60,4 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
     def get_reverse_indexed_cases(self, case_ids):
         return CommCareCaseSQL.objects.filter(
             domain=self.domain, index__referenced_id__in=case_ids
-        ).defer("case_json").prefetch_related('indices  ')
+        ).defer("case_json").prefetch_related('indices')
