@@ -47,6 +47,11 @@ class BaseCommTrackManageView(BaseDomainView):
     def section_url(self):
         return reverse('default_commtrack_setup', args=[self.domain])
 
+    def get(self, *args, **kwargs):
+        if self.domain_object.commtrack_settings is None:
+            raise Http404()
+        return super(BaseCommTrackManageView, self).get(*args, **kwargs)
+
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
@@ -177,11 +182,6 @@ class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
     page_title = ugettext_noop("SMS")
     template_name = 'domain/admin/sms_settings.html'
-
-    def get(self, *args, **kwargs):
-        if self.domain_object.commtrack_settings is None:
-            raise Http404()
-        return super(SMSSettingsView, self).get(*args, **kwargs)
 
     @property
     def page_context(self):
