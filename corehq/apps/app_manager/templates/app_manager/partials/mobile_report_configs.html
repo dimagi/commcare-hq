@@ -1,10 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id='report-module-edit' class="form-horizontal">
-    <div data-bind="saveButton: saveButton"></div>
+<div class="form-horizontal">
+    <div data-bind="saveButton: saveButton" id="save-button"></div>
     <fieldset>
-        <div class="control-group">
+        <div class="control-group" id="module-name">
             <label class="control-label">{% trans "Module Name" %}</label>
             <div class="controls">
                 <input type="text" data-bind="value: currentModuleName">
@@ -18,6 +18,7 @@
             </div>
         </div>
         {% endif %}
+        {% include 'app_manager/partials/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
         <table class="table" id="report-list">
             <thead>
                 <tr class="row control-group" >
@@ -55,7 +56,7 @@
                 </tr>
             </tbody>
         </table>
-        <button class="btn" data-bind="click: addReport">
+        <button class="btn" data-bind="click: addReport" id="add-report-btn">
             <i class="icon-plus"></i>
             {% trans "Add Report" %}
         </button>

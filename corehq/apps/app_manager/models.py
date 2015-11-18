@@ -3432,10 +3432,6 @@ class ReportModule(ModuleBase):
             ]
         )
 
-    def uses_media(self):
-        # for now no media support for ReportModules
-        return False
-
     def check_report_validity(self):
         """
         returns is_valid, valid_report_configs

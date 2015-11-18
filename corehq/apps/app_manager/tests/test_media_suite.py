@@ -82,7 +82,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_all_media_report_module(self):
         """
-        Report Modules don't support media
+        Report Modules support media
         """
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
@@ -101,11 +101,11 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         image_path = 'jr://file/commcare/case_list_image.jpg'
         audio_path = 'jr://file/commcare/case_list_audo.mp3'
-        app.get_module(0).case_list_form.set_icon('en', image_path)
-        app.get_module(0).case_list_form.set_audio('en', audio_path)
+        app.get_module(0).media_image.update({'en': image_path})
+        app.get_module(0).media_audio.update({'en': audio_path})
 
-        self.assertFalse(app.get_module(0).uses_media())
-        self.assertEqual(len(app.all_media), 0)
+        self.assertTrue(app.get_module(0).uses_media())
+        self.assertEqual(len(app.all_media), 2)
 
 
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
