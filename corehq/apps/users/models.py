@@ -1545,7 +1545,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return create_or_update_safe(
             domain=xform.domain,
             user_data=user_data_from_registration_form(xform),
-            **dict([(arg, xform.form[arg]) for arg in (
+            **dict([(arg, xform.form_data[arg]) for arg in (
                 'username',
                 'password',
                 'uuid',

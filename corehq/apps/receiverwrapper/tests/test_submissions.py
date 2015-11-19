@@ -1,3 +1,6 @@
+import json
+
+from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from corehq.apps.users.models import WebUser
@@ -13,6 +16,10 @@ from corehq.form_processor.test_utils import run_with_all_backends
 # bit of a hack, but the tests optimize around this flag to run faster
 # so when we actually want to test this functionality we need to set
 # the flag to False explicitly
+from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN
+from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+
+
 @override_settings(UNIT_TESTING=False)
 class SubmissionTest(TestCase):
     maxDiff = None
@@ -26,7 +33,11 @@ class SubmissionTest(TestCase):
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
 
+        self.use_sql = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False)
+        update_toggle_cache(USE_SQL_BACKEND.slug, self.domain.name, self.use_sql, NAMESPACE_DOMAIN)
+
     def tearDown(self):
+        clear_toggle_cache(USE_SQL_BACKEND.slug, self.domain.name, NAMESPACE_DOMAIN)
         self.couch_user.delete()
         self.domain.delete()
 
@@ -37,47 +48,40 @@ class SubmissionTest(TestCase):
                 "xml_submission_file": f
             }, **extra)
 
-    def _test(self, form, xmlns):
+    def _get_expected_json(self, form_id, xmlns):
+        filename = 'expected_form_{}.json'.format(
+            'sql' if self.use_sql else 'couch'
+        )
+        file_path = os.path.join(os.path.dirname(__file__), "data", filename)
+        with open(file_path, "rb") as f:
+            expected = json.load(f)
 
-        response = self._submit(form,
-                                HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
+        if '_id' in expected:
+            expected['_id'] = form_id
+        else:
+            expected['form_id'] = unicode(form_id)
+        expected['xmlns'] = unicode(xmlns)
+
+        return expected
+
+    def _test(self, form, xmlns):
+        response = self._submit(form, HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
         xform_id = response['X-CommCareHQ-FormID']
         foo = FormProcessorInterface(self.domain.name).get_xform(xform_id).to_json()
-        n_times_saved = int(foo['_rev'].split('-')[0])
         self.assertTrue(foo['received_on'])
-        for key in ['form', '_attachments', '_rev', 'received_on']:
-            del foo[key]
-        self.assertEqual(n_times_saved, 1)
-        self.assertEqual(foo, {
-            "#export_tag": [
-                "domain",
-                "xmlns"
-            ],
-            "_id": xform_id,
-            "app_id": None,
-            "auth_context": {
-                "authenticated": False,
-                "doc_type": "AuthContext",
-                "domain": "submit",
-                "user_id": None
-            },
-            "build_id": None,
-            "computed_": {},
-            "computed_modified_on_": None,
-            "date_header": '2011-04-11T18:24:43.000000Z',
-            "doc_type": "XFormInstance",
-            "domain": "submit",
-            "history": [],
-            "initial_processing_complete": True,
-            "last_sync_token": None,
-            "openrosa_headers": {
-                "HTTP_DATE": "Mon, 11 Apr 2011 18:24:43 GMT",
-            },
-            "partial_submission": False,
-            "path": "/a/submit/receiver",
-            "submit_ip": "127.0.0.1",
-            "xmlns": xmlns,
-        })
+
+        if not self.use_sql:
+            n_times_saved = int(foo['_rev'].split('-')[0])
+            self.assertEqual(n_times_saved, 1)
+
+        for key in ['form', '_attachments', '_rev', 'received_on', 'user_id']:
+            if key in foo:
+                del foo[key]
+
+        # normalize the json
+        foo = json.loads(json.dumps(foo))
+        expected = self._get_expected_json(xform_id, xmlns)
+        self.assertEqual(foo, expected)
 
     @run_with_all_backends
     def test_submit_simple_form(self):
