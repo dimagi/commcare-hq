@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
-from corehq.apps.commtrack.models import StockState, SupplyPointCase
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType, Location
 from datetime import timedelta, datetime
@@ -11,6 +11,7 @@ from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
 from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
@@ -114,7 +115,7 @@ def make_loc(code, name, domain, type, parent=None):
     loc.save()
 
     if not sql_type.administrative:
-        SupplyPointCase.create_from_location(domain, loc)
+        SupplyInterface.create_from_location(domain, loc)
         loc.save()
 
     sql_location = loc.sql_location

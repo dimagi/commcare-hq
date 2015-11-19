@@ -1,3 +1,4 @@
+from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 import logging
 from pillowtop.checkpoints.util import construct_checkpoint_doc_id_from_name
@@ -15,6 +16,8 @@ def migrate_legacy_pillows(migration_apps, pillow_names):
 
 
 def migrate_legacy_pillow_by_name(migration_apps, pillow_name):
+    if settings.UNIT_TESTING:
+        return
     try:
         DjangoPillowCheckpoint = migration_apps.get_model('pillowtop', 'DjangoPillowCheckpoint')
         pillow_config = get_pillow_config_by_name(pillow_name)

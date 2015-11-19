@@ -690,7 +690,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
                 )],
             )
         ])
-        FormProcessorInterface().case_model.get(parent_id).soft_delete()
+        FormProcessorInterface().get_case(parent_id).soft_delete()
         assert_user_doesnt_have_case(self, self.user, parent_id)
         # todo: in the future we may also want to purge the child
         assert_user_has_case(self, self.user, child_id)

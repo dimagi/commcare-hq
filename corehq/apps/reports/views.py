@@ -51,6 +51,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
+from corehq.form_processor.models import UserRequestedRebuild
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
@@ -182,6 +183,7 @@ def default(request, domain):
     if hasattr(module, 'DEFAULT_REPORT_CLASS'):
         return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
     return HttpResponseRedirect(reverse(saved_reports, args=[domain]))
+
 
 @login_and_domain_required
 def old_saved_reports(request, domain):
@@ -336,7 +338,6 @@ def export_data_async(request, domain):
     )
 
 
-
 @login_or_digest
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
@@ -350,13 +351,16 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     else:
         return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
 
+
 @require_permission('view_report', 'corehq.apps.reports.standard.export.DeidExportReport', login_decorator=None)
 def _export_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
 
+
 @require_form_export_permission
 def _export_no_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
+
 
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
     req = request.POST if request.method == 'POST' else request.GET
@@ -712,6 +716,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     return HttpResponse()
 
+
 @login_and_domain_required
 @require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
@@ -726,6 +731,7 @@ def delete_config(request, domain, config_id):
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
 
+
 def normalize_hour(hour):
     day_change = 0
     if hour < 0:
@@ -737,6 +743,7 @@ def normalize_hour(hour):
 
     assert 0 <= hour < 24
     return (hour, day_change)
+
 
 def calculate_hour(hour, hour_difference, minute_difference):
     hour -= hour_difference
@@ -884,6 +891,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     return render(request, template, context)
 
+
 @login_and_domain_required
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
@@ -900,6 +908,7 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
         rep.delete()
         messages.success(request, "Scheduled report deleted!")
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
 
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
@@ -1088,7 +1097,7 @@ def case_xml(request, domain, case_id):
 @require_POST
 def rebuild_case_view(request, domain, case_id):
     case = get_document_or_404(CommCareCase, domain, case_id)
-    rebuild_case_from_forms(case_id)
+    rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id=request.user.user_id))
     messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 

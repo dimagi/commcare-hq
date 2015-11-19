@@ -1,6 +1,7 @@
 import logging
 
 from couchdbkit.exceptions import BulkSaveError
+from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
@@ -82,6 +83,29 @@ class FormProcessorInterface(object):
     def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
+    def get_xform(self, form_id):
+        return self.xform_model.get(form_id)
+
+    def get_form_with_attachments(self, form_id):
+        return self.xform_model.get_with_attachments(form_id)
+
+    def acquire_lock_for_xform(self, xform_id):
+        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
+        try:
+            lock.acquire()
+        except RedisError:
+            lock = None
+        return lock
+
+    def get_case(self, case_id):
+        return self.case_model.get(case_id)
+
+    def get_cases(self, case_ids):
+        return self.case_model.get_cases(case_ids)
+
+    def get_case_xform_ids(self, case_id):
+        return self.case_model.get_case_xform_ids(case_id)
+
     def store_attachments(self, xform, attachments):
         """
         Takes a list of Attachment namedtuples with content, name, and content_type and stores them to the XForm
@@ -115,9 +139,6 @@ class FormProcessorInterface(object):
             _handle_unexpected_error(self, instance, error_message)
             raise
 
-    def process_stock(self, xforms, case_db):
-        return self.processor.process_stock(xforms, case_db)
-
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)
 
@@ -129,3 +150,9 @@ class FormProcessorInterface(object):
 
     def assign_new_id(self, xform):
         return self.processor.assign_new_id(xform)
+
+    def hard_rebuild_case(self, case_id, detail):
+        return self.processor.hard_rebuild_case(self.domain, case_id, detail)
+
+    def get_cases_from_forms(self, xforms, case_db):
+        return self.processor.get_cases_from_forms(xforms, case_db)

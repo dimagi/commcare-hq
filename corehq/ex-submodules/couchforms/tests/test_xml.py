@@ -7,9 +7,12 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from django.test import TestCase
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.util.test_utils import TestFileMixin
 
 
-class XMLElementTest(TestCase):
+class XMLElementTest(TestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
 
     @run_with_all_backends
     def test_various_encodings(self):
@@ -18,9 +21,7 @@ class XMLElementTest(TestCase):
             ('UTF-8', u'हिन्दी चट्टानों'),
             ('ASCII', 'hello'),
         )
-        file_path = os.path.join(os.path.dirname(__file__), "data", "encoding.xml")
-        with open(file_path, "rb") as f:
-            xml_template = f.read()
+        xml_template = self.get_xml('encoding')
 
         for encoding, value in tests:
             xml_data = xml_template.format(

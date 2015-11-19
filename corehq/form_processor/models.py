@@ -1,13 +1,18 @@
 import json
 import os
 import collections
-import hashlib
 
+from datetime import datetime
 from django.db.models import Prefetch
+from jsonobject import JsonObject
+from jsonobject import StringProperty
+from jsonobject.properties import BooleanProperty
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
 from django.db import models, transaction
+from uuidfield import UUIDField
+
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
@@ -104,8 +109,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
-    auth_context = JSONField(lazy=True)
-    openrosa_headers = JSONField(lazy=True)
+    auth_context = JSONField(lazy=True, default=dict)
+    openrosa_headers = JSONField(lazy=True, default=dict)
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
@@ -115,6 +120,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     build_id = models.CharField(max_length=255, null=True)
     # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
+    initial_processing_complete = models.BooleanField(default=False)
 
     @property
     def form_id(self):
@@ -139,6 +145,12 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
             ).get(form_uuid=xform_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
+
+    @classmethod
+    def get_forms_with_attachments(cls, xform_ids):
+        return XFormInstanceSQL.objects.prefetch_related(
+            Prefetch('attachments', to_attr='cached_attachments')
+        ).filter(form_uuid__in=xform_ids)
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -232,6 +244,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
                 operation=XFormOperationSQL.ARCHIVE,
             )
             self.save()
+            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=True)
         xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user=None):
@@ -244,7 +257,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
                 operation=XFormOperationSQL.UNARCHIVE,
             )
             self.save()
-        # xform_unarchived.send(sender="form_processor", xform=self)
+            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=False)
+        xform_unarchived.send(sender="form_processor", xform=self)
 
 
 class AbstractAttachment(models.Model):
@@ -321,8 +335,28 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     location = GeoPointProperty()
 
 
+class SupplyPointCaseMixin(object):
+    @property
+    @memoized
+    def location(self):
+        from corehq.apps.locations.models import Location
+        from couchdbkit.exceptions import ResourceNotFound
+        if self.location_id is None:
+            return None
+        try:
+            return Location.get(self.location_id)
+        except ResourceNotFound:
+            return None
+
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.get(location_id=self.location_id)
+
+
 class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges):
+                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                      SupplyPointCaseMixin):
     hash_property = 'case_uuid'
 
     case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -332,8 +366,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     owner_id = models.CharField(max_length=255)
 
-    opened_on = models.DateTimeField(null=False)
-    opened_by = models.CharField(max_length=255, null=False)
+    opened_on = models.DateTimeField(null=True)
+    opened_by = models.CharField(max_length=255, null=True)
 
     modified_on = models.DateTimeField(null=False)
     server_modified_on = models.DateTimeField(null=False)
@@ -346,6 +380,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     deleted = models.BooleanField(default=False, null=False)
 
     external_id = models.CharField(max_length=255)
+    location_uuid = UUIDField(null=True, unique=False)
 
     case_json = JSONField(lazy=True, default=dict)
 
@@ -358,8 +393,20 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         self.case_uuid = _id
 
     @property
+    def location_id(self):
+        return str(self.location_uuid)
+
+    @location_id.setter
+    def location_id(self, _id):
+        self.location_uuid = _id
+
+    @property
     def xform_ids(self):
-        return self.xform_set.values_list('form_uuid', flat=True)
+        return list(self.transaction_set.filter(
+            revoked=False,
+            form_uuid__isnull=False,
+            type=CaseTransaction.TYPE_FORM
+        ).values_list('form_uuid', flat=True))
 
     @property
     def user_id(self):
@@ -442,7 +489,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
-        return CaseForms.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
+        return CaseTransaction.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -523,12 +570,118 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
         ]
 
 
-class CaseForms(models.Model):
+class CaseTransaction(models.Model):
+    TYPE_FORM = 0
+    TYPE_REBUILD_WITH_REASON = 1
+    TYPE_REBUILD_USER_REQUESTED = 2
+    TYPE_REBUILD_USER_ARCHIVED = 3
+    TYPE_REBUILD_FORM_ARCHIVED = 4
+    TYPE_REBUILD_FORM_EDIT = 5
+    TYPE_CHOICES = (
+        (TYPE_FORM, 'form'),
+        (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
+        (TYPE_REBUILD_USER_REQUESTED, 'user_requested_rebuild'),
+        (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
+        (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
+        (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+    )
+    TYPES_TO_PROCESS = (
+        TYPE_FORM,
+    )
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
-        related_name="xform_set", related_query_name="xform"
+        related_name="transaction_set", related_query_name="transaction"
     )
-    form_uuid = models.CharField(max_length=255, null=False)  # can't be a foreign key due to partitioning
+    form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
+    server_date = models.DateTimeField(null=False)
+    type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
+    revoked = models.BooleanField(default=False, null=False)
+    details = JSONField(lazy=True, default=dict)
+
+    @property
+    def is_relevant(self):
+        relevant = not self.revoked and self.type in CaseTransaction.TYPES_TO_PROCESS
+        if relevant and self.form:
+            relevant = self.form.is_normal
+
+        return relevant
+
+    @property
+    def form(self):
+        if not self.form_uuid:
+            return None
+        form = getattr(self, 'cached_form', None)
+        if not form:
+            self.cached_form = XFormAttachmentSQL.objects.get(self.form_uuid)
+        return self.cached_form
+
+    @classmethod
+    def form_transaction(cls, case, xform):
+        return CaseTransaction(
+            case=case,
+            form_uuid=xform.form_id,
+            server_date=xform.received_on,
+            type=CaseTransaction.TYPE_FORM,
+            revoked=not xform.is_normal
+        )
+
+    @classmethod
+    def rebuild_transaction(cls, case, detail):
+        return CaseTransaction(
+            case=case,
+            server_date=datetime.utcnow(),
+            type=detail.type,
+            details=detail.to_json()
+        )
+
+    @classmethod
+    def get_transactions_for_case_rebuild(cls, case_id):
+        return list(CaseTransaction.objects.filter(
+            case_id=case_id,
+            revoked=False,
+            type__in=CaseTransaction.TYPES_TO_PROCESS
+        ).all())
 
     class Meta:
         unique_together = ("case", "form_uuid")
+        ordering = ['server_date']
+
+
+class CaseTransactionDetail(JsonObject):
+    _type = None
+
+    @property
+    def type(self):
+        return self._type
+
+    def __eq__(self, other):
+        return self.type == other.type and self.to_json() == other.to_json()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+class RebuildWithReason(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_WITH_REASON
+    reason = StringProperty()
+
+
+class UserRequestedRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_USER_REQUESTED
+    user_id = StringProperty()
+
+
+class UserArchivedRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_USER_ARCHIVED
+    user_id = StringProperty()
+
+
+class FormArchiveRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED
+    form_id = StringProperty()
+    archived = BooleanProperty()
+
+
+class FormEditRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
+    deprecated_form_id = StringProperty()

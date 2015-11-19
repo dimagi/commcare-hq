@@ -924,6 +924,21 @@ class InvoiceInterface(InvoiceInterfaceBase):
         )
 
 
+def _get_domain_from_payment_record(payment_record):
+    from corehq.apps.accounting.models import CreditAdjustment
+    credit_adjustments = CreditAdjustment.objects.filter(payment_record=payment_record)
+    domains = set(
+        credit_adj.credit_line.account.created_by_domain
+        for credit_adj in credit_adjustments
+        if credit_adj.credit_line.account.created_by_domain
+    ) | set(
+        credit_adj.credit_line.subscription.subscriber.domain
+        for credit_adj in credit_adjustments
+        if credit_adj.credit_line.subscription
+    )
+    return ', '.join(domains) if domains else None
+
+
 class PaymentRecordInterface(GenericTabularReport):
     section_name = "Accounting"
     dispatcher = AccountingAdminInterfaceDispatcher
@@ -1005,7 +1020,7 @@ class PaymentRecordInterface(GenericTabularReport):
                     ),
                     sort_key=account.name,
                 ),
-                applicable_credit_line.subscription.subscriber.domain if applicable_credit_line.subscription else '',
+                _get_domain_from_payment_record(record),
                 record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(

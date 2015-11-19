@@ -1,4 +1,7 @@
 import logging
+from abc import ABCMeta, abstractmethod
+
+import six as six
 from couchdbkit import ResourceNotFound
 from dimagi.utils.decorators.memoized import memoized
 
@@ -132,3 +135,15 @@ class AbstractCommCareCase(object):
     @classmethod
     def get_case_xform_ids(cls, case_id):
         raise NotImplementedError()
+
+
+class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
+    @classmethod
+    @abstractmethod
+    def get_by_location(cls, location):
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def get_or_create_by_location(cls, location):
+        raise NotImplementedError

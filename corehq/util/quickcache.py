@@ -80,7 +80,7 @@ class QuickCache(object):
                     )
 
         self.encoding_assert = soft_assert(
-            to=['{}@{}'.format('skelly', 'dimagi.com')],
+            notify_admins=True,
             fail_if_debug=False,
             skip_frames=5,
         )

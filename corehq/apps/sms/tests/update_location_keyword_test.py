@@ -1,7 +1,6 @@
 from django.test.testcases import TestCase
-from corehq.apps.accounting import generator
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription, \
-    SubscriptionAdjustment
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.sms.api import incoming
@@ -20,7 +19,7 @@ def create_mobile_worker(domain, username, password, phone_number, save_vn=True)
     return user
 
 
-class UpdateLocationKeywordTest(TestCase):
+class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
 
     def _get_last_outbound_message(self):
         return SMS.objects.filter(domain=self.domain, direction='O').latest('date').text
@@ -33,21 +32,7 @@ class UpdateLocationKeywordTest(TestCase):
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
 
-        generator.instantiate_accounting_for_tests()
-        cls.account = BillingAccount.get_or_create_account_by_domain(
-            cls.domain_obj.name,
-            created_by="automated-test",
-        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            cls.domain_obj, edition=SoftwarePlanEdition.ADVANCED
-        )
-        cls.subscription = Subscription.new_domain_subscription(
-            cls.account,
-            cls.domain_obj.name,
-            plan
-        )
-        cls.subscription.is_active = True
-        cls.subscription.save()
+        cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
         cls.backend = TestSMSBackend(is_global=True)
         cls.backend.save()
@@ -106,6 +91,4 @@ class UpdateLocationKeywordTest(TestCase):
         cls.backend.delete()
         cls.domain_obj.delete()
 
-        SubscriptionAdjustment.objects.all().delete()
-        cls.subscription.delete()
-        cls.account.delete()
+        cls.teardown_subscription()

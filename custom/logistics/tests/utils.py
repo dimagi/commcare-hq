@@ -1,7 +1,6 @@
-from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import TEST_USER, TEST_DOMAIN, TEST_NUMBER, TEST_PASSWORD, TEST_BACKEND
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
 def bootstrap_user(loc, username=TEST_USER, domain=TEST_DOMAIN,
@@ -20,8 +19,9 @@ def bootstrap_user(loc, username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
     if home_loc == loc.site_code:
-        if not SupplyPointCase.get_by_location(loc):
-            make_supply_point(domain, loc)
+        interface = SupplyInterface(domain)
+        if not interface.get_by_location(loc):
+            interface.create_from_location(domain, loc)
 
         user.set_location(loc)
 

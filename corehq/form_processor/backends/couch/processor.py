@@ -1,6 +1,11 @@
 import datetime
+import logging
 
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case import const
+from casexml.apps.case.cleanup import get_case_forms, rebuild_case_from_actions
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import process_xform, deprecation_type
 from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
@@ -20,7 +25,7 @@ class FormProcessorCouch(object):
         if not process:
             def process(xform):
                 xform.domain = domain
-        xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
+        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
             for xform in xforms:
                 xform.save()
@@ -61,11 +66,6 @@ class FormProcessorCouch(object):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
-
-    @classmethod
-    def process_stock(cls, xforms, case_db):
-        from corehq.apps.commtrack.processing import process_stock
-        return process_stock(xforms, case_db)
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
@@ -115,3 +115,83 @@ class FormProcessorCouch(object):
     @classmethod
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
+
+    @staticmethod
+    def get_cases_from_forms(case_db, xforms):
+        """Get all cases affected by the forms. Includes new cases, updated cases.
+        """
+        # have to apply the deprecations before the updates
+        sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
+        touched_cases = {}
+        for xform in sorted_forms:
+            for case_update in get_case_updates(xform):
+                case_doc = case_db.get_case_from_case_update(case_update, xform)
+                if case_doc:
+                    touched_cases[case_doc.case_id] = case_doc
+                else:
+                    logging.error(
+                        "XForm %s had a case block that wasn't able to create a case! "
+                        "This usually means it had a missing ID" % xform.get_id
+                    )
+
+        return touched_cases
+
+    @staticmethod
+    def hard_rebuild_case(domain, case_id, detail):
+        try:
+            case = CommCareCase.get(case_id)
+            assert case.domain == domain
+            found = True
+        except CaseNotFound:
+            case = CommCareCase()
+            case.case_id = case_id
+            case.domain = domain
+            found = False
+
+        forms = get_case_forms(case_id)
+        filtered_forms = [f for f in forms if f.is_normal]
+        sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
+
+        actions = _get_actions_from_forms(domain, sorted_forms, case_id)
+
+        if not found and case.domain is None:
+            case.domain = domain
+
+        rebuild_case_from_actions(case, actions)
+        # todo: should this move to case.rebuild?
+        if not case.xform_ids:
+            if not found:
+                return None
+            # there were no more forms. 'delete' the case
+            case.doc_type = 'CommCareCase-Deleted'
+
+        # add a "rebuild" action
+        case.actions.append(_rebuild_action())
+        case.save()
+        return case
+
+
+def _get_actions_from_forms(domain, sorted_forms, case_id):
+    from corehq.apps.commtrack.processing import get_stock_actions
+    case_actions = []
+    for form in sorted_forms:
+        assert form.domain == domain
+
+        case_updates = get_case_updates(form)
+        filtered_updates = [u for u in case_updates if u.id == case_id]
+        for u in filtered_updates:
+            case_actions.extend(u.get_case_actions(form))
+        stock_actions = get_stock_actions(form)
+        case_actions.extend([intent.action
+                             for intent in stock_actions.case_action_intents
+                             if not intent.is_deprecation])
+    return case_actions
+
+
+def _rebuild_action():
+    now = datetime.datetime.utcnow()
+    return CommCareCaseAction(
+        action_type=const.CASE_ACTION_REBUILD,
+        date=now,
+        server_date=now,
+    )

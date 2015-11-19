@@ -11,12 +11,12 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 from corehq.apps.analytics.tasks import track_workflow
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, Form
@@ -24,11 +24,19 @@ from corehq.apps.app_manager.models import Application, Form
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
-from corehq.apps.dashboard.models import IconContext, TileConfiguration
+from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq import privileges, toggles
+from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
-from corehq.apps.style.decorators import upgrade_knockout_js
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_knockout_js,
+    use_select2,
+    use_daterangepicker,
+    use_datatables,
+    use_jquery_ui,
+)
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -62,6 +70,7 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
+from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
@@ -70,7 +79,6 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from django_prbac.decorators import requires_privilege_raise404
 
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.memoized import memoized
@@ -126,73 +134,109 @@ def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
 
-class ReportBuilderView(TemplateView):
+class ReportBuilderView(BaseDomainView):
 
     @cls_to_view_login_and_domain
-    @upgrade_knockout_js
-    @method_decorator(toggles.REPORT_BUILDER.required_decorator())
-    @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
-    def dispatch(self, request, domain, **kwargs):
-        self.domain = domain
-        return super(ReportBuilderView, self).dispatch(request, domain, **kwargs)
+    @use_bootstrap3
+    @use_knockout_js
+    @use_select2
+    @use_daterangepicker
+    @use_datatables
+    def dispatch(self, request, *args, **kwargs):
+        if has_report_builder_access(request):
+            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
+
+    @property
+    def section_name(self):
+        return _("Report Builder")
+
+    @property
+    def section_url(self):
+        return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
 
 
-class ReportTypeTileConfiguration(TileConfiguration):
-    def __init__(self, *args, **kwargs):
-        self.analytics_label = kwargs.pop('analytics_label', None)
-        super(ReportTypeTileConfiguration, self).__init__(*args, **kwargs)
-
-
-class ReportBuilderTypeSelect(ReportBuilderView):
+class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/builder_report_type_select.html"
+    urlname = 'report_builder_select_type'
+    page_title = ugettext_lazy('Select Report Type')
 
-    def get_context_data(self, **kwargs):
+    @property
+    def page_url(self):
+        return "#"
+
+    @property
+    def page_context(self):
         return {
             "has_apps": len(get_apps_in_domain(self.domain)) > 0,
-            "domain": self.domain,
             "report": {
                 "title": _("Create New Report")
             },
-            "tiles": self.tiles,
+            "tiles": [{
+                'title': tile.title,
+                'slug': tile.slug,
+                'ng_directive': tile.ng_directive,
+            } for tile in self.tiles],
         }
+
+    @allow_remote_invocation
+    def update_tile(self, in_data):
+        tile = self.make_tile(in_data['slug'], in_data)
+        return {
+            'response': tile.context,
+            'success': True,
+        }
+
+    def make_tile(self, slug, in_data):
+        config = self.slug_to_tile[slug]
+        return Tile(config, self.request, in_data)
+
+    @property
+    def slug_to_tile(self):
+        return dict([(a.slug, a) for a in self.tiles])
 
     @property
     def tiles(self):
         return [
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
-                analytics_label="chart",
+                analytics_usage_label="Chart",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
                 help_text=_('A bar graph or a pie chart to show data from your cases or forms.'
                             ' You choose the property to graph.'),
             ),
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
-                analytics_label="list",
+                analytics_usage_label="List",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
                 help_text=_('A list of cases or form submissions.'
                             ' You choose which properties will be columns.'),
             ),
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Worker Report'),
                 slug='worker-report',
-                analytics_label="worker",
+                analytics_usage_label="Worker",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
                 help_text=_('A table of your mobile workers.'
                             ' You choose which properties will be the columns.'),
             ),
-            ReportTypeTileConfiguration(
+            TileConfiguration(
                 title=_('Data Table'),
                 slug='data-table',
-                analytics_label="table",
+                analytics_usage_label="Table",
+                analytics_workflow_label="Clicked on Report Builder Tile",
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -204,12 +248,14 @@ class ReportBuilderTypeSelect(ReportBuilderView):
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/builder_data_source_select.html'
+    page_title = ugettext_lazy('Create Report')
 
-    def dispatch(self, request, domain, report_type, **kwargs):
-        self.report_type = report_type
-        return super(ReportBuilderDataSourceSelect, self).dispatch(request, domain, **kwargs)
+    @property
+    def report_type(self):
+        return self.kwargs['report_type']
 
-    def get_context_data(self, **kwargs):
+    @property
+    def page_context(self):
         context = {
             "sources_map": self.form.sources_map,
             "domain": self.domain,
@@ -275,19 +321,29 @@ class EditReportInBuilder(View):
 
 
 class ConfigureChartReport(ReportBuilderView):
+    page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/partials/report_builder_configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = _("Chart Report: {}")
+    report_title = ugettext_noop("Chart Report: {}")
     report_type = 'chart'
     existing_report = None
 
-    def get_context_data(self, **kwargs):
-        context = {
-            "domain": self.domain,
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_name(self):
+        title = self.request.GET.get('report_name', '')
+        if self.existing_report:
+            title = self.existing_report.title
+        return _(self.report_title).format(title)
+
+    @property
+    def page_context(self):
+        return {
             'report': {
-                "title": self.report_title.format(
-                    self.request.GET.get('report_name', '')
-                )
+                "title": self.page_name
             },
             'report_type': self.report_type,
             'form': self.report_form,
@@ -300,7 +356,6 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
         }
-        return context
 
     @property
     @memoized
@@ -344,7 +399,7 @@ class ConfigureChartReport(ReportBuilderView):
 
 
 class ConfigureListReport(ConfigureChartReport):
-    report_title = _("List Report: {}")
+    report_title = ugettext_noop("List Report: {}")
     report_type = 'list'
 
     @property
@@ -354,7 +409,7 @@ class ConfigureListReport(ConfigureChartReport):
 
 
 class ConfigureTableReport(ConfigureChartReport):
-    report_title = _("Table Report: {}")
+    report_title = ugettext_noop("Table Report: {}")
     report_type = 'table'
 
     @property
@@ -364,7 +419,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
 
 class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = _("Worker Report: {}")
+    report_title = ugettext_noop("Worker Report: {}")
     report_type = 'worker'
 
     @property
@@ -390,7 +445,7 @@ def _edit_report_shared(request, domain, config, read_only=False):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER)
+@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER, toggles.REPORT_BUILDER_BETA_GROUP)
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
