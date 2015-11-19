@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
 
@@ -192,7 +193,7 @@ class FundamentalCaseTests(TestCase):
 
 
 def _submit_case_block(create, case_id, **kwargs):
-    return FormProcessorInterface().post_case_blocks(
+    return post_case_blocks(
         [
             CaseBlock(
                 create=create,

@@ -2,8 +2,9 @@ from django.conf import settings
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
+
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from datetime import datetime
 from casexml.apps.case.xml import V2
@@ -122,7 +123,7 @@ class Version2CaseParsingTest(TestCase):
 
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
-            FormProcessorInterface().post_case_blocks([
+            post_case_blocks([
                 CaseBlock(
                     create=True, case_id=prereq,
                     user_id=user_id

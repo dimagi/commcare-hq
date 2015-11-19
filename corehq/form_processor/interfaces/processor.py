@@ -5,7 +5,6 @@ from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
-from casexml.apps.case.util import post_case_blocks
 
 from ..utils import should_use_sql_backend
 
@@ -75,9 +74,6 @@ class FormProcessorInterface(object):
     @unit_testing_only
     def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
         return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
-
-    def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
-        return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
     def get_xform(self, form_id):
         return self.xform_model.get(form_id)

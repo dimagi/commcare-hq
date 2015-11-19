@@ -7,11 +7,10 @@ from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIn
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
+from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
-from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class SimpleCaseBugTests(SimpleTestCase):
@@ -31,7 +30,6 @@ class CaseBugTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
-        self.interface = FormProcessorInterface()
         delete_all_cases()
 
     def test_conflicting_ids(self):
@@ -130,7 +128,7 @@ class CaseBugTest(TestCase, TestFileMixin):
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
         case_id = 'immagetdeleted'
-        [xform, [case]] = self.interface.post_case_blocks([
+        [xform, [case]] = post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
         ])
@@ -139,7 +137,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         self.assertEqual('bar', case.foo)
         self.assertTrue(case.is_deleted)
 
-        [xform, [case]] = self.interface.post_case_blocks([
+        [xform, [case]] = post_case_blocks([
             CaseBlock(create=False, case_id=case_id, user_id='whatever',
                       update={'foo': 'not_bar'}).as_xml()
         ])
