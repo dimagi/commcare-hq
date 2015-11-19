@@ -37,14 +37,20 @@ class CouchConfig(object):
 
     @property
     @memoized
-    def app_label_to_db_slug(self):
+    def app_label_to_db_uri(self):
         return dict(self._settings_helper.make_couchdb_tuples())
 
+    def get_db_uri_for_class(self, klass):
+        return self.app_label_to_db_uri[getattr(klass._meta, "app_label")]
+
+    def get_db_uri_for_doc_type(self, doc_type):
+        return self.get_db_for_class(class_by_doc_type()[doc_type])
+
     def get_db_for_class(self, klass):
-        return self.app_label_to_db_slug[getattr(klass._meta, "app_label")]
+        return Database(self.get_db_uri_for_class(klass))
 
     def get_db_for_doc_type(self, doc_type):
-        return self.get_db_for_class(class_by_doc_type()[doc_type])
+        return Database(self.get_db_uri_for_doc_type(doc_type))
 
 
 @memoized

@@ -92,11 +92,23 @@ class Command(BaseCommand):
                          "copy. This must be false if running in a supervised process")
     )
 
+    def iter_source_dbs(self):
+        for sourcedb_name, sourcedb in self.source_couch.all_dbs_by_slug.items():
+            if sourcedb_name not in self.exclude_dbs:
+                print "In {} db".format(sourcedb_name or "the main")
+                yield sourcedb_name, sourcedb
+
     def handle(self, *args, **options):
         if len(args) not in [2, 3]:
             raise CommandError('Usage is copy_domain %s' % self.args)
-
-        source_couch = CouchConfig(args[0])
+        self.exclude_dbs = (
+            # these have data we don't want to copy
+            'receiverwrapper', 'couchlog', 'auditcare', 'fluff-bihar', 'fluff-opm',
+            'fluff-mc', 'fluff-cvsu', 'mvp-indicators', 'm4change',
+            # todo: missing domain/docs, but probably want to add back
+            'meta',
+        )
+        self.source_couch = source_couch = CouchConfig(args[0])
         domain = args[1].strip()
         simulate = options['simulate']
         exclude_attachments = options['exclude_attachments']
@@ -105,9 +117,8 @@ class Command(BaseCommand):
         since = json_format_date(iso_string_to_date(options['since'])) if options['since'] else None
 
         if options['list_types']:
-            for sourcedb_name, sourcedb in source_couch.all_dbs_by_slug.items():
-                print "In {} db".format(sourcedb_name or "the main")
-                self.list_types(source_couch, domain, since)
+            for sourcedb_name, sourcedb in self.iter_source_dbs():
+                self.list_types(sourcedb, domain, since)
             sys.exit(0)
 
         if simulate:
@@ -147,16 +158,14 @@ class Command(BaseCommand):
                 print "Path '%s' does not contain any document ID's" % path
                 sys.exit(1)
 
-            for sourcedb_name, sourcedb in source_couch.all_dbs_by_slug.items():
-                print "In {} db".format(sourcedb_name or "the main")
+            for sourcedb_name, sourcedb in self.iter_source_dbs():
                 self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'],
                                exclude_attachments=exclude_attachments)
         else:
             startkey = [domain]
             endkey = [domain, {}]
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
-            for sourcedb_name, sourcedb in source_couch.all_dbs_by_slug.items():
-                print "In {} db".format(sourcedb_name or "the main")
+            for sourcedb_name, sourcedb in self.iter_source_dbs():
                 self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types,
                                postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
 
@@ -216,8 +225,9 @@ class Command(BaseCommand):
         if postgres_db:
             copy_postgres_data_for_docs(postgres_db, doc_ids=doc_ids, simulate=simulate)
 
-    def copy_domain(self, sourcedb, domain):
+    def copy_domain(self, source_couch, domain):
         print "Copying domain doc"
+        sourcedb = source_couch.get_db_for_class(Domain)
         result = sourcedb.view(
             "domain/domains",
             key=domain,
