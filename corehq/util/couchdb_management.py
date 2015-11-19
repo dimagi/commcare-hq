@@ -18,16 +18,22 @@ class CouchConfig(object):
 
     @property
     @memoized
-    def all_dbs_by_slug(self):
+    def all_db_uris_by_slug(self):
         dbs = self._settings_helper.get_extra_couchdbs()
         dbs[None] = self.db_uri
         return dbs
+
+    @property
+    @memoized
+    def all_dbs_by_slug(self):
+        return {slug: Database(db_uri)
+                for slug, db_uri in self.all_db_uris_by_slug.items()}
 
     def get_db(self, postfix):
         """
         Get the couch database by slug
         """
-        return Database(self.all_dbs_by_slug[postfix], create=True)
+        return Database(self.all_db_uris_by_slug[postfix], create=True)
 
     @property
     @memoized
