@@ -8,6 +8,7 @@ from http_parser.http import ParserError
 from restkit import RequestError
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
+from corehq.util.couchdb_management import CouchConfig
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
@@ -95,7 +96,7 @@ class Command(BaseCommand):
         if len(args) not in [2, 3]:
             raise CommandError('Usage is copy_domain %s' % self.args)
 
-        sourcedb = Database(args[0])
+        source_couch = CouchConfig(args[0])
         domain = args[1].strip()
         simulate = options['simulate']
         exclude_attachments = options['exclude_attachments']
@@ -104,7 +105,9 @@ class Command(BaseCommand):
         since = json_format_date(iso_string_to_date(options['since'])) if options['since'] else None
 
         if options['list_types']:
-            self.list_types(sourcedb, domain, since)
+            for sourcedb_name, sourcedb in source_couch.all_dbs_by_slug.items():
+                print "In {} db".format(sourcedb_name or "the main")
+                self.list_types(source_couch, domain, since)
             sys.exit(0)
 
         if simulate:
@@ -121,14 +124,15 @@ class Command(BaseCommand):
             domain_doc = None
 
         if domain_doc is None:
-            self.copy_domain(sourcedb, domain)
+            self.copy_domain(source_couch, domain)
 
         if options['doc_types']:
             doc_types = options['doc_types'].split(',')
-            for type in doc_types:
-                startkey = [x for x in [domain, type, since] if x is not None]
-                endkey = [x for x in [domain, type, {}] if x is not None]
-                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, doc_type=type, since=since,
+            for doc_type in doc_types:
+                sourcedb = source_couch.get_db_for_doc_type(doc_type)
+                startkey = [x for x in [domain, doc_type, since] if x is not None]
+                endkey = [x for x in [domain, doc_type, {}] if x is not None]
+                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, doc_type=doc_type, since=since,
                                postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
         elif options['id_file']:
             path = options['id_file']
@@ -143,14 +147,18 @@ class Command(BaseCommand):
                 print "Path '%s' does not contain any document ID's" % path
                 sys.exit(1)
 
-            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'],
-                           exclude_attachments=exclude_attachments)
+            for sourcedb_name, sourcedb in source_couch.all_dbs_by_slug.items():
+                print "In {} db".format(sourcedb_name or "the main")
+                self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'],
+                               exclude_attachments=exclude_attachments)
         else:
             startkey = [domain]
             endkey = [domain, {}]
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
-            self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types,
-                           postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
+            for sourcedb_name, sourcedb in source_couch.all_dbs_by_slug.items():
+                print "In {} db".format(sourcedb_name or "the main")
+                self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types,
+                               postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
 
     def list_types(self, sourcedb, domain, since):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],

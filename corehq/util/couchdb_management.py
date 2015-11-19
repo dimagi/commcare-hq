@@ -1,4 +1,5 @@
 from couchdbkit.client import Database
+from dimagi.ext.couchdbkit import Document
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 
@@ -15,15 +16,18 @@ class CouchConfig(object):
     def db_uri(self):
         return self._settings_helper.couch_database_url
 
+    @property
+    @memoized
+    def all_dbs_by_slug(self):
+        dbs = self._settings_helper.get_extra_couchdbs()
+        dbs[None] = self.db_uri
+        return dbs
+
     def get_db(self, postfix):
         """
-        Get the couch database.
+        Get the couch database by slug
         """
-        if postfix:
-            db_uri = settings.EXTRA_COUCHDB_DATABASES[postfix]
-        else:
-            db_uri = self.db_uri
-        return Database(db_uri, create=True)
+        return Database(self.all_dbs_by_slug[postfix], create=True)
 
     @property
     @memoized
@@ -31,7 +35,23 @@ class CouchConfig(object):
         return dict(self._settings_helper.make_couchdb_tuples())
 
     def get_db_for_class(self, klass):
-        return self.app_label_to_db_slug[klass.Meta.app_label]
+        return self.app_label_to_db_slug[getattr(klass._meta, "app_label")]
+
+    def get_db_for_doc_type(self, doc_type):
+        return self.get_db_for_class(class_by_doc_type()[doc_type])
+
+
+@memoized
+def class_by_doc_type():
+    queue = [Document]
+    m = {}
+    while queue:
+        klass = queue.pop()
+        app_label = getattr(klass._meta, "app_label", None)
+        if app_label:
+            m[klass._doc_type] = klass
+        queue.extend(klass.__subclasses__())
+    return m
 
 
 couch_config = CouchConfig()
