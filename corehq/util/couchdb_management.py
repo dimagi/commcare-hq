@@ -51,7 +51,7 @@ class CouchConfig(object):
         return self.app_label_to_db_uri[getattr(klass._meta, "app_label")]
 
     def get_db_uri_for_doc_type(self, doc_type):
-        return self.get_db_for_class(get_document_class_by_doc_type(doc_type))
+        return self.get_db_uri_for_class(get_document_class_by_doc_type(doc_type))
 
     def get_db_for_class(self, klass):
         return Database(self.get_db_uri_for_class(klass))
