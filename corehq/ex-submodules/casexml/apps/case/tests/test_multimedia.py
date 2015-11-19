@@ -9,10 +9,9 @@ import lxml
 from django.core.files.uploadedfile import UploadedFile
 from mock import patch
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
-from casexml.apps.phone.models import SyncLog
+from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -86,7 +85,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        response, form, cases = self.interface.submit_form_locally(
+        response, form, cases = submit_form_locally(
             xml_data,
             TEST_DOMAIN_NAME,
             attachments=dict_attachments,

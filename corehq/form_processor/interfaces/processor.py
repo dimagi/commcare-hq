@@ -5,7 +5,6 @@ from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
-from casexml.apps.case.util import post_case_blocks
 
 from ..utils import should_use_sql_backend
 
@@ -76,13 +75,6 @@ class FormProcessorInterface(object):
     def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
         return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
 
-    def submit_form_locally(self, instance, domain='test-domain', **kwargs):
-        from corehq.apps.receiverwrapper.util import submit_form_locally
-        return submit_form_locally(instance, domain, **kwargs)
-
-    def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
-        return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
-
     def get_xform(self, form_id):
         return self.xform_model.get(form_id)
 
@@ -105,6 +97,10 @@ class FormProcessorInterface(object):
 
     def get_case_xform_ids(self, case_id):
         return self.case_model.get_case_xform_ids(case_id)
+
+    def get_case_forms(self, case_id):
+        xform_ids = self.get_case_xform_ids(case_id)
+        return self.processor.get_xforms(xform_ids)
 
     def store_attachments(self, xform, attachments):
         """
@@ -138,6 +134,9 @@ class FormProcessorInterface(object):
             )
             _handle_unexpected_error(self, instance, error_message)
             raise
+
+    def bulk_delete(self, case, xforms):
+        self.processor.bulk_delete(case, xforms)
 
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)

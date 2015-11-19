@@ -2,7 +2,8 @@ import os
 import json
 from django.test import LiveServerTestCase
 from django.conf import settings
-from corehq.apps.accounting import generator
+
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests import BaseAccountingTest
@@ -19,13 +20,11 @@ from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.dbaccessors import get_forms_by_type
 from time import sleep
 from dateutil.parser import parse
 import uuid
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 
 
 def time_parser(value):
@@ -88,7 +87,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             owner_id=owner._id,
             user_id=owner._id,
         ).as_xml()
-        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
+        post_case_blocks([case_block], {'domain': self.domain})
 
     def add_parent_access(self, user, case):
         case_block = CaseBlock(
@@ -98,7 +97,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             owner_id=user._id,
             index={'parent': ('participant', case._id)}
         ).as_xml()
-        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
+        post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
         user = WebUser.create(self.domain, username, password)

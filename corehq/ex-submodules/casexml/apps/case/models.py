@@ -228,11 +228,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
-    @unit_testing_only
-    def hard_delete(self):
-        from casexml.apps.case.cleanup import safe_hard_delete
-        safe_hard_delete(self)
-
     def to_full_dict(self):
         """
         Include calculated properties that need to be available to the case

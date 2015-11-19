@@ -1,12 +1,11 @@
 import uuid
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.apps.domain.shortcuts import create_domain
 import os
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.uth import utils
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from casexml.apps.case.models import CommCareCase
@@ -31,7 +30,7 @@ class UTHTests(TestCase):
                 'scan_time': scan_time
             }
         ).as_xml()
-        FormProcessorInterface().post_case_blocks([case_block], {'domain': UTH_DOMAIN})
+        post_case_blocks([case_block], {'domain': UTH_DOMAIN})
 
         return case_id
 

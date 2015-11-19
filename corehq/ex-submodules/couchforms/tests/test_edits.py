@@ -8,6 +8,7 @@ from mock import patch
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.models import (
     UnfinishedSubmissionStub,
 )
@@ -83,7 +84,7 @@ class EditFormTest(TestCase, TestFileMixin):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
 
-        _, xform, _ = self.interface.submit_form_locally(original_xml, self.domain)
+        _, xform, _ = submit_form_locally(original_xml, self.domain)
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual(self.domain, xform.domain)
@@ -95,7 +96,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         with patch.object(self.interface.processor, 'bulk_save', side_effect=RequestFailed):
             with self.assertRaises(RequestFailed):
-                self.interface.submit_form_locally(edit_xml, self.domain)
+                submit_form_locally(edit_xml, self.domain)
 
         # it didn't go through, so make sure there are no edits still
         self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
