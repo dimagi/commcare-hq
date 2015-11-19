@@ -1033,6 +1033,88 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_twilio_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLTwilioBackend,
+            'SMS',
+            'TWILIO',
+            True,
+            None,
+            'MOBILE_BACKEND_TWILIO',
+            "Twilio",
+            "Twilio Description",
+            ['*'],
+            {
+                'account_sid': 'a',
+                'auth_token': 'b',
+            },
+            None,
+            load_balancing_numbers=['1234', '5678'],
+            couch_class=TwilioBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLTwilioBackend,
+            'SMS',
+            'TWILIO',
+            True,
+            None,
+            'MOBILE_BACKEND_TWILIO2',
+            "Twilio2",
+            "Twilio Description2",
+            ['*'],
+            {
+                'account_sid': 'a2',
+                'auth_token': 'b2',
+            },
+            None,
+            load_balancing_numbers=['1234'],
+            sql_obj=sql_obj,
+            couch_class=TwilioBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_twilio_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            TwilioBackend,
+            None,
+            'MOBILE_BACKEND_TWILIO',
+            "Twilio",
+            None,
+            [],
+            True,
+            "Twilio Description",
+            ['*'],
+            None,
+            load_balancing_numbers=['1234', '5678'],
+            extra_fields={
+                'account_sid': 'a',
+                'auth_token': 'b',
+            }
+        )
+
+        self._test_couch_backend_update(
+            TwilioBackend,
+            None,
+            'MOBILE_BACKEND_TWILIO2',
+            "Twilio2",
+            None,
+            [],
+            True,
+            "Twilio Description2",
+            ['*'],
+            None,
+            couch_obj=couch_obj,
+            load_balancing_numbers=['1234'],
+            extra_fields={
+                'account_sid': 'a2',
+                'auth_token': 'b2',
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
