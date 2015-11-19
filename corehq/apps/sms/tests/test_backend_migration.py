@@ -901,6 +901,72 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_test_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLTestSMSBackend,
+            'SMS',
+            'TEST',
+            True,
+            None,
+            'MOBILE_BACKEND_TEST',
+            "Test",
+            "Test Description",
+            [],
+            {},
+            None,
+            couch_class=TestSMSBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLTestSMSBackend,
+            'SMS',
+            'TEST',
+            True,
+            None,
+            'MOBILE_BACKEND_TEST',
+            "Test",
+            "Test Description",
+            [],
+            {},
+            None,
+            sql_obj=sql_obj,
+            couch_class=TestSMSBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_test_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            TestSMSBackend,
+            None,
+            'MOBILE_BACKEND_TEST',
+            "Test",
+            None,
+            [],
+            True,
+            "Test Description",
+            [],
+            None,
+            extra_fields={}
+        )
+
+        self._test_couch_backend_update(
+            TestSMSBackend,
+            None,
+            'MOBILE_BACKEND_TEST',
+            "Test",
+            None,
+            [],
+            True,
+            "Test Description",
+            [],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={}
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
