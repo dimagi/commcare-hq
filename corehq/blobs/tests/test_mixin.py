@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from hashlib import md5
+import uuid
 from itertools import count
 from unittest import TestCase
 from StringIO import StringIO
@@ -12,8 +12,6 @@ from dimagi.ext.couchdbkit import Document
 
 class TestBlobMixin(TestCase):
 
-    keys = (md5(str(k)).hexdigest() for k in count())
-
     @classmethod
     def setUpClass(cls):
         cls.db = TemporaryFilesystemBlobDB()
@@ -23,10 +21,7 @@ class TestBlobMixin(TestCase):
         cls.db.close()
 
     def make_doc(self, type_):
-        return type_({
-            "_id": next(self.keys),
-            "_rev": next(self.keys),
-        })
+        return type_({"_id": uuid.uuid4().hex})
 
     def setUp(self):
         self.obj = self.make_doc(FakeCouchDocument)
@@ -107,22 +102,69 @@ class TestBlobMixin(TestCase):
         self.assertEqual(doc.blobs["att"].content_length, 13)
         self.assertEqual(doc.blobs["blob"].content_length, 7)
 
+    def test_unsaved_document(self):
+        obj = FakeCouchDocument()
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.put_attachment(b"content", "test.1")
 
-@generate_cases([
-    (None, None),
-    ("abc", None),
-    (None, "abc"),
-], TestBlobMixin)
-def test_unsaved_document(self, _id, _rev):
-    doc = {"_id": _id, "_rev": _rev}
-    obj = FakeCouchDocument(doc)
-    with self.assertRaises(mod.ResourceNotFound):
-        obj.put_attachment(b"content", "test.1")
+    def test_atomic_blobs_success(self):
+        name = "test.1"
+        _id = self.obj._id
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content", name)
+        assert self.obj.saved
+        self.assertEqual(self.obj._id, _id)
+        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        self.assertIn(name, self.obj.blobs)
+
+    def test_atomic_blobs_success_and_new_id(self):
+        name = "test.1"
+        obj = FakeCouchDocument()
+        obj._id = None
+        with obj.atomic_blobs():
+            obj.put_attachment("content", name)
+        assert obj.saved
+        assert obj._id is not None
+        self.assertEqual(obj.fetch_attachment(name), "content")
+        self.assertIn(name, obj.blobs)
+
+    def test_atomic_blobs_fail(self):
+        name = "test.1"
+        _id = self.obj._id
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("content", name)
+                raise BlowUp("while saving atomic blobs")
+        assert not self.obj.saved
+        self.assertEqual(self.obj._id, _id)
+        with self.assertRaises(mod.ResourceNotFound):
+            self.obj.fetch_attachment(name)
+        self.assertNotIn(name, self.obj.blobs)
+
+    def test_atomic_blobs_fail_does_not_delete_out_of_context_blobs(self):
+        self.obj.put_attachment("content", "outside")
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("content", "inside")
+                raise BlowUp("while saving atomic blobs")
+        self.assertEqual(set(self.obj.blobs), {"outside"})
 
 
 class FakeCouchDocument(mod.BlobMixin, Document):
 
     doc_type = "FakeCouchDocument"
+    saved = False
+
+    def get_db(self):
+        class fake_db:
+            class server:
+                @staticmethod
+                def next_uuid():
+                    return uuid.uuid4().hex
+        return fake_db
+
+    def save(self):
+        self.saved = True
 
 
 class AttachmentFallback(object):
@@ -148,3 +190,6 @@ class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
     doc_type = "FallbackToCouchDocument"
     _migrating_from_couch = True
+
+
+class BlowUp(Exception): pass

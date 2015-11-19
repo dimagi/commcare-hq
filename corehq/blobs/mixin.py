@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+import sys
 from cStringIO import StringIO
 from os.path import join
+from contextlib import contextmanager
 
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
@@ -33,8 +35,9 @@ class BlobMixin(Document):
     _migrating_from_couch = False
 
     def _blobdb_bucket(self):
-        if self._id is None or self._rev is None:
-            raise ResourceNotFound("cannot manipulate attachment on unsaved document")
+        if self._id is None:
+            raise ResourceNotFound(
+                    "cannot manipulate attachment on unidentified document")
         return join(self.doc_type, self._id)
 
     @property
@@ -44,7 +47,7 @@ class BlobMixin(Document):
         Includes CouchDB attachments if `_migrating_from_couch` is true.
         The returned value should not be mutated.
         """
-        if not self._migrating_from_couch:
+        if not self._migrating_from_couch or not self._attachments:
             return self.external_blobs
         value = {name: BlobMeta(
             content_length=info["length"],
@@ -91,8 +94,6 @@ class BlobMixin(Document):
             blob = db.get(name, self._blobdb_bucket())
         except NotFound:
             if self._migrating_from_couch:
-                # TODO remove this at some point in the future when all
-                # attachments have been migrated from couch to blobdb.
                 return super(BlobMixin, self).fetch_attachment(name, stream=stream)
             raise ResourceNotFound(u"{model} attachment: {name!r}".format(
                                    model=type(self).__name__, name=name))
@@ -111,9 +112,36 @@ class BlobMixin(Document):
 
     def delete_attachment(self, name):
         if self._migrating_from_couch:
-            # TODO remove this at some point in the future when all
-            # attachments have been migrated from couch to blobdb.
             deleted = super(BlobMixin, self).delete_attachment(name)
         else:
             deleted = False
+        self.external_blobs.pop(name, None)
         return get_blob_db().delete(name, self._blobdb_bucket()) or deleted
+
+    def atomic_blobs(self):
+        """Return a context manager to atomically save doc + blobs
+
+        Usage::
+
+            with doc.atomic_blobs():
+                doc.put_attachment(...)
+            # doc and blob are now saved
+
+        Blobs saved inside the context manager will be deleted if an
+        exception is raised inside the context body.
+        """
+        @contextmanager
+        def atomic_blobs_context():
+            if self._id is None:
+                self._id = self.get_db().server.next_uuid()
+            non_atomic_blobs = set(self.blobs)
+            try:
+                yield
+                self.save()
+            except:
+                typ, exc, tb = sys.exc_info()
+                for name, blob in self.blobs.items():
+                    if name not in non_atomic_blobs:
+                        self.delete_attachment(name)
+                raise typ, exc, tb
+        return atomic_blobs_context()
