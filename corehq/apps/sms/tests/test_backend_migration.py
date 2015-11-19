@@ -1115,6 +1115,88 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_unicel_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLUnicelBackend,
+            'SMS',
+            'UNICEL',
+            True,
+            None,
+            'MOBILE_BACKEND_UNICEL',
+            "Unicel",
+            "Unicel Description",
+            ['91'],
+            {
+                'username': 'a',
+                'password': 'b',
+                'sender': 'c',
+            },
+            'xxxx',
+            couch_class=UnicelBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLUnicelBackend,
+            'SMS',
+            'UNICEL',
+            True,
+            None,
+            'MOBILE_BACKEND_UNICEL2',
+            "Unicel2",
+            "Unicel Description2",
+            ['91'],
+            {
+                'username': 'a2',
+                'password': 'b2',
+                'sender': 'c2',
+            },
+            'xxxxx',
+            sql_obj=sql_obj,
+            couch_class=UnicelBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_unicel_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            UnicelBackend,
+            None,
+            'MOBILE_BACKEND_UNICEL',
+            "Unicel",
+            None,
+            [],
+            True,
+            "Unicel Description",
+            ['91'],
+            'xxxx',
+            extra_fields={
+                'username': 'a',
+                'password': 'b',
+                'sender': 'c',
+            }
+        )
+
+        self._test_couch_backend_update(
+            UnicelBackend,
+            None,
+            'MOBILE_BACKEND_UNICEL2',
+            "Unicel2",
+            None,
+            [],
+            True,
+            "Unicel Description2",
+            ['91'],
+            'xxxxx',
+            couch_obj=couch_obj,
+            extra_fields={
+                'username': 'a2',
+                'password': 'b2',
+                'sender': 'c2',
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
