@@ -22,6 +22,9 @@ class BlobMeta(DocumentSchema):
 class BlobMixin(Document):
 
     _blobs = DictProperty(BlobMeta)
+    class Meta:
+        abstract = True
+
 
     # When true, fallback to couch on fetch and delete if blob is not
     # found in blobdb. Set this to True on subclasses that are in the
