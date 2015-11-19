@@ -5,9 +5,11 @@ from django.http import Http404
 import collections
 from django import forms
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app, \
+    get_exports_by_application
 from corehq.apps.app_manager.models import Application
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from couchforms.dbaccessors import get_exports_by_form
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 
@@ -174,27 +176,9 @@ class ApplicationDataRMIHelper(object):
             self.form_placeholders = self.form_placeholders._asdict()
             self.case_placeholders = self.case_placeholders._asdict()
 
-    def _get_form_results(self):
-        return XFormInstance.get_db().view(
-            'exports_forms/by_xmlns',
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            group=True,
-            stale=settings.COUCH_STALE_QUERY
-        )
-
-    def _get_application_results(self):
-        return Application.get_db().view(
-            'exports_forms/by_xmlns',
-            startkey=['^Application', self.domain],
-            endkey=['^Application', self.domain, {}],
-            reduce=False,
-            stale=settings.COUCH_STALE_QUERY,
-        )
-
     def _get_unknown_form_possibilities(self):
         possibilities = collections.defaultdict(list)
-        for app in self._get_application_results():
+        for app in get_exports_by_application(self.domain):
             # index by xmlns
             x = app['value']
             x['has_app'] = True
@@ -299,7 +283,7 @@ class ApplicationDataRMIHelper(object):
     def _all_forms(self):
         forms = []
         unknown_forms = []
-        for f in self._get_form_results():
+        for f in get_exports_by_form(self.domain):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
                 continue
