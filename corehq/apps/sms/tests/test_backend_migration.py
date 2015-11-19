@@ -1197,6 +1197,100 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_yo_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLYoBackend,
+            'SMS',
+            'YO',
+            True,
+            None,
+            'MOBILE_BACKEND_YO',
+            "Yo",
+            "Yo Description",
+            ['256'],
+            {
+                'url': 'http://127.0.0.1',
+                'message_param': 'text',
+                'number_param': 'phone',
+                'include_plus': True,
+                'method': 'GET',
+                'additional_params': {'a': 'b', 'c': 'd'},
+            },
+            None,
+            couch_class=HttpBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLYoBackend,
+            'SMS',
+            'YO',
+            True,
+            None,
+            'MOBILE_BACKEND_YO2',
+            "Yo2",
+            "Yo Description2",
+            ['256'],
+            {
+                'url': 'http://127.0.0.1:8000',
+                'message_param': 'text2',
+                'number_param': 'phone2',
+                'include_plus': False,
+                'method': 'POST',
+                'additional_params': {'a': 'b2', 'c': 'd2'},
+            },
+            None,
+            sql_obj=sql_obj,
+            couch_class=HttpBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_yo_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            HttpBackend,
+            None,
+            'MOBILE_BACKEND_YO',
+            "Yo",
+            'YO',
+            [],
+            True,
+            "Yo Description",
+            ['256'],
+            None,
+            extra_fields={
+                'url': 'http://127.0.0.1',
+                'message_param': 'text',
+                'number_param': 'phone',
+                'include_plus': True,
+                'method': 'GET',
+                'additional_params': {'a': 'b', 'c': 'd'},
+            }
+        )
+
+        self._test_couch_backend_update(
+            HttpBackend,
+            None,
+            'MOBILE_BACKEND_YO2',
+            "Yo2",
+            'YO',
+            [],
+            True,
+            "Yo Description2",
+            ['256'],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={
+                'url': 'http://127.0.0.1:8000',
+                'message_param': 'text2',
+                'number_param': 'phone2',
+                'include_plus': False,
+                'method': 'POST',
+                'additional_params': {'a': 'b2', 'c': 'd2'},
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
         MobileBackendInvitation.objects.all().delete()
