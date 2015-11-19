@@ -923,9 +923,9 @@ class BackendMigrationTestCase(TestCase):
             'TEST',
             True,
             None,
-            'MOBILE_BACKEND_TEST',
-            "Test",
-            "Test Description",
+            'MOBILE_BACKEND_TEST2',
+            "Test2",
+            "Test Description2",
             [],
             {},
             None,
@@ -953,16 +953,82 @@ class BackendMigrationTestCase(TestCase):
         self._test_couch_backend_update(
             TestSMSBackend,
             None,
-            'MOBILE_BACKEND_TEST',
-            "Test",
+            'MOBILE_BACKEND_TEST2',
+            "Test2",
             None,
             [],
             True,
-            "Test Description",
+            "Test Description2",
             [],
             None,
             couch_obj=couch_obj,
             extra_fields={}
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
+    def test_tropo_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLTropoBackend,
+            'SMS',
+            'TROPO',
+            True,
+            None,
+            'MOBILE_BACKEND_TROPO',
+            "Tropo",
+            "Tropo Description",
+            ['*'],
+            {'messaging_token': 'abc'},
+            None,
+            couch_class=TropoBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLTropoBackend,
+            'SMS',
+            'TROPO',
+            True,
+            None,
+            'MOBILE_BACKEND_TROPO2',
+            "Tropo2",
+            "Tropo Description2",
+            ['*'],
+            {'messaging_token': 'abc2'},
+            None,
+            sql_obj=sql_obj,
+            couch_class=TropoBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_tropo_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            TropoBackend,
+            None,
+            'MOBILE_BACKEND_TROPO',
+            "Tropo",
+            None,
+            [],
+            True,
+            "Tropo Description",
+            ['*'],
+            None,
+            extra_fields={'messaging_token': 'abc'},
+        )
+
+        self._test_couch_backend_update(
+            TropoBackend,
+            None,
+            'MOBILE_BACKEND_TROPO2',
+            "Tropo2",
+            None,
+            [],
+            True,
+            "Tropo Description2",
+            ['*'],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={'messaging_token': 'abc2'},
         )
 
         self._test_couch_backend_retire(couch_obj)
