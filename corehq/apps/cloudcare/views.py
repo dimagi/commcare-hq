@@ -527,6 +527,8 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
+    @use_bootstrap3
+    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 
