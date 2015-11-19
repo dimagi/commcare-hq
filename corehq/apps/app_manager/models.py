@@ -3404,11 +3404,11 @@ class CustomDatespanFilter(ReportAppFilter):
             start_date = today - datetime.timedelta(days=days)
             end_date = None
         elif self.operator == '<':
-            start_date = today - datetime.timedelta(days=days-1)
+            start_date = today - datetime.timedelta(days=days - 1)
             end_date = None
         elif self.operator == '>':
             start_date = None
-            end_date = today - datetime.timedelta(days=days+1)
+            end_date = today - datetime.timedelta(days=days + 1)
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
