@@ -18,7 +18,9 @@ class TestHardDelete(TestCase):
     def test_simple_delete(self):
         factory = CaseFactory()
         case = factory.create_case()
-        [case] = factory.create_or_update_case(CaseStructure(case_id=case.case_id, attrs={'update': {'foo': 'bar'}}))
+        [case] = factory.create_or_update_case(
+            CaseStructure(case_id=case.case_id, attrs={'update': {'foo': 'bar'}})
+        )
         self.assertIsNotNone(self.interface.get_case(case.case_id))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:

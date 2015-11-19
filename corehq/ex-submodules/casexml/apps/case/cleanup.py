@@ -61,6 +61,7 @@ def rebuild_case_from_forms(domain, case_id, detail):
 
     return FormProcessorInterface(domain).hard_rebuild_case(case_id, detail)
 
+
 @unit_testing_only
 def safe_hard_delete(case):
     """
