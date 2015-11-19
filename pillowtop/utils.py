@@ -20,7 +20,7 @@ def get_pillow_class(full_class_str):
         mod = importlib.import_module(mod_path)
         return getattr(mod, pillow_class_name)
     except (AttributeError, ImportError):
-        if getattr(settings, 'UNIT_TESTING', False):
+        if settings.DEBUG:
             raise
         raise ValueError("Could not find pillowtop class '%s'" % full_class_str)
 
