@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from dateutil.parser import parse
 from django.conf import settings
 from pillow_retry.models import PillowError, Stub
@@ -7,8 +7,6 @@ from django.test import TestCase
 from pillow_retry.tasks import process_pillow_retry
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.couchdb import CachedCouchDB
-from pillowtop.feed.couch import change_from_couch_row
-from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
 
 
@@ -244,6 +242,18 @@ class PillowRetryTestCase(TestCase):
 
         errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
         self.assertEqual(len(errors), 2)
+
+    def test_pillow_not_found(self):
+        error = PillowError.objects.create(
+            doc_id='missing-pillow',
+            pillow='badmodule.NotARealPillow',
+            date_created=datetime.utcnow(),
+            date_last_attempt=datetime.utcnow()
+        )
+        # make sure this doesn't error
+        process_pillow_retry(error.id)
+        # and that its total_attempts was bumped above the threshold
+        self.assertTrue(PillowError.objects.get(pk=error.pk).total_attempts > PillowError.multi_attempts_cutoff())
 
 
 class FakePillow(BasicPillow):
