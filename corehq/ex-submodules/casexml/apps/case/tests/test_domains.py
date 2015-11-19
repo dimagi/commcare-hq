@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test.utils import override_settings
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+
+from corehq.apps.receiverwrapper import submit_form_locally
 
 ALICE_XML = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/D95E58BD-A228-414F-83E6-EEE716F0B3AD">
@@ -73,12 +74,11 @@ EVE_DOMAIN = 'domain2'
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=True)
 class DomainTest(TestCase):
     def test_cant_own_case(self):
-        interface = FormProcessorInterface()
-        _, _, [case] = interface.submit_form_locally(ALICE_XML, ALICE_DOMAIN)
-        response, form, cases = interface.submit_form_locally(EVE_XML, EVE_DOMAIN)
+        _, _, [case] = submit_form_locally(ALICE_XML, ALICE_DOMAIN)
+        response, form, cases = submit_form_locally(EVE_XML, EVE_DOMAIN)
 
         self.assertIn('IllegalCaseId', response.content)
         self.assertFalse(hasattr(case, 'plan_to_buy_gun'))
 
-        _, _, [case] = interface.submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
+        _, _, [case] = submit_form_locally(ALICE_UPDATE_XML, ALICE_DOMAIN)
         self.assertEqual(case.plan_to_buy_gun, 'no')

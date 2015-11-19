@@ -76,10 +76,6 @@ class FormProcessorInterface(object):
     def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
         return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
 
-    def submit_form_locally(self, instance, domain='test-domain', **kwargs):
-        from corehq.apps.receiverwrapper.util import submit_form_locally
-        return submit_form_locally(instance, domain, **kwargs)
-
     def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 

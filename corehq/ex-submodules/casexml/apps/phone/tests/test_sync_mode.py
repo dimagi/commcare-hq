@@ -9,6 +9,7 @@ from casexml.apps.phone.tests.utils import get_exactly_one_wrapped_sync_log, gen
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
@@ -73,7 +74,7 @@ class SyncBaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, form, _ = FormProcessorInterface().submit_form_locally(xml_data, last_sync_token=token_id)
+        _, form, _ = submit_form_locally(xml_data, last_sync_token=token_id)
         return form
 
     def _postFakeWithSyncToken(self, caseblocks, token_id):

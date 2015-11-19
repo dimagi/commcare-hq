@@ -1,6 +1,8 @@
 import os
 from datetime import datetime, timedelta
 from django.test import TestCase
+
+from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -23,7 +25,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
     def testArchive(self):
         case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
-        response, xform, cases = self.interface.submit_form_locally(
+        response, xform, cases = submit_form_locally(
             xml_data,
             'test-domain',
         )
@@ -79,7 +81,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform_unarchived.connect(count_unarchive)
 
         xml_data = self.get_xml('basic')
-        response, xform, cases = self.interface.submit_form_locally(
+        response, xform, cases = submit_form_locally(
             xml_data,
             'test-domain',
         )

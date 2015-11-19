@@ -9,6 +9,7 @@ from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
@@ -39,14 +40,14 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         xml_data = self.get_xml('id_conflicts')
         with self.assertRaises(BulkSaveError):
-            self.interface.submit_form_locally(xml_data)
+            submit_form_locally(xml_data)
 
     def test_empty_case_id(self):
         """
         Ensure that form processor fails on empty id
         """
         xml_data = self.get_xml('empty_id')
-        response, form, cases = self.interface.submit_form_locally(xml_data)
+        response, form, cases = submit_form_locally(xml_data)
         self.assertIn('IllegalCaseId', response.content)
 
     def _testCornerCaseDatatypeBugs(self, value):
@@ -63,7 +64,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             format_args.update(custom_format_args)
             for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
                 xml_data = self.get_xml(filename).format(**format_args)
-                response, form, [case] = self.interface.submit_form_locally(xml_data)
+                response, form, [case] = submit_form_locally(xml_data)
 
                 self.assertEqual(format_args['user_id'], case.user_id)
                 self.assertEqual(format_args['case_name'], case.name)
@@ -96,11 +97,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         Submit multiple values for the same property in an update block
         """
         xml_data = self.get_xml('duplicate_case_properties')
-        response, form, [case] = self.interface.submit_form_locally(xml_data)
+        response, form, [case] = submit_form_locally(xml_data)
         self.assertEqual("", case.foo)
 
         xml_data = self.get_xml('duplicate_case_properties_2')
-        response, form, [case] = self.interface.submit_form_locally(xml_data)
+        response, form, [case] = submit_form_locally(xml_data)
         self.assertEqual("2", case.bar)
 
     def testMultipleCaseBlocks(self):
@@ -108,7 +109,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('multiple_case_blocks')
-        response, form, [case] = self.interface.submit_form_locally(xml_data)
+        response, form, [case] = submit_form_locally(xml_data)
 
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
@@ -123,7 +124,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         How do we do when submitting a form with multiple blocks for the same case?
         """
         xml_data = self.get_xml('lots_of_subcases')
-        response, form, cases = self.interface.submit_form_locally(xml_data)
+        response, form, cases = submit_form_locally(xml_data)
         self.assertEqual(11, len(cases))
 
     def testSubmitToDeletedCase(self):

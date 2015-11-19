@@ -2,6 +2,7 @@ import os
 from django.test.utils import override_settings
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_cases
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
@@ -17,7 +18,7 @@ class OutOfOrderCaseTest(TestCase):
         for fname in ('update_oo.xml', 'create_oo.xml'):
             with open(os.path.join(dir, fname), "rb") as f:
                 xml_data = f.read()
-            interface.submit_form_locally(xml_data)
+            submit_form_locally(xml_data)
 
         case = interface.get_case('30bc51f6-3247-4966-b4ae-994f572e85fe')
         self.assertEqual('from the update form', case.pupdate)
