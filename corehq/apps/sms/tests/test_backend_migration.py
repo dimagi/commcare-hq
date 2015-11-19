@@ -1,6 +1,6 @@
 import json
-from corehq.apps.sms.mixin import MobileBackend, SMSLoadBalancingMixin
-from corehq.apps.sms.models import SQLMobileBackend, MobileBackendInvitation
+from corehq.apps.sms.mixin import MobileBackend, SMSLoadBalancingMixin, BackendMapping
+from corehq.apps.sms.models import SQLMobileBackend, MobileBackendInvitation, SQLMobileBackendMapping
 from corehq.messaging.smsbackends.apposit.models import AppositBackend, SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend, SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import HttpBackend, SQLHttpBackend
@@ -28,11 +28,17 @@ class BackendMigrationTestCase(TestCase):
         return (MobileBackend.view('sms/global_backends', include_docs=True, reduce=False).all() +
                 MobileBackend.view('sms/backend_by_owner_domain', include_docs=True, reduce=False).all())
 
+    def _get_all_couch_backend_mappings(self):
+        return BackendMapping.view('sms/backend_map', include_docs=True).all()
+
     def _count_all_sql_backends(self):
         return SQLMobileBackend.objects.count()
 
     def _count_all_sql_backend_invitations(self):
         return MobileBackendInvitation.objects.count()
+
+    def _count_all_sql_backend_mappings(self):
+        return SQLMobileBackendMapping.objects.count()
 
     def _create_or_update_couch_backend(
         self, cls, domain, name, display_name, incoming_api_id, authorized_domains,
@@ -1291,7 +1297,96 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def _compare_backend_maps(self, couch_obj, sql_obj):
+        self.assertEqual(couch_obj._id, sql_obj.couch_id)
+        self.assertEqual(couch_obj.domain, sql_obj.domain)
+        self.assertEqual(couch_obj.is_global, sql_obj.is_global)
+        self.assertEqual(couch_obj.prefix, sql_obj.prefix)
+        self.assertEqual(couch_obj.backend_type, sql_obj.backend_type)
+        self.assertEqual(couch_obj.backend_id, sql_obj.backend.couch_id)
+
+    def _check_backend_counts(self, couch_backends, couch_mappings, sql_backends, sql_mappings):
+        self.assertEqual(len(self._get_all_couch_backends()), couch_backends)
+        self.assertEqual(len(self._get_all_couch_backend_mappings()), couch_mappings)
+        self.assertEqual(self._count_all_sql_backends(), sql_backends)
+        self.assertEqual(self._count_all_sql_backend_mappings(), sql_mappings)
+
+    def test_backend_map_couch_to_sql(self):
+        couch_backend = TestSMSBackend(is_global=True, name='MOBILE_BACKEND_TEST')
+        couch_backend.save()
+
+        # Create
+        couch_backend_mapping = BackendMapping(
+            domain=None,
+            is_global=True,
+            prefix='*',
+            backend_type='SMS',
+            backend_id=couch_backend._id
+        )
+        couch_backend_mapping.save()
+        self._check_backend_counts(1, 1, 1, 1)
+        sql_backend_mapping = SQLMobileBackendMapping.objects.get(couch_id=couch_backend_mapping._id)
+        self._compare_backend_maps(couch_backend_mapping, sql_backend_mapping)
+
+        # Update
+        couch_backend_mapping.prefix = '1'
+        couch_backend_mapping.save()
+        self._check_backend_counts(1, 1, 1, 1)
+        sql_backend_mapping = SQLMobileBackendMapping.objects.get(couch_id=couch_backend_mapping._id)
+        self._compare_backend_maps(couch_backend_mapping, sql_backend_mapping)
+
+        # Delete
+        couch_backend_mapping.delete()
+        self._check_backend_counts(1, 0, 1, 0)
+
+    def test_backend_map_sql_to_couch(self):
+        sql_backend = SQLTestSMSBackend(is_global=True, name='MOBILE_BACKEND_TEST')
+        sql_backend.save()
+
+        # Create
+        sql_backend_mapping = SQLMobileBackendMapping(
+            domain=None,
+            is_global=True,
+            prefix='*',
+            backend_type='SMS',
+            backend=sql_backend
+        )
+        sql_backend_mapping.save()
+        self._check_backend_counts(1, 1, 1, 1)
+        couch_backend_mapping = BackendMapping.get(sql_backend_mapping.couch_id)
+        self._compare_backend_maps(couch_backend_mapping, sql_backend_mapping)
+
+        # Update
+        sql_backend_mapping.prefix = '1'
+        sql_backend_mapping.save()
+        self._check_backend_counts(1, 1, 1, 1)
+        couch_backend_mapping = BackendMapping.get(sql_backend_mapping.couch_id)
+        self._compare_backend_maps(couch_backend_mapping, sql_backend_mapping)
+
+        # Delete
+        sql_backend_mapping.delete()
+        self._check_backend_counts(1, 0, 1, 0)
+
+    def test_backend_cascade_delete(self):
+        sql_backend = SQLTestSMSBackend(is_global=True, name='MOBILE_BACKEND_TEST')
+        sql_backend.save()
+
+        sql_backend_mapping = SQLMobileBackendMapping(
+            domain=None,
+            is_global=True,
+            prefix='*',
+            backend_type='SMS',
+            backend=sql_backend
+        )
+        sql_backend_mapping.save()
+        self._check_backend_counts(1, 1, 1, 1)
+
+        sql_backend.soft_delete()
+        self._check_backend_counts(0, 0, 1, 0)
+
     def _delete_all_backends(self):
         MobileBackend.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backends()])
+        BackendMapping.get_db().bulk_delete([doc.to_json() for doc in self._get_all_couch_backend_mappings()])
         MobileBackendInvitation.objects.all().delete()
         SQLMobileBackend.objects.all().delete()
+        SQLMobileBackendMapping.objects.all().delete()

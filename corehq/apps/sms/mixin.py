@@ -582,7 +582,7 @@ class BackendMapping(SyncCouchToSQLMixin, Document):
         sql_object.domain = self.domain
         sql_object.backend_type = self.backend_type
         sql_object.prefix = self.prefix
-        sql_object.backend = SQLMobileBackend.objects.get(couch_id=self._id)
+        sql_object.backend = SQLMobileBackend.objects.get(couch_id=self.backend_id)
         sql_object.save(sync_to_couch=False)
 
 

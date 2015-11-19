@@ -1448,10 +1448,10 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     )
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
-    backend_type = models.CharField(max_length=3, choices=TYPE_CHOICES)
+    backend_type = models.CharField(max_length=3, choices=TYPE_CHOICES, default=SMS)
 
     # This tells us which type of backend this is
-    hq_api_id = models.CharField(max_length=126)
+    hq_api_id = models.CharField(max_length=126, null=True)
 
     # Global backends are system owned and can be used by anyone
     is_global = models.BooleanField(default=False)
@@ -1474,7 +1474,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     # This information is displayed in the gateway list UI.
     # If this backend represents an international gateway,
     # set this to: ["*"]
-    supported_countries = models.CharField(max_length=126, null=True)
+    supported_countries = models.CharField(max_length=126, default='[]')
 
     # To avoid having many tables with so few records in them, all
     # SMS backends are stored in this same table. This field is a
@@ -1545,6 +1545,10 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         with transaction.atomic():
             self.deleted = True
             self.mobilebackendinvitation_set.all().delete()
+            for mapping in self.sqlmobilebackendmapping_set.all():
+                # TODO: Can do a bulk delete once the two-way sync
+                # with couch is no longer necessary
+                mapping.delete()
             self.save()
 
     def _migration_sync_to_couch(self, couch_obj):
