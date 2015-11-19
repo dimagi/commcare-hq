@@ -642,6 +642,16 @@ class CaseTransaction(models.Model):
             type__in=CaseTransaction.TYPES_TO_PROCESS
         ).all())
 
+    def __unicode__(self):
+        return (
+            "CaseTransaction("
+            "case_id='{self.case_id}', "
+            "form_id='{self.form_uuid}', "
+            "type='{self.type}', "
+            "server_date='{self.server_date}', "
+            "revoked='{self.revoked}'"
+        ).format(self=self)
+
     class Meta:
         unique_together = ("case", "form_uuid")
         ordering = ['server_date']

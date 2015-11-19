@@ -117,8 +117,8 @@ class FormProcessorSQL(object):
             model.save()
 
         to_create = case.get_tracked_models_to_create(model_class)
-        for model in to_create:
-            logging.debug('Creating %s: %s', model_class, to_create)
+        for i, model in enumerate(to_create):
+            logging.debug('Creating %s %s: %s', i, model_class, model)
             model.save()
 
     @classmethod
