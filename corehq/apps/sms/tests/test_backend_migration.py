@@ -26,7 +26,7 @@ class BackendMigrationTestCase(TestCase):
 
     def _get_all_couch_backends(self):
         return (MobileBackend.view('sms/global_backends', include_docs=True, reduce=False).all() +
-                MobileBackend.view('sms/backend_by_domain', include_docs=True, reduce=False).all())
+                MobileBackend.view('sms/backend_by_owner_domain', include_docs=True, reduce=False).all())
 
     def _count_all_sql_backends(self):
         return SQLMobileBackend.objects.count()
@@ -804,6 +804,98 @@ class BackendMigrationTestCase(TestCase):
                 'from_number': 'a2',
                 'client_id': 'b2',
                 'client_secret': 'c2',
+            }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
+    def test_telerivet_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLTelerivetBackend,
+            'SMS',
+            'TELERIVET',
+            False,
+            'telerivet-domain',
+            'MOBILE_BACKEND_TELERIVET',
+            "Telerivet",
+            "Telerivet Description",
+            [],
+            {
+                'api_key': 'a',
+                'project_id': 'b',
+                'phone_id': 'c',
+                'webhook_secret': 'd',
+                'country_code': 'x',
+            },
+            None,
+            shared_domains=['d1', 'd2'],
+            couch_class=TelerivetBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLTelerivetBackend,
+            'SMS',
+            'TELERIVET',
+            False,
+            'telerivet-domain',
+            'MOBILE_BACKEND_TELERIVET2',
+            "Telerivet2",
+            "Telerivet Description2",
+            [],
+            {
+                'api_key': 'a2',
+                'project_id': 'b2',
+                'phone_id': 'c2',
+                'webhook_secret': 'd2',
+                'country_code': 'x2',
+            },
+            None,
+            shared_domains=['d1'],
+            sql_obj=sql_obj,
+            couch_class=TelerivetBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_telerivet_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            TelerivetBackend,
+            'telerivet-domain',
+            'MOBILE_BACKEND_TELERIVET',
+            "Telerivet",
+            None,
+            ['d1', 'd2'],
+            False,
+            "Telerivet Description",
+            [],
+            None,
+            extra_fields={
+                'api_key': 'a',
+                'project_id': 'b',
+                'phone_id': 'c',
+                'webhook_secret': 'd',
+                'country_code': 'x',
+            }
+        )
+
+        self._test_couch_backend_update(
+            TelerivetBackend,
+            'telerivet-domain',
+            'MOBILE_BACKEND_TELERIVET2',
+            "Telerivet2",
+            None,
+            ['d1'],
+            False,
+            "Telerivet Description2",
+            [],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={
+                'api_key': 'a2',
+                'project_id': 'b2',
+                'phone_id': 'c2',
+                'webhook_secret': 'd2',
+                'country_code': 'x2',
             }
         )
 
