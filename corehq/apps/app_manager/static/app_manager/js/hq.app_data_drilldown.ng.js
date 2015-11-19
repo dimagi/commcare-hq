@@ -214,9 +214,9 @@
         };
 
         $scope.selectedAppData = {};
-        $scope.$watch('formData.application', function (curApp) {
+        $scope.$watch('formData.application', function (curAppId) {
             var currentApps = _.filter(self._apps_by_type[$scope.formData.app_type], function (app) {
-                return app.id === curApp;
+                return app.id === curAppId;
             });
             if (currentApps.length === 0) {
                 $scope.selectedAppData = {};
@@ -228,10 +228,10 @@
         });
 
         $scope.selectedFormData = {};
-        $scope.$watch('formData.form', function (curForm) {
+        $scope.$watch('formData.form', function (curFormId) {
             if ($scope.formData.application && $scope.formData.module) {
                 var curForms = _.filter(self._forms_by_app_by_module[$scope.formData.application][$scope.formData.module], function (form) {
-                    return form.id === curForm;
+                    return form.id === curFormId;
                 });
                 if (curForms.length === 0) {
                     $scope.selectedFormData = {};
