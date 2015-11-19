@@ -83,6 +83,9 @@ class FormProcessorInterface(object):
     def post_case_blocks(self, case_blocks, form_extras=None, domain=None):
         return post_case_blocks(case_blocks, form_extras=form_extras, domain=domain)
 
+    def save_xform(self, xform):
+        return self.processor.save_xform(xform)
+
     def get_xform(self, form_id):
         return self.xform_model.get(form_id)
 
@@ -156,3 +159,6 @@ class FormProcessorInterface(object):
 
     def get_cases_from_forms(self, xforms, case_db):
         return self.processor.get_cases_from_forms(xforms, case_db)
+
+    def log_submission_error(self, instance, message, callback):
+        return self.processor.log_submission_error(instance, message, callback)

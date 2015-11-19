@@ -7,7 +7,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import process_xform, deprecation_type
-from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError
+from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError, SubmissionErrorLog
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
@@ -68,6 +68,10 @@ class FormProcessorCouch(object):
         XFormInstance.get_db().bulk_save(docs)
 
     @classmethod
+    def save_xform(cls, xform):
+        xform.save()
+
+    @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
         # if the form contents are not the same:
         #  - "Deprecate" the old form by making a new document with the same contents
@@ -115,6 +119,14 @@ class FormProcessorCouch(object):
     @classmethod
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
+
+    @classmethod
+    def log_submission_error(cls, instance, message, callback):
+        error = SubmissionErrorLog.from_instance(instance, message)
+        if callback:
+            callback(error)
+        error.save()
+        return error
 
     @staticmethod
     def get_cases_from_forms(case_db, xforms):
