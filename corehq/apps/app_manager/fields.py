@@ -186,6 +186,10 @@ class ApplicationDataRMIHelper(object):
         return possibilities
 
     def _attach_unknown_suggestions(self, unknown_forms):
+        """If there are any unknown forms, try and find the best possible matches
+        from deleted apps or copied apps. If no suggestion is found, say so
+        but provide the xmlns.
+        """
         if unknown_forms:
             possibilities = self._get_unknown_form_possibilities()
 
