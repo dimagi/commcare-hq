@@ -996,7 +996,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         hq.app_data_drilldown.ng.js  Use ApplicationDataRMIHelper to help
         format the response.
         """
-        NotImplementedError("Must implement get_intial_form_data")
+        raise NotImplementedError("Must implement get_intial_form_data")
 
     def get_create_export_url(self, form_data):
         """Returns url to the custom export creation form with the export
