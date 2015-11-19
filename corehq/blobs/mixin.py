@@ -24,7 +24,7 @@ class BlobMixin(Document):
     class Meta:
         abstract = True
 
-    _blobs = DictProperty(BlobMeta)
+    external_blobs = DictProperty(BlobMeta)
 
     # When true, fallback to couch on fetch and delete if blob is not
     # found in blobdb. Set this to True on subclasses that are in the
@@ -45,12 +45,12 @@ class BlobMixin(Document):
         The returned value should not be mutated.
         """
         if not self._migrating_from_couch:
-            return self._blobs
+            return self.external_blobs
         value = {name: BlobMeta(
             content_length=info["length"],
             content_type=info["content_type"],
         ) for name, info in self._attachments.iteritems()}
-        value.update(self._blobs)
+        value.update(self.external_blobs)
         return value
 
     def put_attachment(self, content, name=None, content_type=None, content_length=None):
@@ -73,7 +73,7 @@ class BlobMixin(Document):
         # do we need to worry about BlobDB reading beyond content_length?
         bucket = self._blobdb_bucket()
         content_length = db.put(content, name, bucket)
-        self._blobs[name] = BlobMeta(
+        self.external_blobs[name] = BlobMeta(
             content_type=content_type,
             content_length=content_length,
         )
