@@ -106,7 +106,7 @@ class FormProcessorSQL(object):
                 for unsaved_attachment in unsaved_attachments:
                     unsaved_attachment.xform = xform
                 xform.attachments.bulk_create(unsaved_attachments)
-                xform.unsaved_attachments = None
+                del xform.unsaved_attachments
 
     @classmethod
     def save_case(cls, case):
