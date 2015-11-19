@@ -134,7 +134,7 @@
             djangoRMI.get_app_data_drilldown_values({})
                 .success(function (data) {
                     if (data.success) {
-                        $scope.showNoAppsError = data.app_types.length == 1 && data.apps_by_type.all.length === 0;
+                        $scope.showNoAppsError = data.app_types.length === 1 && data.apps_by_type.all.length === 0;
                         if (!$scope.showNoAppsError) {
                             self._placeholders = data.placeholders || {};
                             self._app_types = data.app_types || [];
