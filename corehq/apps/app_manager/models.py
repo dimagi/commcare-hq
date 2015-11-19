@@ -10,8 +10,8 @@ import random
 import json
 import types
 import re
+import datetime
 from collections import defaultdict, namedtuple
-from datetime import datetime
 from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
@@ -3271,6 +3271,7 @@ class ReportAppFilter(DocumentSchema):
                 'StaticChoiceFilter': StaticChoiceFilter,
                 'StaticChoiceListFilter': StaticChoiceListFilter,
                 'StaticDatespanFilter': StaticDatespanFilter,
+                'CustomDatespanFilter': CustomDatespanFilter,
                 'MobileSelectFilter': MobileSelectFilter,
             }
             try:
@@ -3361,6 +3362,53 @@ class StaticDatespanFilter(ReportAppFilter):
 
     def get_filter_value(self, user):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
+class CustomDatespanFilter(ReportAppFilter):
+    operator = StringProperty(
+        choices=[
+            '=',
+            '<=',
+            '>=',
+            '>',
+            '<',
+            'between'
+        ],
+        required=True,
+    )
+    date_number = StringProperty(required=True)
+    date_number2 = StringProperty()
+
+    def get_filter_value(self, user):
+        today = datetime.date.today()
+        start_date = end_date = None
+        days = int(self.date_number)
+        if self.operator == 'between':
+            days2 = int(self.date_number2)
+            # allows user to have specified the two numbers in either order
+            if days > days2:
+                end = days2
+                start = days
+            else:
+                start = days2
+                end = days
+            start_date = today - datetime.timedelta(days=start)
+            end_date = today - datetime.timedelta(days=end)
+        elif self.operator == '=':
+            start_date = end_date = today - datetime.timedelta(days=days)
+        elif self.operator == '>=':
+            start_date = None
+            end_date = today - datetime.timedelta(days=days)
+        elif self.operator == '<=':
+            start_date = today - datetime.timedelta(days=days)
+            end_date = None
+        elif self.operator == '<':
+            start_date = today - datetime.timedelta(days=days-1)
+            end_date = None
+        elif self.operator == '>':
+            start_date = None
+            end_date = today - datetime.timedelta(days=days+1)
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
@@ -4123,7 +4171,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 self.lazy_fetch_attachment('CommCare.jar'),
             )
         except (ResourceError, KeyError):
-            built_on = datetime.utcnow()
+            built_on = datetime.datetime.utcnow()
             all_files = self.create_all_files()
             jad_settings = {
                 'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
@@ -4287,7 +4335,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         record = DeleteApplicationRecord(
             domain=self.domain,
             app_id=self.id,
-            datetime=datetime.utcnow()
+            datetime=datetime.datetime.utcnow()
         )
         record.save()
         return record
@@ -4754,7 +4802,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             app_id=self.id,
             module_id=module.id,
             module=module,
-            datetime=datetime.utcnow()
+            datetime=datetime.datetime.utcnow()
         )
         del self.modules[module.id]
         record.save()
@@ -4777,7 +4825,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             module_unique_id=module_unique_id,
             form_id=form.id,
             form=form,
-            datetime=datetime.utcnow(),
+            datetime=datetime.datetime.utcnow(),
         )
         record.save()
 
