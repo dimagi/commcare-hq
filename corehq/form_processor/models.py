@@ -13,6 +13,7 @@ from django.conf import settings
 from django.db import models, transaction
 from uuidfield import UUIDField
 
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
@@ -416,10 +417,6 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     def user_id(self, value):
         self.modified_by = value
 
-    def hard_delete(self):
-        # see cleanup.safe_hard_delete
-        raise NotImplementedError()
-
     def soft_delete(self):
         self.deleted = True
         self.save()
@@ -442,6 +439,11 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     def pprint(self):
         print self.dumps(pretty=True)
+
+    @property
+    @memoized
+    def reverse_indices(self):
+        return list(CommCareCaseIndexSQL.objects.filter(referenced_id=self.case_id).all())
 
     @memoized
     def _saved_indices(self):
@@ -481,7 +483,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get(cls, case_id):
-        return CommCareCaseSQL.objects.get(case_uuid=case_id)
+        try:
+            return CommCareCaseSQL.objects.get(case_uuid=case_id)
+        except CommCareCaseSQL.DoesNotExist:
+            raise CaseNotFound
 
     @classmethod
     def get_cases(cls, ids):
@@ -489,7 +494,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
-        return CaseTransaction.objects.filter(case_uuid=case_id).values_list('form_uuid', flat=True)
+        return CaseTransaction.objects.filter(case_id=case_id).values_list('form_uuid', flat=True)
 
     @classmethod
     def get_obj_id(cls, obj):

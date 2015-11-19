@@ -98,6 +98,10 @@ class FormProcessorInterface(object):
     def get_case_xform_ids(self, case_id):
         return self.case_model.get_case_xform_ids(case_id)
 
+    def get_case_forms(self, case_id):
+        xform_ids = self.get_case_xform_ids(case_id)
+        return self.processor.get_xforms(xform_ids)
+
     def store_attachments(self, xform, attachments):
         """
         Takes a list of Attachment namedtuples with content, name, and content_type and stores them to the XForm
@@ -130,6 +134,9 @@ class FormProcessorInterface(object):
             )
             _handle_unexpected_error(self, instance, error_message)
             raise
+
+    def bulk_delete(self, case, xforms):
+        self.processor.bulk_delete(case, xforms)
 
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)

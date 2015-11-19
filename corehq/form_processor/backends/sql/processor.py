@@ -13,7 +13,7 @@ from couchforms.util import process_xform
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild)
+    CommCareCaseSQL, FormEditRebuild, CaseAttachmentSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -69,6 +69,18 @@ class FormProcessorSQL(object):
     @classmethod
     def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
         return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
+
+    @classmethod
+    def bulk_delete(cls, case, xforms):
+        form_ids = [xform.form_id for xform in xforms]
+        with transaction.atomic():
+            XFormAttachmentSQL.objects.filter(xform__in=xforms).delete()
+            XFormOperationSQL.objects.filter(xform__in=xforms).delete()
+            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
+            CommCareCaseIndexSQL.objects.filter(case=case).delete()
+            CaseAttachmentSQL.objects.filter(case=case).delete()
+            CaseTransaction.objects.filter(case=case).delete()
+            case.delete()
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
@@ -232,6 +244,10 @@ class FormProcessorSQL(object):
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
         strategy.rebuild_from_transactions(transactions, rebuild_transaction)
         return case
+
+    @staticmethod
+    def get_xforms(xform_ids):
+        return XFormInstanceSQL.get_forms_with_attachments(xform_ids)
 
 
 def get_case_transactions(case_id, updated_xforms=None):
