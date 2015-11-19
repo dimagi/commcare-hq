@@ -7,8 +7,11 @@ from django.db import transaction
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 import sys
+
+from django.views.generic.base import View
 
 from corehq.apps.analytics.tasks import (
     track_created_hq_account_on_hubspot,
@@ -22,6 +25,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -114,28 +118,44 @@ def register_user(request, domain_type=None):
         return render(request, 'registration/create_new_user.html', context)
 
 
-@transaction.atomic
-@login_required
-def register_domain(request, domain_type=None):
-    domain_type = domain_type or 'commcare'
-    if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
-        raise Http404()
+class RegisterDomainView(View):
 
-    context = get_domain_context(domain_type)
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(RegisterDomainView, self).dispatch(request, *args, **kwargs)
 
-    is_new = False
-    referer_url = request.GET.get('referer', '')
+    def get(self, request, *args, **kwargs):
+        domain_type = kwargs.get('domain_type') or 'commcare'
+        if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
+            raise Http404()
 
-    active_domains_for_user = Domain.active_for_user(request.user)
-    if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
-        is_new = True
-        domains_for_user = Domain.active_for_user(request.user, is_active=False)
-        if len(domains_for_user) > 0:
-            context['requested_domain'] = domains_for_user[0]
-            return render(request, 'registration/confirmation_waiting.html',
-                    context)
+        context = get_domain_context(domain_type)
 
-    if request.method == 'POST':
+        is_new = False
+
+        active_domains_for_user = Domain.active_for_user(request.user)
+        if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
+            is_new = True
+            domains_for_user = Domain.active_for_user(request.user, is_active=False)
+            if len(domains_for_user) > 0:
+                context['requested_domain'] = domains_for_user[0]
+                return render(request, 'registration/confirmation_waiting.html',
+                        context)
+
+        context.update({
+            'form': DomainRegistrationForm(initial={'domain_type': domain_type}),
+            'is_new': is_new,
+        })
+        return render(request, 'registration/domain_request.html', context)
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        domain_type = kwargs.get('domain_type') or 'commcare'
+        context = get_domain_context(domain_type)
+
+        is_new = False
+        referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')
         form = DomainRegistrationForm(request.POST)
         if form.is_valid():
@@ -174,14 +194,12 @@ def register_domain(request, domain_type=None):
                 if referer_url:
                     return redirect(referer_url)
                 return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
-    else:
-        form = DomainRegistrationForm(initial={'domain_type': domain_type})
 
-    context.update({
-        'form': form,
-        'is_new': is_new,
-    })
-    return render(request, 'registration/domain_request.html', context)
+        context.update({
+            'form': form,
+            'is_new': is_new,
+        })
+        return render(request, 'registration/domain_request.html', context)
 
 
 @transaction.atomic
