@@ -38,14 +38,14 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         xml_data = self.get_xml('id_conflicts')
         with self.assertRaises(BulkSaveError):
-            submit_form_locally(xml_data)
+            submit_form_locally(xml_data, 'test-domain')
 
     def test_empty_case_id(self):
         """
         Ensure that form processor fails on empty id
         """
         xml_data = self.get_xml('empty_id')
-        response, form, cases = submit_form_locally(xml_data)
+        response, form, cases = submit_form_locally(xml_data, 'test-domain')
         self.assertIn('IllegalCaseId', response.content)
 
     def _testCornerCaseDatatypeBugs(self, value):

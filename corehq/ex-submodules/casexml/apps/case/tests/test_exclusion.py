@@ -23,7 +23,7 @@ class CaseExclusionTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        submit_form_locally(xml_data)
+        submit_form_locally(xml_data, 'test-domain')
         self.assertEqual(0, get_total_case_count())
         
     def testNestedExclusion(self):
@@ -33,6 +33,6 @@ class CaseExclusionTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "exclusion", "nested_device_report.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, _, [case] = submit_form_locally(xml_data)
+        _, _, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual(1, get_total_case_count())
         self.assertEqual("form case", case.name)
