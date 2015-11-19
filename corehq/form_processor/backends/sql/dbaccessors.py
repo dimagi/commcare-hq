@@ -1,26 +1,31 @@
-from dimagi.utils.decorators.memoized import memoized
+from django.db.models import F
 
-from ..utils import should_use_sql_backend
+from corehq.form_processor.models import XFormInstanceSQL
 
 
-class FormDbAccessors(object):
-    """
-    The FormProcessorInterface serves as the base transactions that take place in forms. Different
-    backends can implement this class in order to make common interface.
-    """
+doc_type_to_state = {
+    "XFormInstance": XFormInstanceSQL.NORMAL,
+    "XFormError": XFormInstanceSQL.ERROR,
+    "XFormDuplicate": XFormInstanceSQL.DUPLICATE,
+    "XFormDeprecated": XFormInstanceSQL.DEPRECATED,
+    "XFormArchived": XFormInstanceSQL.ARCHIVED,
+    "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
+}
 
-    def __init__(self, domain=None):
-        self.domain = domain
 
-    @property
-    @memoized
-    def db_accessor(self):
-        from couchforms.models import XFormInstance
-        from corehq.form_processor.models import XFormInstanceSQL
+class FormAccessorSQL(object):
 
-        if should_use_sql_backend(self.domain):
-            return FormDbAccessorSQL
-        else:
-            return FormDbAccessorCouch
+    @staticmethod
+    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+        state = doc_type_to_state[type_]
+        assert limit is not None
 
-    def get_forms_by_type(self, type_, recent_first=False, limit=None):
+        order = 'received_on'
+        if recent_first:
+            order = '-{}'.format(order)
+
+        return XFormInstanceSQL.objects.filter(
+            domain=domain,
+            state=state
+        ).order_by(order)[0:limit]
+

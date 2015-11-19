@@ -1,26 +1,8 @@
-from dimagi.utils.decorators.memoized import memoized
-
-from ..utils import should_use_sql_backend
+from couchforms.dbaccessors import get_forms_by_type
 
 
-class FormDbAccessors(object):
-    """
-    The FormProcessorInterface serves as the base transactions that take place in forms. Different
-    backends can implement this class in order to make common interface.
-    """
+class FormAccessorCouch(object):
 
-    def __init__(self, domain=None):
-        self.domain = domain
-
-    @property
-    @memoized
-    def db_accessor(self):
-        from couchforms.models import XFormInstance
-        from corehq.form_processor.models import XFormInstanceSQL
-
-        if should_use_sql_backend(self.domain):
-            return FormDbAccessorSQL
-        else:
-            return FormDbAccessorCouch
-
-    def get_forms_by_type(self, type_, recent_first=False, limit=None):
+    @staticmethod
+    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+        return get_forms_by_type(domain, type_, recent_first, limit)
