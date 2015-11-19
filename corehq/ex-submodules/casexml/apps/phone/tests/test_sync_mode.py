@@ -76,7 +76,7 @@ class SyncBaseTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, form, _ = submit_form_locally(xml_data, last_sync_token=token_id)
+        _, form, _ = submit_form_locally(xml_data, 'test-domain', last_sync_token=token_id)
         return form
 
     def _postFakeWithSyncToken(self, caseblocks, token_id):
