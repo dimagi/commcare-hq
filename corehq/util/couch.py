@@ -62,23 +62,36 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
 
 
 @memoized
-def get_document_class_by_name(name):
+def get_classes_by_doc_type():
+    queue = [Document]
+    classes_by_doc_type = {}
+    while queue:
+        klass = queue.pop()
+        try:
+            klass._meta.app_label
+        except AttributeError:
+            # exclude abstract base classes (which don't have an app_label)
+            pass
+        else:
+            # a base class (e.g. CommCareCase) wins over a subclass (e.g. BiharCase)
+            if klass._doc_type not in classes_by_doc_type:
+                classes_by_doc_type[klass._doc_type] = klass
+        queue.extend(klass.__subclasses__())
+    return classes_by_doc_type
+
+
+def get_document_class_by_doc_type(doc_type):
     """
-    Given the name of a document class, get the class itself.
+    Given the doc_type of a document class, get the class itself.
 
     Raises a DocumentClassNotFound if not found
     """
-    def _all_subclasses(cls):
-        for subclass in cls.__subclasses__():
-            yield subclass
-            for subsubclass in _all_subclasses(subclass):
-                yield subsubclass
 
-    for subclass in _all_subclasses(Document):
-        if subclass.__name__ == name:
-            return subclass
-
-    raise DocumentClassNotFound(u'No Document class with name "{}" could be found.'.format(name))
+    try:
+        return get_classes_by_doc_type()[doc_type]
+    except KeyError:
+        raise DocumentClassNotFound(
+            u'No Document class with name "{}" could be found.'.format(doc_type))
 
 
 def get_db_by_doc_type(doc_type):
@@ -86,7 +99,7 @@ def get_db_by_doc_type(doc_type):
     Lookup a database by document type. Returns None if the database is not found.
     """
     try:
-        return get_document_class_by_name(doc_type).get_db()
+        return get_document_class_by_doc_type(doc_type).get_db()
     except DocumentClassNotFound:
         return None
 

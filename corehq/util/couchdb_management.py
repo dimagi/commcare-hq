@@ -1,5 +1,5 @@
 from couchdbkit.client import Database
-from dimagi.ext.couchdbkit import Document
+from corehq.util.couch import get_document_class_by_doc_type
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 
@@ -51,26 +51,13 @@ class CouchConfig(object):
         return self.app_label_to_db_uri[getattr(klass._meta, "app_label")]
 
     def get_db_uri_for_doc_type(self, doc_type):
-        return self.get_db_for_class(class_by_doc_type()[doc_type])
+        return self.get_db_for_class(get_document_class_by_doc_type(doc_type))
 
     def get_db_for_class(self, klass):
         return Database(self.get_db_uri_for_class(klass))
 
     def get_db_for_doc_type(self, doc_type):
         return Database(self.get_db_uri_for_doc_type(doc_type))
-
-
-@memoized
-def class_by_doc_type():
-    queue = [Document]
-    m = {}
-    while queue:
-        klass = queue.pop()
-        app_label = getattr(klass._meta, "app_label", None)
-        if app_label:
-            m[klass._doc_type] = klass
-        queue.extend(klass.__subclasses__())
-    return m
 
 
 couch_config = CouchConfig()
