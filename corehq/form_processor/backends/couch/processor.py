@@ -7,7 +7,10 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import process_xform, deprecation_type
-from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError, SubmissionErrorLog
+from couchforms.models import (
+    XFormInstance, XFormDeprecated, XFormDuplicate,
+    doc_types, XFormError, SubmissionErrorLog
+)
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 

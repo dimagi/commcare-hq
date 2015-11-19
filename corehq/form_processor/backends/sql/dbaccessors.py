@@ -1,5 +1,3 @@
-from django.db.models import F
-
 from corehq.form_processor.models import XFormInstanceSQL
 
 
@@ -28,4 +26,3 @@ class FormAccessorSQL(object):
             domain=domain,
             state=state
         ).order_by(order)[0:limit]
-
