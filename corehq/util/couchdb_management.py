@@ -5,6 +5,13 @@ from django.conf import settings
 
 
 class CouchConfig(object):
+    """
+    Interface for accessing the couch-related settings
+
+    You can use db_uri pass in a different couch instance
+    from the one specified by COUCH_DATABASE
+
+    """
     def __init__(self, db_uri=None):
         if db_uri:
             self._settings_helper = (
