@@ -703,6 +703,30 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+class CommentMixin(DocumentSchema):
+    """
+    Documentation comment for app builders and maintainers
+    """
+    comment = StringProperty(default='')
+
+    @property
+    def short_comment(self):
+        """
+        Trim comment to 72 chars
+
+        >>> form = CommentMixin(
+        ...     comment=u"Twas bryllyg, and þe slythy toves "
+        ...             u"Did gyre and gymble in þe wabe: "
+        ...             u"All mimsy were þe borogoves; "
+        ...             u"And þe mome raths outgrabe."
+        ... )
+        >>> form.short_comment
+        u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'
+
+        """
+        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -994,7 +1018,7 @@ class FormBase(DocumentSchema):
         return bool(self.case_list_modules)
 
 
-class IndexedFormBase(FormBase, IndexedSchema):
+class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def get_app(self):
         return self._parent._parent
 
@@ -1773,7 +1797,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         _rename_key(self.label, old_lang, new_lang)
 
 
-class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
+class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(unicode)
     unique_id = StringProperty()
     case_type = StringProperty()
@@ -3727,7 +3751,8 @@ def absolute_url_property(method):
 
 
 class ApplicationBase(VersionedDoc, SnapshotMixin,
-                      CommCareFeatureSupportMixin):
+                      CommCareFeatureSupportMixin,
+                      CommentMixin):
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
