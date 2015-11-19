@@ -284,8 +284,11 @@ cloudCare.CaseListView = Backbone.View.extend({
 
     },
     appendAll: function () {
+        var $table;
         this.caseList.each(this.appendItem);
-        $('table', this.el).dataTable({
+        $table = $('table', this.el);
+        $table.css('width', '100%');
+        $table.dataTable({
             bFilter: true,
             bPaginate: false,
             bSort: true,

@@ -1,16 +1,27 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %} {{ block.super }}
 <script type="text/javascript" src="{% static 'domain/js/media_manager.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     ko.applyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block stylesheets %}
+    <style>
+        .form-actions {
+            padding-left: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
 <form id="update-media-sharing-settings" class="disable-on-submit" method="post">
     <fieldset>
         <legend>{% trans 'Change Multimedia Sharing Settings' %}</legend>
@@ -52,8 +63,8 @@
                 </div>
                 </td>
                 <td><input type="checkbox" data-bind="checked: shared, attr: {name: m_id + '_shared'}" /></td>
-                <td><input type="text" data-bind="value: tags, enable: shared, attr: {name: m_id + '_tags'}" placeholder="Space-separated tags" /></td>
-                <td><select data-bind="options: $root.licenses, optionsText: 'name', optionsValue: 'code', value: license, enable: shared, attr: {name: m_id + '_license'}"></select>
+                <td><input class="form-control" type="text" data-bind="value: tags, enable: shared, attr: {name: m_id + '_tags'}" placeholder="Space-separated tags" /></td>
+                <td><select class="form-control" data-bind="options: $root.licenses, optionsText: 'name', optionsValue: 'code', value: license, enable: shared, attr: {name: m_id + '_license'}"></select>
                     <br />
                     <a data-toggle="modal" href="#license-explanations">{% trans 'More information...' %}</a>
                 </td>

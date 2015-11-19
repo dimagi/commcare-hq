@@ -7,6 +7,10 @@
     cursor: wait;
 }
 
+nav#sessions > ul > li >  a.close{
+  z-index:1000;
+}
+
 nav#sessions > ul > li.nav-header {
     color: #6c6c6c;
 }

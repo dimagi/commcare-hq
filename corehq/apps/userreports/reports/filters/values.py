@@ -49,11 +49,21 @@ class DateFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return None
-        return BetweenFilter(
-            self.filter.field,
-            '%s_startdate' % self.filter.slug,
-            '%s_enddate' % self.filter.slug
-        )
+        if self.value.startdate is None:
+            return LTFilter(
+                self.filter.field,
+                '%s_enddate' % self.filter.slug)
+        elif self.value.enddate is None:
+            return GTFilter(
+                self.filter.field,
+                '%s_startdate' % self.filter.slug
+            )
+        else:
+            return BetweenFilter(
+                self.filter.field,
+                '%s_startdate' % self.filter.slug,
+                '%s_enddate' % self.filter.slug
+            )
 
     def to_sql_values(self):
         if self.value is None:
@@ -61,17 +71,22 @@ class DateFilterValue(FilterValue):
 
         startdate = self.value.startdate
         enddate = self.value.enddate
-        if self.value.inclusive:
-            enddate = self.value.enddate + timedelta(days=1) - timedelta.resolution
 
         if self.filter.compare_as_string:
-            startdate = str(startdate)
-            enddate = str(enddate)
+            startdate = str(startdate) if startdate is not None else None
+            enddate = str(enddate) if enddate is not None else None
 
-        return {
-            '%s_startdate' % self.filter.slug: startdate,
-            '%s_enddate' % self.filter.slug: enddate,
-        }
+        if self.value.inclusive and enddate:
+                enddate = self.value.enddate + timedelta(days=1) - timedelta.resolution
+
+        sql_values = {}
+        if startdate is not None:
+            sql_values.update({'%s_startdate' % self.filter.slug: startdate})
+        if enddate is not None:
+            sql_values.update({'%s_enddate' % self.filter.slug: enddate})
+
+        return sql_values
+
 
 
 class NumericFilterValue(FilterValue):

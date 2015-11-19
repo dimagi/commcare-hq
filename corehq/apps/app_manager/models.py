@@ -10,8 +10,8 @@ import random
 import json
 import types
 import re
+import datetime
 from collections import defaultdict, namedtuple
-from datetime import datetime
 from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
@@ -703,6 +703,30 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+class CommentMixin(DocumentSchema):
+    """
+    Documentation comment for app builders and maintainers
+    """
+    comment = StringProperty(default='')
+
+    @property
+    def short_comment(self):
+        """
+        Trim comment to 72 chars
+
+        >>> form = CommentMixin(
+        ...     comment=u"Twas bryllyg, and þe slythy toves "
+        ...             u"Did gyre and gymble in þe wabe: "
+        ...             u"All mimsy were þe borogoves; "
+        ...             u"And þe mome raths outgrabe."
+        ... )
+        >>> form.short_comment
+        u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'
+
+        """
+        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -994,7 +1018,7 @@ class FormBase(DocumentSchema):
         return bool(self.case_list_modules)
 
 
-class IndexedFormBase(FormBase, IndexedSchema):
+class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def get_app(self):
         return self._parent._parent
 
@@ -1773,7 +1797,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         _rename_key(self.label, old_lang, new_lang)
 
 
-class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
+class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(unicode)
     unique_id = StringProperty()
     case_type = StringProperty()
@@ -3247,6 +3271,7 @@ class ReportAppFilter(DocumentSchema):
                 'StaticChoiceFilter': StaticChoiceFilter,
                 'StaticChoiceListFilter': StaticChoiceListFilter,
                 'StaticDatespanFilter': StaticDatespanFilter,
+                'CustomDatespanFilter': CustomDatespanFilter,
                 'MobileSelectFilter': MobileSelectFilter,
             }
             try:
@@ -3337,6 +3362,53 @@ class StaticDatespanFilter(ReportAppFilter):
 
     def get_filter_value(self, user):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
+class CustomDatespanFilter(ReportAppFilter):
+    operator = StringProperty(
+        choices=[
+            '=',
+            '<=',
+            '>=',
+            '>',
+            '<',
+            'between'
+        ],
+        required=True,
+    )
+    date_number = StringProperty(required=True)
+    date_number2 = StringProperty()
+
+    def get_filter_value(self, user):
+        today = datetime.date.today()
+        start_date = end_date = None
+        days = int(self.date_number)
+        if self.operator == 'between':
+            days2 = int(self.date_number2)
+            # allows user to have specified the two numbers in either order
+            if days > days2:
+                end = days2
+                start = days
+            else:
+                start = days2
+                end = days
+            start_date = today - datetime.timedelta(days=start)
+            end_date = today - datetime.timedelta(days=end)
+        elif self.operator == '=':
+            start_date = end_date = today - datetime.timedelta(days=days)
+        elif self.operator == '>=':
+            start_date = None
+            end_date = today - datetime.timedelta(days=days)
+        elif self.operator == '<=':
+            start_date = today - datetime.timedelta(days=days)
+            end_date = None
+        elif self.operator == '<':
+            start_date = today - datetime.timedelta(days=days - 1)
+            end_date = None
+        elif self.operator == '>':
+            start_date = None
+            end_date = today - datetime.timedelta(days=days + 1)
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
@@ -3431,10 +3503,6 @@ class ReportModule(ModuleBase):
                 for config in self.report_configs
             ]
         )
-
-    def uses_media(self):
-        # for now no media support for ReportModules
-        return False
 
     def check_report_validity(self):
         """
@@ -3731,7 +3799,8 @@ def absolute_url_property(method):
 
 
 class ApplicationBase(VersionedDoc, SnapshotMixin,
-                      CommCareFeatureSupportMixin):
+                      CommCareFeatureSupportMixin,
+                      CommentMixin):
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
@@ -4102,7 +4171,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 self.lazy_fetch_attachment('CommCare.jar'),
             )
         except (ResourceError, KeyError):
-            built_on = datetime.utcnow()
+            built_on = datetime.datetime.utcnow()
             all_files = self.create_all_files()
             jad_settings = {
                 'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
@@ -4266,7 +4335,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         record = DeleteApplicationRecord(
             domain=self.domain,
             app_id=self.id,
-            datetime=datetime.utcnow()
+            datetime=datetime.datetime.utcnow()
         )
         record.save()
         return record
@@ -4733,7 +4802,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             app_id=self.id,
             module_id=module.id,
             module=module,
-            datetime=datetime.utcnow()
+            datetime=datetime.datetime.utcnow()
         )
         del self.modules[module.id]
         record.save()
@@ -4756,7 +4825,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             module_unique_id=module_unique_id,
             form_id=form.id,
             form=form,
-            datetime=datetime.utcnow(),
+            datetime=datetime.datetime.utcnow(),
         )
         record.save()
 

@@ -684,7 +684,6 @@ AUDIT_MODULES = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
-    'PINGDOM_API_ID': '',
     'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
@@ -1057,6 +1056,9 @@ USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 NEW_FIXTURES_DB = 'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
 
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = None
+
 COUCHDB_APPS = [
     'api',
     'app_manager',
@@ -1077,7 +1079,6 @@ COUCHDB_APPS = [
     'ctable',
     'custom_data_fields',
     'hqadmin',
-    'domain',
     'ext',
     'facilities',
     'fluff_filter',
@@ -1148,12 +1149,16 @@ COUCHDB_APPS = [
 
     # fixtures
     ('fixtures', FIXTURES_DB),
+
+    # domains
+    ('domain', DOMAINS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS,
-                                            [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB])
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
+    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
+])
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
@@ -1286,9 +1291,6 @@ PILLOWTOPS = {
         'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
-    ],
-    'phonelog': [
-        'corehq.pillows.log.PhoneLogPillow',
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',

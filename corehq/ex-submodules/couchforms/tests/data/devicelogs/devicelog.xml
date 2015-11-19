@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+  <device_id>351780060530179</device_id>
+  <report_date>2014-10-13T09:10:30.122+02</report_date>
+  <app_version>CommCare ODK, version "2.15.0"(335344). App v182. CommCare Version 2.15. Build 335344, built on: October-02-2014</app_version>
+  <user_subreport>
+    <user>
+      <username>ricatla</username>
+      <user_id>428d454aa9abc74e1964e16d3565d6b6</user_id>
+      <sync_token>848609ceef09fa567e98ca61e3b0514d</sync_token>
+    </user>
+  </user_subreport>
+  <log_subreport>
+    <log date="2014-10-08T10:43:38.793+02">
+      <type>resources</type>
+      <msg>Staging Sandbox: 54cfe6515fc24e3fafa1170b9a7c2a00</msg>
+    </log>
+    <log date="2014-10-08T10:48:45.196+02">
+      <type>user</type>
+      <msg>login|ricatla|428d454aa9abc74e1964e16d3565d6b6</msg>
+    </log>
+    <log date="2014-10-08T10:43:38.900+02">
+      <type>resources</type>
+      <msg>Beginning install attempt for profile https://www.commcarehq.org/a/chai-moz/apps/download/41a280e1ae2827f4b04edf36ab10395b/media_profile.ccpr?latest=true</msg>
+    </log>
+    <log date="2014-10-08T10:48:22.644+02">
+      <type>Resource</type>
+      <msg>Upgrade table fetched, beginning upgrade</msg>
+    </log>
+    <log date="2014-10-09T10:48:45.811+02">
+      <type>maintenance</type>
+      <msg>Logging out user ricatla</msg>
+    </log>
+    <log date="2014-10-13T09:10:20.183+02">
+      <type>resources</type>
+      <msg>Staging Sandbox: 54cfe6515fc24e3fafa1170b9a7c2a00</msg>
+    </log>
+    <log date="2014-10-13T09:10:29.649+02">
+      <type>user</type>
+      <msg>login|ricatla|428d454aa9abc74e1964e16d3565d6b6</msg>
+    </log>
+  </log_subreport>
+</device_report>

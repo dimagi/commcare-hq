@@ -28,7 +28,7 @@ class ConfigurableReportTestMixin(object):
             case_type=cls.case_type,
             update=properties,
         ).as_xml()
-        FormProcessorInterface().post_case_blocks([case_block], {'domain': cls.domain})
+        post_case_blocks([case_block], {'domain': cls.domain})
         return CommCareCase.get(id)
 
     @classmethod
