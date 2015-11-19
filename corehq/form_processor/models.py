@@ -615,6 +615,20 @@ class CaseTransaction(models.Model):
             self.cached_form = XFormAttachmentSQL.objects.get(self.form_uuid)
         return self.cached_form
 
+    def __eq__(self, other):
+        if not isinstance(other, CaseTransaction):
+            return False
+
+        return (
+            self.case_id == other.case_id and
+            self.type == other.type and
+            self.form_uuid == other.form_uuid
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
     @classmethod
     def form_transaction(cls, case, xform):
         return CaseTransaction(
