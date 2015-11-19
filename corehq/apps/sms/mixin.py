@@ -193,7 +193,7 @@ def get_global_prefix_backend_mapping():
     return result
 
 
-class MobileBackend(SyncCouchToSQLMixin, Document):
+class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
     """
     Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
