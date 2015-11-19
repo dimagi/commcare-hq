@@ -47,6 +47,7 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     FeatureType,
+    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
@@ -1389,6 +1390,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
                 entry_point=EntryPoint.CONTRACTED,
+                pre_or_post_pay=PreOrPostPay.POSTPAY
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)

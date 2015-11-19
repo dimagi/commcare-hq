@@ -269,6 +269,7 @@ class PreOrPostPay(object):
     CHOICES = (
         (PREPAY, "Prepay"),
         (POSTPAY, "Postpay"),
+        (NOT_SET, "Not Set"),
     )
 
 

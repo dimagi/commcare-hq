@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
-    SubscriptionType
+    SubscriptionType, PreOrPostPay
 )
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
@@ -271,6 +271,7 @@ def create_30_day_trial(domain_obj):
         currency=Currency.get_default(),
         created_by_domain=domain_obj.name,
         account_type=BillingAccountType.TRIAL,
+        pre_or_post_pay=PreOrPostPay.POSTPAY,
     )[0]
     trial_subscription = Subscription.new_domain_subscription(
         trial_account, domain_obj.name, advanced_plan_version,
