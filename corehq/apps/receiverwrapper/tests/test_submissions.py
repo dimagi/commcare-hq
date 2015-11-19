@@ -5,7 +5,9 @@ from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
-from couchforms.models import XFormInstance
+
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import run_with_all_backends
 
 
 # bit of a hack, but the tests optimize around this flag to run faster
@@ -40,7 +42,7 @@ class SubmissionTest(TestCase):
         response = self._submit(form,
                                 HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
         xform_id = response['X-CommCareHQ-FormID']
-        foo = XFormInstance.get(xform_id).to_json()
+        foo = FormProcessorInterface(self.domain.name).get_xform(xform_id).to_json()
         n_times_saved = int(foo['_rev'].split('-')[0])
         self.assertTrue(foo['received_on'])
         for key in ['form', '_attachments', '_rev', 'received_on']:
@@ -77,30 +79,35 @@ class SubmissionTest(TestCase):
             "xmlns": xmlns,
         })
 
+    @run_with_all_backends
     def test_submit_simple_form(self):
         self._test(
             form='simple_form.xml',
             xmlns='http://commcarehq.org/test/submit',
         )
 
+    @run_with_all_backends
     def test_submit_bare_form(self):
         self._test(
             form='bare_form.xml',
             xmlns='http://commcarehq.org/test/submit',
         )
 
+    @run_with_all_backends
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
             xmlns='http://openrosa.org/user/registration',
         )
 
+    @run_with_all_backends
     def test_submit_with_case(self):
         self._test(
             form='form_with_case.xml',
             xmlns='http://commcarehq.org/test/submit',
         )
 
+    @run_with_all_backends
     def test_submit_with_namespaced_meta(self):
         self._test(
             form='namespace_in_meta.xml',

@@ -2,7 +2,8 @@ import uuid
 from django.core.urlresolvers import reverse
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
-from couchforms.models import XFormInstance
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import run_with_all_backends
 import django_digest.test
 from django.test import TestCase
 import os
@@ -86,10 +87,11 @@ class _AuthTest(TestCase):
         self.assertEqual(response.status_code, expected_status)
         if expected_auth_context is not None:
             xform_id = response['X-CommCareHQ-FormID']
-            xform = XFormInstance.get(xform_id)
+            xform = FormProcessorInterface(self.domain).get_xform(xform_id)
             self.assertEqual(xform.auth_context, expected_auth_context)
             return xform
 
+    @run_with_all_backends
     def test_digest(self):
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
@@ -107,6 +109,7 @@ class _AuthTest(TestCase):
             authtype='digest',
         )
 
+    @run_with_all_backends
     def test_basic(self):
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
@@ -132,6 +135,7 @@ class _AuthTest(TestCase):
             expected_auth_context=expected_auth_context
         )
 
+    @run_with_all_backends
     def test_noauth_nometa(self):
         self._test_post(
             file_path=self.bare_form,
@@ -139,6 +143,7 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
+    @run_with_all_backends
     def test_noauth_devicelog(self):
         self._test_post(
             file_path=self.device_log,
@@ -146,6 +151,7 @@ class _AuthTest(TestCase):
             expected_status=201,
         )
 
+    @run_with_all_backends
     def test_bad_noauth(self):
         """
         if someone submits a form in noauth mode, but it creates or updates
@@ -158,6 +164,7 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
+    @run_with_all_backends
     def test_case_noauth(self):
         self._test_post(
             file_path=self.form_with_demo_case,
