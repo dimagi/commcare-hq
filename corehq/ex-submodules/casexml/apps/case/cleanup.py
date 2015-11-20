@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
+
+from django.conf import settings
+
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_updates
@@ -69,6 +72,12 @@ def safe_hard_delete(case):
 
     This is used primarily for cleaning up system cases/actions (e.g. the location delegate case).
     """
+    if not settings.UNIT_TESTING:
+        from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+        whitelist_case_types = [USER_LOCATION_OWNER_MAP_TYPE]
+        if case.type not in whitelist_case_types:
+            raise CommCareCaseError("Attempt to hard delete a case whose type isn't white listed")
+
     if case.reverse_indices:
         raise CommCareCaseError("You can't hard delete a case that has other dependencies ({})!".format(case.case_id))
     interface = FormProcessorInterface(case.domain)
