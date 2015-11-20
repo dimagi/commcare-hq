@@ -52,7 +52,10 @@ from corehq.apps.accounting.models import (
     Feature,
     FeatureRate,
     FeatureType,
+    FundingSource,
     Invoice,
+    LastPayment,
+    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
@@ -99,6 +102,14 @@ class BillingAccountBasicForm(forms.Form):
         label=ugettext_lazy("Entry Point"),
         choices=EntryPoint.CHOICES,
     )
+    last_payment_method = forms.ChoiceField(
+        label=ugettext_lazy("Last Payment Method"),
+        choices=LastPayment.CHOICES
+    )
+    pre_or_post_pay = forms.ChoiceField(
+        label=ugettext_lazy("Prepay or Postpay"),
+        choices=PreOrPostPay.CHOICES
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -112,11 +123,15 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
+                'last_payment_method': account.last_payment_method,
+                'pre_or_post_pay': account.pre_or_post_pay,
             }
         else:
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
                 'entry_point': EntryPoint.CONTRACTED,
+                'last_payment_method': LastPayment.NONE,
+                'pre_or_post_pay': PreOrPostPay.POSTPAY,
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
@@ -148,6 +163,8 @@ class BillingAccountBasicForm(forms.Form):
                 'salesforce_account_id',
                 'currency',
                 'entry_point',
+                'last_payment_method',
+                'pre_or_post_pay',
                 crispy.Div(*additional_fields),
             ),
             FormActions(
@@ -212,6 +229,8 @@ class BillingAccountBasicForm(forms.Form):
             salesforce_account_id=salesforce_account_id,
             currency=currency,
             entry_point=self.cleaned_data['entry_point'],
+            last_payment_medthod=self.cleaned_data['last_payment_method'],
+            pre_or_post_pay=self.cleaned_data['pre_or_post_pay']
         )
         account.save()
 
@@ -239,6 +258,8 @@ class BillingAccountBasicForm(forms.Form):
         )
         account.dimagi_contact = self.cleaned_data['dimagi_contact']
         account.entry_point = self.cleaned_data['entry_point']
+        account.last_payment_method = self.cleaned_data['last_payment_method']
+        account.pre_or_post_pay = self.cleaned_data['pre_or_post_pay']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
@@ -351,9 +372,14 @@ class SubscriptionForm(forms.Form):
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Pro-Bono"),
+        label=ugettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
+    )
+    funding_source = forms.ChoiceField(
+        label=ugettext_lazy("Funding Source"),
+        choices=FundingSource.CHOICES,
+        initial=FundingSource.CLIENT,
     )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -438,6 +464,7 @@ class SubscriptionForm(forms.Form):
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
+            self.fields['funding_source'].initial = subscription.funding_source
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
@@ -514,7 +541,8 @@ class SubscriptionForm(forms.Form):
                     data_bind="visible: noInvoice"),
                 'auto_generate_credits',
                 'service_type',
-                'pro_bono_status'
+                'pro_bono_status',
+                'funding_source'
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -583,6 +611,7 @@ class SubscriptionForm(forms.Form):
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
         service_type = self.cleaned_data['service_type']
         pro_bono_status = self.cleaned_data['pro_bono_status']
+        funding_source = self.cleaned_data['funding_source']
         sub = Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
@@ -595,6 +624,7 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=service_type,
             pro_bono_status=pro_bono_status,
+            funding_source=funding_source,
             internal_change=True,
         )
         return sub
@@ -618,6 +648,7 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source']
         )
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
@@ -650,9 +681,14 @@ class ChangeSubscriptionForm(forms.Form):
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Pro-Bono"),
+        label=ugettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
+    )
+    funding_source = forms.ChoiceField(
+        label=ugettext_lazy("Funding Source"),
+        choices=FundingSource.CHOICES,
+        initial=FundingSource.CLIENT,
     )
 
     def __init__(self, subscription, web_user, *args, **kwargs):
@@ -677,6 +713,7 @@ class ChangeSubscriptionForm(forms.Form):
                 ),
                 'service_type',
                 'pro_bono_status',
+                'funding_source',
                 'subscription_change_note',
             ),
             FormActions(
