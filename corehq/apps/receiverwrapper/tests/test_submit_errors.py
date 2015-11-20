@@ -5,7 +5,9 @@ from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
-from couchforms.dbaccessors import get_forms_by_type, clear_forms_in_domain
+
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.test_utils import run_with_all_backends, FormProcessorTestUtils
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
 
@@ -20,51 +22,48 @@ class SubmissionErrorTest(TestCase):
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
-        clear_forms_in_domain(self.domain.name)
+        FormProcessorTestUtils.delete_all_xforms(self.domain.name)
 
     def tearDown(self):
         self.couch_user.delete()
         self.domain.delete()
-        clear_forms_in_domain(self.domain.name)
+        FormProcessorTestUtils.delete_all_xforms(self.domain.name)
 
     def _submit(self, formname):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
         with open(file_path, "rb") as f:
-            return self.client.post(self.url, {
+            res = self.client.post(self.url, {
                 "xml_submission_file": f
             })
-        
+            return file_path, res
+
+    @run_with_all_backends
     def testSubmitBadAttachmentType(self):
         res = self.client.post(self.url, {
                 "xml_submission_file": "this isn't a file"
         })
         self.assertEqual(400, res.status_code)
         self.assertIn("xml_submission_file", res.content)
-            
-    def testSubmitDuplicate(self):
-        file = os.path.join(os.path.dirname(__file__), "data", "simple_form.xml")
-        with open(file) as f:
-            res = self.client.post(self.url, {
-                "xml_submission_file": f
-            })
-            self.assertEqual(201, res.status_code)
-            self.assertIn(u"   √   ".encode('utf-8'), res.content)
 
-        with open(file) as f:
-            res = self.client.post(self.url, {
-                "xml_submission_file": f
-            })
-            self.assertEqual(201, res.status_code)
-            self.assertIn("Form is a duplicate", res.content)
+    @run_with_all_backends
+    def testSubmitDuplicate(self):
+        file, res = self._submit('simple_form.xml')
+        self.assertEqual(201, res.status_code)
+        self.assertIn(u"   √   ".encode('utf-8'), res.content)
+
+        file, res = self._submit('simple_form.xml')
+        self.assertEqual(201, res.status_code)
+        self.assertIn("Form is a duplicate", res.content)
 
         # make sure we logged it
-        [log] = get_forms_by_type(self.domain.name, 'XFormDuplicate', limit=1)
+        [log] = FormAccessors(self.domain.name).get_forms_by_type('XFormDuplicate', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
 
+    @run_with_all_backends
     def testSubmissionError(self):
         evil_laugh = "mwa ha ha!"
 
@@ -74,17 +73,12 @@ class SubmissionErrorTest(TestCase):
         successful_form_received.connect(fail)
 
         try:
-            file = os.path.join(os.path.dirname(__file__), "data",
-                                "simple_form.xml")
-            with open(file) as f:
-                res = self.client.post(self.url, {
-                    "xml_submission_file": f
-                })
-                self.assertEqual(201, res.status_code)
-                self.assertIn(evil_laugh, res.content)
+            file, res = self._submit("simple_form.xml")
+            self.assertEqual(201, res.status_code)
+            self.assertIn(evil_laugh, res.content)
 
             # make sure we logged it
-            [log] = get_forms_by_type(self.domain.name, 'XFormError', limit=1)
+            [log] = FormAccessors(self.domain.name).get_forms_by_type('XFormError', limit=1)
 
             self.assertIsNotNone(log)
             self.assertIn(evil_laugh, log.problem)
@@ -93,7 +87,8 @@ class SubmissionErrorTest(TestCase):
         
         finally:
             successful_form_received.disconnect(fail)
-            
+
+    @run_with_all_backends
     def testSubmitBadXML(self):
         f, path = tmpfile()
         with f:
@@ -106,7 +101,7 @@ class SubmissionErrorTest(TestCase):
             self.assertIn('Invalid XML', res.content)
 
         # make sure we logged it
-        [log] = get_forms_by_type(self.domain.name, 'SubmissionErrorLog',
+        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog',
                                   limit=1)
 
         self.assertIsNotNone(log)

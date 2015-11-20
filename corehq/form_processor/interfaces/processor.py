@@ -75,6 +75,9 @@ class FormProcessorInterface(object):
     def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
         return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
 
+    def save_xform(self, xform):
+        return self.processor.save_xform(xform)
+
     def get_xform(self, form_id):
         return self.xform_model.get(form_id)
 
@@ -117,9 +120,9 @@ class FormProcessorInterface(object):
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
-    def bulk_save(self, instance, xforms, cases=None):
+    def save_processed_models(self, instance, xforms, cases=None):
         try:
-            return self.processor.bulk_save(instance, xforms, cases=cases)
+            return self.processor.save_processed_models(xforms, cases=cases)
         except BulkSaveError as e:
             logging.error('BulkSaveError saving forms', exc_info=1,
                           extra={'details': {'errors': e.errors}})
@@ -155,3 +158,6 @@ class FormProcessorInterface(object):
 
     def get_cases_from_forms(self, xforms, case_db):
         return self.processor.get_cases_from_forms(xforms, case_db)
+
+    def log_submission_error(self, instance, message, callback):
+        return self.processor.log_submission_error(instance, message, callback)
