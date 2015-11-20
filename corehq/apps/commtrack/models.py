@@ -1,43 +1,38 @@
 from decimal import Decimal
-import uuid
-import logging
-from xml.etree import ElementTree
 
-from couchdbkit.exceptions import ResourceNotFound
-
-from django.utils.translation import ugettext as _
-from django.dispatch import receiver
 from django.db import models
 from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils.translation import ugettext as _
 
-from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
-from corehq.apps.commtrack.exceptions import MissingProductId
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from dimagi.ext.couchdbkit import *
-from dimagi.ext import jsonobject
-from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
 from casexml.apps.stock.models import StockReport, DocDomainMapping
-from casexml.apps.case.xml import V2
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.commtrack import const
-from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
-from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
+from couchdbkit.exceptions import ResourceNotFound
+from couchexport.models import register_column_type, ComplexExportColumn
+from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.ext import jsonobject
+from dimagi.ext.couchdbkit import *
+from dimagi.utils import parsing as dateparse
+from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
-from couchforms.signals import xform_archived, xform_unarchived
-from dimagi.utils import parsing as dateparse
-from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.commtrack.const import StockActions, RequisitionActions, DAYS_IN_MONTH
-from corehq.apps.commtrack.xmlutil import XML
-from couchexport.models import register_column_type, ComplexExportColumn
-from dimagi.utils.decorators.memoized import memoized
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
+
+from . import const
+from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
+from .dbaccessors import get_supply_point_case_by_location
+from .exceptions import MissingProductId
+from .xmlutil import XML
 
 
 STOCK_ACTION_ORDER = [
