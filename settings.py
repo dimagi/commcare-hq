@@ -1035,8 +1035,7 @@ INDICATOR_CONFIG = {
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import (
     get_dynamic_db_settings,
-    make_couchdb_tuples,
-    get_extra_couchdbs,
+    CouchSettingsHelper,
     SharedDriveConfiguration
 )
 
@@ -1056,6 +1055,9 @@ USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
 NEW_FIXTURES_DB = 'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
+
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = None
 
 COUCHDB_APPS = [
     'api',
@@ -1077,7 +1079,6 @@ COUCHDB_APPS = [
     'ctable',
     'custom_data_fields',
     'hqadmin',
-    'domain',
     'ext',
     'facilities',
     'fluff_filter',
@@ -1148,13 +1149,18 @@ COUCHDB_APPS = [
 
     # fixtures
     ('fixtures', FIXTURES_DB),
+
+    # domains
+    ('domain', DOMAINS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
-                                             [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB])
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
+    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
+])
+COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
+EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
 INSTALLED_APPS += LOCAL_APPS
 

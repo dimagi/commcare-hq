@@ -2,6 +2,7 @@ import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL
 
 
@@ -33,7 +34,7 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
                     self.locks.append(lock)
             else:
                 case = CommCareCaseSQL.get(case_id)
-        except CommCareCaseSQL.DoesNotExist:
+        except CaseNotFound:
             return None
 
         return case

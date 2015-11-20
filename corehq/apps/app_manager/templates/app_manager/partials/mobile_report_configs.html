@@ -2,7 +2,9 @@
 {% load i18n %}
 
 <div class="form-horizontal">
-    <div data-bind="saveButton: saveButton" id="save-button"></div>
+    <div class="save-button-holder clearfix">
+        <div data-bind="saveButton: saveButton" id="save-button"></div>
+    </div>
     <fieldset>
         <div class="control-group" id="module-name">
             <label class="control-label">{% trans "Module Name" %}</label>

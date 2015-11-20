@@ -2,11 +2,12 @@ import datetime
 import logging
 
 from casexml.apps.case import const
-from casexml.apps.case.cleanup import get_case_forms, rebuild_case_from_actions
+from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
-from couchforms.util import process_xform, deprecation_type
+from couchforms.util import process_xform, deprecation_type, fetch_and_wrap_form
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog
@@ -63,6 +64,11 @@ class FormProcessorCouch(object):
     @classmethod
     def is_duplicate(cls, xform):
         return xform.form_id in XFormInstance.get_db()
+
+    @classmethod
+    def bulk_delete(cls, case, xforms):
+        docs = [case._doc] + [f._doc for f in xforms]
+        case.get_db().bulk_delete(docs)
 
     @classmethod
     def save_processed_models(cls, xforms, cases=None):
@@ -163,7 +169,7 @@ class FormProcessorCouch(object):
             case.domain = domain
             found = False
 
-        forms = get_case_forms(case_id)
+        forms = FormProcessorCouch.get_case_forms(case_id)
         filtered_forms = [f for f in forms if f.is_normal]
         sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
 
@@ -184,6 +190,19 @@ class FormProcessorCouch(object):
         case.actions.append(_rebuild_action())
         case.save()
         return case
+
+    @staticmethod
+    def get_case_forms(case_id):
+        """
+        Get all forms that have submitted against a case (including archived and deleted forms)
+        wrapped by the appropriate form type.
+        """
+        form_ids = get_case_xform_ids(case_id)
+        return FormProcessorCouch.get_xforms(form_ids)
+
+    @staticmethod
+    def get_xforms(form_ids):
+        return [fetch_and_wrap_form(id) for id in form_ids]
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):

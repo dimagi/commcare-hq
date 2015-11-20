@@ -106,9 +106,6 @@ class AbstractCommCareCase(object):
     def case_name(self):
         raise NotImplementedError()
 
-    def hard_delete(self):
-        raise NotImplementedError()
-
     def soft_delete(self):
         raise NotImplementedError()
 
