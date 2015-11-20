@@ -1,5 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
+from corehq.apps.userreports.dbaccessors import get_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -327,7 +328,7 @@ class ReportConfigurationDbTest(TestCase):
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
+        for config in get_all_report_configs():
             config.delete()
 
     def test_get_by_domain(self):
@@ -340,7 +341,7 @@ class ReportConfigurationDbTest(TestCase):
         self.assertEqual(0, len(results))
 
     def test_get_all(self):
-        self.assertEqual(3, len(list(ReportConfiguration.all())))
+        self.assertEqual(3, len(list(get_all_report_configs())))
 
     def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
@@ -392,7 +393,7 @@ class ReportTranslationTest(TestCase):
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
+        for config in get_all_report_configs():
             config.delete()
 
     def setUp(self):
