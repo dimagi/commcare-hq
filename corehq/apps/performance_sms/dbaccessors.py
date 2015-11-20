@@ -3,6 +3,7 @@ from django.conf import settings
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.performance_sms.models import PerformanceConfiguration
+from corehq.util.test_utils import unit_testing_only
 
 
 def by_domain(domain):
@@ -18,8 +19,8 @@ def by_interval(interval_keys):
     ))
 
 
+@unit_testing_only
 def delete_all_configs():
-    assert settings.UNIT_TESTING
     db = PerformanceConfiguration.get_db()
 
     # Since this is a unit test, number of domains is small
