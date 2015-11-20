@@ -329,6 +329,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
         "case_type": None,
+        'comment': None,
         "display_separately": None,
         "has_schedule": None,
         "media_audio": None,
@@ -445,6 +446,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module[attribute][lang] = name
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
+    if should_edit('comment'):
+        module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
         show = '{SLUG}-show'.format(SLUG=SLUG)
         label = '{SLUG}-label'.format(SLUG=SLUG)

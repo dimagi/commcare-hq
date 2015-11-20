@@ -150,6 +150,7 @@ todo fix
 {% endcomment %}
 
 <div class="tab-pane" id="commcare-settings">
+    <div id="app_short_comment" class="app-comment">{{ app.short_comment }}</div>
     <div class="clearfix" id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
     <form class="form-horizontal">
         <div data-bind="foreach: sections">

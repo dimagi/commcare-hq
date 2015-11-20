@@ -404,11 +404,10 @@ class DashboardPageView(RedirectView):
                         url = StockStatus.get_raw_url(domain, request=self.request)
                 except EWSExtension.DoesNotExist:
                     pass
-
             start_date, end_date = EWSDateFilter.last_reporting_period()
             url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
                 url,
-                loc_id,
+                loc_id or '',
                 program_id if program_id else '',
                 start_date.strftime('%Y-%m-%d'),
                 end_date.strftime('%Y-%m-%d')
