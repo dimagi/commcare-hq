@@ -13,7 +13,7 @@ from couchforms.util import process_xform
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild)
+    CommCareCaseSQL, FormEditRebuild, CaseAttachmentSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -30,7 +30,7 @@ class FormProcessorSQL(object):
         if not process:
             def process(xform):
                 xform.domain = domain
-        xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
+        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
             cls.bulk_save(xforms[0], xforms)
             return xforms[0]
@@ -69,6 +69,18 @@ class FormProcessorSQL(object):
     @classmethod
     def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
         return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
+
+    @classmethod
+    def bulk_delete(cls, case, xforms):
+        form_ids = [xform.form_id for xform in xforms]
+        with transaction.atomic():
+            XFormAttachmentSQL.objects.filter(xform__in=xforms).delete()
+            XFormOperationSQL.objects.filter(xform__in=xforms).delete()
+            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
+            CommCareCaseIndexSQL.objects.filter(case=case).delete()
+            CaseAttachmentSQL.objects.filter(case=case).delete()
+            CaseTransaction.objects.filter(case=case).delete()
+            case.delete()
 
     @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
@@ -117,14 +129,9 @@ class FormProcessorSQL(object):
             model.save()
 
         to_create = case.get_tracked_models_to_create(model_class)
-        for model in to_create:
-            logging.debug('Creating %s: %s', model_class, to_create)
+        for i, model in enumerate(to_create):
+            logging.debug('Creating %s %s: %s', i, model_class, model)
             model.save()
-
-    @classmethod
-    def process_stock(cls, xforms, case_db):
-        from corehq.apps.commtrack.processing import StockProcessingResult
-        return StockProcessingResult(xforms[0])
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
@@ -238,9 +245,13 @@ class FormProcessorSQL(object):
         strategy.rebuild_from_transactions(transactions, rebuild_transaction)
         return case
 
+    @staticmethod
+    def get_xforms(xform_ids):
+        return XFormInstanceSQL.get_forms_with_attachments(xform_ids)
+
 
 def get_case_transactions(case_id, updated_xforms=None):
-    transactions = list(CaseTransaction.objects.filter(case_id=case_id, revoked=False).all())
+    transactions = CaseTransaction.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_uuid for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated

@@ -144,12 +144,6 @@ class _AuthTest(TestCase):
             file_path=self.device_log,
             authtype='noauth',
             expected_status=201,
-            expected_auth_context={
-                'doc_type': 'WaivedAuthContext',
-                'domain': self.domain,
-                'authenticated': False,
-                'user_id': None,
-            },
         )
 
     def test_bad_noauth(self):

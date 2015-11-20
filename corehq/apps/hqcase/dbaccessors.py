@@ -1,5 +1,5 @@
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs, get_db
+from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 
 

@@ -2,11 +2,12 @@ import datetime
 import logging
 
 from casexml.apps.case import const
-from casexml.apps.case.cleanup import get_case_forms, rebuild_case_from_actions
+from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
-from couchforms.util import process_xform, deprecation_type
+from couchforms.util import process_xform, deprecation_type, fetch_and_wrap_form
 from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
@@ -25,7 +26,7 @@ class FormProcessorCouch(object):
         if not process:
             def process(xform):
                 xform.domain = domain
-        xform_lock = process_xform(instance_xml, attachments=attachments, process=process, domain=domain)
+        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
             for xform in xforms:
                 xform.save()
@@ -62,15 +63,15 @@ class FormProcessorCouch(object):
         return xform.form_id in XFormInstance.get_db()
 
     @classmethod
+    def bulk_delete(cls, case, xforms):
+        docs = [case._doc] + [f._doc for f in xforms]
+        case.get_db().bulk_delete(docs)
+
+    @classmethod
     def bulk_save(cls, instance, xforms, cases=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
-
-    @classmethod
-    def process_stock(cls, xforms, case_db):
-        from corehq.apps.commtrack.processing import process_stock
-        return process_stock(xforms, case_db)
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
@@ -153,7 +154,7 @@ class FormProcessorCouch(object):
             case.domain = domain
             found = False
 
-        forms = get_case_forms(case_id)
+        forms = FormProcessorCouch.get_case_forms(case_id)
         filtered_forms = [f for f in forms if f.is_normal]
         sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
 
@@ -174,6 +175,19 @@ class FormProcessorCouch(object):
         case.actions.append(_rebuild_action())
         case.save()
         return case
+
+    @staticmethod
+    def get_case_forms(case_id):
+        """
+        Get all forms that have submitted against a case (including archived and deleted forms)
+        wrapped by the appropriate form type.
+        """
+        form_ids = get_case_xform_ids(case_id)
+        return FormProcessorCouch.get_xforms(form_ids)
+
+    @staticmethod
+    def get_xforms(form_ids):
+        return [fetch_and_wrap_form(id) for id in form_ids]
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):

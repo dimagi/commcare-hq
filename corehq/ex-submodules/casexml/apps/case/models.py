@@ -81,9 +81,9 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         ret = CommCareCaseAction(action_type=action.action_type_slug, date=date, user_id=user_id)
         
         ret.server_date = xformdoc.received_on
-        ret.xform_id = xformdoc.get_id
+        ret.xform_id = xformdoc.form_id
         ret.xform_xmlns = xformdoc.xmlns
-        ret.xform_name = xformdoc.name
+        ret.xform_name = getattr(xformdoc, 'name', '')
         ret.updated_known_properties = action.get_known_properties()
 
         ret.updated_unknown_properties = action.dynamic_properties
@@ -227,11 +227,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def soft_delete(self):
         self.doc_type += DELETED_SUFFIX
         self.save()
-
-    @unit_testing_only
-    def hard_delete(self):
-        from casexml.apps.case.cleanup import safe_hard_delete
-        safe_hard_delete(self)
 
     def to_full_dict(self):
         """

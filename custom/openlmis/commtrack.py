@@ -64,7 +64,7 @@ def sync_facility_to_supply_point(domain, facility):
         return make_supply_point(domain, facility_loc)
     else:
         facility_loc = supply_point.location
-        if parent_sp and facility_loc.parent_id != parent_sp.location._id:
+        if parent_sp and facility_loc.parent_id != parent_sp.location.location_id:
             raise BadParentException('You are trying to move a location. This is currently not supported.')
 
         should_save = apply_updates(facility_loc, facility_dict)

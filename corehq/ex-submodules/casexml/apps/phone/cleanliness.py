@@ -70,6 +70,15 @@ def set_cleanliness_flags_for_domain(domain, force_full=False):
                 notify_exception(None, unicode(e))
 
 
+def _is_web_user(owner_id):
+    from corehq.apps.users.models import WebUser
+    try:
+        document = WebUser.get_db().get(owner_id)
+    except ResourceNotFound:
+        document = {'doc_type': 'unknown'}
+    return document.get('doc_type', None) == 'WebUser'
+
+
 def set_cleanliness_flags(domain, owner_id, force_full=False):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
@@ -105,14 +114,9 @@ def set_cleanliness_flags(domain, owner_id, force_full=False):
         # we went from clean to dirty and would not have checked except that we forced it
         # this seems to indicate a problem in the logic that invalidates the flag, unless the feature
         # flag was turned off for the domain. either way cory probably wants to know.
-        try:
-            document = get_db().get(owner_id)
-        except ResourceNotFound:
-            document = {'doc_type': 'unknown'}
 
-        owner_doc_type = document.get('doc_type', None)
         # filter out docs where we expect this to be broken (currently just web users)
-        if owner_doc_type != 'WebUser':
+        if not _is_web_user(owner_id):
             _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=False)
             _assert(False, 'Cleanliness flags out of sync for a {} with id {} in domain {}!'.format(
                 owner_doc_type, owner_id, domain

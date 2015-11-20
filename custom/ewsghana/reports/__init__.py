@@ -206,6 +206,10 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
         ).order_by('report__date', 'pk')
 
     @classmethod
+    def get_raw_url(cls, domain=None, render_as=None, **kwargs):
+        return super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
+
+    @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
 
         url = super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)

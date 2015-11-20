@@ -1,7 +1,5 @@
 import logging
 
-from datetime import datetime
-
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
@@ -18,7 +16,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 
-        self.case.track_create(CaseTransaction.form_transaction(self.case, xformdoc))
+        transaction = CaseTransaction.form_transaction(self.case, xformdoc)
+        if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+            # don't add multiple transactions for the same form
+            self.case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
         if case_update.has_referrals():
@@ -78,7 +79,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._update_known_properties(update_action)
 
         for key, value in update_action.dynamic_properties.items():
-            if key not in const.CASE_TAGS:
+            if key == 'location_id':
+                # special treatment of location_id
+                self.case.location_uuid = value
+            elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
     def _apply_index_action(self, action):

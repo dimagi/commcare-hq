@@ -44,7 +44,7 @@ class Command(BaseCommand):
             self.println('duplicate code [%s]' % code)
             locs = Location.view('_all_docs', keys=loc_ids, include_docs=True)
             for loc in locs:
-                self.println('  %s [%s]' % (loc.name, loc._id))
+                self.println('  %s [%s]' % (loc.name, loc.location_id))
 
     def println(self, msg):
         self.stdout.write(msg + '\n')

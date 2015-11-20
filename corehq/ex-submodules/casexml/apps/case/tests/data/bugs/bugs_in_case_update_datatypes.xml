@@ -1,13 +1,11 @@
 <?xml version='1.0' ?>
 <system version="1" uiVersion="1" xmlns="http://commcarehq.org/case">
-    <case>
-		<case_id>{case_id}</case_id>
-		<date_modified>2011-11-16T10:08:46.085-05</date_modified>
-		<update>
+    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="{case_id}"
+		date_modified="2011-11-16T10:08:46.085-05" user_id="{user_id}">
+        <update>
             <age>EXT2</age>
-            <user_id>{user_id}</user_id>
             <case_name>{case_name}</case_name>
-            <type>{case_type}</type>
+            <case_type>{case_type}</case_type>
         </update>
 	</case>
 	<meta>

@@ -167,7 +167,7 @@ class EWSStockAndReceiptParser(StockAndReceiptParser):
                     # the user provides them)
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location'].get_id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.RECEIPTS,
@@ -175,7 +175,7 @@ class EWSStockAndReceiptParser(StockAndReceiptParser):
                     )
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location'].get_id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.STOCKONHAND,

@@ -5,6 +5,7 @@ from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from corehq.util.couch_helpers import OverrideDB
+from corehq.util.couchdb_management import CouchConfig
 from couchforms.models import XFormInstance
 
 
@@ -24,15 +25,15 @@ class Command(LabelCommand):
     def handle(self, *args, **options):
         if len(args) < 2:
             raise CommandError('Usage is copy_case, %s' % self.args)
-
-        sourcedb = Database(args[0])
+        source_couch = CouchConfig(args[0])
         case_id = args[1]
         doc_ids = [case_id]
 
         domain = args[2] if len(args) > 2 else None
+
         def _migrate_case(case_id):
             print 'getting case %s' % case_id
-            case = CommCareCase.wrap(sourcedb.get(case_id))
+            case = CommCareCase.wrap(source_couch.get_db_for_class(CommCareCase).get(case_id))
             original_domain = case.domain
             if domain is not None:
                 case.domain = domain
@@ -47,7 +48,7 @@ class Command(LabelCommand):
 
         # hack, set the domain back to make sure we get the reverse indices correctly
         case.domain = orig_domain
-        with OverrideDB(CommCareCase, sourcedb):
+        with OverrideDB(CommCareCase, source_couch.get_db_for_class(CommCareCase)):
             child_indices = get_reverse_indices(case)
         print 'copying %s child cases' % len(child_indices)
         for index in child_indices:
@@ -61,7 +62,7 @@ class Command(LabelCommand):
             doc.pop('_attachments', None)
             return XFormInstance.wrap(doc)
 
-        xforms = sourcedb.all_docs(
+        xforms = source_couch.get_db_for_class(XFormInstance).all_docs(
             keys=case.xform_ids,
             include_docs=True,
             wrapper=form_wrapper,
