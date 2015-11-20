@@ -101,7 +101,6 @@ def _get_user_case_fields(commcare_user):
         except ElementTree.ParseError:
             return False
 
-
     # remove any keys that aren't valid XML element names
     fields = {k: v for k, v in commcare_user.user_data.items() if
               valid_element_name(k)}
