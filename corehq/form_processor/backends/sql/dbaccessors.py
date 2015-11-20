@@ -1,5 +1,6 @@
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 
+from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -26,3 +27,19 @@ class FormAccessorSQL(object):
             domain=domain,
             state=state
         ).order_by(order)[0:limit]
+
+
+class CaseAccessorSQL(object):
+    @staticmethod
+    def get_case_ids_in_domain(domain, type=None):
+        query = CommCareCaseSQL.objects.filter(domain=domain)
+        if type:
+            query.filter(type=type)
+        return list(query.values_list('case_uuid', flat=True))
+
+    @staticmethod
+    def get_cases_in_domain(domain, type=None):
+        case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain, type)
+        for ids in chunked(case_ids, 500):
+            for case in CaseAccessorSQL.objects.filter(case_uuid__in=ids).iterator():
+                yield case
