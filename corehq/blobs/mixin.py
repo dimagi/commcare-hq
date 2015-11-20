@@ -12,7 +12,6 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
     StringProperty,
 )
-from django.conf import settings
 
 
 class BlobMeta(DocumentSchema):
@@ -94,9 +93,7 @@ class BlobMixin(Document):
                 return super(BlobMixin, self).fetch_attachment(
                                                         name, stream=stream)
             raise ResourceNotFound(u"{model} attachment: {name!r}".format(
-                model=type(self).__name__,
-                name=name,
-            ))
+                                   model=type(self).__name__, name=name))
         if stream:
             return blob
 

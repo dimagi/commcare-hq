@@ -1,4 +1,3 @@
-import os
 import sys
 
 if "django.conf" not in sys.modules:

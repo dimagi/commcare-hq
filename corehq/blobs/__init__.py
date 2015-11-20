@@ -1,4 +1,5 @@
-_db = [] # singleton/global, stack for tests to push temporary dbs
+_db = []  # singleton/global, stack for tests to push temporary dbs
+
 
 def get_blob_db():
     if not _db:

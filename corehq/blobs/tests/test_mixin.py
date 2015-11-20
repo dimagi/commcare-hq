@@ -1,9 +1,6 @@
 from __future__ import unicode_literals
-import os
 from hashlib import md5
 from itertools import count
-from shutil import rmtree
-from tempfile import mkdtemp
 from unittest import TestCase
 from StringIO import StringIO
 
@@ -46,7 +43,7 @@ class TestBlobMixin(TestCase):
 
     def test_put_attachment_bytes(self):
         name = "test.1"
-        data = b"\xe4\x94 content" # cannot be decoded as UTF-8
+        data = b"\xe4\x94 content"  # cannot be decoded as UTF-8
         self.obj.put_attachment(data, name)
         self.assertEqual(self.obj.fetch_attachment(name), data)
 
@@ -110,6 +107,7 @@ class TestBlobMixin(TestCase):
         self.assertEqual(doc.blobs["att"].content_length, 13)
         self.assertEqual(doc.blobs["blob"].content_length, 7)
 
+
 @generate_cases([
     (None, None),
     ("abc", None),
@@ -134,7 +132,7 @@ class AttachmentFallback(object):
         self._attachments = {}
 
     def put_attachment(self, *args, **kw):
-        raise NotImplmentedError
+        raise NotImplementedError
 
     def fetch_attachment(self, name, stream=False):
         if name in self._attachments:
