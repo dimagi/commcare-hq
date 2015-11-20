@@ -21,10 +21,10 @@ class BlobMeta(DocumentSchema):
 
 class BlobMixin(Document):
 
-    _blobs = DictProperty(BlobMeta)
     class Meta:
         abstract = True
 
+    _blobs = DictProperty(BlobMeta)
 
     # When true, fallback to couch on fetch and delete if blob is not
     # found in blobdb. Set this to True on subclasses that are in the
@@ -93,8 +93,7 @@ class BlobMixin(Document):
             if self._migrating_from_couch:
                 # TODO remove this at some point in the future when all
                 # attachments have been migrated from couch to blobdb.
-                return super(BlobMixin, self).fetch_attachment(
-                                                        name, stream=stream)
+                return super(BlobMixin, self).fetch_attachment(name, stream=stream)
             raise ResourceNotFound(u"{model} attachment: {name!r}".format(
                                    model=type(self).__name__, name=name))
         if stream:
