@@ -470,6 +470,11 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
+    @property
+    @memoized
+    def transactions(self):
+        return list(self.transaction_set.all())
+
     @memoized
     def _saved_attachments(self):
         return self.attachments.all()
