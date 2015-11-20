@@ -76,20 +76,24 @@ class FormProcessorSQL(object):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Ensure already saved forms get saved first to avoid ID conflicts
+            is_deprecation = len(xforms) > 1
             for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
-                cls.save_xform(xform)
+                cls.save_xform(xform, is_deprecation)
 
             if cases:
                 for case in cases:
                     cls.save_case(case)
 
     @classmethod
-    def save_xform(cls, xform):
+    def save_xform(cls, xform, is_deprecation=False):
+        """
+        :param xform: The xform to save
+        :param is_deprecation: Set to True if this save is part of a deprecation save.
+        """
         with transaction.atomic():
             logging.debug('Saving form: %s', xform)
-            unsaved_form = not xform.is_saved()
             xform.save()
-            if unsaved_form and xform.is_deprecated:
+            if is_deprecation and xform.is_deprecated:
                 logging.debug(
                     'Reassigning attachments and operations to deprecated form: %s -> %s',
                     xform.orig_id, xform.form_id
