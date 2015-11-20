@@ -264,7 +264,7 @@ def mark_cases_changed(case_action_intents, case_db):
                 case.xform_ids.append(action_intent.form_id)
 
         case_db.mark_changed(case)
-
+    return relevant_cases
 
 def _compute_ledger_values(original_balance, stock_transaction):
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
