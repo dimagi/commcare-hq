@@ -33,7 +33,7 @@ class FormProcessorSQL(object):
                 xform.domain = domain
         xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
-            cls.bulk_save(xforms[0], xforms)
+            cls.save_processed_models(xforms)
             return xforms[0]
 
     @classmethod
