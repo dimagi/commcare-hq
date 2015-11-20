@@ -4,12 +4,14 @@ from datetime import time
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
 from crispy_forms.helper import FormHelper
 from django import forms
+from django.core.urlresolvers import reverse
 from django.forms.forms import Form
 from django.forms.fields import *
 from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, ErrorsOnlyField,
-    HiddenFieldWithErrors, FieldsetAccordionGroup)
+from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, HiddenFieldWithErrors, FieldsetAccordionGroup)
 from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
@@ -980,3 +982,30 @@ class SubscribeSMSForm(Form):
         alert_config.non_report = self.cleaned_data.get("non_report", False)
 
         commtrack_settings.save()
+
+
+class ComposeMessageForm(forms.Form):
+
+    recipients = forms.CharField(widget=forms.Textarea,
+                                 help_text=ugettext_lazy("Type a username, group name or 'send to all'"))
+    message = forms.CharField(widget=forms.Textarea, help_text=ugettext_lazy('0 characters (160 max)'))
+
+    def __init__(self, *args, **kwargs):
+        domain = kwargs.pop('domain')
+        super(ComposeMessageForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_action = reverse('send_to_recipients', args=[domain])
+        self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-10 col-md-10 col-lg-10'
+        self.helper.layout = crispy.Layout(
+            crispy.Field('recipients', rows=2, css_class='sms-typeahead'),
+            crispy.Field('message', rows=2),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Send Message"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )
