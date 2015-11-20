@@ -27,6 +27,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.signals import commcare_domain_pre_delete
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils import parsing as dateparse
 from corehq.apps.locations.signals import location_created, location_edited
@@ -295,6 +296,13 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     @property
     def openlmis_enabled(self):
         return self.openlmis_config.enabled
+
+
+@receiver(commcare_domain_pre_delete)
+def clear_commtrack_config_cache(domain, **kwargs):
+    config = CommtrackConfig.for_domain(domain.name)
+    if config:
+        config.delete()
 
 
 def force_int(value):
