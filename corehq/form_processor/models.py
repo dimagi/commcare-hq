@@ -489,8 +489,18 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             raise CaseNotFound
 
     @classmethod
-    def get_cases(cls, ids):
-        return CommCareCaseSQL.objects.filter(case_uuid__in=list(ids))
+    def get_cases(cls, ids, ordered=False):
+        cases = CommCareCaseSQL.objects.filter(case_uuid__in=list(ids))
+        if ordered:
+            # SQL won't return the rows in any particular order so we need to order them ourselves
+            index_map = {id_: index for index, id_ in enumerate(ids)}
+            ordered_cases = [None] * len(ids)
+            for case in cases:
+                ordered_cases[index_map[case.case_id]] = case
+
+            cases = ordered_cases
+
+        return cases
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
