@@ -74,8 +74,7 @@ def safe_hard_delete(case):
     """
     if not settings.UNIT_TESTING:
         from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-        whitelist_case_types = [USER_LOCATION_OWNER_MAP_TYPE]
-        if case.type not in whitelist_case_types:
+        if case.type != USER_LOCATION_OWNER_MAP_TYPE:
             raise CommCareCaseError("Attempt to hard delete a case whose type isn't white listed")
 
     if case.reverse_indices:
