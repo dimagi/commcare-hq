@@ -3870,7 +3870,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         default=AMPLIFIES_NOT_SET
     )
     minimum_use_threshold = StringProperty(
-        default = '15'
+        default='15'
     )
 
     # exchange properties

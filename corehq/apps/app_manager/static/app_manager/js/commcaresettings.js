@@ -437,12 +437,15 @@ $(function () {
 CommcareSettings.widgets.number = function (self) {
     self.valueIsLegal = function () {
         var value = self.value();
-        if (self.min_value && !(value >= self.min_value)) {
+        if (!(_.isNumber(value))) {
             return false;
         }
-        if (self.max_value && !(value <= self.max_value)) {
+        if (self.min_value && value < self.min_value) {
             return false;
         }
-        return true
-    }
+        if (self.max_value && value > self.max_value) {
+            return false;
+        }
+        return true;
+    };
 };
