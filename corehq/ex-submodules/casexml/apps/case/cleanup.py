@@ -2,13 +2,10 @@ from __future__ import absolute_import
 from xml.etree import ElementTree
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.util.test_utils import unit_testing_only
-from couchforms import fetch_and_wrap_form
 
 
 def close_case(case_id, domain, user):
@@ -62,7 +59,6 @@ def rebuild_case_from_forms(domain, case_id, detail):
     return FormProcessorInterface(domain).hard_rebuild_case(case_id, detail)
 
 
-@unit_testing_only
 def safe_hard_delete(case):
     """
     Hard delete a case - by deleting the case itself as well as all forms associated with it
