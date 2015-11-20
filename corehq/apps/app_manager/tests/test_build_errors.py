@@ -34,6 +34,26 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
+    def test_empty_module_errors(self):
+        factory = AppFactory(build_version='2.24')
+        app = factory.app
+        m1 = factory.new_basic_module('register', 'case', with_form=False)
+        factory.new_advanced_module('update', 'case', with_form=False)
+        factory.new_shadow_module('update', m1, with_form=False)
+        errors = app.validate_app()
+
+        standard_module_error = {
+            'type': 'no forms or case list',
+            'module': {'id': 0, 'name': {'en': u'register module'}},
+        }
+        advanced_module_error = {
+            'type': 'no forms or case list',
+            'module': {'id': 1, 'name': {'en': u'update module'}},
+        }
+        self.assertEqual(len(errors), 2)
+        self.assertIn(standard_module_error, errors)
+        self.assertIn(advanced_module_error, errors)
+
     def test_parent_cycle_in_app(self):
         cycle_error = {
             'type': 'parent cycle',
