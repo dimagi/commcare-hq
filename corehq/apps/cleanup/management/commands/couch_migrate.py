@@ -55,7 +55,7 @@ def _copy(config):
     for domain in domain_names:
         for doc_type in config.doc_types:
             ids_of_this_type = [row['id'] for row in database.view(
-                'domain/docs',
+                'by_domain_doc_type_date/view',
                 startkey=[domain, doc_type],
                 endkey=[domain, doc_type, {}],
                 reduce=False,
