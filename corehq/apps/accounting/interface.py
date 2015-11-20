@@ -236,7 +236,7 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
             DataTablesColumn("Type"),
-            DataTablesColumn("Discounted"),
+            DataTablesColumn("Pro-Bono"),
         )
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
