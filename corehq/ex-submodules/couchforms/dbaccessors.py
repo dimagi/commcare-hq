@@ -119,3 +119,13 @@ def get_commtrack_forms(domain):
         reduce=False,
         include_docs=True
     )
+
+
+def get_exports_by_form(domain):
+    return XFormInstance.get_db().view(
+        'exports_forms/by_xmlns',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group=True,
+        stale=settings.COUCH_STALE_QUERY
+    )
