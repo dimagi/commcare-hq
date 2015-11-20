@@ -52,45 +52,16 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
     """
     with CriticalSection(['user_case_%s_for_%s' % (case_type, commcare_user._id)]):
         domain = commcare_user.project
+        fields = _get_user_case_fields(commcare_user)
 
-        def valid_element_name(name):
-            try:
-                ElementTree.fromstring('<{}/>'.format(name))
-                return True
-            except ElementTree.ParseError:
-                return False
 
-        # remove any keys that aren't valid XML element names
-        fields = {k: v for k, v in commcare_user.user_data.items() if valid_element_name(k)}
-
-        # language or phone_number can be null and will break
-        # case submission
-        fields.update({
-            'name': commcare_user.name or commcare_user.raw_username,
-            'username': commcare_user.raw_username,
-            'email': commcare_user.email,
-            'language': commcare_user.language or '',
-            'phone_number': commcare_user.phone_number or ''
-        })
-
-        if not case:
-            case = get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
+        case = case or get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
+
+
         caseblock = None
         if case:
-            props = case.dynamic_case_properties()
-
-            changed = close != case.closed
-            changed = changed or case.type != case_type
-            changed = changed or case.name != fields['name']
-            changed = changed or case.owner_id != owner_id
-
-            if not changed:
-                for field, value in fields.items():
-                    if field != 'name' and props.get(field) != value:
-                        changed = True
-                        break
-
+            changed = _user_case_changed(case, case_type, close, fields, owner_id)
             if changed:
                 caseblock = CaseBlock(
                     create=False,
@@ -114,6 +85,45 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
         if caseblock:
             casexml = ElementTree.tostring(caseblock.as_xml())
             submit_case_blocks(casexml, domain.name)
+
+
+def _get_user_case_fields(commcare_user):
+
+    def valid_element_name(name):
+        try:
+            ElementTree.fromstring('<{}/>'.format(name))
+            return True
+        except ElementTree.ParseError:
+            return False
+
+
+    # remove any keys that aren't valid XML element names
+    fields = {k: v for k, v in commcare_user.user_data.items() if
+              valid_element_name(k)}
+    # language or phone_number can be null and will break
+    # case submission
+    fields.update({
+        'name': commcare_user.name or commcare_user.raw_username,
+        'username': commcare_user.raw_username,
+        'email': commcare_user.email,
+        'language': commcare_user.language or '',
+        'phone_number': commcare_user.phone_number or ''
+    })
+    return fields
+
+
+def _user_case_changed(case, case_type, close, fields, owner_id):
+    props = case.dynamic_case_properties()
+    changed = close != case.closed
+    changed = changed or case.type != case_type
+    changed = changed or case.name != fields['name']
+    changed = changed or case.owner_id != owner_id
+    if not changed:
+        for field, value in fields.items():
+            if field != 'name' and props.get(field) != value:
+                changed = True
+                break
+    return changed
 
 
 def sync_call_center_user_case(user):
