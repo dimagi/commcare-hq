@@ -1297,6 +1297,7 @@ PILLOWTOPS = {
         'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
+        'corehq.pillows.blobs.BlobDeletionPillow',
         'corehq.pillows.group.GroupPillow',
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
