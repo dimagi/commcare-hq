@@ -33,7 +33,8 @@
                 },
                 permissions: {
                     cloudcare: {{ is_cloudcare_allowed|BOOL }}
-                }
+                },
+                warning: '{% trans "This is not an allowed value for this field" %}'
             }
         };
         $(function () {
@@ -233,20 +234,6 @@
         $('#download_zip').click(function() {
             ga_track_event('App Builder', 'Download Multimedia');
         });
-    </script>
-    <script>
-        $(function () {
-            $('#minimum_use_threshold-warning').hide();
-            $('#minimum_use_threshold-input').change(function () {
-                if ($(this).val() > 0 && $(this).val() < 100) {
-                    $('#minimum_use_threshold-warning').hide();
-                    $('#minimum_use_threshold-control').removeClass("error");
-                } else {
-                    $('#minimum_use_threshold-warning').show();
-                    $('#minimum_use_threshold-control').addClass("error");
-                }
-            });
-        })
     </script>
 {% endblock %}
 
