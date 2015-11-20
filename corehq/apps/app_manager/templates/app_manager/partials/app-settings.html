@@ -198,11 +198,6 @@ todo fix
                                 {% endblocktrans %}
                                 </span>
                             </p>
-{#                            <p class="help-block" data-bind="visible: !$data.valueIsLegal()">#}
-{#                                {% blocktrans %}#}
-{#                                    This is not an allowed value for this field#}
-{#                                {% endblocktrans %}#}
-{#                            </p>#}
                             <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
                             <span class="help-inline" data-bind="
                                 text: $data.warning || $parents[1].warning,
