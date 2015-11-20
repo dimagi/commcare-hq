@@ -95,8 +95,8 @@ class FormProcessorInterface(object):
     def get_case(self, case_id):
         return self.case_model.get(case_id)
 
-    def get_cases(self, case_ids):
-        return self.case_model.get_cases(case_ids)
+    def get_cases(self, case_ids, ordered=False):
+        return self.case_model.get_cases(case_ids, ordered=ordered)
 
     def get_case_xform_ids(self, case_id):
         return self.case_model.get_case_xform_ids(case_id)
