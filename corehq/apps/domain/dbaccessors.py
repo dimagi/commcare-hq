@@ -29,7 +29,10 @@ def get_docs_in_domain_by_class(domain, doc_class):
     in order to prevent this from being used on a doc_class with many docs per domain
     doc_class must be white-listed.
     """
-    whitelist = ['CommtrackConfig']
+    whitelist = [
+        'CallCenterIndicatorConfig',
+        'CommtrackConfig',
+    ]
     doc_type = doc_class.__name__
     assert doc_type in whitelist
     return doc_class.view(
