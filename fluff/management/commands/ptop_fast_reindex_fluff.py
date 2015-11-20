@@ -12,7 +12,7 @@ POOL_SIZE = 15
 class FluffPtopReindexer(PtopReindexer):
     help = "Fast reindex of fluff docs"
 
-    view_name = 'domain/docs'
+    view_name = 'by_domain_doc_type_date/view'
 
     # override these
     domain = None
