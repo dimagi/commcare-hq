@@ -65,7 +65,7 @@ class FormProcessorCouch(object):
         return xform.form_id in XFormInstance.get_db()
 
     @classmethod
-    def bulk_save(cls, instance, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)

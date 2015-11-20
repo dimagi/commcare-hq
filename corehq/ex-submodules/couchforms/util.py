@@ -286,7 +286,7 @@ class SubmissionPost(object):
         xforms[0] = instance
         # this is usually just one document, but if an edit errored we want
         # to save the deprecated form as well
-        self.interface.bulk_save(instance, xforms)
+        self.interface.save_processed_models(instance, xforms)
         return instance, [], []
 
     def _handle_basic_failure_modes(self):
@@ -372,7 +372,7 @@ class SubmissionPost(object):
 
                     cases = case_db.get_cases_for_saving(instance.received_on)
 
-                    self.interface.bulk_save(instance, xforms, cases)
+                    self.interface.save_processed_models(instance, xforms, cases)
 
                     unfinished_submission_stub.saved = True
                     unfinished_submission_stub.save()

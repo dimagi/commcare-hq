@@ -72,7 +72,7 @@ class FormProcessorSQL(object):
         return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
 
     @classmethod
-    def bulk_save(cls, instance, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Ensure already saved forms get saved first to avoid ID conflicts

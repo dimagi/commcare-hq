@@ -124,9 +124,9 @@ class FormProcessorInterface(object):
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
-    def bulk_save(self, instance, xforms, cases=None):
+    def save_processed_models(self, instance, xforms, cases=None):
         try:
-            return self.processor.bulk_save(instance, xforms, cases=cases)
+            return self.processor.save_processed_models(xforms, cases=cases)
         except BulkSaveError as e:
             logging.error('BulkSaveError saving forms', exc_info=1,
                           extra={'details': {'errors': e.errors}})
