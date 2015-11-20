@@ -7,7 +7,7 @@ from corehq.util.test_utils import unit_testing_only
 
 
 def by_domain(domain):
-    return list(get_docs_in_domain_by_class(domain, PerformanceConfiguration))
+    return get_docs_in_domain_by_class(domain, PerformanceConfiguration)
 
 
 def by_interval(interval_keys):
