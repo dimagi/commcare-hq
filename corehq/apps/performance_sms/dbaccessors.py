@@ -26,5 +26,5 @@ def delete_all_configs():
     # Since this is a unit test, number of domains is small
     all_domains = Domain.get_all()
     for domain in all_domains:
-        domain_configs = by_domain(domain)
+        domain_configs = by_domain(domain.name)
         db.bulk_delete(domain_configs)
