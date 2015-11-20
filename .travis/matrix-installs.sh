@@ -24,6 +24,5 @@ fi
 
 if [ "${BOWER:-no}" = "yes" ]; then
     npm install -g bower
-    ln -nfs `which bower` /home/travis/bower
-    python manage.py bower install
+    bower install
 fi

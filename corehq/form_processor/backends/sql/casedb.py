@@ -2,6 +2,7 @@ import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL
 
 
@@ -33,30 +34,31 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
                     self.locks.append(lock)
             else:
                 case = CommCareCaseSQL.get(case_id)
-        except CommCareCaseSQL.DoesNotExist:
+        except CaseNotFound:
             return None
 
         return case
 
     def _iter_cases(self, case_ids):
-        return CommCareCaseSQL.query.filter(case_uuid__in=case_ids).all()
+        return CommCareCaseSQL.objects.filter(case_uuid__in=case_ids).all()
 
     def get_cases_for_saving(self, now):
         cases = self.get_changed()
 
         for case in cases:
-            rev = CommCareCaseSQL.objects.filter(
-                case_uuid=case.case_id,
-                server_modified_on=case.server_modified_on
-            )
-            assert not rev.exists(), (
-                "Aborting because there would have been "
-                "a document update conflict. {}".format(case.case_id)
-            )
+            if case.is_saved():
+                unchanged_case = CommCareCaseSQL.objects.filter(
+                    case_uuid=case.case_id,
+                    server_modified_on=case.server_modified_on
+                )
+                assert unchanged_case.exists(), (
+                    "Aborting because the case has been modified"
+                    " by another process. {}".format(case.case_id)
+                )
             case.server_modified_on = now
         return cases
 
     def get_reverse_indexed_cases(self, case_ids):
         return CommCareCaseSQL.objects.filter(
             domain=self.domain, index__referenced_id__in=case_ids
-        ).defer("case_json").prefetch_related('indices  ')
+        ).defer("case_json").prefetch_related('indices')

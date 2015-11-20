@@ -89,11 +89,7 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
-# Do not change, there's a weird bug with Django 1.7 that requires this to be bower_components when using
-# collectstatic
-BOWER_COMPONENTS_ROOT = os.path.join(FILEPATH, 'bower_components')
-
-BOWER_PATH = '/usr/local/bin/bower'
+BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -102,7 +98,9 @@ STATICFILES_FINDERS = (
     'djangobower.finders.BowerFinder',
 )
 
-STATICFILES_DIRS = ()
+STATICFILES_DIRS = (
+    BOWER_COMPONENTS,
+)
 
 # bleh, why did this submodule have to be removed?
 # deploy fails if this item is present and the path does not exist
@@ -277,6 +275,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
@@ -375,6 +374,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
     'djangobower',
@@ -684,7 +684,6 @@ AUDIT_MODULES = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
-    'PINGDOM_API_ID': '',
     'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
@@ -892,7 +891,7 @@ LOGGING = {
 
 # Django Compressor
 COMPRESS_PRECOMPILERS = (
-   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
 
@@ -984,8 +983,8 @@ try:
                         )
                     handler["class"] = "logging.StreamHandler"
 except ImportError:
-   # fallback in case nothing else is found - used for readthedocs
-   from dev_settings import *
+    # fallback in case nothing else is found - used for readthedocs
+    from dev_settings import *
 
 if DEBUG:
     try:
@@ -1036,8 +1035,7 @@ INDICATOR_CONFIG = {
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import (
     get_dynamic_db_settings,
-    make_couchdb_tuples,
-    get_extra_couchdbs,
+    CouchSettingsHelper,
     SharedDriveConfiguration
 )
 
@@ -1057,6 +1055,9 @@ USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
 NEW_FIXTURES_DB = 'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
+
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = None
 
 COUCHDB_APPS = [
     'api',
@@ -1078,7 +1079,6 @@ COUCHDB_APPS = [
     'ctable',
     'custom_data_fields',
     'hqadmin',
-    'domain',
     'ext',
     'facilities',
     'fluff_filter',
@@ -1149,13 +1149,18 @@ COUCHDB_APPS = [
 
     # fixtures
     ('fixtures', FIXTURES_DB),
+
+    # domains
+    ('domain', DOMAINS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
-                                             [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB])
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
+    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
+])
+COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
+EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -1166,47 +1171,6 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
-
-### BOWER APPS ###
-BOWER_CORE_APPS = (
-    'jquery#1.11.1',
-    'jquery-1.7.1-legacy=jquery#1.7.1',
-    'underscore#1.6.0',
-    'underscore-legacy=underscore#1.4.4',
-    'jquery-form#3.45.0',
-    'jquery.cookie#1.4.1',
-    'jquery-timeago#1.2.0',
-    'jquery-ui#1.11.4',
-    'angular#1.4.4',
-    'angular-route#1.4.4',
-    'angular-resource#1.4.4',
-    'angular-message-format#1.4.4',
-    'angular-messages#1.4.4',
-    'angular-cookies#1.4.4',
-    'angular-sanitize#1.4.4',
-    'knockout-2.3.0-legacy=knockout.js#2.3',
-    'knockout#3.1.0',
-    'select2-3.4.5-legacy=select2#3.4.5',
-    'less#1.7.3',
-    'backbone#0.9.1',
-    'bootstrap-daterangepicker#2.1.13',
-    'd3#3.1',
-    'nvd3#1.1.10-beta',
-    'datatables#1.10.9',
-    'datatables-bootstrap3#0.1',
-)
-
-BOWER_TEST_APPS = (
-    'chai#3.3.0',
-    'mocha#2.3.3',
-    'sinon=http://sinonjs.org/releases/sinon-1.17.0.js',
-    'angular-mocks#1.4.4',
-)
-
-BOWER_INSTALLED_APPS = BOWER_CORE_APPS
-
-if DEBUG:
-    BOWER_INSTALLED_APPS += BOWER_TEST_APPS
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = SharedDriveConfiguration(
@@ -1274,6 +1238,7 @@ SMS_LOADED_BACKENDS = [
     "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
     "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
     "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
+    "corehq.messaging.smsbackends.apposit.models.AppositBackend",
 ]
 
 IVR_BACKEND_MAP = {
@@ -1327,9 +1292,6 @@ PILLOWTOPS = {
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
     ],
-    'phonelog': [
-        'corehq.pillows.log.PhoneLogPillow',
-    ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
@@ -1378,7 +1340,13 @@ PILLOWTOPS = {
             'name': 'KafkaCaseConsumerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        }
+        },
+        {
+            'name': 'LoggingPythonDemoPillow',
+            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
+        },
+
     ]
 }
 
@@ -1425,7 +1393,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
-    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -1476,6 +1443,10 @@ CUSTOM_MODULES = [
     'custom.ilsgateway',
     'custom.ewsghana',
 ]
+
+CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
+    'ews-ghana': 'dashboard_page'
+}
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 

@@ -1,6 +1,8 @@
 import os
 from datetime import datetime, timedelta
 from django.test import TestCase
+
+from corehq.apps.receiverwrapper import submit_form_locally
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -21,8 +23,9 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
     @run_with_all_backends
     def testArchive(self):
+        case_id = 'ddb8e2b3-7ce0-43e4-ad45-d7a2eebe9169'
         xml_data = self.get_xml('basic')
-        response, xform, cases = self.interface.submit_form_locally(
+        response, xform, cases = submit_form_locally(
             xml_data,
             'test-domain',
         )
@@ -34,8 +37,11 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.archive(user='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = self.interface.xform_model.get(xform.form_id)
+        xform = self.interface.get_xform(xform.form_id)
         self.assertTrue(xform.is_archived)
+        case = self.interface.get_case(case_id)
+        self.assertTrue(case.is_deleted)
+        self.assertEqual(case.xform_ids, [])
 
         [archival] = xform.history
         self.assertTrue(lower_bound <= archival.date <= upper_bound)
@@ -46,14 +52,18 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.unarchive(user='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = self.interface.xform_model.get(xform.form_id)
+        xform = self.interface.get_xform(xform.form_id)
         self.assertTrue(xform.is_normal)
+        case = self.interface.get_case(case_id)
+        self.assertFalse(case.is_deleted)
+        self.assertEqual(case.xform_ids, [xform.form_id])
 
         [archival, restoration] = xform.history
         self.assertTrue(lower_bound <= restoration.date <= upper_bound)
         self.assertEqual('unarchive', restoration.operation)
         self.assertEqual('mr. researcher', restoration.user)
 
+    @run_with_all_backends
     def testSignal(self):
         global archive_counter, restore_counter
         archive_counter = 0
@@ -71,7 +81,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform_unarchived.connect(count_unarchive)
 
         xml_data = self.get_xml('basic')
-        response, xform, cases = self.interface.submit_form_locally(
+        response, xform, cases = submit_form_locally(
             xml_data,
             'test-domain',
         )

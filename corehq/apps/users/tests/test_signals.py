@@ -16,28 +16,28 @@ from ..models import CommCareUser, WebUser
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 class TestUserSignals(SimpleTestCase):
 
-    @patch('corehq.apps.analytics.signals.update_subscription_properties_by_user')
+    @patch('corehq.apps.analytics.signals.update_hubspot_properties')
     @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_call_center,
-                               update_subscription):
+                               update_hubspot_properties):
         CommCareUser().save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
         self.assertTrue(sync_call_center.called)
-        self.assertFalse(update_subscription.called)
+        self.assertFalse(update_hubspot_properties.called)
 
-    @patch('corehq.apps.analytics.signals.update_subscription_properties_by_user')
+    @patch('corehq.apps.analytics.signals.update_hubspot_properties')
     @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
     def test_webuser_save(self, send_to_es, invalidate, sync_call_center,
-                          update_subscription):
+                          update_hubspot_properties):
         WebUser().save()
 
         self.assertTrue(send_to_es.called)
         self.assertTrue(invalidate.called)
         self.assertFalse(sync_call_center.called)
-        self.assertTrue(update_subscription.called)
+        self.assertTrue(update_hubspot_properties.called)

@@ -3,7 +3,7 @@ import os
 import time
 from django.test.utils import override_settings
 from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.apps.receiverwrapper import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
 from casexml.apps.phone.restore import RestoreConfig, CachedResponse
@@ -122,7 +122,7 @@ class OtaRestoreTest(TestCase):
             xml_data = f.read()
 
         # implicit length assertion
-        _, _, [newcase] = FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
+        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
 
         expected_case_block = """
         <case>
@@ -190,7 +190,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
+        submit_form_locally(xml_data, domain=self.project.name)
 
         time.sleep(1)
         restore_payload = generate_restore_payload(self.project, dummy_user(), items=items)
@@ -235,7 +235,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "update_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
+        submit_form_locally(xml_data, domain=self.project.name)
 
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(
@@ -267,7 +267,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "attributes.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        _, _, [newcase] = FormProcessorInterface().submit_form_locally(xml_data, domain=self.project.name)
+        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
 
         self.assertTrue(isinstance(newcase.adate, dict))
         self.assertEqual(date(2012, 02, 01), newcase.adate["#text"])

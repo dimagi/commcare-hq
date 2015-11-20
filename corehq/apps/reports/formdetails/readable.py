@@ -323,7 +323,7 @@ def pop_from_form_data(relative_data, absolute_data, path):
         try:
             if path:
                 data = data[key]
-            elif hasattr(data, 'pop'):
+            elif isinstance(data, dict):
                 return data.pop(key)
             else:
                 return None

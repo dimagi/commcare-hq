@@ -198,7 +198,7 @@ def get_dimagi_from_email_by_product(product):
 
 
 def quantize_accounting_decimal(decimal_value):
-    return decimal_value.quantize(Decimal(10) ** -2)
+    return "%0.2f" % decimal_value
 
 
 def fmt_dollar_amount(decimal_value):

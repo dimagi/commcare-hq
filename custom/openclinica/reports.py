@@ -126,9 +126,9 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
         for case in self.get_study_subject_cases():
             subject = Subject(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), self.domain)
-            subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE)
-            subject.sex = getattr(case, CC_SEX)
-            subject.dob = getattr(case, CC_DOB)
+            subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE, None)
+            subject.sex = getattr(case, CC_SEX, None)
+            subject.dob = getattr(case, CC_DOB, None)
             for form in originals_first(case.get_forms()):
                 # Pass audit log ID by reference to increment it for each audit log
                 subject.add_data(form.form, form, audit_log_id_ref)

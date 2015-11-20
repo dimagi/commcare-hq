@@ -1,13 +1,14 @@
 import datetime
 
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.const import USER_DATE_FORMAT
+from corehq.const import SERVER_DATE_FORMAT
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
@@ -923,6 +924,21 @@ class InvoiceInterface(InvoiceInterfaceBase):
         )
 
 
+def _get_domain_from_payment_record(payment_record):
+    from corehq.apps.accounting.models import CreditAdjustment
+    credit_adjustments = CreditAdjustment.objects.filter(payment_record=payment_record)
+    domains = set(
+        credit_adj.credit_line.account.created_by_domain
+        for credit_adj in credit_adjustments
+        if credit_adj.credit_line.account.created_by_domain
+    ) | set(
+        credit_adj.credit_line.subscription.subscriber.domain
+        for credit_adj in credit_adjustments
+        if credit_adj.credit_line.subscription
+    )
+    return ', '.join(domains) if domains else None
+
+
 class PaymentRecordInterface(GenericTabularReport):
     section_name = "Accounting"
     dispatcher = AccountingAdminInterfaceDispatcher
@@ -968,7 +984,7 @@ class PaymentRecordInterface(GenericTabularReport):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             filters.update(
-                creditadjustment__credit_line__account__created_by_domain=subscriber,
+                creditadjustment__credit_line__subscription__subscriber__domain=subscriber
             )
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
@@ -992,7 +1008,7 @@ class PaymentRecordInterface(GenericTabularReport):
             account = applicable_credit_line.account
             rows.append([
                 format_datatables_data(
-                    text=record.date_created.strftime(USER_DATE_FORMAT),
+                    text=record.date_created.strftime(SERVER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
                 format_datatables_data(
@@ -1004,7 +1020,7 @@ class PaymentRecordInterface(GenericTabularReport):
                     ),
                     sort_key=account.name,
                 ),
-                applicable_credit_line.subscription.subscriber.domain if applicable_credit_line.subscription else 'None',
+                _get_domain_from_payment_record(record),
                 record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
@@ -1118,9 +1134,9 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 "Credit Line",
                 DataTablesColumn("Account"),
                 DataTablesColumn("Subscription"),
-                DataTablesColumn("Project Space"),
                 DataTablesColumn("Product/Feature Type")
             ),
+            DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
@@ -1149,10 +1165,6 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     )),
                     credit_adj.credit_line.subscription.id,
                 ) if credit_adj.credit_line.subscription else '',
-                (
-                    credit_adj.credit_line.subscription.subscriber.domain
-                    if credit_adj.credit_line.subscription is not None else ''
-                ),
                 dict(FeatureType.CHOICES).get(
                     credit_adj.credit_line.feature_type,
                     dict(SoftwareProductType.CHOICES).get(
@@ -1160,9 +1172,16 @@ class CreditAdjustmentInterface(GenericTabularReport):
                         "Any"
                     ),
                 ),
+                (
+                    credit_adj.credit_line.subscription.subscriber.domain
+                    if credit_adj.credit_line.subscription is not None else (
+                        credit_adj.invoice.subscription.subscriber.domain
+                        if credit_adj.invoice else ''
+                    )
+                ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
                 credit_adj.note,
-                credit_adj.amount,
+                quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,
             ])
             for credit_adj in self.filtered_credit_adjustments
@@ -1178,7 +1197,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
-            query = query.filter(credit_line__subscription__subscriber__domain=domain)
+            query = query.filter(
+                Q(credit_line__subscription__subscriber__domain=domain)
+                | Q(invoice__subscription__subscriber__domain=domain)
+            )
 
         if DateFilter.use_filter(self.request):
             query = query.filter(

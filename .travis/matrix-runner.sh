@@ -3,7 +3,7 @@ set -ev
 
 server_started() {
     echo "Waiting for server to start"
-    for i in `seq 1 10`; do
+    for i in `seq 1 15`; do
         printf '.'
         if $(curl --output /dev/null --silent --head --fail http://localhost:8000/); then
             return 0

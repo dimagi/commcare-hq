@@ -1,6 +1,7 @@
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import ElasticReindexer
 from corehq.pillows.user import UserPillow, UnknownUsersPillow
 from couchforms.models import XFormInstance
+from pillowtop.feed.interface import Change
 
 
 class Command(ElasticReindexer):
@@ -17,7 +18,8 @@ class Command(ElasticReindexer):
 
     def process_row(self, row, count):
         doc = _make_view_dict_look_like_xform_doc(row)
-        super(Command, self).process_row({'id': doc['_id'], 'doc': doc}, count)
+        change = Change(id=doc['_id'], sequence_id=None, document=doc)
+        super(Command, self).process_row(change, count)
 
 
 def _make_view_dict_look_like_xform_doc(emitted_dict):

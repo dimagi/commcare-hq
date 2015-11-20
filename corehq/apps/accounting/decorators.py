@@ -83,7 +83,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
                                      get_response=None, **assignment):
     """
     A version of the requires privilege decorator which returns an
-    HttpResponse object with an HTTP Status Code of 405 by default
+    HttpResponse object with an HTTP Status Code of 401 by default
     and content_type application/json if the privilege is not found.
 
     `get_response` is an optional parameter where you can specify the
@@ -97,7 +97,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
     ```
     todo accounting for API requests
     """
-    http_status_code = http_status_code or 405
+    http_status_code = http_status_code or 401
     if get_response is None:
         get_response = lambda msg, code: {'code': code, 'message': msg}
 
@@ -111,7 +111,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
                 error_message = "You have lost access to this feature."
                 response = get_response(error_message, http_status_code)
                 return HttpResponse(json.dumps(response),
-                                    content_type="application/json")
+                                    content_type="application/json", status=401)
         return wrapped
     return decorate
 

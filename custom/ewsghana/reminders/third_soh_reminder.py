@@ -1,8 +1,8 @@
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.dbaccessors import get_web_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.ewsghana.reminders import THIRD_STOCK_ON_HAND_REMINDER, INCOMPLETE_SOH_TO_SUPER
 from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
@@ -13,7 +13,7 @@ from dimagi.utils.couch.database import iter_docs
 class ThirdSOHReminder(SecondSOHReminder):
 
     def get_message_for_location(self, location):
-        supply_point = SupplyPointCase.get_by_location(location)
+        supply_point = SupplyInterface(location.domain).get_by_location(location)
         if not supply_point:
             return None, {}
 

@@ -1,4 +1,7 @@
 import collections
+from corehq import privileges, toggles
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from django_prbac.utils import has_privilege
 
 
 def localize(value, lang):
@@ -22,3 +25,11 @@ def localize(value, lang):
 
 def default_language():
     return "en"
+
+
+def has_report_builder_access(request):
+    builder_enabled = toggle_enabled(request, toggles.REPORT_BUILDER)
+    builder_privileges = has_privilege(request, privileges.REPORT_BUILDER)
+    beta_group_enabled = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
+
+    return (builder_enabled and builder_privileges) or beta_group_enabled

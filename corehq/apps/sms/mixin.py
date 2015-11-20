@@ -16,7 +16,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 
-TEST = False
+
 phone_number_re = re.compile("^\d+$")
 
 
@@ -487,21 +487,8 @@ class SMSBackend(MobileBackend):
         """
         return None
 
-    def test_send_sms(self, msg, *args, **kwargs):
-        from corehq.apps.sms.tests import BackendInvocationDoc
-        doc = BackendInvocationDoc()
-        doc._id = '%s-%s' % (self.__class__.__name__, json_format_datetime(msg.date))
-        doc.save()
-    test_send_sms.__test__ = False
-
-    def send_sms(self, msg, *args, **kwargs):
-        raise NotImplementedError("send_sms() method not implemented")
-
     def send(self, msg, *args, **kwargs):
-        if TEST:
-            return self.test_send_sms(msg, *args, **kwargs)
-        else:
-            return self.send_sms(msg, *args, **kwargs)
+        raise NotImplementedError("send() method not implemented")
 
     @classmethod
     def get_opt_in_keywords(cls):

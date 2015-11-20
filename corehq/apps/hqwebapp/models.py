@@ -33,10 +33,10 @@ from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.apps.userreports.util import has_report_builder_access
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
@@ -296,14 +296,14 @@ class ProjectReportsTab(UITab):
         ])]
 
         user_reports = []
-        if (toggle_enabled(self._request, toggles.REPORT_BUILDER)
-                and has_privilege(self._request, privileges.REPORT_BUILDER)):
+
+        if has_report_builder_access(self._request):
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
                     "url": reverse("report_builder_select_type", args=[self.domain]),
-                    "icon": "icon-plus"
+                    "icon": "icon-plus fa fa-plus"
                 }]
             )]
 
@@ -610,6 +610,84 @@ class ProjectDataTab(UITab):
             'domain': self.domain,
         }
 
+        new_exports_views = []
+        if self.can_edit_commcare_data and toggle_enabled(self._request,
+                                                          toggles.REVAMPED_EXPORTS):
+            from corehq.apps.export.views import (
+                FormExportListView,
+                CaseExportListView,
+                CreateCustomFormExportView,
+                CreateCustomCaseExportView,
+                DownloadFormExportView,
+                DownloadCaseExportView,
+                BulkDownloadFormExportView,
+                EditCustomFormExportView,
+                EditCustomCaseExportView,
+            )
+            new_exports_views.extend([
+                {
+                    'title': FormExportListView.page_title,
+                    'url': reverse(FormExportListView.urlname,
+                                   args=(self.domain,)),
+                    'subpages': [
+                        {
+                            'title': CreateCustomFormExportView.page_title,
+                            'urlname': CreateCustomFormExportView.urlname,
+                        },
+                        {
+                            'title': BulkDownloadFormExportView.page_title,
+                            'urlname': BulkDownloadFormExportView.urlname,
+                        },
+                        {
+                            'title': DownloadFormExportView.page_title,
+                            'urlname': DownloadFormExportView.urlname,
+                        },
+                        {
+                            'title': EditCustomFormExportView.page_title,
+                            'urlname': EditCustomFormExportView.urlname,
+                        },
+                    ]
+                },
+                {
+                    'title': CaseExportListView.page_title,
+                    'url': reverse(CaseExportListView.urlname,
+                                   args=(self.domain,)),
+                    'subpages': [
+                        {
+                            'title': CreateCustomCaseExportView.page_title,
+                            'urlname': CreateCustomCaseExportView.urlname,
+                        },
+                        {
+                            'title': DownloadCaseExportView.page_title,
+                            'urlname': DownloadCaseExportView.urlname,
+                        },
+                        {
+                            'title': EditCustomCaseExportView.page_title,
+                            'urlname': EditCustomCaseExportView.urlname,
+                        },
+                    ]
+                },
+            ])
+        from corehq.apps.export.views import DeIdFormExportListView
+        if (
+            DeIdFormExportListView.has_deid_permissions(self._request, self.domain)
+            and toggle_enabled(self._request, toggles.REVAMPED_EXPORTS)
+        ):
+            from corehq.apps.export.views import DownloadFormExportView
+            new_exports_views.append({
+                'title': DeIdFormExportListView.page_title,
+                'url': reverse(DeIdFormExportListView.urlname,
+                               args=(self.domain,)),
+                'subpages': [
+                    {
+                        'title': DownloadFormExportView.page_title,
+                        'urlname': DownloadFormExportView.urlname,
+                    },
+                ]
+            })
+        if new_exports_views:
+            items.append([_("Export Data [New - IN UAT/QA]"), new_exports_views])
+
         if self.can_export_data:
             from corehq.apps.data_interfaces.dispatcher \
                 import DataInterfaceDispatcher
@@ -639,10 +717,6 @@ class ProjectDataTab(UITab):
         if self.can_use_lookup_tables:
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
             items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
-
-        if toggle_enabled(self._request, toggles.REVAMPED_EXPORTS):
-            from corehq.apps.reports.dispatcher import DataExportInterfaceDispatcher
-            items.extend(DataExportInterfaceDispatcher.navigation_sections(context))
 
         return items
 

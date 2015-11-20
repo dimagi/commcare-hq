@@ -22,6 +22,7 @@ from soil.util import expose_cached_download, get_download_context
 from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.tasks import import_locations_async
+from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
@@ -68,7 +69,7 @@ class BaseLocationView(BaseDomainView):
         context.update({
             'hierarchy': location_hierarchy_config(self.domain),
             'api_root': reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                             'resource_name': 'location',
+                                                             'resource_name': 'location_internal',
                                                              'api_name': 'v0.3'}),
         })
         return context
@@ -135,7 +136,8 @@ class LocationTypesView(BaseLocationView):
                             if loc_type.parent_type else None),
             'administrative': loc_type.administrative,
             'shares_cases': loc_type.shares_cases,
-            'view_descendants': loc_type.view_descendants
+            'view_descendants': loc_type.view_descendants,
+            'code': loc_type.code,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     def post(self, request, *args, **kwargs):
@@ -146,7 +148,7 @@ class LocationTypesView(BaseLocationView):
             return isinstance(pk, basestring) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative,
-                       shares_cases, view_descendants, pk):
+                       shares_cases, view_descendants, pk, code):
             parent = sql_loc_types[parent_type] if parent_type else None
 
             loc_type = None
@@ -162,6 +164,7 @@ class LocationTypesView(BaseLocationView):
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
+            loc_type.code = unicode_slug(code)
             loc_type.save()
             sql_loc_types[pk] = loc_type
 
@@ -261,7 +264,7 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        selected = self.location._id or self.location.parent_id
+        selected = self.location.location_id or self.location.parent_id
         breadcrumbs = [{
             'title': LocationsListView.page_title,
             'url': reverse(
@@ -330,7 +333,7 @@ class NewLocationView(BaseLocationView):
         messages.success(self.request, _('Location saved!'))
         return HttpResponseRedirect(
             reverse(EditLocationView.urlname,
-                    args=[self.domain, self.location_form.location._id]),
+                    args=[self.domain, self.location_form.location.location_id]),
         )
 
     def settings_form_post(self, request, *args, **kwargs):
@@ -436,7 +439,7 @@ class EditLocationView(NewLocationView):
                 self.location.location_type,
                 # FIXME accessing this value from the sql location
                 # would be faster
-                self.supply_point._id if self.supply_point else None,
+                self.supply_point.case_id if self.supply_point else None,
             )
             if consumption:
                 consumptions.append((product.name, consumption))

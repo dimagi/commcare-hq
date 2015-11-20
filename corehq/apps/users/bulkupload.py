@@ -1,6 +1,7 @@
 from StringIO import StringIO
 import logging
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.utils.translation import ugettext as _
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
@@ -16,7 +17,7 @@ from soil import DownloadBase
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
+from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -147,11 +148,11 @@ class SiteCodeToSupplyPointCache(BulkCacheBase):
     """
 
     def lookup(self, site_code):
-        supply_point = get_supply_point(
+        case_location = get_supply_point_and_location(
             self.domain,
             site_code
-        )['case']
-        return supply_point
+        )
+        return case_location.case
 
 
 class SiteCodeToLocationCache(BulkCacheBase):
@@ -443,14 +444,19 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if language:
                         user.language = language
                     if email:
-                        user.email = email
+                        email_validator = EmailValidator()
+                        try:
+                            email_validator(email)
+                            user.email = email
+                        except ValidationError:
+                            raise UserUploadError(_("User has an invalid email address"))
                     if is_active is not None:
                         user.is_active = is_active
 
                     user.save()
                     if can_access_locations and location_code:
                         loc = location_cache.get(location_code)
-                        if user.location_id != loc._id:
+                        if user.location_id != loc.location_id:
                             # this triggers a second user save so
                             # we want to avoid doing it if it isn't
                             # needed

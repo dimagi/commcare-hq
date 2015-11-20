@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _
 
 # Checking if report was complete or not
 def report_completion_check(user):
-    sp_id = SQLLocation.objects.get(domain=user.domain, location_id=user.location._id).supply_point_id
+    sp_id = SQLLocation.objects.get(domain=user.domain, location_id=user.location.location_id).supply_point_id
     now = datetime.datetime.utcnow()
     reported_products = set(StockTransaction.objects.filter(case_id=sp_id, type='stockonhand',
                                                             report__date=now).values_list('sql_product__name',
