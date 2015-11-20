@@ -221,7 +221,8 @@ def submit_mapping_case_block(user, index):
 
 
 def location_map_case_id(user):
-    return 'user-owner-mapping-' + user._id
+    # TODO: migrate these to use uuid5(uuid.NAMESPACE_OID, user.user_id)
+    return 'user-owner-mapping-' + user.user_id
 
 
 def get_commtrack_location_id(user, domain):
