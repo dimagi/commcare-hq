@@ -81,10 +81,12 @@ class TestFixtureStatus(TestCase):
     def test_update_status_reset_location(self):
         fake_location = MagicMock()
         fake_location.location_id = "misty_mountains"
+        fake_location.group_id = "misty_mountains"
         self.couch_user.set_location(fake_location)
         previously_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified
 
         fake_location.location_id = "lonely_mountain"
+        fake_location.group_id = "lonely_mountain"
         self.couch_user.set_location(fake_location)
 
         new_updated_time = UserFixtureStatus.objects.get(user_id=self.couch_user._id).last_modified
