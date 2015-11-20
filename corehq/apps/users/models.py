@@ -1804,7 +1804,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
-            location.location_id
+            location.group_id
         })
 
         self.location_id = location.location_id
