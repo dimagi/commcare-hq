@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0007_subscription_funding_source'),
+        ('accounting', '0007_make_subscriber_domain_required'),
     ]
 
     operations = [
@@ -15,6 +15,18 @@ class Migration(migrations.Migration):
             model_name='billingaccount',
             name='last_payment_method',
             field=models.CharField(default=b'NONE', max_length=25, choices=[(b'CC_ONE_TIME', b'Credit Card - One Time'), (b'CC_AUTO', b'Credit Card - Autopay'), (b'WIRE', b'Wire'), (b'ACH', b'ACH'), (b'OTHER', b'Other'), (b'BU_PAYMENT', b'Payment to local BU'), (b'NONE', b'None')]),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='billingaccount',
+            name='pre_or_post_pay',
+            field=models.CharField(default=b'NOT_SET', max_length=25, choices=[(b'PREPAY', b'Prepay'), (b'POSTPAY', b'Postpay'), (b'NOT_SET', b'Not Set')]),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='subscription',
+            name='funding_source',
+            field=models.CharField(default=b'CLIENT', max_length=25, choices=[(b'DIMAGI', b'Dimagi'), (b'CLIENT', b'Client Funding'), (b'EXTERNAL', b'External Funding')]),
             preserve_default=True,
         ),
         migrations.AlterField(
@@ -26,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='subscription',
             name='service_type',
-            field=models.CharField(max_length=25, choices=[(b'IMPLEMENTATION', b'Implementation'), (b'PRODUCT', b'Product'), (b'TRIAL', b'Trial'), (b'SANDBOX', b'Sandbox'), (b'INTERNAL', b'Internal')]),
+            field=models.CharField(default=b'NOT_SET', max_length=25, choices=[(b'IMPLEMENTATION', b'Implementation'), (b'PRODUCT', b'Product'), (b'TRIAL', b'Trial'), (b'SANDBOX', b'Sandbox'), (b'INTERNAL', b'Internal')]),
             preserve_default=True,
         ),
     ]
