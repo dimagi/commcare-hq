@@ -67,7 +67,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
-    StripePaymentMethod, LastPayment
+    StripePaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -1006,7 +1006,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
     def get_payment_handler(self):
         """Returns a StripePaymentHandler object
         """
-        raise NotImplementedError("You must implement get_payment_handler()")
+        raise NotImplementedError("You must impmenent get_payment_handler()")
 
     def post(self, request, *args, **kwargs):
         try:
@@ -1046,7 +1046,6 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             created_by=self.request.user.username,
             account_type=BillingAccountType.USER_CREATED,
             entry_point=EntryPoint.SELF_STARTED,
-            last_payment_method=LastPayment.CC_ONE_TIME,
         )[0]
 
     def get_payment_handler(self):
@@ -1478,7 +1477,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
-        if self.edition == SoftwarePlanEdition.ENTERPRISE:
+        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 

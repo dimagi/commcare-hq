@@ -47,14 +47,12 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     FeatureType,
-    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
     EntryPoint,
-    FundingSource
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
@@ -1173,7 +1171,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.SELF_SERVICE,
                         pro_bono_status=ProBonoStatus.NO,
-                        funding_source=FundingSource.CLIENT
                     )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
@@ -1269,7 +1266,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 adjustment_method=SubscriptionAdjustmentMethod.USER,
                 service_type=SubscriptionType.SELF_SERVICE,
                 pro_bono_status=ProBonoStatus.NO,
-                funding_source=FundingSource.CLIENT,
                 new_version=self.renewed_version,
             )
         except SubscriptionRenewalError as e:
@@ -1390,7 +1386,6 @@ class InternalSubscriptionManagementForm(forms.Form):
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
                 entry_point=EntryPoint.CONTRACTED,
-                pre_or_post_pay=PreOrPostPay.POSTPAY
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1501,7 +1496,6 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
         fields.update({
             'do_not_invoice': True,
-            'service_type': SubscriptionType.INTERNAL,
         })
         return fields
 
@@ -1584,7 +1578,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
-            'service_type': SubscriptionType.TRIAL
         })
         return fields
 
