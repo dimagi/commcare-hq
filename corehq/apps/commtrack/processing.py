@@ -177,8 +177,9 @@ def get_stock_actions(xform):
     if not transaction_helpers:
         return _empty_actions()
 
-    case_action_intents = _get_case_action_intents(transaction_helpers)
+    case_action_intents = _get_case_action_intents(xform, transaction_helpers)
     return StockFormActions(stock_report_helpers, case_action_intents)
+
 
 def _get_case_action_intents(xform, transaction_helpers):
     # list of cases that had stock reports in the form
