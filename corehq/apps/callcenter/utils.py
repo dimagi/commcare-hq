@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
+from casexml.apps.case.const import CASE_ACTION_CLOSE
 from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
 import uuid
@@ -53,11 +54,15 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
     with CriticalSection(['user_case_%s_for_%s' % (case_type, commcare_user._id)]):
         domain = commcare_user.project
         fields = _get_user_case_fields(commcare_user)
-
-
         case = case or get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
 
+        def case_should_be_reopened(case, user_case_should_be_closed):
+            return case and case.closed and not user_case_should_be_closed
+
+        if case_should_be_reopened(case, close):
+            _re_open_case(case)
+            return
 
         caseblock = None
         if case:
@@ -110,6 +115,12 @@ def _get_user_case_fields(commcare_user):
         'phone_number': commcare_user.phone_number or ''
     })
     return fields
+
+
+def _re_open_case(case):
+    closing_action = case.actions[-1]
+    assert closing_action.action_type == CASE_ACTION_CLOSE
+    closing_action.xform.archive()
 
 
 def _user_case_changed(case, case_type, close, fields, owner_id):
