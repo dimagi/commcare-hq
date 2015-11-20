@@ -11,9 +11,9 @@ from corehq.util.test_utils import unit_testing_only
 from couchforms import fetch_and_wrap_form
 
 
-def close_case(case_id, domain, user):
+def close_cases(case_ids, domain, user):
     """
-    Close a case by submitting a close form to it.
+    Close cases by submitting a close forms.
 
     Accepts submitting user as a user object or a fake system user string.
 
@@ -27,13 +27,17 @@ def close_case(case_id, domain, user):
         user_id = user
         username = user
 
-    case_block = ElementTree.tostring(CaseBlock(
+    case_blocks = [ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case_id,
         close=True,
-    ).as_xml())
+    ).as_xml()) for case_id in case_ids]
 
-    return submit_case_blocks([case_block], domain, username, user_id)
+    return submit_case_blocks(case_blocks, domain, username, user_id)
+
+
+def close_case(case_id, domain, user):
+    return close_cases([case_id], domain, user)
 
 
 def rebuild_case_from_actions(case, actions):
