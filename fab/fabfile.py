@@ -965,7 +965,7 @@ def _migrations_exist():
             n_migrations = int(sudo(
                 '%(virtualenv_root)s/bin/python manage.py migrate --list | grep "\[ ]" | wc -l' % env)
             )
-        except:
+        except Exception:
             # If we fail on this, return True to be safe. It's most likely cause we lost connection and
             # failed to return a value python could parse into an int
             return True
