@@ -25,6 +25,7 @@
         "bootstrap-daterangepicker": "2.1.13",
         "datatables": "1.10.9",
         "datatables-bootstrap3": "0.1",
+        "nprogress": "0.2.0",
         "d3": "3.1",
         "nvd3": "1.1.10-beta"
     },
