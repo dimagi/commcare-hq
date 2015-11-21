@@ -148,12 +148,12 @@ var hideLoading = function (selector) {
 var tfLoadingComplete = function (isError) {
     hideLoading();
     if (isError) {
-        showError(translatedStrings.errSaving, $('#cloudcare-notifications'))
+        showError(translatedStrings.errSaving, $('#cloudcare-notifications'));
     }
 }
 
 var hideLoading = function (selector) {
-    NProgress.done()
+    NProgress.done();
 };
 
 var hideLoadingCallback = function () {
