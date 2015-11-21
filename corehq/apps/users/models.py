@@ -1786,10 +1786,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
-            SupplyInterface(self.domain).get_or_create_by_location(location)
+            sp = SupplyInterface(self.domain).get_or_create_by_location(location)
 
             self.user_data.update({
-                'commtrack-supply-point': location.sql_location.supply_point_id
+                'commtrack-supply-point': sp.case_id
             })
 
         if self.project.supports_multiple_locations_per_user:
@@ -1805,7 +1805,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
-            location.location_id
+            location.group_id
         })
 
         self.location_id = location.location_id
