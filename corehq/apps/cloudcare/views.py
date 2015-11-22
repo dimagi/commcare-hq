@@ -9,6 +9,7 @@ from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
+from corehq.util.xml_utils import indent_xml
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -47,7 +48,6 @@ from django.views.generic import View
 from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.reports.templatetags.xform_tags import render_pretty_xml
 from corehq.apps.style.decorators import (
     use_knockout_js,
     use_datatables,
@@ -512,7 +512,7 @@ def render_form(request, domain):
 
     return json_response({
         'form_data': rendered_readable_form,
-        'instance_xml': render_pretty_xml(form_data_xml)
+        'instance_xml': indent_xml(form_data_xml)
     })
 
 
