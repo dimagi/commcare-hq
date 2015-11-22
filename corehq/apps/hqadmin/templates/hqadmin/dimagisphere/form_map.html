@@ -42,34 +42,12 @@ jQuery(document).ready(function($) {
         heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
     });
 
-    var formData = {
-        totalFormsByCountry: {},  // keeps track of totals per country
-        recentFormsByCountry: {},  // keeps track of "active" per country - from the last second
-        maxFormsByCountry: 0
-    }
-
-    function addData(msgObj) {
-        if (msgObj.country) {
-            // update totals
-            var currentCount = formData.totalFormsByCountry[msgObj.country] || 0;
-            currentCount += 1;
-            formData.totalFormsByCountry[msgObj.country] = currentCount;
-            if (currentCount > formData.maxFormsByCountry) {
-                formData.maxFormsByCountry = currentCount;
-            }
-            // update active
-            var activeCount = formData.recentFormsByCountry[msgObj.country] || 0;
-            formData.recentFormsByCountry[msgObj.country] = activeCount + 1;
-            return true;
-        }
-        return false;
-    }
     function addDataToMap(msgObj) {
-        if (addData(msgObj)) {
+        if (dimagisphere.addData(msgObj)) {
             colorAll();
             // this removes from active after a bit of time
             window.setTimeout(function () {
-                formData.recentFormsByCountry[msgObj.country] -= 1;
+                dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
             }, 1000);
         }
     }
@@ -93,13 +71,13 @@ jQuery(document).ready(function($) {
     function getColor(featureId) {
         // courtesy of http://colorbrewer2.org/
         var colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
-        var count = formData.totalFormsByCountry[featureId];
+        var count = dimagisphere.formData.totalFormsByCountry[featureId];
         if (!count) {
             return colors[0];
         }
-        var activeCount = formData.recentFormsByCountry[featureId];
+        var activeCount = dimagisphere.formData.recentFormsByCountry[featureId];
         if (!activeCount) {
-            var pct = count / formData.maxFormsByCountry;
+            var pct = count / dimagisphere.formData.maxFormsByCountry;
             var index = Math.min(Math.ceil(pct * colors.length), colors.length - 1);
             return colors[index];
         }
@@ -111,7 +89,7 @@ jQuery(document).ready(function($) {
     }
 
     function getOpacity(featureId) {
-        if (formData.totalFormsByCountry[featureId]) {
+        if (dimagisphere.formData.totalFormsByCountry[featureId]) {
             return .9;
         } else {
             return 0;

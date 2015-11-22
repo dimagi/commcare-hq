@@ -1,6 +1,32 @@
 var dimagisphere = (function() {
     var self = {};
 
+    self.formData = {
+        totalFormsByCountry: {},  // keeps track of totals per country
+        recentFormsByCountry: {},  // keeps track of "active" per country - from the last second
+        maxFormsByCountry: 0
+    };
+
+    self.addData = function (dataItem) {
+        /**
+         * Adds data to self.formData. Returns whether anything was done.
+         */
+        if (dataItem.country) {
+            // update totals
+            var currentCount = self.formData.totalFormsByCountry[dataItem.country] || 0;
+            currentCount += 1;
+            self.formData.totalFormsByCountry[dataItem.country] = currentCount;
+            if (currentCount > self.formData.maxFormsByCountry) {
+                self.formData.maxFormsByCountry = currentCount;
+            }
+            // update active
+            var activeCount = self.formData.recentFormsByCountry[dataItem.country] || 0;
+            self.formData.recentFormsByCountry[dataItem.country] = activeCount + 1;
+            return true;
+        }
+        return false;
+    };
+
     var DOMAINS = {
         'dimagi': 'United States of America',
         'unicef': 'Nigeria',
