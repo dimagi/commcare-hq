@@ -27,7 +27,7 @@ var dimagisphere = (function() {
         return false;
     };
 
-    var DOMAINS = {
+    var FAKE_DOMAINS = {
         'dimagi': 'United States of America',
         'unicef': 'Nigeria',
         'mvp': 'Ethiopia',
@@ -37,13 +37,13 @@ var dimagisphere = (function() {
     };
 
     self.generateRandomItem = function () {
-        // just return a random item from DOMAINS
+        // just return a random item from FAKE_DOMAINS
         // http://stackoverflow.com/questions/2532218/pick-random-property-from-a-javascript-object
-        var domains = Object.keys(DOMAINS);
+        var domains = Object.keys(FAKE_DOMAINS);
         var randomDomain = domains[domains.length * Math.random() << 0];
         return {
             domain: randomDomain,
-            country: DOMAINS[randomDomain]
+            country: FAKE_DOMAINS[randomDomain]
         }
     };
     return self;
