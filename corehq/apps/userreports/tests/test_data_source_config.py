@@ -97,6 +97,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
 
 
 class DataSourceConfigurationDbTest(TestCase):
+    dependent_apps = ['corehq.apps.userreports']
 
     @classmethod
     def setUpClass(cls):
