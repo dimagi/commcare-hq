@@ -1,0 +1,121 @@
+from copy import copy
+import os
+import unittest
+from django.apps import apps
+from django.test.simple import build_test
+import yaml
+from django.conf import settings
+
+
+class DependenciesNotFound(Exception):
+    pass
+
+
+class OptimizedTestRunnerMixin(object):
+    """
+    You can have any TestRunner mixin this class to add db optimizations to it.
+    """
+
+    def run_tests(self, test_labels, extra_tests=None, **kwargs):
+        """
+        Run the unit tests in two groups, those that don't need db access
+        first and those that require db access afterwards.
+        """
+        test_labels = test_labels or self.get_test_labels()
+        with optimize_apps_for_test_labels(test_labels):
+            super(OptimizedTestRunnerMixin, self).run_tests(test_labels, extra_tests, **kwargs)
+
+
+class AppAndTestMap(object):
+
+    def __init__(self):
+        self._dependencies = get_app_test_db_dependencies()
+        # these are permanently needed apps
+        self.required_apps = set([
+            'django.contrib.auth',
+            'django.contrib.contenttypes',
+        ])
+        self.apps = set([])
+        self.tests = []  # contains tuples of app_labels and test classes
+
+    def add_test(self, app_label, test):
+        self.tests.append((app_label, test))
+
+    def add_app(self, app_label):
+        self.apps.add(app_label)
+
+    def get_needed_installed_apps(self):
+        try:
+            needed_apps = copy(self.required_apps)
+            for app in self.apps:
+                needed_apps.update(self.get_app_dependencies(app))
+
+            for app, test in self.tests:
+                needed_apps.update(self.get_test_dependencies(app, test))
+
+            return needed_apps
+        except DependenciesNotFound:
+            # any time we can't detect dependencies fall back to including all apps
+            return settings.INSTALLED_APPS
+
+    def get_app_dependencies(self, app):
+        if app not in self._dependencies:
+            raise DependenciesNotFound()
+        return self._dependencies[app]
+
+    def get_test_dependencies(self, app, test):
+        dependencies = set()
+
+        def _extract_tests(test_suite_or_test):
+            if isinstance(test_suite_or_test, unittest.TestCase):
+                return [test_suite_or_test]
+            elif isinstance(test_suite_or_test, unittest.TestSuite):
+                return test._tests
+            else:
+                raise DependenciesNotFound()
+
+        for test in _extract_tests(test):
+            if hasattr(test, 'dependent_apps'):
+                dependencies.update(test.dependent_apps)
+            else:
+                # if any of the tests don't have explicit dependencies defined
+                # immediately short-circuit to using all app dependencies for the app
+                return self.get_app_dependencies(app)
+        return dependencies
+
+
+class optimize_apps_for_test_labels(object):
+
+    def __init__(self, test_labels):
+        self.test_map = AppAndTestMap()
+        for label in test_labels:
+            if '.' in label:
+                self.test_map.add_test(label.split('.')[0], build_test(label))
+            else:
+                self.test_map.add_app(label)
+
+    def __enter__(self):
+        self._real_installed_apps = settings.INSTALLED_APPS
+        needed_apps = self.test_map.get_needed_installed_apps()
+        print 'overriding settings.INSTALLED_APPS to {}'.format(
+            ','.join(self.test_map.get_needed_installed_apps())
+        )
+        settings.INSTALLED_APPS = tuple(needed_apps)
+        apps.set_installed_apps(settings.INSTALLED_APPS)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        settings.INSTALLED_APPS = self._real_installed_apps
+        apps.unset_installed_apps()
+
+
+def get_app_test_db_dependencies():
+    file_path = os.path.join(os.path.dirname(__file__), 'app_test_db_dependencies.yml')
+    all_dependencies = {}
+    with open(file_path) as f:
+        app_dependencies = yaml.load(f)
+        for app_path, dependencies in app_dependencies.items():
+            # all_dependencies just contains the short labels, and should include a pointer to the
+            # fully qualified app itself
+            all_dependencies[app_path.split('.')[-1]] = [app_path] + dependencies
+
+    return all_dependencies

@@ -1,0 +1,42 @@
+
+pillowtop: []
+testapps.test_pillowtop:
+  - corehq.apps.users
+  - couchforms
+casexml.apps.case:
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.apps.hqcase
+  - corehq.apps.products
+  - corehq.apps.receiverwrapper
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.tzmigration
+  - couchforms
+  - phonelog
+corehq.apps.userreports:
+  - casexml.apps.case
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.apps.app_manager
+  - corehq.apps.commtrack
+  - corehq.apps.domain
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.receiverwrapper
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - couchforms
+  # unfortunately domain.delete() needs all of these - otherwise they could be removed
+  - custom.logistics
+  - custom.ilsgateway
+  - custom.ewsghana
+  - custom.ewsghana
+  - django_prbac
+  - corehq.apps.accounting
+  - corehq.apps.smsforms
