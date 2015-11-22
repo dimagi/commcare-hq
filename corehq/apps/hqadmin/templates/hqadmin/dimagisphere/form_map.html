@@ -12,6 +12,12 @@
     {% endcompress %}
     <style>
         #map { height: 800px; }
+        .map-info {
+            padding: 6px 8px;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -108,6 +114,7 @@ jQuery(document).ready(function($) {
         };
     }
 
+    // highlights
     function highlightFeature(e) {
         var layer = e.target;
         layer.setStyle({
@@ -118,10 +125,12 @@ jQuery(document).ready(function($) {
         if (!L.Browser.ie && !L.Browser.opera) {
             layer.bringToFront();
         }
+        info.update(layer.feature.properties);
     }
 
     function resetHighlight(e) {
         countriesGeo.resetStyle(e.target);
+        info.update();
     }
 
     function onEachFeature(feature, layer) {
@@ -130,6 +139,22 @@ jQuery(document).ready(function($) {
             mouseout: resetHighlight
         });
     }
+
+    // info control
+    var info = L.control();
+    info.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'map-info');
+        this.update();
+        return this._div;
+    };
+
+    // method that we will use to update the control based on feature properties passed in
+    info.update = function (props) {
+        this._div.innerHTML = (props ?
+            '<b>' + props.name + '</b>: '+ (dimagisphere.formData.totalFormsByCountry[props.name] || 'no') + ' forms'
+            : 'Hover over a country');
+    };
+    info.addTo(map);
 
     // todo: should probably be getting this from somewhere else and possibly not on every page load.
     $.getJSON('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json', function (data) {
