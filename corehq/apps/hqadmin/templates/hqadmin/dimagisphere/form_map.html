@@ -44,9 +44,9 @@ jQuery(document).ready(function($) {
 
     var formData = {
         totalFormsByCountry: {},  // keeps track of totals per country
-        recentFormsByCountry: {}  // keeps track of "active" per country - from the last second
+        recentFormsByCountry: {},  // keeps track of "active" per country - from the last second
+        maxFormsByCountry: 0
     }
-    var maxCount = 0;
 
     function addData(msgObj) {
         if (msgObj.country) {
@@ -54,8 +54,8 @@ jQuery(document).ready(function($) {
             var currentCount = formData.totalFormsByCountry[msgObj.country] || 0;
             currentCount += 1;
             formData.totalFormsByCountry[msgObj.country] = currentCount;
-            if (currentCount > maxCount) {
-                maxCount = currentCount;
+            if (currentCount > formData.maxFormsByCountry) {
+                formData.maxFormsByCountry = currentCount;
             }
             // update active
             var activeCount = formData.recentFormsByCountry[msgObj.country] || 0;
@@ -98,7 +98,7 @@ jQuery(document).ready(function($) {
         }
         var activeCount = formData.recentFormsByCountry[featureId];
         if (!activeCount) {
-            var pct = count / maxCount;
+            var pct = count / formData.maxFormsByCountry;
             var index = Math.min(Math.ceil(pct * colors.length), colors.length - 1);
             return colors[index];
         }
