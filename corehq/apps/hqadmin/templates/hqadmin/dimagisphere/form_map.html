@@ -42,16 +42,16 @@ jQuery(document).ready(function($) {
         heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
     });
 
-    var formCounts = {};  // keeps track of totals per country
+    var totalFormsByCountry = {};  // keeps track of totals per country
     var maxCount = 0;
     var activeCounts = {};  // keeps track of "active" per country - from the last second
 
     function addDataToMap(msgObj) {
         if (msgObj.country) {
             // update totals
-            var currentCount = formCounts[msgObj.country] || 0;
+            var currentCount = totalFormsByCountry[msgObj.country] || 0;
             currentCount += 1;
-            formCounts[msgObj.country] = currentCount;
+            totalFormsByCountry[msgObj.country] = currentCount;
             if (currentCount > maxCount) {
                 maxCount = currentCount;
             }
@@ -87,7 +87,7 @@ jQuery(document).ready(function($) {
     function getColor(featureId) {
         // courtesy of http://colorbrewer2.org/
         var colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
-        var count = formCounts[featureId];
+        var count = totalFormsByCountry[featureId];
         if (!count) {
             return colors[0];
         }
@@ -105,7 +105,7 @@ jQuery(document).ready(function($) {
     }
 
     function getOpacity(featureId) {
-        if (formCounts[featureId]) {
+        if (totalFormsByCountry[featureId]) {
             return .9;
         } else {
             return 0;
