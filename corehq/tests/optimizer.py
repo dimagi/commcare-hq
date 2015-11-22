@@ -54,7 +54,7 @@ class OptimizedTestRunnerMixin(object):
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
         test_labels = test_labels or self.get_test_labels()
         with optimize_apps_for_test_labels(test_labels):
-            super(OptimizedTestRunnerMixin, self).run_tests(test_labels, extra_tests, **kwargs)
+            return super(OptimizedTestRunnerMixin, self).run_tests(test_labels, extra_tests, **kwargs)
 
 
 class AppAndTestMap(object):
