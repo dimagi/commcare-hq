@@ -1,5 +1,6 @@
 var dimagisphere = (function() {
-    var fn = {};
+    var self = {};
+
     var DOMAINS = {
         'dimagi': 'United States of America',
         'unicef': 'Nigeria',
@@ -9,7 +10,7 @@ var dimagisphere = (function() {
         'tula': 'Guatemala'
     };
 
-    fn.generateRandomItem = function () {
+    self.generateRandomItem = function () {
         // just return a random item from DOMAINS
         // http://stackoverflow.com/questions/2532218/pick-random-property-from-a-javascript-object
         var domains = Object.keys(DOMAINS);
@@ -19,5 +20,5 @@ var dimagisphere = (function() {
             country: DOMAINS[randomDomain]
         }
     };
-    return fn;
+    return self;
 })();
