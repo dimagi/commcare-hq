@@ -6,13 +6,13 @@
     <li><a href="#configs" data-toggle="tab">{% trans "Configs" %}</a></li>
 </ul>
 
-<div class="tab-content">
+<div class="save-button-holder clearfix">
+    <div data-bind="saveButton: saveButton" id="save-button"></div>
+</div>
 
+<div class="tab-content">
     <div class="tab-pane active" id="settings">
         <div class="form-horizontal">
-            <div class="save-button-holder clearfix">
-                <div data-bind="saveButton: saveButton" id="save-button"></div>
-            </div>
             <fieldset>
                 <div class="control-group" id="module-name">
                     <label class="control-label">{% trans "Module Name" %}</label>
