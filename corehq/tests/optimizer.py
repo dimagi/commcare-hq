@@ -14,13 +14,44 @@ class DependenciesNotFound(Exception):
 class OptimizedTestRunnerMixin(object):
     """
     You can have any TestRunner mixin this class to add db optimizations to it.
+    What this does is allow you to explicitly declare test app dependencies and then
+    using this test runner will only bootstrap those apps. If an app needs the database
+    but has very few dependencies this can drastically improve speedup times.
+
+    There are two ways to optimize tests, by app and by test class.
+
+    By app:
+
+    To optimize tests by app, you should add the app as an entry to `app_test_db_dependencies.yml`.
+    Then you declare all other dependencies the app has by following the format of other apps.
+    You _must_ use the fully qualified app from settings.py.
+    The app is always assumed to be dependent on itself.
+
+    App dependencies will be picked up and used by any of the following formats:
+
+     - ./manage.py test appname
+     - ./manage.py test appname.TestCase
+     - ./manage.py test appname.TestCase.test_method
+
+    By test:
+
+    Some tests may require far fewer dependencies than the entire app. In this case you can further
+    optimize by adding a `dependent_apps` property to the test itself. For example:
+
+    class MyTestCase(TestCase):
+        dependent_apps = ['myapp.dependentapp1', 'myapp.dependentapp2']
+
+    This will override the app-level setting. Note that when declaring explicit test dependencies
+    you _must_ explicitly specify the test's own fully-qualified app path (if necessary).
+
+    Updating:
+
+    The easiest way to determine an app/test's dependencies is to mark them empty and then run the tests.
+    The tests will fail on various django/couch access. You can then iteratively add those apps to the
+    list of dependencies until tests pass again.
     """
 
     def run_tests(self, test_labels, extra_tests=None, **kwargs):
-        """
-        Run the unit tests in two groups, those that don't need db access
-        first and those that require db access afterwards.
-        """
         test_labels = test_labels or self.get_test_labels()
         with optimize_apps_for_test_labels(test_labels):
             super(OptimizedTestRunnerMixin, self).run_tests(test_labels, extra_tests, **kwargs)
