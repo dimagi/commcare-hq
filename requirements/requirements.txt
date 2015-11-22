@@ -76,8 +76,9 @@ git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e2
 Pygments==2.0.2
 tinys3==0.1.11
 datadog==0.10.0
+django-websocket-redis==0.4.4
+django-redis-sessions==0.5.0
 django-uuidfield==0.5.0
-
 # required by ctable
 SQLAlchemy==0.8.2
 alembic==0.6.4

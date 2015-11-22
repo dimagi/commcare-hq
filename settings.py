@@ -173,6 +173,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
+    'corehq.util.context_processors.websockets_override',
 ]
 
 TEMPLATE_DIRS = []
@@ -197,6 +198,7 @@ DEFAULT_APPS = (
     'compressor',
     'mptt',
     'tastypie',
+    'ws4redis',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -405,6 +407,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
 
+
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 ####### Domain settings  #######
@@ -544,6 +547,15 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
+
+
+# websockets config
+from settingshelper import get_allowed_websocket_channels
+WEBSOCKET_URL = '/ws/'
+WS4REDIS_PREFIX = 'ws'
+WSGI_APPLICATION = 'ws4redis.django_runserver.application'
+WS4REDIS_ALLOWED_CHANNELS = get_allowed_websocket_channels
+
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
