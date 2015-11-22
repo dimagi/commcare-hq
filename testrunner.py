@@ -10,6 +10,7 @@ from django.conf import settings
 from django.test import TransactionTestCase
 from django.utils import unittest
 from mock import patch, Mock
+from corehq.tests.optimizer import OptimizedTestRunnerMixin
 
 import settingshelper
 
@@ -73,7 +74,6 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             db_name: self.get_test_db_name(url)
             for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
         }
-
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
@@ -304,6 +304,12 @@ class TwoStageTestRunner(HqTestSuiteRunner):
             percent,
         )
 
+
+class DevTestRunner(OptimizedTestRunnerMixin, TwoStageTestRunner):
+    """
+    See OptimizedTestRunner.
+    """
+    pass
 
 class NonDbOnlyTestRunner(TwoStageTestRunner):
     """
