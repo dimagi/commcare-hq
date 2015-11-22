@@ -37,7 +37,7 @@ class GuessReportingMinuteTest(SimpleTestCase):
 
 
 class ScheduledReportTest(TestCase):
-    dependent_apps = ['corehq.apps.reports', 'corehq.couchapps']
+    dependent_apps = ['corehq.couchapps']
 
     def setUp(self):
         for report in ReportNotification.view(

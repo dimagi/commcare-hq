@@ -41,8 +41,8 @@ class OptimizedTestRunnerMixin(object):
     class MyTestCase(TestCase):
         dependent_apps = ['myapp.dependentapp1', 'myapp.dependentapp2']
 
-    This will override the app-level setting. Note that when declaring explicit test dependencies
-    you _must_ explicitly specify the test's own fully-qualified app path (if necessary).
+    This will override the app-level setting. Like apps, tests are always assumed to be dependent
+    on the apps they live in.
 
     Updating:
 
@@ -95,7 +95,7 @@ class AppAndTestMap(object):
         return self._dependencies[app]
 
     def get_test_dependencies(self, app, test):
-        dependencies = set()
+        dependencies = set([apps.get_app_config(app).name])
 
         def _extract_tests(test_suite_or_test):
             if isinstance(test_suite_or_test, unittest.TestCase):
