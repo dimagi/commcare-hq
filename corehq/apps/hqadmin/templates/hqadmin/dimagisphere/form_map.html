@@ -19,7 +19,11 @@
 		{% block main_content %}
             <h1>Incoming Forms by country <small>This should update in real time. Also check out the <a href="{% url 'dimagisphere_charts' %}" target="_blank">graph</a></small></h1>
             <div id="map"></div>
-            <div id="chart"><svg style='height:500px'></svg></div>
+            <div id="controls" class="pull-right">Simulate:
+                <button id="controlButton" type="button" class="btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-play"></span>
+                </button>
+            </div>
 		{% endblock main_content %}
 	</div>
     {% compress js %}
@@ -27,6 +31,7 @@
         <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'reports/javascripts/leaflet.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
     {% endcompress %}
     {% block script_panel %}
         <script type="text/javascript">
@@ -41,9 +46,7 @@ jQuery(document).ready(function($) {
     var maxCount = 0;
     var activeCounts = {};  // keeps track of "active" per country - from the last second
 
-    // receive a message though the Websocket from the server
-    function receiveMessage(msg) {
-        var msgObj = JSON.parse(msg);
+    function addDataToMap(msgObj) {
         if (msgObj.country) {
             // update totals
             var currentCount = formCounts[msgObj.country] || 0;
@@ -63,6 +66,11 @@ jQuery(document).ready(function($) {
                 activeCounts[msgObj.country] -= 1;
             }, 1000);
         }
+    }
+
+    // receive a message though the Websocket from the server
+    function receiveMessage(msg) {
+        addDataToMap(JSON.parse(msg));
     }
 
     var map = L.map('map').setView([0, 0], 3)
@@ -126,8 +134,35 @@ jQuery(document).ready(function($) {
             countriesGeo.setStyle(style);
         }
     }
+
     // update all every 5 seconds in case no activity (this is just to clear active state)
     window.setInterval(colorAll, 5000);
+
+    // simulation controls
+    var simulationOn = false;
+    var controlButton = $('#controlButton');
+    function setPauseButton() {
+        controlButton.children('span').removeClass('glyphicon-play').addClass('glyphicon-pause');
+    }
+    function setPlayButton() {
+        controlButton.children('span').removeClass('glyphicon-pause').addClass('glyphicon-play');
+    }
+    function simulateForms() {
+        if (simulationOn) {
+            addDataToMap(dimagisphere.generateRandomItem());
+            window.setTimeout(simulateForms, 1000);
+        }
+    }
+    controlButton.click(function () {
+        if (!simulationOn) {
+            simulationOn = true;
+            setPauseButton()
+            simulateForms();
+        } else {
+            simulationOn = false;
+            setPlayButton();
+        }
+    });
 });
 </script>
 	{% endblock %}
