@@ -44,7 +44,7 @@ jQuery(document).ready(function($) {
 
     var totalFormsByCountry = {};  // keeps track of totals per country
     var maxCount = 0;
-    var activeCounts = {};  // keeps track of "active" per country - from the last second
+    var recentFormsByCountry = {};  // keeps track of "active" per country - from the last second
 
     function addDataToMap(msgObj) {
         if (msgObj.country) {
@@ -57,13 +57,13 @@ jQuery(document).ready(function($) {
             }
 
             // update active
-            var activeCount = activeCounts[msgObj.country] || 0;
-            activeCounts[msgObj.country] = activeCount + 1;
+            var activeCount = recentFormsByCountry[msgObj.country] || 0;
+            recentFormsByCountry[msgObj.country] = activeCount + 1;
             colorAll();
 
             // this removes from active after a bit of time
             window.setTimeout(function () {
-                activeCounts[msgObj.country] -= 1;
+                recentFormsByCountry[msgObj.country] -= 1;
             }, 1000);
         }
     }
@@ -91,7 +91,7 @@ jQuery(document).ready(function($) {
         if (!count) {
             return colors[0];
         }
-        var activeCount = activeCounts[featureId];
+        var activeCount = recentFormsByCountry[featureId];
         if (!activeCount) {
             var pct = count / maxCount;
             var index = Math.min(Math.ceil(pct * colors.length), colors.length - 1);
