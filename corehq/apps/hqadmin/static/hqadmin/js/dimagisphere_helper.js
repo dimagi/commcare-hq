@@ -44,7 +44,7 @@ var dimagisphere = (function() {
         return {
             domain: randomDomain,
             country: FAKE_DOMAINS[randomDomain]
-        }
+        };
     };
     return self;
 })();
