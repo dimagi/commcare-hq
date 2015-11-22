@@ -42,28 +42,30 @@ jQuery(document).ready(function($) {
         heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
     });
 
-    var totalFormsByCountry = {};  // keeps track of totals per country
+    var formData = {
+        totalFormsByCountry: {},  // keeps track of totals per country
+        recentFormsByCountry: {}  // keeps track of "active" per country - from the last second
+    }
     var maxCount = 0;
-    var recentFormsByCountry = {};  // keeps track of "active" per country - from the last second
 
     function addDataToMap(msgObj) {
         if (msgObj.country) {
             // update totals
-            var currentCount = totalFormsByCountry[msgObj.country] || 0;
+            var currentCount = formData.totalFormsByCountry[msgObj.country] || 0;
             currentCount += 1;
-            totalFormsByCountry[msgObj.country] = currentCount;
+            formData.totalFormsByCountry[msgObj.country] = currentCount;
             if (currentCount > maxCount) {
                 maxCount = currentCount;
             }
 
             // update active
-            var activeCount = recentFormsByCountry[msgObj.country] || 0;
-            recentFormsByCountry[msgObj.country] = activeCount + 1;
+            var activeCount = formData.recentFormsByCountry[msgObj.country] || 0;
+            formData.recentFormsByCountry[msgObj.country] = activeCount + 1;
             colorAll();
 
             // this removes from active after a bit of time
             window.setTimeout(function () {
-                recentFormsByCountry[msgObj.country] -= 1;
+                formData.recentFormsByCountry[msgObj.country] -= 1;
             }, 1000);
         }
     }
@@ -87,11 +89,11 @@ jQuery(document).ready(function($) {
     function getColor(featureId) {
         // courtesy of http://colorbrewer2.org/
         var colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
-        var count = totalFormsByCountry[featureId];
+        var count = formData.totalFormsByCountry[featureId];
         if (!count) {
             return colors[0];
         }
-        var activeCount = recentFormsByCountry[featureId];
+        var activeCount = formData.recentFormsByCountry[featureId];
         if (!activeCount) {
             var pct = count / maxCount;
             var index = Math.min(Math.ceil(pct * colors.length), colors.length - 1);
@@ -105,7 +107,7 @@ jQuery(document).ready(function($) {
     }
 
     function getOpacity(featureId) {
-        if (totalFormsByCountry[featureId]) {
+        if (formData.totalFormsByCountry[featureId]) {
             return .9;
         } else {
             return 0;
