@@ -437,9 +437,6 @@ $(function () {
 CommcareSettings.widgets.number = function (self) {
     self.valueIsLegal = function () {
         var value = self.value();
-        if (!(_.isNumber(value))) {
-            return false;
-        }
         if (self.min_value && value < self.min_value) {
             return false;
         }
