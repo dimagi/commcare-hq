@@ -1,19 +1,19 @@
 from datetime import datetime
 import logging
 from xml.etree import ElementTree
+from django.conf import settings
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import (
     Application,
     ReportModule,
 )
 from corehq.util.xml_utils import serialize
 
-from .exceptions import UserReportsError
-from .models import ReportConfiguration
-from .reports.factory import ReportFactory
-from .util import localize
+from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.util import localize
 
 
 class ReportFixturesProvider(object):
@@ -23,6 +23,8 @@ class ReportFixturesProvider(object):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
+        # delay import so that get_apps_in_domain is mockable
+        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         if not toggles.MOBILE_UCR.enabled(user.domain):
             return []
 
@@ -50,6 +52,8 @@ class ReportFixturesProvider(object):
                 pass
             except Exception as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
+                if settings.UNIT_TESTING:
+                    raise
         root.append(reports_elem)
         return [root]
 

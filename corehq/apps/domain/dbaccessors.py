@@ -33,6 +33,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
         'CallCenterIndicatorConfig',
         'CommtrackConfig',
         'Invitation',
+        'DomainInvitation',
     ]
     doc_type = doc_class.__name__
     assert doc_type in whitelist
