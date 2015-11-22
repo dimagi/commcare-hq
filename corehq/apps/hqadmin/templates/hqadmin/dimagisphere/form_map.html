@@ -60,11 +60,12 @@ jQuery(document).ready(function($) {
             // update active
             var activeCount = formData.recentFormsByCountry[msgObj.country] || 0;
             formData.recentFormsByCountry[msgObj.country] = activeCount + 1;
+            return true;
         }
+        return false;
     }
     function addDataToMap(msgObj) {
-        if (msgObj.country) {
-            addData(msgObj);
+        if (addData(msgObj)) {
             colorAll();
             // this removes from active after a bit of time
             window.setTimeout(function () {
