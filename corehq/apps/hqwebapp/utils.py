@@ -65,7 +65,6 @@ def send_confirmation_email(invitation):
 class InvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
     inv_id = None
-    inv_type = Invitation
     template = ""
     need = [] # a list of strings containing which parameters of the call function should be set as attributes to self
 
@@ -123,7 +122,7 @@ class InvitationView(object):
             return HttpResponseRedirect(request.path)
 
         try:
-            invitation = self.inv_type.get(invitation_id)
+            invitation = Invitation.get(invitation_id)
         except ResourceNotFound:
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or request a "

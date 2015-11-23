@@ -578,7 +578,6 @@ def delete_user_role(request, domain):
 
 
 class UserInvitationView(InvitationView):
-    inv_type = Invitation
     template = "users/accept_invite.html"
     need = ["domain"]
 
