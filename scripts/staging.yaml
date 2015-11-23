@@ -57,7 +57,6 @@ branches:
   - websocket-demo  # cz 11/16
   - fix-toggle #wsp 11/17
   - billing-metatdata #Cal 11/18
-  - remove-obsolete-conditionals # Nick P 11/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
