@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.sms import StockReportParser, SMSError
-from corehq.form_processor.parsers.ledgers import StockTransactionHelper
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from custom.ilsgateway import LOGISTICS_PRODUCT_ALIASES
 
 

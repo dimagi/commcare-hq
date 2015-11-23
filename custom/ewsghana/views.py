@@ -19,7 +19,7 @@ from corehq.apps.locations.permissions import locations_access_required, user_ca
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.form_processor.parsers.ledgers import StockTransactionHelper
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.filters import EWSDateFilter

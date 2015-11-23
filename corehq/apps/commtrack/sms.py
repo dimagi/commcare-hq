@@ -26,7 +26,7 @@ from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError)
 import re
-from corehq.form_processor.parsers.ledgers import StockTransactionHelper
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 
 logger = logging.getLogger('commtrack.sms')
 
