@@ -9,7 +9,7 @@ from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import (
     UnfinishedSubmissionStub,
 )
@@ -29,6 +29,7 @@ class EditFormTest(TestCase, TestFileMixin):
     def setUp(self):
         self.interface = FormProcessorInterface(self.domain)
         self.casedb = CaseAccessors(self.domain)
+        self.formdb = FormAccessors(self.domain)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
@@ -57,7 +58,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual("100", xform.form_data['vitals']['height'])
         self.assertEqual("Edited Baby!", xform.form_data['assessment']['categories'])
 
-        deprecated_xform = self.interface.get_xform(xform.deprecated_form_id)
+        deprecated_xform = self.formdb.get_form(xform.deprecated_form_id)
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
         self.assertNotEqual(self.ID, deprecated_xform.form_id)
@@ -103,7 +104,7 @@ class EditFormTest(TestCase, TestFileMixin):
         # it didn't go through, so make sure there are no edits still
         self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
 
-        xform = self.interface.get_xform(self.ID)
+        xform = self.formdb.get_form(self.ID)
         self.assertIsNotNone(xform)
         self.assertEqual(
             UnfinishedSubmissionStub.objects.filter(xform_id=self.ID,
@@ -183,10 +184,10 @@ class EditFormTest(TestCase, TestFileMixin):
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        xform = self.interface.get_xform(form_id)
+        xform = self.formdb.get_form(form_id)
         self.assertTrue(xform.is_error)
 
-        deprecated_xform = self.interface.get_xform(xform.deprecated_form_id)
+        deprecated_xform = self.formdb.get_form(xform.deprecated_form_id)
         self.assertTrue(deprecated_xform.is_deprecated)
 
     @run_with_all_backends

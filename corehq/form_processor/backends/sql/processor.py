@@ -277,8 +277,9 @@ class FormProcessorSQL(object):
         return case
 
     @staticmethod
-    def get_xforms(xform_ids):
-        return FormAccessorSQL.get_forms_with_attachments(xform_ids)
+    def get_case_forms(case_id):
+        xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
+        return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
 
 
 def get_case_transactions(case_id, updated_xforms=None):
@@ -289,7 +290,7 @@ def get_case_transactions(case_id, updated_xforms=None):
     } if updated_xforms else {}
 
     form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
-    xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments(form_ids_to_fetch)}
+    xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):
         if form_id in updated_xforms_map:

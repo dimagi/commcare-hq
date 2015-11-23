@@ -202,10 +202,6 @@ class FormProcessorCouch(object):
         wrapped by the appropriate form type.
         """
         form_ids = get_case_xform_ids(case_id)
-        return FormProcessorCouch.get_xforms(form_ids)
-
-    @staticmethod
-    def get_xforms(form_ids):
         return [fetch_and_wrap_form(id) for id in form_ids]
 
 

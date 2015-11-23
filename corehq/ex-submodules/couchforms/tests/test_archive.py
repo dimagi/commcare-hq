@@ -3,10 +3,9 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.signals import xform_archived, xform_unarchived
 
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
 
@@ -16,8 +15,8 @@ class TestFormArchiving(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
-        self.interface = FormProcessorInterface('test-domain')
         self.casedb = CaseAccessors('test-domain')
+        self.formdb = FormAccessors('test-domain')
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
@@ -39,7 +38,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.archive(user='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = self.interface.get_xform(xform.form_id)
+        xform = self.formdb.get_form(xform.form_id)
         self.assertTrue(xform.is_archived)
         case = self.casedb.get_case(case_id)
         self.assertTrue(case.is_deleted)
@@ -54,7 +53,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.unarchive(user='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
-        xform = self.interface.get_xform(xform.form_id)
+        xform = self.formdb.get_form(xform.form_id)
         self.assertTrue(xform.is_normal)
         case = self.casedb.get_case(case_id)
         self.assertFalse(case.is_deleted)
@@ -95,7 +94,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(1, archive_counter)
         self.assertEqual(0, restore_counter)
 
-        xform = self.interface.get_xform(xform.form_id)
+        xform = self.formdb.get_form(xform.form_id)
         xform.unarchive()
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)

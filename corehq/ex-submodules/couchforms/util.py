@@ -14,6 +14,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import new_xform
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.soft_assert import soft_assert
@@ -131,7 +132,7 @@ def _handle_duplicate(new_doc, instance):
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = interface.get_form_with_attachments(conflict_id)
+    existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()

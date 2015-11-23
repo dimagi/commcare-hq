@@ -2,8 +2,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 
 
@@ -178,7 +177,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': token_id})
-        form = FormProcessorInterface(domain).get_xform(case.xform_ids[0])
+        form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_default(self):
@@ -189,7 +188,7 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         case = factory.create_case()
-        form = FormProcessorInterface(domain).get_xform(case.xform_ids[0])
+        form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_override_defaults(self):
@@ -198,5 +197,5 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': 'differenttoken'})
-        form = FormProcessorInterface(domain).get_xform(case.xform_ids[0])
+        form = FormAccessors(domain).get_form(case.xform_ids[0])
         self.assertEqual('differenttoken', form.last_sync_token)

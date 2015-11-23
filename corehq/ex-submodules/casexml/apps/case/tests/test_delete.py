@@ -5,16 +5,15 @@ from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.test_utils import run_with_all_backends
 
 
 class TestHardDelete(TestCase):
 
     def setUp(self):
-        self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
         self.casedb = CaseAccessors(TEST_DOMAIN_NAME)
+        self.formdb = FormAccessors(TEST_DOMAIN_NAME)
 
     @run_with_all_backends
     def test_simple_delete(self):
@@ -26,7 +25,7 @@ class TestHardDelete(TestCase):
         self.assertIsNotNone(self.casedb.get_case(case.case_id))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
-            self.assertIsNotNone(self.interface.get_xform(form_id))
+            self.assertIsNotNone(self.formdb.get_form(form_id))
         safe_hard_delete(case)
 
         with self.assertRaises(CaseNotFound):
@@ -34,7 +33,7 @@ class TestHardDelete(TestCase):
 
         for form_id in case.xform_ids:
             with self.assertRaises(XFormNotFound):
-                self.interface.get_xform(form_id)
+                self.formdb.get_form(form_id)
 
     @run_with_all_backends
     def test_delete_with_related(self):

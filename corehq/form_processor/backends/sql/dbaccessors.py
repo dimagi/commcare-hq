@@ -38,7 +38,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             raise XFormNotFound
 
     @staticmethod
-    def get_forms_with_attachments(form_ids):
+    def get_forms_with_attachments_meta(form_ids):
         return XFormInstanceSQL.objects.prefetch_related(
             Prefetch('attachments', to_attr='cached_attachments')
         ).filter(form_uuid__in=form_ids)

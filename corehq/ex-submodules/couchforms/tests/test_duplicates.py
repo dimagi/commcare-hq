@@ -2,6 +2,7 @@ import os
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
@@ -44,7 +45,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
 
         # Change the doc_type of the form by archiving it
         xform1.archive()
-        xform1 = self.interface.get_xform(xform1.form_id)
+        xform1 = FormAccessors().get_form(xform1.form_id)
         self.assertTrue(xform1.is_archived)
 
         # Post an xform with that has different doc_type but same id

@@ -18,8 +18,6 @@ class FormProcessorInterface(object):
 
     def __init__(self, domain=None):
         self.domain = domain
-        self.casedb = CaseAccessors(self.domain)
-        self.formdb = FormAccessors(self.domain)
 
     @property
     @memoized
@@ -71,12 +69,6 @@ class FormProcessorInterface(object):
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
 
-    def get_xform(self, form_id):
-        return self.formdb.get_form(form_id)
-
-    def get_form_with_attachments(self, form_id):
-        return self.formdb.get_with_attachments(form_id)
-
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
         try:
@@ -86,8 +78,7 @@ class FormProcessorInterface(object):
         return lock
 
     def get_case_forms(self, case_id):
-        xform_ids = self.casedb.get_case_xform_ids(case_id)
-        return self.processor.get_xforms(xform_ids)
+        return self.processor.get_case_forms(case_id)
 
     def store_attachments(self, xform, attachments):
         """
