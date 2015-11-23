@@ -133,16 +133,6 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     else:
         ledger_format = LedgerFormat.PER_ENTRY
 
-    # helper functions
-    def get_date():
-        timestamp = ledger_json.get('@date') or form.received_on
-        if type(timestamp) is datetime.date:
-            timestamp = datetime.datetime.combine(timestamp, datetime.time())
-
-        if not isinstance(timestamp, (datetime.datetime)):
-            raise InvalidDate("{} has invalid @date".format(ledger_json))
-        return timestamp
-
     def make_transaction_helper(ledger_instruction, action, case_id):
         subaction = ledger_instruction.type
         return StockTransactionHelper(
@@ -198,7 +188,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             ))
             return None
 
-    timestamp = get_date()
+    timestamp = _get_and_validate_date()
     ledger_instructions = []
     if ledger_format == LedgerFormat.INDIVIDUAL:
         # this is @date, @section-id, etc.
@@ -264,6 +254,15 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
 
     return StockReportHelper.make_from_form(form, timestamp, report_type, transaction_helpers)
 
+
+def _get_and_validate_date(ledger_json, form):
+    timestamp = ledger_json.get('@date') or form.received_on
+    if type(timestamp) is datetime.date:
+        timestamp = datetime.datetime.combine(timestamp, datetime.time())
+
+    if not isinstance(timestamp, (datetime.datetime)):
+        raise InvalidDate("{} has invalid @date".format(ledger_json))
+    return timestamp
 
 def _coerce_to_list(obj_or_list):
     if obj_or_list is None:
