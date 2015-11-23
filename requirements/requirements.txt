@@ -80,5 +80,5 @@ django-websocket-redis==0.4.4
 django-redis-sessions==0.5.0
 django-uuidfield==0.5.0
 # required by ctable
-SQLAlchemy==0.8.2
+SQLAlchemy==1.0.9
 alembic==0.6.4
