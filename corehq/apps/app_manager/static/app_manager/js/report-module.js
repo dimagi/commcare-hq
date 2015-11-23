@@ -222,17 +222,22 @@ var ReportModule = (function () {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
-        this.availableReportIds = availableReportIds;
-        this.display = ko.observable(this.fullDisplay[this.lang]);
         this.fullLocalizedDescription = localizedDescription || {};
-        this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
-        this.localizedDescription.subscribe(changeSaveButton);
-        this.xpathDescription = ko.observable(xpathDescription);
-        this.xpathDescription.subscribe(changeSaveButton);
-        this.useXpathDescription = ko.observable(useXpathDescription);
-        this.useXpathDescription.subscribe(changeSaveButton);
         this.uuid = uuid;
+        this.availableReportIds = availableReportIds;
+
         this.reportId = ko.observable(report_id);
+        this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
+        this.xpathDescription = ko.observable(xpathDescription);
+        this.useXpathDescription = ko.observable(useXpathDescription);
+
+        this.reportId.subscribe(changeSaveButton);
+        this.display.subscribe(changeSaveButton);
+        this.localizedDescription.subscribe(changeSaveButton);
+        this.xpathDescription.subscribe(changeSaveButton);
+        this.useXpathDescription.subscribe(changeSaveButton);
+
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
@@ -346,8 +351,6 @@ var ReportModule = (function () {
                 self.lang,
                 self.changeSaveButton
             );
-            report.display.subscribe(self.changeSaveButton);
-            report.reportId.subscribe(self.changeSaveButton);
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));
             });
