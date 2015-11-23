@@ -3,7 +3,6 @@ import logging
 from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
 

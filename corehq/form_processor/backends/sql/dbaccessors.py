@@ -1,15 +1,12 @@
 from datetime import datetime
 from django.db import transaction
 from django.db.models import Prefetch
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
 )
-from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
