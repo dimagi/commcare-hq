@@ -12,6 +12,7 @@ from mock import patch
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -202,7 +203,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self._validateOTARestore(case.case_id, restore_attachments)
 
     def _validateOTARestore(self, case_id, restore_attachments):
-        case_xml = self.interface.get_case(case_id).to_xml(V2)
+        case_xml = CaseAccessors().get_case(case_id).to_xml(V2)
         root_node = lxml.etree.fromstring(case_xml)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))

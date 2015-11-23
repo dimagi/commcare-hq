@@ -389,8 +389,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def xform_ids(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        return CaseDbAccessor.get_case_xform_ids(self.case_id)
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case_xform_ids(self.case_id)
 
     @property
     def user_id(self):
@@ -426,13 +426,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def reverse_indices(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        return CaseDbAccessor.get_reverse_indices(self.case_id)
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_reverse_indices(self.case_id)
 
     @memoized
     def _saved_indices(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        return CaseDbAccessor.get_indices(self.case_id) if self.is_saved() else []
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_indices(self.case_id) if self.is_saved() else []
 
     @property
     def indices(self):
@@ -456,41 +456,27 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         return None
 
     def _get_attachment_from_db(self, attachment_name):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        return CaseDbAccessor.get_attachment(self.case_id, attachment_name)
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_attachment(self.case_id, attachment_name)
 
     @property
     @memoized
     def case_attachments(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        attachments = CaseDbAccessor.get_attachments(self.case_id)
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        attachments = CaseAccessorSQL.get_attachments(self.case_id)
         return {attachment.name: attachment for attachment in attachments}
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
     @classmethod
-    def get(cls, case_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        return CaseDbAccessor.get_case(case_id)
-
-    @classmethod
-    def get_cases(cls, case_ids):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        return CaseDbAccessor.get_cases(case_ids)
-
-    @classmethod
-    def get_case_xform_ids(cls, case_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
-        return CaseDbAccessor.get_case_xform_ids(case_id)
-
-    @classmethod
     def get_obj_id(cls, obj):
         return obj.case_uuid
 
     @classmethod
-    def get_obj_by_id(cls, _id):
-        return cls.get(_id)
+    def get_obj_by_id(cls, case_id):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case(case_id)
 
     def __unicode__(self):
         return (

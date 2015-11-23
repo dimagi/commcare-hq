@@ -2,6 +2,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 
@@ -103,7 +104,7 @@ class CaseFactoryTest(TestCase):
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
-        self.assertIsNotNone(FormProcessorInterface().get_case(case.case_id))
+        self.assertIsNotNone(CaseAccessors().get_case(case.case_id))
 
     def test_create_overrides(self):
         factory = CaseFactory()

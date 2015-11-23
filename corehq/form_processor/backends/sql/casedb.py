@@ -1,6 +1,6 @@
 import redis
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import CaseNotFound
@@ -30,25 +30,25 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
                 try:
                     case, lock = CommCareCaseSQL.get_locked_obj(_id=case_id)
                 except redis.RedisError:
-                    case = CaseDbAccessor.get_case(case_id)
+                    case = CaseAccessorSQL.get_case(case_id)
                 else:
                     self.locks.append(lock)
             else:
-                case = CaseDbAccessor.get_case(case_id)
+                case = CaseAccessorSQL.get_case(case_id)
         except CaseNotFound:
             return None
 
         return case
 
     def _iter_cases(self, case_ids):
-        return CaseDbAccessor.get_cases(case_ids)
+        return CaseAccessorSQL.get_cases(case_ids)
 
     def get_cases_for_saving(self, now):
         cases = self.get_changed()
 
         for case in cases:
             if case.is_saved():
-                modified = CaseDbAccessor.case_modified_since(case.case_id, case.server_modified_on)
+                modified = CaseAccessorSQL.case_modified_since(case.case_id, case.server_modified_on)
                 assert not modified, (
                     "Aborting because the case has been modified"
                     " by another process. {}".format(case.case_id)
@@ -57,4 +57,4 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         return cases
 
     def get_reverse_indexed_cases(self, case_ids):
-        return CaseDbAccessor.get_reverse_indexed_cases(self.domain, case_ids)
+        return CaseAccessorSQL.get_reverse_indexed_cases(self.domain, case_ids)

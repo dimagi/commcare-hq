@@ -3,6 +3,7 @@ import logging
 from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.decorators.memoized import memoized
 from corehq.util.test_utils import unit_testing_only
 
@@ -17,6 +18,7 @@ class FormProcessorInterface(object):
 
     def __init__(self, domain=None):
         self.domain = domain
+        self.casedb = CaseAccessors(self.domain)
 
     @property
     @memoized
@@ -92,17 +94,8 @@ class FormProcessorInterface(object):
             lock = None
         return lock
 
-    def get_case(self, case_id):
-        return self.case_model.get(case_id)
-
-    def get_cases(self, case_ids):
-        return self.case_model.get_cases(case_ids)
-
-    def get_case_xform_ids(self, case_id):
-        return self.case_model.get_case_xform_ids(case_id)
-
     def get_case_forms(self, case_id):
-        xform_ids = self.get_case_xform_ids(case_id)
+        xform_ids = self.casedb.get_case_xform_ids(case_id)
         return self.processor.get_xforms(xform_ids)
 
     def store_attachments(self, xform, attachments):

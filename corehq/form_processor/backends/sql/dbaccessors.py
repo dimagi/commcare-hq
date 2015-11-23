@@ -3,6 +3,7 @@ from django.db import transaction
 from django.db.models import Prefetch
 
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
@@ -105,7 +106,7 @@ class FormAccessorSQL(object):
         return XFormAttachmentSQL.objects.filter(xform_id=form_id, name=attachment_name).first()
 
 
-class CaseDbAccessor(object):
+class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case(case_id):

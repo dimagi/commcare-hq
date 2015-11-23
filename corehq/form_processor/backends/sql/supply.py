@@ -2,7 +2,7 @@ import logging
 
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.form_processor.abstract_models import AbstractSupplyInterface
-from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import CommCareCaseSQL
 
 
@@ -27,4 +27,4 @@ class SupplyPointSQL(AbstractSupplyInterface):
 
     @classmethod
     def get_by_location(cls, location):
-        return CaseDbAccessor.get_case_by_location(location.domain, location.location_id)
+        return CaseAccessorSQL.get_case_by_location(location.domain, location.location_id)

@@ -3,6 +3,7 @@ from django.test.utils import override_settings
 from casexml.apps.case import const
 from casexml.apps.case.tests.test_const import *
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
@@ -33,7 +34,7 @@ class CaseFromXFormTest(TestCase):
         
         case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         # fetch the case from the DB to ensure it is property wrapped
-        case = self.interface.get_case(case.case_id)
+        case = CaseAccessors().get_case(case.case_id)
         self.assertEqual(False, case.closed)
         
         self.assertEqual(3, len(case.actions))

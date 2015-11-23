@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -16,6 +17,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
     def setUp(self):
         self.interface = FormProcessorInterface('test-domain')
+        self.casedb = CaseAccessors('test-domain')
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
@@ -39,7 +41,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.interface.get_xform(xform.form_id)
         self.assertTrue(xform.is_archived)
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertTrue(case.is_deleted)
         self.assertEqual(case.xform_ids, [])
 
@@ -54,7 +56,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
 
         xform = self.interface.get_xform(xform.form_id)
         self.assertTrue(xform.is_normal)
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertFalse(case.is_deleted)
         self.assertEqual(case.xform_ids, [xform.form_id])
 

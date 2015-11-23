@@ -121,18 +121,6 @@ class AbstractCommCareCase(object):
     def dynamic_case_properties(self):
         raise NotImplementedError()
 
-    @classmethod
-    def get(cls, case_id):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_cases(cls, ids):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_case_xform_ids(cls, case_id):
-        raise NotImplementedError()
-
 
 class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
     @classmethod

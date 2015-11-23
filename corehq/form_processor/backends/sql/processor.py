@@ -6,7 +6,7 @@ import hashlib
 from django.db import transaction
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseDbAccessor
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.const import ATTACHMENT_NAME
@@ -72,7 +72,7 @@ class FormProcessorSQL(object):
     def hard_delete_case_and_forms(cls, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
         FormAccessorSQL.hard_delete_forms(form_ids)
-        CaseDbAccessor.hard_delete_case(case.case_id)
+        CaseAccessorSQL.hard_delete_case(case.case_id)
 
     @classmethod
     def save_processed_models(cls, xforms, cases=None):
@@ -255,7 +255,7 @@ class FormProcessorSQL(object):
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail):
         try:
-            case = CommCareCaseSQL.get(case_id)
+            case = CaseAccessorSQL.get_case(case_id)
             assert case.domain == domain
             found = True
         except CaseNotFound:
@@ -282,7 +282,7 @@ class FormProcessorSQL(object):
 
 
 def get_case_transactions(case_id, updated_xforms=None):
-    transactions = CaseDbAccessor.get_transactions_for_case_rebuild(case_id)
+    transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_uuid for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
