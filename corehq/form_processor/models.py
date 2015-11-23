@@ -227,27 +227,16 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     def archive(self, user=None):
         if self.is_archived:
             return
-        with transaction.atomic():
-            self.state = self.ARCHIVED
-            self.xformoperationsql_set.create(
-                user=user,
-                operation=XFormOperationSQL.ARCHIVE,
-            )
-            self.save()
-            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=True)
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        FormAccessorSQL.archive_form(self.form_id, user_id=user)
         xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user=None):
         if not self.is_archived:
             return
-        with transaction.atomic():
-            self.state = self.NORMAL
-            self.xformoperationsql_set.create(
-                user=user,
-                operation=XFormOperationSQL.UNARCHIVE,
-            )
-            self.save()
-            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=False)
+
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        FormAccessorSQL.unarchive_form(self.form_id, user_id=user)
         xform_unarchived.send(sender="form_processor", xform=self)
 
 

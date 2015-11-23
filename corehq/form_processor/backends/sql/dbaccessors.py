@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import transaction
 from django.db.models import Prefetch
 
@@ -66,6 +67,32 @@ class FormAccessorSQL(object):
             XFormAttachmentSQL.objects.filter(xform_id__in=form_ids).delete()
             XFormOperationSQL.objects.filter(xform_id__in=form_ids).delete()
             XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
+
+    @staticmethod
+    def archive_form(form_id, user_id=None):
+        with transaction.atomic():
+            operation = XFormOperationSQL(
+                user=user_id,
+                operation=XFormOperationSQL.ARCHIVE,
+                date=datetime.utcnow(),
+                xform_id=form_id
+            )
+            operation.save()
+            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.ARCHIVED)
+            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=True)
+
+    @staticmethod
+    def unarchive_form(form_id, user_id=None):
+        with transaction.atomic():
+            operation = XFormOperationSQL(
+                user=user_id,
+                operation=XFormOperationSQL.UNARCHIVE,
+                date=datetime.utcnow(),
+                xform_id=form_id
+            )
+            operation.save()
+            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.NORMAL)
+            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=False)
 
 
 class CaseDbAccessor(object):
