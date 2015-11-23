@@ -44,7 +44,7 @@ class FormProcessorSQL(object):
                 name=attachment.name,
                 attachment_uuid=unicode(uuid.uuid4()),
                 content_type=attachment.content_type,
-                md5=hashlib.md5(attachment.content).hexdigest(),
+                md5=attachment.md5,
             )
             xform_attachment.write_content(attachment.content)
             xform_attachments.append(xform_attachment)
@@ -214,7 +214,7 @@ class FormProcessorSQL(object):
         )
         cls.store_attachments(xform, [Attachment(
             name=ATTACHMENT_NAME,
-            content=instance,
+            raw_content=instance,
             content_type='text/xml',
         )])
 

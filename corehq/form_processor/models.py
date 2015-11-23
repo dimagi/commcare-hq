@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import collections
@@ -27,7 +28,22 @@ from couchforms.jsonobject_extensions import GeoPointProperty
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
 from .exceptions import XFormNotFound, AttachmentNotFound
 
-Attachment = collections.namedtuple('Attachment', 'name content content_type')
+
+class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
+    @property
+    @memoized
+    def content(self):
+        if hasattr(self.raw_content, 'read'):
+            if hasattr(self.raw_content, 'seek'):
+                self.raw_content.seek(0)
+            data = self.raw_content.read()
+        else:
+            data = self.raw_content
+        return data
+
+    @property
+    def md5(self):
+        return hashlib.md5(self.content).hexdigest()
 
 
 class PreSaveHashableMixin(object):
@@ -470,6 +486,11 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
+    @property
+    @memoized
+    def transactions(self):
+        return list(self.transaction_set.all())
+
     @memoized
     def _saved_attachments(self):
         return self.attachments.all()
@@ -489,8 +510,18 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             raise CaseNotFound
 
     @classmethod
-    def get_cases(cls, ids):
-        return CommCareCaseSQL.objects.filter(case_uuid__in=list(ids))
+    def get_cases(cls, ids, ordered=False):
+        cases = CommCareCaseSQL.objects.filter(case_uuid__in=list(ids))
+        if ordered:
+            # SQL won't return the rows in any particular order so we need to order them ourselves
+            index_map = {id_: index for index, id_ in enumerate(ids)}
+            ordered_cases = [None] * len(ids)
+            for case in cases:
+                ordered_cases[index_map[case.case_id]] = case
+
+            cases = ordered_cases
+
+        return cases
 
     @classmethod
     def get_case_xform_ids(cls, case_id):

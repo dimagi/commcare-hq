@@ -309,7 +309,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return get_case_xform_ids(case_id)
 
     @classmethod
-    def get_cases(cls, ids):
+    def get_cases(cls, ids, ordered=False):
         return [
             CommCareCase.wrap(doc) for doc in iter_docs(
                 CommCareCase.get_db(),
