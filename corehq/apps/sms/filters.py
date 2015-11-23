@@ -58,9 +58,7 @@ class EventTypeFilter(BaseMultipleOptionFilter):
 
 
 class EventStatusFilter(BaseSingleOptionFilter):
-    ALL = '_all_'
     STATUS_CHOICES = (
-        (ALL, ugettext_noop('All')),
         (MessagingEvent.STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (MessagingEvent.STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (MessagingEvent.STATUS_ERROR, ugettext_noop('Error')),

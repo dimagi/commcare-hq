@@ -680,24 +680,29 @@ class MessagingEventsReport(BaseMessagingEventReport):
                     content_type_filter.append(content_type)
 
         event_status = EventStatusFilter.get_value(self.request, self.domain)
-        if event_status and event_status != EventStatusFilter.ALL:
-            if event_status == MessagingEvent.STATUS_ERROR:
-                event_status_filter = (
-                    Q(status=event_status) |
-                    Q(messagingsubevent__status=event_status) |
-                    Q(messagingsubevent__sms__error=True)
-                )
-            elif event_status == MessagingEvent.STATUS_IN_PROGRESS:
-                event_status_filter = (
-                    Q(status=event_status) |
-                    Q(messagingsubevent__status=event_status) |
-                    Q(messagingsubevent__xforms_session__end_time__isnull=True)
-                )
-            elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
-                event_status_filter = (
-                    Q(messagingsubevent__xforms_session__end_time__isnull=False) &
-                    Q(messagingsubevent__xforms_session__submission_id__isnull=True)
-                )
+        if event_status == MessagingEvent.STATUS_ERROR:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                Q(messagingsubevent__sms__error=True)
+            )
+        elif event_status == MessagingEvent.STATUS_IN_PROGRESS:
+            # We need to check for id__isnull=False below because the
+            # query we make in this report has to do a left join, and
+            # in this particular filter we can only validly check
+            # end_time__isnull=True if there actually is a
+            # MessagingSubEvent record
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                (Q(messagingsubevent__xforms_session__id__isnull=False) &
+                 Q(messagingsubevent__xforms_session__end_time__isnull=True))
+            )
+        elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
+            event_status_filter = (
+                Q(messagingsubevent__xforms_session__end_time__isnull=False) &
+                Q(messagingsubevent__xforms_session__submission_id__isnull=True)
+            )
 
         return source_filter, content_type_filter, event_status_filter
 
