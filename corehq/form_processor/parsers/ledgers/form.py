@@ -209,7 +209,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     helper_generator_fn = {
         stockconst.REPORT_TYPE_BALANCE: _get_transaction_helpers_from_balance_instruction,
         stockconst.REPORT_TYPE_TRANSFER: _get_transaction_helpers_from_transfer_instruction,
-    }
+    }[report_type]
     transaction_helpers = [
         transaction_helper
         for ledger_instruction in ledger_instructions
