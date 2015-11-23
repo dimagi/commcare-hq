@@ -191,26 +191,20 @@ class InvitationView(object):
                                                  password=form.cleaned_data["password"])
                     if authenticated is not None and authenticated.is_active:
                         login(request, authenticated)
-                    if isinstance(invitation, Invitation):
-                        track_workflow(request.POST['email'],
-                                       "New User Accepted a project invitation",
-                                       {"New User Accepted a project invitation": "yes"})
-                        return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
-                    else:
-                        return HttpResponseRedirect(reverse("homepage"))
+                    track_workflow(request.POST['email'],
+                                   "New User Accepted a project invitation",
+                                   {"New User Accepted a project invitation": "yes"})
+                    return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
-                if isinstance(invitation, Invitation):
-                    if CouchUser.get_by_username(invitation.email):
-                        return HttpResponseRedirect(reverse("login") + '?next=' +
-                            reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
-                    domain = Domain.get_by_name(invitation.domain)
-                    form = NewWebUserRegistrationForm(initial={
-                        'email': invitation.email,
-                        'hr_name': domain.display_name() if domain else invitation.domain,
-                        'create_domain': False,
-                    })
-                else:
-                    form = NewWebUserRegistrationForm(initial={'email': invitation.email})
+                if CouchUser.get_by_username(invitation.email):
+                    return HttpResponseRedirect(reverse("login") + '?next=' +
+                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
+                domain = Domain.get_by_name(invitation.domain)
+                form = NewWebUserRegistrationForm(initial={
+                    'email': invitation.email,
+                    'hr_name': domain.display_name() if domain else invitation.domain,
+                    'create_domain': False,
+                })
 
         context.update({"form": form})
         return render(request, self.template, context)
