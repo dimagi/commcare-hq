@@ -1,3 +1,6 @@
+from django.db.models import Prefetch
+
+from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstanceSQL
 
 
@@ -12,6 +15,28 @@ doc_type_to_state = {
 
 
 class FormAccessorSQL(object):
+
+    @staticmethod
+    def get_form(form_id):
+        try:
+            return XFormInstanceSQL.objects.get(form_uuid=form_id)
+        except XFormInstanceSQL.DoesNotExist:
+            raise XFormNotFound
+
+    @staticmethod
+    def get_with_attachments(form_id):
+        try:
+            return XFormInstanceSQL.objects.prefetch_related(
+                Prefetch('attachments', to_attr='cached_attachments')
+            ).get(form_uuid=form_id)
+        except XFormInstanceSQL.DoesNotExist:
+            raise XFormNotFound
+
+    @staticmethod
+    def get_forms_with_attachments(form_ids):
+        return XFormInstanceSQL.objects.prefetch_related(
+            Prefetch('attachments', to_attr='cached_attachments')
+        ).filter(form_uuid__in=form_ids)
 
     @staticmethod
     def get_forms_by_type(domain, type_, recent_first=False, limit=None):

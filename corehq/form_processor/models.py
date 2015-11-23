@@ -132,34 +132,23 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         self.form_uuid = _id
 
     @classmethod
-    def get(cls, xform_id):
-        try:
-            return XFormInstanceSQL.objects.get(form_uuid=xform_id)
-        except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
+    def get(cls, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form(form_id)
 
     @classmethod
-    def get_with_attachments(cls, xform_id):
-        try:
-            return XFormInstanceSQL.objects.prefetch_related(
-                Prefetch('attachments', to_attr='cached_attachments')
-            ).get(form_uuid=xform_id)
-        except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
-
-    @classmethod
-    def get_forms_with_attachments(cls, xform_ids):
-        return XFormInstanceSQL.objects.prefetch_related(
-            Prefetch('attachments', to_attr='cached_attachments')
-        ).filter(form_uuid__in=xform_ids)
+    def get_with_attachments(cls, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_with_attachments(form_id)
 
     @classmethod
     def get_obj_id(cls, obj):
         return obj.form_uuid
 
     @classmethod
-    def get_obj_by_id(cls, _id):
-        return cls.get(_id)
+    def get_obj_by_id(cls, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form(form_id)
 
     @property
     def is_normal(self):
