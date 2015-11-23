@@ -43,7 +43,7 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
                                      UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
-                                      DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
+                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
                                       DomainMembershipError)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.reports.util import get_possible_reports
@@ -489,7 +489,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     @property
     @memoized
     def invitations(self):
-        invitations = DomainInvitation.by_domain(self.domain)
+        invitations = Invitation.by_domain(self.domain)
         for invitation in invitations:
             invitation.role_label = self.role_labels.get(invitation.role, "")
         return invitations
@@ -578,7 +578,7 @@ def delete_user_role(request, domain):
 
 
 class UserInvitationView(InvitationView):
-    inv_type = DomainInvitation
+    inv_type = Invitation
     template = "users/accept_invite.html"
     need = ["domain"]
 
@@ -622,7 +622,7 @@ def accept_invitation(request, domain, invitation_id):
 def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
-        invitation = DomainInvitation.get(invitation_id)
+        invitation = Invitation.get(invitation_id)
         invitation.invited_on = datetime.utcnow()
         invitation.save()
         invitation.send_activation_email()
@@ -635,7 +635,7 @@ def reinvite_web_user(request, domain):
 @require_can_edit_web_users
 def delete_invitation(request, domain):
     invitation_id = request.POST['id']
-    invitation = DomainInvitation.get(invitation_id)
+    invitation = Invitation.get(invitation_id)
     invitation.delete()
     return json_response({'status': 'ok'})
 
@@ -680,7 +680,7 @@ class InviteWebUserView(BaseManageWebUserView):
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in DomainInvitation.by_domain(self.domain)]
+            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
@@ -731,7 +731,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                invite = DomainInvitation(**data)
+                invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
             return HttpResponseRedirect(reverse(

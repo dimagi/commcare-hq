@@ -86,7 +86,7 @@ class LocationGenerationCache(GenerationCache):
     ]
 
 
-class DomainInvitationGenerationCache(GenerationCache):
+class InvitationGenerationCache(GenerationCache):
     generation_key = '#gen#invitation#'
     doc_types = ['Invitation']
     views = [
