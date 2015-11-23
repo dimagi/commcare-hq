@@ -13,9 +13,10 @@ from casexml.apps.stock import const as stockconst, const
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
-from corehq.form_processor.parsers.ledgers import StockTransactionHelper, StockReportHelper
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper, StockReportHelper
 from corehq.form_processor.utils import adjust_datetimes
 from couchforms.models import XFormInstance
+from xml2json.lib import convert_xml_to_json
 
 
 CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action'])
@@ -42,7 +43,6 @@ def get_stock_actions(xform):
     any ledger data. These are just marker actions that can be used in looking up a case's forms or
     in rebuilding it.
     """
-    from corehq.apps.commtrack.parsing import unpack_commtrack
     if is_device_report(xform):
         return _empty_actions()
 
