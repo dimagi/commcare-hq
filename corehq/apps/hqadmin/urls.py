@@ -40,6 +40,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
         name='dimagisphere'),
     url(r'^dimagisphere/charts$',
         require_superuser(TemplateView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
-        name='dimagisphere'),
+        name='dimagisphere_charts'),
     AdminReportDispatcher.url_pattern(),
 )
