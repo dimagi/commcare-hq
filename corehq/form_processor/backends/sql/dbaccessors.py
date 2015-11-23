@@ -98,6 +98,10 @@ class FormAccessorSQL(object):
     def get_form_history(form_id):
         return list(XFormOperationSQL.objects.filter(xform_id=form_id).order_by('date'))
 
+    @staticmethod
+    def get_attachment(form_id, attachment_name):
+        return XFormAttachmentSQL.objects.filter(xform_id=form_id, name=attachment_name).first()
+
 
 class CaseDbAccessor(object):
     @staticmethod
@@ -107,3 +111,11 @@ class CaseDbAccessor(object):
             CaseAttachmentSQL.objects.filter(case_id=case_id).delete()
             CaseTransaction.objects.filter(case_id=case_id).delete()
             CommCareCaseSQL.objects.filter(case_uuid=case_id).delete()
+
+    @staticmethod
+    def get_attachment(case_id, attachment_name):
+        return CaseAttachmentSQL.objects.filter(case_id=case_id, name=attachment_name).first()
+
+    @staticmethod
+    def get_attachments(case_id):
+        return list(CaseAttachmentSQL.objects.filter(case_id=case_id).all())

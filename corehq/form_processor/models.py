@@ -67,7 +67,10 @@ class AttachmentMixin(SaveStateMixin):
                 return _get_attachment_from_list(getattr(self, list_attr))
 
         if self.is_saved():
-            return self.attachments.filter(name=attachment_name).first()
+            return self._attachments_from_db(attachment_name)
+
+    def _get_attachment_from_db(self, attachment_name):
+        raise NotImplementedError
 
 
 class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
@@ -200,6 +203,10 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self)
         return serializer.data
+
+    def _get_attachment_from_db(self, attachment_name):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachment(self.form_id, attachment_name)
 
     def get_xml_element(self):
         xml = self.get_xml()
@@ -449,13 +456,16 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    @memoized
-    def _saved_attachments(self):
-        return self.attachments.all()
+    def _get_attachment_from_db(self, attachment_name):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        return CaseDbAccessor.get_attachment(self.case_id, attachment_name)
 
     @property
+    @memoized
     def case_attachments(self):
-        return {attachment.name: attachment for attachment in self._saved_attachments()}
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        attachments = CaseDbAccessor.get_attachments(self.case_id)
+        return {attachment.name: attachment for attachment in attachments}
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
