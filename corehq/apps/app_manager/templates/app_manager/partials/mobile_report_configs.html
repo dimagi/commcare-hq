@@ -41,7 +41,7 @@
                         <th></th>
                         <th>{% trans "Report" %}</th>
                         <th>{% trans "Display Text" %}</th>
-                        <th>{% trans "Description (requires valid Xpath expression)" %}</th>
+                        <th>{% trans "Description" %}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -61,9 +61,17 @@
                         </td>
                         <td>
                             <p>
-                                <input type="checkbox" data-bind="checked: useXpathDescription">{% trans "Use xpath description" %}
+                                <input type="checkbox" data-bind="checked: useXpathDescription">
+                                {% trans "Use xpath expression" %}
                             </p>
-                            <input type="text" data-bind="value: description">
+                            <div data-bind="visible: useXpathDescription">
+                                <input type="text" data-bind="value: xpathDescription">
+                                <p>
+                                    <i class="icon-warning-sign"></i>
+                                    {% trans "Must be a valid xpath expression." %}
+                                </p>
+                            </div>
+                            <input type="text" data-bind="value: localizedDescription, visible: !useXpathDescription()">
                         </td>
                         <td>
                             <i title="{% trans 'Delete' %}" style="cursor: pointer;"

@@ -213,7 +213,8 @@ var ReportModule = (function () {
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }
 
-    function ReportConfig(report_id, display, description, useXpathDescription,
+    function ReportConfig(report_id, display,
+                          localizedDescription, xpathDescription, useXpathDescription,
                           uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
@@ -223,8 +224,11 @@ var ReportModule = (function () {
         this.fullDisplay = display || {};
         this.availableReportIds = availableReportIds;
         this.display = ko.observable(this.fullDisplay[this.lang]);
-        this.description = ko.observable(description);
-        this.description.subscribe(changeSaveButton);
+        this.fullLocalizedDescription = localizedDescription || {};
+        this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
+        this.localizedDescription.subscribe(changeSaveButton);
+        this.xpathDescription = ko.observable(xpathDescription);
+        this.xpathDescription.subscribe(changeSaveButton);
         this.useXpathDescription = ko.observable(useXpathDescription);
         this.useXpathDescription.subscribe(changeSaveButton);
         this.uuid = uuid;
@@ -234,12 +238,14 @@ var ReportModule = (function () {
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
+            self.fullLocalizedDescription[self.lang] = self.localizedDescription();
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
-                description: self.description(),
+                localized_description: self.fullLocalizedDescription,
+                xpath_description: self.xpathDescription(),
                 use_xpath_description: self.useXpathDescription(),
                 uuid: self.uuid
             };
@@ -328,7 +334,8 @@ var ReportModule = (function () {
             var report = new ReportConfig(
                 options.report_id,
                 options.header,
-                options.description,
+                options.localized_description,
+                options.xpath_description,
                 options.use_xpath_description,
                 options.uuid,
                 self.availableReportIds,
@@ -345,7 +352,7 @@ var ReportModule = (function () {
                 report.display(self.defaultReportTitle(reportId));
             });
             report.reportId.subscribe(function (reportId) {
-                report.description(self.defaultReportDescription(reportId));
+                report.localizedDescription(self.defaultReportDescription(reportId));
             });
 
             return report;
