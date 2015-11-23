@@ -65,6 +65,7 @@ class AppAndTestMap(object):
         self.required_apps = set([
             'django.contrib.auth',
             'django.contrib.contenttypes',
+            'django.contrib.sessions'
         ])
         self.apps = set([])
         self.tests = []  # contains tuples of app_labels and test classes
