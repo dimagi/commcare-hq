@@ -65,10 +65,15 @@ class ReportFixturesProvider(object):
             report_elem.append(self._element('description', localize(report_config.localized_description, user.language)))
         data_source = ReportFactory.from_spec(report)
 
-        data_source.set_filter_values({
+        filter_values = {
             filter_slug: filter.get_filter_value(user)
             for filter_slug, filter in report_config.filters.items()
-        })
+        }
+        filter_values = {
+            filter_slug: filter for filter_slug, filter in filter_values.items()
+            if filter is not None
+        }
+        data_source.set_filter_values(filter_values)
 
         rows_elem = ElementTree.Element('rows')
 
