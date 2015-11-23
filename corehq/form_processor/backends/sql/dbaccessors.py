@@ -3,7 +3,7 @@ from django.db import transaction
 from django.db.models import Prefetch
 
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor
+from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
@@ -19,7 +19,7 @@ doc_type_to_state = {
 }
 
 
-class FormAccessorSQL(object):
+class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form(form_id):

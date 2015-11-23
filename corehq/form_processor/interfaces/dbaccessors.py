@@ -7,6 +7,20 @@ from dimagi.utils.decorators.memoized import memoized
 from ..utils import should_use_sql_backend
 
 
+class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
+    @abstractmethod
+    def get_form(form_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_with_attachments(form_id):
+        raise NotImplementedError
+
+
 class FormAccessors(object):
     def __init__(self, domain=None):
         self.domain = domain
@@ -21,11 +35,14 @@ class FormAccessors(object):
         else:
             return FormAccessorCouch
 
+    def get_form(self, form_id):
+        return self.db_accessor.get_form(form_id)
+
     def get_forms_by_type(self, type_, recent_first=False, limit=None):
         return self.db_accessor.get_forms_by_type(self.domain, type_, recent_first, limit)
 
-    def get_forms_with_attachments(self, form_ids):
-        return self.db_accessor.get_forms_with_attachments(form_ids)
+    def get_with_attachments(self, form_id):
+        return self.db_accessor.get_with_attachments(form_id)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):

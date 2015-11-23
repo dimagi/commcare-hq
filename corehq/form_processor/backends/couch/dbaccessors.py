@@ -1,15 +1,23 @@
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor
+from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from couchforms.dbaccessors import get_forms_by_type
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
 
-class FormAccessorCouch(object):
+class FormAccessorCouch(AbstractFormAccessor):
+    @staticmethod
+    def get_form(form_id):
+        return XFormInstance.get(form_id)
 
     @staticmethod
     def get_forms_by_type(domain, type_, recent_first=False, limit=None):
         return get_forms_by_type(domain, type_, recent_first, limit)
+
+    @staticmethod
+    def get_with_attachments(form_id):
+        return XFormInstance.get_with_attachments(form_id)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):

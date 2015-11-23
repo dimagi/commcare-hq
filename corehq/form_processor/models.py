@@ -135,16 +135,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         self.form_uuid = _id
 
     @classmethod
-    def get(cls, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form(form_id)
-
-    @classmethod
-    def get_with_attachments(cls, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_with_attachments(form_id)
-
-    @classmethod
     def get_obj_id(cls, obj):
         return obj.form_uuid
 
