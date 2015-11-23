@@ -8,11 +8,11 @@ from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.commtrack.processing import get_stock_actions
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.tzmigration import set_migration_started, \
     set_migration_complete
 from corehq.apps.tzmigration.planning import PlanningDB
+from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
