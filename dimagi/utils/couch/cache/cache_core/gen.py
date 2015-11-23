@@ -5,6 +5,7 @@ from django.conf import settings
 from django_redis.exceptions import ConnectionInterrupted
 import simplejson
 from dimagi.utils.couch.cache.cache_core.const import INTERRUPTED, MISSING
+from couchdbkit import ResourceNotFound
 
 
 class GenerationCache(object):
@@ -133,16 +134,21 @@ class GenerationCache(object):
 
                     rows = []
                     for stub in row_stubs:
-                        row = {
-                            "id": stub['id'],
-                            "value": None,
-                            "key": stub["key"],
-                            # this feels hacky, but for some reason other views are squashing the master cached doc.
-                            # a more true invalidation scheme should have this more readily address this, but for now
-                            # do a db call here and cache it. Should be a _cached_doc_only call here
-                            "doc": cached_open_doc(db, stub['id'])
-                        }
-                        rows.append(row)
+                        try:
+                            row = {
+                                "id": stub['id'],
+                                "value": None,
+                                "key": stub["key"],
+                                # this feels hacky, but for some reason other views are squashing the master cached doc.
+                                # a more true invalidation scheme should have this more readily address this, but for now
+                                # do a db call here and cache it. Should be a _cached_doc_only call here
+                                "doc": cached_open_doc(db, stub['id'])
+                            }
+                            rows.append(row)
+                        except ResourceNotFound:
+                            # maybe the doc was deleted just after we cached the view.
+                            # in that scenario, just don't add it to the results rather than failing hard
+                            pass
                     if wrapper:
                         final_results = [wrapper(x['doc']) for x in rows]
                     else:
