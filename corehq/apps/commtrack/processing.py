@@ -154,6 +154,17 @@ def _empty_actions():
 
 
 def get_stock_actions(xform):
+    """
+    Pulls out the ledger blocks and case action intents from a form and returns them
+    in a StockFormActions object.
+
+    The stock_report_helpers are StockReportHelper objects, which are basically parsed commtrack actions.
+    They should only affect ledger data.
+
+    The case_action_intents are the actions that should be applied to the case, and should not contain
+    any ledger data. These are just marker actions that can be used in looking up a case's forms or
+    in rebuilding it.
+    """
     if is_device_report(xform):
         return _empty_actions()
 
@@ -166,6 +177,11 @@ def get_stock_actions(xform):
     if not transaction_helpers:
         return _empty_actions()
 
+    case_action_intents = _get_case_action_intents(xform, transaction_helpers)
+    return StockFormActions(stock_report_helpers, case_action_intents)
+
+
+def _get_case_action_intents(xform, transaction_helpers):
     # list of cases that had stock reports in the form
     case_ids = list(set(transaction_helper.case_id
                         for transaction_helper in transaction_helpers))
@@ -173,21 +189,20 @@ def get_stock_actions(xform):
     user_id = xform.metadata.userID
     submit_time = xform.received_on
     case_action_intents = []
-
     for case_id in case_ids:
         if xform.is_deprecated:
             case_action_intents.append(CaseActionIntent(
                 case_id=case_id, form_id=xform.orig_id, is_deprecation=True, action=None
             ))
         else:
+            # todo: convert to CaseTransaction object
             case_action = CommCareCaseAction.from_parsed_action(
                 submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
             )
             case_action_intents.append(CaseActionIntent(
                 case_id=case_id, form_id=xform.form_id, is_deprecation=False, action=case_action
             ))
-
-    return StockFormActions(stock_report_helpers, case_action_intents)
+    return case_action_intents
 
 
 @log_exception()
@@ -200,20 +215,28 @@ def process_stock(xforms, case_db=None):
     else:
         assert isinstance(case_db, AbstractCaseDbCache)
 
-    sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     stock_report_helpers = []
     case_action_intents = []
+    sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     for xform in sorted_forms:
         actions_for_form = get_stock_actions(xform)
         stock_report_helpers += actions_for_form.stock_report_helpers
         case_action_intents += actions_for_form.case_action_intents
 
     # omitted: normalize_transactions (used for bulk requisitions?)
-
     # validate the parsed transactions
     for stock_report_helper in stock_report_helpers:
         stock_report_helper.validate()
 
+    relevant_cases = mark_cases_changed(case_action_intents, case_db)
+    return StockProcessingResult(
+        xform=sorted_forms[-1],
+        relevant_cases=relevant_cases,
+        stock_report_helpers=stock_report_helpers,
+    )
+
+
+def mark_cases_changed(case_action_intents, case_db):
     relevant_cases = []
     # touch every case for proper ota restore logic syncing to be preserved
     for action_intent in case_action_intents:
@@ -241,13 +264,7 @@ def process_stock(xforms, case_db=None):
                 case.xform_ids.append(action_intent.form_id)
 
         case_db.mark_changed(case)
-
-    return StockProcessingResult(
-        xform=sorted_forms[-1],
-        relevant_cases=relevant_cases,
-        stock_report_helpers=stock_report_helpers,
-    )
-
+    return relevant_cases
 
 def _compute_ledger_values(original_balance, stock_transaction):
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
