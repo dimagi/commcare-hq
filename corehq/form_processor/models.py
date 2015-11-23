@@ -389,11 +389,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def xform_ids(self):
-        return list(self.transaction_set.filter(
-            revoked=False,
-            form_uuid__isnull=False,
-            type=CaseTransaction.TYPE_FORM
-        ).values_list('form_uuid', flat=True))
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        return CaseDbAccessor.get_case_xform_ids(self.case_id)
 
     @property
     def user_id(self):
@@ -429,11 +426,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def reverse_indices(self):
-        return list(CommCareCaseIndexSQL.objects.filter(referenced_id=self.case_id).all())
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        return CaseDbAccessor.get_reverse_indices(self.case_id)
 
     @memoized
     def _saved_indices(self):
-        return self.index_set.all() if self.is_saved() else []
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        return CaseDbAccessor.get_indices(self.case_id) if self.is_saved() else []
 
     @property
     def indices(self):
@@ -472,18 +471,18 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get(cls, case_id):
-        try:
-            return CommCareCaseSQL.objects.get(case_uuid=case_id)
-        except CommCareCaseSQL.DoesNotExist:
-            raise CaseNotFound
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        return CaseDbAccessor.get_case(case_id)
 
     @classmethod
-    def get_cases(cls, ids):
-        return CommCareCaseSQL.objects.filter(case_uuid__in=list(ids))
+    def get_cases(cls, case_ids):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        return CaseDbAccessor.get_cases(case_ids)
 
     @classmethod
     def get_case_xform_ids(cls, case_id):
-        return CaseTransaction.objects.filter(case_id=case_id).values_list('form_uuid', flat=True)
+        from corehq.form_processor.backends.sql.dbaccessors import CaseDbAccessor
+        return CaseDbAccessor.get_case_xform_ids(case_id)
 
     @classmethod
     def get_obj_id(cls, obj):
@@ -602,11 +601,12 @@ class CaseTransaction(models.Model):
 
     @property
     def form(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         if not self.form_uuid:
             return None
         form = getattr(self, 'cached_form', None)
         if not form:
-            self.cached_form = XFormAttachmentSQL.objects.get(self.form_uuid)
+            self.cached_form = FormAccessorSQL.get_form(self.form_uuid)
         return self.cached_form
 
     def __eq__(self, other):
@@ -641,14 +641,6 @@ class CaseTransaction(models.Model):
             type=detail.type,
             details=detail.to_json()
         )
-
-    @classmethod
-    def get_transactions_for_case_rebuild(cls, case_id):
-        return list(CaseTransaction.objects.filter(
-            case_id=case_id,
-            revoked=False,
-            type__in=CaseTransaction.TYPES_TO_PROCESS
-        ).all())
 
     def __unicode__(self):
         return (

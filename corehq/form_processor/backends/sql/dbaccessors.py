@@ -2,9 +2,11 @@ from datetime import datetime
 from django.db import transaction
 from django.db.models import Prefetch
 
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction, \
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.models import (
+    XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
+)
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -104,6 +106,52 @@ class FormAccessorSQL(object):
 
 
 class CaseDbAccessor(object):
+
+    @staticmethod
+    def get_case(case_id):
+        try:
+            return CommCareCaseSQL.objects.get(case_uuid=case_id)
+        except CommCareCaseSQL.DoesNotExist:
+            raise CaseNotFound
+
+    @staticmethod
+    def get_cases(case_ids):
+        return list(CommCareCaseSQL.objects.filter(case_uuid__in=list(case_ids)).all())
+
+    @staticmethod
+    def case_modified_since(case_id, server_modified_on):
+        """
+        Return True if a case has been modified since the given modification date.
+        Assumes that the case exists in the DB.
+        """
+        return not CommCareCaseSQL.objects.filter(
+            case_uuid=case_id,
+            server_modified_on=server_modified_on
+        ).exists()
+
+    @staticmethod
+    def get_case_xform_ids(case_id):
+        return list(CaseTransaction.objects.filter(
+            case_id=case_id,
+            revoked=False,
+            form_uuid__isnull=False,
+            type=CaseTransaction.TYPE_FORM
+        ).values_list('form_uuid', flat=True))
+
+    @staticmethod
+    def get_indices(case_id):
+        return list(CommCareCaseIndexSQL.objects.filter(case_id=case_id).all())
+
+    @staticmethod
+    def get_reverse_indices(case_id):
+        return list(CommCareCaseIndexSQL.objects.filter(referenced_id=case_id).all())
+
+    @staticmethod
+    def get_reverse_indexed_cases(domain, case_ids):
+        return CommCareCaseSQL.objects.filter(
+            domain=domain, index__referenced_id__in=case_ids
+        ).defer("case_json").prefetch_related('indices')
+
     @staticmethod
     def hard_delete_case(case_id):
         with transaction.atomic():
@@ -119,3 +167,22 @@ class CaseDbAccessor(object):
     @staticmethod
     def get_attachments(case_id):
         return list(CaseAttachmentSQL.objects.filter(case_id=case_id).all())
+
+    @staticmethod
+    def get_transactions_for_case_rebuild(case_id):
+        return list(CaseTransaction.objects.filter(
+            case_id=case_id,
+            revoked=False,
+            type__in=CaseTransaction.TYPES_TO_PROCESS
+        ).all())
+
+    @staticmethod
+    def get_case_by_location(domain, location_id):
+        try:
+            return CommCareCaseSQL.objects.filter(
+                domain=domain,
+                type='supply-point',
+                location_uuid=location_id
+            ).get()
+        except CommCareCaseSQL.DoesNotExist:
+            return None

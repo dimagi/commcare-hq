@@ -282,7 +282,7 @@ class FormProcessorSQL(object):
 
 
 def get_case_transactions(case_id, updated_xforms=None):
-    transactions = CaseTransaction.get_transactions_for_case_rebuild(case_id)
+    transactions = CaseDbAccessor.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_uuid for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
