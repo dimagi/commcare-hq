@@ -111,8 +111,12 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
-    def is_duplicate(self, xform):
-        return self.processor.is_duplicate(xform)
+    def is_duplicate(self, xform_id, domain=None):
+        """
+        Check if there is already a form with the given ID. If domain is specified only check for
+        duplicates within that domain.
+        """
+        return self.processor.is_duplicate(xform_id, domain=domain)
 
     def new_xform(self, instance_xml):
         return self.processor.new_xform(instance_xml)
@@ -146,9 +150,6 @@ class FormProcessorInterface(object):
 
     def deduplicate_xform(self, xform):
         return self.processor.deduplicate_xform(xform)
-
-    def should_handle_as_duplicate_or_edit(self, xform_id, domain):
-        return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)
 
     def assign_new_id(self, xform):
         return self.processor.assign_new_id(xform)

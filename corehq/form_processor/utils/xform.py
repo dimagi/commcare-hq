@@ -80,7 +80,7 @@ def new_xform(domain, instance_xml, attachments=None, process=None):
 
     lock = interface.acquire_lock_for_xform(xform.form_id)
     with ReleaseOnError(lock):
-        if interface.is_duplicate(xform):
+        if interface.is_duplicate(xform.form_id):
             raise DuplicateError(xform)
 
     return LockManager(xform, lock)

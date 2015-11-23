@@ -6,6 +6,7 @@ import hashlib
 from django.db import transaction
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.const import ATTACHMENT_NAME
@@ -64,12 +65,8 @@ class FormProcessorSQL(object):
         )
 
     @classmethod
-    def is_duplicate(cls, xform):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform.form_id).exists()
-
-    @classmethod
-    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
+    def is_duplicate(cls, xform_id, domain=None):
+        return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
     def bulk_delete(cls, case, xforms):

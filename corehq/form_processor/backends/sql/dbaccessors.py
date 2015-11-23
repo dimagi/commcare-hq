@@ -26,3 +26,10 @@ class FormAccessorSQL(object):
             domain=domain,
             state=state
         ).order_by(order)[0:limit]
+
+    @staticmethod
+    def form_with_id_exists(form_id, domain=None):
+        query = XFormInstanceSQL.objects.filter(form_uuid=form_id)
+        if domain:
+            query = query.filter(domain=domain)
+        return query.exists()

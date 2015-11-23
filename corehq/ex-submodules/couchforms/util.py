@@ -109,7 +109,7 @@ def _handle_id_conflict(instance, xform, domain):
     conflict_id = xform.form_id
 
     interface = FormProcessorInterface(domain)
-    if interface.should_handle_as_duplicate_or_edit(conflict_id, domain):
+    if interface.is_duplicate(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
         return _handle_duplicate(xform, instance)
     else:
