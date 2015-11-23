@@ -120,9 +120,7 @@ def _get_all_stock_report_helpers_from_form(xform):
         # that would be applied to XFormInstance.form
         adjust_datetimes(ledger_json)
         ledger_json = XFormInstance({'form': ledger_json}).form
-
-        yield _ledger_json_to_stock_report_helper(
-            xform, report_type, ledger_json)
+        yield _ledger_json_to_stock_report_helper(xform, report_type, ledger_json)
 
 
 def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
