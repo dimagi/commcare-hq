@@ -234,6 +234,7 @@ class Domain(Document, SnapshotMixin):
     allow_domain_requests = BooleanProperty(default=False)
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
+    hipaa_compliant = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 

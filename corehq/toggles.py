@@ -322,6 +322,13 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
+    'hipaa_compliance_checkbox',
+    'Show HIPAA compliance checkbox',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
+)
+
 REMOTE_APPS = StaticToggle(
     'remote-apps',
     'Allow creation of remote applications',
