@@ -1,10 +1,13 @@
+from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case import const
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.test_const import *
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCaseSQL
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -98,7 +101,10 @@ class CaseFromXFormTest(TestCase):
         pass
     
     def _check_static_properties(self, case):
-        self.assertEqual(self.interface.case_model, type(case))
+        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(CommCareCaseSQL, type(case))
+        else:
+            self.assertEqual(CommCareCase, type(case))
         self.assertEqual('CommCareCase', case.doc_type)
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)

@@ -33,16 +33,6 @@ class FormProcessorInterface(object):
 
     @property
     @memoized
-    def case_model(self):
-        from casexml.apps.case.models import CommCareCase
-        from corehq.form_processor.models import CommCareCaseSQL
-        if should_use_sql_backend(self.domain):
-            return CommCareCaseSQL
-        else:
-            return CommCareCase
-
-    @property
-    @memoized
     def sync_log_model(self):
         from casexml.apps.phone.models import SyncLog
 
