@@ -3499,16 +3499,19 @@ class ReportModule(ModuleBase):
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self):
-        yield suite_models.Menu(
+        menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
-            text=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.module_locale(self))
-            ),
-            commands=[
-                suite_models.Command(id=id_strings.report_command(config.uuid))
-                for config in self.report_configs
-            ]
+            menu_locale_id=id_strings.module_locale(self),
+            media_image=bool(len(self.all_image_paths())),
+            media_audio=bool(len(self.all_audio_paths())),
+            image_locale_id=id_strings.module_icon_locale(self),
+            audio_locale_id=id_strings.module_audio_locale(self),
         )
+        menu.commands.extend([
+            suite_models.Command(id=id_strings.report_command(config.uuid))
+            for config in self.report_configs
+        ])
+        yield menu
 
     def check_report_validity(self):
         """

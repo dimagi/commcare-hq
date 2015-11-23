@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import collections
@@ -27,7 +28,22 @@ from couchforms.jsonobject_extensions import GeoPointProperty
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
 from .exceptions import XFormNotFound, AttachmentNotFound
 
-Attachment = collections.namedtuple('Attachment', 'name content content_type')
+
+class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
+    @property
+    @memoized
+    def content(self):
+        if hasattr(self.raw_content, 'read'):
+            if hasattr(self.raw_content, 'seek'):
+                self.raw_content.seek(0)
+            data = self.raw_content.read()
+        else:
+            data = self.raw_content
+        return data
+
+    @property
+    def md5(self):
+        return hashlib.md5(self.content).hexdigest()
 
 
 class PreSaveHashableMixin(object):
@@ -448,6 +464,11 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_attachment(self.case_id, attachment_name)
+
+    @property
+    @memoized
+    def transactions(self):
+        return list(self.transaction_set.all())
 
     @property
     @memoized

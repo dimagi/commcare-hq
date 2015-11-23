@@ -334,6 +334,5 @@ class CaseFactory(object):
             form_extras,
         )
 
-        return CaseAccessors(self.domain).get_cases(
-            [id for structure in case_structures for id in structure.walk_ids()]
-        )
+        case_ids = [id for structure in case_structures for id in structure.walk_ids()]
+        return CaseAccessors(self.domain).get_cases(case_ids, ordered=True)

@@ -24,6 +24,7 @@ from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtra
 from corehq.apps.app_manager.xpath import (
     session_var,
 )
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -624,6 +625,23 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             app.create_suite(),
             "./menu",
         )
+
+        app.multimedia_map = {
+            "jr://file/commcare/image/module0_en.png": HQMediaMapItem(
+                multimedia_id='bb4472b4b3c702f81c0b208357eb22f8',
+                media_type='CommCareImage',
+                unique_id='fe06454697634053cdb75fd9705ac7e6',
+            ),
+        }
+        report_module.media_image = {
+            'en': 'jr://file/commcare/image/module0_en.png',
+        }
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_menu_multimedia'),
+            app.create_suite(),
+            "./menu",
+        )
+
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_select_detail'),
             app.create_suite(),

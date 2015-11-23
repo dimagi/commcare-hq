@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.db import transaction
 from django.db.models import Prefetch
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
@@ -8,6 +9,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
 )
+from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -187,3 +189,17 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             ).get()
         except CommCareCaseSQL.DoesNotExist:
             return None
+
+    @staticmethod
+    def get_case_ids_in_domain(domain, type=None):
+        query = CommCareCaseSQL.objects.filter(domain=domain)
+        if type:
+            query.filter(type=type)
+        return list(query.values_list('case_uuid', flat=True))
+
+    @staticmethod
+    def get_cases_in_domain(domain, type=None):
+        case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain, type)
+        for ids in chunked(case_ids, 500):
+            for case in CaseAccessorSQL.objects.filter(case_uuid__in=ids).iterator():
+                yield case
