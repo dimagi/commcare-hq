@@ -186,7 +186,7 @@ def _get_ledger_instructions_from_individual_format(ledger_json, common_attribut
         t = {}
         t.update(top_level_attributes)
         t.update({'entry_id': product_entry.get('@id'),
-                  'quantity': _get_quantity_or_none(product_entry, section_id, domain)})
+                  'quantity': _get_quantity_or_none(product_entry, section_id, common_attributes['domain'])})
         yield LedgerInstruction(**t)
 
 
@@ -210,7 +210,7 @@ def _get_ledger_instructions_from_per_entry_format(ledger_json, common_attribute
             section_id = value.get('@section-id')
             t.update(top_level_attributes)
             t.update({'entry_id': product_entry.get('@id')})
-            t.update({'quantity': _get_quantity_or_none(value, section_id, domain),
+            t.update({'quantity': _get_quantity_or_none(value, section_id, common_attributes['domain']),
                       'section_id': section_id})
             yield LedgerInstruction(**t)
 
