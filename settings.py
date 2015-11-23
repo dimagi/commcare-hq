@@ -128,7 +128,7 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
-CSRF_ALWAYS_OFF = False
+CSRF_ALWAYS_OFF = True
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
