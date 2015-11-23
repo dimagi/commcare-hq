@@ -206,7 +206,7 @@ class FormProcessorCouch(object):
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):
-    from corehq.apps.commtrack.processing import get_stock_actions
+    from corehq.form_processor.parsers.ledgers import get_stock_actions
     case_actions = []
     for form in sorted_forms:
         assert form.domain == domain
