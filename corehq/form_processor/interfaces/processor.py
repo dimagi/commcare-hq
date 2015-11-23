@@ -142,8 +142,8 @@ class FormProcessorInterface(object):
             _handle_unexpected_error(self, instance, error_message)
             raise
 
-    def bulk_delete(self, case, xforms):
-        self.processor.bulk_delete(case, xforms)
+    def hard_delete_case_and_forms(self, case, xforms):
+        self.processor.hard_delete_case_and_forms(case, xforms)
 
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)

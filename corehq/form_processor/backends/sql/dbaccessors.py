@@ -1,8 +1,9 @@
+from django.db import transaction
 from django.db.models import Prefetch
 
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import XFormInstanceSQL
-
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction, \
+    CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -58,3 +59,20 @@ class FormAccessorSQL(object):
         if domain:
             query = query.filter(domain=domain)
         return query.exists()
+
+    @staticmethod
+    def hard_delete_forms(form_ids):
+        with transaction.atomic():
+            XFormAttachmentSQL.objects.filter(xform_id__in=form_ids).delete()
+            XFormOperationSQL.objects.filter(xform_id__in=form_ids).delete()
+            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
+
+
+class CaseDbAccessor(object):
+    @staticmethod
+    def hard_delete_case(case_id):
+        with transaction.atomic():
+            CommCareCaseIndexSQL.objects.filter(case_id=case_id).delete()
+            CaseAttachmentSQL.objects.filter(case_id=case_id).delete()
+            CaseTransaction.objects.filter(case_id=case_id).delete()
+            CommCareCaseSQL.objects.filter(case_uuid=case_id).delete()

@@ -6,7 +6,7 @@ import hashlib
 from django.db import transaction
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseDbAccessor
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.const import ATTACHMENT_NAME
@@ -69,16 +69,10 @@ class FormProcessorSQL(object):
         return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
-    def bulk_delete(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(xform__in=xforms).delete()
-            XFormOperationSQL.objects.filter(xform__in=xforms).delete()
-            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
-            CommCareCaseIndexSQL.objects.filter(case=case).delete()
-            CaseAttachmentSQL.objects.filter(case=case).delete()
-            CaseTransaction.objects.filter(case=case).delete()
-            case.delete()
+        FormAccessorSQL.hard_delete_forms(form_ids)
+        CaseDbAccessor.hard_delete_case(case.case_id)
 
     @classmethod
     def save_processed_models(cls, xforms, cases=None):
