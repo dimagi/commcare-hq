@@ -148,6 +148,9 @@ var ReportConfigsViewModel = function (options) {
         $.ajax({
             type: "DELETE",
             url: options.saveUrl + '/' + config._id(),
+            beforeSend: function(xhr, settings) {
+                setAjaxCsrfHeader(xhr, settings);
+            },
             success: function (data) {
                 window.location.reload();
             }
@@ -290,7 +293,9 @@ var ReportConfigsViewModel = function (options) {
                         self.setConfigBeingViewed(newConfig);
                     }
                 },
-                beforeSend: function(jqXHR) {
+                beforeSend: function(jqXHR, settings) {
+                    setAjaxCsrfHeader(jqXHR, settings);
+
                     var valid = self.validate();
                     if (!valid) {
                         jqXHR.abort();
