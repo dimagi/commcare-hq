@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
-from corehq.apps.commtrack.models import StockTransactionHelper, CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
 from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
@@ -26,6 +26,7 @@ from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError)
 import re
+from corehq.form_processor.parsers.ledgers import StockTransactionHelper
 
 logger = logging.getLogger('commtrack.sms')
 

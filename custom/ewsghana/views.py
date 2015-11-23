@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from django.views.generic.base import RedirectView
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import StockState, StockTransactionHelper
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import process
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
@@ -19,6 +19,7 @@ from corehq.apps.locations.permissions import locations_access_required, user_ca
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.form_processor.parsers.ledgers import StockTransactionHelper
 from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.filters import EWSDateFilter
