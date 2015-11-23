@@ -19,6 +19,7 @@ from dimagi.ext.couchdbkit import (
 class BlobMeta(DocumentSchema):
     content_type = StringProperty()
     content_length = IntegerProperty()
+    digest = StringProperty()
 
 
 class BlobMixin(Document):
@@ -52,6 +53,7 @@ class BlobMixin(Document):
         value = {name: BlobMeta(
             content_length=info["length"],
             content_type=info["content_type"],
+            digest=info["digest"],
         ) for name, info in self._attachments.iteritems()}
         value.update(self.external_blobs)
         return value
@@ -75,10 +77,11 @@ class BlobMixin(Document):
 
         # do we need to worry about BlobDB reading beyond content_length?
         bucket = self._blobdb_bucket()
-        content_length = db.put(content, name, bucket)
+        result = db.put(content, name, bucket)
         self.external_blobs[name] = BlobMeta(
             content_type=content_type,
-            content_length=content_length,
+            content_length=result["length"],
+            digest=result["digest"],
         )
         return True
 

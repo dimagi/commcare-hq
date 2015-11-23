@@ -32,13 +32,15 @@ class FilesystemBlobDB(object):
         file path separators. Nested directories will be created for
         each logical path element, so it must be a valid relative path.
         Blob names within a single bucket must be unique.
-        :returns: Content length (number of bytes persisted).
+        :returns: A dict containing length (number of bytes persisted),
+        and digest.
         """
         path = self._getpath(name, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):
             os.makedirs(dirpath)
         length = 0
+        digest = md5()
         with open(path, "wb") as fh:
             while True:
                 chunk = content.read(CHUNK_SIZE)
@@ -46,7 +48,8 @@ class FilesystemBlobDB(object):
                     break
                 fh.write(chunk)
                 length += len(chunk)
-        return length
+                digest.update(chunk)
+        return {"length": length, "digest": "md5-" + digest.hexdigest()}
 
     def get(self, name, bucket=DEFAULT_BUCKET):
         """Get a blob

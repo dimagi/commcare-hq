@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import uuid
+from hashlib import md5
 from itertools import count
 from unittest import TestCase
 from StringIO import StringIO
@@ -90,17 +91,22 @@ class TestBlobMixin(TestCase):
         assert name not in doc._attachments, doc._attachments
 
     def test_blobs_property(self):
+        couch_digest = "md5-" + md5(b"couch content").hexdigest()
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments["att"] = {
             "content": b"couch content",
             "content_type": None,
+            "digest": couch_digest,
             "length": 13,
         }
         doc.put_attachment("content", "blob", content_type="text/plain")
         self.assertIn("att", doc.blobs)
         self.assertIn("blob", doc.blobs)
         self.assertEqual(doc.blobs["att"].content_length, 13)
+        self.assertEqual(doc.blobs["att"].digest, couch_digest)
         self.assertEqual(doc.blobs["blob"].content_length, 7)
+        self.assertEqual(doc.blobs["blob"].digest,
+                         "md5-" + md5(b"content").hexdigest())
 
     def test_unsaved_document(self):
         obj = FakeCouchDocument()
