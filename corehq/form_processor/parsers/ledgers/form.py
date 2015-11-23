@@ -52,7 +52,7 @@ def get_stock_actions(xform):
     if is_device_report(xform):
         return _empty_actions()
 
-    stock_report_helpers = list(unpack_commtrack(xform))
+    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
     transaction_helpers = [
         transaction_helper
         for stock_report_helper in stock_report_helpers
@@ -93,7 +93,7 @@ def _get_case_action_intents(xform, transaction_helpers):
     return case_action_intents
 
 
-def unpack_commtrack(xform):
+def _get_all_stock_report_helpers_from_form(xform):
     """
     Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
     them to StockReportHelper objects.
