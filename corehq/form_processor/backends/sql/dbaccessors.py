@@ -118,8 +118,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             raise CaseNotFound
 
     @staticmethod
-    def get_cases(case_ids):
-        return list(CommCareCaseSQL.objects.filter(case_uuid__in=list(case_ids)).all())
+    def get_cases(case_ids, ordered=False):
+        cases = list(CommCareCaseSQL.objects.filter(case_uuid__in=list(case_ids)).all())
+        if ordered:
+            # SQL won't return the rows in any particular order so we need to order them ourselves
+            index_map = {id_: index for index, id_ in enumerate(case_ids)}
+            ordered_cases = [None] * len(case_ids)
+            for case in cases:
+                ordered_cases[index_map[case.case_id]] = case
+
+            cases = ordered_cases
+
+        return cases
 
     @staticmethod
     def case_modified_since(case_id, server_modified_on):
@@ -196,10 +206,3 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if type:
             query.filter(type=type)
         return list(query.values_list('case_uuid', flat=True))
-
-    @staticmethod
-    def get_cases_in_domain(domain, type=None):
-        case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain, type)
-        for ids in chunked(case_ids, 500):
-            for case in CaseAccessorSQL.objects.filter(case_uuid__in=ids).iterator():
-                yield case

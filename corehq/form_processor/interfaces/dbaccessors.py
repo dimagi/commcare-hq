@@ -58,6 +58,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_case_xform_ids(case_ids):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_case_ids_in_domain(domain, type=None):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     def __init__(self, domain=None):
@@ -76,14 +80,11 @@ class CaseAccessors(object):
     def get_case(self, case_id):
         return self.db_accessor.get_case(case_id)
 
-    def get_cases(self, case_ids):
-        return self.db_accessor.get_cases(case_ids)
+    def get_cases(self, case_ids, ordered=False):
+        return self.db_accessor.get_cases(case_ids, ordered=ordered)
 
     def get_case_xform_ids(self, case_ids):
         return self.db_accessor.get_case_xform_ids(case_ids)
 
     def get_case_ids_in_domain(self, type=None):
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
-
-    def get_cases_in_domain(self, type=None):
-        return self.db_accessor.get_cases_in_domain(self.domain, type)

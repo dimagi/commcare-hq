@@ -1,5 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
@@ -27,7 +28,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return CommCareCase.get(case_id)
 
     @staticmethod
-    def get_cases(case_ids):
+    def get_cases(case_ids, ordered=False):
         return [
             CommCareCase.wrap(doc) for doc in iter_docs(
                 CommCareCase.get_db(),
@@ -38,3 +39,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_xform_ids(case_id):
         return get_case_xform_ids(case_id)
+
+    @staticmethod
+    def get_case_ids_in_domain(domain, type=None):
+        return get_case_ids_in_domain(domain, type=type)
