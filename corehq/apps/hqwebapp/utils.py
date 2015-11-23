@@ -18,7 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import Invitation, CouchUser, WebUser, DomainInvitation
+from corehq.apps.users.models import Invitation, CouchUser, WebUser
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
@@ -192,7 +192,7 @@ class InvitationView(object):
                                                  password=form.cleaned_data["password"])
                     if authenticated is not None and authenticated.is_active:
                         login(request, authenticated)
-                    if isinstance(invitation, DomainInvitation):
+                    if isinstance(invitation, Invitation):
                         track_workflow(request.POST['email'],
                                        "New User Accepted a project invitation",
                                        {"New User Accepted a project invitation": "yes"})
@@ -200,7 +200,7 @@ class InvitationView(object):
                     else:
                         return HttpResponseRedirect(reverse("homepage"))
             else:
-                if isinstance(invitation, DomainInvitation):
+                if isinstance(invitation, Invitation):
                     if CouchUser.get_by_username(invitation.email):
                         return HttpResponseRedirect(reverse("login") + '?next=' +
                             reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
