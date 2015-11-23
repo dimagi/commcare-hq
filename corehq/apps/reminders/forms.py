@@ -561,6 +561,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -574,8 +576,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             self.section_message,
             self.section_repeat,
             self.section_advanced,
-            FormActions(
-                StrictButton(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
                     _("Update Reminder") if is_edit else _("Create Reminder"),
                     css_class='btn-primary',
                     type='submit',
@@ -597,7 +599,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             _('Start'),
             crispy.HTML(
                 '<p style="padding: 0; margin-bottom: 1.5em;">'
-                '<i class="icon-info-sign"></i> %s</p>' % _(
+                '<i class="fa fa-info-circle"></i> %s</p>' % _(
                     "Choose what will cause this reminder to be sent"
                 ),
             ),
@@ -626,7 +628,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                   "is equal to 'yes')")
             ),
             crispy.Div(
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     _("When Case Property"),
                     InlineField(
                         'start_property',
@@ -646,7 +648,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isStartReminderCaseProperty",
             ),
             crispy.Div(
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     _("Day of Reminder"),
                     InlineField(
                         'start_property_offset_type',
@@ -678,7 +680,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     css_class="input-xlarge",
                     data_bind="typeahead: getAvailableCaseProperties",
                 ),
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "",
                     InlineField(
                         'start_date_offset_type',
@@ -711,7 +713,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                   "contacts. "),
                 css_class="input-xlarge",
             ),
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("When Case Property"),
                 InlineField(
                     'recipient_case_match_property',
@@ -762,7 +764,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def timing_fields(self):
         return [
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Time of Day"),
                 InlineField(
                     'event_timing',
@@ -800,7 +802,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 ),
                 data_bind="visible: isMaxIterationCountVisible",
             ),
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Repeat Every"),
                 InlineField(
                     'schedule_length',
@@ -814,7 +816,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_advanced(self):
         fields = [
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Additional Stop Condition"),
                 InlineField(
                     'stop_condition',
@@ -838,7 +840,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 css_id="stop-condition-group",
             ),
             crispy.Div(
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     _("Default Language"),
                     InlineField(
                         'default_lang',
@@ -900,11 +902,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
         ]
         if self.is_previewer:
             fields.append(
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "",
                     InlineField(
-                        'use_custom_content_handler',
-                        data_bind="checked: use_custom_content_handler",
+                        twbscrispy.PrependedText(
+                            'use_custom_content_handler', '',
+                            data_bind="checked: use_custom_content_handler"
+                        ),
                     ),
                     InlineField(
                         'custom_content_handler',
@@ -914,7 +918,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 )
             )
 
-        return FieldsetAccordionGroup(
+        return hqcrispy.FieldsetAccordionGroup(
             _("Advanced Options"),
             *fields,
             active=False
@@ -1539,7 +1543,7 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     @property
     def timing_fields(self):
         return [
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Time of Day"),
                 InlineField(
                     'event_timing',
@@ -1596,7 +1600,7 @@ class ComplexScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
     @property
     def timing_fields(self):
         return [
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Time of Day"),
                 InlineField(
                     'event_timing',
@@ -1698,6 +1702,8 @@ class CaseReminderEventForm(forms.Form):
         # Note the following is only used for the Simple UI.
         # The Complex UI goes off the template: reminders/partial/complex_message_table.html
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Field('subject_data', data_bind="value: subject_data, attr: {id: ''}"),
@@ -1747,10 +1753,12 @@ class CaseReminderEventMessageForm(forms.Form):
         super(CaseReminderEventMessageForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Field('langcode', data_bind="value: langcode"),
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 '%s <span data-bind="visible: languageLabel()">'
                 '(<span data-bind="text:languageLabel"></span>)</span>' %
                 _("Message"),
@@ -1768,7 +1776,7 @@ class CaseReminderEventMessageForm(forms.Form):
                     rows="2",
                 ),
                 crispy.Div(
-                    style="padding-top: 10px; padding-left: 5px;",
+                    style="padding-top: 25px; padding-left: 5px;",
                     data_bind="template: { name: 'event-message-length-template' },"
                               "visible: !$parent.isEmailSelected()"
                 )

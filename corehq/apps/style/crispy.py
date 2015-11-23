@@ -2,7 +2,7 @@ import re
 from contextlib import contextmanager
 
 from django.utils.safestring import mark_safe
-from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField
+from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField, AccordionGroup
 from crispy_forms.layout import Field as OldField, LayoutObject
 from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import Context
@@ -204,3 +204,12 @@ class LinkButton(LayoutObject):
             'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
         })
         return render_to_string(template, context)
+
+
+class FieldsetAccordionGroup(AccordionGroup):
+    template = "style/crispy/{template_pack}/accordion_group.html"
+
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        self.template = self.template.format(template_pack=template_pack)
+        return super(FieldsetAccordionGroup, self).render(form, form_style, context, template_pack)

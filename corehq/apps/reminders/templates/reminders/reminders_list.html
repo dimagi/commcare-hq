@@ -1,11 +1,11 @@
-{% extends 'reminders/base_template.html' %}
+{% extends "style/bootstrap3/base_section.html" %}
+
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %} {{ block.super }}
     <script src="{% static 'reminders/ko/reminders.progressbar.js' %}"></script>
     <script src="{% static 'reminders/ko/reminders.list.js' %}"></script>
-    {% include "imports/datatables.html" %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -17,27 +17,35 @@
 
         $(function() {
             $("#reminder-list-table").dataTable({
-                "sPaginationType": "bootstrap",
-                "bLengthChange": false,
-                "bFilter": true,
-                "oLanguage": {"sEmptyTable": "{% trans 'There are no reminders to display.' %}", "sInfoEmpty" : ""},
-                "bSort": true,
-                "aaSorting": [[0, "asc"]],
-                "iDisplayLength": 5
+                "paginateType": "bootstrap",
+                "lengthChange": false,
+                "filter": true,
+                "oLanguage": {"emptyTable": "{% trans 'There are no reminders to display.' %}", "infoEmpty" : ""},
+                "sort": true,
+                "sorting": [[0, "asc"]],
+                "displayLength": 5
             });
         });
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block stylesheets %}
+    <style>
+        .label {
+            font-size: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
     <h2>{% trans 'Reminders' %}</h2>
     <div class="btn-group">
         <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">
-            <i class="icon-plus"></i>
+            <i class="fa fa-plus"></i>
             {% trans 'Add Single Event Reminder' %}
         </a>
         <a href="{% url "create_complex_reminder_schedule" domain %}" class="btn btn-success">
-            <i class="icon-plus"></i>
+            <i class="fa fa-plus"></i>
             {% trans 'Add Multi Event Reminder' %}
         </a>
     </div>
@@ -51,15 +59,15 @@
     </div>
 
     <script type="text/html" id="reminder-list-template">
-        <div class="row-fluid">
-            <div class="span12">
+        <div class="row">
+            <div class="col-md-12">
                 <table id="reminder-list-table" class="table table-striped table-bordered">
                     <thead>
                         <tr>
-                            <th class="span4">{% trans 'Name' %}</th>
-                            <th class="span4">{% trans 'Case Type' %}</th>
-                            <th class="span4">{% trans 'Status' %}</th>
-                            <th class="span4">{% trans 'Action' %}</th>
+                            <th class="col-md-4">{% trans 'Name' %}</th>
+                            <th class="col-md-4">{% trans 'Case Type' %}</th>
+                            <th class="col-md-4">{% trans 'Status' %}</th>
+                            <th class="col-md-4">{% trans 'Action' %}</th>
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: reminders">
@@ -69,8 +77,8 @@
                             <td>
                                 <div>
                                     <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
-                                    <span class="label label-important" data-bind="visible: !active()">{% trans "Inactive" %}</span>
-                                    <span class="label" data-bind="visible: progressBar.in_progress(), text: '{% trans 'Rule is processing: ' %}' + progressBar.progress_pct()"></span>
+                                    <span class="label label-danger" data-bind="visible: !active()">{% trans "Inactive" %}</span>
+                                    <span class="label label-default" data-bind="visible: progressBar.in_progress(), text: '{% trans 'Rule is processing: ' %}' + progressBar.progress_pct()"></span>
                                 </div>
                             </td>
                             <td>
@@ -90,7 +98,7 @@
                 data-bind="visible: active, event: {
                     click: deactivate
                 }"
-                class="btn"
+                class="btn btn-default"
                 data-success-text="{% trans 'Deactivate' %}"
                 data-loading-text="{% trans 'Deactivating reminder...' %}"
                 data-error-text="{% trans 'Error deactivating, try again?' %}"
@@ -105,7 +113,7 @@
                 data-bind="visible: !active(), event: {
                     click: activate
                 }"
-                class="btn"
+                class="btn btn-default"
                 data-success-text="{% trans 'Activate' %}"
                 data-loading-text="{% trans 'Activating reminder...' %}"
                 data-error-text="{% trans 'Error activating, try again?' %}"
