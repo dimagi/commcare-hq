@@ -700,8 +700,10 @@ class MessagingEventsReport(BaseMessagingEventReport):
             )
         elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
             event_status_filter = (
-                Q(messagingsubevent__xforms_session__end_time__isnull=False) &
-                Q(messagingsubevent__xforms_session__submission_id__isnull=True)
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                (Q(messagingsubevent__xforms_session__end_time__isnull=False) &
+                 Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
 
         return source_filter, content_type_filter, event_status_filter
