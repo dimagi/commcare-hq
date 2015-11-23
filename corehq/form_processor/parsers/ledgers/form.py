@@ -9,7 +9,7 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xform import is_device_report
 from casexml.apps.case.xml.parser import AbstractAction
-from casexml.apps.stock import const as stockconst, const
+from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
@@ -17,6 +17,12 @@ from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from corehq.form_processor.utils import adjust_datetimes
 from couchforms.models import XFormInstance
 from xml2json.lib import convert_xml_to_json
+
+
+class LedgerFormat(object):
+    """This object is just used to represent these two constants"""
+    individual = object()
+    per_entry = object()
 
 
 CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action'])
@@ -88,6 +94,7 @@ def _get_case_action_intents(xform, transaction_helpers):
 
 
 def unpack_commtrack(xform):
+
     form_xml = xform.get_xml_element()
     commtrack_node_names = ('{%s}balance' % COMMTRACK_REPORT_XMLNS,
                             '{%s}transfer' % COMMTRACK_REPORT_XMLNS)
@@ -109,11 +116,11 @@ def unpack_commtrack(xform):
         adjust_datetimes(ledger_json)
         ledger_json = XFormInstance({'form': ledger_json}).form
 
-        yield ledger_json_to_stock_report_helper(
+        yield _ledger_json_to_stock_report_helper(
             xform, report_type, ledger_json)
 
 
-def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
+def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     domain = form.domain
     # figure out what kind of block we're dealing with
     if ledger_json.get('@section-id'):
@@ -202,7 +209,7 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             'type': ledger_json.get('@type'),
         }
 
-        product_entries = should_be_a_list(ledger_json.get('entry'))
+        product_entries = _coerce_to_list(ledger_json.get('entry'))
         for product_entry in product_entries:
             # product_entry looks like
             # {"@id": "", "@quantity": ""}
@@ -221,11 +228,11 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             'type': ledger_json.get('@type'),
         }
 
-        product_entries = should_be_a_list(ledger_json.get('entry'))
+        product_entries = _coerce_to_list(ledger_json.get('entry'))
         for product_entry in product_entries:
             # product_entry looks like
             # {"@id": "", 'value': [...]}
-            for value in should_be_a_list(product_entry.get('value')):
+            for value in _coerce_to_list(product_entry.get('value')):
                 # value looks like
                 # {"@section-id: "", "@quantity": ""}
                 t = {}
@@ -253,7 +260,7 @@ def ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     return StockReportHelper.make_from_form(form, timestamp, report_type, transaction_helpers)
 
 
-def should_be_a_list(obj_or_list):
+def _coerce_to_list(obj_or_list):
     if obj_or_list is None:
         return []
     elif isinstance(obj_or_list, list):
@@ -261,7 +268,3 @@ def should_be_a_list(obj_or_list):
     else:
         return [obj_or_list]
 
-
-class LedgerFormat(object):
-    individual = object()
-    per_entry = object()
