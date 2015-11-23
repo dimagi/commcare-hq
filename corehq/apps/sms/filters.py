@@ -66,7 +66,7 @@ class EventStatusFilter(BaseSingleOptionFilter):
 
     slug = 'event_status'
     label = ugettext_noop("Status")
-    default_text = ugettext_noop("All")
+    default_text = ugettext_noop("Any")
     options = STATUS_CHOICES
 
 
