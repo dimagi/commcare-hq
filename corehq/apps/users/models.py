@@ -2399,7 +2399,6 @@ class Invitation(CachedCouchDocumentMixin, Document):
                         reduce=False,
                         key=[email],
                         include_docs=True,
-                        stale=settings.COUCH_STALE_QUERY,
                         ).all()
 
     @property
