@@ -27,6 +27,8 @@
             var summaryApp = angular.module('summaryApp', ['ngRoute', 'summaryModule']);
             summaryApp.config(['$httpProvider', function($httpProvider) {
                 $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+                $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+                $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
             }]);
             summaryApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
                 djangoRMIProvider.configure({% djng_current_rmi %});

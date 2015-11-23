@@ -516,7 +516,7 @@
                                                             {% trans "Only supported for versions made after 2013-10-15" %}
                                                         </span>
                                                     </label>
-                                                    <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">
+                                                    <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">{% csrf_token %}
                                                         <label>{% trans "Send to:" %}</label>
                                                         <input type="text" name="recipients" data-bind="multiTypeahead: $root.recipients" value=""/>
                                                         <br />
