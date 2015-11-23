@@ -8,6 +8,10 @@ from ..utils import should_use_sql_backend
 
 
 class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
+    """
+    Contract for common methods expected on FormAccessor(SQL/Couch). All methods
+    should be static or classmethods.
+    """
     @abstractmethod
     def get_form(form_id):
         raise NotImplementedError
@@ -22,6 +26,9 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
 
 
 class FormAccessors(object):
+    """
+    Facade for Form DB access that proxies method calls to SQL or Couch version
+    """
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -46,6 +53,10 @@ class FormAccessors(object):
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
+    """
+    Contract for common methods expected on CaseAccessor(SQL/Couch). All methods
+    should be static or classmethods.
+    """
     @abstractmethod
     def get_case(case_id):
         raise NotImplementedError
@@ -64,6 +75,9 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
 
 class CaseAccessors(object):
+    """
+    Facade for Case DB access that proxies method calls to SQL or Couch version
+    """
     def __init__(self, domain=None):
         self.domain = domain
 
