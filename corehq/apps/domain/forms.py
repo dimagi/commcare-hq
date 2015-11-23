@@ -726,7 +726,7 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
     )
-    hippa_compliant = BooleanField(
+    hipaa_compliant = BooleanField(
         label=ugettext_lazy("HIPAA compliant"),
         required=False,
     )
@@ -741,7 +741,7 @@ class PrivacySecurityForm(forms.Form):
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
         self.helper[2] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[3] = twbscrispy.PrependedText('hippa_compliant', '')
+        self.helper[3] = twbscrispy.PrependedText('hipaa_compliant', '')
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(3)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
@@ -767,7 +767,7 @@ class PrivacySecurityForm(forms.Form):
                     app.secure_submissions = secure_submissions
                     apps_to_save.append(app)
         domain.secure_submissions = secure_submissions
-        domain.hippa_compliant = self.cleaned_data.get('hippa_compliant', False)
+        domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
 
         domain.save()
 

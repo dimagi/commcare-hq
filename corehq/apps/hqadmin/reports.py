@@ -712,7 +712,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("# Outgoing SMS in last 30 days"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_sms_out_30_d"),
             DataTablesColumn(_("Custom EULA?"), prop_name="internal.custom_eula"),
-            DataTablesColumn(_("HIPPA Compliant"), prop_name="hippa_compliant"),
+            DataTablesColumn(_("HIPAA Compliant"), prop_name="hipaa_compliant"),
         )
         return headers
 
@@ -807,7 +807,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
                     format_bool(dom.get('internal', {}).get('custom_eula')),
-                    dom.get('hippa_compliant', _('false'))
+                    dom.get('hipaa_compliant', _('false'))
                 ]
 
 

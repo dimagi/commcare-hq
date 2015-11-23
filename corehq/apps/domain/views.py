@@ -1356,7 +1356,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "secure_submissions": self.domain_object.secure_submissions,
             "restrict_superusers": self.domain_object.restrict_superusers,
             "allow_domain_requests": self.domain_object.allow_domain_requests,
-            "hippa_compliant": self.domain_object.hippa_compliant,
+            "hipaa_compliant": self.domain_object.hipaa_compliant,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
