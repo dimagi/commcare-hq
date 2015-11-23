@@ -29,7 +29,7 @@ CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_dep
 StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_action_intents'])
 LedgerInstruction = namedtuple(
     'LedgerInstruction',
-    ['date', 'section_id', 'entry_id', 'quantity',
+    ['domain', 'date', 'section_id', 'entry_id', 'quantity',
      # for balance instructions
      'entity_id',
      # for transfer instructions
@@ -141,7 +141,6 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             case_id = ledger_instruction.entity_id
             yield _make_transaction_helper(
                 ledger_instruction,
-                domain=domain,
                 action=(const.StockActions.STOCKONHAND
                         if ledger_instruction.quantity > 0
                         else const.StockActions.STOCKOUT),
@@ -156,12 +155,10 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             if src is not None:
                 yield _make_transaction_helper(
                     ledger_instruction,
-                    domain=domain,
                     action=const.StockActions.CONSUMPTION, case_id=src)
             if dest is not None:
                 yield _make_transaction_helper(
                     ledger_instruction,
-                    domain=domain,
                     action=const.StockActions.RECEIPTS, case_id=dest)
     else:
         raise ValueError()
@@ -184,6 +181,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
         # @entity-id/@src,@dest
         section_id = ledger_json.get('@section-id')
         top_level_attributes = {
+            'domain': domain,
             'date': timestamp,
             'section_id': section_id,
             'entity_id': ledger_json.get('@entity-id'),
@@ -204,6 +202,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             ledger_instructions.append(LedgerInstruction(**t))
     else:
         top_level_attributes = {
+            'domain': domain,
             'date': timestamp,
             'entity_id': ledger_json.get('@entity-id'),
             'src': ledger_json.get('@src'),
@@ -243,10 +242,10 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     return StockReportHelper.make_from_form(form, timestamp, report_type, transaction_helpers)
 
 
-def _make_transaction_helper(ledger_instruction, domain, action, case_id):
+def _make_transaction_helper(ledger_instruction, action, case_id):
     subaction = ledger_instruction.type
     return StockTransactionHelper(
-        domain=domain,
+        domain=ledger_instruction.domain,
         timestamp=ledger_instruction.date,
         product_id=ledger_instruction.entry_id,
         quantity=ledger_instruction.quantity,
