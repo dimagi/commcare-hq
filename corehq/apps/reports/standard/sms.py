@@ -690,8 +690,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
             # We need to check for id__isnull=False below because the
             # query we make in this report has to do a left join, and
             # in this particular filter we can only validly check
-            # end_time__isnull=True if there actually is a
-            # MessagingSubEvent record
+            # end_time__isnull=True if there actually are
+            # subevent and xforms session records
             event_status_filter = (
                 Q(status=event_status) |
                 Q(messagingsubevent__status=event_status) |
