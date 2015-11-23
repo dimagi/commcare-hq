@@ -57,6 +57,8 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
+        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+        self.blob_db = TemporaryFilesystemBlobDB()
         self.newdbname = self.get_test_db_name(settings.COUCH_DATABASE_NAME)
         print "overridding the couch settings!"
         new_db_settings = settingshelper.get_dynamic_db_settings(
@@ -77,6 +79,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
+        self.blob_db.close()
         for db_uri in settings.EXTRA_COUCHDB_DATABASES.values():
             db = Database(db_uri)
             self._assert_is_a_test_db(db_uri)
