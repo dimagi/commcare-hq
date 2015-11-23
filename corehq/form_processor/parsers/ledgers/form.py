@@ -173,7 +173,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             ))
             return None
 
-    timestamp = _get_and_validate_date()
+    timestamp = _get_and_validate_date(ledger_json, form)
     ledger_instructions = []
     if ledger_format == LedgerFormat.INDIVIDUAL:
         # this is @date, @section-id, etc.
