@@ -132,9 +132,11 @@ def optimize_apps_for_test_labels(test_labels):
     )
     settings.INSTALLED_APPS = tuple(needed_apps)
     apps.set_installed_apps(settings.INSTALLED_APPS)
-    yield
-    settings.INSTALLED_APPS = _real_installed_apps
-    apps.unset_installed_apps()
+    try:
+        yield
+    finally:
+        settings.INSTALLED_APPS = _real_installed_apps
+        apps.unset_installed_apps()
 
 
 def get_app_test_db_dependencies():
