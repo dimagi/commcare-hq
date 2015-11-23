@@ -133,29 +133,15 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     else:
         ledger_format = LedgerFormat.PER_ENTRY
 
-    def make_transaction_helper(ledger_instruction, action, case_id):
-        subaction = ledger_instruction.type
-        return StockTransactionHelper(
-            # domain is a closure variable
-            domain=domain,
-            timestamp=ledger_instruction.date,
-            product_id=ledger_instruction.entry_id,
-            quantity=ledger_instruction.quantity,
-            action=action,
-            case_id=case_id,
-            section_id=ledger_instruction.section_id,
-            subaction=subaction if subaction and subaction != action else None,
-            location_id=None,
-        )
-
     # details of transaction generation
     # depend on whether it's a balance or a transfer
     if report_type == stockconst.REPORT_TYPE_BALANCE:
         def get_transaction_helpers(ledger_instruction):
 
             case_id = ledger_instruction.entity_id
-            yield make_transaction_helper(
+            yield _make_transaction_helper(
                 ledger_instruction,
+                domain=domain,
                 action=(const.StockActions.STOCKONHAND
                         if ledger_instruction.quantity > 0
                         else const.StockActions.STOCKOUT),
@@ -168,12 +154,14 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             if not (src or dest):
                 raise IllegalCaseId(_("Can't specify a transaction block with no src or dest case"))
             if src is not None:
-                yield make_transaction_helper(
+                yield _make_transaction_helper(
                     ledger_instruction,
+                    domain=domain,
                     action=const.StockActions.CONSUMPTION, case_id=src)
             if dest is not None:
-                yield make_transaction_helper(
+                yield _make_transaction_helper(
                     ledger_instruction,
+                    domain=domain,
                     action=const.StockActions.RECEIPTS, case_id=dest)
     else:
         raise ValueError()
@@ -255,6 +243,21 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     return StockReportHelper.make_from_form(form, timestamp, report_type, transaction_helpers)
 
 
+def _make_transaction_helper(ledger_instruction, domain, action, case_id):
+    subaction = ledger_instruction.type
+    return StockTransactionHelper(
+        domain=domain,
+        timestamp=ledger_instruction.date,
+        product_id=ledger_instruction.entry_id,
+        quantity=ledger_instruction.quantity,
+        action=action,
+        case_id=case_id,
+        section_id=ledger_instruction.section_id,
+        subaction=subaction if subaction and subaction != action else None,
+        location_id=None,
+    )
+
+
 def _get_and_validate_date(ledger_json, form):
     timestamp = ledger_json.get('@date') or form.received_on
     if type(timestamp) is datetime.date:
@@ -264,6 +267,7 @@ def _get_and_validate_date(ledger_json, form):
         raise InvalidDate("{} has invalid @date".format(ledger_json))
     return timestamp
 
+
 def _coerce_to_list(obj_or_list):
     if obj_or_list is None:
         return []
@@ -271,4 +275,3 @@ def _coerce_to_list(obj_or_list):
         return obj_or_list
     else:
         return [obj_or_list]
-
