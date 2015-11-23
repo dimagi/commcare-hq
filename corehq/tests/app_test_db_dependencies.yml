@@ -16,6 +16,38 @@ casexml.apps.case:
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
+corehq.apps.commtrack:
+  - auditcare
+  - couchforms
+  - phonelog
+  - django_digest
+  - casexml.apps.case
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.apps.consumption
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.apps.fixtures
+  - corehq.apps.groups
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.receiverwrapper
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - custom.logistics
+  - custom.ilsgateway
+  - custom.ewsghana
+  - django_prbac
+  - django.contrib.admin
+  - tastypie
+  - corehq.apps.accounting
+  - corehq.apps.dropbox
+  - touchforms.formplayer
 corehq.apps.userreports:
   - casexml.apps.case
   - casexml.apps.stock
@@ -35,7 +67,6 @@ corehq.apps.userreports:
   # unfortunately domain.delete() needs all of these - otherwise they could be removed
   - custom.logistics
   - custom.ilsgateway
-  - custom.ewsghana
   - custom.ewsghana
   - django_prbac
   - corehq.apps.accounting
