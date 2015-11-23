@@ -2346,13 +2346,18 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class Invitation(Document):
+class Invitation(CachedCouchDocumentMixin, Document):
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
+    domain = StringProperty()
+    role = StringProperty()
+    program = None
+    supply_point = None
 
     _inviter = None
+
     def get_inviter(self):
         if self._inviter is None:
             self._inviter = CouchUser.get_by_user_id(self.invited_by)
@@ -2360,24 +2365,6 @@ class Invitation(Document):
                 self.invited_by = self._inviter.user_id
                 self.save()
         return self._inviter
-
-    def send_activation_email(self):
-        raise NotImplementedError
-
-    @property
-    def is_expired(self):
-        return False
-
-
-class DomainInvitation(CachedCouchDocumentMixin, Invitation):
-    """
-    When we invite someone to a domain it gets stored here.
-    """
-    domain = StringProperty()
-    role = StringProperty()
-    doc_type = "Invitation"
-    program = None
-    supply_point = None
 
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
