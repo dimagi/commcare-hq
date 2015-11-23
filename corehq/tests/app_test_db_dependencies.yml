@@ -13,6 +13,7 @@ casexml.apps.case:
   - corehq.apps.receiverwrapper
   - corehq.apps.reminders
   - corehq.apps.sms
+  - corehq.apps.smsforms
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
@@ -40,3 +41,27 @@ corehq.apps.userreports:
   - django_prbac
   - corehq.apps.accounting
   - corehq.apps.smsforms
+couchforms:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.apps.hqcase
+  - corehq.apps.products
+  - corehq.apps.receiverwrapper
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tzmigration
+  - phonelog
+corehq.form_processor:
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.couchapps
+  - corehq.apps.receiverwrapper
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tzmigration
+  - couchforms
