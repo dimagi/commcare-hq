@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - pare-down-related_to_domain  # danny 10/8
+  - jquery-ui-1.8.23-legacy  # Danny 11/23
   - vellum-staging # J$ 11/13
   - exports-ui-changes  # biyeun 9/28
   - two-factor+websockets
