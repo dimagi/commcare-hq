@@ -213,7 +213,8 @@ var ReportModule = (function () {
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }
 
-    function ReportConfig(report_id, display, description, uuid, availableReportIds,
+    function ReportConfig(report_id, display, description, useXpathDescription,
+                          uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
                           language, changeSaveButton) {
@@ -224,6 +225,8 @@ var ReportModule = (function () {
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.description = ko.observable(description);
         this.description.subscribe(changeSaveButton);
+        this.useXpathDescription = ko.observable(useXpathDescription);
+        this.useXpathDescription.subscribe(changeSaveButton);
         this.uuid = uuid;
         this.reportId = ko.observable(report_id);
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
@@ -237,6 +240,7 @@ var ReportModule = (function () {
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
                 description: self.description(),
+                use_xpath_description: self.useXpathDescription(),
                 uuid: self.uuid
             };
         };
@@ -325,6 +329,7 @@ var ReportModule = (function () {
                 options.report_id,
                 options.header,
                 options.description,
+                options.use_xpath_description,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
