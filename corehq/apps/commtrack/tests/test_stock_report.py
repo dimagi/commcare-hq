@@ -55,7 +55,7 @@ class StockReportDomainTest(TestCase):
                 for product, p_bal in self.product_ids.items():
                     bal = c_bal + s_bal + p_bal
                     transactions_flat.append(
-                        STrans(
+                        StockTransactionHelper(
                             case_id=case,
                             section_id=section,
                             product_id=product,
@@ -98,7 +98,7 @@ class StockReportDomainTest(TestCase):
 
         date = datetime.utcnow()
         report, _ = self.create_report([
-            STrans(
+            StockTransactionHelper(
                 case_id='c1',
                 section_id='s1',
                 product_id='p1',
@@ -110,7 +110,7 @@ class StockReportDomainTest(TestCase):
         # create second report with the same date
         # results should have this transaction and not the previous one
         report, _ = self.create_report([
-            STrans(
+            StockTransactionHelper(
                 case_id='c1',
                 section_id='s1',
                 product_id='p1',
