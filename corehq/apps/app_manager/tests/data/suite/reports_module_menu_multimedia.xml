@@ -1,0 +1,13 @@
+<partial>
+  <menu id="m0">
+    <display>
+      <text>
+        <locale id="modules.m0"/>
+      </text>
+      <text form="image">
+        <locale id="modules.m0.icon"/>
+      </text>
+    </display>
+    <command id="reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i"/>
+  </menu>
+</partial>
