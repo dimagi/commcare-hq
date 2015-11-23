@@ -214,7 +214,7 @@ class FormProcessorSQL(object):
         )
         cls.store_attachments(xform, [Attachment(
             name=ATTACHMENT_NAME,
-            content=instance,
+            raw_content=instance,
             content_type='text/xml',
         )])
 
