@@ -93,6 +93,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(1, archive_counter)
         self.assertEqual(0, restore_counter)
 
+        xform = self.interface.get_xform(xform.form_id)
         xform.unarchive()
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
