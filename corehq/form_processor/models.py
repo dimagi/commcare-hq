@@ -185,7 +185,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     @property
     def history(self):
-        return self.xformoperationsql_set.order_by('date')
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form_history(self.form_id)
 
     @property
     def metadata(self):

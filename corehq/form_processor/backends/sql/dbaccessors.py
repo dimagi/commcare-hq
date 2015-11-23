@@ -94,6 +94,10 @@ class FormAccessorSQL(object):
             XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.NORMAL)
             CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=False)
 
+    @staticmethod
+    def get_form_history(form_id):
+        return list(XFormOperationSQL.objects.filter(xform_id=form_id).order_by('date'))
+
 
 class CaseDbAccessor(object):
     @staticmethod
