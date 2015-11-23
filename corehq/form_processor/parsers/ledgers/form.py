@@ -136,16 +136,6 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     if report_type not in (stockconst.REPORT_TYPE_BALANCE, stockconst.REPORT_TYPE_TRANSFER):
         raise ValueError(_('Invalid stock report type {}!'.format(report_type)))
 
-    def get_quantity_or_none(value, section_id):
-        try:
-            return Decimal(str(float(value.get('@quantity'))))
-        except (ValueError, TypeError):
-            logging.error((
-                "Non-numeric quantity submitted on domain %s for "
-                "a %s ledger" % (domain, section_id)
-            ))
-            return None
-
     timestamp = _get_and_validate_date(ledger_json, form)
     ledger_instructions = []
     if ledger_format == LedgerFormat.INDIVIDUAL:
@@ -170,8 +160,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
             t = {}
             t.update(top_level_attributes)
             t.update({'entry_id': product_entry.get('@id'),
-                      'quantity': get_quantity_or_none(product_entry,
-                                                       section_id)})
+                      'quantity': _get_quantity_or_none(product_entry, section_id, domain)})
             ledger_instructions.append(LedgerInstruction(**t))
     else:
         top_level_attributes = {
@@ -194,7 +183,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
                 section_id = value.get('@section-id')
                 t.update(top_level_attributes)
                 t.update({'entry_id': product_entry.get('@id')})
-                t.update({'quantity': get_quantity_or_none(value, section_id),
+                t.update({'quantity': _get_quantity_or_none(value, section_id, domain),
                           'section_id': section_id})
                 ledger_instructions.append(LedgerInstruction(**t))
 
@@ -268,6 +257,17 @@ def _get_and_validate_date(ledger_json, form):
     if not isinstance(timestamp, (datetime.datetime)):
         raise InvalidDate("{} has invalid @date".format(ledger_json))
     return timestamp
+
+
+def _get_quantity_or_none(value, section_id, domain):
+    try:
+        return Decimal(str(float(value.get('@quantity'))))
+    except (ValueError, TypeError):
+        logging.error((
+            "Non-numeric quantity submitted on domain %s for "
+            "a %s ledger" % (domain, section_id)
+        ))
+        return None
 
 
 def _coerce_to_list(obj_or_list):
