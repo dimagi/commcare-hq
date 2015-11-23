@@ -1,29 +1,20 @@
 import logging
-from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.hqwebapp.forms import BulkUploadForm
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.decorators.memoized import memoized
-from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.views import redirect_to_login
+
 from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
-from django.views.generic import TemplateView
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.views import logout
-from corehq.apps.registration.forms import NewWebUserRegistrationForm
-from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.users.models import Invitation, CouchUser, WebUser
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 
-from corehq.apps.analytics.tasks import track_workflow
+from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.hqwebapp.forms import BulkUploadForm
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.models import WebUser
+
 
 logger = logging.getLogger(__name__)
 

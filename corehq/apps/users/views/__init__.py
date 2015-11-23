@@ -1,56 +1,47 @@
 from __future__ import absolute_import
+from datetime import datetime
 import json
+import langcodes
 import logging
 import re
 import urllib
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.views import redirect_to_login
-from django.utils.decorators import method_decorator
-from django.views.decorators.debug import sensitive_post_parameters
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
-from corehq import privileges
-from corehq.apps.domain.models import Domain, toggles
-from corehq.apps.app_manager.models import Application
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.es.queries import search_string_query
-from corehq.apps.hqwebapp.utils import send_confirmation_email
-from corehq.apps.registration.utils import activate_new_user
-from corehq.apps.style.decorators import (
-    use_bootstrap3,
-    use_knockout_js,
-)
-from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
-from dimagi.utils.decorators.memoized import memoized
-from django_prbac.utils import has_privilege
-import langcodes
-from datetime import datetime
-from couchdbkit.exceptions import ResourceNotFound
 
+from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
-from django.contrib import messages
+
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
 from django_digest.decorators import httpdigest
+from django_prbac.utils import has_privilege
 from no_exceptions.exceptions import Http403
 
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
-
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
+from corehq.apps.domain.models import Domain, toggles
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es.queries import search_string_query
+from corehq.apps.hqwebapp.utils import send_confirmation_email
+from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.registration.forms import AdminInvitesUserForm, \
     NewWebUserRegistrationForm
-from corehq.apps.hqwebapp.views import BasePageView, logout
-from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
-                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
-from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
-                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
-                                      DomainMembershipError)
-from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
+from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
@@ -59,10 +50,19 @@ from corehq.apps.sms.verify import (
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
 )
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_knockout_js,
+)
+from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
+from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
+                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
+from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
+                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
+                                      DomainMembershipError)
+from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from corehq.util.couch import get_document_or_404
-from corehq.apps.analytics.tasks import track_workflow
-
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 def _users_context(request, domain):
