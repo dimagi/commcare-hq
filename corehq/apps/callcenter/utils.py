@@ -40,6 +40,59 @@ class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type us
         return sorted([midnight_tz_utc1, midnight_tz_utc2])
 
 
+class _UserCaseHelper(object):
+
+    def __init__(self, domain, owner_id):
+        self.domain = domain
+        self.owner_id = owner_id
+
+    def _submit_case_block(self, caseblock):
+        casexml = ElementTree.tostring(caseblock.as_xml())
+        submit_case_blocks(casexml, self.domain.name)
+
+    @staticmethod
+    def re_open_case(case):
+        closing_action = None
+        for action in reversed(case.actions):
+            if action.action_type == CASE_ACTION_CLOSE:
+                closing_action = action
+                break
+        if closing_action:
+            closing_action.xform.archive()
+
+    def create_user_case(self, case_type, commcare_user, fields):
+        fields['hq_user_id'] = commcare_user._id
+        caseblock = CaseBlock(
+            create=True,
+            case_id=uuid.uuid4().hex,
+            owner_id=self.owner_id,
+            user_id=self.owner_id,
+            case_type=case_type,
+            update=fields
+        )
+        self._submit_case_block(caseblock)
+
+    def update_user_case(self, case, case_type, fields):
+        caseblock = CaseBlock(
+            create=False,
+            case_id=case._id,
+            owner_id=self.owner_id,
+            case_type=case_type,
+            close=False,
+            update=fields
+        )
+        self._submit_case_block(caseblock)
+
+    def close_user_case(self, case, case_type):
+        caseblock = CaseBlock(
+            create=False,
+            case_id=case._id,
+            owner_id=self.owner_id,
+            case_type=case_type,
+            close=True,
+        )
+        self._submit_case_block(caseblock)
+
 CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
 
 
@@ -56,62 +109,23 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
         fields = _get_user_case_fields(commcare_user)
         case = case or get_case_by_domain_hq_user_id(domain.name, commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
+        user_case_helper = _UserCaseHelper(domain, owner_id)
 
         def case_should_be_reopened(case, user_case_should_be_closed):
             return case and case.closed and not user_case_should_be_closed
 
         if case_should_be_reopened(case, close):
-            _re_open_case(case)
+            user_case_helper.re_open_case(case)
             return
 
         if not case:
-            _create_user_case(case_type, commcare_user, domain, fields, owner_id)
+            user_case_helper.create_user_case(case_type, commcare_user, fields)
         else:
             changed = _user_case_changed(case, case_type, close, fields, owner_id)
             if changed:
-                _update_user_case(case, case_type, domain, fields, owner_id)
+                user_case_helper.update_user_case(case, case_type, fields)
             if close and not case.closed:
-                _close_user_case(case, case_type, domain, owner_id)
-
-
-def _create_user_case(case_type, commcare_user, domain, fields, owner_id):
-    fields['hq_user_id'] = commcare_user._id
-    caseblock = CaseBlock(
-        create=True,
-        case_id=uuid.uuid4().hex,
-        owner_id=owner_id,
-        user_id=owner_id,
-        case_type=case_type,
-        update=fields
-    )
-    _submit_case_block(caseblock, domain)
-
-
-def _update_user_case(case, case_type, domain, fields, owner_id):
-    caseblock = CaseBlock(
-        create=False,
-        case_id=case._id,
-        owner_id=owner_id,
-        case_type=case_type,
-        close=False,
-        update=fields
-    )
-    _submit_case_block(caseblock, domain)
-
-
-def _close_user_case(case, case_type, domain, owner_id):
-    caseblock = CaseBlock(
-        create=False,
-        case_id=case._id,
-        owner_id=owner_id,
-        case_type=case_type,
-        close=True,
-    )
-    _submit_case_block(caseblock, domain)
-
-def _submit_case_block(caseblock, domain_obj):
-    casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, domain_obj.name)
+                user_case_helper.close_user_case(case, case_type)
 
 
 def _get_user_case_fields(commcare_user):
@@ -137,16 +151,6 @@ def _get_user_case_fields(commcare_user):
         'phone_number': commcare_user.phone_number or ''
     })
     return fields
-
-
-def _re_open_case(case):
-    closing_action = None
-    for action in reversed(case.actions):
-        if action.action_type == CASE_ACTION_CLOSE:
-            closing_action = action
-            break
-    if closing_action:
-        closing_action.xform.archive()
 
 
 def _user_case_changed(case, case_type, close, fields, owner_id):
