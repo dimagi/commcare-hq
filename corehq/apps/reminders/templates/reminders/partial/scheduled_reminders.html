@@ -4,21 +4,6 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        $(function (){
-            var unsaved = false;
-            $(":input[type='submit'].btn-primary").click(function (){
-                unsaved = false;
-            });
-            $(":input").not(":input[type='submit']").change(function(){
-                unsaved = true;
-            });
-            function unloadPage(){
-                if(unsaved){
-                    return "{% trans 'You have unsaved changes.' %}";
-                }
-            }
-            window.onbeforeunload = unloadPage;
-        });
         $(function () {
             var reminders = [
                 {% for data in reminder_data %}

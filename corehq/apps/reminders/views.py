@@ -302,7 +302,6 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
     urlname = 'scheduled_reminders'
     page_title = ugettext_noop("Reminder Calendar")
     template_name = 'reminders/partial/scheduled_reminders.html'
-    ui_type = UI_SIMPLE_FIXED
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(reminders_framework_permission)
