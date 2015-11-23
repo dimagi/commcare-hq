@@ -21,8 +21,8 @@ from xml2json.lib import convert_xml_to_json
 
 class LedgerFormat(object):
     """This object is just used to represent these two constants"""
-    individual = object()
-    per_entry = object()
+    INDIVIDUAL = object()
+    PER_ENTRY = object()
 
 
 CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action'])
@@ -124,9 +124,9 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
     domain = form.domain
     # figure out what kind of block we're dealing with
     if ledger_json.get('@section-id'):
-        ledger_format = LedgerFormat.individual
+        ledger_format = LedgerFormat.INDIVIDUAL
     else:
-        ledger_format = LedgerFormat.per_entry
+        ledger_format = LedgerFormat.PER_ENTRY
 
     # helper functions
     def get_date():
@@ -195,7 +195,7 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
 
     timestamp = get_date()
     ledger_instructions = []
-    if ledger_format == LedgerFormat.individual:
+    if ledger_format == LedgerFormat.INDIVIDUAL:
         # this is @date, @section-id, etc.
         # but also balance/transfer specific attributes:
         # @entity-id/@src,@dest
