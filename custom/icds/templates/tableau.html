@@ -6,11 +6,20 @@
 
 <script type="text/javascript" src="{% new_static 'underscore/underscore.js' %}"></script>
 
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="nav navbar-nav">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reports<span class="caret"></span></a>
+                <ul class="dropdown-menu"></ul>
+            </li>
+        </div>
+    </div>
+
+</nav>
+
 <div class="container-fluid">
     <div class="row">
-        <div id="sideNav" class="col-md-3">
-            <h2 class="text-center">Reports</h2>
-        </div>
         <div class="col-md-7">
             {#    TODO: update this div to use B3 spacing that is the right size.#}
             <div id="tableauPlaceholder" style="width:1100px; height:900px;"></div>

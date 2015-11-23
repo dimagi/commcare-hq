@@ -1,6 +1,6 @@
 from django.http import HttpResponse
-from django.shortcuts import render
 from django.template.loader import render_to_string
+import requests
 
 
 def tableau(request):
@@ -8,5 +8,17 @@ def tableau(request):
         'report_view': 'POCReports/MainDashboard'
     }
     response = render_to_string('tableau.html', context)
+    # trusted_ticket = _get_tableau_trusted_ticket(request.)
     return HttpResponse(response)
-    # return render(request, context=context, template='tableau.html')
+
+
+def _get_tableau_trusted_ticket(client_ip):
+    # TODO: Add client_ip into request and configure extended checking on Tableau server
+    TABLEAU_SERVER = 'https://icds.commcarehq.org/trusted'
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+    }
+    response = requests.post(TABLEAU_SERVER, data={'username': 'tsheffels', 'client_ip': client_ip}, headers=headers)
+    return response
+
+#     Post to Tableau server

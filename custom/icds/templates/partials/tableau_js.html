@@ -20,7 +20,7 @@
         workbook = viz.getWorkbook();
         var sheets = workbook.getPublishedSheetsInfo();
         _.each(sheets, function(sheet) {
-            addNavigationButton(sheet.$0.name, sheet.$0.isActive)
+            addNavigationLink(sheet.$0.name, sheet.$0.isActive)
         })
         $(".btn").click(function (){
             var btn = $(this);
@@ -34,10 +34,11 @@
         viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
     }
 
-    function addNavigationButton(sheetName, isActive) {
+    function addNavigationLink(sheetName, isActive) {
         var btnColor = isActive  ? 'success' : 'default';
-        var html = "<div class='row'><button class='btn btn-block btn-" + btnColor + "'>" + sheetName + "</btn></div>";
-        $("#sideNav").append(html);
+        // var html = "<div class='row'><button class='btn btn-block btn-" + btnColor + "'>" + sheetName + "</btn></div>";
+        var html = "<li><a href='#'>" + sheetName + "</a></li>";
+        $(".dropdown-menu").append(html);
     }
 
     function onMarksSelection(marksEvent) {
@@ -48,7 +49,7 @@
     function activateDrilldown(marks) {
         console.log('onMarksSelection', marks   );
         clearDrilldown();
-        {# marks is an array of what the user has clicked #}
+        // marks is an array of what the user has clicked
         var html = [],
             sheetName = '',
             filters = {},
