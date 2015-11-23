@@ -150,9 +150,12 @@ jQuery(document).ready(function($) {
 
     // method that we will use to update the control based on feature properties passed in
     info.update = function (props) {
-        this._div.innerHTML = (props ?
-            '<b>' + props.name + '</b>: '+ (dimagisphere.formData.totalFormsByCountry[props.name] || 'no') + ' forms'
-            : 'Hover over a country');
+        function _getInfoContent(countryName) {
+            var formCount = dimagisphere.formData.totalFormsByCountry[countryName];
+            var message = formCount ? formCount + ' forms' : 'no data yet';
+            return '<b>' + countryName + '</b>: ' + message;
+        }
+        this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
     };
     info.addTo(map);
 
