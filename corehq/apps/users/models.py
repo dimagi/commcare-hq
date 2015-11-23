@@ -2388,8 +2388,6 @@ class Invitation(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
-        key = [domain]
-
         return filter(
             lambda domain_invitation: not domain_invitation.is_accepted,
             get_docs_in_domain_by_class(domain, cls)
