@@ -137,55 +137,14 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
         raise ValueError(_('Invalid stock report type {}!'.format(report_type)))
 
     timestamp = _get_and_validate_date(ledger_json, form)
-    ledger_instructions = []
+    common_attributes = {
+        'domain': domain,
+        'date': timestamp,
+    }
     if ledger_format == LedgerFormat.INDIVIDUAL:
-        # this is @date, @section-id, etc.
-        # but also balance/transfer specific attributes:
-        # @entity-id/@src,@dest
-        section_id = ledger_json.get('@section-id')
-        top_level_attributes = {
-            'domain': domain,
-            'date': timestamp,
-            'section_id': section_id,
-            'entity_id': ledger_json.get('@entity-id'),
-            'src': ledger_json.get('@src'),
-            'dest': ledger_json.get('@dest'),
-            'type': ledger_json.get('@type'),
-        }
-
-        product_entries = _coerce_to_list(ledger_json.get('entry'))
-        for product_entry in product_entries:
-            # product_entry looks like
-            # {"@id": "", "@quantity": ""}
-            t = {}
-            t.update(top_level_attributes)
-            t.update({'entry_id': product_entry.get('@id'),
-                      'quantity': _get_quantity_or_none(product_entry, section_id, domain)})
-            ledger_instructions.append(LedgerInstruction(**t))
+        ledger_instructions = _get_ledger_instructions_from_individual_format(ledger_json, common_attributes)
     else:
-        top_level_attributes = {
-            'domain': domain,
-            'date': timestamp,
-            'entity_id': ledger_json.get('@entity-id'),
-            'src': ledger_json.get('@src'),
-            'dest': ledger_json.get('@dest'),
-            'type': ledger_json.get('@type'),
-        }
-
-        product_entries = _coerce_to_list(ledger_json.get('entry'))
-        for product_entry in product_entries:
-            # product_entry looks like
-            # {"@id": "", 'value': [...]}
-            for value in _coerce_to_list(product_entry.get('value')):
-                # value looks like
-                # {"@section-id: "", "@quantity": ""}
-                t = {}
-                section_id = value.get('@section-id')
-                t.update(top_level_attributes)
-                t.update({'entry_id': product_entry.get('@id')})
-                t.update({'quantity': _get_quantity_or_none(value, section_id, domain),
-                          'section_id': section_id})
-                ledger_instructions.append(LedgerInstruction(**t))
+        ledger_instructions = _get_ledger_instructions_from_per_entry_format(ledger_json, common_attributes)
 
     # filter out ones where quantity is None
     # todo: is this really the behavior we want when quantity=""?
@@ -204,8 +163,56 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
         for ledger_instruction in ledger_instructions
         for transaction_helper in helper_generator_fn(ledger_instruction)
     ]
-
     return StockReportHelper.make_from_form(form, timestamp, report_type, transaction_helpers)
+
+
+def _get_ledger_instructions_from_individual_format(ledger_json, common_attributes):
+    # this is @date, @section-id, etc.
+    # but also balance/transfer specific attributes:
+    # @entity-id/@src,@dest
+    section_id = ledger_json.get('@section-id')
+    top_level_attributes = {
+        'section_id': section_id,
+        'entity_id': ledger_json.get('@entity-id'),
+        'src': ledger_json.get('@src'),
+        'dest': ledger_json.get('@dest'),
+        'type': ledger_json.get('@type'),
+    }
+    top_level_attributes.update(common_attributes)
+    product_entries = _coerce_to_list(ledger_json.get('entry'))
+    for product_entry in product_entries:
+        # product_entry looks like
+        # {"@id": "", "@quantity": ""}
+        t = {}
+        t.update(top_level_attributes)
+        t.update({'entry_id': product_entry.get('@id'),
+                  'quantity': _get_quantity_or_none(product_entry, section_id, domain)})
+        yield LedgerInstruction(**t)
+
+
+def _get_ledger_instructions_from_per_entry_format(ledger_json, common_attributes):
+    top_level_attributes = {
+        'entity_id': ledger_json.get('@entity-id'),
+        'src': ledger_json.get('@src'),
+        'dest': ledger_json.get('@dest'),
+        'type': ledger_json.get('@type'),
+    }
+    top_level_attributes.update(common_attributes)
+
+    product_entries = _coerce_to_list(ledger_json.get('entry'))
+    for product_entry in product_entries:
+        # product_entry looks like
+        # {"@id": "", 'value': [...]}
+        for value in _coerce_to_list(product_entry.get('value')):
+            # value looks like
+            # {"@section-id: "", "@quantity": ""}
+            t = {}
+            section_id = value.get('@section-id')
+            t.update(top_level_attributes)
+            t.update({'entry_id': product_entry.get('@id')})
+            t.update({'quantity': _get_quantity_or_none(value, section_id, domain),
+                      'section_id': section_id})
+            yield LedgerInstruction(**t)
 
 
 def _get_transaction_helpers_from_balance_instruction(ledger_instruction):
