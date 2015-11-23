@@ -203,7 +203,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         </partial>
         """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary']/detail/field/template[@form='graph']")
 
-    def test_fixture(self):
+    def test_fixture_rows(self):
         self.assertXmlPartialEqual("""
         <partial>
           <rows>
@@ -225,3 +225,16 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
           </rows>
         </partial>
         """, self.fixture, "reports/report/rows")
+
+    def test_fixture_filters(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <filters>
+            <filter field="computed_owner_name_40cc88a0_1">
+              <option value="cory">Cory Zue</option>
+              <option value="ctsims">Clayton Sims</option>
+              <option value="daniel">Daniel Roberts</option>
+            </filter>
+          </filters>
+        </partial>
+        """, self.fixture, "reports/report/filters")
