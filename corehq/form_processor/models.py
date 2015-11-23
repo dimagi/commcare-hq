@@ -67,7 +67,7 @@ class AttachmentMixin(SaveStateMixin):
                 return _get_attachment_from_list(getattr(self, list_attr))
 
         if self.is_saved():
-            return self._attachments_from_db(attachment_name)
+            return self._get_attachment_from_db(attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
         raise NotImplementedError
