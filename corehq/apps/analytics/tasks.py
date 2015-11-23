@@ -85,15 +85,14 @@ def _hubspot_post(url, data):
         headers = {
             'content-type': 'application/json'
         }
-        req = requests.post(
+        response = requests.post(
             url,
             params={'hapikey': api_key},
             data=data,
             headers=headers
         )
-        logger.debug('Sent this data to HS: %s \nreceived: %s'
-                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
-        req.raise_for_status()
+        _log_response(data, response)
+        response.raise_for_status()
 
 
 def _get_user_hubspot_id(webuser):
@@ -140,13 +139,19 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
 
-        req = requests.post(
+        response = requests.post(
             url,
             data=data
         )
-        logger.debug('Sent this data to HS: %s \nreceived: %s'
-                     .format(data, json.dumps(json.loads(req.json), indent=2, sort_keys=True)))
-        req.raise_for_status()
+        _log_response(data, response)
+        response.raise_for_status()
+
+
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def update_hubspot_properties(webuser, properties):
+    vid = _get_user_hubspot_id(webuser)
+    if vid:
+        _track_on_hubspot(webuser, properties)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -200,20 +205,6 @@ def track_app_from_template_on_hubspot(webuser, cookies, meta):
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
-
-
-@task(queue="background_queue", acks_late=True, ignore_result=True)
-def track_user_subscriptions_on_hubspot(webuser, properties):
-    vid = _get_user_hubspot_id(webuser)
-    if vid:
-        _track_on_hubspot(webuser, {
-            'is_on_community_plan': properties[SoftwarePlanEdition.COMMUNITY],
-            'is_on_standard_plan': properties[SoftwarePlanEdition.STANDARD],
-            'is_on_pro_plan': properties[SoftwarePlanEdition.PRO],
-            'is_on_advanced_plan': properties[SoftwarePlanEdition.ADVANCED],
-            'is_on_enterprise_plan': properties[SoftwarePlanEdition.ENTERPRISE],
-            'is_on_pro_bono_or_discounted_plan': properties["Pro Bono"],
-        })
 
 
 def track_workflow(email, event, properties=None):
@@ -367,3 +358,13 @@ def _track_periodic_data_on_kiss(submit_json):
         s3_connection.upload(filename, f, 'kiss-uploads')
 
     os.remove(filename)
+
+
+def _log_response(data, response):
+    try:
+        response_text = json.dumps(response.json(), indent=2, sort_keys=True)
+    except Exception:
+        response_text = response.status_code
+    logger.debug('Sent this data to HS: %s \nreceived: %s' %
+                 (json.dumps(data, indent=2, sort_keys=True),
+                  response_text))

@@ -302,3 +302,12 @@
   default: "86400"
   values_txt: "This will set the amount of time you will remain logged in before automatically being logged out."
   since: "2.21"
+  
+- name: "Smart Image Inflation"
+  description: "When a value is selected, this feature controls the display size of any user-provided image such that it will be consistent with the size of the original image file, and consistent across devices. Follow the instructions here to determine which value you should use: https://confluence.dimagi.com/display/commcarepublic/Images+in+CommCare#ImagesinCommCare-ImageSizes"
+  id: "cc-inflation-target-density"
+  values: ["120", "160", "240", "280", "320", "400", "480", "none"]
+  value_names: ["Low Density", "Medium Density", "High Density", "Density 280", "XHigh Density", "Density 400", "XXHigh Density", "None"]
+  default: "none"
+  since: "2.24"
+  force: true

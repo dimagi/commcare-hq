@@ -30,6 +30,13 @@ fixtures_migration = Migrator(
     )
 )
 
+domains_migration = Migrator(
+    slug='domains',
+    source_db_name=None,
+    target_db_name=settings.NEW_DOMAINS_DB,
+    doc_types=('Domain',)
+)
+
 
 def get_migrator_by_slug(slug):
     return Migrator.instances[slug]

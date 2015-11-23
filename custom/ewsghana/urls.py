@@ -2,7 +2,7 @@ from django.conf.urls import patterns, url, include
 from corehq.apps.api.urls import CommCareHqApi
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from custom.ewsghana.views import EWSConfigView, EWSGlobalStats, InputStockView, EWSUserExtensionView, \
-    DashboardRedirectReportView, BalanceMigrationView
+    BalanceMigrationView, DashboardPageView
 
 hq_api = CommCareHqApi(api_name='v0.3')
 hq_api.register(EWSLocationResource())
@@ -30,6 +30,6 @@ urlpatterns = patterns('custom.ewsghana.views',
     url(r'^convert_user_data_fields/$', 'convert_user_data_fields', name='convert_user_data_fields'),
     url(r'^non_administrative_locations/$', 'non_administrative_locations_for_select2'),
     url(r'^user_settings/(?P<user_id>[ \w-]+)/$', EWSUserExtensionView.as_view(), name='ews_user_settings'),
-    url(r'^dashboard/(?P<site_code>\w+)/', DashboardRedirectReportView.as_view(), name='dashboard_report'),
+    url(r'^dashboard_page/$', DashboardPageView.as_view(), name='dashboard_page'),
     url(r'^balance/$', BalanceMigrationView.as_view(), name='balance_migration')
 )

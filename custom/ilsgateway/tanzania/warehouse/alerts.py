@@ -28,7 +28,7 @@ def populate_facility_stockout_alerts(facility, date):
 
 
 def create_multilevel_alert(location, date, alert_type, details):
-    create_alert(location._id, date, alert_type, details)
+    create_alert(location.location_id, date, alert_type, details)
     if location.parent is not None:
         create_multilevel_alert(location.parent, date, alert_type, details)
 

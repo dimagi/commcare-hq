@@ -16,6 +16,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.users.util import SYSTEM_USER_ID
 from casexml.apps.case import const
 
 
@@ -272,7 +273,7 @@ def update_case(domain, case_id, case_properties=None, close=False):
     context = {
         'case_id': case_id,
         'date_modified': json_format_datetime(datetime.datetime.utcnow()),
-        'user_id': '',
+        'user_id': SYSTEM_USER_ID,
         'case_properties': case_properties,
         'close': close,
     }

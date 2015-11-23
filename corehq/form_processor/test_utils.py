@@ -1,20 +1,45 @@
 import functools
 from couchdbkit import ResourceNotFound
+from django.db.models.query_utils import Q
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, \
+    CaseTransaction
+from django.conf import settings
 
 
 class FormProcessorTestUtils(object):
 
     @classmethod
     @unit_testing_only
-    def delete_all_cases(cls):
-        cls._delete_all(CommCareCase.get_db(), 'case/get_lite')
+    def delete_all_cases(cls, domain=None):
+        view_kwargs = {}
+
+        if domain:
+            view_kwargs = {
+                'startkey': [domain],
+                'endkey': [domain, {}],
+            }
+
+        cls._delete_all(
+            CommCareCase.get_db(),
+            'cases_by_server_date/by_server_modified_on',
+            **view_kwargs
+        )
+
+        def _sql_delete(query, domain_filter):
+            if domain is not None:
+                query.filter(domain_filter)
+            query.all().delete()
+
+        _sql_delete(CommCareCaseIndexSQL.objects, Q(case__domain=domain))
+        _sql_delete(CaseAttachmentSQL.objects, Q(case__domain=domain))
+        _sql_delete(CaseTransaction.objects, Q(case__domain=domain))
+        _sql_delete(CommCareCaseSQL.objects, Q(domain=domain))
 
     @classmethod
     @unit_testing_only
@@ -39,7 +64,12 @@ class FormProcessorTestUtils(object):
             view,
             **view_kwargs
         )
-        XFormInstanceSQL.objects.all().delete()
+        query = XFormInstanceSQL.objects
+        if domain is not None:
+            query = query.filter(domain=domain)
+        if user_id is not None:
+            query = query.filter(user_id=user_id)
+        query.all().delete()
 
     @classmethod
     @unit_testing_only
@@ -63,17 +93,17 @@ class FormProcessorTestUtils(object):
 run_with_all_backends = functools.partial(
     run_with_multiple_configs,
     run_configs=[
-        # clean restore code but without cleanliness flags
+        # run with default setting
         RunConfig(
             settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': True,
+                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
             },
             post_run=lambda *args, **kwargs: args[0].tearDown()
         ),
-        # original code
+        # run with inverse of default setting
         RunConfig(
             settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': False,
+                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
             },
             pre_run=lambda *args, **kwargs: args[0].setUp(),
         ),

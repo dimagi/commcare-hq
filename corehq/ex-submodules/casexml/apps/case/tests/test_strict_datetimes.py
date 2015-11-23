@@ -32,7 +32,7 @@ class StrictDatetimesTest(TestCase):
 
     def test(self):
         form = make_form_from_case_blocks([ElementTree.fromstring(CASE_BLOCK)])
-        lock_manager = process_xform(form, domain=self.domain)
+        lock_manager = process_xform(self.domain, form)
         with lock_manager as xforms:
             with self.interface.casedb_cache(domain=self.domain) as case_db:
                 with self.assertRaises(PhoneDateValueError):

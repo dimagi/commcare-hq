@@ -47,6 +47,11 @@ class BaseCommTrackManageView(BaseDomainView):
     def section_url(self):
         return reverse('default_commtrack_setup', args=[self.domain])
 
+    def get(self, *args, **kwargs):
+        if self.domain_object.commtrack_settings is None:
+            raise Http404()
+        return super(BaseCommTrackManageView, self).get(*args, **kwargs)
+
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)

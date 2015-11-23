@@ -80,16 +80,31 @@ class AutomaticUpdateRule(models.Model):
                 close = True
 
         update_case(case.domain, case.get_id, case_properties=properties, close=close)
+        return close
 
     def apply_rule(self, case, now):
+        """
+        Returns True if the case was closed, False otherwise.
+        """
         if self.deleted:
             raise Exception("Attempted to call apply_rule on a deleted rule")
+
+        if not self.active:
+            raise Exception("Attempted to call apply_rule on an inactive rule")
 
         if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise Exception("Invalid case given")
 
+        if case.doc_type != 'CommCareCase':
+            # Exclude deleted cases
+            return False
+
+        if case.closed:
+            return False
+
         if self.rule_matches_case(case, now):
-            self.apply_actions(case)
+            return self.apply_actions(case)
+        return False
 
     def activate(self, active=True):
         self.active = active
@@ -104,13 +119,11 @@ class AutomaticUpdateRuleCriteria(models.Model):
     MATCH_DAYS_SINCE = 'DAYS'
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
-    MATCH_EXISTS = 'EXISTS'
 
     MATCH_TYPE_CHOICES = (
         (MATCH_DAYS_SINCE, MATCH_DAYS_SINCE),
         (MATCH_EQUAL, MATCH_EQUAL),
         (MATCH_NOT_EQUAL, MATCH_NOT_EQUAL),
-        (MATCH_EXISTS, MATCH_EXISTS),
     )
 
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
@@ -142,15 +155,11 @@ class AutomaticUpdateRuleCriteria(models.Model):
     def check_not_equal(self, case, now):
         return case.get_case_property(self.property_name) != self.property_value
 
-    def check_exists(self, case, now):
-        return case.get_case_property(self.property_name) is not None
-
     def matches(self, case, now):
         return {
             self.MATCH_DAYS_SINCE: self.check_days_since,
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,
-            self.MATCH_EXISTS: self.check_exists,
         }.get(self.match_type)(case, now)
 
 

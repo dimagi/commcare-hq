@@ -7,11 +7,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
     VerifiedNumber
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
 from corehq.apps.reports.models import ReportNotification, ReportConfig
 from dimagi.utils.dates import force_to_datetime
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import WebUser, UserRole, Permissions, CouchUser
 from custom.api.utils import apply_updates
@@ -272,8 +273,9 @@ class EWSApi(APISynchronization):
             return new_location
 
     def _create_supply_point_from_location(self, supply_point, location):
-        if not SupplyPointCase.get_by_location(location):
-            return SupplyPointCase.get_or_create_by_location(Loc(_id=location.get_id,
+        interface = SupplyInterface(location.domain)
+        if not interface.get_by_location(location):
+            return interface.get_or_create_by_location(Loc(_id=location.get_id,
                                                              name=supply_point.name,
                                                              external_id=str(supply_point.id),
                                                              domain=self.domain))
@@ -459,7 +461,7 @@ class EWSApi(APISynchronization):
                     external_id=str(supply_point.id),
                     domain=self.domain
                 )
-                case = SupplyPointCase.get_or_create_by_location(fake_location)
+                case = SupplyInterface(self.domain).get_or_create_by_location(fake_location)
                 sql_location = created_location.sql_location
                 sql_location.supply_point_id = case.get_id
                 sql_location.save()
@@ -501,7 +503,7 @@ class EWSApi(APISynchronization):
                 external_id=None,
                 domain=self.domain
             )
-            supply_point = SupplyPointCase.get_or_create_by_location(fake_location)
+            supply_point = SupplyInterface(self.domain).get_or_create_by_location(fake_location)
             sql_location = location.sql_location
             sql_location.supply_point_id = supply_point.get_id
             sql_location.save()
@@ -839,7 +841,7 @@ class EmailSettingsSync(object):
         self.domain = domain
 
     def _report_notfication_sync(self, report, interval, day):
-        if not report.users:
+        if not report.users or report.report not in self.REPORT_MAP:
             return
         user_id = report.users[0]
         recipients = report.users[1:]
@@ -850,20 +852,23 @@ class EmailSettingsSync(object):
             return
 
         try:
-            location = SQLLocation.objects.get(site_code=location_code, domain=self.domain)
+            location = SQLLocation.active_objects.get(site_code=location_code, domain=self.domain)
         except SQLLocation.DoesNotExist:
             return
 
         notifications = ReportNotification.by_domain_and_owner(self.domain, user.get_id)
-        reports = []
         for n in notifications:
-            for config_id in n.config_ids:
-                config = ReportConfig.get(config_id)
-                reports.append((config.filters.get('location_id'), config.report_slug, interval))
-
-        if report.report not in self.REPORT_MAP or (location.location_id, self.REPORT_MAP[report.report],
-                                                    interval) in reports:
-            return
+            if len(n.config_ids) == 1:
+                # Migrated reports have only one config
+                config = ReportConfig.get(n.config_ids[0])
+                location_id = config.filters.get('location_id')
+                slug = self.REPORT_MAP[report.report]
+                report_slug = config.report_slug
+                if (n.day, location_id, report_slug, n.interval) == (day, location.location_id, slug, interval):
+                    if not n.send_to_owner and not n.recipient_emails:
+                        n.send_to_owner = True
+                        n.save()
+                    return
 
         saved_config = ReportConfig(
             report_type='custom_project_report', name=report.report, owner_id=user.get_id,
@@ -873,7 +878,7 @@ class EmailSettingsSync(object):
         saved_config.save()
         saved_notification = ReportNotification(
             hour=report.hours, day=day, interval=interval, owner_id=user.get_id, domain=self.domain,
-            recipient_emails=recipients, config_ids=[saved_config.get_id]
+            recipient_emails=recipients, config_ids=[saved_config.get_id], send_to_owner=True
         )
         saved_notification.save()
         return saved_notification

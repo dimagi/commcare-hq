@@ -23,7 +23,6 @@ import langcodes
 from datetime import datetime
 from couchdbkit.exceptions import ResourceNotFound
 
-from dimagi.utils.couch.database import get_db
 from django.contrib.auth.forms import SetPasswordForm
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -431,7 +430,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
                     'email': u.get_email(),
                     'domain': domain,
                     'name': u.full_name,
-                    'role': u.role_label(),
+                    'role': u.role_label(domain),
                     'phoneNumbers': u.phone_numbers,
                     'id': u.get_id,
                     'editUrl': reverse('user_account', args=[domain, u.get_id]),

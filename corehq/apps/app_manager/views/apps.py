@@ -30,6 +30,7 @@ from corehq.apps.app_manager.const import (
     APP_V1,
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
+    AUTO_SELECT_USERCASE,
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
@@ -547,6 +548,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'text_input', 'platform', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
+        'comment',
         # Application only
         'cloudcare_enabled',
         'application_version',
@@ -582,6 +584,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('amplifies_workers', None),
         ('amplifies_project', None),
         ('use_grid_menus', None),
+        ('comment', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -743,3 +746,26 @@ def formdefs(request, domain, app_id):
         return response
     else:
         return json_response(formdefs)
+
+
+@require_GET
+@require_can_edit_apps
+def drop_user_case(request, domain, app_id):
+    app = get_app(domain, app_id)
+    for module in app.get_modules():
+        for form in module.get_forms():
+            if form.form_type == 'module_form':
+                if 'usercase_update' in form.actions and form.actions['usercase_update'].update:
+                    form.actions['usercase_update'].update = {}
+                if 'usercase_preload' in form.actions and form.actions['usercase_preload'].preload:
+                    form.actions['usercase_preload'].preload = {}
+            else:
+                for action in list(form.actions.load_update_cases):
+                    if action.auto_select and action.auto_select.mode == AUTO_SELECT_USERCASE:
+                        form.actions.load_update_cases.remove(action)
+            app.save()
+            messages.success(
+                request,
+                _('You have successfully removed User Case properties from this application.')
+            )
+    return back_to_main(request, domain, app_id=app_id)

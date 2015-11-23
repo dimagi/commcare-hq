@@ -1,5 +1,5 @@
 Documenting
-=============
+===========
 
 .. This is a comment
 
@@ -17,17 +17,18 @@ For a more complete working set of documentation, check out `Django's docs direc
 .. _dj_docs: https://docs.djangoproject.com
 
 Index
-------
+-----
 
 #. :ref:`sphinx` is used to build the documentation.
 #. :ref:`doc-style` - Some general tips for writing documentation
 #. :ref:`rst` is used for markup.
+#. :ref:`editors` with RestructuredText support
 
 
 .. _sphinx:
 
 Sphinx
---------
+------
 
 Sphinx builds the documentation and extends the functionality of rst a bit
 for stuff like pointing to other files and modules.
@@ -42,27 +43,46 @@ Open ``<path_to_commcare-hq>/docs/_build/html/index.html`` in your browser and y
 .. _doc-style:
 
 Writing Documentation
-----------------------
+---------------------
 
-For some great references, check out Jacob Kaplan-Moss's series `Writing Great Documentation <jkm_>`_ and this `blog post`_ by Steve Losh.  Here are some takeaways:
+For some great references, check out Jacob Kaplan-Moss's series `Writing Great Documentation <jkm_>`_ and this
+`blog post`_ by Steve Losh.  Here are some takeaways:
 
 * Use short sentences and paragraphs
 * Break your documentation into sections to avoid text walls
 * Avoid making assumptions about your reader's background knowledge
-* Consider `three levels of documentation <jkm_>`_:
+* Consider `three types of documentation <jkm_wtw_>`_:
 
    #. Tutorials - quick introduction to the basics
    #. Topical Guides - comprehensive overview of the project; everything but the dirty details
    #. Reference Material - complete reference for the API
 
-.. _jkm: http://jacobian.org/writing/great-documentation/what-to-write/
+One aspect that Kaplan-Moss doesn't mention explicitly (other than advising us to "Omit fluff" in his
+`Technical style <jkm_ts_>`_ piece) but is clear from both his documentation series and the Django documentation,
+is *what not to write*.
+It's an important aspect of the readability of any written work, but has other implications when it comes to
+technical writing.
+
+Antoine de Saint Exupéry wrote, "... perfection is attained not when there is nothing more to add, but when there
+is nothing more to remove."
+
+Keep things short and take stuff out where possible.
+It can help to get your point across, but, maybe more importantly with documentation, means there is less that
+needs to change when the codebase changes.
+
+Think of it as an extension of the DRY principle.
+
+
+.. _jkm: http://jacobian.org/writing/great-documentation/
 .. _blog post: http://stevelosh.com/blog/2013/09/teach-dont-tell/
+.. _jkm_wtw: http://jacobian.org/writing/what-to-write/
+.. _jkm_ts: http://jacobian.org/writing/technical-style/
 
 
 .. _rst:
 
 reStructuredText
------------------
+----------------
 
 reStructuredText is a markup language that is commonly used for Python documentation.  You can view the source of this document or any other to get an idea of how to do stuff (this document has hidden comments).  Here are some useful links for more detail:
 
@@ -99,16 +119,37 @@ reStructuredText is a markup language that is commonly used for Python documenta
     Of course, none of this will show up in the html, because it's all part of the comment block (by indentation)
 
 
+.. _editors:
+
+Editors
+-------
+
+While you can use any text editor for editing RestructuredText
+documents, I find two particularly useful:
+
+* PyCharm (or other JetBrains IDE, like IntelliJ), which has great
+  syntax highlighting and linting.
+* Sublime Text, which has a useful plugin for hard-wrapping lines called
+  `Sublime Wrap Plus`_. Hard-wrapped lines make documentation easy to
+  read in a console, or editor that doesn't soft-wrap lines (i.e. most
+  code editors).
+* Vim has a command ``gq`` to reflow a block of text (``:help gq``). It
+  uses the value of ``textwidth`` to wrap (``:setl tw=75``).  Also check
+  out ``:help autoformat``.  Syntastic has a rst linter.  To make a line a
+  header, just ``yypVr=`` (or whatever symbol you want).
+
+
+.. _Sublime Wrap Plus: https://github.com/ehuss/Sublime-Wrap-Plus
 
 -----------------------
 
 Examples
-~~~~~~~~~
+~~~~~~~~
 
 Some basic examples adapted from 2 Scoops of Django:
 
 Section Header
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 Sections are explained well `here <http://docutils.sourceforge.net/docs/user/rst/quickstart.html#sections>`_ 
 

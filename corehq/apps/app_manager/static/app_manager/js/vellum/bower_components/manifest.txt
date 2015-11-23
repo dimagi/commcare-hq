@@ -5,21 +5,18 @@
 ├── Caret.js#0.2.2
 ├── MediaUploader#dacf28f419
 ├── XMLWriter#ab8760d6e0
-├── almond#0.2.9 (latest is 0.3.1)
-├── chai#3.3.0 (3.4.0 available)
+├── chai#3.4.2
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#1.2.2
 ├── jquery#1.11.3 (latest is 3.0.0-alpha1+compat)
-├── jsdiff#1.4.0 (latest is 2.2.0)
+├── jsdiff#1.4.0 (latest is 2.2.1)
 ├─┬ jstree#3.1.1 (latest is 3.2.1)
 │ └── jquery#1.11.3 (3.0.0-alpha1+compat available)
 ├── langcodes#dd833883b5
-├── lodash#3.10.1 extraneous
-├── lodash-compat#3.10.1 extraneous
 ├── markdown-it#4.2.2 (latest is 5.0.1)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
-├── requirejs#2.1.20
+├── requirejs#2.1.20 (2.1.21 available)
 ├── requirejs-plugins#1.0.3
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f

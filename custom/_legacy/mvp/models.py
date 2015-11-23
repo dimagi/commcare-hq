@@ -7,7 +7,6 @@ import logging
 import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
 from corehq.apps.reports.util import make_form_couch_key
-from dimagi.utils.couch.database import get_db
 from mvp.indicator_admin.crud import MVPActiveCasesCRUDManager, MVPChildCasesByAgeCRUDManager
 
 

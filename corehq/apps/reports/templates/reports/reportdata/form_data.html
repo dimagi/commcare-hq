@@ -13,7 +13,7 @@
 {% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
 
 {% block page-title %}
-    {% include 'reports/form/partials/form_breadcrumbs.html' %}
+    {% include 'reports/form/partials/bootstrap2/form_breadcrumbs.html' %}
 {% endblock %}
 
 {% block main_column %}
