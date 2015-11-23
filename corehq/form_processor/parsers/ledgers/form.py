@@ -94,22 +94,27 @@ def _get_case_action_intents(xform, transaction_helpers):
 
 
 def unpack_commtrack(xform):
-
+    """
+    Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
+    them to StockReportHelper objects.
+    """
     form_xml = xform.get_xml_element()
     commtrack_node_names = ('{%s}balance' % COMMTRACK_REPORT_XMLNS,
                             '{%s}transfer' % COMMTRACK_REPORT_XMLNS)
 
-    def commtrack_nodes(node):
+    def _extract_ledger_nodes_from_xml(node):
+        """
+        Goes through a parsed XML document and recursively pulls out any ledger XML blocks.
+        """
         for child in node:
             if child.tag in commtrack_node_names:
                 yield child
             else:
-                for e in commtrack_nodes(child):
+                for e in _extract_ledger_nodes_from_xml(child):
                     yield e
 
-    for elem in commtrack_nodes(form_xml):
-        report_type, ledger_json = convert_xml_to_json(
-            elem, last_xmlns=COMMTRACK_REPORT_XMLNS)
+    for elem in _extract_ledger_nodes_from_xml(form_xml):
+        report_type, ledger_json = convert_xml_to_json(elem, last_xmlns=COMMTRACK_REPORT_XMLNS)
 
         # apply the same datetime & string conversions
         # that would be applied to XFormInstance.form
