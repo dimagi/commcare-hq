@@ -135,33 +135,8 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
 
     # details of transaction generation
     # depend on whether it's a balance or a transfer
-    if report_type == stockconst.REPORT_TYPE_BALANCE:
-        def get_transaction_helpers(ledger_instruction):
-
-            case_id = ledger_instruction.entity_id
-            yield _make_transaction_helper(
-                ledger_instruction,
-                action=(const.StockActions.STOCKONHAND
-                        if ledger_instruction.quantity > 0
-                        else const.StockActions.STOCKOUT),
-                case_id=case_id,
-            )
-    elif report_type == stockconst.REPORT_TYPE_TRANSFER:
-        def get_transaction_helpers(ledger_instruction):
-            src = ledger_instruction.src
-            dest = ledger_instruction.dest
-            if not (src or dest):
-                raise IllegalCaseId(_("Can't specify a transaction block with no src or dest case"))
-            if src is not None:
-                yield _make_transaction_helper(
-                    ledger_instruction,
-                    action=const.StockActions.CONSUMPTION, case_id=src)
-            if dest is not None:
-                yield _make_transaction_helper(
-                    ledger_instruction,
-                    action=const.StockActions.RECEIPTS, case_id=dest)
-    else:
-        raise ValueError()
+    if report_type not in (stockconst.REPORT_TYPE_BALANCE, stockconst.REPORT_TYPE_TRANSFER):
+        raise ValueError(_('Invalid stock report type {}!'.format(report_type)))
 
     def get_quantity_or_none(value, section_id):
         try:
@@ -233,13 +208,43 @@ def _ledger_json_to_stock_report_helper(form, report_type, ledger_json):
         if ledger_instruction.quantity is not None
     ]
 
+    helper_generator_fn = {
+        stockconst.REPORT_TYPE_BALANCE: _get_transaction_helpers_from_balance_instruction,
+        stockconst.REPORT_TYPE_TRANSFER: _get_transaction_helpers_from_transfer_instruction,
+    }
     transaction_helpers = [
         transaction_helper
         for ledger_instruction in ledger_instructions
-        for transaction_helper in get_transaction_helpers(ledger_instruction)
+        for transaction_helper in helper_generator_fn(ledger_instruction)
     ]
 
     return StockReportHelper.make_from_form(form, timestamp, report_type, transaction_helpers)
+
+
+def _get_transaction_helpers_from_balance_instruction(ledger_instruction):
+    case_id = ledger_instruction.entity_id
+    yield _make_transaction_helper(
+        ledger_instruction,
+        action=(const.StockActions.STOCKONHAND
+                if ledger_instruction.quantity > 0
+                else const.StockActions.STOCKOUT),
+        case_id=case_id,
+    )
+
+
+def _get_transaction_helpers_from_transfer_instruction(ledger_instruction):
+    src = ledger_instruction.src
+    dest = ledger_instruction.dest
+    if not (src or dest):
+        raise IllegalCaseId(_("Can't specify a transaction block with no src or dest case"))
+    if src is not None:
+        yield _make_transaction_helper(
+            ledger_instruction,
+            action=const.StockActions.CONSUMPTION, case_id=src)
+    if dest is not None:
+        yield _make_transaction_helper(
+            ledger_instruction,
+            action=const.StockActions.RECEIPTS, case_id=dest)
 
 
 def _make_transaction_helper(ledger_instruction, action, case_id):
