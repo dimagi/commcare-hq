@@ -43,7 +43,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         )
 
         # Change the doc_type of the form by archiving it
-        self.interface.xform_model.archive(xform1)
+        xform1.archive()
         xform1 = self.interface.get_xform(xform1.form_id)
         self.assertTrue(xform1.is_archived)
 
