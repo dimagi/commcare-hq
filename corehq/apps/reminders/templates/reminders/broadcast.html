@@ -1,15 +1,11 @@
-{% extends 'reminders/base_template.html' %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block head %}{{ block.super}}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
-{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reminders/ko/reminders.broadcast.ko.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'reminders/ko/reminders.broadcast.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -22,7 +18,7 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div id="broadcast-form">
         {% crispy form %}
     </div>
