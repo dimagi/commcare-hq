@@ -1,6 +1,8 @@
 import datetime
 import logging
 
+from couchdbkit.exceptions import ResourceNotFound
+
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -62,11 +64,18 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def is_duplicate(cls, xform):
-        return xform.form_id in XFormInstance.get_db()
+    def is_duplicate(cls, xform_id, domain=False):
+        if domain:
+            try:
+                existing_doc = XFormInstance.get_db().get(xform_id)
+            except ResourceNotFound:
+                return False
+            return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
+        else:
+            return xform_id in XFormInstance.get_db()
 
     @classmethod
-    def bulk_delete(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, case, xforms):
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
 
@@ -119,11 +128,6 @@ class FormProcessorCouch(object):
         new_id = XFormInstance.get_db().server.next_uuid()
         xform._id = new_id
         return xform
-
-    @classmethod
-    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        existing_doc = XFormInstance.get_db().get(xform_id)
-        return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
 
     @classmethod
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
@@ -198,15 +202,11 @@ class FormProcessorCouch(object):
         wrapped by the appropriate form type.
         """
         form_ids = get_case_xform_ids(case_id)
-        return FormProcessorCouch.get_xforms(form_ids)
-
-    @staticmethod
-    def get_xforms(form_ids):
         return [fetch_and_wrap_form(id) for id in form_ids]
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):
-    from corehq.apps.commtrack.processing import get_stock_actions
+    from corehq.form_processor.parsers.ledgers import get_stock_actions
     case_actions = []
     for form in sorted_forms:
         assert form.domain == domain

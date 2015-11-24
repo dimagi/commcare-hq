@@ -3,7 +3,7 @@ import os
 from django.test.utils import override_settings
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -11,7 +11,6 @@ class MultiCaseTest(TestCase):
 
     def setUp(self):
         self.domain = 'gigglyfoo'
-        self.interface = FormProcessorInterface()
         delete_all_xforms()
         delete_all_cases()
 
@@ -42,6 +41,6 @@ class MultiCaseTest(TestCase):
 
     def _check_ids(self, form, cases):
         for case in cases:
-            ids = self.interface.get_case_xform_ids(case.case_id)
+            ids = CaseAccessors().get_case_xform_ids(case.case_id)
             self.assertEqual(1, len(ids))
             self.assertEqual(form._id, ids[0])

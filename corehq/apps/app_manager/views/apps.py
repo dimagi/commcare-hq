@@ -583,6 +583,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('auto_gps_capture', None),
         ('amplifies_workers', None),
         ('amplifies_project', None),
+        ('minimum_use_threshold', None),
         ('use_grid_menus', None),
         ('comment', None),
     )

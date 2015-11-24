@@ -11,7 +11,7 @@ from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
 from corehq.util.soft_assert import soft_assert
-from corehq.util.xml import serialize
+from corehq.util.xml_utils import serialize
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX

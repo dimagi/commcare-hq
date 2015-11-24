@@ -18,6 +18,7 @@ from corehq.apps.reports.formdetails.readable import get_readable_data_for_submi
 from corehq import toggles
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
+from corehq.util.xml_utils import indent_xml
 from couchforms.models import XFormInstance
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
@@ -35,13 +36,8 @@ register = template.Library()
 def render_form_xml(form):
     xml = form.get_xml() or ''
     return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
-           % escape(xml.replace("><", ">\n<"))
+           % escape(indent_xml(xml))
 
-
-@register.simple_tag
-def render_pretty_xml(xml):
-    return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
-           % escape(xml.replace("><", ">\n<"))
 
 
 @register.simple_tag

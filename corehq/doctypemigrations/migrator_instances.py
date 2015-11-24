@@ -13,7 +13,6 @@ users_migration = Migrator(
         'CommCareUser',
         'WebUser',
         'Invitation',
-        'DomainInvitation',
         'DomainRemovalRecord',
         'OrgRemovalRecord',
     )

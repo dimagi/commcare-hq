@@ -8,7 +8,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ReportModule,
 )
-from corehq.util.xml import serialize
+from corehq.util.xml_utils import serialize
 
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import ReportConfiguration

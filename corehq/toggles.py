@@ -322,6 +322,13 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
+    'hipaa_compliance_checkbox',
+    'Show HIPAA compliance checkbox',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
+)
+
 REMOTE_APPS = StaticToggle(
     'remote-apps',
     'Allow creation of remote applications',
@@ -416,12 +423,6 @@ FORM_LINK_WORKFLOW = StaticToggle(
 
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
-VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
-    'transaction_question_types',
-    "Adds transaction-related question types in the form builder",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',

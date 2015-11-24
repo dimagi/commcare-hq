@@ -12,14 +12,24 @@
     {% endcompress %}
     <style>
         #map { height: 800px; }
+        .map-info {
+            padding: 6px 8px;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
 	<div class="container-fluid">
 		{% block main_content %}
-            <h1>Incoming Forms by country <small>This should update in real time.</small></h1>
+            <h1>Incoming Forms by country <small>This should update in real time. Also check out the <a href="{% url 'dimagisphere_charts' %}" target="_blank">graph</a></small></h1>
             <div id="map"></div>
-            <div id="chart"><svg style='height:500px'></svg></div>
+            <div id="controls" class="pull-right">Simulate:
+                <button id="controlButton" type="button" class="btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-play"></span>
+                </button>
+            </div>
 		{% endblock main_content %}
 	</div>
     {% compress js %}
@@ -27,6 +37,7 @@
         <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'reports/javascripts/leaflet.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
     {% endcompress %}
     {% block script_panel %}
         <script type="text/javascript">
@@ -37,36 +48,24 @@ jQuery(document).ready(function($) {
         heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
     });
 
-    var formCounts = {};  // keeps track of totals per country
-    var maxCount = 0;
-    var activeCounts = {};  // keeps track of "active" per country - from the last second
-
-    // receive a message though the Websocket from the server
-    function receiveMessage(msg) {
-        var msgObj = JSON.parse(msg);
-        if (msgObj.country) {
-            // update totals
-            var currentCount = formCounts[msgObj.country] || 0;
-            currentCount += 1;
-            formCounts[msgObj.country] = currentCount;
-            if (currentCount > maxCount) {
-                maxCount = currentCount;
-            }
-
-            // update active
-            var activeCount = activeCounts[msgObj.country] || 0;
-            activeCounts[msgObj.country] = activeCount + 1;
+    function addDataToMap(msgObj) {
+        if (dimagisphere.addData(msgObj)) {
             colorAll();
-
             // this removes from active after a bit of time
             window.setTimeout(function () {
-                activeCounts[msgObj.country] -= 1;
+                dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
             }, 1000);
         }
     }
 
-    var map = L.map('map').setView([0, 0], 3)
+    // receive a message though the Websocket from the server
+    function receiveMessage(msg) {
+        addDataToMap(JSON.parse(msg));
+    }
 
+    var countriesGeo;
+    // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
+    var map = L.map('map').setView([0, 0], 3)
     var mapId = 'mapbox.dark';
     // todo: move to config somewhere
     var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
@@ -79,13 +78,13 @@ jQuery(document).ready(function($) {
     function getColor(featureId) {
         // courtesy of http://colorbrewer2.org/
         var colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
-        var count = formCounts[featureId];
+        var count = dimagisphere.formData.totalFormsByCountry[featureId];
         if (!count) {
             return colors[0];
         }
-        var activeCount = activeCounts[featureId];
+        var activeCount = dimagisphere.formData.recentFormsByCountry[featureId];
         if (!activeCount) {
-            var pct = count / maxCount;
+            var pct = count / dimagisphere.formData.maxFormsByCountry;
             var index = Math.min(Math.ceil(pct * colors.length), colors.length - 1);
             return colors[index];
         }
@@ -97,7 +96,7 @@ jQuery(document).ready(function($) {
     }
 
     function getOpacity(featureId) {
-        if (formCounts[featureId]) {
+        if (dimagisphere.formData.totalFormsByCountry[featureId]) {
             return .9;
         } else {
             return 0;
@@ -115,10 +114,54 @@ jQuery(document).ready(function($) {
         };
     }
 
+    // highlights
+    function highlightFeature(e) {
+        var layer = e.target;
+        layer.setStyle({
+            weight: 4,
+            color: '#002c5f',
+            dashArray: ''
+        });
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+        info.update(layer.feature.properties);
+    }
+
+    function resetHighlight(e) {
+        countriesGeo.resetStyle(e.target);
+        info.update();
+    }
+
+    function onEachFeature(feature, layer) {
+        layer.on({
+            mouseover: highlightFeature,
+            mouseout: resetHighlight
+        });
+    }
+
+    // info control
+    var info = L.control();
+    info.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'map-info');
+        this.update();
+        return this._div;
+    };
+
+    // method that we will use to update the control based on feature properties passed in
+    info.update = function (props) {
+        function _getInfoContent(countryName) {
+            var formCount = dimagisphere.formData.totalFormsByCountry[countryName];
+            var message = formCount ? formCount + ' forms' : 'no data yet';
+            return '<b>' + countryName + '</b>: ' + message;
+        }
+        this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
+    };
+    info.addTo(map);
+
     // todo: should probably be getting this from somewhere else and possibly not on every page load.
-    var countriesGeo;
     $.getJSON('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json', function (data) {
-        countriesGeo = L.geoJson(data, {style: style}).addTo(map);
+        countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
     });
 
     function colorAll() {
@@ -126,8 +169,35 @@ jQuery(document).ready(function($) {
             countriesGeo.setStyle(style);
         }
     }
+
     // update all every 5 seconds in case no activity (this is just to clear active state)
     window.setInterval(colorAll, 5000);
+
+    // simulation controls
+    var simulationOn = false;
+    var controlButton = $('#controlButton');
+    function setPauseButton() {
+        controlButton.children('span').removeClass('glyphicon-play').addClass('glyphicon-pause');
+    }
+    function setPlayButton() {
+        controlButton.children('span').removeClass('glyphicon-pause').addClass('glyphicon-play');
+    }
+    function simulateForms() {
+        if (simulationOn) {
+            addDataToMap(dimagisphere.generateRandomItem());
+            window.setTimeout(simulateForms, 1200);
+        }
+    }
+    controlButton.click(function () {
+        if (!simulationOn) {
+            simulationOn = true;
+            setPauseButton()
+            simulateForms();
+        } else {
+            simulationOn = false;
+            setPlayButton();
+        }
+    });
 });
 </script>
 	{% endblock %}

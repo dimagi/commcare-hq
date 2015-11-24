@@ -115,7 +115,6 @@ def _create_commtrack_config_if_needed(domain):
 def _enable_commtrack_previews(domain):
     for toggle_class in (
         toggles.COMMTRACK,
-        toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
         toggles.VELLUM_ADVANCED_ITEMSETS,
         toggles.STOCK_TRANSACTION_EXPORT,
     ):
