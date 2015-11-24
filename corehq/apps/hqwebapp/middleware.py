@@ -1,7 +1,10 @@
-from django.middleware.csrf import CsrfViewMiddleware, REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN
+import logging
 
-from corehq.util.soft_assert import soft_assert
+from django.middleware.csrf import CsrfViewMiddleware, REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN
 from django.conf import settings
+
+
+logger = logging.getLogger('')
 
 
 class HQCsrfViewMiddleWare(CsrfViewMiddleware):
@@ -14,9 +17,7 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
                       "Read more here https://github.com/dimagi/commcare-hq/pull/9227".format(
                           url=request.path
                       )
-            _assert = soft_assert(notify_admins=True, exponential_backoff=True)
-            _assert(False, warning)
-
+            logger.error(warning)
             return self._accept(request)
         else:
             return super(HQCsrfViewMiddleWare, self)._reject(request, reason)
