@@ -1,5 +1,8 @@
 from django.test import SimpleTestCase, TestCase
+
 from jsonobject.exceptions import BadValueError
+
+from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.dbaccessors import get_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
@@ -320,9 +323,14 @@ class ReportConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        ReportConfiguration(domain='foo', config_id='foo1').save()
-        ReportConfiguration(domain='foo', config_id='foo2').save()
-        ReportConfiguration(domain='bar', config_id='bar1').save()
+        domain_foo = Domain(name='foo')
+        domain_foo.save()
+        domain_bar = Domain(name='bar')
+        domain_bar.save()
+
+        ReportConfiguration(domain=domain_foo.name, config_id='foo1').save()
+        ReportConfiguration(domain=domain_foo.name, config_id='foo2').save()
+        ReportConfiguration(domain=domain_bar.name, config_id='bar1').save()
 
     @classmethod
     def tearDownClass(cls):
@@ -330,6 +338,8 @@ class ReportConfigurationDbTest(TestCase):
             config.delete()
         for config in get_all_report_configs():
             config.delete()
+        for domain in Domain.get_all():
+            domain.delete()
 
     def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
