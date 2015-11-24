@@ -252,9 +252,9 @@ var ReportModule = (function () {
         });
         self.lang = options.lang;
         self.moduleName = options.moduleName;
-        self.moduleFilter = options.moduleFilter;
+        self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
-        self.currentModuleFilter = ko.observable(options.moduleFilter);
+        self.currentModuleFilter = ko.observable(self.moduleFilter);
         self.menuImage = options.menuImage;
         self.menuAudio = options.menuAudio;
         self.reportTitles = {};
