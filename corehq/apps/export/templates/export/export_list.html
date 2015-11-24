@@ -26,9 +26,6 @@
 (function (angular, undefined) {
    'use strict';
     var listExportsApp = angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
-    listExportsApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-    }]);
     listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);

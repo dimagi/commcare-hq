@@ -13,6 +13,10 @@
         'ngMessages'
     ]);
 
+    list_exports.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
         $scope, djangoRMI
