@@ -1,5 +1,5 @@
-from corehq.apps.commtrack.models import StockTransactionHelper
 from corehq.apps.commtrack.sms import StockReportParser, SMSError
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from custom.ilsgateway import LOGISTICS_PRODUCT_ALIASES
 
 
@@ -55,7 +55,7 @@ class ILSStockReportParser(StockReportParser):
                 for p in products:
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location'].get_id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=action.action,

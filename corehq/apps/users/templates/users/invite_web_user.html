@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block main_column %}
-    <form class="form form-horizontal" method="post" action="">
+    <form class="form form-horizontal" method="post" action="">{% csrf_token %}
         {% bootstrap_form_errors registration_form %}
         {% bootstrap_fieldset registration_form "Information for new web user" %}
         <div class="form-actions">

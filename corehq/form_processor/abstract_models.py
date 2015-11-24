@@ -1,4 +1,7 @@
 import logging
+from abc import ABCMeta, abstractmethod
+
+import six as six
 from couchdbkit import ResourceNotFound
 from dimagi.utils.decorators.memoized import memoized
 
@@ -76,7 +79,7 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     @classmethod
-    def get_with_attachments(slef, xform_id):
+    def get_with_attachments(self, xform_id):
         raise NotImplementedError()
 
     @memoized
@@ -103,9 +106,6 @@ class AbstractCommCareCase(object):
     def case_name(self):
         raise NotImplementedError()
 
-    def hard_delete(self):
-        raise NotImplementedError()
-
     def soft_delete(self):
         raise NotImplementedError()
 
@@ -121,14 +121,14 @@ class AbstractCommCareCase(object):
     def dynamic_case_properties(self):
         raise NotImplementedError()
 
+
+class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
     @classmethod
-    def get(cls, case_id):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_by_location(cls, location):
+        raise NotImplementedError
 
     @classmethod
-    def get_cases(cls, ids):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_case_xform_ids(cls, case_id):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_or_create_by_location(cls, location):
+        raise NotImplementedError

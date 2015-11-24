@@ -244,7 +244,7 @@ GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
@@ -294,6 +294,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+REPORT_BUILDER_BETA_GROUP = StaticToggle(
+    'report_builder_beta_group',
+    'RB beta group',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -313,6 +320,13 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
+    'hipaa_compliance_checkbox',
+    'Show HIPAA compliance checkbox',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
 )
 
 REMOTE_APPS = StaticToggle(
@@ -409,12 +423,6 @@ FORM_LINK_WORKFLOW = StaticToggle(
 
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
-VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
-    'transaction_question_types',
-    "Adds transaction-related question types in the form builder",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
@@ -694,6 +702,13 @@ USE_SQL_BACKEND = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+TWO_FACTOR_AUTH = StaticToggle(
+    'two_factor_auth',
+    "Enforce two factor auth before accessing the domain",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -719,12 +734,5 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     'tf_sql_backend',
     'Use a SQLite backend for Touchforms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-TWO_FACTOR_AUTH = StaticToggle(
-    'two_factor_auth',
-    "Enforce two factor auth before accessing the domain",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )

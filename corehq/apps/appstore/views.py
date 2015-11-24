@@ -262,6 +262,9 @@ def copy_snapshot(request, domain):
                     new_domain = dom.save_copy(new_domain_name,
                                                new_hr_name=form.cleaned_data['hr_name'],
                                                user=user)
+                    if new_domain.commtrack_enabled:
+                        new_domain.convert_to_commtrack()
+
                 except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
                     return project_info(request, domain)

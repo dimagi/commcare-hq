@@ -151,7 +151,7 @@ def get_location_id(form):
     loc = _get_location(form)
     if not loc:
         return None
-    return loc._id
+    return loc.location_id
 
 
 def get_location_id_by_type(form, type):
@@ -159,7 +159,7 @@ def get_location_id_by_type(form, type):
         loc = get_location_by_type(form, type)
     except SQLLocation.DoesNotExist:
         loc = None
-    return loc._id if loc else None
+    return loc.location_id if loc else None
 
 
 def get_location_by_type(form, type):

@@ -1,11 +1,11 @@
 import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from couchforms.models import XFormInstance
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import generator
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig, \
-    SupplyPointCase
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
@@ -84,21 +84,21 @@ class EWSScriptTest(TestScript):
         region = make_loc(code='region', name='Test region', type='region', domain=domain.name, parent=national)
         loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name,
                        parent=national)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, loc)
+        SupplyInterface.create_from_location(TEST_DOMAIN, loc)
         loc.save()
 
         rms2 = make_loc(code="wrms", name="Test RMS 2", type="Regional Medical Store", domain=domain.name,
                         parent=region)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, rms2)
+        SupplyInterface.create_from_location(TEST_DOMAIN, rms2)
         rms2.save()
 
         cms = make_loc(code="cms", name="Central Medical Stores", type="Central Medical Store",
                        domain=domain.name, parent=national)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, cms)
+        SupplyInterface.create_from_location(TEST_DOMAIN, cms)
         cms.save()
 
         loc2 = make_loc(code="tf", name="Test Facility", type="CHPS Facility", domain=domain.name, parent=region)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, loc2)
+        SupplyInterface.create_from_location(TEST_DOMAIN, loc2)
         loc2.save()
 
         supply_point_id = loc.linked_supply_point().get_id

@@ -9,6 +9,7 @@ from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, \
     CaseTransaction
+from django.conf import settings
 
 
 class FormProcessorTestUtils(object):
@@ -16,8 +17,8 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
+        assert CommCareCase.get_db().dbname.endswith('test')
         view_kwargs = {}
-
         if domain:
             view_kwargs = {
                 'startkey': [domain],
@@ -92,17 +93,17 @@ class FormProcessorTestUtils(object):
 run_with_all_backends = functools.partial(
     run_with_multiple_configs,
     run_configs=[
-        # clean restore code but without cleanliness flags
+        # run with default setting
         RunConfig(
             settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': True,
+                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
             },
             post_run=lambda *args, **kwargs: args[0].tearDown()
         ),
-        # original code
+        # run with inverse of default setting
         RunConfig(
             settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': False,
+                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
             },
             pre_run=lambda *args, **kwargs: args[0].setUp(),
         ),

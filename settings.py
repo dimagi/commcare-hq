@@ -174,6 +174,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
+    'corehq.util.context_processors.websockets_override',
 ]
 
 location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
@@ -205,6 +206,7 @@ DEFAULT_APPS = (
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'ws4redis',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -419,6 +421,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
 
+
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 ####### Domain settings  #######
@@ -506,7 +509,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
-        "corehq.apps.userreports.fixtures.report_fixture_generator",
+        "corehq.apps.app_manager.fixtures.report_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
@@ -558,6 +561,15 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
+
+
+# websockets config
+from settingshelper import get_allowed_websocket_channels
+WEBSOCKET_URL = '/ws/'
+WS4REDIS_PREFIX = 'ws'
+WSGI_APPLICATION = 'ws4redis.django_runserver.application'
+WS4REDIS_ALLOWED_CHANNELS = get_allowed_websocket_channels
+
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
@@ -698,7 +710,6 @@ AUDIT_MODULES = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
-    'PINGDOM_API_ID': '',
     'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
@@ -1050,8 +1061,7 @@ INDICATOR_CONFIG = {
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import (
     get_dynamic_db_settings,
-    make_couchdb_tuples,
-    get_extra_couchdbs,
+    CouchSettingsHelper,
     SharedDriveConfiguration
 )
 
@@ -1071,6 +1081,9 @@ USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
 NEW_FIXTURES_DB = 'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
+
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = None
 
 COUCHDB_APPS = [
     'api',
@@ -1092,7 +1105,6 @@ COUCHDB_APPS = [
     'ctable',
     'custom_data_fields',
     'hqadmin',
-    'domain',
     'ext',
     'facilities',
     'fluff_filter',
@@ -1163,13 +1175,18 @@ COUCHDB_APPS = [
 
     # fixtures
     ('fixtures', FIXTURES_DB),
+
+    # domains
+    ('domain', DOMAINS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE,
-                                             [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB])
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
+    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
+])
+COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
+EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -1301,9 +1318,6 @@ PILLOWTOPS = {
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
     ],
-    'phonelog': [
-        'corehq.pillows.log.PhoneLogPillow',
-    ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
@@ -1404,8 +1418,7 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
-    'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
-    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -1456,6 +1469,10 @@ CUSTOM_MODULES = [
     'custom.ilsgateway',
     'custom.ewsghana',
 ]
+
+CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
+    'ews-ghana': 'dashboard_page'
+}
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 

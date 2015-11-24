@@ -5,6 +5,7 @@ from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.ewsghana.api import EWSApi
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
@@ -13,7 +14,7 @@ from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
-from corehq.apps.commtrack.models import SupplyPointCase, StockState
+from corehq.apps.commtrack.models import StockState
 
 
 TEST_DOMAIN = 'ews-stock-transaction'
@@ -60,8 +61,8 @@ class TestStockDataSync(TestCase):
         l1.save()
         l2.save()
 
-        SupplyPointCase.create_from_location(TEST_DOMAIN, l1)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, l2)
+        SupplyInterface.create_from_location(TEST_DOMAIN, l1)
+        SupplyInterface.create_from_location(TEST_DOMAIN, l2)
 
         l1.save()
         l2.save()

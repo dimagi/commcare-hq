@@ -320,7 +320,10 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
             messages.error(request, _('The session containing the file you '
                                       'uploaded has expired - please upload '
                                       'a new one.'))
-            return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
+        else:
+            messages.error(request, _('Sorry something went wrong with that import. Please try again. '
+                                      'Report an issue if you continue to have problems.'))
+        return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
     else:
         context = RequestContext(request)
         context.update(download_context)
