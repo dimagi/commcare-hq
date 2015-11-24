@@ -27,9 +27,7 @@
           href="{% new_static 'datatables/media/css/jquery.dataTables.min.css ' %}" />
     <link rel="stylesheet" href="{% new_static 'formplayer/style/webforms.css' %}">
     <link rel="stylesheet" href="{% new_static 'cloudcare/css/cloudcare.css' %}">
-    {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
     <link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}" />
-    {% endif %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
@@ -54,10 +52,8 @@
     <script src="{% new_static 'formplayer/script/entrycontrols_full.js' %}"></script>
     <script src="{% new_static 'formplayer/script/fullform-ui.js' %}"></script>
 
-    {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
     <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
     <script src="{% new_static 'codemirror/mode/xml/xml.js' %}"></script>
-    {% endif %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
