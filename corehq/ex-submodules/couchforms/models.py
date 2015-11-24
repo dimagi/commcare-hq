@@ -405,6 +405,10 @@ class XFormDuplicate(XFormError):
     def is_duplicate(self):
         return True
 
+    @property
+    def is_submission_error_log(self):
+        return False
+
 
 class XFormDeprecated(XFormError):
     """
