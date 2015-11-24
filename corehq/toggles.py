@@ -716,6 +716,13 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+TWO_FACTOR_AUTH = StaticToggle(
+    'two_factor_auth',
+    "Enforce two factor auth before accessing the domain",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 GRID_MENUS = StaticToggle(
     'grid_menus',
     'Allow using grid menus on Android',
@@ -727,5 +734,4 @@ ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
 )
