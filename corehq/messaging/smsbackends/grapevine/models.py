@@ -124,14 +124,14 @@ class UrlencodedDeserializer(Serializer):
         'urlencode': 'application/x-www-form-urlencoded',
     }
 
-    def from_urlencode(self, data,options=None):
+    def from_urlencode(self, data, options=None):
         """ handles basic form encoded url posts """
-        qs = dict((k, v if len(v)>1 else v[0] )
+        qs = dict((k, v if len(v) > 1 else v[0])
             for k, v in urlparse.parse_qs(data).iteritems())
 
         return qs
 
-    def to_urlencode(self,content):
+    def to_urlencode(self, content):
         pass
 
 

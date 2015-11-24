@@ -1,18 +1,15 @@
-from datetime import datetime
-import logging
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SQLSMSBackend
-from corehq.util.timezones.conversions import UserTime
 from urllib2 import urlopen
 from urllib import urlencode
-import pytz
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.unicel.forms import UnicelBackendForm
 from django.conf import settings
 
 OUTBOUND_URLBASE = "http://www.unicel.in/SendSMS/sendmsg.php"
+
 
 class InboundParams(object):
     """
@@ -45,6 +42,7 @@ class OutboundParams(object):
 UNICODE_PARAMS = [("udhi", 0),
                   ("dcs", 8)]
 
+
 class UnicelBackend(SMSBackend):
     username = StringProperty()
     password = StringProperty()
@@ -70,7 +68,7 @@ class UnicelBackend(SMSBackend):
         """
         Send an outbound message using the Unicel API
         """
-        
+
         phone_number = clean_phone_number(message.phone_number).replace("+", "")
         params = [(OutboundParams.DESTINATION, phone_number),
                   (OutboundParams.USERNAME, self.username),
