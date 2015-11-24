@@ -114,13 +114,11 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
         def case_should_be_reopened(case, user_case_should_be_closed):
             return case and case.closed and not user_case_should_be_closed
 
-        if case_should_be_reopened(case, close):
-            user_case_helper.re_open_case(case)
-            return
-
         if not case:
             user_case_helper.create_user_case(case_type, commcare_user, fields)
         else:
+            if case_should_be_reopened(case, close):
+                user_case_helper.re_open_case(case)
             changed = _user_case_changed(case, case_type, close, fields, owner_id)
             if changed:
                 user_case_helper.update_user_case(case, case_type, fields)
@@ -154,7 +152,7 @@ def _get_user_case_fields(commcare_user):
 
 def _user_case_changed(case, case_type, close, fields, owner_id):
     props = case.dynamic_case_properties()
-    changed = close != case.closed
+    changed = close and not case.closed
     changed = changed or case.type != case_type
     changed = changed or case.name != fields['name']
     changed = changed or case.owner_id != owner_id
