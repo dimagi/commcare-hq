@@ -35,8 +35,8 @@ class StrictDatetimesTest(TestCase):
     @run_with_all_backends
     def test(self):
         form = make_form_from_case_blocks([ElementTree.fromstring(CASE_BLOCK)])
-        lock_manager = process_xform_xml(self.domain, form)
-        with lock_manager as xforms:
+        result = process_xform_xml(self.domain, form)
+        with result.get_locked_forms() as xforms:
             with self.interface.casedb_cache(domain=self.domain) as case_db:
                 with self.assertRaises(PhoneDateValueError):
                     process_cases_with_casedb(xforms, case_db)

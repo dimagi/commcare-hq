@@ -109,28 +109,25 @@ class SubmissionPost(object):
         if failure_result:
             return failure_result
 
-        try:
-            xform_lock_manager = process_xform_xml(self.domain, self.instance, self.attachments)
-        except SubmissionError as e:
-            instance = e.error_log
-            self._post_process_form(instance)
-            self.interface.save_xform(instance)
-            return self.get_exception_response_and_log(e, self.path), None, []
+        result = process_xform_xml(self.domain, self.instance, self.attachments)
+        submitted_form = result.submitted_form
+
+        self._post_process_form(submitted_form)
+
+        if submitted_form.is_submission_error_log:
+            self.interface.save_xform(submitted_form)
+            return self.get_exception_response_and_log(submitted_form, self.path), None, []
 
         cases = []
-        with xform_lock_manager as xforms:
+        with result.get_locked_forms() as xforms:
             instance = xforms[0]
-            self._post_process_form(instance)
             if instance.xmlns == DEVICE_LOG_XMLNS:
                 process_device_log(self.domain, instance)
-            elif instance.is_duplicate:
-                assert len(xforms) == 1
-                self.interface.save_xform(instance)
-            elif not instance.is_error:
-                if len(xforms) > 1:
-                    assert len(xforms) == 2
-                    assert xforms[1].is_deprecated
 
+            elif instance.is_duplicate:
+                self.interface.save_xform(instance)
+
+            elif not instance.is_error:
                 try:
                     cases = self.process_xforms_for_cases(xforms)
                 except (IllegalCaseId, UsesReferrals, MissingProductId, PhoneDateValueError) as e:
@@ -251,16 +248,17 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_exception_response_and_log(error, path):
+    def get_exception_response_and_log(error_instance, path):
         logging.exception(
-            u"Problem receiving submission to %s. %s" % (
+            u"Problem receiving submission to %s. Doc id: %s, Error %s" % (
                 path,
-                unicode(error),
+                error_instance.form_id,
+                error_instance.problem
             )
         )
         return OpenRosaResponse(
             message=("The sever got itself into big trouble! "
-                     "Details: %s" % error.error_log.problem),
+                     "Details: %s" % error_instance.problem),
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()

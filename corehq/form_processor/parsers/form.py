@@ -18,6 +18,47 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
+class FormProcessingResult(object):
+    def __init__(self, submitted_form, existing_duplicate=None):
+        self.submitted_form = submitted_form
+        self.existing_duplicate = existing_duplicate
+
+        if submitted_form.is_duplicate:
+            assert existing_duplicate is None
+
+        if existing_duplicate:
+            assert existing_duplicate.is_deprecated
+
+        self.interface = FormProcessorInterface(self.submitted_form.domain)
+
+    def _get_form_lock(self, form_id):
+        return self.interface.acquire_lock_for_xform(form_id)
+
+    def get_locked_forms(self):
+        if self.existing_duplicate:
+            # Lock docs with their original ID's (before they got switched during deprecation)
+            new_id = self.existing_duplicate.form_id
+            old_id = self.existing_duplicate.orig_id
+            return MultiLockManager([
+                LockManager(self.submitted_form, self._get_form_lock(new_id)),
+                LockManager(self.existing_duplicate, self._get_form_lock(old_id)),
+            ])
+        else:
+            return MultiLockManager([
+                LockManager(self.submitted_form, self._get_form_lock(self.submitted_form.form_id))
+            ])
+
+
+class LockedFormProcessingResult(FormProcessingResult):
+    def __init__(self, submitted_form):
+        super(LockedFormProcessingResult, self).__init__(submitted_form)
+        assert submitted_form.is_normal
+        self.lock = self._get_form_lock(submitted_form.form_id)
+
+    def get_locked_forms(self):
+        return MultiLockManager([LockManager(self.submitted_form, self.lock)])
+
+
 def process_xform_xml(domain, instance, attachments=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
@@ -31,13 +72,11 @@ def process_xform_xml(domain, instance, attachments=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = _create_new_xform(domain, instance, attachments=attachments)
+        return _create_new_xform(domain, instance, attachments=attachments)
     except XMLSyntaxError as e:
-        xform = _get_submission_error(domain, instance, e)
-        raise SubmissionError(xform)
+        return _get_submission_error(domain, instance, e)
     except DuplicateError as e:
         return _handle_id_conflict(instance, e.xform, domain)
-    return MultiLockManager([xform_lock])
 
 
 def _create_new_xform(domain, instance_xml, attachments=None):
@@ -72,12 +111,12 @@ def _create_new_xform(domain, instance_xml, attachments=None):
     attachments.append(Attachment(name='form.xml', raw_content=instance_xml, content_type='text/xml'))
     interface.store_attachments(xform, attachments)
 
-    lock = interface.acquire_lock_for_xform(xform.form_id)
-    with ReleaseOnError(lock):
+    result = LockedFormProcessingResult(xform)
+    with ReleaseOnError(result.lock):
         if interface.is_duplicate(xform.form_id):
             raise DuplicateError(xform)
 
-    return LockManager(xform, lock)
+    return result
 
 
 def _get_submission_error(domain, instance, error):
@@ -90,7 +129,8 @@ def _get_submission_error(domain, instance, error):
     except UnicodeDecodeError:
         message = unicode(str(error), encoding='utf-8')
 
-    return FormProcessorInterface(domain).submission_error_form_instance(instance, message)
+    xform = FormProcessorInterface(domain).submission_error_form_instance(instance, message)
+    return FormProcessingResult(xform)
 
 
 def _handle_id_conflict(instance, xform, domain):
@@ -112,8 +152,7 @@ def _handle_id_conflict(instance, xform, domain):
         # an ID that belonged to a different doc type. these are likely developers
         # manually testing or broken API users. just resubmit with a generated ID.
         xform = interface.assign_new_id(xform)
-        lock = interface.acquire_lock_for_xform(xform.form_id)
-        return MultiLockManager([LockManager(xform, lock)])
+        return FormProcessingResult(xform)
 
 
 def _handle_duplicate(new_doc, instance):
@@ -138,15 +177,9 @@ def _handle_duplicate(new_doc, instance):
         #  - Save the new instance to the previous document to preserve the ID
         existing_doc, new_doc = interface.deprecate_xform(existing_doc, new_doc)
 
-        # Lock docs with their original ID's (before they got switched during deprecation)
-        return MultiLockManager([
-            LockManager(new_doc, interface.acquire_lock_for_xform(existing_doc.form_id)),
-            LockManager(existing_doc, interface.acquire_lock_for_xform(existing_doc.orig_id)),
-        ])
+        return FormProcessingResult(new_doc, existing_doc)
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
         duplicate = interface.deduplicate_xform(new_doc)
-        return MultiLockManager([
-            LockManager(duplicate, interface.acquire_lock_for_xform(duplicate.form_id)),
-        ])
+        return FormProcessingResult(duplicate)
