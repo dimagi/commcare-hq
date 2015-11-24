@@ -3,8 +3,10 @@ from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import run_with_all_backends
 
@@ -19,7 +21,7 @@ class CaseDbCacheTest(TestCase):
     @run_with_all_backends
     def testDomainCheck(self):
         id = uuid.uuid4().hex
-        FormProcessorInterface().post_case_blocks([
+        post_case_blocks([
                 CaseBlock(
                     create=True, case_id=id,
                     user_id='some-user'
@@ -74,7 +76,7 @@ class CaseDbCacheTest(TestCase):
             self.assertFalse(cache.in_cache(id))
 
         for id in case_ids:
-            cache.set(id, self.interface.get_case(id))
+            cache.set(id, CaseAccessors().get_case(id))
 
         for i, id in enumerate(case_ids):
             self.assertTrue(cache.in_cache(id))
@@ -162,7 +164,7 @@ class CaseDbCacheNoDbTest(SimpleTestCase):
 
 def _make_some_cases(howmany, domain='dbcache-test'):
     ids = [uuid.uuid4().hex for i in range(howmany)]
-    FormProcessorInterface().post_case_blocks([
+    post_case_blocks([
         CaseBlock(
             create=True,
             case_id=ids[i],

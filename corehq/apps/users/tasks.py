@@ -142,12 +142,12 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
     queue='background_queue',
 )
 def resend_pending_invitations():
-    from corehq.apps.users.models import DomainInvitation
+    from corehq.apps.users.models import Invitation
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
     for domain in domains:
-        invitations = DomainInvitation.by_domain(domain.name)
+        invitations = Invitation.by_domain(domain.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:

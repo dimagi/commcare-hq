@@ -1,6 +1,6 @@
 import logging
 
-from datetime import datetime
+from iso8601 import iso8601
 
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
@@ -11,6 +11,14 @@ from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, 
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
+PROPERTY_TYPE_MAPPING = {
+    'opened_on': iso8601.parse_date
+}
+
+
+def _convert_type(property_name, value):
+    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
+
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
@@ -18,7 +26,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 
-        self.case.track_create(CaseTransaction.form_transaction(self.case, xformdoc))
+        transaction = CaseTransaction.form_transaction(self.case, xformdoc)
+        if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+            # don't add multiple transactions for the same form
+            self.case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
         if case_update.has_referrals():
@@ -62,9 +73,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             ))
 
     def _update_known_properties(self, action):
-        for k, v in action.get_known_properties().items():
-            if v:
-                setattr(self.case, k, v)
+        for name, value in action.get_known_properties().items():
+            if value:
+                setattr(self.case, name, _convert_type(name, value))
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)

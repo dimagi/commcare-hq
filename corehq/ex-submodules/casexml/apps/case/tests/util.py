@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from xml.etree import ElementTree
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.test_utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
 
@@ -55,11 +55,11 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=
     )
 
     domain = domain or 'test-domain'
-    _, _, [case] = FormProcessorInterface().submit_form_locally(updated_xml, domain=domain)
+    _, xform, [case] = submit_form_locally(updated_xml, domain=domain)
     test_class.assertLessEqual(starttime, case.server_modified_on)
     test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
     test_class.assertEqual(case_id, case.case_id)
-    return case
+    return xform, case
 
 
 def _replace_ids_in_xform_xml(xml_data, case_id_override=None):

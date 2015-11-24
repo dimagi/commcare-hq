@@ -16,6 +16,8 @@
     var usersApp = angular.module('usersApp', ['hq.web_users']);
     usersApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     }]);
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
@@ -209,6 +211,7 @@
                         <div class="input-group">
                             <input type="text"
                                    class="form-control"
+                                   ng-keypress="updateOnEnter($event)"
                                    ng-model="query"
                                    placeholder="{% trans "Filter Users..." %}">
                             <span class="input-group-btn">

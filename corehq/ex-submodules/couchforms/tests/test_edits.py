@@ -8,6 +8,8 @@ from mock import patch
 from couchdbkit import RequestFailed
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import (
     UnfinishedSubmissionStub,
 )
@@ -26,6 +28,8 @@ class EditFormTest(TestCase, TestFileMixin):
 
     def setUp(self):
         self.interface = FormProcessorInterface(self.domain)
+        self.casedb = CaseAccessors(self.domain)
+        self.formdb = FormAccessors(self.domain)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
@@ -54,7 +58,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual("100", xform.form_data['vitals']['height'])
         self.assertEqual("Edited Baby!", xform.form_data['assessment']['categories'])
 
-        deprecated_xform = self.interface.get_xform(xform.deprecated_form_id)
+        deprecated_xform = self.formdb.get_form(xform.deprecated_form_id)
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)
         self.assertNotEqual(self.ID, deprecated_xform.form_id)
@@ -83,7 +87,7 @@ class EditFormTest(TestCase, TestFileMixin):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
 
-        _, xform, _ = self.interface.submit_form_locally(original_xml, self.domain)
+        _, xform, _ = submit_form_locally(original_xml, self.domain)
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual(self.domain, xform.domain)
@@ -93,14 +97,14 @@ class EditFormTest(TestCase, TestFileMixin):
             0
         )
 
-        with patch.object(self.interface.processor, 'bulk_save', side_effect=RequestFailed):
+        with patch.object(self.interface.processor, 'save_processed_models', side_effect=RequestFailed):
             with self.assertRaises(RequestFailed):
-                self.interface.submit_form_locally(edit_xml, self.domain)
+                submit_form_locally(edit_xml, self.domain)
 
         # it didn't go through, so make sure there are no edits still
         self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
 
-        xform = self.interface.get_xform(self.ID)
+        xform = self.formdb.get_form(self.ID)
         self.assertIsNotNone(xform)
         self.assertEqual(
             UnfinishedSubmissionStub.objects.filter(xform_id=self.ID,
@@ -129,7 +133,7 @@ class EditFormTest(TestCase, TestFileMixin):
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(case.type, 'person')
         self.assertEqual(case.dynamic_case_properties()['property'], 'original value')
         self.assertEqual([form_id], case.xform_ids)
@@ -151,7 +155,7 @@ class EditFormTest(TestCase, TestFileMixin):
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(case.type, 'newtype')
         self.assertEqual(case.dynamic_case_properties()['property'], 'edited value')
         self.assertEqual([form_id], case.xform_ids)
@@ -180,10 +184,10 @@ class EditFormTest(TestCase, TestFileMixin):
         ).as_string()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        xform = self.interface.get_xform(form_id)
+        xform = self.formdb.get_form(form_id)
         self.assertTrue(xform.is_error)
 
-        deprecated_xform = self.interface.get_xform(xform.deprecated_form_id)
+        deprecated_xform = self.formdb.get_form(xform.deprecated_form_id)
         self.assertTrue(deprecated_xform.is_deprecated)
 
     @run_with_all_backends
@@ -201,7 +205,7 @@ class EditFormTest(TestCase, TestFileMixin):
         create_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual([create_form_id], case.xform_ids)
 
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
@@ -222,7 +226,7 @@ class EditFormTest(TestCase, TestFileMixin):
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(case.dynamic_case_properties()['property'], 'first value')
         self.assertEqual([create_form_id, edit_form_id], case.xform_ids)
 
@@ -240,7 +244,7 @@ class EditFormTest(TestCase, TestFileMixin):
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)
 
         # validate that worked
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)
 
@@ -264,7 +268,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         # ensure that the middle edit stays in the right place and is applied
         # before the final one
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(case.dynamic_case_properties()['property'], 'final value')
         self.assertEqual(case.dynamic_case_properties()['added_property'], 'added value')
         self.assertEqual([create_form_id, edit_form_id, second_edit_form_id], case.xform_ids)

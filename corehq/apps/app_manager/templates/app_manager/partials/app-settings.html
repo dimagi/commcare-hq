@@ -92,6 +92,16 @@
     </span>
 </script>
 
+<script type="text/html" id="CommcareSettings.widgets.number">
+    <span>
+        <input type="number" class="span3" data-bind="
+            value: visibleValue,
+            valueUpdate: 'textchange',
+            attr: {disabled: !enabled(), id: inputId}
+        " />
+    </span>
+</script>
+
 <script type="text/html" id="CommcareSettings.widgets.textarea">
     <span>
         <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
@@ -149,6 +159,7 @@ todo fix
 </script>
 {% endcomment %}
 
+
 <div class="tab-pane" id="commcare-settings">
     <div id="app_short_comment" class="app-comment">{{ app.short_comment }}</div>
     <div class="clearfix" id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
@@ -188,12 +199,11 @@ todo fix
                                 {% endblocktrans %}
                                 </span>
                             </p>
-                            <p class="help-block" data-bind="visible: !$data.valueIsLegal()">
-                                {% blocktrans %}
-                                    This is not an allowed value for this field
-                                {% endblocktrans %}
-                            </p>
                             <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+                            <span class="help-inline" data-bind="
+                                text: $data.warning || $parents[1].warning,
+                                visible: !$data.valueIsLegal()">
+                            </span>
                         </div>
                     </div>
                 </div>

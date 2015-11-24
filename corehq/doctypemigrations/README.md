@@ -65,7 +65,6 @@ users_migration = Migrator(
         'CommCareUser',
         'WebUser',
         'Invitation',
-        'DomainInvitation',
         'DomainRemovalRecord',
         'OrgRemovalRecord',
     )
@@ -117,8 +116,6 @@ CommCareUser                    82031   0
 CommCareUser-Deleted            1       0
 DeleteGroupRecord               2904    0
 DeleteGroupRecord-Deleted       0       0
-DomainInvitation                0       0
-DomainInvitation-Deleted        0       0
 DomainRemovalRecord             1259    0
 DomainRemovalRecord-Deleted     0       0
 Group                           20981   0

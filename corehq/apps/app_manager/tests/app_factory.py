@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.const import APP_V2, AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase, CaseIndex, PreloadAction
+    AutoSelectCase, CaseIndex, PreloadAction, ShadowModule
 
 
 class AppFactory(object):
@@ -56,6 +56,13 @@ class AppFactory(object):
 
     def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
         return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module, case_list_form)
+
+    def new_shadow_module(self, slug, source_module, with_form=True):
+        module = self.app.add_module(ShadowModule.new_module('{} module'.format(slug), None))
+        module.unique_id = '{}_module'.format(slug)
+        module.source_module_id = source_module.unique_id
+        self.slugs[module.unique_id] = slug
+        return (module, self.new_form(module)) if with_form else module
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]

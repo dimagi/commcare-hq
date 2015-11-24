@@ -17,8 +17,8 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
+        assert CommCareCase.get_db().dbname.endswith('test')
         view_kwargs = {}
-
         if domain:
             view_kwargs = {
                 'startkey': [domain],
