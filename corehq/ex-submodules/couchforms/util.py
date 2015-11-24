@@ -527,4 +527,7 @@ def spoof_submission(submit_url, body):
     response = client.post(submit_url, {
         'xml_submission_file': f,
     })
-    return response['X-CommCareHQ-FormID']
+    try:
+        return response['X-CommCareHQ-FormID']
+    except KeyError:
+        return None
