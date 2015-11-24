@@ -12,7 +12,8 @@ from django.http import (
 )
 
 import couchforms
-from casexml.apps.case.exceptions import PhoneDateValueError
+from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals
+from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.tzmigration import timezone_migration_in_progress
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -109,51 +110,31 @@ class SubmissionPost(object):
             return failure_result
 
         try:
-            xform_lock_manager = process_xform_xml(
-                self.domain,
-                self.instance,
-                attachments=self.attachments,
-            )
+            xform_lock_manager = process_xform_xml(self.domain, self.instance, self.attachments)
         except SubmissionError as e:
             instance = e.error_log
             self._post_process_form(instance)
             self.interface.save_xform(instance)
             return self.get_exception_response_and_log(e, self.path), None, []
 
+        cases = []
         with xform_lock_manager as xforms:
             instance = xforms[0]
             self._post_process_form(instance)
             if instance.xmlns == DEVICE_LOG_XMLNS:
                 process_device_log(self.domain, instance)
-                cases, errors = [], []
-            else:
-                cases, errors = self.process_xforms_for_cases(xforms)
+            elif instance.is_duplicate:
+                assert len(xforms) == 1
+                self.interface.save_xform(instance)
+            elif not instance.is_error:
+                if len(xforms) > 1:
+                    assert len(xforms) == 2
+                    assert xforms[1].is_deprecated
 
-            response = self._get_open_rosa_response(instance, errors)
-            return response, instance, cases
-
-    def process_xforms_for_cases(self, xforms):
-        from casexml.apps.case.xform import get_and_check_xform_domain
-        from casexml.apps.case.signals import case_post_save
-        from casexml.apps.case.exceptions import IllegalCaseId, UsesReferrals
-        from corehq.apps.commtrack.exceptions import MissingProductId
-        from casexml.apps.case.xform import process_cases_with_casedb
-        from corehq.apps.commtrack.processing import process_stock
-
-        cases = []
-        errors = []
-        known_errors = (IllegalCaseId, UsesReferrals, MissingProductId, PhoneDateValueError)
-        instance = xforms[0]
-
-        if self.validate_xforms_for_case_processing(xforms):
-            domain = get_and_check_xform_domain(instance)
-            with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
                 try:
-                    case_result = process_cases_with_casedb(xforms, case_db)
-                    stock_result = process_stock(xforms, case_db)
-                except known_errors as e:
+                    cases = self.process_xforms_for_cases(xforms)
+                except (IllegalCaseId, UsesReferrals, MissingProductId, PhoneDateValueError) as e:
                     self._handle_known_error(e, instance, xforms)
-                    return [], []
                 except Exception as e:
                     # handle / log the error and reraise so the phone knows to resubmit
                     # note that in the case of edit submissions this won't flag the previous
@@ -162,32 +143,49 @@ class SubmissionPost(object):
                     handle_unexpected_error(self.interface, instance, e)
                     raise
 
-                now = datetime.datetime.utcnow()
-                unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-                    xform_id=instance.form_id,
-                    timestamp=now,
-                    saved=False,
-                    domain=domain,
-                )
-
-                # todo: this property is only used by the MVPFormIndicatorPillow
-                instance.initial_processing_complete = True
-
-                cases = case_db.get_cases_for_saving(instance.received_on)
-
-                self.interface.save_processed_models(instance, xforms, cases)
-
-                unfinished_submission_stub.saved = True
-                unfinished_submission_stub.save()
-                case_result.commit_dirtiness_flags()
-                stock_result.commit()
-                for case in cases:
-                    case_post_save.send(case.__class__, case=case)
-
             errors = self.process_signals(instance)
-            unfinished_submission_stub.delete()
 
-        return cases, errors
+            response = self._get_open_rosa_response(instance, errors)
+            return response, instance, cases
+
+    def process_xforms_for_cases(self, xforms):
+        from casexml.apps.case.xform import get_and_check_xform_domain
+        from casexml.apps.case.signals import case_post_save
+        from casexml.apps.case.xform import process_cases_with_casedb
+        from corehq.apps.commtrack.processing import process_stock
+
+        instance = xforms[0]
+
+        domain = get_and_check_xform_domain(instance)
+        with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
+            case_result = process_cases_with_casedb(xforms, case_db)
+            stock_result = process_stock(xforms, case_db)
+
+            now = datetime.datetime.utcnow()
+            unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+                xform_id=instance.form_id,
+                timestamp=now,
+                saved=False,
+                domain=domain,
+            )
+
+            # todo: this property is only used by the MVPFormIndicatorPillow
+            instance.initial_processing_complete = True
+
+            cases = case_db.get_cases_for_saving(instance.received_on)
+
+            self.interface.save_processed_models(instance, xforms, cases)
+
+            unfinished_submission_stub.saved = True
+            unfinished_submission_stub.save()
+            case_result.commit_dirtiness_flags()
+            stock_result.commit()
+            for case in cases:
+                case_post_save.send(case.__class__, case=case)
+
+        unfinished_submission_stub.delete()
+
+        return cases
 
     def get_response(self):
         response, _, _ = self.run()
@@ -208,18 +206,6 @@ class SubmissionPost(object):
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
             self.interface.save_xform(instance)
         return errors
-
-    def validate_xforms_for_case_processing(self, xforms):
-        instance = xforms[0]
-        if instance.is_duplicate:
-            assert len(xforms) == 1
-            self.interface.save_xform(instance)
-            return False
-        elif not instance.is_error:
-            if len(xforms) > 1:
-                assert len(xforms) == 2
-                assert xforms[1].is_deprecated
-            return True
 
     @staticmethod
     def get_failed_auth_response():
