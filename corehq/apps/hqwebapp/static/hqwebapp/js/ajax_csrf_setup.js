@@ -4,10 +4,9 @@ function csrfSafeMethod(method) {
 }
 
 function setAjaxCsrfHeader(xhr, settings) {
-	$csrf_token = $.cookie('csrftoken');
-
+	// Don't pass csrftoken cross domain
 	if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-	    // Don't pass csrftoken cross domain
+	    $csrf_token = $.cookie('csrftoken');
 	    xhr.setRequestHeader("X-CSRFToken", $csrf_token);
 	}
 }
