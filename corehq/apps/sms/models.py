@@ -4,6 +4,7 @@ import json
 import json_field
 import logging
 import uuid
+import uuidfield
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
@@ -1454,7 +1455,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     # This is an api key that the gateway uses when making inbound requests to hq.
     # This enforces gateway security and also allows us to tie every inbound request
     # to a specific backend.
-    inbound_api_key = models.CharField(max_length=126, unique=True)
+    inbound_api_key = uuidfield.UUIDField(auto=True, unique=True)
 
     # This tells us which type of backend this is
     hq_api_id = models.CharField(max_length=126, null=True)
@@ -1505,11 +1506,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     class Meta:
         db_table = 'messaging_mobilebackend'
         unique_together = ('domain', 'name')
-
-    def __init__(self, *args, **kwargs):
-        super(SQLMobileBackend, self).__init__(*args, **kwargs)
-        if not self.inbound_api_key:
-            self.inbound_api_key = uuid.uuid4().hex
 
     @classmethod
     def get_available_extra_fields(cls):
