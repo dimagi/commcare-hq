@@ -3,6 +3,7 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.form_processor.submission_post import SubmissionPost
 from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
 import couchforms
@@ -18,7 +19,7 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
-    response, xform, cases = couchforms.SubmissionPost(
+    response, xform, cases = SubmissionPost(
         domain=domain,
         instance=instance,
         **kwargs
