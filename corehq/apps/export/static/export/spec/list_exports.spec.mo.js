@@ -161,6 +161,6 @@ describe('ListExportsController Unit Tests', function() {
             assert.isFalse(component.updatingData);
             assert.isTrue(component.updatedDataTriggered);
         });
-    })
+    });
 
 });
