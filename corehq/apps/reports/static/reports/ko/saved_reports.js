@@ -293,9 +293,7 @@ var ReportConfigsViewModel = function (options) {
                         self.setConfigBeingViewed(newConfig);
                     }
                 },
-                beforeSend: function(jqXHR, settings) {
-                    setAjaxCsrfHeader(jqXHR, settings);
-
+                beforeSend: function(jqXHR) {
                     var valid = self.validate();
                     if (!valid) {
                         jqXHR.abort();

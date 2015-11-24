@@ -29,22 +29,6 @@ var eventize = function (that) {
     return that;
 };
 
-// This is copy of csrf ajax utilities from hqwebapp/js/ajax_csrf_setup.js
-// This is manually pasted here, since this code is strict requirement for save-button and
-// pasting these utils here is better than duplicating ajax_csrf_setup.js wherever main.js is needed
-function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-}
-
-function setAjaxCsrfHeader(xhr, settings) {
-    $csrf_token = $.cookie('csrftoken');
-
-    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-        // Don't pass csrftoken cross domain
-        xhr.setRequestHeader("X-CSRFToken", $csrf_token);
-    }
-}
 
 var SaveButton = {
     /*
@@ -98,9 +82,10 @@ var SaveButton = {
                     success = options.success || function () {},
                     error = options.error || function () {},
                     that = this;
-                options.beforeSend = function () {
+                options.beforeSend = function (jqXHR, settings) {
                     that.setState('saving');
                     that.nextState = 'saved';
+                    setAjaxCsrfHeader(jqXHR, settings);
                     beforeSend.apply(this, arguments);
                 };
                 options.success = function (data) {
@@ -177,9 +162,6 @@ var SaveButton = {
                         dataType: 'json',
                         data: $form.serialize(),
                         success: options.success,
-                        beforeSend: function(jqXHR, settings) {
-                            setAjaxCsrfHeader(jqXHR, settings);
-                        }
                     });
                 }
             }),
