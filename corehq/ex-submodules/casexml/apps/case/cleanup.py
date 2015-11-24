@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
+
+from django.conf import settings
+
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.util.test_utils import unit_testing_only
-from couchforms import fetch_and_wrap_form
 
 
 def close_cases(case_ids, domain, user):
@@ -66,7 +66,6 @@ def rebuild_case_from_forms(domain, case_id, detail):
     return FormProcessorInterface(domain).hard_rebuild_case(case_id, detail)
 
 
-@unit_testing_only
 def safe_hard_delete(case):
     """
     Hard delete a case - by deleting the case itself as well as all forms associated with it
@@ -77,6 +76,11 @@ def safe_hard_delete(case):
 
     This is used primarily for cleaning up system cases/actions (e.g. the location delegate case).
     """
+    if not settings.UNIT_TESTING:
+        from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+        if case.type != USER_LOCATION_OWNER_MAP_TYPE:
+            raise CommCareCaseError("Attempt to hard delete a case whose type isn't white listed")
+
     if case.reverse_indices:
         raise CommCareCaseError("You can't hard delete a case that has other dependencies ({})!".format(case.case_id))
     interface = FormProcessorInterface(case.domain)
@@ -86,4 +90,4 @@ def safe_hard_delete(case):
         if any([c.id != case.case_id for c in case_updates]):
             raise CommCareCaseError("You can't hard delete a case that has shared forms with other cases!")
 
-    interface.bulk_delete(case, forms)
+    interface.hard_delete_case_and_forms(case, forms)

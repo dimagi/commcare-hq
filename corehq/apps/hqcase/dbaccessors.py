@@ -1,3 +1,4 @@
+from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
@@ -29,6 +30,9 @@ def get_case_ids_in_domain(domain, type=None):
     if type is None:
         type_keys = [[]]
     elif isinstance(type, (list, tuple)):
+        soft_assert('skelly@{}'.format('dimagi.com'))(
+            False, 'get_case_ids_in_domain called with typle / list arg for type'
+        )
         type_keys = [[t] for t in type]
     elif isinstance(type, basestring):
         type_keys = [[type]]

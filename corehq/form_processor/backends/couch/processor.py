@@ -1,6 +1,8 @@
 import datetime
 import logging
 
+from couchdbkit.exceptions import ResourceNotFound
+
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -8,7 +10,10 @@ from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import process_xform, deprecation_type, fetch_and_wrap_form
-from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError
+from couchforms.models import (
+    XFormInstance, XFormDeprecated, XFormDuplicate,
+    doc_types, XFormError, SubmissionErrorLog
+)
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
@@ -59,19 +64,30 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def is_duplicate(cls, xform):
-        return xform.form_id in XFormInstance.get_db()
+    def is_duplicate(cls, xform_id, domain=False):
+        if domain:
+            try:
+                existing_doc = XFormInstance.get_db().get(xform_id)
+            except ResourceNotFound:
+                return False
+            return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
+        else:
+            return xform_id in XFormInstance.get_db()
 
     @classmethod
-    def bulk_delete(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, case, xforms):
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
 
     @classmethod
-    def bulk_save(cls, instance, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
+
+    @classmethod
+    def save_xform(cls, xform):
+        xform.save()
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
@@ -114,13 +130,16 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        existing_doc = XFormInstance.get_db().get(xform_id)
-        return existing_doc.get('domain') == domain and existing_doc.get('doc_type') in doc_types()
-
-    @classmethod
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
+
+    @classmethod
+    def log_submission_error(cls, instance, message, callback):
+        error = SubmissionErrorLog.from_instance(instance, message)
+        if callback:
+            callback(error)
+        error.save()
+        return error
 
     @staticmethod
     def get_cases_from_forms(case_db, xforms):
@@ -183,15 +202,11 @@ class FormProcessorCouch(object):
         wrapped by the appropriate form type.
         """
         form_ids = get_case_xform_ids(case_id)
-        return FormProcessorCouch.get_xforms(form_ids)
-
-    @staticmethod
-    def get_xforms(form_ids):
         return [fetch_and_wrap_form(id) for id in form_ids]
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):
-    from corehq.apps.commtrack.processing import get_stock_actions
+    from corehq.form_processor.parsers.ledgers import get_stock_actions
     case_actions = []
     for form in sorted_forms:
         assert form.domain == domain

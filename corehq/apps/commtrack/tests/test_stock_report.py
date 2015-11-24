@@ -5,12 +5,13 @@ import string
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.stock.utils import get_current_ledger_transactions, get_current_ledger_state
-from corehq.apps.commtrack.models import StockReportHelper, SQLProduct, StockTransactionHelper as STrans
+from corehq.apps.commtrack.models import SQLProduct
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import create_models_for_stock_report
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
 from couchforms.models import XFormInstance
 
 
@@ -54,7 +55,7 @@ class StockReportDomainTest(TestCase):
                 for product, p_bal in self.product_ids.items():
                     bal = c_bal + s_bal + p_bal
                     transactions_flat.append(
-                        STrans(
+                        StockTransactionHelper(
                             case_id=case,
                             section_id=section,
                             product_id=product,
@@ -97,7 +98,7 @@ class StockReportDomainTest(TestCase):
 
         date = datetime.utcnow()
         report, _ = self.create_report([
-            STrans(
+            StockTransactionHelper(
                 case_id='c1',
                 section_id='s1',
                 product_id='p1',
@@ -109,7 +110,7 @@ class StockReportDomainTest(TestCase):
         # create second report with the same date
         # results should have this transaction and not the previous one
         report, _ = self.create_report([
-            STrans(
+            StockTransactionHelper(
                 case_id='c1',
                 section_id='s1',
                 product_id='p1',

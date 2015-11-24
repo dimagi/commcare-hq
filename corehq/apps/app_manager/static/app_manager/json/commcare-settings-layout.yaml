@@ -22,9 +22,6 @@
     - hq.build_spec  # CommCare Version
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
-    - properties.server-tether  # Sync Mode
-    - properties.cc-autosync-freq  # Auto-Sync Frequency
-    - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.cc-content-valid  # Multimedia Validation
     
 
@@ -36,6 +33,9 @@
     - hq.admin_password  # Admin Password
     - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
+    - properties.server-tether  # Sync Mode
+    - properties.cc-autosync-freq  # Auto-Sync Frequency
+    - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.password_format  # Password Format
 
 - title: 'Java Phone User Interface Settings'
@@ -64,6 +64,7 @@
     - hq.auto_gps_capture
     - properties.cc-login-duration-seconds
     - properties.cc-log-entity-detail-enabled
+    - properties.cc-inflation-target-density
     - hq.use_grid_menus
 
 - title: 'Advanced'
@@ -77,6 +78,7 @@
     - hq.translation_strategy
     - hq.amplifies_workers
     - hq.amplifies_project
+    - hq.minimum_use_threshold
 
 - title: 'Disabled'
   id: app-settings-disabled

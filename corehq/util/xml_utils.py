@@ -1,4 +1,5 @@
 from decimal import Decimal
+from xml.dom import minidom
 import datetime
 from dimagi.utils.parsing import json_format_datetime
 
@@ -17,3 +18,10 @@ def serialize(value):
         return unicode(value)
     else:
         return value if value is not None else ""
+
+
+def indent_xml(xml_string):
+    """
+    Takes an xml string and returns an indented and properly tabbled version of the string
+    """
+    return minidom.parseString(xml_string).toprettyxml()

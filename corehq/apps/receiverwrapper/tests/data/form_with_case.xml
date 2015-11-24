@@ -1,25 +1,20 @@
 <?xml version='1.0' ?>
-<registration version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
-<meta>
-    <DeviceID>Chalimbana</DeviceID>
-    <TimeStart>2010-06-29T13:42:50.137</TimeStart>
-    <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
-    <username>someuser</username>
-    <userID>{userID}</userID>
-    <instanceID>{instanceID}</instanceID>
-</meta>
-<case>
-    <case_id>{case_id}</case_id>
-    <user_id>{userID}</user_id>
-    <date_modified>2010-06-29T13:42:50</date_modified>
-    <create>
-        <case_type_id>test_case_type</case_type_id>
-        <user_id>foo</user_id>
-        <case_name>test case name</case_name>
-        <external_id>someexternal</external_id>
-    </create>
-</case>
-<patient>
-    <patient_id>12345</patient_id>
-</patient>
-</registration>
+<form name="v2 create" version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
+    <meta>
+        <DeviceID>Chalimbana</DeviceID>
+        <TimeStart>2010-06-29T13:42:50.137</TimeStart>
+        <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
+        <username>someuser</username>
+        <userID>ad38211be256653bceac8e2156475665</userID>
+        <instanceID>ad38211be256653bceac8e2156475666</instanceID>
+    </meta>
+	<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="ad38211be256653bceac8e2156475667" user_id="ad38211be256653bceac8e2156475665" date_modified="2010-06-29T13:42:50" >
+	    <create>
+	        <case_type>test_case_type</case_type>
+	        <case_name>test case name</case_name>
+	    </create>
+        <update>
+            <external_id>someexternal</external_id>
+        </update>
+	</case>
+</form>

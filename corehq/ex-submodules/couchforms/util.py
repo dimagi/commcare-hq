@@ -14,6 +14,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import new_xform
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.soft_assert import soft_assert
@@ -81,7 +82,7 @@ def process_xform(domain, instance, attachments=None, process=None):
     try:
         xform_lock = new_xform(domain, instance, attachments=attachments, process=process)
     except couchforms.XMLSyntaxError as e:
-        xform = _log_hard_failure(instance, process, e)
+        xform = _log_hard_failure(domain, instance, process, e)
         raise SubmissionError(xform)
     except DuplicateError as e:
         return _handle_id_conflict(instance, e.xform, domain)
@@ -109,7 +110,7 @@ def _handle_id_conflict(instance, xform, domain):
     conflict_id = xform.form_id
 
     interface = FormProcessorInterface(domain)
-    if interface.should_handle_as_duplicate_or_edit(conflict_id, domain):
+    if interface.is_duplicate(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
         return _handle_duplicate(xform, instance)
     else:
@@ -131,7 +132,7 @@ def _handle_duplicate(new_doc, instance):
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = interface.get_form_with_attachments(conflict_id)
+    existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = hashlib.md5(instance).hexdigest()
@@ -166,7 +167,7 @@ def is_override(xform):
     return bool(getattr(xform, 'deprecated_form_id', None))
 
 
-def _log_hard_failure(instance, process, error):
+def _log_hard_failure(domain, instance, process, error):
     """
     Handle's a hard failure from posting a form to couch.
 
@@ -178,12 +179,7 @@ def _log_hard_failure(instance, process, error):
     except UnicodeDecodeError:
         message = unicode(str(error), encoding='utf-8')
 
-    error_log = SubmissionErrorLog.from_instance(instance, message)
-    if process:
-        process(error_log)
-
-    error_log.save()
-    return error_log
+    return FormProcessorInterface(domain).log_submission_error(instance, message, process)
 
 
 def scrub_meta(xform):
@@ -291,7 +287,7 @@ class SubmissionPost(object):
         xforms[0] = instance
         # this is usually just one document, but if an edit errored we want
         # to save the deprecated form as well
-        self.interface.bulk_save(instance, xforms)
+        self.interface.save_processed_models(instance, xforms)
         return instance, [], []
 
     def _handle_basic_failure_modes(self):
@@ -377,7 +373,7 @@ class SubmissionPost(object):
 
                     cases = case_db.get_cases_for_saving(instance.received_on)
 
-                    self.interface.bulk_save(instance, xforms, cases)
+                    self.interface.save_processed_models(instance, xforms, cases)
 
                     unfinished_submission_stub.saved = True
                     unfinished_submission_stub.save()
@@ -396,8 +392,7 @@ class SubmissionPost(object):
         response, _, _ = self.run()
         return response
 
-    @staticmethod
-    def process_signals(instance):
+    def process_signals(self, instance):
         feedback = successful_form_received.send_robust(None, xform=instance)
         errors = []
         for func, resp in feedback:
@@ -406,19 +401,18 @@ class SubmissionPost(object):
                 logging.error((
                     u"Receiver app: problem sending "
                     u"post-save signal %s for xform %s: %s: %s"
-                ) % (func, instance._id, type(resp).__name__, error_message))
+                ) % (func, instance.form_id, type(resp).__name__, error_message))
                 errors.append(error_message)
         if errors:
-            instance.problem = ", ".join(errors)
-            instance.save()
+            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
+            self.interface.save_xform(instance)
         return errors
 
-    @staticmethod
-    def validate_xforms_for_case_processing(xforms):
+    def validate_xforms_for_case_processing(self, xforms):
         instance = xforms[0]
         if instance.is_duplicate:
             assert len(xforms) == 1
-            instance.save()
+            self.interface.save_xform(instance)
             return False
         elif not instance.is_error:
             if len(xforms) > 1:
