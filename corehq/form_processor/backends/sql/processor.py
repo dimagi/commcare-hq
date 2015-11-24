@@ -9,8 +9,8 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.parsers.form import process_xform
 from couchforms.const import ATTACHMENT_NAME
-from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,

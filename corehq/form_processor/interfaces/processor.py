@@ -106,14 +106,14 @@ class FormProcessorInterface(object):
                           extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            from couchforms.util import _handle_unexpected_error
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
                 type(e).__name__,
                 unicode(e),
                 ', '.join(xforms_being_saved)
             )
-            _handle_unexpected_error(self, instance, error_message)
+            from corehq.form_processor.submission_post import handle_unexpected_error
+            handle_unexpected_error(self, instance, error_message)
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):

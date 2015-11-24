@@ -9,7 +9,8 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
-from couchforms.util import process_xform, deprecation_type, fetch_and_wrap_form
+from corehq.form_processor.parsers.form import process_xform
+from couchforms.util import fetch_and_wrap_form
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog
@@ -105,7 +106,7 @@ class FormProcessorCouch(object):
         new_xform._rev, existing_xform._rev = existing_xform._rev, new_xform._rev
 
         # flag the old doc with metadata pointing to the new one
-        existing_xform.doc_type = deprecation_type()
+        existing_xform.doc_type = XFormDeprecated.__name__
         existing_xform.orig_id = old_id
 
         # and give the new doc server data of the old one and some metadata
