@@ -117,8 +117,10 @@ class FormProcessorCouch(object):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     @classmethod
-    def submission_error_form_instance(cls, instance, message):
-        return SubmissionErrorLog.from_instance(instance, message)
+    def submission_error_form_instance(cls, domain, instance, message):
+        log = SubmissionErrorLog.from_instance(instance, message)
+        log.domain = domain
+        return log
 
     @staticmethod
     def get_cases_from_forms(case_db, xforms):

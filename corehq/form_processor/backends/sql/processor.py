@@ -178,8 +178,9 @@ class FormProcessorSQL(object):
         return instance
 
     @classmethod
-    def submission_error_form_instance(cls, instance, message):
+    def submission_error_form_instance(cls, domain, instance, message):
         xform = XFormInstanceSQL(
+            domain=domain,
             form_uuid=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,

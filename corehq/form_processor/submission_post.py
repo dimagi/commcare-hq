@@ -115,7 +115,8 @@ class SubmissionPost(object):
 
         if submitted_form.is_submission_error_log:
             self.interface.save_xform(submitted_form)
-            return self.get_exception_response_and_log(submitted_form, self.path), None, []
+            response = self.get_exception_response_and_log(submitted_form, self.path)
+            return response, None, []
 
         cases = []
         with result.get_locked_forms() as xforms:

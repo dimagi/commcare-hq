@@ -130,4 +130,4 @@ class FormProcessorInterface(object):
         return self.processor.get_cases_from_forms(xforms, case_db)
 
     def submission_error_form_instance(self, instance, message):
-        return self.processor.submission_error_form_instance(instance, message)
+        return self.processor.submission_error_form_instance(self.domain, instance, message)
