@@ -1,33 +1,6 @@
 Mocha Tests
 ===========
 
-## Getting started
-
-1. Install `grunt-mocha`
-
-```
-npm install grunt-mocha
-```
-
-Note: be careful not to use the `-g` option, or your paths might get confused.
-
-2. Run the tests in `<src_root>` (where `Gruntfile.js` is).
-
-To run them all:
-
-```
-grunt mocha
-```
-
-To run tests for `<app_name>`:
-
-```
-grunt mocha:<app_name>
-```
-
-You can also visit the tests from the browser `http://localhost:8000/mocha/<app>/<config>`
-
-
 ## Adding a new app to test
 
 There are three steps to adding a new app to test:
