@@ -18,7 +18,7 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
-def process_xform(domain, instance, attachments=None, process=None):
+def process_xform_xml(domain, instance, attachments=None, process=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,

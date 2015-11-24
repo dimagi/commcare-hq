@@ -15,7 +15,7 @@ import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError
 from corehq.apps.tzmigration import timezone_migration_in_progress
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.form import process_xform
+from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.exceptions import SubmissionError
@@ -111,7 +111,7 @@ class SubmissionPost(object):
                 legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
         try:
-            lock_manager = process_xform(
+            lock_manager = process_xform_xml(
                 self.domain,
                 self.instance,
                 attachments=self.attachments,
