@@ -2187,7 +2187,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build() + self.validate_details_for_build()
-        if not self.forms:
+        if not self.forms and not self.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
                 'module': self.get_module_info(),
