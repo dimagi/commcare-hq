@@ -1245,7 +1245,6 @@ SMS_LOADED_BACKENDS = [
     'corehq.messaging.smsbackends.http.models.HttpBackend',
     'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
     'corehq.messaging.smsbackends.test.models.TestSMSBackend',
-    'corehq.apps.sms.backend.test.TestBackend',
     'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
     'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
     'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
