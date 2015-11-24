@@ -62,15 +62,20 @@ class ReportFixturesProvider(object):
         report = ReportConfiguration.get(report_config.report_id)
         data_source = ReportFactory.from_spec(report)
 
-        filter_values = {
+        all_filter_values = {
             filter_slug: filter.get_filter_value(user)
             for filter_slug, filter in report_config.filters.items()
         }
         filter_values = {
-            filter_slug: filter for filter_slug, filter in filter_values.items()
+            filter_slug: filter for filter_slug, filter in all_filter_values.items()
             if filter is not None
         }
+        defer_filters = {
+            filter_slug: filter for filter_slug, filter in all_filter_values.items()
+            if filter is None
+        }
         data_source.set_filter_values(filter_values)
+        data_source.defer_filters(defer_filters)
 
         rows_elem = ElementTree.Element('rows')
 
