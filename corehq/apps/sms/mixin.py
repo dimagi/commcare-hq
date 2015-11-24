@@ -340,7 +340,7 @@ class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
         sql_object.name = self.name
         sql_object.display_name = self.display_name
         sql_object.description = self.description
-        sql_object.supported_countries = json.dumps(self.supported_countries)
+        sql_object.supported_countries = self.supported_countries
         sql_object.reply_to_phone_number = self.reply_to_phone_number
 
         extra_fields = {}

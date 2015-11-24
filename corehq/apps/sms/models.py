@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import json
+import json_field
 import logging
 import uuid
 from dimagi.ext.couchdbkit import *
@@ -1479,7 +1480,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     # This information is displayed in the gateway list UI.
     # If this backend represents an international gateway,
     # set this to: ["*"]
-    supported_countries = models.CharField(max_length=126, default='[]')
+    supported_countries = json_field.JSONField(default=[])
 
     # To avoid having many tables with so few records in them, all
     # SMS backends are stored in this same table. This field is a
@@ -1570,7 +1571,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         ]
         couch_obj.is_global = self.is_global
         couch_obj.description = self.description
-        couch_obj.supported_countries = json.loads(self.supported_countries)
+        couch_obj.supported_countries = self.supported_countries
         couch_obj.reply_to_phone_number = self.reply_to_phone_number
         couch_obj.backend_type = self.backend_type
         couch_obj.reply_to_phone_number = self.reply_to_phone_number

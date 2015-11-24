@@ -80,7 +80,7 @@ class BackendMigrationTestCase(TestCase):
         sql_obj.name = name
         sql_obj.display_name = display_name
         sql_obj.description = description
-        sql_obj.supported_countries = json.dumps(supported_countries)
+        sql_obj.supported_countries = supported_countries
         sql_obj.set_extra_fields(**extra_fields)
         sql_obj.reply_to_phone_number = reply_to_phone_number
 
@@ -113,7 +113,7 @@ class BackendMigrationTestCase(TestCase):
 
         self.assertEqual(couch_obj.is_global, sql_obj.is_global)
         self.assertEqual(couch_obj.description, sql_obj.description)
-        self.assertEqual(couch_obj.supported_countries, json.loads(sql_obj.supported_countries))
+        self.assertEqual(couch_obj.supported_countries, sql_obj.supported_countries)
         self.assertEqual(couch_obj.reply_to_phone_number, sql_obj.reply_to_phone_number)
         self.assertEqual(couch_obj.backend_type, sql_obj.backend_type)
 
@@ -132,7 +132,7 @@ class BackendMigrationTestCase(TestCase):
         self.assertEqual(sql_obj.name, couch_obj.name)
         self.assertEqual(sql_obj.display_name, couch_obj.display_name)
         self.assertEqual(sql_obj.description, couch_obj.description)
-        self.assertEqual(json.loads(sql_obj.supported_countries), couch_obj.supported_countries)
+        self.assertEqual(sql_obj.supported_countries, couch_obj.supported_countries)
         self.assertEqual(json.loads(sql_obj.extra_fields), extra_fields)
         self.assertEqual(sql_obj.deleted, False)
         self.assertEqual(sql_obj.reply_to_phone_number, couch_obj.reply_to_phone_number)
