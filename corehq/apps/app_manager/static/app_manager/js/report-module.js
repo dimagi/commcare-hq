@@ -300,7 +300,10 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
-                self.moduleFilter = self.currentModuleFilter();
+
+                var filter = self.currentModuleFilter().trim();
+                self.moduleFilter = filter === '' ? undefined : filter;
+
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
