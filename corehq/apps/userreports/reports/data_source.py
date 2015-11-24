@@ -115,7 +115,7 @@ class ConfigurableReportDataSource(SqlData):
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
-            raise UserReportsError(e.message)
+            raise UserReportsError(unicode(e))
         except TableNotFoundException as e:
             raise TableNotFoundWarning
 
