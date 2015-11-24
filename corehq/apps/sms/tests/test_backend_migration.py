@@ -1,4 +1,3 @@
-import json
 from corehq.apps.sms.mixin import MobileBackend, SMSLoadBalancingMixin, BackendMapping
 from corehq.apps.sms.models import SQLMobileBackend, MobileBackendInvitation, SQLMobileBackendMapping
 from corehq.messaging.smsbackends.apposit.models import AppositBackend, SQLAppositBackend
