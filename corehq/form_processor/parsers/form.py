@@ -5,7 +5,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from couchforms import XMLSyntaxError
-from couchforms.exceptions import SubmissionError, DuplicateError
+from couchforms.exceptions import DuplicateError
 from dimagi.utils.couch import LockManager, ReleaseOnError
 
 

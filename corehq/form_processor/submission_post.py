@@ -19,7 +19,6 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
-from couchforms.exceptions import SubmissionError
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
