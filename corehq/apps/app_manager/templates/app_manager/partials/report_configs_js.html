@@ -14,7 +14,8 @@
             saveURL: saveURL,
             lang: {{ lang|JSON }},
             menuImage: menuImage,
-            menuAudio: menuAudio
+            menuAudio: menuAudio,
+            containerId: "#settings"
         });
         ko.applyBindings(reportModule, document.getElementById("save-button"));
         ko.applyBindings(reportModule, document.getElementById("module-name"));
