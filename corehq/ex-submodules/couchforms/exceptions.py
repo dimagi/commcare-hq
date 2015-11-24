@@ -18,5 +18,3 @@ class UnexpectedDeletedXForm(Exception):
     pass
 
 
-class PhoneDateValueError(CouchFormException):
-    pass
