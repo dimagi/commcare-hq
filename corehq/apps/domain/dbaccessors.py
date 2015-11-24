@@ -32,6 +32,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
     whitelist = [
         'CallCenterIndicatorConfig',
         'CommtrackConfig',
+        'Group',
         'Invitation',
         'PerformanceConfiguration',
     ]
