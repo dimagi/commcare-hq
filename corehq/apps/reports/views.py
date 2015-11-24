@@ -64,7 +64,6 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types, XFormDeprecated
-import couchforms.views as couchforms_views
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
