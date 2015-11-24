@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 import dimagi.utils.couch.migration
+import uuidfield.fields
+import json_field.fields
 
 
 class Migration(migrations.Migration):
@@ -18,15 +20,15 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('couch_id', models.CharField(max_length=126, null=True, db_index=True)),
                 ('backend_type', models.CharField(default=b'SMS', max_length=3, choices=[(b'SMS', 'SMS'), (b'IVR', 'IVR')])),
-                ('inbound_api_key', models.CharField(unique=True, max_length=126)),
+                ('inbound_api_key', uuidfield.fields.UUIDField(unique=True, max_length=32, editable=False, blank=True)),
                 ('hq_api_id', models.CharField(max_length=126, null=True)),
                 ('is_global', models.BooleanField(default=False)),
                 ('domain', models.CharField(max_length=126, null=True, db_index=True)),
                 ('name', models.CharField(max_length=126)),
                 ('display_name', models.CharField(max_length=126, null=True)),
                 ('description', models.TextField(null=True)),
-                ('supported_countries', models.CharField(default=b'[]', max_length=126)),
-                ('extra_fields', models.TextField(default=b'{}')),
+                ('supported_countries', json_field.fields.JSONField(default=[], help_text='Enter a valid JSON object')),
+                ('extra_fields', json_field.fields.JSONField(default={}, help_text='Enter a valid JSON object')),
                 ('deleted', models.BooleanField(default=False)),
                 ('load_balancing_numbers', models.TextField(default=b'[]')),
                 ('reply_to_phone_number', models.CharField(max_length=126, null=True)),
