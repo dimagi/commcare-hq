@@ -170,32 +170,27 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     @property
     def is_error(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type != 'XFormInstance'
 
     @property
     def is_duplicate(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'XFormDuplicate'
 
     @property
     def is_archived(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'XFormArchived'
 
     @property
     def is_deprecated(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'XFormDeprecated'
 
     @property
     def is_submission_error_log(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'SubmissionErrorLog'
 
     @property
     def is_normal(self):
-        return not (self.is_error or self.is_deprecated or self.is_duplicate or self.is_archived)
+        return self.doc_type == 'XFormInstance'
 
     @property
     def metadata(self):
@@ -404,10 +399,6 @@ class XFormDuplicate(XFormError):
     @property
     def is_duplicate(self):
         return True
-
-    @property
-    def is_submission_error_log(self):
-        return False
 
 
 class XFormDeprecated(XFormError):
