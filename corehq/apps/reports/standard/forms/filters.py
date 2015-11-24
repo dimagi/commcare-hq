@@ -1,13 +1,14 @@
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQToggle
-from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
 
 class SubmitToggle(HQToggle):
     
     def __init__(self,  type, show, name, doc_type):
         super(SubmitToggle, self).__init__(type, show, name)
         self.doc_type = doc_type
+
 
 class SubmissionErrorType(object):
     # This is largely modeled off how the user filter works
