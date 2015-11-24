@@ -9,7 +9,7 @@ from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
 
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.test_utils import run_with_all_backends
 
 
@@ -67,7 +67,7 @@ class SubmissionTest(TestCase):
     def _test(self, form, xmlns):
         response = self._submit(form, HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
         xform_id = response['X-CommCareHQ-FormID']
-        foo = FormProcessorInterface(self.domain.name).get_xform(xform_id).to_json()
+        foo = FormAccessors(self.domain.name).get_form(xform_id).to_json()
         self.assertTrue(foo['received_on'])
 
         if not self.use_sql:

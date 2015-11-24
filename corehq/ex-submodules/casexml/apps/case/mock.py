@@ -315,7 +315,7 @@ class CaseFactory(object):
         return self.create_or_update_cases([case_structure], form_extras)
 
     def create_or_update_cases(self, case_structures, form_extras=None):
-        from corehq.form_processor.interfaces.processor import FormProcessorInterface
+        from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
         def _get_case_block(substructure):
             return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
@@ -335,4 +335,4 @@ class CaseFactory(object):
         )
 
         case_ids = [id for structure in case_structures for id in structure.walk_ids()]
-        return FormProcessorInterface(self.domain).get_cases(case_ids, ordered=True)
+        return CaseAccessors(self.domain).get_cases(case_ids, ordered=True)

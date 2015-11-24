@@ -2,9 +2,8 @@ from django.test import TestCase
 import os
 from django.test.utils import override_settings
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessor
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.test_utils import run_with_all_backends
 
 TEST_DOMAIN = 'test-domain'
@@ -29,7 +28,7 @@ class CaseExclusionTest(TestCase):
             xml_data = f.read()
 
         submit_form_locally(xml_data, TEST_DOMAIN)
-        self.assertEqual(0, len(CaseAccessor(TEST_DOMAIN).get_case_ids_in_domain()))
+        self.assertEqual(0, len(CaseAccessors(TEST_DOMAIN).get_case_ids_in_domain()))
 
     @run_with_all_backends
     def testNestedExclusion(self):
@@ -40,5 +39,5 @@ class CaseExclusionTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         _, _, [case] = submit_form_locally(xml_data, TEST_DOMAIN)
-        self.assertEqual(['case_in_form'], CaseAccessor(TEST_DOMAIN).get_case_ids_in_domain())
+        self.assertEqual(['case_in_form'], CaseAccessors(TEST_DOMAIN).get_case_ids_in_domain())
         self.assertEqual("form case", case.name)

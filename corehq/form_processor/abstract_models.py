@@ -79,7 +79,7 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     @classmethod
-    def get_with_attachments(slef, xform_id):
+    def get_with_attachments(self, xform_id):
         raise NotImplementedError()
 
     @memoized
@@ -119,18 +119,6 @@ class AbstractCommCareCase(object):
         raise NotImplementedError()
 
     def dynamic_case_properties(self):
-        raise NotImplementedError()
-
-    @classmethod
-    def get(cls, case_id):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_cases(cls, ids):
-        raise NotImplementedError()
-
-    @classmethod
-    def get_case_xform_ids(cls, case_id):
         raise NotImplementedError()
 
 

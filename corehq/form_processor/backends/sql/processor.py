@@ -6,6 +6,7 @@ import hashlib
 from django.db import transaction
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.const import ATTACHMENT_NAME
@@ -64,24 +65,14 @@ class FormProcessorSQL(object):
         )
 
     @classmethod
-    def is_duplicate(cls, xform):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform.form_id).exists()
+    def is_duplicate(cls, xform_id, domain=None):
+        return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
-    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
-
-    @classmethod
-    def bulk_delete(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(xform__in=xforms).delete()
-            XFormOperationSQL.objects.filter(xform__in=xforms).delete()
-            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
-            CommCareCaseIndexSQL.objects.filter(case=case).delete()
-            CaseAttachmentSQL.objects.filter(case=case).delete()
-            CaseTransaction.objects.filter(case=case).delete()
-            case.delete()
+        FormAccessorSQL.hard_delete_forms(form_ids)
+        CaseAccessorSQL.hard_delete_case(case.case_id)
 
     @classmethod
     def save_processed_models(cls, xforms, cases=None):
@@ -264,7 +255,7 @@ class FormProcessorSQL(object):
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail):
         try:
-            case = CommCareCaseSQL.get(case_id)
+            case = CaseAccessorSQL.get_case(case_id)
             assert case.domain == domain
             found = True
         except CaseNotFound:
@@ -286,19 +277,20 @@ class FormProcessorSQL(object):
         return case
 
     @staticmethod
-    def get_xforms(xform_ids):
-        return XFormInstanceSQL.get_forms_with_attachments(xform_ids)
+    def get_case_forms(case_id):
+        xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
+        return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
 
 
 def get_case_transactions(case_id, updated_xforms=None):
-    transactions = CaseTransaction.get_transactions_for_case_rebuild(case_id)
+    transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_uuid for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
 
     form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
-    xform_map = {form.form_id: form for form in XFormInstanceSQL.get_forms_with_attachments(form_ids_to_fetch)}
+    xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):
         if form_id in updated_xforms_map:
