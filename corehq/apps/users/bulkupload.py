@@ -438,8 +438,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         error = custom_data_validator(data)
                         if error:
                             raise UserUploadError(error)
+                        data = {k: unicode(v) for k, v in data.iteritems()}
                         user.user_data.update(data)
                     if uncategorized_data:
+                        uncategorized_data = {k: unicode(v) for k, v in uncategorized_data.iteritems()}
                         user.user_data.update(uncategorized_data)
                     if language:
                         user.language = language
