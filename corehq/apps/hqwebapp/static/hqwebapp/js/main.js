@@ -161,7 +161,7 @@ var SaveButton = {
                         type: 'POST',
                         dataType: 'json',
                         data: $form.serialize(),
-                        success: options.success,
+                        success: options.success
                     });
                 }
             }),
