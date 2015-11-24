@@ -103,7 +103,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         if self.active_location:
             current_location = self.active_location.sql_location
 
@@ -243,7 +243,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             )
         )
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
         stock_states = StockState.objects.filter(
