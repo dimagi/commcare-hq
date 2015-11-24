@@ -55,9 +55,6 @@
 (function (angular, undefined) {
    'use strict';
     var downloadExportsApp = angular.module('downloadExportsApp', ['hq.download_export']);
-    downloadExportsApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-    }]);
     downloadExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);

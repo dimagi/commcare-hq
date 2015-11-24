@@ -22,6 +22,9 @@
             return $('#id_user_types');
         }
     };
+    download_export.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
 
     download_export.constant('exportList', []);
     download_export.constant('maxColumnSize', 2000);
