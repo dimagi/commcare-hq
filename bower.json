@@ -36,5 +36,8 @@
     "sinon": "http://sinonjs.org/releases/sinon-1.17.0.js",
     "angular-mocks": "1.4.4"
   },
-  "private": true
+  "private": true,
+  "resolutions": {
+    "jquery": "1.11.1"
+  }
 }
