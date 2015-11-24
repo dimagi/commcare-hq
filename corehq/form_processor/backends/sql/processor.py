@@ -178,7 +178,7 @@ class FormProcessorSQL(object):
         return instance
 
     @classmethod
-    def log_submission_error(cls, instance, message, callback):
+    def submission_error_form_instance(cls, instance, message):
         xform = XFormInstanceSQL(
             form_uuid=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
@@ -191,10 +191,6 @@ class FormProcessorSQL(object):
             content_type='text/xml',
         )])
 
-        if callback:
-            callback(xform)
-
-        cls.save_xform(xform)
         return xform
 
     @staticmethod

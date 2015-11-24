@@ -129,5 +129,5 @@ class FormProcessorInterface(object):
     def get_cases_from_forms(self, xforms, case_db):
         return self.processor.get_cases_from_forms(xforms, case_db)
 
-    def log_submission_error(self, instance, message, callback):
-        return self.processor.log_submission_error(instance, message, callback)
+    def submission_error_form_instance(self, instance, message):
+        return self.processor.submission_error_form_instance(instance, message)

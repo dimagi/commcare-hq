@@ -18,7 +18,7 @@ class MultiLockManager(list):
             lock_manager.__exit__(exc_type, exc_val, exc_tb)
 
 
-def process_xform_xml(domain, instance, attachments=None, process=None):
+def process_xform_xml(domain, instance, attachments=None):
     """
     Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
@@ -31,16 +31,16 @@ def process_xform_xml(domain, instance, attachments=None, process=None):
     attachments = attachments or {}
 
     try:
-        xform_lock = _create_new_xform(domain, instance, attachments=attachments, process=process)
+        xform_lock = _create_new_xform(domain, instance, attachments=attachments)
     except XMLSyntaxError as e:
-        xform = _log_hard_failure(domain, instance, process, e)
+        xform = _get_submission_error(domain, instance, e)
         raise SubmissionError(xform)
     except DuplicateError as e:
         return _handle_id_conflict(instance, e.xform, domain)
     return MultiLockManager([xform_lock])
 
 
-def _create_new_xform(domain, instance_xml, attachments=None, process=None):
+def _create_new_xform(domain, instance_xml, attachments=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -62,6 +62,7 @@ def _create_new_xform(domain, instance_xml, attachments=None, process=None):
     adjust_datetimes(form_data)
 
     xform = interface.new_xform(form_data)
+    xform.domain = domain
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = map(
@@ -71,11 +72,6 @@ def _create_new_xform(domain, instance_xml, attachments=None, process=None):
     attachments.append(Attachment(name='form.xml', raw_content=instance_xml, content_type='text/xml'))
     interface.store_attachments(xform, attachments)
 
-    # this had better not fail, don't think it ever has
-    # if it does, nothing's saved and we get a 500
-    if process:
-        process(xform)
-
     lock = interface.acquire_lock_for_xform(xform.form_id)
     with ReleaseOnError(lock):
         if interface.is_duplicate(xform.form_id):
@@ -84,19 +80,17 @@ def _create_new_xform(domain, instance_xml, attachments=None, process=None):
     return LockManager(xform, lock)
 
 
-def _log_hard_failure(domain, instance, process, error):
+def _get_submission_error(domain, instance, error):
     """
     Handle's a hard failure from posting a form to couch.
-
-    Currently, it will save the raw payload to couch in a hard-failure doc
-    and return that doc.
+    :returns: xform error instance with raw xml as attachment
     """
     try:
         message = unicode(error)
     except UnicodeDecodeError:
         message = unicode(str(error), encoding='utf-8')
 
-    return FormProcessorInterface(domain).log_submission_error(instance, message, process)
+    return FormProcessorInterface(domain).submission_error_form_instance(instance, message)
 
 
 def _handle_id_conflict(instance, xform, domain):

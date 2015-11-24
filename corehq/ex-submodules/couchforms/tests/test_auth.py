@@ -1,10 +1,11 @@
 from django.test import TestCase
 
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from couchforms.models import DefaultAuthContext
 import os
 
-from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class AuthTest(TestCase, TestFileMixin):
@@ -15,8 +16,5 @@ class AuthTest(TestCase, TestFileMixin):
     def test_auth_context(self):
         xml_data = self.get_xml('meta')
 
-        def process(xform):
-            xform.auth_context = DefaultAuthContext().to_json()
-
-        xform = post_xform(xml_data, process=process)
+        _, xform, _ = submit_form_locally(xml_data, 'test-domain', auth_context=DefaultAuthContext())
         self.assertEqual(xform.auth_context, {'doc_type': 'DefaultAuthContext'})

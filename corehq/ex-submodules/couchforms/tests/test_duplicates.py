@@ -34,10 +34,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         instance = self.get_xml('duplicate')
 
         # Post an xform with an alternate doc_type
-        xform1 = post_xform(
-            instance,
-            domain=domain,
-        )
+        xform1 = post_xform(instance, domain=domain)
 
         # Change the doc_type of the form by archiving it
         xform1.archive()

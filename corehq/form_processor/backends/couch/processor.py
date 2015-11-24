@@ -117,12 +117,8 @@ class FormProcessorCouch(object):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     @classmethod
-    def log_submission_error(cls, instance, message, callback):
-        error = SubmissionErrorLog.from_instance(instance, message)
-        if callback:
-            callback(error)
-        error.save()
-        return error
+    def submission_error_form_instance(cls, instance, message):
+        return SubmissionErrorLog.from_instance(instance, message)
 
     @staticmethod
     def get_cases_from_forms(case_db, xforms):
