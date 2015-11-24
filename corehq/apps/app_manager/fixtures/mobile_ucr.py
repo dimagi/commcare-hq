@@ -49,10 +49,11 @@ class ReportFixturesProvider(object):
             try:
                 reports_elem.append(self._report_config_to_fixture(report_config, user))
             except UserReportsError:
-                pass
+                if settings.UNIT_TESTING or settings.DEBUG:
+                    raise
             except Exception as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
-                if settings.UNIT_TESTING:
+                if settings.UNIT_TESTING or settings.DEBUG:
                     raise
         root.append(reports_elem)
         return [root]
