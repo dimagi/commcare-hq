@@ -33,7 +33,7 @@ def submit_form_locally(instance, domain, **kwargs):
 
 
 def get_meta_appversion_text(xform):
-    form_data = xform.form
+    form_data = xform.form_data
     try:
         text = form_data['meta']['appVersion']['#text']
     except KeyError:

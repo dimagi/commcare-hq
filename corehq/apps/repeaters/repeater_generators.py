@@ -2,7 +2,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.xform import cases_referenced_by_xform
 
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, \
     AppStructureRepeater, RegisterGenerator
 
 from casexml.apps.case.xml import V2
