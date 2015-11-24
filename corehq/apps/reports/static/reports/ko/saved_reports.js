@@ -148,9 +148,6 @@ var ReportConfigsViewModel = function (options) {
         $.ajax({
             type: "DELETE",
             url: options.saveUrl + '/' + config._id(),
-            beforeSend: function(xhr, settings) {
-                setAjaxCsrfHeader(xhr, settings);
-            },
             success: function (data) {
                 window.location.reload();
             }

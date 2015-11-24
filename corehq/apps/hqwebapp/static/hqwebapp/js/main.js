@@ -85,7 +85,7 @@ var SaveButton = {
                 options.beforeSend = function (jqXHR, settings) {
                     that.setState('saving');
                     that.nextState = 'saved';
-                    setAjaxCsrfHeader(jqXHR, settings);
+                    $.ajaxSettings.beforeSend(jqXHR, settings);
                     beforeSend.apply(this, arguments);
                 };
                 options.success = function (data) {
