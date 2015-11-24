@@ -22,7 +22,7 @@ from couchforms.exceptions import SubmissionError
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
-from couchforms.xml import OpenRosaResponse, ResponseNature
+from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception
 from phonelog.utils import process_device_log
 
