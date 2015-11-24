@@ -133,7 +133,7 @@ class BackendMigrationTestCase(TestCase):
         self.assertEqual(sql_obj.display_name, couch_obj.display_name)
         self.assertEqual(sql_obj.description, couch_obj.description)
         self.assertEqual(sql_obj.supported_countries, couch_obj.supported_countries)
-        self.assertEqual(json.loads(sql_obj.extra_fields), extra_fields)
+        self.assertEqual(sql_obj.extra_fields, extra_fields)
         self.assertEqual(sql_obj.deleted, False)
         self.assertEqual(sql_obj.reply_to_phone_number, couch_obj.reply_to_phone_number)
         if isinstance(couch_obj, SMSLoadBalancingMixin):

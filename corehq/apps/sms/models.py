@@ -1486,7 +1486,9 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     # SMS backends are stored in this same table. This field is a
     # JSON dict which stores any additional fields that the SMS
     # backend subclasses need.
-    extra_fields = models.TextField(default='{}')
+    # NOTE: Do not access this field directly, instead use get_extra_fields()
+    # and set_extra_fields()
+    extra_fields = json_field.JSONField(default={})
 
     # For a historical view of sms data, we can't delete backends.
     # Instead, set a deleted flag when a backend should no longer be used.
@@ -1519,7 +1521,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
     def get_extra_fields(self):
         result = {field: None for field in self.get_available_extra_fields()}
-        result.update(json.loads(self.extra_fields))
+        result.update(self.extra_fields)
         return result
 
     def set_extra_fields(self, **kwargs):
@@ -1534,7 +1536,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
                     % (k, self.__class__.__name__))
             result[k] = v
 
-        self.extra_fields = json.dumps(result)
+        self.extra_fields = result
 
     def set_shared_domains(self, domains):
         if self.id is None:
