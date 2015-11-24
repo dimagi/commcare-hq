@@ -67,6 +67,7 @@ domain_specific = patterns('',
     (r'^dashboard/', include('corehq.apps.dashboard.urls')),
     (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
+    (r'^tableau/', include('custom.icds.urls')),
 )
 
 urlpatterns = patterns('',
@@ -131,7 +132,6 @@ urlpatterns = patterns('',
     url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
-    url(r'^tableau/$', 'custom.icds.views.tableau', name='tableau')
 ) + patterns('', *LOCAL_APP_URLS)
 
 if settings.ENABLE_PRELOGIN_SITE:

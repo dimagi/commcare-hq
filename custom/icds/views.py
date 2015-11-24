@@ -1,9 +1,11 @@
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 import requests
+from corehq import toggles
 
 
-def tableau(request):
+@toggles.ICDS_REPORTS.required_decorator()
+def tableau(request, domain):
     context = {
         'report_view': 'POCReports/MainDashboard'
     }

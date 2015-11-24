@@ -721,3 +721,10 @@ GRID_MENUS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+ICDS_REPORTS = StaticToggle(
+    'icds_reports',
+    'Enable access to the Tableau dashboard for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
