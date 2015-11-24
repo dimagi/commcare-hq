@@ -15,7 +15,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product
-from corehq.apps.sms.backend import test
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.parsing import json_format_date
 
@@ -142,7 +142,9 @@ class CommTrackTest(TestCase):
         StockReport.objects.all().delete()
         StockTransaction.objects.all().delete()
 
-        self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
+        self.backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
+        self.backend.save()
+
         self.domain = bootstrap_domain()
         bootstrap_location_types(self.domain.name)
         bootstrap_products(self.domain.name)
