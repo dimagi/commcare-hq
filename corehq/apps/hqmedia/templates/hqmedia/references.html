@@ -5,6 +5,7 @@
 {% block title %}{% trans 'Multimedia Map' %}{% endblock title %}
 
 {% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script> <!-- todo add the media player back in -->
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
