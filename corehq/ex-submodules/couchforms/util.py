@@ -18,6 +18,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import new_xform
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.soft_assert import soft_assert
+from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.mixins import UnicodeMixIn
@@ -518,19 +519,12 @@ def fetch_and_wrap_form(doc_id):
     raise ResourceNotFound(doc_id)
 
 
-def spoof_submission(submit_url, body, name="form.xml", hqsubmission=True,
-                     headers=None):
-    if headers is None:
-        headers = {}
+@unit_testing_only
+def spoof_submission(submit_url, body):
     client = Client()
     f = StringIO(body.encode('utf-8'))
-    f.name = name
+    f.name = 'form.xml'
     response = client.post(submit_url, {
         'xml_submission_file': f,
-    }, **headers)
-    if hqsubmission:
-        xform_id = response['X-CommCareHQ-FormID']
-        xform = XFormInstance.get(xform_id)
-        xform['doc_type'] = "HQSubmission"
-        xform.save()
-    return response
+    })
+    return response['X-CommCareHQ-FormID']
