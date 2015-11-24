@@ -60,12 +60,13 @@
                             <input type="text" data-bind="value: display">
                         </td>
                         <td>
+                            <input type="text" data-bind="value: xpathDescription, visible: useXpathDescription">
+                            <input type="text" data-bind="value: localizedDescription, visible: !useXpathDescription()">
                             <label class="checkbox">
                                 <input type="checkbox" data-bind="checked: useXpathDescription">
                                 {% trans "Use xpath expression" %}
                             </label>
                             <div data-bind="visible: useXpathDescription">
-                                <input type="text" data-bind="value: xpathDescription">
                                 <p>
                                     <i class="icon-warning-sign"></i>
                                     {% trans "Must be a valid xpath expression." %}
@@ -75,7 +76,6 @@
                                     {% trans "Not localizable." %}
                                 </p>
                             </div>
-                            <input type="text" data-bind="value: localizedDescription, visible: !useXpathDescription()">
                         </td>
                         <td>
                             <i title="{% trans 'Delete' %}" style="cursor: pointer;"
