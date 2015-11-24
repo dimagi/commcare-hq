@@ -52,6 +52,7 @@
                     if (self._numTries > 3) {
                         $scope.hasLoaded = true;
                         $scope.exportsListError = 'default';
+                        return;
                     }
                     self._numTries ++;
                     self._getExportsList();
@@ -61,7 +62,7 @@
 
         // For Bulk Export
         $scope.showBulkExportDownload = false;
-        $scope.bulkExportList = '';
+        $scope.bulkExportList = '[]';
 
         $scope.updateBulkStatus = function () {
             var selectedExports = _.filter($scope.exports, function (exp) {
