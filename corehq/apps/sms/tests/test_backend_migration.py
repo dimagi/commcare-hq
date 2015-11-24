@@ -85,7 +85,7 @@ class BackendMigrationTestCase(TestCase):
         sql_obj.reply_to_phone_number = reply_to_phone_number
 
         if load_balancing_numbers:
-            sql_obj.load_balancing_numbers = json.dumps(load_balancing_numbers)
+            sql_obj.load_balancing_numbers = load_balancing_numbers
 
         sql_obj.save()
 
@@ -120,9 +120,8 @@ class BackendMigrationTestCase(TestCase):
         for k, v in sql_obj.get_extra_fields().iteritems():
             self.assertEqual(getattr(couch_obj, k), v)
 
-        load_balancing_numbers = json.loads(sql_obj.load_balancing_numbers)
-        if load_balancing_numbers:
-            self.assertEqual(couch_obj.x_phone_numbers, load_balancing_numbers)
+        if sql_obj.load_balancing_numbers:
+            self.assertEqual(couch_obj.x_phone_numbers, sql_obj.load_balancing_numbers)
 
     def _compare_sql_backend(self, couch_obj, sql_obj, extra_fields):
         self.assertEqual(sql_obj.backend_type, couch_obj.backend_type)
@@ -137,9 +136,9 @@ class BackendMigrationTestCase(TestCase):
         self.assertEqual(sql_obj.deleted, False)
         self.assertEqual(sql_obj.reply_to_phone_number, couch_obj.reply_to_phone_number)
         if isinstance(couch_obj, SMSLoadBalancingMixin):
-            self.assertEqual(json.loads(sql_obj.load_balancing_numbers), couch_obj.phone_numbers)
+            self.assertEqual(sql_obj.load_balancing_numbers, couch_obj.phone_numbers)
         else:
-            self.assertEqual(sql_obj.load_balancing_numbers, '[]')
+            self.assertEqual(sql_obj.load_balancing_numbers, [])
 
         shared_domains = []
         for invitation in sql_obj.mobilebackendinvitation_set.all():

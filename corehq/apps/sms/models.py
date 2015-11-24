@@ -1500,7 +1500,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
     # If the backend uses load balancing, this is a JSON list of the
     # phone numbers to load balance over.
-    load_balancing_numbers = models.TextField(default='[]')
+    load_balancing_numbers = json_field.JSONField(default=[])
 
     # The phone number which you can text to or call in order to reply
     # to this backend
@@ -1579,9 +1579,8 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         for k, v in self.get_extra_fields().iteritems():
             setattr(couch_obj, k, v)
 
-        load_balancing_numbers = json.loads(self.load_balancing_numbers)
-        if load_balancing_numbers:
-            couch_obj.x_phone_numbers = load_balancing_numbers
+        if self.load_balancing_numbers:
+            couch_obj.x_phone_numbers = self.load_balancing_numbers
 
         if self.deleted:
             if not couch_obj.base_doc.endswith('-Deleted'):

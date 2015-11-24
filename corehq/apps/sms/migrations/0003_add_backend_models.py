@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 ('supported_countries', json_field.fields.JSONField(default=[], help_text='Enter a valid JSON object')),
                 ('extra_fields', json_field.fields.JSONField(default={}, help_text='Enter a valid JSON object')),
                 ('deleted', models.BooleanField(default=False)),
-                ('load_balancing_numbers', models.TextField(default=b'[]')),
+                ('load_balancing_numbers', json_field.fields.JSONField(default=[], help_text='Enter a valid JSON object')),
                 ('reply_to_phone_number', models.CharField(max_length=126, null=True)),
             ],
             options={

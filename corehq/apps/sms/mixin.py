@@ -351,7 +351,7 @@ class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
         sql_object.deleted = self.base_doc.endswith('-Deleted')
 
         if isinstance(self, SMSLoadBalancingMixin):
-            sql_object.load_balancing_numbers = json.dumps(self.phone_numbers)
+            sql_object.load_balancing_numbers = self.phone_numbers
 
         with transaction.atomic():
             sql_object.save(sync_to_couch=False)
