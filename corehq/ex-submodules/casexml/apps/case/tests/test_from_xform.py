@@ -2,10 +2,12 @@ from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case import const
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.test_const import *
 from casexml.apps.case.tests.util import bootstrap_case_from_xml
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CaseTransaction
+from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.test_utils import run_with_all_backends
 
 
@@ -42,7 +44,7 @@ class CaseFromXFormTest(TestCase):
         
         xform2, case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         # fetch the case from the DB to ensure it is property wrapped
-        case = self.interface.get_case(case.case_id)
+        case = CaseAccessors().get_case(case.case_id)
         self.assertEqual(False, case.closed)
 
         if settings.TESTS_SHOULD_USE_SQL_BACKEND:
@@ -107,8 +109,10 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(CLOSE_DATE, case.modified_on)
 
     def _check_static_properties(self, case):
-        self.assertEqual(self.interface.case_model, type(case))
-        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(CommCareCaseSQL, type(case))
+        else:
+            self.assertEqual(CommCareCase, type(case))
             self.assertEqual('CommCareCase', case.doc_type)
         self.assertEqual("test_case_type", case.type)
         self.assertEqual("test case name", case.name)

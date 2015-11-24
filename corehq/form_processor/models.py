@@ -83,7 +83,10 @@ class AttachmentMixin(SaveStateMixin):
                 return _get_attachment_from_list(getattr(self, list_attr))
 
         if self.is_saved():
-            return self.attachments.filter(name=attachment_name).first()
+            return self._get_attachment_from_db(attachment_name)
+
+    def _get_attachment_from_db(self, attachment_name):
+        raise NotImplementedError
 
 
 class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
@@ -148,34 +151,13 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         self.form_uuid = _id
 
     @classmethod
-    def get(cls, xform_id):
-        try:
-            return XFormInstanceSQL.objects.get(form_uuid=xform_id)
-        except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
-
-    @classmethod
-    def get_with_attachments(cls, xform_id):
-        try:
-            return XFormInstanceSQL.objects.prefetch_related(
-                Prefetch('attachments', to_attr='cached_attachments')
-            ).get(form_uuid=xform_id)
-        except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
-
-    @classmethod
-    def get_forms_with_attachments(cls, xform_ids):
-        return XFormInstanceSQL.objects.prefetch_related(
-            Prefetch('attachments', to_attr='cached_attachments')
-        ).filter(form_uuid__in=xform_ids)
-
-    @classmethod
     def get_obj_id(cls, obj):
         return obj.form_uuid
 
     @classmethod
-    def get_obj_by_id(cls, _id):
-        return cls.get(_id)
+    def get_obj_by_id(cls, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form(form_id)
 
     @property
     def is_normal(self):
@@ -212,7 +194,8 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     @property
     def history(self):
-        return self.xformoperationsql_set.order_by('date')
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form_history(self.form_id)
 
     @property
     def metadata(self):
@@ -226,6 +209,10 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self)
         return serializer.data
+
+    def _get_attachment_from_db(self, attachment_name):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachment(self.form_id, attachment_name)
 
     def get_xml_element(self):
         xml = self.get_xml()
@@ -254,27 +241,16 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     def archive(self, user=None):
         if self.is_archived:
             return
-        with transaction.atomic():
-            self.state = self.ARCHIVED
-            self.xformoperationsql_set.create(
-                user=user,
-                operation=XFormOperationSQL.ARCHIVE,
-            )
-            self.save()
-            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=True)
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        FormAccessorSQL.archive_form(self.form_id, user_id=user)
         xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user=None):
         if not self.is_archived:
             return
-        with transaction.atomic():
-            self.state = self.NORMAL
-            self.xformoperationsql_set.create(
-                user=user,
-                operation=XFormOperationSQL.UNARCHIVE,
-            )
-            self.save()
-            CaseTransaction.objects.filter(form_uuid=self.form_id).update(revoked=False)
+
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        FormAccessorSQL.unarchive_form(self.form_id, user_id=user)
         xform_unarchived.send(sender="form_processor", xform=self)
 
 
@@ -419,11 +395,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def xform_ids(self):
-        return list(self.transaction_set.filter(
-            revoked=False,
-            form_uuid__isnull=False,
-            type=CaseTransaction.TYPE_FORM
-        ).values_list('form_uuid', flat=True))
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case_xform_ids(self.case_id)
 
     @property
     def user_id(self):
@@ -459,11 +432,13 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def reverse_indices(self):
-        return list(CommCareCaseIndexSQL.objects.filter(referenced_id=self.case_id).all())
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_reverse_indices(self.case_id)
 
     @memoized
     def _saved_indices(self):
-        return self.index_set.all() if self.is_saved() else []
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_indices(self.case_id) if self.is_saved() else []
 
     @property
     def indices(self):
@@ -486,54 +461,33 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
+    def _get_attachment_from_db(self, attachment_name):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_attachment(self.case_id, attachment_name)
+
     @property
     @memoized
     def transactions(self):
         return list(self.transaction_set.all())
 
-    @memoized
-    def _saved_attachments(self):
-        return self.attachments.all()
-
     @property
+    @memoized
     def case_attachments(self):
-        return {attachment.name: attachment for attachment in self._saved_attachments()}
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        attachments = CaseAccessorSQL.get_attachments(self.case_id)
+        return {attachment.name: attachment for attachment in attachments}
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
-
-    @classmethod
-    def get(cls, case_id):
-        try:
-            return CommCareCaseSQL.objects.get(case_uuid=case_id)
-        except CommCareCaseSQL.DoesNotExist:
-            raise CaseNotFound
-
-    @classmethod
-    def get_cases(cls, ids, ordered=False):
-        cases = CommCareCaseSQL.objects.filter(case_uuid__in=list(ids))
-        if ordered:
-            # SQL won't return the rows in any particular order so we need to order them ourselves
-            index_map = {id_: index for index, id_ in enumerate(ids)}
-            ordered_cases = [None] * len(ids)
-            for case in cases:
-                ordered_cases[index_map[case.case_id]] = case
-
-            cases = ordered_cases
-
-        return cases
-
-    @classmethod
-    def get_case_xform_ids(cls, case_id):
-        return CaseTransaction.objects.filter(case_id=case_id).values_list('form_uuid', flat=True)
 
     @classmethod
     def get_obj_id(cls, obj):
         return obj.case_uuid
 
     @classmethod
-    def get_obj_by_id(cls, _id):
-        return cls.get(_id)
+    def get_obj_by_id(cls, case_id):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_case(case_id)
 
     def __unicode__(self):
         return (
@@ -644,11 +598,12 @@ class CaseTransaction(models.Model):
 
     @property
     def form(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         if not self.form_uuid:
             return None
         form = getattr(self, 'cached_form', None)
         if not form:
-            self.cached_form = XFormAttachmentSQL.objects.get(self.form_uuid)
+            self.cached_form = FormAccessorSQL.get_form(self.form_uuid)
         return self.cached_form
 
     def __eq__(self, other):
@@ -683,14 +638,6 @@ class CaseTransaction(models.Model):
             type=detail.type,
             details=detail.to_json()
         )
-
-    @classmethod
-    def get_transactions_for_case_rebuild(cls, case_id):
-        return list(CaseTransaction.objects.filter(
-            case_id=case_id,
-            revoked=False,
-            type__in=CaseTransaction.TYPES_TO_PROCESS
-        ).all())
 
     def __unicode__(self):
         return (

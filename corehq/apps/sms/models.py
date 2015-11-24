@@ -982,7 +982,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
-    def create_subevent_for_single_sms(self, recipient_doc_type=None, recipient_id=None, case=None):
+    def create_subevent_for_single_sms(self, recipient_doc_type=None,
+            recipient_id=None, case=None, completed=False):
         obj = MessagingSubEvent.objects.create(
             parent=self,
             date=datetime.utcnow(),
@@ -990,7 +991,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_id=recipient_id,
             content_type=MessagingEvent.CONTENT_SMS,
             case_id=case.get_id if case else None,
-            status=MessagingEvent.STATUS_IN_PROGRESS,
+            status=(MessagingEvent.STATUS_COMPLETED
+                    if completed
+                    else MessagingEvent.STATUS_IN_PROGRESS),
         )
         return obj
 

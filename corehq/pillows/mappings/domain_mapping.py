@@ -1,5 +1,5 @@
-DOMAIN_INDEX = "hqdomains_20150909_1150"
-DOMAIN_MAPPING = {'_meta': {'comment': 'jenny modified on 9/9/2015',
+DOMAIN_INDEX = "hqdomains_20151123_1855"
+DOMAIN_MAPPING = {'_meta': {'comment': 'farid modified on 2015/11/23',
                             'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -131,6 +131,7 @@ DOMAIN_MAPPING = {'_meta': {'comment': 'jenny modified on 9/9/2015',
                                                    'section_title': {'type': 'string'}},
                                     'type': 'object'},
                 'full_downloads': {'type': 'long'},
+                'hipaa_compliant': {'type': 'boolean'},
                 'hr_name': {'type': 'string'},
                 'image_path': {'type': 'string'},
                 'image_type': {'type': 'string'},

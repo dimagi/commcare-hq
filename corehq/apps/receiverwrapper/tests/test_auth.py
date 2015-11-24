@@ -2,7 +2,7 @@ import uuid
 from django.core.urlresolvers import reverse
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.test_utils import run_with_all_backends
 import django_digest.test
 from django.test import TestCase
@@ -87,7 +87,7 @@ class _AuthTest(TestCase):
         self.assertEqual(response.status_code, expected_status)
         if expected_auth_context is not None:
             xform_id = response['X-CommCareHQ-FormID']
-            xform = FormProcessorInterface(self.domain).get_xform(xform_id)
+            xform = FormAccessors(self.domain).get_form(xform_id)
             self.assertEqual(xform.auth_context, expected_auth_context)
             return xform
 
