@@ -51,17 +51,6 @@ def all_known_formlike_doc_types():
     return set(doc_types().keys()) | set(['XFormInstance-Deleted', 'HQSubmission'])
 
 
-def get(doc_id):
-    import warnings
-    warnings.warn(
-        'couchforms.models.get has been deprecated. '
-        'You should use couchforms.fetch_and_wrap_form instead.',
-        DeprecationWarning
-    )
-    import couchforms
-    return couchforms.fetch_and_wrap_form(doc_id)
-
-
 class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
