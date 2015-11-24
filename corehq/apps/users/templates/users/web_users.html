@@ -209,6 +209,7 @@
                         <div class="input-group">
                             <input type="text"
                                    class="form-control"
+                                   ng-keypress="updateOnEnter($event)"
                                    ng-model="query"
                                    placeholder="{% trans "Filter Users..." %}">
                             <span class="input-group-btn">
