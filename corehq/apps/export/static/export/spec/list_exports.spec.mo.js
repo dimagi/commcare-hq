@@ -1,5 +1,3 @@
-'use strict';
-
 describe('ListExportsController Unit Tests', function() {
     var $httpBackend, createController, $rootScope, currentScope;
 

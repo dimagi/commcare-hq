@@ -49,6 +49,6 @@
             id: 'uuid-exportSimple',
             formname: 'Test Export Simple'
         }
-    }
+    };
 
 })();
