@@ -4,7 +4,6 @@ from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
-from corehq.util.test_utils import unit_testing_only
 
 from ..utils import should_use_sql_backend
 
@@ -60,10 +59,6 @@ class FormProcessorInterface(object):
             return CaseDbCacheSQL
         else:
             return CaseDbCacheCouch
-
-    @unit_testing_only
-    def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
-        return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
 
     def save_xform(self, xform):
         return self.processor.save_xform(xform)

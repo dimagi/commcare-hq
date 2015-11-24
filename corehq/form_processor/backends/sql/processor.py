@@ -1,7 +1,6 @@
 import datetime
 import logging
 import uuid
-import hashlib
 
 from django.db import transaction
 
@@ -9,33 +8,16 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.parsers.form import process_xform
 from couchforms.const import ATTACHMENT_NAME
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
+    CommCareCaseSQL, FormEditRebuild, Attachment)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
 class FormProcessorSQL(object):
-
-    @classmethod
-    def post_xform(cls, instance_xml, attachments=None, process=None, domain='test-domain'):
-        """
-        create a new xform and releases the lock
-
-        this is a testing entry point only and is not to be used in real code
-
-        """
-        if not process:
-            def process(xform):
-                xform.domain = domain
-        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
-        with xform_lock as xforms:
-            cls.save_processed_models(xforms)
-            return xforms[0]
 
     @classmethod
     def store_attachments(cls, xform, attachments):
