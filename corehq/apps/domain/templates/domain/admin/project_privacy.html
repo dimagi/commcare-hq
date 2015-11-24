@@ -1,19 +1,10 @@
 {% extends "domain/admin/info_base.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load crispy_forms_tags %}
 {% load i18n %}
 
 
-{% block main_column %}
-    <form class="form-horizontal" method="post">
-        <fieldset>
-            {% bootstrap_form_errors privacy_form %}
-            {% bootstrap_fieldset privacy_form _("Edit Privacy Settings") %}
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    {% trans 'Update Privacy Settings' %}
-                </button>
-            </div>
-        </fieldset>
-    </form>
+{% block page_content %}
+    {% crispy privacy_form %}
 {% endblock %}

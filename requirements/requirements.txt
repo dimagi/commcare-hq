@@ -3,7 +3,7 @@ cython==0.23.4
 restkit==4.2.2
 iso8601==0.1.10
 jsonobject==0.7.1
-jsonobject-couchdbkit==0.7.0.1
+jsonobject-couchdbkit==0.7.1.0
 celery==3.1.18
 # required by django-digest
 decorator==4.0.4
@@ -16,7 +16,6 @@ defusedxml==0.4.1
 diff-match-patch==20120106
 django-tastypie==0.12.2
 djangorestframework==3.3.1
-django-bower==5.0.4
 djtables==0.1.1
 elasticsearch==0.4.4
 #egenix-mx-base==3.2.8
@@ -78,7 +77,9 @@ Pygments==2.0.2
 tinys3==0.1.11
 django-two-factor-auth==1.2.0
 datadog==0.10.0
-
+django-websocket-redis==0.4.4
+django-redis-sessions==0.5.0
+django-uuidfield==0.5.0
 # required by ctable
-SQLAlchemy==0.8.2
+SQLAlchemy==1.0.9
 alembic==0.6.4

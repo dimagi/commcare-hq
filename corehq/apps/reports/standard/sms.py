@@ -13,7 +13,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
-from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter, PhoneNumberFilter
+from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter, PhoneNumberFilter, EventStatusFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -626,6 +626,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        EventStatusFilter,
         PhoneNumberFilter,
     ]
     ajax_pagination = True
@@ -655,6 +656,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def get_filters(self):
         source_filter = []
         content_type_filter = []
+        event_status_filter = None
         event_type_filter = EventTypeFilter.get_value(self.request, self.domain)
 
         for source_type, x in MessagingEvent.SOURCE_CHOICES:
@@ -677,7 +679,34 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 else:
                     content_type_filter.append(content_type)
 
-        return (source_filter, content_type_filter)
+        event_status = EventStatusFilter.get_value(self.request, self.domain)
+        if event_status == MessagingEvent.STATUS_ERROR:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                Q(messagingsubevent__sms__error=True)
+            )
+        elif event_status == MessagingEvent.STATUS_IN_PROGRESS:
+            # We need to check for id__isnull=False below because the
+            # query we make in this report has to do a left join, and
+            # in this particular filter we can only validly check
+            # end_time__isnull=True if there actually are
+            # subevent and xforms session records
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                (Q(messagingsubevent__xforms_session__id__isnull=False) &
+                 Q(messagingsubevent__xforms_session__end_time__isnull=True))
+            )
+        elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status) |
+                (Q(messagingsubevent__xforms_session__end_time__isnull=False) &
+                 Q(messagingsubevent__xforms_session__submission_id__isnull=True))
+            )
+
+        return source_filter, content_type_filter, event_status_filter
 
     def _fmt_recipient(self, event, doc_info):
         if event.recipient_type in (
@@ -696,7 +725,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             )
 
     def get_queryset(self):
-        source_filter, content_type_filter = self.get_filters()
+        source_filter, content_type_filter, event_status_filter = self.get_filters()
 
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
@@ -706,6 +735,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 Q(content_type__in=content_type_filter) |
                 Q(messagingsubevent__content_type__in=content_type_filter)),
         )
+
+        if event_status_filter:
+            data = data.filter(event_status_filter)
 
         if self.phone_number_filter:
             data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
@@ -726,6 +758,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
             {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
         ]
 

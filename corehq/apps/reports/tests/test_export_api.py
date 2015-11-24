@@ -1,6 +1,7 @@
 from django.test.client import Client
 from couchforms.util import spoof_submission
 import uuid
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.domain.shortcuts import create_domain
 from django.core.urlresolvers import reverse
@@ -60,8 +61,8 @@ def _content(streaming_response):
     return ''.join(streaming_response.streaming_content)
 
 
-class ExportTest(BaseAccountingTest):
-    
+class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
+
     def _clear_docs(self):
         config = ExportConfiguration(XFormInstance.get_db(),
                                      [DOMAIN, "http://www.commcarehq.org/export/test"])
@@ -71,26 +72,17 @@ class ExportTest(BaseAccountingTest):
     def setUp(self):
         self._clear_docs()
         self.domain = create_domain(DOMAIN)
-        self.account = BillingAccount.get_or_create_account_by_domain(DOMAIN, created_by="automated-test")[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(DOMAIN, edition=SoftwarePlanEdition.ADVANCED)
-        self.subscription = Subscription.new_domain_subscription(self.account, DOMAIN, plan)
-        self.subscription.is_active = True
-        self.subscription.save()
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.ADVANCED)
+
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(DOMAIN, is_admin=True)
         self.couch_user.save()
-        
+
     def tearDown(self):
         self.couch_user.delete()
         self._clear_docs()
 
-        SubscriptionAdjustment.objects.all().delete()
-
-        if self.subscription:
-            self.subscription.delete()
-
-        if self.account:
-            self.account.delete()
+        self.teardown_subscription()
 
         super(ExportTest, self).tearDown()
 

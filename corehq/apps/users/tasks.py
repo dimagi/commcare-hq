@@ -9,6 +9,7 @@ from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
+from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
@@ -56,7 +57,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
-def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
+def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list, deletion_id,
                                                   deleted_cases=None):
     """
     Upon user deletion, mark associated forms as deleted and prep cases
@@ -70,6 +71,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
     forms_to_check = get_docs(XFormInstance.get_db(), form_id_list)
     forms_to_save = []
     for form in forms_to_check:
+        assert form['domain'] == domain
         if not is_deleted(form):
             form['doc_type'] += DELETED_SUFFIX
             form['-deletion_id'] = deletion_id
@@ -79,8 +81,9 @@ def tag_forms_as_deleted_rebuild_associated_cases(form_id_list, deletion_id,
         cases_to_rebuild.update(get_case_ids_from_form(form))
 
     XFormInstance.get_db().bulk_save(forms_to_save)
+    detail = UserArchivedRebuild(user_id=user_id)
     for case in cases_to_rebuild - deleted_cases:
-        _rebuild_case_with_retries.delay(case)
+        _rebuild_case_with_retries.delay(domain, case, detail)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -116,7 +119,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
 
 @task(bind=True, queue='background_queue', ignore_result=True,
       default_retry_delay=5 * 60, max_retries=3, acks_late=True)
-def _rebuild_case_with_retries(self, case_id):
+def _rebuild_case_with_retries(self, domain, case_id, detail):
     """
     Rebuild a case with retries
     - retry in 5 min if failure occurs after (default_retry_delay)
@@ -124,7 +127,7 @@ def _rebuild_case_with_retries(self, case_id):
     """
     from casexml.apps.case.cleanup import rebuild_case_from_forms
     try:
-        rebuild_case_from_forms(case_id)
+        rebuild_case_from_forms(domain, case_id, detail)
     except (UnexpectedDeletedXForm, ResourceConflict) as exc:
         try:
             self.retry(exc=exc)
@@ -139,12 +142,12 @@ def _rebuild_case_with_retries(self, case_id):
     queue='background_queue',
 )
 def resend_pending_invitations():
-    from corehq.apps.users.models import DomainInvitation
+    from corehq.apps.users.models import Invitation
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
     for domain in domains:
-        invitations = DomainInvitation.by_domain(domain.name)
+        invitations = Invitation.by_domain(domain.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:

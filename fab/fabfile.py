@@ -45,7 +45,7 @@ from fabric.operations import require, local, prompt
 
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
-ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer']
+ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
 ROLES_CELERY = ['django_monolith', 'django_celery']
 ROLES_PILLOWTOP = ['django_monolith', 'django_pillowtop']
 ROLES_DJANGO = ['django_monolith', 'django_app']
@@ -120,6 +120,7 @@ def format_env(current_env, extra=None):
     """
     ret = dict()
     important_props = [
+        'root',
         'environment',
         'code_root',
         'code_current',
@@ -679,9 +680,6 @@ def copy_tf_localsettings():
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
         sudo('cp -r {}/bower_components {}/bower_components'.format(env.code_current, env.code_root))
-    else:
-        # In the event that the folder doesn't exist, create it so that djangobower doesn't choke
-        sudo('mkdir -p {}/bower_components/bower_components'.format(env.code_root))
 
 
 def copy_release_files():
@@ -964,9 +962,14 @@ def _migrations_exist():
     """
     _require_target()
     with cd(env.code_root):
-        n_migrations = int(sudo(
-            '%(virtualenv_root)s/bin/python manage.py migrate --list | grep "\[ ]" | wc -l' % env)
-        )
+        try:
+            n_migrations = int(sudo(
+                '%(virtualenv_root)s/bin/python manage.py migrate --list | grep "\[ ]" | wc -l' % env)
+            )
+        except Exception:
+            # If we fail on this, return True to be safe. It's most likely cause we lost connection and
+            # failed to return a value python could parse into an int
+            return True
         return n_migrations > 0
 
 
@@ -1002,9 +1005,9 @@ def _do_collectstatic(use_current_release=False):
 @parallel
 @roles(ROLES_STATIC)
 def _bower_install(use_current_release=False):
-    venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{venv}/bin/python manage.py bower install'.format(venv=venv), user=env.sudo_user)
+        sudo('bower prune --production')
+        sudo('bower update --production')
 
 
 @roles(ROLES_DJANGO)
@@ -1116,6 +1119,7 @@ def set_pillowtop_supervisorconf():
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_form_feed.conf')
 
 
 @roles(ROLES_DJANGO)
@@ -1148,6 +1152,11 @@ def set_pillow_retry_queue_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_pillow_retry_queue.conf')
 
 
+@roles(ROLES_STATIC)
+def set_websocket_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_websockets.conf')
+
+
 @task
 def set_supervisor_config():
     setup_release()
@@ -1165,6 +1174,7 @@ def _set_supervisor_config():
     _execute_with_timing(set_sms_queue_supervisorconf)
     _execute_with_timing(set_reminder_queue_supervisorconf)
     _execute_with_timing(set_pillow_retry_queue_supervisorconf)
+    _execute_with_timing(set_websocket_supervisorconf)
 
     # if needing tunneled ES setup, comment this back in
     # execute(set_elasticsearch_supervisorconf)

@@ -13,7 +13,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -140,27 +139,6 @@ class CaseInfo(object):
                 return group_obj
         except Exception:
             return None
-
-    @property
-    @memoized
-    def owner_doc(self, wrap=False):
-        doc = None
-        if self.owner_id:
-            try:
-                doc = get_db().get(self.owner_id)
-            except ResourceNotFound:
-                pass
-        if not doc:
-            return None
-
-        if wrap:
-            class_ = {
-                'CommCareUser': CommCareUser,
-                'Group': Group,
-            }.get(doc['doc_type'])
-            return class_.wrap(doc)
-        else:
-            return doc
 
     @memoized
     def _get_username(self, user_id):

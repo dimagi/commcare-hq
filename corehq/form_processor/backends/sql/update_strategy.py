@@ -1,16 +1,37 @@
 import logging
+
+from iso8601 import iso8601
+
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
+from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseForms
+from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
+
+PROPERTY_TYPE_MAPPING = {
+    'opened_on': iso8601.parse_date
+}
+
+
+def _convert_type(property_name, value):
+    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
 
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+        self._apply_case_update(case_update, xformdoc)
+
+        transaction = CaseTransaction.form_transaction(self.case, xformdoc)
+        if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+            # don't add multiple transactions for the same form
+            self.case.track_create(transaction)
+
+    def _apply_case_update(self, case_update, xformdoc):
         if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
@@ -34,8 +55,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if self.case.modified_on is None or modified_on > self.case.modified_on:
             self.case.modified_on = modified_on
 
-        self.case.track_create(CaseForms(case=self.case, form_uuid=xformdoc.form_id))
-
     def _apply_action(self, case_update, action, xform):
         if action.action_type_slug == const.CASE_ACTION_CREATE:
             self._apply_create_action(case_update, action)
@@ -54,9 +73,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             ))
 
     def _update_known_properties(self, action):
-        for k, v in action.get_known_properties().items():
-            if v:
-                setattr(self.case, k, v)
+        for name, value in action.get_known_properties().items():
+            if value:
+                setattr(self.case, name, _convert_type(name, value))
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
@@ -70,7 +89,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._update_known_properties(update_action)
 
         for key, value in update_action.dynamic_properties.items():
-            if key not in const.CASE_TAGS:
+            if key == 'location_id':
+                # special treatment of location_id
+                self.case.location_uuid = value
+            elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
     def _apply_index_action(self, action):
@@ -109,3 +131,51 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.closed = True
         self.case.closed_on = case_update.guess_modified_on()
         self.case.closed_by = case_update.user_id
+
+    def _reset_case_state(self):
+        """
+        Clear known case properties, and all dynamic properties
+        """
+        self.case.case_json = {}
+        self.case.deleted = False
+
+        # hard-coded normal properties (from a create block)
+        for prop, default_value in KNOWN_PROPERTIES.items():
+            setattr(self.case, prop, default_value)
+
+        self.case.closed = False
+        self.case.modified_on = None
+        self.case.closed_on = None
+        self.case.closed_by = ''
+        self.case.opened_by = None
+
+    def rebuild_from_transactions(self, transactions, rebuild_transaction):
+        # TODO: handle case indices
+        self._reset_case_state()
+
+        real_transactions = []
+        for transaction in transactions:
+            if not transaction.is_relevant:
+                continue
+            elif transaction.type == CaseTransaction.TYPE_FORM:
+                self._apply_form_transaction(transaction)
+                real_transactions.append(transaction)
+
+        self.case.deleted = not bool(real_transactions)
+
+        self.case.track_create(rebuild_transaction)
+        self.case.modified_on = rebuild_transaction.server_date
+
+    def _apply_form_transaction(self, transaction):
+        form = transaction.form
+        if form:
+            assert form.domain == self.case.domain
+            case_updates = get_case_updates(form)
+            filtered_updates = [u for u in case_updates if u.id == self.case.case_id]
+            # TODO: stock
+            # stock_actions = get_stock_actions(form)
+            # case_actions.extend([intent.action
+            #                      for intent in stock_actions.case_action_intents
+            #                      if not intent.is_deprecation])
+            for case_update in filtered_updates:
+                self._apply_case_update(case_update, form)

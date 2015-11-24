@@ -154,6 +154,9 @@ class HqdbContext(DatabaseContext):
         if self.should_skip_test_setup():
             return
 
+        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+        self.blob_db = TemporaryFilesystemBlobDB()
+
         log.info("overridding the couchdbkit database settings to use a test database!")
 
         # first pass: just implement this as a monkey-patch to the loading module
@@ -188,6 +191,8 @@ class HqdbContext(DatabaseContext):
     def teardown(self):
         if self.should_skip_test_setup():
             return
+
+        self.blob_db.close()
 
         # delete couch databases
         deleted_databases = []

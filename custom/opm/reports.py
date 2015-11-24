@@ -528,10 +528,7 @@ class MetReport(CaseReportMixin, BaseReport):
     default_rows = 5
     cache_key = 'opm-report'
     show_total = True
-
-    @property
-    def exportable(self):
-        return self.request.couch_user.is_dimagi
+    exportable = True
 
     @property
     def row_objects(self):
@@ -724,7 +721,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return DataTablesHeader(*headers)
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         self.is_rendered_as_email = True
         self.use_datatables = False

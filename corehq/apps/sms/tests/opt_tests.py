@@ -1,12 +1,7 @@
 from django.test import TestCase
 from corehq.apps.accounting import generator
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
-)
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.api import incoming, send_sms
@@ -15,7 +10,7 @@ from corehq.messaging.smsbackends.test.api import TestSMSBackend
 from corehq.apps.domain.models import Domain
 
 
-class OptTestCase(BaseAccountingTest):
+class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
     def setUp(self):
         super(OptTestCase, self).setUp()
         self.domain = "opt-test"
@@ -23,21 +18,7 @@ class OptTestCase(BaseAccountingTest):
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
 
-        generator.instantiate_accounting_for_tests()
-        self.account = BillingAccount.get_or_create_account_by_domain(
-            self.domain_obj.name,
-            created_by="automated-test",
-        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain_obj, edition=SoftwarePlanEdition.ADVANCED
-        )
-        self.subscription = Subscription.new_domain_subscription(
-            self.account,
-            self.domain_obj.name,
-            plan
-        )
-        self.subscription.is_active = True
-        self.subscription.save()
+        self.setup_subscription(self.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
         self.backend = TestSMSBackend(is_global=True)
         self.backend.save()
@@ -78,6 +59,4 @@ class OptTestCase(BaseAccountingTest):
         self.backend.delete()
         self.domain_obj.delete()
 
-        SubscriptionAdjustment.objects.all().delete()
-        self.subscription.delete()
-        self.account.delete()
+        self.teardown_subscription()

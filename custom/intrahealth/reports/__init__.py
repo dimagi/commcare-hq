@@ -31,9 +31,9 @@ class IntraHealthReportConfigMixin(object):
     def config_update(self, config):
         if self.request.GET.get('location_id', ''):
             if self.location.location_type.lower() == 'district':
-                config.update(dict(district_id=self.location._id))
+                config.update(dict(district_id=self.location.location_id))
             else:
-                config.update(dict(region_id=self.location._id))
+                config.update(dict(region_id=self.location.location_id))
 
     @property
     def report_config(self):

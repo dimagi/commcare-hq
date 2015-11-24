@@ -6,6 +6,7 @@ $.prototype.iconify = function (icon) {
     $(this).css('width', "16px").prepend($icon);
 };
 
+
 var eventize = function (that) {
     'use strict';
     var events = {};
@@ -27,6 +28,7 @@ var eventize = function (that) {
     };
     return that;
 };
+
 
 var SaveButton = {
     /*
@@ -80,9 +82,10 @@ var SaveButton = {
                     success = options.success || function () {},
                     error = options.error || function () {},
                     that = this;
-                options.beforeSend = function () {
+                options.beforeSend = function (jqXHR, settings) {
                     that.setState('saving');
                     that.nextState = 'saved';
+                    $.ajaxSettings.beforeSend(jqXHR, settings);
                     beforeSend.apply(this, arguments);
                 };
                 options.success = function (data) {
@@ -184,23 +187,26 @@ var COMMCAREHQ = (function () {
     'use strict';
     return {
         icons: {
-            GRIP:   'icon-resize-vertical icon-blue',
-            ADD:    'icon-plus icon-blue',
-            COPY:   'icon-copy icon-blue',
-            DELETE: 'icon-remove icon-blue',
-            PAPERCLIP: 'icon-paper-clip'
+            GRIP:   'fa fa-sort icon-resize-vertical icon-blue',
+            ADD:    'fa fa-plus icon-plus icon-blue',
+            COPY:   'fa fa-copy icon-copy icon-blue',
+            DELETE: 'fa fa-remove icon-remove icon-blue',
+            PAPERCLIP: 'fa fa-paperclip icon-paper-clip'
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
+            var iconClass = "icon-question-sign";
+            if (opts.bootstrap3){
+                iconClass = "fa fa-question-circle";
+            }
             var el = $(
                 '<div class="hq-help">' + 
                     '<a href="#">' +
-                        '<i class="icon-question-sign"></i></a></div>'
+                        '<i class="' + iconClass + '"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];
-
             attrs.map(function (attr) {
-                el.find('a').data(attr, opts[attr]);
+                el.find('a').attr("data-"+attr, opts[attr]);
             });
             if (wrap) {
                 el.hqHelp();
@@ -217,7 +223,7 @@ var COMMCAREHQ = (function () {
                 e.preventDefault();
                 if (!$(this).data('clicked')) {
                     $(this).prev('form').submit();
-                    $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+                    $(this).data('clicked', 'true').children('i').removeClass().addClass("fa fa-refresh fa-spin icon-refresh icon-spin");
                 }
             });
 
@@ -324,11 +330,11 @@ var COMMCAREHQ = (function () {
 
 $(function () {
     'use strict';
-    $('.delete_link').iconify('icon-remove');
+    $('.delete_link').iconify('fa fa-remove icon-remove');
     $(".delete_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
-    $('.new_link').iconify('icon-plus');
-    $('.edit_link').iconify('icon-pencil');
+    $('.new_link').iconify('fa fa-plus icon-plus');
+    $('.edit_link').iconify('fa fa-pencil icon-pencil');
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 

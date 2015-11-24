@@ -3,6 +3,7 @@ import uuid
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
 
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
@@ -23,7 +24,6 @@ from corehq.db import connection_manager, UCR_ENGINE_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class TestFieldColumn(SimpleTestCase):
@@ -126,7 +126,7 @@ class TestExpandedColumn(TestCase):
             case_type=self.case_type,
             update=properties,
         ).as_xml()
-        FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
+        post_case_blocks([case_block], {'domain': self.domain})
         return CommCareCase.get(id)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):

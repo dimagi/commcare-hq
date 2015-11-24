@@ -6,6 +6,8 @@ from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports_core.exceptions import FilterException
+from corehq.apps.style.decorators import use_datatables, use_nvd3, \
+    use_bootstrap3, use_daterangepicker
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
@@ -65,6 +67,10 @@ class TestReport(JSONResponseMixin, TemplateView):
     template_name = 'reports_core/base_template_new.html'
     data_model = TestReportData
 
+    @use_datatables
+    @use_nvd3
+    @use_daterangepicker
+    @use_bootstrap3
     def dispatch(self, request, domain=None, **kwargs):
         user = request.couch_user
         if self.has_permissions(domain, user):

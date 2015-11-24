@@ -9,10 +9,12 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import primary_actions
+from casexml.apps.case.util import primary_actions, post_case_blocks
 from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy, _action_sort_key_function
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import RebuildWithReason
 from couchforms.models import XFormInstance
+
+REBUILD_TEST_DOMAIN = 'rebuild-test'
 
 
 def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
@@ -20,7 +22,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
               **kwargs):
 
     form_extras = form_extras or {}
-    form_extras['domain'] = 'rebuild-test'
+    form_extras['domain'] = REBUILD_TEST_DOMAIN
 
     uid = lambda: uuid.uuid4().hex
     case_id = case_id or uid()
@@ -32,7 +34,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       date_modified=date_modified,
                       update=kwargs,
                       close=close).as_xml()
-    FormProcessorInterface().post_case_blocks([block], form_extras)
+    post_case_blocks([block], form_extras)
     return case_id
 
 
@@ -167,7 +169,7 @@ class CaseRebuildTest(TestCase):
         _confirm_action_order(case, [a1, a2, a3])
 
     def testRebuildEmpty(self):
-        self.assertEqual(None, rebuild_case_from_forms('notarealid'))
+        self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
 
     def testRebuildCreateCase(self):
         case_id = _post_util(create=True)
@@ -183,7 +185,7 @@ class CaseRebuildTest(TestCase):
         except ResourceNotFound:
             pass
 
-        case = rebuild_case_from_forms(case_id)
+        case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self.assertEqual(case.p1, 'p1')
         self.assertEqual(case.p2, 'p2')
         self.assertEqual(2, len(primary_actions(case)))  # create + update
@@ -233,7 +235,7 @@ class CaseRebuildTest(TestCase):
         self._assertListNotEqual(original_actions, case.actions)
 
         # test clean slate rebuild
-        case = rebuild_case_from_forms(case_id)
+        case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
 
@@ -370,11 +372,11 @@ class CaseRebuildTest(TestCase):
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
         create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
-        FormProcessorInterface().post_case_blocks(
+        post_case_blocks(
             [create_block.as_xml()], form_extras={'received_on': way_earlier}
         )
         update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
-        FormProcessorInterface().post_case_blocks(
+        post_case_blocks(
             [update_block.as_xml()], form_extras={'received_on': earlier}
         )
 

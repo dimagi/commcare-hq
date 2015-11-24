@@ -1,4 +1,6 @@
 from django.core.files.uploadedfile import UploadedFile
+
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.couchapps.dbaccessors import get_attachment_size_by_domain, get_attachment_size_by_domain_app_id_xmlns
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils
@@ -49,7 +51,7 @@ class AttachmentsTest(TestCase):
             attachments = {
                 'pic.jpg': UploadedFile(attachment, 'pic.jpg')
             }
-        FormProcessorInterface().submit_form_locally(xml, domain=DOMAIN, app_id=app_id, attachments=attachments)
+        submit_form_locally(xml, domain=DOMAIN, app_id=app_id, attachments=attachments)
 
     @classmethod
     def tearDownClass(cls):

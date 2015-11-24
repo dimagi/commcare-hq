@@ -16,7 +16,7 @@ from pillowtop.listener import PythonPillow
 class ChangeFeedPillow(PythonPillow):
 
     def __init__(self, couch_db, kafka, checkpoint):
-        super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint)
+        super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint, chunk_size=10)
         self._kafka = kafka
         self._producer = KeyedProducer(self._kafka)
 

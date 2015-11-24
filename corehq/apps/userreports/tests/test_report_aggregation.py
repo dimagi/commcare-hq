@@ -83,9 +83,9 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
 
     def _create_view(self, report_config):
         view = ConfigurableReport()
-        view.domain = self.domain
-        view.lang = "en"
-        view.report_config_id = report_config._id
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = report_config._id
         return view
 
     def test_aggregation_by_column_not_in_report(self):

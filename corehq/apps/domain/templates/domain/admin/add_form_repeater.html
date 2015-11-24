@@ -1,7 +1,8 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
@@ -16,7 +17,7 @@
                     data = {url: url, repeater_type: type, format: format};
                 jQuery.post("{% url "test_repeater" domain %}", data, function(data) {
                     json_res = JSON.parse(data);
-                    $testLabel.removeClass("hide label-important label-success");
+                    $testLabel.removeClass("hide label-danger label-success");
                     if (json_res.status) {
                         msg = json_res.status + ": " + json_res.response;
                     } else {
@@ -26,7 +27,7 @@
                         $testLabel.addClass("label-success");
                         $testLabel.text("{% trans 'Success! Response is' %}: " + msg);
                     } else {
-                        $testLabel.addClass("label-important");
+                        $testLabel.addClass("label-danger");
                         $testLabel.text("{% trans 'Failed! Response is' %}: " + msg);
                     }
                 });
@@ -44,10 +45,6 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
-<form class="form form-horizontal" method="post" action="">
-    {% bootstrap_form_errors form %}
-    {% bootstrap_fieldset form "Forwarding Settings" %}
-    <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans 'Start Forwarding' %}</button></div>
-</form>
+{% block page_content %}
+    {% crispy form %}
 {% endblock %}

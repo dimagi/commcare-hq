@@ -121,6 +121,7 @@ def format_sidebar(context):
                                 actual_context = {}
                                 for d in context.dicts:
                                     actual_context.update(d)
+                                subpage['is_active'] = True
                                 subpage['title'] = subpage['title'](**actual_context)
                             nav['subpage'] = subpage
                             break

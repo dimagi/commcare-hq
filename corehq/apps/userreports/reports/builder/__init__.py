@@ -58,7 +58,12 @@ def make_case_property_indicator(property_name, column_id=None):
     }
 
 
-def make_owner_name_indicator(column_id):
+def _make_user_group_or_location_indicator(property_name, column_id):
+    """
+    Return a data source indicator config with the given column_id that stores
+    a user name, group name, or location name for the id corresponding to the
+    given property_name.
+    """
     return {
         "datatype": "string",
         "type": "expression",
@@ -75,7 +80,7 @@ def make_owner_name_indicator(column_id):
                     "related_doc_type": "Group",
                     "doc_id_expression": {
                         "type": "property_name",
-                        "property_name": "owner_id"
+                        "property_name": property_name
                     }
                 },
                 "type": "boolean_expression",
@@ -90,7 +95,7 @@ def make_owner_name_indicator(column_id):
                 "related_doc_type": "Group",
                 "doc_id_expression": {
                     "type": "property_name",
-                    "property_name": "owner_id"
+                    "property_name": property_name
                 }
             },
             "type": "conditional",
@@ -107,7 +112,7 @@ def make_owner_name_indicator(column_id):
                         "related_doc_type": "CommCareUser",
                         "doc_id_expression": {
                             "type": "property_name",
-                            "property_name": "owner_id"
+                            "property_name": property_name
                         }
                     },
                     "type": "boolean_expression",
@@ -122,7 +127,7 @@ def make_owner_name_indicator(column_id):
                     "related_doc_type": "CommCareUser",
                     "doc_id_expression": {
                         "type": "property_name",
-                        "property_name": "owner_id"
+                        "property_name": property_name
                     }
                 },
                 "expression_if_false": {
@@ -134,12 +139,20 @@ def make_owner_name_indicator(column_id):
                     "related_doc_type": "Location",
                     "doc_id_expression": {
                         "type": "property_name",
-                        "property_name": "owner_id"
+                        "property_name": property_name
                     }
                 }
             }
         }
     }
+
+
+def make_user_name_indicator(column_id):
+    return _make_user_group_or_location_indicator("user_id", column_id)
+
+
+def make_owner_name_indicator(column_id):
+    return _make_user_group_or_location_indicator("owner_id", column_id)
 
 
 def make_form_question_indicator(question, column_id=None):

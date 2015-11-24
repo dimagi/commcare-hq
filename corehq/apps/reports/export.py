@@ -163,7 +163,7 @@ class BulkExportHelper(object):
     def zip_export(self):
         return True
 
-    def prepare_export(self, export_tags, export_filter):
+    def get_download_task(self, export_tags, export_filter):
         self.generate_bulk_files(export_tags, export_filter)
 
         download = DownloadBase()
@@ -172,6 +172,10 @@ class BulkExportHelper(object):
             download.download_id,
             domain=self.domain
         ))
+        return download
+
+    def prepare_export(self, export_tags, export_filter):
+        download = self.get_download_task(export_tags, export_filter)
         return download.get_start_response()
 
     def generate_bulk_files(self, export_tags, export_filter):

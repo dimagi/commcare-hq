@@ -246,7 +246,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 hqcrispy.Field('first_name'),
                 hqcrispy.Field('last_name'),
                 hqcrispy.Field('email'),
-                hqcrispy.Field('email_opt_out'),
+                twbscrispy.PrependedText('email_opt_out', ''),
             ),
             cb3_layout.Fieldset(
                 _("Other Options"),
@@ -729,3 +729,32 @@ class SelfRegistrationForm(forms.Form):
     def clean_password2(self):
         if self.cleaned_data.get('password') != self.cleaned_data.get('password2'):
             raise forms.ValidationError(_('Passwords do not match.'))
+
+
+class AddPhoneNumberForm(forms.Form):
+    phone_number = forms.CharField(
+        max_length=50, help_text=ugettext_lazy('Please enter number, including country code, in digits only.')
+    )
+
+    form_type = forms.CharField(initial='add-phonenumber', widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        super(AddPhoneNumberForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            Fieldset(
+                _('Add a Phone Number'),
+                'form_type',
+                twbscrispy.PrependedText('phone_number', '+', type='tel', pattern='\d+')
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Add Number'),
+                    css_class='btn-primary disable-on-submit',
+                    type='submit',
+                )
+            )
+        )

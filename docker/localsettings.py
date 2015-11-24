@@ -102,10 +102,9 @@ OVERRIDE_LOCATION = "https://www.commcarehq.org"
 # See corehq/apps/builds/README.md for more information.
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('BASE_HOST', 'localhost'))
 
-# Set your analytics IDs here for GA and pingdom RUM
+# Set your analytics IDs here for GA and other external analytics services
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '*******',
-    'PINGDOM_API_ID': '*****',
     'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
 }

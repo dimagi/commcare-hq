@@ -4,6 +4,7 @@ function CommcareSettings(options) {
     self.sections = options.sections;
     self.user = options.user;
     self.permissions = options.permissions;
+    self.warning = options.warning;
 
     self.customPropertyType = 'custom_properties';
     self.customProperties = ko.observableArray(_.map(options.customProperties, function(d) {
@@ -432,3 +433,16 @@ $(function () {
         }
     }
 });
+
+CommcareSettings.widgets.number = function (self) {
+    self.valueIsLegal = function () {
+        var value = self.value();
+        if (self.min_value && value < self.min_value) {
+            return false;
+        }
+        if (self.max_value && value > self.max_value) {
+            return false;
+        }
+        return true;
+    };
+};

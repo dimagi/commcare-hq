@@ -232,7 +232,7 @@ cloudCare.CaseListView = Backbone.View.extend({
         $panel.append($panelBody);
         self.$el.append($panel);
 
-        var table = $("<table />").addClass("table table-striped table-hover datatable").css('clear', 'both').appendTo($panelBody);
+        var table = $("<table />").addClass("table table-striped table-hover datatable clearfix").appendTo($panelBody);
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         if (self.options.delegation) {
@@ -284,8 +284,11 @@ cloudCare.CaseListView = Backbone.View.extend({
 
     },
     appendAll: function () {
+        var $table;
         this.caseList.each(this.appendItem);
-        $('table', this.el).dataTable({
+        $table = $('table', this.el);
+        $table.css('width', '100%');
+        $table.dataTable({
             bFilter: true,
             bPaginate: false,
             bSort: true,
@@ -293,7 +296,7 @@ cloudCare.CaseListView = Backbone.View.extend({
                 "sSearch": "Filter cases:",
                 "sEmptyTable": "No cases available. You must register a case to access this form."
             },
-            sScrollX: +$('#case-list').css('width').replace('px', ''),
+            sScrollX: $('#case-list').outerWidth(),
             bScrollCollapse: true
         });
         var $dataTablesFilter = $(".dataTables_filter");
@@ -338,7 +341,7 @@ cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend
 
 
         if (self.model) {
-            var table = $("<table />").addClass("table table-striped datatable").appendTo($panelBody);
+            var table = $("<table />").addClass("table table-striped table-hover datatable").appendTo($panelBody);
             var thead = $("<thead />").appendTo(table);
             var theadrow = $("<tr />").appendTo(thead);
 	        $("<th />").attr("colspan", "2").text("Case Details for " + self.model.getProperty("name")).appendTo(theadrow);
