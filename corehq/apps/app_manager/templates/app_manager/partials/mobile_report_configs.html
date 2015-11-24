@@ -60,10 +60,10 @@
                             <input type="text" data-bind="value: display">
                         </td>
                         <td>
-                            <p>
+                            <label class="checkbox">
                                 <input type="checkbox" data-bind="checked: useXpathDescription">
                                 {% trans "Use xpath expression" %}
-                            </p>
+                            </label>
                             <div data-bind="visible: useXpathDescription">
                                 <input type="text" data-bind="value: xpathDescription">
                                 <p>
