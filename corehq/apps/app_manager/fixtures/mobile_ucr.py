@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 import logging
 from xml.etree import ElementTree
@@ -75,7 +76,8 @@ class ReportFixturesProvider(object):
             if filter is not None
         }
         defer_filters = {
-            filter_slug: filter for filter_slug, filter in all_filter_values.items()
+            filter_slug: report.get_ui_filter(filter_slug)
+            for filter_slug, filter in all_filter_values.items()
             if filter is None
         }
         data_source.set_filter_values(filter_values)
@@ -83,17 +85,39 @@ class ReportFixturesProvider(object):
 
         rows_elem = ElementTree.Element('rows')
 
+        deferred_fields = {ui_filter.field for ui_filter in defer_filters.values()}
+        filter_options_by_field = defaultdict(set)
+
         for i, row in enumerate(data_source.get_data()):
             row_elem = ElementTree.Element('row', attrib={'index': str(i)})
             for k in sorted(row.keys()):
-                row_elem.append(self._element('column', serialize(row[k]), attrib={'id': k}))
+                value = serialize(row[k])
+                row_elem.append(self._element('column', value, attrib={'id': k}))
+                if k in deferred_fields:
+                    filter_options_by_field[k].add(value)
             rows_elem.append(row_elem)
 
+        filters_elem = self._element('filters')
+        for filter_slug, ui_filter in defer_filters.items():
+            # @field is maybe a bad name for this attribute,
+            # since it's actually the filter slug
+            filter_elem = self._element('filter', attrib={'field': filter_slug})
+            option_values = filter_options_by_field[ui_filter.field]
+            choices = ui_filter.choice_provider.get_choices_for_values(option_values)
+            choices.sort(key=lambda (value, display): display)
+            for choice in choices:
+                # add the correct text from ui_filter.choice_provider
+                option_elem = self._element(
+                    'option', text=choice.display, attrib={'value': choice.value})
+                filter_elem.append(option_elem)
+            filters_elem.append(filter_elem)
+
+        report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return report_elem
 
     @staticmethod
-    def _element(name, text, attrib=None):
+    def _element(name, text=None, attrib=None):
         attrib = attrib or {}
         element = ElementTree.Element(name, attrib=attrib)
         element.text = text
