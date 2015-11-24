@@ -13,8 +13,8 @@ run_pre_and_post_timezone_migration = functools.partial(
         ),
         RunConfig(
             settings={
-                'PHONE_TIMEZONES_SHOULD_BE_PROCESSED': True,
-                'PHONE_TIMEZONES_HAVE_BEEN_PROCESSED': True,
+                'PHONE_TIMEZONES_SHOULD_BE_PROCESSED': False,
+                'PHONE_TIMEZONES_HAVE_BEEN_PROCESSED': False,
             },
         )
     ]

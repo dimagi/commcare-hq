@@ -84,13 +84,6 @@ def get_number_of_forms_of_all_types(domain):
     return submissions['value'] if submissions else 0
 
 
-@unit_testing_only
-def clear_forms_in_domain(domain):
-    items = get_forms_of_all_types(domain)
-    for item in items:
-        item.delete()
-
-
 def get_number_of_forms_all_domains_in_couch():
     """
     Return number of non-error, non-log forms total across all domains
@@ -125,4 +118,14 @@ def get_commtrack_forms(domain):
         endkey=key + [{}],
         reduce=False,
         include_docs=True
+    )
+
+
+def get_exports_by_form(domain):
+    return XFormInstance.get_db().view(
+        'exports_forms/by_xmlns',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group=True,
+        stale=settings.COUCH_STALE_QUERY
     )

@@ -8,7 +8,10 @@ from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import process_xform, deprecation_type, fetch_and_wrap_form
-from couchforms.models import XFormInstance, XFormDeprecated, XFormDuplicate, doc_types, XFormError
+from couchforms.models import (
+    XFormInstance, XFormDeprecated, XFormDuplicate,
+    doc_types, XFormError, SubmissionErrorLog
+)
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
@@ -68,10 +71,14 @@ class FormProcessorCouch(object):
         case.get_db().bulk_delete(docs)
 
     @classmethod
-    def bulk_save(cls, instance, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
+
+    @classmethod
+    def save_xform(cls, xform):
+        xform.save()
 
     @classmethod
     def deprecate_xform(cls, existing_xform, new_xform):
@@ -121,6 +128,14 @@ class FormProcessorCouch(object):
     @classmethod
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
+
+    @classmethod
+    def log_submission_error(cls, instance, message, callback):
+        error = SubmissionErrorLog.from_instance(instance, message)
+        if callback:
+            callback(error)
+        error.save()
+        return error
 
     @staticmethod
     def get_cases_from_forms(case_db, xforms):
@@ -191,7 +206,7 @@ class FormProcessorCouch(object):
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):
-    from corehq.apps.commtrack.processing import get_stock_actions
+    from corehq.form_processor.parsers.ledgers import get_stock_actions
     case_actions = []
     for form in sorted_forms:
         assert form.domain == domain

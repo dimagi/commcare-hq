@@ -8,12 +8,13 @@ from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from couchforms.const import ATTACHMENT_NAME
 from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, CaseAttachmentSQL)
+    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -32,7 +33,7 @@ class FormProcessorSQL(object):
                 xform.domain = domain
         xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
         with xform_lock as xforms:
-            cls.bulk_save(xforms[0], xforms)
+            cls.save_processed_models(xforms)
             return xforms[0]
 
     @classmethod
@@ -43,7 +44,7 @@ class FormProcessorSQL(object):
                 name=attachment.name,
                 attachment_uuid=unicode(uuid.uuid4()),
                 content_type=attachment.content_type,
-                md5=hashlib.md5(attachment.content).hexdigest(),
+                md5=attachment.md5,
             )
             xform_attachment.write_content(attachment.content)
             xform_attachments.append(xform_attachment)
@@ -83,26 +84,45 @@ class FormProcessorSQL(object):
             case.delete()
 
     @classmethod
-    def bulk_save(cls, instance, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Ensure already saved forms get saved first to avoid ID conflicts
+            is_deprecation = len(xforms) > 1
             for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
-                xform.save()
-                if xform.is_deprecated:
-                    attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
-                    attachments.update(xform_id=xform.form_id)
-
-                    operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
-                    operations.update(xform_id=xform.form_id)
-
-            for unsaved_attachment in instance.unsaved_attachments:
-                unsaved_attachment.xform = instance
-            instance.attachments.bulk_create(instance.unsaved_attachments)
+                cls.save_xform(xform, is_deprecation)
 
             if cases:
                 for case in cases:
                     cls.save_case(case)
+
+    @classmethod
+    def save_xform(cls, xform, is_deprecation=False):
+        """
+        :param xform: The xform to save
+        :param is_deprecation: Set to True if this save is part of a deprecation save.
+        """
+        with transaction.atomic():
+            logging.debug('Saving form: %s', xform)
+            xform.save()
+            if is_deprecation and xform.is_deprecated:
+                logging.debug(
+                    'Reassigning attachments and operations to deprecated form: %s -> %s',
+                    xform.orig_id, xform.form_id
+                )
+                attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
+                attachments.update(xform_id=xform.form_id)
+
+                operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
+                operations.update(xform_id=xform.form_id)
+
+            unsaved_attachments = getattr(xform, 'unsaved_attachments', None)
+            if unsaved_attachments:
+                logging.debug('Saving %s attachments for form: %s', len(unsaved_attachments), xform.form_id)
+                for unsaved_attachment in unsaved_attachments:
+                    unsaved_attachment.xform = xform
+                xform.attachments.bulk_create(unsaved_attachments)
+                del xform.unsaved_attachments
 
     @classmethod
     def save_case(cls, case):
@@ -183,6 +203,26 @@ class FormProcessorSQL(object):
                 instance.id = None
 
         return instance
+
+    @classmethod
+    def log_submission_error(cls, instance, message, callback):
+        xform = XFormInstanceSQL(
+            form_uuid=uuid.uuid4().hex,
+            received_on=datetime.datetime.utcnow(),
+            problem=message,
+            state=XFormInstanceSQL.SUBMISSION_ERROR_LOG
+        )
+        cls.store_attachments(xform, [Attachment(
+            name=ATTACHMENT_NAME,
+            raw_content=instance,
+            content_type='text/xml',
+        )])
+
+        if callback:
+            callback(xform)
+
+        cls.save_xform(xform)
+        return xform
 
     @staticmethod
     def get_cases_from_forms(case_db, xforms):

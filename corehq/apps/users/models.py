@@ -17,6 +17,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from corehq.elastic import es_wrapper
@@ -1545,7 +1546,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return create_or_update_safe(
             domain=xform.domain,
             user_data=user_data_from_registration_form(xform),
-            **dict([(arg, xform.form[arg]) for arg in (
+            **dict([(arg, xform.form_data[arg]) for arg in (
                 'username',
                 'password',
                 'uuid',
@@ -1785,10 +1786,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
-            SupplyInterface(self.domain).get_or_create_by_location(location)
+            sp = SupplyInterface(self.domain).get_or_create_by_location(location)
 
             self.user_data.update({
-                'commtrack-supply-point': location.sql_location.supply_point_id
+                'commtrack-supply-point': sp.case_id
             })
 
         if self.project.supports_multiple_locations_per_user:
@@ -1804,7 +1805,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
-            location.location_id
+            location.group_id
         })
 
         self.location_id = location.location_id
@@ -2027,51 +2028,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return usercase.case_id if usercase else None
 
 
-class OrgMembershipMixin(DocumentSchema):
-    org_memberships = SchemaListProperty(OrgMembership)
-
-    @property
-    def organizations(self):
-        return [om.organization for om in self.org_memberships]
-
-    def is_member_of_org(self, org_name_or_model):
-        """
-        takes either a organization name or an organization object and returns whether the user is part of that org
-        """
-        try:
-            org = org_name_or_model.name
-        except Exception:
-            org = org_name_or_model
-        return org in self.organizations
-
-    def get_org_membership(self, org):
-        for om in self.org_memberships:
-            if om.organization == org:
-                return om
-        return None
-
-    def is_org_admin(self, org):
-        om = self.get_org_membership(org)
-        return om and om.is_admin
-
-    def is_member_of_team(self, org, team_id):
-        om = self.get_org_membership(org)
-        return om and team_id in om.team_ids
-
-    def remove_from_team(self, org, team_id):
-        om = self.get_org_membership(org)
-        if om:
-            om.team_ids.remove(team_id)
-
-    def set_org_admin(self, org):
-        om = self.get_org_membership(org)
-        if not om:
-            raise OrgMembershipError("Cannot set admin -- %s is not a member of the %s organization" %
-                                     (self.username, org))
-        om.is_admin = True
-
-
-class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
+class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
 
     program_id = StringProperty()
@@ -2345,13 +2302,18 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class Invitation(Document):
+class Invitation(CachedCouchDocumentMixin, Document):
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
+    domain = StringProperty()
+    role = StringProperty()
+    program = None
+    supply_point = None
 
     _inviter = None
+
     def get_inviter(self):
         if self._inviter is None:
             self._inviter = CouchUser.get_by_user_id(self.invited_by)
@@ -2359,24 +2321,6 @@ class Invitation(Document):
                 self.invited_by = self._inviter.user_id
                 self.save()
         return self._inviter
-
-    def send_activation_email(self):
-        raise NotImplementedError
-
-    @property
-    def is_expired(self):
-        return False
-
-
-class DomainInvitation(CachedCouchDocumentMixin, Invitation):
-    """
-    When we invite someone to a domain it gets stored here.
-    """
-    domain = StringProperty()
-    role = StringProperty()
-    doc_type = "Invitation"
-    program = None
-    supply_point = None
 
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
@@ -2400,14 +2344,10 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
-        key = [domain]
-
-        return cls.view("users/open_invitations_by_domain",
-            reduce=False,
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-        ).all()
+        return filter(
+            lambda domain_invitation: not domain_invitation.is_accepted,
+            get_docs_in_domain_by_class(domain, cls)
+        )
 
     @classmethod
     def by_email(cls, email, is_active=True):
@@ -2415,7 +2355,6 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
                         reduce=False,
                         key=[email],
                         include_docs=True,
-                        stale=settings.COUCH_STALE_QUERY,
                         ).all()
 
     @property

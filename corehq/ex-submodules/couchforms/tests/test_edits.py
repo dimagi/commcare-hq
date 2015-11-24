@@ -94,7 +94,7 @@ class EditFormTest(TestCase, TestFileMixin):
             0
         )
 
-        with patch.object(self.interface.processor, 'bulk_save', side_effect=RequestFailed):
+        with patch.object(self.interface.processor, 'save_processed_models', side_effect=RequestFailed):
             with self.assertRaises(RequestFailed):
                 submit_form_locally(edit_xml, self.domain)
 

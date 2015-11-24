@@ -1,0 +1,16 @@
+{% extends 'mocha/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+
+{% block core_libraries %}{{ block.super }}
+{% include "style/includes/bootstrap3/angular.html" %}
+<script src="{% new_static 'angular-mocks/angular-mocks.js' %}"></script>
+{% endblock %}
+
+{% block dependencies %}
+<script src="{% new_static 'export/js/list_exports.ng.js' %}"></script>
+{% endblock %}
+
+{% block mocha_tests %}
+<script src="{% new_static 'export/spec/data/list_exports.data.mo.js' %}"></script>
+<script src="{% new_static 'export/spec/list_exports.spec.mo.js' %}"></script>
+{% endblock %}

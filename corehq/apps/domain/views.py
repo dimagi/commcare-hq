@@ -54,7 +54,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import DomainInvitation
+from corehq.apps.users.models import Invitation
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
@@ -123,7 +123,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
-    open_invitations = [e for e in DomainInvitation.by_email(email) if not e.is_expired]
+    open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domains_for_user': domains_for_user,
@@ -1356,10 +1356,12 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "secure_submissions": self.domain_object.secure_submissions,
             "restrict_superusers": self.domain_object.restrict_superusers,
             "allow_domain_requests": self.domain_object.allow_domain_requests,
+            "hipaa_compliant": self.domain_object.hipaa_compliant,
         }
         if self.request.method == 'POST':
-            return PrivacySecurityForm(self.request.POST, initial=initial)
-        return PrivacySecurityForm(initial=initial)
+            return PrivacySecurityForm(self.request.POST, initial=initial,
+                                       user_name=self.request.couch_user.username)
+        return PrivacySecurityForm(initial=initial, user_name=self.request.couch_user.username)
 
     @property
     def page_context(self):

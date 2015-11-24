@@ -1,5 +1,7 @@
 import logging
 
+from iso8601 import iso8601
+
 from casexml.apps.case import const
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
@@ -8,6 +10,14 @@ from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
+
+PROPERTY_TYPE_MAPPING = {
+    'opened_on': iso8601.parse_date
+}
+
+
+def _convert_type(property_name, value):
+    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
 
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
@@ -63,9 +73,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             ))
 
     def _update_known_properties(self, action):
-        for k, v in action.get_known_properties().items():
-            if v:
-                setattr(self.case, k, v)
+        for name, value in action.get_known_properties().items():
+            if value:
+                setattr(self.case, name, _convert_type(name, value))
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)

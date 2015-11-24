@@ -1,13 +1,6 @@
-{% extends "users/base_template.html" %}
+{% extends 'settings/bootstrap3/base_template.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-{% endblock %}
 
 {% block js-inline %}{{ block.super }}
 <script>
@@ -132,9 +125,24 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block stylesheets %}
+    <style>
+        #cloudcare-app-settings-form label.radio {
+            padding-left: 2em;
+            width: 20%;
+        }
+
+        #cloudcare-app-settings-form select {
+            width: 20%;
+        }
+    </style>
+
+
+{% endblock %}
+
+{% block page_content %}
     <h2>{% trans 'Manage CloudCare Permissions' %}</h2>
-    <section id="cloudcare-app-settings" class="hide">
+    <section id="cloudcare-app-settings" style="display: none">
         <div data-bind="saveButton: saveButton"></div>
         <div id="cloudcare-app-settings-form" data-bind="with: applicationAccess">
             <label class="radio">
@@ -158,7 +166,7 @@
                         <tr>
                             <td data-bind="text: app_id.obj().name"></td>
                             <td>
-                                <select data-bind="
+                                <select class="form-control" data-bind="
                                     visible: $root.groupDB._sorted.length,
                                     value: group_id,
                                     options: $root.groupDB._sorted,
