@@ -288,4 +288,4 @@ def handle_unexpected_error(interface, instance, e):
         u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance.orig_id, error_message, instance.form_id))
-    instance.save()
+    interface.save_xform(instance)
