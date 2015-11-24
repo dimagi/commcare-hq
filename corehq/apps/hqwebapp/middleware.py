@@ -9,8 +9,12 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
     def _reject(self, request, reason):
         if settings.CSRF_ALWAYS_OFF and reason in [REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN]:
 
-            warning = """Request doesn't contain a csrf token. Letting the request pass through for now. Check if we are sending csrf_token in the corresponding POST form, if not fix it. Read more here"""
-            _assert = soft_assert(notify_admins=True)
+            warning = "Request at {url} doesn't contain a csrf token. Letting the request pass through for now. "\
+                      "Check if we are sending csrf_token in the corresponding POST form, if not fix it. "\
+                      "Read more here https://github.com/dimagi/commcare-hq/pull/9227".format(
+                          url=request.path
+                      )
+            _assert = soft_assert(notify_admins=True, exponential_backoff=True)
             _assert(False, warning)
 
             return self._accept(request)
