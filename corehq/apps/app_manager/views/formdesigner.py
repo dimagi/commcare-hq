@@ -70,8 +70,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
                             unique_form_id=form.unique_id)
 
     vellum_plugins = ["modeliteration", "itemset"]
-    if (toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain) or
-            toggles.COMMTRACK.enabled(domain)):
+    if (toggles.COMMTRACK.enabled(domain)):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
