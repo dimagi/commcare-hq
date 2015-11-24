@@ -11,10 +11,16 @@ BLOCK_JS = ' block js '
 BLOCK_CSS = ' block css '
 ENDBLOCK = ' endblock '
 
+DISALLOWED_TAGS = [
+    '{% if',
+]
+
 
 class TestDjangoCompressOffline(SimpleTestCase):
 
     def _assert_valid_import(self, line):
+        for tag in DISALLOWED_TAGS:
+            self.assertNotIn(tag, line)
         if 'src' not in line and 'href' not in line:
             return
         self.assertIn('new_static', line)
