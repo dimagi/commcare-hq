@@ -135,6 +135,7 @@
                 $scope.prepareExportError = "default";
             }
             $scope.preparingExport = false;
+            $scope.preparingMultimediaExport = false;
         };
 
         $scope.preparingMultimediaExport = false;
@@ -264,9 +265,12 @@
                         self.downloadStatusData = data;
                         if (data.has_file && data.is_ready) {
                             $interval.cancel(self._promise);
+                            return;
                         }
                         if (data.progress && data.progress.error) {
                             $interval.cancel(self._promise);
+                            self.downloadError = data.progress.error;
+                            return;
                         }
                     }
                     if (data.error) {
