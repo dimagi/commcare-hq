@@ -47,7 +47,7 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def is_duplicate(cls, xform_id, domain=False):
+    def is_duplicate(cls, xform_id, domain=None):
         if domain:
             try:
                 existing_doc = XFormInstance.get_db().get(xform_id)
