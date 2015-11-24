@@ -1,7 +1,6 @@
 import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
-from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -16,8 +15,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
-
-from .dbaccessors import get_all_users_by_location
 
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
@@ -718,6 +715,7 @@ class Location(CachedCouchDocumentMixin, Document):
                                        .couch_locations())
 
     def linked_supply_point(self):
+        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
         return get_supply_point_case_by_location(self)
 
     @property
@@ -737,6 +735,7 @@ def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
     """
+    from corehq.apps.locations.dbaccessors import get_all_users_by_location
     for user in get_all_users_by_location(domain, location_id):
         if user.is_web_user():
             user.unset_location(domain)

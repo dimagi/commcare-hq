@@ -22,7 +22,7 @@
         {% if progress.total %}
             <p class="help-inline">
                 {% trans "Processed" %} {{ progress.percent }}%
-                ( {{ progress.current }} of {{ progress.total }} )
+                ( {{ progress.current|floatformat:"0" }} of {{ progress.total }} )
             </p>
         {% else %}
         {% endif %}

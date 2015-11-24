@@ -11,6 +11,8 @@ LOCAL_APPS = (
     'django_extensions',
 )
 
+TEST_RUNNER = 'testrunner.DevTestRunner'
+
 ####### Django Extensions #######
 # These things will be imported when you run ./manage.py shell_plus
 SHELL_PLUS_POST_IMPORTS = (

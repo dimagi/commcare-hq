@@ -1,3 +1,4 @@
+from collections import namedtuple
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, feature_previews
@@ -5,9 +6,9 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
     CommtrackRequisitionConfig
+from corehq.apps.locations.dbaccessors import get_location_from_site_code
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.locations.models import Location
 import itertools
 from datetime import date, timedelta
 from calendar import monthrange
@@ -20,6 +21,9 @@ from django.utils.translation import ugettext as _
 import re
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
+
+
+CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
 
 def all_sms_codes(domain):
@@ -35,20 +39,14 @@ def all_sms_codes(domain):
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
 
 
-def get_supply_point(domain, site_code=None, loc=None):
-    if loc is None:
-        loc = Location.view('commtrack/locations_by_code',
-                            key=[domain, site_code.lower()],
-                            include_docs=True).first()
-    if loc:
-        case = SupplyInterface(domain).get_by_location(loc)
+def get_supply_point_and_location(domain, site_code):
+    location = get_location_from_site_code(domain, site_code)
+    if location:
+        case = SupplyInterface(domain).get_by_location(location)
     else:
         case = None
 
-    return {
-        'case': case,
-        'location': loc,
-    }
+    return CaseLocationTuple(case=case, location=location)
 
 
 def make_program(domain, name, code, default=False):
@@ -117,7 +115,6 @@ def _create_commtrack_config_if_needed(domain):
 def _enable_commtrack_previews(domain):
     for toggle_class in (
         toggles.COMMTRACK,
-        toggles.VELLUM_TRANSACTION_QUESTION_TYPES,
         toggles.VELLUM_ADVANCED_ITEMSETS,
         toggles.STOCK_TRANSACTION_EXPORT,
     ):
@@ -223,7 +220,8 @@ def submit_mapping_case_block(user, index):
 
 
 def location_map_case_id(user):
-    return 'user-owner-mapping-' + user._id
+    # TODO: migrate these to use uuid5(uuid.NAMESPACE_OID, user.user_id)
+    return 'user-owner-mapping-' + user.user_id
 
 
 def get_commtrack_location_id(user, domain):

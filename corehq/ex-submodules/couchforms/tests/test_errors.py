@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.test_utils import run_with_all_backends
 
 
@@ -25,7 +25,7 @@ class CaseProcessingErrorsTest(TestCase):
         """
 
         domain = 'special_domain'
-        _, xform, _ = FormProcessorInterface().submit_form_locally(
+        _, xform, _ = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-123</instanceID>
@@ -50,7 +50,7 @@ class CaseProcessingErrorsTest(TestCase):
         - an XFormError is saved with the original id as orig_id
         """
         domain = 'special_domain'
-        _, xform, _ = FormProcessorInterface().submit_form_locally(
+        _, xform, _ = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-456</instanceID>

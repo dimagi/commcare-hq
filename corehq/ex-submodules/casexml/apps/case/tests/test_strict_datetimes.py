@@ -3,6 +3,7 @@ from django.test import TestCase
 from casexml.apps.case.util import make_form_from_case_blocks
 from casexml.apps.case.xform import process_cases_with_casedb
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.test_utils import run_with_all_backends
 from couchforms.exceptions import PhoneDateValueError
 from couchforms.util import process_xform
 
@@ -30,9 +31,10 @@ class StrictDatetimesTest(TestCase):
         cls.domain = 'strict-datetimes-test-domain'
         cls.interface = FormProcessorInterface(cls.domain)
 
+    @run_with_all_backends
     def test(self):
         form = make_form_from_case_blocks([ElementTree.fromstring(CASE_BLOCK)])
-        lock_manager = process_xform(form, domain=self.domain)
+        lock_manager = process_xform(self.domain, form)
         with lock_manager as xforms:
             with self.interface.casedb_cache(domain=self.domain) as case_db:
                 with self.assertRaises(PhoneDateValueError):

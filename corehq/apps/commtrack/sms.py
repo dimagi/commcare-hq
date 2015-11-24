@@ -2,17 +2,19 @@ from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
-from corehq.apps.commtrack.models import StockTransactionHelper, CommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
 from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
 from corehq import toggles
 from lxml import etree
 import logging
+
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
-from corehq.apps.commtrack.util import get_supply_point
+from corehq.apps.commtrack.util import get_supply_point_and_location
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.products.models import Product
 from corehq.apps.users.models import CouchUser
@@ -24,6 +26,7 @@ from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError)
 import re
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -82,6 +85,7 @@ class StockReportParser(object):
         self.v = v
 
         self.location = None
+        self.case = None
         u = v.owner
 
         if domain.commtrack_enabled:
@@ -90,9 +94,9 @@ class StockReportParser(object):
                 raise NotAUserClassError
 
             # currently only support one location on the UI
-            linked_loc = u.location
-            if linked_loc:
-                self.location = get_supply_point(self.domain.name, loc=linked_loc)
+            self.location = u.location
+            if self.location:
+                self.case = SupplyInterface(domain.name).get_by_location(self.location)
 
         self.C = domain.commtrack_settings
 
@@ -113,14 +117,14 @@ class StockReportParser(object):
                 # though need to make sure that PACK and APPROVE still require location code
                 # (since they refer to locations different from the sender's loc)
                 raise SMSError("must specify a location code")
-            self.location = self.location_from_code(args[0])
+            self.case, self.location = self.get_supply_point_and_location(args[0])
             args = args[1:]
 
         action = self.C.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
             # TODO: support single-action by product, as well as by action?
             self.verify_location_registration()
-            self.case_id = self.location['case']._id
+            self.case_id = self.case.case_id
             _tx = self.single_action_transactions(action, args)
         elif action and action.action in [
             RequisitionActions.REQUEST,
@@ -142,7 +146,7 @@ class StockReportParser(object):
         return self.unpack_transactions(_tx)
 
     def verify_location_registration(self):
-        if not self.location.get('case'):
+        if not self.case:
             raise NoDefaultLocationException(
                 _("You have not been registered with a default location yet."
                   "  Please register a default location for this user.")
@@ -155,7 +159,7 @@ class StockReportParser(object):
                 for prod_code in args:
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location']._id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=self.product_from_code(prod_code).get_id,
                         action=action.action,
@@ -185,7 +189,7 @@ class StockReportParser(object):
                 for p in products:
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location']._id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=action.action,
@@ -242,7 +246,7 @@ class StockReportParser(object):
 
                 yield StockTransactionHelper(
                     domain=self.domain.name,
-                    location_id=self.location['location']._id,
+                    location_id=self.location.location_id,
                     case_id=self.case_id,
                     product_id=product.get_id,
                     action=action.action,
@@ -253,12 +257,12 @@ class StockReportParser(object):
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
 
-    def location_from_code(self, loc_code):
+    def get_supply_point_and_location(self, loc_code):
         """return the supply point case referenced by loc_code"""
-        result = get_supply_point(self.domain.name, loc_code)
-        if not result:
+        case_location_tuple = get_supply_point_and_location(self.domain.name, loc_code)
+        if not case_location_tuple:
             raise SMSError('invalid location code "%s"' % loc_code)
-        return result
+        return case_location_tuple
 
     def product_from_code(self, prod_code):
         """return the product doc referenced by prod_code"""
@@ -284,7 +288,7 @@ class StockReportParser(object):
             'timestamp': datetime.utcnow(),
             'user': self.v.owner,
             'phone': self.v.phone_number,
-            'location': self.location['location'],
+            'location': self.location,
             'transactions': tx,
         }
 
@@ -334,11 +338,11 @@ class StockAndReceiptParser(StockReportParser):
             return None
 
         if not self.location:
-            self.location = self.location_from_code(args[0])
+            self.case, self.location = self.get_supply_point_and_location(args[0])
             args = args[1:]
 
         self.verify_location_registration()
-        self.case_id = self.location['case']._id
+        self.case_id = self.case.case_id
         action = self.C.action_by_keyword('soh')
         _tx = self.single_action_transactions(action, args)
 
@@ -367,7 +371,7 @@ class StockAndReceiptParser(StockReportParser):
                     # the user provides them)
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location']._id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.RECEIPTS,
@@ -375,7 +379,7 @@ class StockAndReceiptParser(StockReportParser):
                     )
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location']._id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.STOCKONHAND,

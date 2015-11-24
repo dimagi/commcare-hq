@@ -174,3 +174,19 @@
   default: false
   since: "2.24"
   toggle: GRID_MENUS
+
+- id: minimum_use_threshold
+  name: 'Minimum Use Threshold'
+  description: 'This field indicates the minimum number of forms in this application that a user should submit monthly in order to be considered using sufficiently to generate a WAM. The default value is 15. Please see <a href="https://confluence.dimagi.com/display/internal/WAMs+and+PAMs">confluence</a> or the data team for further clarification.'
+  widget: number
+  preview: true
+  warning: 'The minimum use threshold must be between 1 and 100'
+  min_value: 1
+  max_value: 100
+
+- id: comment
+  name: 'Comment'
+  description: >
+    A comment to document or explain this application for other app builders or maintainers.
+  default: ''
+  widget: textarea

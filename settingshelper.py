@@ -1,3 +1,4 @@
+from collections import namedtuple
 import os
 import tempfile
 import uuid
@@ -76,47 +77,44 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
     }
 
 
-def _make_couchdb_tuple(row, couch_database_url):
+class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
+                          ['couch_database_url', 'couchdb_apps', 'extra_db_names'])):
+    def make_couchdb_tuples(self):
+        """
+        Helper function to generate couchdb tuples
+        for mapping app name to couch database URL.
 
-    if isinstance(row, basestring):
-        app_label, postfix = row, None
-    else:
-        app_label, postfix = row
-    if postfix:
-        return app_label, '%s__%s' % (couch_database_url, postfix)
-    else:
-        return app_label, couch_database_url
+        """
+        return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
+    def _make_couchdb_tuple(self, row):
+        if isinstance(row, basestring):
+            app_label, postfix = row, None
+        else:
+            app_label, postfix = row
+        if postfix:
+            return app_label, '%s__%s' % (self.couch_database_url, postfix)
+        else:
+            return app_label, self.couch_database_url
 
-def make_couchdb_tuples(config, couch_database_url):
-    """
-    Helper function to generate couchdb tuples
-    for mapping app name to couch database URL.
+    def get_extra_couchdbs(self):
+        """
+        Create a mapping from database prefix to database url
 
-    """
-    return [_make_couchdb_tuple(row, couch_database_url) for row in config]
+        """
+        extra_dbs = {}
+        postfixes = []
+        for row in self.couchdb_apps:
+            if isinstance(row, tuple):
+                _, postfix = row
+                if postfix:
+                    postfixes.append(postfix)
 
+        postfixes.extend(self.extra_db_names)
+        for postfix in postfixes:
+            extra_dbs[postfix] = '%s__%s' % (self.couch_database_url, postfix)
 
-def get_extra_couchdbs(config, couch_database_url, extra_db_names=()):
-    """
-    Create a mapping from database prefix to database url
-
-    :param config:              list of database strings or tuples
-    :param couch_database_url:  main database url
-    """
-    extra_dbs = {}
-    postfixes = []
-    for row in config:
-        if isinstance(row, tuple):
-            _, postfix = row
-            if postfix:
-                postfixes.append(postfix)
-
-    postfixes.extend(extra_db_names)
-    for postfix in postfixes:
-        extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
-
-    return extra_dbs
+        return extra_dbs
 
 
 def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):

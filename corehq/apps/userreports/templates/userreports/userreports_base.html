@@ -1,16 +1,17 @@
 {% extends "style/bootstrap2/two_column.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
 {% block js %}{{ block.super }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/addon/fold/foldcode.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/addon/fold/foldgutter.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/addon/fold/brace-fold.js"></script>
+    <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
+    <script src="{% new_static 'codemirror/mode/javascript/javascript.js' %}"></script>
+    <script src="{% new_static 'codemirror/addon/fold/foldcode.js' %}"></script>
+    <script src="{% new_static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+    <script src="{% new_static 'codemirror/addon/fold/brace-fold.js' %}"></script>
 {% endblock %}
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/codemirror.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.5.0/addon/fold/foldgutter.css"/>
+    <link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}" />
+    <link rel="stylesheet" href="{% new_static 'codemirror/addon/fold/foldgutter.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
 <style>

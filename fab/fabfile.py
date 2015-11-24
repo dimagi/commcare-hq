@@ -962,9 +962,14 @@ def _migrations_exist():
     """
     _require_target()
     with cd(env.code_root):
-        n_migrations = int(sudo(
-            '%(virtualenv_root)s/bin/python manage.py migrate --list | grep "\[ ]" | wc -l' % env)
-        )
+        try:
+            n_migrations = int(sudo(
+                '%(virtualenv_root)s/bin/python manage.py migrate --list | grep "\[ ]" | wc -l' % env)
+            )
+        except Exception:
+            # If we fail on this, return True to be safe. It's most likely cause we lost connection and
+            # failed to return a value python could parse into an int
+            return True
         return n_migrations > 0
 
 
@@ -1001,7 +1006,8 @@ def _do_collectstatic(use_current_release=False):
 @roles(ROLES_STATIC)
 def _bower_install(use_current_release=False):
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('bower install --production')
+        sudo('bower prune --production')
+        sudo('bower update --production')
 
 
 @roles(ROLES_DJANGO)

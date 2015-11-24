@@ -7,7 +7,7 @@
 <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-<script src="{% static 'commtrack/ko/locations.js' %}"></script>
+<script src="{% static 'locations/ko/location_types.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -77,6 +77,12 @@
                     <i class="icon-plus"></i> {% trans "New Organization Level" %}
                 </button>
                 <hr />
+                <div class="pull-right">
+                    <label>
+                        <input type="checkbox" data-bind="checked:advanced_mode"/>
+                        {% trans "Advanced mode" %}
+                    </label>
+                </div>
                 <div class="alert alert-error" style="display: none"
                      data-bind="visible: loc_types_error">
                     {% trans "Organization Levels cannot be their own ancestors." %}
@@ -96,6 +102,11 @@
                                       {% endblocktrans %}">
                                 </span>
                             </th>
+                            <!-- ko if:advanced_mode -->
+                            <th>
+                                {% trans "Type Code"%}
+                            </th>
+                            <!-- /ko -->
                             {% if commtrack_enabled %}
                             <th>{% trans "Tracks Stock" %}</th>
                             {% endif %}
@@ -140,6 +151,14 @@
                                                optionsCaption: '\u2013top level\u2013'">
                             </select>
                         </td>
+                        <!-- ko if:$parent.advanced_mode() -->
+                        <td class="control-group" data-bind="css: { 'error': code_error }">
+                            <input class="typecode" data-bind="value: code" type="text" />
+                            <div class="help-inline" data-bind="visible: code_error">
+                                {% trans "Required" %}
+                            </div>
+                        </td>
+                        <!-- /ko -->
                         {% if commtrack_enabled %}
                         <td>
                             <input data-bind="checked: tracks_stock" type="checkbox" />
