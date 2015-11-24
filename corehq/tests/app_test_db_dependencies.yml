@@ -133,3 +133,4 @@ corehq.form_processor:
   - corehq.apps.tzmigration
   - corehq.couchapps
   - couchforms
+corehq.apps.toggle_ui: []
