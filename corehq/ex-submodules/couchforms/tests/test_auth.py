@@ -4,7 +4,7 @@ from corehq.util.test_utils import TestFileMixin
 from couchforms.models import DefaultAuthContext
 import os
 
-from corehq.form_processor.test_utils import run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
 
 
 class AuthTest(TestCase, TestFileMixin):

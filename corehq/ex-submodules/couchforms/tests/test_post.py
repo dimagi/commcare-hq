@@ -7,7 +7,7 @@ from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
 from corehq.util.test_utils import TestFileMixin
-from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
 
 
 class PostTest(TestCase, TestFileMixin):

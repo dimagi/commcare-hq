@@ -8,7 +8,7 @@ from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
-from corehq.form_processor.test_utils import run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
 
 
 class TestMeta(TestCase, TestFileMixin):

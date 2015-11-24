@@ -13,7 +13,7 @@ from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.tests.util import (check_user_has_case,
     assert_user_doesnt_have_case,

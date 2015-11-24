@@ -15,7 +15,7 @@ from couchforms.models import (
 )
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 

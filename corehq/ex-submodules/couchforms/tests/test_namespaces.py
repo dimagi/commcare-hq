@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
 
-from corehq.form_processor.test_utils import run_with_all_backends, post_xform
+from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 

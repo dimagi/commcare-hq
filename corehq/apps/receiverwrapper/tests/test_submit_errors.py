@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.test_utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
 
