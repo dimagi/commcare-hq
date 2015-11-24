@@ -28,7 +28,7 @@ from corehq.pillows.xform import XFormPillow
 from corehq.pillows.case import CasePillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_1, v0_4, v0_5
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api import es

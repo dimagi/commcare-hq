@@ -3,7 +3,7 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from corehq.apps.domain.models import Domain
-from corehq.apps.receiverwrapper.models import RepeatRecord
+from corehq.apps.repeaters.models import RepeatRecord
 
 
 class Command(BaseCommand):

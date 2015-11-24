@@ -251,6 +251,7 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
+    'corehq.apps.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.facilities',
@@ -1141,7 +1142,7 @@ COUCHDB_APPS = [
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('performance_sms', 'meta'),
-    ('receiverwrapper', 'receiverwrapper'),
+    ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
     ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
