@@ -3872,6 +3872,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
         default=AMPLIFIES_NOT_SET
     )
+    minimum_use_threshold = StringProperty(
+        default='15'
+    )
 
     # exchange properties
     cached_properties = DictProperty()
