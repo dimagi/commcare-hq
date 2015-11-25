@@ -20,7 +20,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
 
         self.setup_subscription(self.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
-        self.backend = TestSMSBackend(is_global=True)
+        self.backend = TestSMSBackend(name='MOBILE_BACKEND_TEST', is_global=True)
         self.backend.save()
 
         self.backend_mapping = BackendMapping(

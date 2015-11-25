@@ -34,7 +34,7 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
 
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
-        cls.backend = TestSMSBackend(is_global=True)
+        cls.backend = TestSMSBackend(name='MOBILE_BACKEND_TEST', is_global=True)
         cls.backend.save()
 
         cls.backend_mapping = BackendMapping(
