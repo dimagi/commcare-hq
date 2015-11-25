@@ -2,6 +2,10 @@ import logging
 import os
 import datetime
 from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
+
+from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 try:
     import psutil
@@ -26,7 +30,7 @@ class OpenRosaMiddleware(object):
         pass
 
     def process_request(self, request):
-        # if there's a date header specified add that to the request 
+        # if there's a date header specified add that to the request
         # as a first class property
         or_headers = {}
         for header in OPENROSA_HEADERS:
@@ -81,3 +85,14 @@ class TimingMiddleware(object):
             duration = datetime.datetime.utcnow() - request._profile_starttime
             profile_logger.info('{} time {}'.format(request.path, duration), extra={'duration': duration})
         return response
+
+
+class TimeoutMiddleware(object):
+
+    def process_request(self, request):
+        now = datetime.datetime.utcnow()
+        last_request = request.session.get('last_request')
+        if last_request is not None and now - string_to_utc_datetime(last_request) > datetime.timedelta(minutes=settings.INACTIVITY_TIMEOUT):
+                del request.session['last_request']
+                return HttpResponseRedirect(reverse('logout'))
+        request.session['last_request'] = json_format_datetime(now)
