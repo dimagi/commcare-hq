@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_version_from_build_id, get_submit_url
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from couchforms.util import spoof_submission
 
 
