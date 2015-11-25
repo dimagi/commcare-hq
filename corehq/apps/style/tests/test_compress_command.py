@@ -1,3 +1,4 @@
+import re
 from StringIO import StringIO
 from mock import patch, MagicMock
 
@@ -12,15 +13,18 @@ BLOCK_CSS = ' block stylesheets '
 ENDBLOCK = ' endblock '
 
 DISALLOWED_TAGS = [
-    '{% if',
+    ('{% if', 'You cannot use "if" tags in a compress block'),
+    ('^</script>$', 'You cannot use inline JS in a compress block'),
 ]
 
 
 class TestDjangoCompressOffline(SimpleTestCase):
 
     def _assert_valid_import(self, line):
+        if not line.strip():
+            return
         for tag in DISALLOWED_TAGS:
-            self.assertNotIn(tag, line)
+            self.assertNotRegexpMatches(tag[0], line.strip(), tag[1])
         if 'src' not in line and 'href' not in line:
             return
         self.assertIn('new_static', line)
