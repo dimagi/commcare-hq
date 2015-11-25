@@ -45,15 +45,31 @@ class SMSGHBackend(SMSBackend):
             return {}
 
     def handle_error(self, response, msg):
-        phone = strip_plus(msg.phone_number)
-        if not (phone.startswith(GHANA_COUNTRY_CODE) and len(phone) == GHANA_PHONE_LENGTH):
+        data = self.get_additional_data(response)
+        subcode = data.get('Status')
+        if response.status_code == 502 and subcode == 4:
+            # When this error happens, the gateway is saying that the
+            # phone number is not a valid phone number.
             msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             return
-        data = self.get_additional_data(response)
+        elif response.status_code == 403 and subcode == 7:
+            # When this error happens, it means the user has opted to not
+            # receive SMS and has been added to a blacklist. If the user wants
+            # to be removed from the blacklist, the user could either contact
+            # their mobile operator or the gateway.
+            msg.set_system_error(SMS.ERROR_PHONE_NUMBER_OPTED_OUT)
+            return
+        elif response.status_code == 404 and subcode is None:
+            # This is a generic error returned by the gateway and should be
+            # retried. Check for it here just so that it's documented, but
+            # we'll just raise the exception below so that we are alerted
+            # to the frequency of these errors and so that it will be retried
+            # by the framework.
+            pass
         raise SMSGHException("Error with the SMSGH backend. "
             "Response Code: %s, Subcode: %s. See "
             "http://developers.smsgh.com/documentations/sendmessage#handlingerrors "
-            "for details. " % (response.status_code, data.get('Status')))
+            "for details. " % (response.status_code, subcode))
 
     def handle_success(self, response, msg):
         data = self.get_additional_data(response)
