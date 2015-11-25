@@ -13,10 +13,6 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 
 
-# bit of a hack, but the tests optimize around this flag to run faster
-# so when we actually want to test this functionality we need to set
-# the flag to False explicitly
-@override_settings(UNIT_TESTING=False)
 class SubmissionTest(TestCase):
     maxDiff = None
 
