@@ -1,8 +1,6 @@
-from django.conf import settings
-
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.domain.models import Domain
 from corehq.apps.performance_sms.models import PerformanceConfiguration
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.util.test_utils import unit_testing_only
 
 
@@ -21,10 +19,4 @@ def by_interval(interval_keys):
 
 @unit_testing_only
 def delete_all_configs():
-    db = PerformanceConfiguration.get_db()
-
-    # Since this is a unit test, number of domains is small
-    all_domains = Domain.get_all()
-    for domain in all_domains:
-        domain_configs = by_domain(domain.name)
-        db.bulk_delete(domain_configs)
+    delete_all_docs_by_doc_type(PerformanceConfiguration.get_db(), ('PerformanceConfiguration',))
