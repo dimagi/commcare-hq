@@ -314,6 +314,7 @@ HQ_APPS = (
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
+    'corehq.blobs',
 
     # custom reports
     'a5288',
