@@ -1,4 +1,6 @@
 import re
+from uuid import UUID
+
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.auth import determine_authtype_from_request
@@ -56,6 +58,8 @@ def get_version_from_build_id(domain, build_id):
     """
     if not build_id:
         return None
+    elif isinstance(build_id, UUID):
+        build_id = build_id.hex
 
     try:
         build = ApplicationBase.get(build_id)

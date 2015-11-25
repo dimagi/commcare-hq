@@ -5,6 +5,8 @@ import hashlib
 import inspect
 from inspect import isfunction
 import logging
+from uuid import UUID
+
 from django.core.cache import caches as django_caches
 from corehq.util.soft_assert.api import soft_assert
 
@@ -135,6 +137,8 @@ class QuickCache(object):
         elif isinstance(value, set):
             return 'S' + self._hash(
                 ','.join(sorted(map(self._serialize_for_key, value))))
+        elif isinstance(value, UUID):
+            return '#' + value.hex
         elif value is None:
             return 'N'
         else:
