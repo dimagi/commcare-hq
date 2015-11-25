@@ -1,6 +1,7 @@
 from django.core.management.base import LabelCommand
 import sys
 from corehq.apps.domain.models import Domain
+from corehq.util.couch import get_db_by_doc_type
 
 
 class Command(LabelCommand):
@@ -29,11 +30,15 @@ class Command(LabelCommand):
         # unfortunately the only couch view we have for this needs to go by domain
         # will be a bit slow
         domain_names = Domain.get_all_names()
-        database = Domain.get_db()
-        for domain in domain_names:
-            for doc_type in doc_types:
-                docs = [row['doc'] for row in database.view(
-                    'domain/docs',
+        for doc_type in doc_types:
+            db = get_db_by_doc_type(doc_type)
+            if not db:
+                print "Cannot find db for {}, skipping".format(doc_type)
+                continue
+
+            for domain in domain_names:
+                docs = [row['doc'] for row in db.view(
+                    'by_domain_doc_type_date/view',
                     startkey=[domain, doc_type],
                     endkey=[domain, doc_type, {}],
                     reduce=False,
@@ -42,7 +47,7 @@ class Command(LabelCommand):
                 if docs:
                     count = len(docs)
                     print 'deleting {} {}s from {}'.format(count, doc_type, domain)
-                    database.delete_docs(docs)
+                    db.delete_docs(docs)
                     deleted += count
                     if remaining is not None:
                         remaining -= count

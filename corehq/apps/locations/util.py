@@ -71,8 +71,15 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             children = loc.child_locations(include_archive_ancestors=include_archived)
             if only_administrative:
                 children = children.filter(location_type__administrative=True)
+
             # find existing entry in the json tree that corresponds to this loc
-            this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
+            try:
+                this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
+            except IndexError:
+                # if we couldn't find this location the view just break out of the loop.
+                # there are some instances in viewing archived locations where we don't actually
+                # support drilling all the way down.
+                pass
             this_loc['children'] = [
                 loc_to_json(loc, project) for loc in children
                 if user is None or user_can_view_location(user, loc, project)

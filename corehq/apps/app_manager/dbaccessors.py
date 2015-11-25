@@ -1,3 +1,4 @@
+from django.conf import settings
 from corehq.apps.app_manager.util import get_correct_app_class
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
@@ -121,3 +122,14 @@ def get_built_app_ids(domain):
     app_ids = [data.get('value', {}).get('copy_of') for data in result]
     app_ids = list(set(app_ids))
     return [app_id for app_id in app_ids if app_id]
+
+
+def get_exports_by_application(domain):
+    from .models import Application
+    return Application.get_db().view(
+        'exports_forms/by_xmlns',
+        startkey=['^Application', domain],
+        endkey=['^Application', domain, {}],
+        reduce=False,
+        stale=settings.COUCH_STALE_QUERY,
+    )

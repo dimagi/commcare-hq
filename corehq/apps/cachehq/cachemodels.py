@@ -30,7 +30,6 @@ class UserGenerationCache(GenerationCache):
         "users/by_username",
         "users/mailing_list_emails",
         "domain/old_users",
-        "domain/docs",
         "users_extra/phones_to_domains",
         "eula_reports/non_eulized_users"
     ]
@@ -87,20 +86,11 @@ class LocationGenerationCache(GenerationCache):
     ]
 
 
-class DomainInvitationGenerationCache(GenerationCache):
+class InvitationGenerationCache(GenerationCache):
     generation_key = '#gen#invitation#'
     doc_types = ['Invitation']
     views = [
         'users/open_invitations_by_email',
-        'users/open_invitations_by_domain',
-    ]
-
-
-class CommtrackConfigGenerationCache(GenerationCache):
-    generation_key = '#gen#commtrackconfig#'
-    doc_types = ['CommtrackConfig']
-    views = [
-        'domain/docs',
     ]
 
 

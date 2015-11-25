@@ -1,9 +1,10 @@
 import os
 from django.test import TestCase
 
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from phonelog.models import UserEntry, DeviceReportEntry
 
 
@@ -21,7 +22,7 @@ class DeviceLogTest(TestCase, TestFileMixin):
     @run_with_all_backends
     def test_basic_devicelog(self):
         xml = self.get_xml('devicelog')
-        self.interface.submit_form_locally(xml, 'test-domain')
+        submit_form_locally(xml, 'test-domain')
 
         # Assert Device Report Entries
         self.assertEqual(DeviceReportEntry.objects.count(), 7)

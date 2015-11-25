@@ -3,7 +3,7 @@
 <table class="table">
     <thead>
         <tr>
-            <th>{% trans 'Filter Name' %}</th>
+            <th>{% trans 'Filter' %}</th>
             <th>{% trans 'Type' %}</th>
             <th></th>
         </tr>
@@ -32,14 +32,14 @@
                     </div>
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'CustomDatespanFilter'">
                         <span>today() - </span><span data-bind="text: filter.display"></span>
-                        <select style="width:85px;"
+                        <select class="span3"
                                 data-bind="
                                     options: report.filterConfig.date_operators,
                                     value: filter.selectedValue.operator
                         "></select>
-                        <input type="number" style="width:45px;" data-bind="value: filter.selectedValue.date_number"/>
+                        <input type="number" class="input-mini" data-bind="value: filter.selectedValue.date_number"/>
                         <span data-bind="visible: filter.selectedValue.operator() === 'between'">and</span>
-                        <input type="number" style="width:45px;" data-bind="
+                        <input type="number" class="input-mini" data-bind="
                             value: filter.selectedValue.date_number2,
                             visible: filter.selectedValue.operator() === 'between'
                         "/>

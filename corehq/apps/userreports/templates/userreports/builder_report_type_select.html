@@ -14,6 +14,7 @@
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
+    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% new_static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
 {% endblock %}
@@ -31,6 +32,8 @@
         ]);
         dashboardApp.config(['$httpProvider', function($httpProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
         }]);
         dashboardApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
             djangoRMIProvider.configure({% djng_current_rmi %});

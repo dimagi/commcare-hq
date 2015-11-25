@@ -13,7 +13,6 @@ users_migration = Migrator(
         'CommCareUser',
         'WebUser',
         'Invitation',
-        'DomainInvitation',
         'DomainRemovalRecord',
         'OrgRemovalRecord',
     )
@@ -28,6 +27,13 @@ fixtures_migration = Migrator(
         'FixtureDataItem',
         'FixtureOwnership',
     )
+)
+
+domains_migration = Migrator(
+    slug='domains',
+    source_db_name=None,
+    target_db_name=settings.NEW_DOMAINS_DB,
+    doc_types=('Domain',)
 )
 
 

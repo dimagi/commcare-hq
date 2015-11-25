@@ -54,7 +54,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import DomainInvitation
+from corehq.apps.users.models import Invitation
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
@@ -77,7 +77,6 @@ from corehq.apps.accounting.user_text import (
     get_feature_recurring_interval,
 )
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
-from corehq.apps import receiverwrapper
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required
@@ -95,9 +94,9 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord
+from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
+    RepeatRecord, repeater_types
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -123,7 +122,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
-    open_invitations = [e for e in DomainInvitation.by_email(email) if not e.is_expired]
+    open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domains_for_user': domains_for_user,
@@ -534,7 +533,7 @@ def test_repeater(request, domain):
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
-        repeater_class=receiverwrapper.models.repeater_types[repeater_type]
+        repeater_class=repeater_types[repeater_type]
     )
     if form.is_valid():
         url = form.cleaned_data["url"]
@@ -1356,10 +1355,12 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "secure_submissions": self.domain_object.secure_submissions,
             "restrict_superusers": self.domain_object.restrict_superusers,
             "allow_domain_requests": self.domain_object.allow_domain_requests,
+            "hipaa_compliant": self.domain_object.hipaa_compliant,
         }
         if self.request.method == 'POST':
-            return PrivacySecurityForm(self.request.POST, initial=initial)
-        return PrivacySecurityForm(initial=initial)
+            return PrivacySecurityForm(self.request.POST, initial=initial,
+                                       user_name=self.request.couch_user.username)
+        return PrivacySecurityForm(initial=initial, user_name=self.request.couch_user.username)
 
     @property
     def page_context(self):
@@ -2122,7 +2123,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def repeater_class(self):
         try:
-            return receiverwrapper.models.repeater_types[self.repeater_type]
+            return repeater_types[self.repeater_type]
         except KeyError:
             raise Http404()
 

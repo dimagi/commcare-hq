@@ -79,19 +79,13 @@ class DateFilterValue(FilterValue):
         if self.value.inclusive and enddate:
                 enddate = self.value.enddate + timedelta(days=1) - timedelta.resolution
 
-        if startdate is None:
-            return {
-                '%s_enddate' % self.filter.slug: enddate,
-            }
-        elif enddate is None:
-            return {
-                '%s_startdate' % self.filter.slug: startdate,
-            }
-        else:
-            return {
-                '%s_startdate' % self.filter.slug: startdate,
-                '%s_enddate' % self.filter.slug: enddate,
-            }
+        sql_values = {}
+        if startdate is not None:
+            sql_values.update({'%s_startdate' % self.filter.slug: startdate})
+        if enddate is not None:
+            sql_values.update({'%s_enddate' % self.filter.slug: enddate})
+
+        return sql_values
 
 
 

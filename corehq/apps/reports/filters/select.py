@@ -4,6 +4,7 @@ import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
@@ -61,7 +62,8 @@ class CaseTypeMixin(object):
     @property
     def options(self):
         case_types = get_case_types_for_domain(self.domain)
-        return [(case, "%s" % case) for case in case_types]
+        return [(case, "%s" % case) for case in case_types
+                if case != USER_LOCATION_OWNER_MAP_TYPE]
 
 
 class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):

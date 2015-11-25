@@ -2,14 +2,15 @@ from django.conf import settings
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.case.models import CommCareCase
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+
+from casexml.apps.case.util import post_case_blocks
+from corehq.apps.receiverwrapper import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, delete_all_cases
 from datetime import datetime
 from casexml.apps.case.xml import V2
 from casexml.apps.case import const
 from casexml.apps.phone import xml
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -34,7 +35,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        _, _, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual("bar-user-id", case.opened_by)
@@ -57,7 +58,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        _, _, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 42, 50), case.modified_on)
@@ -77,7 +78,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        _, _, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 44, 50), case.modified_on)
@@ -96,7 +97,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        _, _, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertTrue(case.closed)
         self.assertEqual("bar-user-id", case.closed_by)
 
@@ -106,7 +107,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         
-        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        _, _, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertFalse(case.closed)
         self.assertEqual("d5ce3a980b5b69e793445ec0e3b2138e", case.user_id)
         self.assertEqual(datetime(2011, 12, 27), case.modified_on)
@@ -122,7 +123,7 @@ class Version2CaseParsingTest(TestCase):
 
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
-            FormProcessorInterface().post_case_blocks([
+            post_case_blocks([
                 CaseBlock(
                     create=True, case_id=prereq,
                     user_id=user_id
@@ -133,7 +134,7 @@ class Version2CaseParsingTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
 
-        _, _, [case] = FormProcessorInterface().submit_form_locally(xml_data)
+        _, _, [case] = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual(2, len(case.indices))
         self.assertTrue(case.has_index("foo_ref"))
         self.assertTrue(case.has_index("baz_ref"))
