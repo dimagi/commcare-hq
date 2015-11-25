@@ -8,7 +8,7 @@ from django.core.management import call_command
 from django.test import SimpleTestCase
 
 BLOCK_JS = ' block js '
-BLOCK_CSS = ' block css '
+BLOCK_CSS = ' block stylesheets '
 ENDBLOCK = ' endblock '
 
 DISALLOWED_TAGS = [
