@@ -12,5 +12,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(assert_migration_complete("saved_exports"))
+        migrations.RunPython(*assert_migration_complete("saved_exports"))
     ]

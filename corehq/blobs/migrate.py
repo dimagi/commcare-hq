@@ -43,22 +43,26 @@ models' attachments to the blob database:
    Then modify the new migration, adding an operation:
    ```
    operations = [
-       migrations.RunPython(assert_migration_complete("<your_slug>"))
+       migrations.RunPython(*assert_migration_complete("<your_slug>"))
    ]
    ```
    Don't forget to put
    `from corehq.blobs.migrate import assert_migration_complete`
    at the top of the file.
 
+5. Run tests and test your migrations.
+
 That's it, you're done!
 """
 import json
 import os
+import traceback
 from cStringIO import StringIO
 from tempfile import mkdtemp
 
 from django.conf import settings
 from couchexport.models import SavedBasicExport
+from corehq.blobs import get_blob_db
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_docs_with_doc_types,
@@ -80,6 +84,14 @@ keep a copy of the pre-migrated documents from couch.
 
 See also:
 https://github.com/dimagi/commcare-hq/blob/master/corehq/blobs/migrate.py
+"""
+
+BLOB_DB_NOT_CONFIGURED = """
+The blob database has not been configured.
+
+This often means that settings.SHARED_DRIVE_ROOT is not configured.
+It should be set to a real directory. Update your localsettings.py
+and retry the migration.
 """
 
 
@@ -153,14 +165,26 @@ def print_status(num, total):
 
 
 def assert_migration_complete(slug):
+
     def forwards(apps, schema_editor):
         if settings.UNIT_TESTING or getattr(settings, 'IS_TRAVIS', False):
             return
+
+        try:
+            get_blob_db()
+        except Exception:
+            raise MigrationError(
+                "Cannot get blob db:\n{error}{message}".format(
+                    error=traceback.format_exc(),
+                    message=BLOB_DB_NOT_CONFIGURED,
+                ))
+
         try:
             BlobMigrationState.objects.get(slug=slug)
-            return
+            return  # already migrated
         except BlobMigrationState.DoesNotExist:
             pass
+
         migrator = MIGRATIONS[slug]
         total = 0
         for doc_type in migrator.doc_types:
@@ -171,8 +195,23 @@ def assert_migration_complete(slug):
 
         # just do the migration if the number of documents is small
         migrator.migrate()
-    return forwards
+
+    def reverse(apps, schema_editor):
+        # NOTE: this does not move blobs back into couch. It only
+        # un-sets the blob migration state so it can be run again.
+        # It is safe to run the forward migration more than once.
+        try:
+            model = BlobMigrationState.objects.get(slug=slug)
+            model.delete()
+        except BlobMigrationState.DoesNotExist:
+            pass
+
+    return forwards, reverse
 
 
-class MigrationNotComplete(Exception):
+class MigrationError(Exception):
+    pass
+
+
+class MigrationNotComplete(MigrationError):
     pass
