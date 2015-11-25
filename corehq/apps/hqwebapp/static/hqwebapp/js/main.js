@@ -6,6 +6,7 @@ $.prototype.iconify = function (icon) {
     $(this).css('width', "16px").prepend($icon);
 };
 
+
 var eventize = function (that) {
     'use strict';
     var events = {};
@@ -27,6 +28,7 @@ var eventize = function (that) {
     };
     return that;
 };
+
 
 var SaveButton = {
     /*
@@ -80,9 +82,10 @@ var SaveButton = {
                     success = options.success || function () {},
                     error = options.error || function () {},
                     that = this;
-                options.beforeSend = function () {
+                options.beforeSend = function (jqXHR, settings) {
                     that.setState('saving');
                     that.nextState = 'saved';
+                    $.ajaxSettings.beforeSend(jqXHR, settings);
                     beforeSend.apply(this, arguments);
                 };
                 options.success = function (data) {

@@ -305,19 +305,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             raise CaseNotFound
 
     @classmethod
-    def get_case_xform_ids(cls, case_id):
-        return get_case_xform_ids(case_id)
-
-    @classmethod
-    def get_cases(cls, ids):
-        return [
-            CommCareCase.wrap(doc) for doc in iter_docs(
-                CommCareCase.get_db(),
-                ids
-            )
-        ]
-
-    @classmethod
     def get_lite(cls, id, wrap=True):
         from corehq.apps.hqcase.dbaccessors import get_lite_case_json
         results = get_lite_case_json(id)

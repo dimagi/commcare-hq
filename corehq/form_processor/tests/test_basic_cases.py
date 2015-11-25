@@ -4,6 +4,7 @@ from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
 
@@ -19,6 +20,7 @@ class FundamentalCaseTests(TestCase):
 
     def setUp(self):
         self.interface = FormProcessorInterface()
+        self.casedb = CaseAccessors()
 
     @run_with_all_backends
     def test_create_case(self):
@@ -31,7 +33,7 @@ class FundamentalCaseTests(TestCase):
             }
         )
 
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertIsNotNone(case)
         self.assertEqual(case.case_id, case_id)
         self.assertEqual(case.owner_id, 'owner1')
@@ -72,7 +74,7 @@ class FundamentalCaseTests(TestCase):
             }
         )
 
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(case.owner_id, 'owner2')
         self.assertEqual(case.name, 'update_case')
         self.assertEqual(case.opened_on, opened_on)
@@ -99,7 +101,7 @@ class FundamentalCaseTests(TestCase):
             False, case_id, user_id='user2', date_modified=modified_on, close=True
         )
 
-        case = self.interface.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(case.owner_id, 'owner1')
         self.assertEqual(case.modified_on, modified_on)
         self.assertEqual(case.modified_by, 'user2')
@@ -125,7 +127,7 @@ class FundamentalCaseTests(TestCase):
             }
         )
 
-        case = self.interface.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id)
         self.assertEqual(len(case.indices), 1)
         index = case.indices[0]
         self.assertEqual(index.identifier, 'mom')
@@ -149,7 +151,7 @@ class FundamentalCaseTests(TestCase):
             }
         )
 
-        case = self.interface.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id)
         self.assertEqual(case.indices[0].identifier, 'mom')
 
         _submit_case_block(
@@ -157,7 +159,7 @@ class FundamentalCaseTests(TestCase):
                 'mom': ('other_mother', mother_case_id)
             }
         )
-        case = self.interface.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id)
         self.assertEqual(case.indices[0].referenced_type, 'other_mother')
 
     @run_with_all_backends
@@ -176,7 +178,7 @@ class FundamentalCaseTests(TestCase):
             }
         )
 
-        case = self.interface.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id)
         self.assertEqual(len(case.indices), 1)
 
         _submit_case_block(
@@ -184,7 +186,7 @@ class FundamentalCaseTests(TestCase):
                 'mom': ('mother', '')
             }
         )
-        case = self.interface.get_case(child_case_id)
+        case = self.casedb.get_case(child_case_id)
         self.assertEqual(len(case.indices), 0)
 
     def test_case_with_attachment(self):

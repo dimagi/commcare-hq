@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import traceback
+import uuid
 
 from django.conf import settings
 from django.contrib import messages
@@ -161,11 +162,16 @@ def server_error(request, template_name='500.html'):
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name)
     type, exc, tb = sys.exc_info()
+
+    traceback_text = ''.join(traceback.format_tb(tb))
+    traceback_key = uuid.uuid4().hex
+    cache.cache.set(traceback_key, traceback_text, 60*60)
+
     return HttpResponseServerError(t.render(RequestContext(request,
         {'MEDIA_URL': settings.MEDIA_URL,
          'STATIC_URL': settings.STATIC_URL,
          'domain': domain,
-         '500traceback': ''.join(traceback.format_tb(tb)),
+         '500traceback': traceback_key,
         })))
 
 
@@ -570,7 +576,9 @@ def bug_report(req):
     if req.POST.get('five-hundred-report'):
         extra_message = ("This messge was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")
-        traceback_info = "Traceback of this 500: \n%s" % report['500traceback']
+        traceback_info = cache.cache.get(report['500traceback'])
+        cache.cache.delete(report['500traceback'])
+        traceback_info = "Traceback of this 500: \n%s" % traceback_info
         message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
 
     email = EmailMessage(

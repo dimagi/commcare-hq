@@ -5,14 +5,15 @@ from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.test_utils import run_with_all_backends
 
 
 class TestHardDelete(TestCase):
 
     def setUp(self):
-        self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
+        self.casedb = CaseAccessors(TEST_DOMAIN_NAME)
+        self.formdb = FormAccessors(TEST_DOMAIN_NAME)
 
     @run_with_all_backends
     def test_simple_delete(self):
@@ -21,18 +22,18 @@ class TestHardDelete(TestCase):
         [case] = factory.create_or_update_case(
             CaseStructure(case_id=case.case_id, attrs={'update': {'foo': 'bar'}})
         )
-        self.assertIsNotNone(self.interface.get_case(case.case_id))
+        self.assertIsNotNone(self.casedb.get_case(case.case_id))
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
-            self.assertIsNotNone(self.interface.get_xform(form_id))
+            self.assertIsNotNone(self.formdb.get_form(form_id))
         safe_hard_delete(case)
 
         with self.assertRaises(CaseNotFound):
-            self.interface.get_case(case.case_id)
+            self.casedb.get_case(case.case_id)
 
         for form_id in case.xform_ids:
             with self.assertRaises(XFormNotFound):
-                self.interface.get_xform(form_id)
+                self.formdb.get_form(form_id)
 
     @run_with_all_backends
     def test_delete_with_related(self):
@@ -49,9 +50,9 @@ class TestHardDelete(TestCase):
 
         # deleting the child is ok
         safe_hard_delete(child)
-        self.assertIsNotNone(self.interface.get_case(parent.case_id))
+        self.assertIsNotNone(self.casedb.get_case(parent.case_id))
         with self.assertRaises(CaseNotFound):
-            self.interface.get_case(child.case_id)
+            self.casedb.get_case(child.case_id)
 
     @run_with_all_backends
     def test_delete_sharing_form(self):
@@ -66,5 +67,5 @@ class TestHardDelete(TestCase):
         with self.assertRaises(CommCareCaseError):
             safe_hard_delete(c2)
 
-        self.assertIsNotNone(self.interface.get_case(c1.case_id))
-        self.assertIsNotNone(self.interface.get_case(c2.case_id))
+        self.assertIsNotNone(self.casedb.get_case(c1.case_id))
+        self.assertIsNotNone(self.casedb.get_case(c2.case_id))

@@ -40,7 +40,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}" method="post">
+    <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}" method="post">{% csrf_token %}
         <fieldset>
             <legend>{% trans "Send SMS Message" %}</legend>
             <div class="control-group">

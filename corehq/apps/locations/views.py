@@ -115,7 +115,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
 class LocationTypesView(BaseLocationView):
     urlname = 'location_types'
     page_title = ugettext_noop("Organization Levels")
-    template_name = 'locations/settings.html'
+    template_name = 'locations/location_types.html'
 
     @method_decorator(can_edit_location_types)
     def dispatch(self, request, *args, **kwargs):

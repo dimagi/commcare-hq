@@ -31,16 +31,6 @@ class FormProcessorInterface(object):
 
     @property
     @memoized
-    def case_model(self):
-        from casexml.apps.case.models import CommCareCase
-        from corehq.form_processor.models import CommCareCaseSQL
-        if should_use_sql_backend(self.domain):
-            return CommCareCaseSQL
-        else:
-            return CommCareCase
-
-    @property
-    @memoized
     def sync_log_model(self):
         from casexml.apps.phone.models import SyncLog
 
@@ -78,12 +68,6 @@ class FormProcessorInterface(object):
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
 
-    def get_xform(self, form_id):
-        return self.xform_model.get(form_id)
-
-    def get_form_with_attachments(self, form_id):
-        return self.xform_model.get_with_attachments(form_id)
-
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
         try:
@@ -92,18 +76,8 @@ class FormProcessorInterface(object):
             lock = None
         return lock
 
-    def get_case(self, case_id):
-        return self.case_model.get(case_id)
-
-    def get_cases(self, case_ids):
-        return self.case_model.get_cases(case_ids)
-
-    def get_case_xform_ids(self, case_id):
-        return self.case_model.get_case_xform_ids(case_id)
-
     def get_case_forms(self, case_id):
-        xform_ids = self.get_case_xform_ids(case_id)
-        return self.processor.get_xforms(xform_ids)
+        return self.processor.get_case_forms(case_id)
 
     def store_attachments(self, xform, attachments):
         """
@@ -111,8 +85,12 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
-    def is_duplicate(self, xform):
-        return self.processor.is_duplicate(xform)
+    def is_duplicate(self, xform_id, domain=None):
+        """
+        Check if there is already a form with the given ID. If domain is specified only check for
+        duplicates within that domain.
+        """
+        return self.processor.is_duplicate(xform_id, domain=domain)
 
     def new_xform(self, instance_xml):
         return self.processor.new_xform(instance_xml)
@@ -138,17 +116,14 @@ class FormProcessorInterface(object):
             _handle_unexpected_error(self, instance, error_message)
             raise
 
-    def bulk_delete(self, case, xforms):
-        self.processor.bulk_delete(case, xforms)
+    def hard_delete_case_and_forms(self, case, xforms):
+        self.processor.hard_delete_case_and_forms(case, xforms)
 
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)
 
     def deduplicate_xform(self, xform):
         return self.processor.deduplicate_xform(xform)
-
-    def should_handle_as_duplicate_or_edit(self, xform_id, domain):
-        return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)
 
     def assign_new_id(self, xform):
         return self.processor.assign_new_id(xform)

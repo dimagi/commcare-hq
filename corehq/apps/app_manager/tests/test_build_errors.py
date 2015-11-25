@@ -1,7 +1,7 @@
 import json
 from django.test import SimpleTestCase
 import os
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, CaseList
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 
@@ -39,6 +39,10 @@ class BuildErrorsTest(SimpleTestCase):
         app = factory.app
         m1 = factory.new_basic_module('register', 'case', with_form=False)
         factory.new_advanced_module('update', 'case', with_form=False)
+
+        m2 = factory.new_basic_module('update', 'case', with_form=False)
+        m2.case_list = CaseList(show=True, label={'en': "case_list"})
+
         factory.new_shadow_module('update', m1, with_form=False)
         errors = app.validate_app()
 
