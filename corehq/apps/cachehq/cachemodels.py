@@ -86,7 +86,7 @@ class LocationGenerationCache(GenerationCache):
     ]
 
 
-class DomainInvitationGenerationCache(GenerationCache):
+class InvitationGenerationCache(GenerationCache):
     generation_key = '#gen#invitation#'
     doc_types = ['Invitation']
     views = [
@@ -99,12 +99,4 @@ class UserReportsDataSourceCache(GenerationCache):
     doc_types = ['DataSourceConfiguration']
     views = [
         'userreports/data_sources_by_build_info',
-    ]
-
-
-class UserReportsReportConfigCache(GenerationCache):
-    generation_key = '#gen#userreports#reportconfig#'
-    doc_types = ['ReportConfiguration']
-    views = [
-        'userreports/report_configs_by_domain',
     ]

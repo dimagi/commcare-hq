@@ -13,6 +13,10 @@
         'ngMessages'
     ]);
 
+    list_exports.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
         $scope, djangoRMI
@@ -48,6 +52,7 @@
                     if (self._numTries > 3) {
                         $scope.hasLoaded = true;
                         $scope.exportsListError = 'default';
+                        return;
                     }
                     self._numTries ++;
                     self._getExportsList();
@@ -57,7 +62,7 @@
 
         // For Bulk Export
         $scope.showBulkExportDownload = false;
-        $scope.bulkExportList = '';
+        $scope.bulkExportList = '[]';
 
         $scope.updateBulkStatus = function () {
             var selectedExports = _.filter($scope.exports, function (exp) {

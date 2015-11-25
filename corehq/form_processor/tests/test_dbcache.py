@@ -6,8 +6,9 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class CaseDbCacheTest(TestCase):
@@ -75,7 +76,7 @@ class CaseDbCacheTest(TestCase):
             self.assertFalse(cache.in_cache(id))
 
         for id in case_ids:
-            cache.set(id, self.interface.get_case(id))
+            cache.set(id, CaseAccessors().get_case(id))
 
         for i, id in enumerate(case_ids):
             self.assertTrue(cache.in_cache(id))

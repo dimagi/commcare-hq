@@ -10,7 +10,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
 
 

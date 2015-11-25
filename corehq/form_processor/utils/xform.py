@@ -42,50 +42,6 @@ def extract_meta_user_id(form):
     return user_id
 
 
-def new_xform(domain, instance_xml, attachments=None, process=None):
-    """
-    create but do not save an XFormInstance from an xform payload (xml_string)
-    optionally set the doc _id to a predefined value (_id)
-    return doc _id of the created doc
-
-    `process` is transformation to apply to the form right before saving
-    This is to avoid having to save multiple times
-
-    If xml_string is bad xml
-      - raise couchforms.XMLSyntaxError
-      :param domain:
-
-    """
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
-    interface = FormProcessorInterface(domain)
-
-    assert attachments is not None
-    form_data = convert_xform_to_json(instance_xml)
-    adjust_datetimes(form_data)
-
-    xform = interface.new_xform(form_data)
-
-    # Maps all attachments to uniform format and adds form.xml to list before storing
-    attachments = map(
-        lambda a: Attachment(name=a[0], content=a[1], content_type=a[1].content_type),
-        attachments.items()
-    )
-    attachments.append(Attachment(name='form.xml', content=instance_xml, content_type='text/xml'))
-    interface.store_attachments(xform, attachments)
-
-    # this had better not fail, don't think it ever has
-    # if it does, nothing's saved and we get a 500
-    if process:
-        process(xform)
-
-    lock = interface.acquire_lock_for_xform(xform.form_id)
-    with ReleaseOnError(lock):
-        if interface.is_duplicate(xform):
-            raise DuplicateError(xform)
-
-    return LockManager(xform, lock)
-
-
 def convert_xform_to_json(xml_string):
     """
     takes xform payload as xml_string and returns the equivalent json

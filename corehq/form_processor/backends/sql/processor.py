@@ -1,40 +1,23 @@
 import datetime
 import logging
 import uuid
-import hashlib
 
 from django.db import transaction
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.const import ATTACHMENT_NAME
-from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
+    CommCareCaseSQL, FormEditRebuild, Attachment)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
 class FormProcessorSQL(object):
-
-    @classmethod
-    def post_xform(cls, instance_xml, attachments=None, process=None, domain='test-domain'):
-        """
-        create a new xform and releases the lock
-
-        this is a testing entry point only and is not to be used in real code
-
-        """
-        if not process:
-            def process(xform):
-                xform.domain = domain
-        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
-        with xform_lock as xforms:
-            cls.save_processed_models(xforms)
-            return xforms[0]
 
     @classmethod
     def store_attachments(cls, xform, attachments):
@@ -44,7 +27,7 @@ class FormProcessorSQL(object):
                 name=attachment.name,
                 attachment_uuid=unicode(uuid.uuid4()),
                 content_type=attachment.content_type,
-                md5=hashlib.md5(attachment.content).hexdigest(),
+                md5=attachment.md5,
             )
             xform_attachment.write_content(attachment.content)
             xform_attachments.append(xform_attachment)
@@ -64,24 +47,14 @@ class FormProcessorSQL(object):
         )
 
     @classmethod
-    def is_duplicate(cls, xform):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform.form_id).exists()
+    def is_duplicate(cls, xform_id, domain=None):
+        return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
-    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
-
-    @classmethod
-    def bulk_delete(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(xform__in=xforms).delete()
-            XFormOperationSQL.objects.filter(xform__in=xforms).delete()
-            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
-            CommCareCaseIndexSQL.objects.filter(case=case).delete()
-            CaseAttachmentSQL.objects.filter(case=case).delete()
-            CaseTransaction.objects.filter(case=case).delete()
-            case.delete()
+        FormAccessorSQL.hard_delete_forms(form_ids)
+        CaseAccessorSQL.hard_delete_case(case.case_id)
 
     @classmethod
     def save_processed_models(cls, xforms, cases=None):
@@ -205,8 +178,9 @@ class FormProcessorSQL(object):
         return instance
 
     @classmethod
-    def log_submission_error(cls, instance, message, callback):
+    def submission_error_form_instance(cls, domain, instance, message):
         xform = XFormInstanceSQL(
+            domain=domain,
             form_uuid=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
@@ -214,14 +188,10 @@ class FormProcessorSQL(object):
         )
         cls.store_attachments(xform, [Attachment(
             name=ATTACHMENT_NAME,
-            content=instance,
+            raw_content=instance,
             content_type='text/xml',
         )])
 
-        if callback:
-            callback(xform)
-
-        cls.save_xform(xform)
         return xform
 
     @staticmethod
@@ -264,7 +234,7 @@ class FormProcessorSQL(object):
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail):
         try:
-            case = CommCareCaseSQL.get(case_id)
+            case = CaseAccessorSQL.get_case(case_id)
             assert case.domain == domain
             found = True
         except CaseNotFound:
@@ -286,19 +256,20 @@ class FormProcessorSQL(object):
         return case
 
     @staticmethod
-    def get_xforms(xform_ids):
-        return XFormInstanceSQL.get_forms_with_attachments(xform_ids)
+    def get_case_forms(case_id):
+        xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
+        return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
 
 
 def get_case_transactions(case_id, updated_xforms=None):
-    transactions = CaseTransaction.get_transactions_for_case_rebuild(case_id)
+    transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
     form_ids = {tx.form_uuid for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
 
     form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
-    xform_map = {form.form_id: form for form in XFormInstanceSQL.get_forms_with_attachments(form_ids_to_fetch)}
+    xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):
         if form_id in updated_xforms_map:

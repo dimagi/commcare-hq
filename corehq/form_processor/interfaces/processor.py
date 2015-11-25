@@ -4,7 +4,6 @@ from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
-from corehq.util.test_utils import unit_testing_only
 
 from ..utils import should_use_sql_backend
 
@@ -28,16 +27,6 @@ class FormProcessorInterface(object):
             return XFormInstanceSQL
         else:
             return XFormInstance
-
-    @property
-    @memoized
-    def case_model(self):
-        from casexml.apps.case.models import CommCareCase
-        from corehq.form_processor.models import CommCareCaseSQL
-        if should_use_sql_backend(self.domain):
-            return CommCareCaseSQL
-        else:
-            return CommCareCase
 
     @property
     @memoized
@@ -71,18 +60,8 @@ class FormProcessorInterface(object):
         else:
             return CaseDbCacheCouch
 
-    @unit_testing_only
-    def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
-        return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
-
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
-
-    def get_xform(self, form_id):
-        return self.xform_model.get(form_id)
-
-    def get_form_with_attachments(self, form_id):
-        return self.xform_model.get_with_attachments(form_id)
 
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
@@ -92,18 +71,8 @@ class FormProcessorInterface(object):
             lock = None
         return lock
 
-    def get_case(self, case_id):
-        return self.case_model.get(case_id)
-
-    def get_cases(self, case_ids):
-        return self.case_model.get_cases(case_ids)
-
-    def get_case_xform_ids(self, case_id):
-        return self.case_model.get_case_xform_ids(case_id)
-
     def get_case_forms(self, case_id):
-        xform_ids = self.get_case_xform_ids(case_id)
-        return self.processor.get_xforms(xform_ids)
+        return self.processor.get_case_forms(case_id)
 
     def store_attachments(self, xform, attachments):
         """
@@ -111,8 +80,12 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
-    def is_duplicate(self, xform):
-        return self.processor.is_duplicate(xform)
+    def is_duplicate(self, xform_id, domain=None):
+        """
+        Check if there is already a form with the given ID. If domain is specified only check for
+        duplicates within that domain.
+        """
+        return self.processor.is_duplicate(xform_id, domain=domain)
 
     def new_xform(self, instance_xml):
         return self.processor.new_xform(instance_xml)
@@ -128,27 +101,24 @@ class FormProcessorInterface(object):
                           extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            from couchforms.util import _handle_unexpected_error
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
                 type(e).__name__,
                 unicode(e),
                 ', '.join(xforms_being_saved)
             )
-            _handle_unexpected_error(self, instance, error_message)
+            from corehq.form_processor.submission_post import handle_unexpected_error
+            handle_unexpected_error(self, instance, error_message)
             raise
 
-    def bulk_delete(self, case, xforms):
-        self.processor.bulk_delete(case, xforms)
+    def hard_delete_case_and_forms(self, case, xforms):
+        self.processor.hard_delete_case_and_forms(case, xforms)
 
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)
 
     def deduplicate_xform(self, xform):
         return self.processor.deduplicate_xform(xform)
-
-    def should_handle_as_duplicate_or_edit(self, xform_id, domain):
-        return self.processor.should_handle_as_duplicate_or_edit(xform_id, domain)
 
     def assign_new_id(self, xform):
         return self.processor.assign_new_id(xform)
@@ -159,5 +129,5 @@ class FormProcessorInterface(object):
     def get_cases_from_forms(self, xforms, case_db):
         return self.processor.get_cases_from_forms(xforms, case_db)
 
-    def log_submission_error(self, instance, message, callback):
-        return self.processor.log_submission_error(instance, message, callback)
+    def submission_error_form_instance(self, instance, message):
+        return self.processor.submission_error_form_instance(self.domain, instance, message)

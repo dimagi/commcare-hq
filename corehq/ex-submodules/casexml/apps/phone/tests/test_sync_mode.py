@@ -12,8 +12,8 @@ from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIn
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from casexml.apps.case.tests.util import (check_user_has_case,
     assert_user_doesnt_have_case,
@@ -693,7 +693,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
                 )],
             )
         ])
-        FormProcessorInterface().get_case(parent_id).soft_delete()
+        CaseAccessors().get_case(parent_id).soft_delete()
         assert_user_doesnt_have_case(self, self.user, parent_id)
         # todo: in the future we may also want to purge the child
         assert_user_has_case(self, self.user, child_id)

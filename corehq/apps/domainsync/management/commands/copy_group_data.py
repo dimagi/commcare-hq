@@ -40,6 +40,12 @@ class Command(LabelCommand):
                 raise
 
     def handle(self, *args, **options):
+        raise CommandError(
+            'copy_group_data is currently broken. '
+            'Ask Danny or Ethan to fix it along the lines of '
+            'https://github.com/dimagi/commcare-hq/pull/9180/files#diff-9d976dc051a36a028c6604581dfbce5dR95'
+        )
+
         if len(args) != 2:
             raise CommandError('Usage is copy_group_data %s' % self.args)
 

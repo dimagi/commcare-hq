@@ -10,7 +10,7 @@ from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.models import User
 from django.test import TestCase, SimpleTestCase
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 USER_ID = 'test-index-user'
 
