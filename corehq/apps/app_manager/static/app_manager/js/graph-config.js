@@ -309,8 +309,6 @@ var GraphViewModel = function(moduleOptions){
         'show-axes',
         'show-grid',
         'show-legend',
-        'zoom',
-        'zoom-location',
         'bar-orientation',
         'stack',
     ];
@@ -335,8 +333,6 @@ var GraphViewModel = function(moduleOptions){
         'show-axes': 'true() or false()',
         'show-grid': 'true() or false()',
         'show-legend': 'true() or false()',
-        'zoom': 'true() or false()',
-        'zoom-location': 'ex: \'top-right\'',
         'bar-orientation': '\'horizontal\' or \'vertical\'',
         'stack': 'true() or false()',
     };
@@ -491,13 +487,11 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     self.xLabel = "X";
     self.yLabel = "Y";
     self.configPropertyOptions = [
-        'fill-above',
         'fill-below',
         'line-color',
         'name',
     ];
     self.configPropertyHints = {
-        'fill-above': "ex: '#aarrggbb'",
         'fill-below': "ex: '#aarrggbb'",
         'line-color': "ex: '#aarrggbb'",
         'name': "ex: 'My Series 1'",
