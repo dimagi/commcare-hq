@@ -52,7 +52,7 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         if self.x_phone_numbers:
             return self.x_phone_numbers
         else:
-            return [self.phone_number]
+            return [self.phone_number] if hasattr(self, 'phone_number') else []
 
     def send(self, msg, *args, **kwargs):
         orig_phone_number = kwargs.get("orig_phone_number")
