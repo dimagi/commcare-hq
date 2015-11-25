@@ -41,7 +41,7 @@ from corehq.apps.sms.models import (
     LastReadMessage, MessagingEvent, SelfRegistrationInvitation
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
-    SMSLoadBalancingMixin)
+    SMSLoadBalancingMixin, UnrecognizedBackendException)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
     InitiateAddSMSBackendForm, SubscribeSMSForm,
     SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
@@ -1137,8 +1137,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def get_deleted_item_data(self, item_id):
         try:
-            backend = SMSBackend.get(item_id)
-        except ResourceNotFound:
+            backend = SMSBackend.get_wrapped(item_id)
+        except UnrecognizedBackendException:
             raise Http404()
         if (backend.is_global or backend.domain != self.domain or
             backend.base_doc != "MobileBackend"):
