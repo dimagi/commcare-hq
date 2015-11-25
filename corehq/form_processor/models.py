@@ -278,8 +278,8 @@ class AbstractAttachment(models.Model):
     @property
     def filepath(self):
         if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', self.attachment_uuid)
-        return os.path.join('/tmp/', self.attachment_uuid)
+            return os.path.join('/home/travis/', str(self.attachment_uuid))
+        return os.path.join('/tmp/', str(self.attachment_uuid))
 
     def write_content(self, content):
         with open(self.filepath, 'w+') as f:
@@ -394,7 +394,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @property
     def case_id(self):
-        return self.case_uuid
+        return str(self.case_uuid)
 
     @case_id.setter
     def case_id(self, _id):
