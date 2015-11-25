@@ -1,3 +1,6 @@
+from collections import MutableMapping
+from uuid import UUID
+
 import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -5,6 +8,33 @@ from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStra
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL
+
+
+def to_uuid_safe(id_):
+        return id_ if id_ is None or isinstance(id_, UUID) else UUID(id_)
+
+
+class UUIDCache(MutableMapping):
+    """
+    Dict that coerces keys to UUIDs
+    """
+    def __init__(self, initial):
+        self.data = {to_uuid_safe(key): value for key, value in initial} if initial else {}
+
+    def __getitem__(self, item):
+        return self.data[to_uuid_safe(item)]
+
+    def __setitem__(self, key, value):
+        self.data[to_uuid_safe(key)] = value
+
+    def __delitem__(self, key):
+        del self.data[to_uuid_safe(key)]
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
 
 
 class CaseDbCacheSQL(AbstractCaseDbCache):
@@ -16,6 +46,9 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         super(CaseDbCacheSQL, self).__init__(domain, strip_history, deleted_ok, lock, wrap, initial, xforms)
         if not self.wrap:
             raise ValueError('CaseDbCacheSQL does not support unwrapped models')
+
+    def _populate_from_initial(self, initial_cases):
+        self.cache = UUIDCache(initial_cases)
 
     def _validate_case(self, case):
         if self.domain and case.domain != self.domain:
