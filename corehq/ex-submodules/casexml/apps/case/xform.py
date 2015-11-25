@@ -39,13 +39,13 @@ class CaseProcessingResult(object):
 
     def get_clean_owner_ids(self):
         dirty_flags = self.get_flags_to_save()
-        return {c.owner_id for c in self.cases if c.owner_id and c.owner_id not in dirty_flags}
+        return {str(c.owner_id) for c in self.cases if c.owner_id and str(c.owner_id) not in dirty_flags}
 
     def set_cases(self, cases):
         self.cases = cases
 
     def get_flags_to_save(self):
-        return {f.owner_id: f.case_id for f in self.dirtiness_flags}
+        return {str(f.owner_id): f.case_id for f in self.dirtiness_flags}
 
     def commit_dirtiness_flags(self):
         """
