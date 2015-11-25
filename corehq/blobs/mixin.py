@@ -33,22 +33,22 @@ class BlobMixin(Document):
     # found in blobdb. Set this to True on subclasses that are in the
     # process of being migrated. When this is false (the default) the
     # methods on this mixin will not touch couchdb.
-    _migrating_from_couch = False
+    migrating_blobs_from_couch = False
 
     def _blobdb_bucket(self):
         if self._id is None:
             raise ResourceNotFound(
-                    "cannot manipulate attachment on unidentified document")
+                "cannot manipulate attachment on unidentified document")
         return join(self.doc_type, self._id)
 
     @property
     def blobs(self):
         """Get a dictionary of BlobMeta objects keyed by attachment name
 
-        Includes CouchDB attachments if `_migrating_from_couch` is true.
+        Includes CouchDB attachments if `migrating_blobs_from_couch` is true.
         The returned value should not be mutated.
         """
-        if not self._migrating_from_couch or not self._attachments:
+        if not self.migrating_blobs_from_couch or not self._attachments:
             return self.external_blobs
         value = {name: BlobMeta(
             content_length=info["length"],
@@ -96,7 +96,7 @@ class BlobMixin(Document):
         try:
             blob = db.get(name, self._blobdb_bucket())
         except NotFound:
-            if self._migrating_from_couch:
+            if self.migrating_blobs_from_couch:
                 return super(BlobMixin, self).fetch_attachment(name, stream=stream)
             raise ResourceNotFound(u"{model} attachment: {name!r}".format(
                                    model=type(self).__name__, name=name))
@@ -114,7 +114,7 @@ class BlobMixin(Document):
         return body
 
     def delete_attachment(self, name):
-        if self._migrating_from_couch:
+        if self.migrating_blobs_from_couch:
             deleted = super(BlobMixin, self).delete_attachment(name)
         else:
             deleted = False

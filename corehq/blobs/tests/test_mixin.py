@@ -1,13 +1,11 @@
 from __future__ import unicode_literals
 import uuid
 from hashlib import md5
-from itertools import count
 from unittest import TestCase
 from StringIO import StringIO
 
 import corehq.blobs.mixin as mod
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.util.test_utils import generate_cases
 from dimagi.ext.couchdbkit import Document
 
 
@@ -195,7 +193,8 @@ class AttachmentFallback(object):
 class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
     doc_type = "FallbackToCouchDocument"
-    _migrating_from_couch = True
+    migrating_blobs_from_couch = True
 
 
-class BlowUp(Exception): pass
+class BlowUp(Exception):
+    pass
