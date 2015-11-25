@@ -74,7 +74,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain):
+    if toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain) and module and module.case_type:
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
