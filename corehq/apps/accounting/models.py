@@ -198,6 +198,7 @@ class SubscriptionType(object):
     CONTRACTED = "IMPLEMENTATION"
     SELF_SERVICE = "PRODUCT"
     TRIAL = "TRIAL"
+    EXTENDED_TRIAL = "EXTENDED_TRIAL"
     SANDBOX = "SANDBOX"
     INTERNAL = "INTERNAL"
     NOT_SET = "NOT_SET"
@@ -205,6 +206,7 @@ class SubscriptionType(object):
         (CONTRACTED, "Implementation"),
         (SELF_SERVICE, "Product"),
         (TRIAL, "Trial"),
+        (EXTENDED_TRIAL, "Extended Trial"),
         (SANDBOX, "Sandbox"),
         (INTERNAL, "Internal"),
     )
