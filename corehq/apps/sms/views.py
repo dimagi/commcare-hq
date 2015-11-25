@@ -668,7 +668,7 @@ def default_sms_admin_interface(request):
 @require_superuser
 def delete_backend(request, backend_id):
     # We need to keep this until we move over the admin sms gateway UIs
-    backend = SMSBackend.get(backend_id)
+    backend = SMSBackend.get_wrapped(backend_id)
     if not backend.is_global or backend.base_doc != "MobileBackend":
         raise Http404
     backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
