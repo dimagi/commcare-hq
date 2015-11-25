@@ -77,19 +77,44 @@ class B3MultiField(LayoutObject):
     def __init__(self, field_label, *fields, **kwargs):
         self.fields = list(fields)
         self.label_html = field_label
+        self.css_class = kwargs.pop('css_class', '')
+        self.css_id = kwargs.pop('css_id', '')
         self.flat_attrs = flatatt(kwargs)
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
         html = u''
+
+        errors = self._get_errors(form, self.fields)
+        if len(errors) > 0:
+            self.css_class += "has-error"
+
         for field in self.fields:
             html += render_field(field, form, form_style, context, template_pack=template_pack)
         context.update({
             'label_html': mark_safe(self.label_html),
             'field_html': mark_safe(html),
             'multifield': self,
+            'error_list': errors
         })
         return render_to_string(self.template, context)
+
+    def _get_errors(self, form, fields):
+        errors = []
+        for field in fields:
+            if isinstance(field, OldField) or issubclass(field.__class__, OldField):
+                fname = field.fields[0]
+                if fname not in form:
+                    continue
+                error = form[fname].errors
+                if error:
+                    errors.append(error)
+            else:
+                try:
+                    errors.extend(self._get_errors(form, field.fields))
+                except AttributeError:
+                    pass
+        return errors
 
 
 class CrispyTemplate(object):
