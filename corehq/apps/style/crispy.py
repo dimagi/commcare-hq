@@ -87,7 +87,7 @@ class B3MultiField(LayoutObject):
 
         errors = self._get_errors(form, self.fields)
         if len(errors) > 0:
-            self.css_class += "has-error"
+            self.css_class += " has-error"
 
         for field in self.fields:
             html += render_field(field, form, form_style, context, template_pack=template_pack)
