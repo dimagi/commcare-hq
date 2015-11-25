@@ -141,12 +141,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        return list(CaseTransaction.objects.filter(
+        return [str(uuid) for uuid in CaseTransaction.objects.filter(
             case_id=case_id,
             revoked=False,
             form_uuid__isnull=False,
             type=CaseTransaction.TYPE_FORM
-        ).values_list('form_uuid', flat=True))
+        ).values_list('form_uuid', flat=True)]
 
     @staticmethod
     def get_indices(case_id):

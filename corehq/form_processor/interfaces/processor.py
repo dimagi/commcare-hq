@@ -101,7 +101,7 @@ class FormProcessorInterface(object):
                           extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            xforms_being_saved = [xform.form_id for xform in xforms]
+            xforms_being_saved = [str(xform.form_id) for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
                 type(e).__name__,
                 unicode(e),

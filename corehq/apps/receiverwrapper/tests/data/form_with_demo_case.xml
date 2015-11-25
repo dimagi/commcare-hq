@@ -1,9 +1,9 @@
 <?xml version='1.0' ?>
 <registration version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
 <meta>
-    <DeviceID>Chalimbana</DeviceID>
-    <TimeStart>2010-06-29T13:42:50.137</TimeStart>
-    <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
+    <deviceID>Chalimbana</deviceID>
+    <timeStart>2010-06-29T13:42:50.137</timeStart>
+    <timeEnd>2010-06-29T13:55:50.137</timeEnd>
     <username>demo_user</username>
     <userID>demo_user</userID>
     <instanceID>{instanceID}</instanceID>

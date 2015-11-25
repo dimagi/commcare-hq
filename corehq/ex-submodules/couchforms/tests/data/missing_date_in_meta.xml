@@ -3,7 +3,7 @@
     <meta xmlns="http://openrosa.org/jr/xforms">
         <instanceID>c28f68a5-e920-4594-aea7-dbae3c3650b4</instanceID>
         <timeStart>2014-07-10</timeStart>
-        <userID>12345</userID>
+        <userID>c28f68a5-e920-4594-aea7-dbae3c3650b5</userID>
     </meta>
     <foo>bar</foo>
 </data>

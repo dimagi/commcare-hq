@@ -57,7 +57,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         case = self.casedb.get_case(case_id)
         self.assertFalse(case.is_deleted)
-        self.assertEqual(case.xform_ids, [xform.form_id])
+        self.assertEqual(case.xform_ids, [str(xform.form_id)])
 
         [archival, restoration] = xform.history
         self.assertTrue(lower_bound <= restoration.date <= upper_bound)

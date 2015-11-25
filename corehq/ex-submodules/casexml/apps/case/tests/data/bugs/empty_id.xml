@@ -1,12 +1,12 @@
 <?xml version='1.0' ?>
 <anc version="8" uiVersion="2" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://www.commcarehq.org/case/test/">
 	<Meta>
-		<DeviceID>6YE3THZNAVT40K5XGQSF09WL1</DeviceID>
+		<deviceID>6YE3THZNAVT40K5XGQSF09WL1</deviceID>
 		<timeStart>2011-02-15T22:00:52.312</timeStart>
 		<timeEnd>2011-02-15T22:01:18.957</timeEnd>
 		<username>user1</username>
-		<chw_id>82WS6S0JPCKFK82SPGF6W023L</chw_id>
-		<uid>3A6B9P0AYZD0OGC3U5XQ3HN45</uid>
+		<userID>f7f0c79e-8b79-11df-b7de-005056c00008</userID>
+		<instanceID>5d3d01561f584e85b53669a48bfc6039</instanceID>
 	</Meta>
 	<case>
 		<case_id></case_id>

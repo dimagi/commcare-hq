@@ -37,13 +37,13 @@ class FormProcessorSQL(object):
     @classmethod
     def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
-
+        user_id = extract_meta_user_id(form_data)
         return XFormInstanceSQL(
             # other properties can be set post-wrap
             form_uuid=form_id,
             xmlns=form_data.get('@xmlns'),
             received_on=datetime.datetime.utcnow(),
-            user_id=extract_meta_user_id(form_data),
+            user_id=user_id,
         )
 
     @classmethod
@@ -208,7 +208,7 @@ class FormProcessorSQL(object):
                     deprecated_form = xform
                 affected_cases.update(case_update.id for case_update in get_case_updates(xform))
 
-            rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
+            rebuild_detail = FormEditRebuild(deprecated_form_id=str(deprecated_form.form_id))
             for case_id in affected_cases:
                 case = case_db.get(case_id)
                 if not case:

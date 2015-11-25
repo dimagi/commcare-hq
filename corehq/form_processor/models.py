@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import collections
 
@@ -108,18 +109,18 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     hash_property = 'form_uuid'
 
-    form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    form_uuid = UUIDField(unique=True, db_index=True, hyphenate=True)
 
     domain = models.CharField(max_length=255)
-    app_id = models.CharField(max_length=255, null=True)
+    app_id = UUIDField(unique=False, null=True, hyphenate=True)
     xmlns = models.CharField(max_length=255)
-    user_id = models.CharField(max_length=255, null=True)
+    user_id = UUIDField(unique=False, null=True, hyphenate=True)
 
     # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
-    orig_id = models.CharField(max_length=255, null=True)
+    orig_id = UUIDField(null=True, hyphenate=True)
 
     # When a form is deprecated, the new form gets a reference to the deprecated form
-    deprecated_form_id = models.CharField(max_length=255, null=True)
+    deprecated_form_id = UUIDField(null=True, hyphenate=True)
 
     # Stores the datetime of when a form was deprecated
     edited_on = models.DateTimeField(null=True)
@@ -133,11 +134,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     openrosa_headers = JSONField(lazy=True, default=dict)
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
-    last_sync_token = models.CharField(max_length=255, null=True)
+    last_sync_token = UUIDField(unique=False, null=True, hyphenate=True)
     problem = models.TextField(null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
-    build_id = models.CharField(max_length=255, null=True)
+    build_id = UUIDField(unique=False, null=True, hyphenate=True)
     # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
@@ -253,6 +254,19 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         FormAccessorSQL.unarchive_form(self.form_id, user_id=user)
         xform_unarchived.send(sender="form_processor", xform=self)
 
+    @memoized
+    def get_sync_token(self):
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        if self.last_sync_token:
+            from couchdbkit import ResourceNotFound
+            try:
+                return get_properly_wrapped_sync_log(str(self.last_sync_token))
+            except ResourceNotFound:
+                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
+                    self.last_sync_token, self.form_id, self.domain,
+                ))
+                raise
+        return None
 
 class AbstractAttachment(models.Model):
     attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
@@ -582,7 +596,7 @@ class CaseTransaction(models.Model):
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
     )
-    form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
+    form_uuid = UUIDField(max_length=255, null=True, hyphenate=True)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)

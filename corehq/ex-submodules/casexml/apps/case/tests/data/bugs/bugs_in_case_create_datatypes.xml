@@ -13,7 +13,7 @@
 		<timeStart>2011-11-16T10:06:54.055-05</timeStart>
 		<timeEnd>2011-11-16T10:08:46.093-05</timeEnd>
 		<username>admin</username>
-		<userID>5463YB9DV8CPCJHRJ6RO9PGJU</userID>
+		<userID>{user_id}</userID>
 		<instanceID>{form_id}</instanceID>
 	</meta>
 </data>

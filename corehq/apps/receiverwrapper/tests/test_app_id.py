@@ -1,14 +1,16 @@
+import uuid
+
 from django.core.cache import cache
 from django.test import TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_version_from_build_id, get_submit_url
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, UuidAssertMixin
 from couchforms.util import spoof_submission
 
 
-class TestAppId(TestCase):
+class TestAppId(TestCase, UuidAssertMixin):
     @classmethod
     def setUpClass(cls):
         cls.domain = 'alskdjfablasdkffsdlkfjabas'
@@ -33,7 +35,8 @@ class TestAppId(TestCase):
     def test(self):
         self._test(self.build_id, self.app_id, self.build_id)
         self._test(self.app_id, self.app_id, None)
-        self._test('alskdjflaksdjf', 'alskdjflaksdjf', None)
+        unknown_app = uuid.uuid4().hex
+        self._test(unknown_app, unknown_app, None)
 
         # does this work just as well for a deleted app?
         self.app.delete_app()
@@ -55,8 +58,8 @@ class TestAppId(TestCase):
             '<data xmlns="http://example.com/"><question1/></data>'
         )
         form = FormAccessors(self.domain).get_form(form_id)
-        self.assertEqual(form.app_id, expected_app_id)
-        self.assertEqual(form.build_id, expected_build_id)
+        self.assertUuidEqual(form.app_id, expected_app_id)
+        self.assertUuidEqual(form.build_id, expected_build_id)
         return form
 
     def _test_app_version(self, domain, form, build):
