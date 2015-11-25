@@ -1,6 +1,6 @@
-USER_INDEX = "hqusers_2015-11-12_1638"
+USER_INDEX = "hqusers_2015-11-24_12_33"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
- '_meta': {'comment': 'Ethan modified on 2015-11-12',
+ '_meta': {'comment': 'Farid modified on 2015-11-24',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
