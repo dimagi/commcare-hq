@@ -79,19 +79,19 @@ Run these commands to procede with migrations:
 ./manage.py run_blob_migration {slug} --file=FILE
 ./manage.py migrate
 
-Note: --file=FILE is optional, and can be omitted if you do not want to
-keep a copy of the pre-migrated documents from couch.
+Note: --file=FILE is optional and can be omitted if you do not want to
+keep a copy of the pre-migrated couch documents.
 
 See also:
 https://github.com/dimagi/commcare-hq/blob/master/corehq/blobs/migrate.py
 """
 
 BLOB_DB_NOT_CONFIGURED = """
-The blob database has not been configured.
+Cannot get the blob database.
 
 This often means that settings.SHARED_DRIVE_ROOT is not configured.
-It should be set to a real directory. Update your localsettings.py
-and retry the migration.
+It should be set to a real directory. Update localsettings.py and
+retry the migration.
 """
 
 

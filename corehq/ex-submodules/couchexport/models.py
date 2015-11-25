@@ -929,6 +929,7 @@ class GroupExportConfiguration(Document):
         """
         return zip(self.all_configs, self.all_export_schemas)
 
+
 class SavedBasicExport(BlobMixin, Document):
     """
     A cache of an export that lives in couch.
