@@ -1,4 +1,3 @@
-import re
 from StringIO import StringIO
 from mock import patch, MagicMock
 
