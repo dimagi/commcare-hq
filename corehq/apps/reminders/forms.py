@@ -2495,8 +2495,8 @@ class BroadcastForm(Form):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-10 col-md-3 col-lg-3'
 
         from corehq.apps.reminders.views import BroadcastListView
         layout_fields = [
@@ -2571,10 +2571,10 @@ class BroadcastForm(Form):
                             'date',
                             data_bind='value: date'
                         ),
-                        css_class='col-md-2'
+                        css_class='col-sm-6'
                     ),
                     crispy.Div(
-                        template='reminders/partial/time_picker.html',
+                        template='reminders/partial/time_picker.html'
                     ),
                 ),
                 ErrorsOnlyField('time'),
