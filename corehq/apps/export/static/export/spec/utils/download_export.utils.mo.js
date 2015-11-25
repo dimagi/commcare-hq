@@ -174,7 +174,11 @@
             DnldExpData.$httpBackend = $injector.get('$httpBackend');
             DnldExpData.$interval = $injector.get('$interval');
             DnldExpData.exportDownloadService = $injector.get('exportDownloadService');
+        }));
+    };
 
+    window.DnldExpData.prepareDownloadController = function () {
+        beforeEach(inject(function ($injector) {
             var $controller = $injector.get('$controller');
             DnldExpData.createController = function (exportList, checkForMultimedia) {
                 DnldExpData.currentScope = DnldExpData.$rootScope.$new();
@@ -182,6 +186,21 @@
                     '$scope': DnldExpData.currentScope,
                     checkForMultimedia: checkForMultimedia || false,
                     exportList: exportList
+                });
+            };
+
+        }));
+    };
+
+
+
+    window.DnldExpData.prepareDownloadProgressController = function () {
+        beforeEach(inject(function ($injector) {
+            var $controller = $injector.get('$controller');
+            DnldExpData.createProgressController = function () {
+                DnldExpData.currentScope = DnldExpData.$rootScope.$new();
+                return $controller('DownloadProgressController', {
+                    '$scope': DnldExpData.currentScope
                 });
             };
 

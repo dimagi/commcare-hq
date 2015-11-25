@@ -1,5 +1,6 @@
 describe('DownloadExportFormController -> exportDownloadService - Polling', function() {
     DnldExpData.prepareTests();
+    DnldExpData.prepareDownloadController();
     DnldExpData.prepareBackends();
     var downloadId = 'uuid-errorsTest';
 
