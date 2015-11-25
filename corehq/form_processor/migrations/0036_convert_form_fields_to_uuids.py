@@ -112,4 +112,14 @@ class Migration(migrations.Migration):
                 preserve_default=True,
             )]
         ),
+        migrations.RunSQL(
+            'ALTER TABLE "form_processor_xformoperationsql" ALTER COLUMN "user" TYPE uuid USING user::uuid',
+            'ALTER TABLE "form_processor_xformoperationsql" ALTER COLUMN "user" TYPE varchar(255)',
+            state_operations=[migrations.AlterField(
+                model_name='xformoperationsql',
+                name='user',
+                field=uuidfield.fields.UUIDField(max_length=32, null=True),
+                preserve_default=True,
+            )]
+        ),
     ]

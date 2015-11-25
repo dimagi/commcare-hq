@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime, timedelta
 from django.test import TestCase
 
@@ -6,11 +7,11 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.signals import xform_archived, xform_unarchived
 
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, UuidAssertMixin
 from corehq.util.test_utils import TestFileMixin
 
 
-class TestFormArchiving(TestCase, TestFileMixin):
+class TestFormArchiving(TestCase, TestFileMixin, UuidAssertMixin):
     file_path = ('data', 'sample_xforms')
     root = os.path.dirname(__file__)
 
@@ -31,11 +32,14 @@ class TestFormArchiving(TestCase, TestFileMixin):
             'test-domain',
         )
 
+        mr_researcher = uuid.uuid4().hex
+        mr_librarian = uuid.uuid4().hex
+
         self.assertTrue(xform.is_normal)
         self.assertEqual(0, len(xform.history))
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        xform.archive(user='mr. librarian')
+        xform.archive(user=mr_librarian)
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.formdb.get_form(xform.form_id)
@@ -47,10 +51,10 @@ class TestFormArchiving(TestCase, TestFileMixin):
         [archival] = xform.history
         self.assertTrue(lower_bound <= archival.date <= upper_bound)
         self.assertEqual('archive', archival.operation)
-        self.assertEqual('mr. librarian', archival.user)
+        self.assertUuidEqual(mr_librarian, archival.user)
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        xform.unarchive(user='mr. researcher')
+        xform.unarchive(user=mr_researcher)
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.formdb.get_form(xform.form_id)
@@ -62,7 +66,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         [archival, restoration] = xform.history
         self.assertTrue(lower_bound <= restoration.date <= upper_bound)
         self.assertEqual('unarchive', restoration.operation)
-        self.assertEqual('mr. researcher', restoration.user)
+        self.assertUuidEqual(mr_researcher, restoration.user)
 
     @run_with_all_backends
     def testSignal(self):
