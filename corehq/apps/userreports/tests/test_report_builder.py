@@ -2,6 +2,7 @@ import os
 from django.test import TestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.userreports.dbaccessors import get_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.builder.forms import ConfigureListReportForm
 
@@ -26,7 +27,7 @@ class ReportBuilderTest(TestCase):
         cls.app.delete()
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
+        for config in get_all_report_configs():
             config.delete()
 
     def test_updating_out_of_date_report(self):
