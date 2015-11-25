@@ -41,17 +41,14 @@ class DomainRegistrationForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                '',
-                'hr_name',
-                'org',
-                'domain_type',
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _("Create Project"),
-                        type="submit",
-                        css_class="btn btn-primary btn-lg disable-on-submit",
-                    )
+            'hr_name',
+            'org',
+            'domain_type',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Create Project"),
+                    type="submit",
+                    css_class="btn btn-primary btn-lg disable-on-submit",
                 )
             )
         )
