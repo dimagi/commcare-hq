@@ -1,8 +1,7 @@
 import os
 from django.test import TestCase
 
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -17,7 +16,7 @@ class TestNamespaces(TestCase, TestFileMixin):
     @run_with_all_backends
     def testClosed(self):
         xml_data = self.get_xml('namespaces')
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
         self._assert_xmlns('no namespace here', xform, 'form/empty')

@@ -4,7 +4,6 @@ from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
-from corehq.util.test_utils import unit_testing_only
 
 from ..utils import should_use_sql_backend
 
@@ -61,10 +60,6 @@ class FormProcessorInterface(object):
         else:
             return CaseDbCacheCouch
 
-    @unit_testing_only
-    def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
-        return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
-
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
 
@@ -106,14 +101,14 @@ class FormProcessorInterface(object):
                           extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            from couchforms.util import _handle_unexpected_error
             xforms_being_saved = [xform.form_id for xform in xforms]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
                 type(e).__name__,
                 unicode(e),
                 ', '.join(xforms_being_saved)
             )
-            _handle_unexpected_error(self, instance, error_message)
+            from corehq.form_processor.submission_post import handle_unexpected_error
+            handle_unexpected_error(self, instance, error_message)
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
@@ -134,5 +129,5 @@ class FormProcessorInterface(object):
     def get_cases_from_forms(self, xforms, case_db):
         return self.processor.get_cases_from_forms(xforms, case_db)
 
-    def log_submission_error(self, instance, message, callback):
-        return self.processor.log_submission_error(instance, message, callback)
+    def submission_error_form_instance(self, instance, message):
+        return self.processor.submission_error_form_instance(self.domain, instance, message)

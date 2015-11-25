@@ -6,7 +6,7 @@ from corehq.apps.app_manager.models import CareplanModule, CareplanConfig, Carep
 
 
 def create_app_structure_repeat_records(sender, application, **kwargs):
-    from corehq.apps.receiverwrapper.models import AppStructureRepeater
+    from corehq.apps.repeaters.models import AppStructureRepeater
     domain = application.domain
     if domain:
         repeaters = AppStructureRepeater.by_domain(domain)

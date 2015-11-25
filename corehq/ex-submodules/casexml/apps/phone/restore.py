@@ -21,7 +21,7 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from couchforms.xml import (
+from couchforms.openrosa_response import (
     ResponseNature,
     get_simple_response_xml,
 )

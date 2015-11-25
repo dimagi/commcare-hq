@@ -23,8 +23,8 @@ from datetime import date
 import json
 import logging
 from corehq.apps.receiverwrapper.exceptions import IgnoreDocument
-from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
-from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.models import RegisterGenerator, FormRepeater
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings
 from custom.dhis2.const import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS, REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS, \

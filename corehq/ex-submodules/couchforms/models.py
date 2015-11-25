@@ -51,17 +51,6 @@ def all_known_formlike_doc_types():
     return set(doc_types().keys()) | set(['XFormInstance-Deleted', 'HQSubmission'])
 
 
-def get(doc_id):
-    import warnings
-    warnings.warn(
-        'couchforms.models.get has been deprecated. '
-        'You should use couchforms.fetch_and_wrap_form instead.',
-        DeprecationWarning
-    )
-    import couchforms
-    return couchforms.fetch_and_wrap_form(doc_id)
-
-
 class Metadata(DocumentSchema):
     """
     Metadata of an xform, from a meta block structured like:
@@ -181,32 +170,27 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     @property
     def is_error(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type != 'XFormInstance'
 
     @property
     def is_duplicate(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'XFormDuplicate'
 
     @property
     def is_archived(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'XFormArchived'
 
     @property
     def is_deprecated(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'XFormDeprecated'
 
     @property
     def is_submission_error_log(self):
-        assert self.doc_type == 'XFormInstance'
-        return False
+        return self.doc_type == 'SubmissionErrorLog'
 
     @property
     def is_normal(self):
-        return not (self.is_error or self.is_deprecated or self.is_duplicate or self.is_archived)
+        return self.doc_type == 'XFormInstance'
 
     @property
     def metadata(self):

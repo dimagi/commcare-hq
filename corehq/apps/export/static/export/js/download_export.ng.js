@@ -11,17 +11,14 @@
         'ngMessages'
     ]);
 
-    var $element = {
-        progress: function () {
-            return $('#download-progress-bar');
-        },
-        group: function () {
-            return $('#id_group');
-        },
-        user_type: function () {
-            return $('#id_user_types');
-        }
-    };
+    download_export.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    download_export.constant('formElement', {
+        progress: function () { return null; },
+        group: function () { return null; },
+        user_type: function () { return null; }
+    });
 
     download_export.constant('exportList', []);
     download_export.constant('maxColumnSize', 2000);
@@ -31,7 +28,7 @@
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
         $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService,
-        defaultDateRange, checkForMultimedia
+        defaultDateRange, checkForMultimedia, formElement
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
@@ -54,7 +51,7 @@
 
         $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
-        $element.user_type().select2('val', ['mobile']);
+        if (formElement.user_type()) formElement.user_type().select2('val', ['mobile']);
 
         if (!_.isNull(defaultDateRange)) {
             $scope.formData.date_range = defaultDateRange;
@@ -87,7 +84,7 @@
             if (data.success) {
                 $scope.groupsLoading = false;
                 $scope.hasGroups = data.groups.length > 0;
-                $element.group().select2({
+                if (formElement.group()) formElement.group().select2({
                     data: data.groups
                 });
             } else {
@@ -138,6 +135,7 @@
                 $scope.prepareExportError = "default";
             }
             $scope.preparingExport = false;
+            $scope.preparingMultimediaExport = false;
         };
 
         $scope.preparingMultimediaExport = false;
@@ -169,7 +167,7 @@
     };
 
     exportsControllers.DownloadProgressController = function (
-        $scope, exportDownloadService
+        $scope, exportDownloadService, formElement
     ) {
         var self = {};
 
@@ -183,8 +181,10 @@
             $scope.progress = {};
             $scope.showCeleryError = false;
             $scope.isMultimediaDownload = false;
-            $element.progress().css('width', '0%');
-            $element.progress().removeClass('progress-bar-success');
+            if (formElement.progress()) {
+                formElement.progress().css('width', '0%');
+                formElement.progress().removeClass('progress-bar-success');
+            }
         };
 
         self._reset();
@@ -206,12 +206,12 @@
                 $scope.isDownloadReady = true;
                 $scope.dropboxUrl = data.dropbox_url;
                 $scope.downloadUrl = data.download_url;
-                $element.progress().addClass('progress-bar-success');
+                if (formElement.progress()) formElement.progress().addClass('progress-bar-success');
             } else if (_.isNumber(data.progress.percent)) {
                 progressPercent = data.progress.percent;
             }
             $scope.progress.percent = progressPercent;
-            $element.progress().css('width', progressPercent + '%');
+            if (formElement.progress()) formElement.progress().css('width', progressPercent + '%');
         };
 
         $scope.resetDownload = function () {
@@ -265,9 +265,12 @@
                         self.downloadStatusData = data;
                         if (data.has_file && data.is_ready) {
                             $interval.cancel(self._promise);
+                            return;
                         }
                         if (data.progress && data.progress.error) {
                             $interval.cancel(self._promise);
+                            self.downloadError = data.progress.error;
+                            return;
                         }
                     }
                     if (data.error) {

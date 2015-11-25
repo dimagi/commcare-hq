@@ -5,6 +5,7 @@ from couchdbkit import ResourceNotFound
 from django.db.models import Q
 from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
 from casexml.apps.case.signals import cases_received
+from casexml.apps.case.util import validate_phone_datetime
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -14,7 +15,6 @@ from casexml.apps.case.exceptions import (
     NoDomainProvided,
 )
 from django.conf import settings
-from couchforms.validators import validate_phone_datetime
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const

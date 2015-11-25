@@ -262,9 +262,9 @@ class McSqlData(SqlData):
         return self.format.get_headers()
 
     @memoized
-    def get_data(self, slugs=None):
+    def get_data(self):
         # only overridden to memoize
-        return super(McSqlData, self).get_data(slugs)
+        return super(McSqlData, self).get_data()
 
     @memoized
     def get_users(self):
