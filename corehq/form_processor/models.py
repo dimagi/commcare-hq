@@ -268,8 +268,9 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
                 raise
         return None
 
+
 class AbstractAttachment(models.Model):
-    attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    attachment_uuid = UUIDField(unique=True, db_index=True, hyphenate=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
@@ -366,28 +367,28 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
                       SupplyPointCaseMixin):
     hash_property = 'case_uuid'
 
-    case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    case_uuid = UUIDField(unique=True, db_index=True, hyphenate=True)
     domain = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
     name = models.CharField(max_length=255, null=True)
 
-    owner_id = models.CharField(max_length=255)
+    owner_id = UUIDField(unique=False, hyphenate=True)
 
     opened_on = models.DateTimeField(null=True)
-    opened_by = models.CharField(max_length=255, null=True)
+    opened_by = UUIDField(unique=False, null=True, hyphenate=True)
 
     modified_on = models.DateTimeField(null=False)
     server_modified_on = models.DateTimeField(null=False)
-    modified_by = models.CharField(max_length=255)
+    modified_by = UUIDField(unique=False, hyphenate=True)
 
     closed = models.BooleanField(default=False, null=False)
     closed_on = models.DateTimeField(null=True)
-    closed_by = models.CharField(max_length=255, null=True)
+    closed_by = UUIDField(unique=False, null=True, hyphenate=True)
 
     deleted = models.BooleanField(default=False, null=False)
 
     external_id = models.CharField(max_length=255)
-    location_uuid = UUIDField(null=True, unique=False)
+    location_uuid = UUIDField(null=True, unique=False, hyphenate=True)
 
     case_json = JSONField(lazy=True, default=dict)
 
@@ -545,7 +546,7 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
     identifier = models.CharField(max_length=255, null=False)
-    referenced_id = models.CharField(max_length=255, null=False)
+    referenced_id = UUIDField(unique=False, null=False, hyphenate=True)
     referenced_type = models.CharField(max_length=255, null=False)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
