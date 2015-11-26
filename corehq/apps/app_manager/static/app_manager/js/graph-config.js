@@ -303,6 +303,7 @@ var GraphViewModel = function(moduleOptions){
         'secondary-y-max',
         // Axis labels:
         'x-labels',
+        'x-labels-time-format',
         'y-labels',
         'secondary-y-labels',
         // other:
@@ -327,6 +328,7 @@ var GraphViewModel = function(moduleOptions){
         'secondary-y-max': 'ex: 100',
         // Axis labels:
         'x-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
+        'x-labels-time-format': 'ex: \'%Y-%m\'',
         'y-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
         'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
@@ -490,11 +492,13 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
         'fill-below',
         'line-color',
         'name',
+        'x-name',
     ];
     self.configPropertyHints = {
         'fill-below': "ex: '#aarrggbb'",
         'line-color': "ex: '#aarrggbb'",
-        'name': "ex: 'My Series 1'",
+        'name': "ex: 'My Y-Values 1'",
+        'x-name': "ex: 'My X-Values'",
     };
 
     self.toggleShowDataPath = function() {
@@ -513,8 +517,10 @@ GraphSeries.prototype.constructor = GraphSeries;
 var XYGraphSeries = function(original, childCaseTypes, fixtures){
     GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
     var self = this;
-    self.configPropertyOptions = self.configPropertyOptions.concat(['point-style', 'secondary-y']);
-    self.configPropertyHints['point-style'] = "'none', 'circle', 'x', 'diamond', ..."; //triangle and square are also options
+    self.configPropertyOptions = self.configPropertyOptions.concat(['is-data', 'point-style', 'secondary-y']);
+    self.configPropertyHints['is-data'] = 'true() or false()';
+    // triangle-up and triangle-down are also options
+    self.configPropertyHints['point-style'] = "'none', 'circle', 'cross', 'diamond', ...";
     self.configPropertyHints['secondary-y'] = 'true() or false()';
 
 };
@@ -527,7 +533,8 @@ var BarGraphSeries = function(original, childCaseTypes, fixtures){
 
     self.xLabel = "Label";
     self.yLabel = "Value";
-    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-sort']);
+    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-color', 'bar-sort']);
+    self.configPropertyHints['bar-color'] = "if(x > 100, '#55ff00ff', 'ffff00ff')";
     self.configPropertyHints['bar-sort'] = "'ascending' or 'descending'";
 };
 BarGraphSeries.prototype = new GraphSeries();
