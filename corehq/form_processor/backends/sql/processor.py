@@ -238,7 +238,7 @@ class FormProcessorSQL(object):
             assert case.domain == domain
             found = True
         except CaseNotFound:
-            case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
+            case = CommCareCaseSQL(case_id=case_id, domain=domain)
             found = False
 
         case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)

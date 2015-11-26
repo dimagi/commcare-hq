@@ -342,9 +342,9 @@ class SupplyPointCaseMixin(object):
 class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin):
-    hash_property = 'case_uuid'
+    hash_property = 'case_id'
 
-    case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
     name = models.CharField(max_length=255, null=True)
@@ -368,14 +368,6 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     location_uuid = UUIDField(null=True, unique=False)
 
     case_json = JSONField(lazy=True, default=dict)
-
-    @property
-    def case_id(self):
-        return self.case_uuid
-
-    @case_id.setter
-    def case_id(self, _id):
-        self.case_uuid = _id
 
     @property
     def location_id(self):
@@ -474,7 +466,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     @classmethod
     def get_obj_id(cls, obj):
-        return obj.case_uuid
+        return obj.case_id
 
     @classmethod
     def get_obj_by_id(cls, case_id):
@@ -484,7 +476,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     def __unicode__(self):
         return (
             "CommCareCase("
-            "case_id='{c.case_uuid}', "
+            "case_id='{c.case_id}', "
             "domain='{c.domain}', "
             "closed={c.closed}, "
             "owner_id='{c.owner_id}', "
@@ -502,7 +494,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
 class CaseAttachmentSQL(AbstractAttachment):
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_uuid', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
@@ -518,7 +510,7 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_uuid', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name="index_set", related_query_name="index"
     )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
@@ -571,7 +563,7 @@ class CaseTransaction(models.Model):
         TYPE_FORM,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_uuid', db_index=False,
+        'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning

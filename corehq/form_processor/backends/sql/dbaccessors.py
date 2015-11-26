@@ -110,13 +110,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case(case_id):
         try:
-            return CommCareCaseSQL.objects.get(case_uuid=case_id)
+            return CommCareCaseSQL.objects.get(case_id=case_id)
         except CommCareCaseSQL.DoesNotExist:
             raise CaseNotFound
 
     @staticmethod
     def get_cases(case_ids, ordered=False):
-        cases = list(CommCareCaseSQL.objects.filter(case_uuid__in=list(case_ids)).all())
+        cases = list(CommCareCaseSQL.objects.filter(case_id__in=list(case_ids)).all())
         if ordered:
             # SQL won't return the rows in any particular order so we need to order them ourselves
             index_map = {id_: index for index, id_ in enumerate(case_ids)}
@@ -135,7 +135,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Assumes that the case exists in the DB.
         """
         return not CommCareCaseSQL.objects.filter(
-            case_uuid=case_id,
+            case_id=case_id,
             server_modified_on=server_modified_on
         ).exists()
 
@@ -168,7 +168,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             CommCareCaseIndexSQL.objects.filter(case_id=case_id).delete()
             CaseAttachmentSQL.objects.filter(case_id=case_id).delete()
             CaseTransaction.objects.filter(case_id=case_id).delete()
-            CommCareCaseSQL.objects.filter(case_uuid=case_id).delete()
+            CommCareCaseSQL.objects.filter(case_id=case_id).delete()
 
     @staticmethod
     def get_attachment(case_id, attachment_name):
@@ -202,4 +202,4 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         query = CommCareCaseSQL.objects.filter(domain=domain)
         if type:
             query.filter(type=type)
-        return list(query.values_list('case_uuid', flat=True))
+        return list(query.values_list('case_id', flat=True))
