@@ -23,7 +23,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         try:
-            return XFormInstanceSQL.objects.get(form_uuid=form_id)
+            return XFormInstanceSQL.objects.get(form_id=form_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
@@ -32,7 +32,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         try:
             return XFormInstanceSQL.objects.prefetch_related(
                 Prefetch('attachments', to_attr='cached_attachments')
-            ).get(form_uuid=form_id)
+            ).get(form_id=form_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
@@ -40,7 +40,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def get_forms_with_attachments_meta(form_ids):
         return XFormInstanceSQL.objects.prefetch_related(
             Prefetch('attachments', to_attr='cached_attachments')
-        ).filter(form_uuid__in=form_ids)
+        ).filter(form_id__in=form_ids)
 
     @staticmethod
     def get_forms_by_type(domain, type_, recent_first=False, limit=None):
@@ -58,7 +58,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
-        query = XFormInstanceSQL.objects.filter(form_uuid=form_id)
+        query = XFormInstanceSQL.objects.filter(form_id=form_id)
         if domain:
             query = query.filter(domain=domain)
         return query.exists()
@@ -68,7 +68,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         with transaction.atomic():
             XFormAttachmentSQL.objects.filter(form_id__in=form_ids).delete()
             XFormOperationSQL.objects.filter(form_id__in=form_ids).delete()
-            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
+            XFormInstanceSQL.objects.filter(form_id__in=form_ids).delete()
 
     @staticmethod
     def archive_form(form_id, user_id=None):
@@ -80,7 +80,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 form_id=form_id
             )
             operation.save()
-            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.ARCHIVED)
+            XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.ARCHIVED)
             CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=True)
 
     @staticmethod
@@ -93,7 +93,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 form_id=form_id
             )
             operation.save()
-            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.NORMAL)
+            XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.NORMAL)
             CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=False)
 
     @staticmethod

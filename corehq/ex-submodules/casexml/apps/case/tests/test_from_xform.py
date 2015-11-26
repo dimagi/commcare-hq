@@ -126,5 +126,5 @@ class CaseFromXFormTest(TestCase):
         for index, xform in enumerate(xforms):
             transaction = case.transactions[index]
             self.assertEqual(CaseTransaction.TYPE_FORM, transaction.type)
-            self.assertEqual(xform.form_id, transaction.form_uuid)
+            self.assertEqual(xform.form_id, transaction.form_id)
             self.assertFalse(transaction.revoked)

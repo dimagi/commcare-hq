@@ -106,9 +106,9 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
 
-    hash_property = 'form_uuid'
+    hash_property = 'form_id'
 
-    form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
@@ -142,17 +142,9 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
 
-    @property
-    def form_id(self):
-        return self.form_uuid
-
-    @form_id.setter
-    def form_id(self, _id):
-        self.form_uuid = _id
-
     @classmethod
     def get_obj_id(cls, obj):
-        return obj.form_uuid
+        return obj.form_id
 
     @classmethod
     def get_obj_by_id(cls, form_id):
@@ -281,7 +273,7 @@ class AbstractAttachment(models.Model):
 
 class XFormAttachmentSQL(AbstractAttachment):
     form = models.ForeignKey(
-        XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid',
+        XFormInstanceSQL, to_field='form_id',
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
@@ -293,7 +285,7 @@ class XFormOperationSQL(models.Model):
     user = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
-    form = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
+    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):

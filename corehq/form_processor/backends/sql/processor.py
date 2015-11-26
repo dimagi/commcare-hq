@@ -40,7 +40,7 @@ class FormProcessorSQL(object):
 
         return XFormInstanceSQL(
             # other properties can be set post-wrap
-            form_uuid=form_id,
+            form_id=form_id,
             xmlns=form_data.get('@xmlns'),
             received_on=datetime.datetime.utcnow(),
             user_id=extract_meta_user_id(form_data),
@@ -181,7 +181,7 @@ class FormProcessorSQL(object):
     def submission_error_form_instance(cls, domain, instance, message):
         xform = XFormInstanceSQL(
             domain=domain,
-            form_uuid=uuid.uuid4().hex,
+            form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
             state=XFormInstanceSQL.SUBMISSION_ERROR_LOG
