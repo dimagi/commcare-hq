@@ -137,6 +137,7 @@
             if (self._numRetries > 3) {
                 $scope.formLoadError = 'default';
                 $scope.isLoaded = true;
+                return;
             }
             self._numRetries ++;
             self._initializeForm();
