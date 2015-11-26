@@ -8,8 +8,9 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
 from corehq.apps.groups.dbaccessors import (
+    get_group_ids_by_domain,
+    group_by_domain,
     refresh_group_views,
-    stale_group_by_domain,
     stale_group_by_name,
 )
 from corehq.apps.locations.models import SQLLocation
@@ -164,7 +165,7 @@ class Group(UndoableDocument):
 
     @classmethod
     def by_domain(cls, domain):
-        return stale_group_by_domain(domain)
+        return group_by_domain(domain)
 
     @classmethod
     def choices_by_domain(cls, domain):
@@ -176,7 +177,7 @@ class Group(UndoableDocument):
 
     @classmethod
     def ids_by_domain(cls, domain):
-        return [r['id'] for r in stale_group_by_domain(domain, include_docs=False)]
+        return get_group_ids_by_domain(domain)
 
     @classmethod
     def by_name(cls, domain, name, one=True):
