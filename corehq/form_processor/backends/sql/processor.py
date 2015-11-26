@@ -94,7 +94,7 @@ class FormProcessorSQL(object):
                 logging.debug('Saving %s attachments for form: %s', len(unsaved_attachments), xform.form_id)
                 for unsaved_attachment in unsaved_attachments:
                     unsaved_attachment.form = xform
-                xform.attachments.bulk_create(unsaved_attachments)
+                xform.attachment_set.bulk_create(unsaved_attachments)
                 del xform.unsaved_attachments
 
     @classmethod

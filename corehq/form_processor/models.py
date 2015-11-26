@@ -64,7 +64,7 @@ class SaveStateMixin(object):
 class AttachmentMixin(SaveStateMixin):
     """Requires the model to be linked to the attachments model via the 'attachments' related name.
     """
-    ATTACHMENTS_RELATED_NAME = 'attachments'
+    ATTACHMENTS_RELATED_NAME = 'attachment_set'
 
     def get_attachment(self, attachment_name):
         attachment = self.get_attachment_meta(attachment_name)
