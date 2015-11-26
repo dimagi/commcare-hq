@@ -8,9 +8,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 class AbstractXFormInstance(object):
 
-    @property
-    def form_id(self):
-        raise NotImplementedError()
+    # @property
+    # def form_id(self):
+    #     raise NotImplementedError()
 
     @property
     def form_data(self):
@@ -98,9 +98,9 @@ class AbstractXFormInstance(object):
 
 class AbstractCommCareCase(object):
 
-    @property
-    def case_id(self):
-        raise NotImplementedError()
+    # @property
+    # def case_id(self):
+    #     raise NotImplementedError()
 
     @property
     def case_name(self):
