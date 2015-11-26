@@ -83,17 +83,17 @@ class FormProcessorSQL(object):
                     'Reassigning attachments and operations to deprecated form: %s -> %s',
                     xform.orig_id, xform.form_id
                 )
-                attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
-                attachments.update(xform_id=xform.form_id)
+                attachments = XFormAttachmentSQL.objects.filter(form_id=xform.orig_id)
+                attachments.update(form_id=xform.form_id)
 
-                operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
-                operations.update(xform_id=xform.form_id)
+                operations = XFormOperationSQL.objects.filter(form_id=xform.orig_id)
+                operations.update(form_id=xform.form_id)
 
             unsaved_attachments = getattr(xform, 'unsaved_attachments', None)
             if unsaved_attachments:
                 logging.debug('Saving %s attachments for form: %s', len(unsaved_attachments), xform.form_id)
                 for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.xform = xform
+                    unsaved_attachment.form = xform
                 xform.attachments.bulk_create(unsaved_attachments)
                 del xform.unsaved_attachments
 

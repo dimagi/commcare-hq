@@ -66,8 +66,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(form_ids):
         with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(xform_id__in=form_ids).delete()
-            XFormOperationSQL.objects.filter(xform_id__in=form_ids).delete()
+            XFormAttachmentSQL.objects.filter(form_id__in=form_ids).delete()
+            XFormOperationSQL.objects.filter(form_id__in=form_ids).delete()
             XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
 
     @staticmethod
@@ -77,7 +77,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 user=user_id,
                 operation=XFormOperationSQL.ARCHIVE,
                 date=datetime.utcnow(),
-                xform_id=form_id
+                form_id=form_id
             )
             operation.save()
             XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.ARCHIVED)
@@ -90,7 +90,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 user=user_id,
                 operation=XFormOperationSQL.UNARCHIVE,
                 date=datetime.utcnow(),
-                xform_id=form_id
+                form_id=form_id
             )
             operation.save()
             XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.NORMAL)
@@ -98,11 +98,11 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_history(form_id):
-        return list(XFormOperationSQL.objects.filter(xform_id=form_id).order_by('date'))
+        return list(XFormOperationSQL.objects.filter(form_id=form_id).order_by('date'))
 
     @staticmethod
     def get_attachment(form_id, attachment_name):
-        return XFormAttachmentSQL.objects.filter(xform_id=form_id, name=attachment_name).first()
+        return XFormAttachmentSQL.objects.filter(form_id=form_id, name=attachment_name).first()
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):

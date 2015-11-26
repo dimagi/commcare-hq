@@ -280,7 +280,7 @@ class AbstractAttachment(models.Model):
 
 
 class XFormAttachmentSQL(AbstractAttachment):
-    xform = models.ForeignKey(
+    form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_uuid', db_column='form_uuid',
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
@@ -293,7 +293,7 @@ class XFormOperationSQL(models.Model):
     user = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
-    xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
+    form = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):
