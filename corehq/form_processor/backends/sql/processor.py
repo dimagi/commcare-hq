@@ -25,7 +25,7 @@ class FormProcessorSQL(object):
         for attachment in attachments:
             xform_attachment = XFormAttachmentSQL(
                 name=attachment.name,
-                attachment_id=unicode(uuid.uuid4()),
+                attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
                 md5=attachment.md5,
             )
