@@ -94,7 +94,7 @@ SMS_CHAT_HISTORY_CHOICES = (
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(compose_message, args=[domain]))
+    return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):
@@ -354,7 +354,7 @@ def send_to_recipients(request, domain):
 
     return HttpResponseRedirect(
         request.META.get('HTTP_REFERER') or
-        reverse(compose_message, args=[domain])
+        reverse(ComposeMessageView.urlname, args=[domain])
     )
 
 @domain_admin_required
