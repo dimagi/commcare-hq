@@ -247,7 +247,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
 
 class AbstractAttachment(models.Model):
-    attachment_id = models.CharField(max_length=255, unique=True, db_index=True)
+    attachment_id = UUIDField(unique=True, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
@@ -255,8 +255,8 @@ class AbstractAttachment(models.Model):
     @property
     def filepath(self):
         if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', self.attachment_id)
-        return os.path.join('/tmp/', self.attachment_id)
+            return os.path.join('/home/travis/', str(self.attachment_id))
+        return os.path.join('/tmp/', str(self.attachment_id))
 
     def write_content(self, content):
         with open(self.filepath, 'w+') as f:
