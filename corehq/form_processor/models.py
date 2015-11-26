@@ -4,17 +4,15 @@ import os
 import collections
 
 from datetime import datetime
-from django.db.models import Prefetch
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from lxml import etree
 from json_field.fields import JSONField
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 from uuidfield import UUIDField
 
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.track_related import TrackRelatedChanges
 
 from dimagi.utils.couch import RedisLockableMixIn
@@ -26,7 +24,7 @@ from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
-from .exceptions import XFormNotFound, AttachmentNotFound
+from .exceptions import AttachmentNotFound
 
 
 class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
@@ -221,6 +219,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         """
         Evaluates an xpath expression like: path/to/node and returns the value
         of that element, or None if there is no value.
+        :param path: xpath like expression
         """
         return safe_index({'form': self.form_data}, path.split("/"))
 
@@ -509,7 +508,7 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name="index_set", related_query_name="index"
     )
-    domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
+    domain = models.CharField(max_length=255)
     identifier = models.CharField(max_length=255, null=False)
     referenced_id = models.CharField(max_length=255, null=False)
     referenced_type = models.CharField(max_length=255, null=False)
