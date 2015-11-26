@@ -74,7 +74,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def archive_form(form_id, user_id=None):
         with transaction.atomic():
             operation = XFormOperationSQL(
-                user=user_id,
+                user_id=user_id,
                 operation=XFormOperationSQL.ARCHIVE,
                 date=datetime.utcnow(),
                 form_id=form_id
@@ -87,7 +87,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def unarchive_form(form_id, user_id=None):
         with transaction.atomic():
             operation = XFormOperationSQL(
-                user=user_id,
+                user_id=user_id,
                 operation=XFormOperationSQL.UNARCHIVE,
                 date=datetime.utcnow(),
                 form_id=form_id

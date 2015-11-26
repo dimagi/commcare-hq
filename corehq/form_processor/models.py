@@ -230,19 +230,19 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').md5
 
-    def archive(self, user=None):
+    def archive(self, user_id=None):
         if self.is_archived:
             return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.archive_form(self.form_id, user_id=user)
+        FormAccessorSQL.archive_form(self.form_id, user_id=user_id)
         xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user=None):
+    def unarchive(self, user_id=None):
         if not self.is_archived:
             return
 
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.unarchive_form(self.form_id, user_id=user)
+        FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
 
 
@@ -283,9 +283,13 @@ class XFormOperationSQL(models.Model):
     UNARCHIVE = 'unarchive'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
-    user = models.CharField(max_length=255, null=True)
+    user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def user(self):
+        return self.user_id
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):
