@@ -559,7 +559,7 @@ class CaseTransaction(models.Model):
         TYPE_FORM,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name="transaction_set", related_query_name="transaction"
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
