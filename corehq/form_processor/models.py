@@ -369,7 +369,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     deleted = models.BooleanField(default=False, null=False)
 
     external_id = models.CharField(max_length=255)
-    location_id = UUIDField(null=True, unique=False)
+    location_id = models.CharField(max_length=255, null=True)
 
     case_json = JSONField(lazy=True, default=dict)
 
