@@ -129,7 +129,7 @@ describe('DownloadProgressController', function() {
                     assert.isFalse(DnldExpData.currentScope.isDownloadReady);
                     assert.isNull(DnldExpData.currentScope.dropboxUrl);
                     assert.isNull(DnldExpData.currentScope.downloadUrl);
-                })
+                });
             });
         });
 
