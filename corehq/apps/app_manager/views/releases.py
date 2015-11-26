@@ -26,7 +26,6 @@ from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_bootstrap3
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import json_response
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (

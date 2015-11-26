@@ -122,7 +122,7 @@ class LocationGroupTest(LocationTestBase):
         user = CommCareUser.wrap(self.user.to_json())
         owner_ids = user.get_owner_ids()
         self.assertEqual(2, len(owner_ids))
-        self.assertEqual(self.loc._id, owner_ids[1])
+        self.assertEqual(self.loc.location_id, owner_ids[1])
 
         # set it back to false in case other tests needed that
         loc_type.shares_cases = False

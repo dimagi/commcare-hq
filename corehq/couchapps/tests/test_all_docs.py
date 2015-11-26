@@ -31,6 +31,7 @@ class AllDocsTest(TestCase):
              get_all_doc_ids_for_domain_grouped_by_db(self.domain)},
             {get_db(None).uri: ['main_db_doc'],
              get_db('users').uri: ['users_db_doc'],
+             get_db('meta').uri: [],
              get_db('fixtures').uri: []}
         )
 

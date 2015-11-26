@@ -13,7 +13,7 @@ from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, In
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain, get_all_report_configs
+    get_report_configs_for_domain
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
@@ -367,10 +367,6 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @classmethod
     def by_domain(cls, domain):
         return get_report_configs_for_domain(domain)
-
-    @classmethod
-    def all(cls):
-        return get_all_report_configs()
 
 
 STATIC_PREFIX = 'static-'

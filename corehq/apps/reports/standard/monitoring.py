@@ -12,7 +12,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter, MISSING_APP_ID
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
@@ -20,14 +20,10 @@ from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.elastic import es_query
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
-from couchforms.analytics import get_number_of_submissions
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, json_format_date

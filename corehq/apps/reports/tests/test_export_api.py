@@ -1,6 +1,7 @@
 from django.test.client import Client
 from couchforms.util import spoof_submission
 import uuid
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.domain.shortcuts import create_domain
 from django.core.urlresolvers import reverse
@@ -35,11 +36,11 @@ def get_form():
     return FORM_TEMPLATE % {"uid": uuid.uuid4().hex}
 
 
-def submit_form(f=None, domain=DOMAIN):
+def _submit_form(f=None, domain=DOMAIN):
     if f is None:
         f = get_form()
     url = get_submit_url(domain)
-    return spoof_submission(url, f, hqsubmission=False)
+    return spoof_submission(url, f)
 
 
 def get_export_response(client, previous="", include_errors=False, domain=DOMAIN):
@@ -60,8 +61,8 @@ def _content(streaming_response):
     return ''.join(streaming_response.streaming_content)
 
 
-class ExportTest(BaseAccountingTest):
-    
+class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
+
     def _clear_docs(self):
         config = ExportConfiguration(XFormInstance.get_db(),
                                      [DOMAIN, "http://www.commcarehq.org/export/test"])
@@ -71,26 +72,17 @@ class ExportTest(BaseAccountingTest):
     def setUp(self):
         self._clear_docs()
         self.domain = create_domain(DOMAIN)
-        self.account = BillingAccount.get_or_create_account_by_domain(DOMAIN, created_by="automated-test")[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(DOMAIN, edition=SoftwarePlanEdition.ADVANCED)
-        self.subscription = Subscription.new_domain_subscription(self.account, DOMAIN, plan)
-        self.subscription.is_active = True
-        self.subscription.save()
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.ADVANCED)
+
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(DOMAIN, is_admin=True)
         self.couch_user.save()
-        
+
     def tearDown(self):
         self.couch_user.delete()
         self._clear_docs()
 
-        SubscriptionAdjustment.objects.all().delete()
-
-        if self.subscription:
-            self.subscription.delete()
-
-        if self.account:
-            self.account.delete()
+        self.teardown_subscription()
 
         super(ExportTest, self).tearDown()
 
@@ -98,7 +90,7 @@ class ExportTest(BaseAccountingTest):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
 
-        submit_form()
+        _submit_form()
         time.sleep(1)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
@@ -119,7 +111,7 @@ class ExportTest(BaseAccountingTest):
         self.assertEqual(302, resp.status_code)
         
         # data = data
-        submit_form()
+        _submit_form()
 
         # now that this is time based we have to sleep first. this is annoying
         time.sleep(1)
@@ -133,7 +125,7 @@ class ExportTest(BaseAccountingTest):
         resp = get_export_response(c, prev_token)
         self.assertEqual(302, resp.status_code)
 
-        submit_form()
+        _submit_form()
         time.sleep(1)
         resp = get_export_response(c, prev_token)
         self.assertEqual(200, resp.status_code)
@@ -149,13 +141,13 @@ class ExportTest(BaseAccountingTest):
         
         # submit, assert something
         f = get_form()
-        submit_form(f)
+        _submit_form(f)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         initial_content = _content(resp)
         
         # resubmit, assert same since it's a dupe
-        submit_form(f)
+        _submit_form(f)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         # hack: check for the number of rows to ensure the new one 
@@ -181,7 +173,7 @@ class ExportTest(BaseAccountingTest):
         c = Client()
         c.login(**{'username': 'test2', 'password': 'testpass'})
         f = get_form()
-        submit_form(f, community_domain.name)
+        _submit_form(f, community_domain.name)
         resp = get_export_response(c, domain=community_domain.name)
         self.assertEqual(401, resp.status_code)
 

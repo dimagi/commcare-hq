@@ -139,7 +139,10 @@ var ReportModule = (function () {
                     'custom_data_property',
                     'date_range',
                     'filter_type',
-                    'select_value'
+                    'select_value',
+                    'operator',
+                    'date_number',
+                    'date_number2'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
@@ -170,14 +173,17 @@ var ReportModule = (function () {
                     selectedFilterValues[filter.slug].doc_type = filter.selectedValue.doc_type();
                     // Depending on doc_type, pull the correct observables' values
                     var docTypeToField = {
-                        AutoFilter: 'filter_type',
-                        CustomDataAutoFilter: 'custom_data_property',
-                        StaticChoiceFilter: 'select_value',
-                        StaticDatespanFilter: 'date_range'
+                        AutoFilter: ['filter_type'],
+                        CustomDataAutoFilter: ['custom_data_property'],
+                        StaticChoiceFilter: ['select_value'],
+                        StaticDatespanFilter: ['date_range'],
+                        CustomDatespanFilter: ['operator', 'date_number', 'date_number2']
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
-                            selectedFilterValues[filter.slug][field] = filter.selectedValue[field]();
+                            _.each(field, function(value) {
+                                selectedFilterValues[filter.slug][value] = filter.selectedValue[value]();
+                            });
                         }
                     });
                     if(filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
@@ -201,35 +207,51 @@ var ReportModule = (function () {
         };
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
+        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
         this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
+        this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }
 
-    function ReportConfig(report_id, display, description, uuid, availableReportIds,
+    function ReportConfig(report_id, display,
+                          localizedDescription, xpathDescription, useXpathDescription,
+                          uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
                           language, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
-        this.availableReportIds = availableReportIds;
-        this.display = ko.observable(this.fullDisplay[this.lang]);
-        this.description = ko.observable(description);
-        this.description.subscribe(changeSaveButton);
+        this.fullLocalizedDescription = localizedDescription || {};
         this.uuid = uuid;
+        this.availableReportIds = availableReportIds;
+
         this.reportId = ko.observable(report_id);
+        this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
+        this.xpathDescription = ko.observable(xpathDescription);
+        this.useXpathDescription = ko.observable(useXpathDescription);
+
+        this.reportId.subscribe(changeSaveButton);
+        this.display.subscribe(changeSaveButton);
+        this.localizedDescription.subscribe(changeSaveButton);
+        this.xpathDescription.subscribe(changeSaveButton);
+        this.useXpathDescription.subscribe(changeSaveButton);
+
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
+            self.fullLocalizedDescription[self.lang] = self.localizedDescription();
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
-                description: self.description(),
+                localized_description: self.fullLocalizedDescription,
+                xpath_description: self.xpathDescription(),
+                use_xpath_description: self.useXpathDescription(),
                 uuid: self.uuid
             };
         };
@@ -242,7 +264,11 @@ var ReportModule = (function () {
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
+        self.moduleFilter = options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
+        self.currentModuleFilter = ko.observable(options.moduleFilter);
+        self.menuImage = options.menuImage;
+        self.menuAudio = options.menuAudio;
         self.reportTitles = {};
         self.reportDescriptions = {};
         self.reportCharts = {};
@@ -266,6 +292,15 @@ var ReportModule = (function () {
             return self.reportDescriptions[reportId];
         };
 
+        self.multimedia = function () {
+            var multimedia = {};
+            multimedia.mediaImage = {};
+            multimedia.mediaImage[self.lang] = self.menuImage.ref().path;
+            multimedia.mediaAudio = {};
+            multimedia.mediaAudio[self.lang] = self.menuAudio.ref().path;
+            return multimedia;
+        };
+
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unsaved changes in your report list module",
             save: function () {
@@ -277,30 +312,36 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
+                self.moduleFilter = self.currentModuleFilter();
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
                     dataType: 'json',
                     data: {
                         name: JSON.stringify(self.moduleName),
-                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); }))
+                        module_filter: self.moduleFilter,
+                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
+                        multimedia: JSON.stringify(self.multimedia())
                     }
                 });
             }
         });
 
-        var changeSaveButton = function () {
+        self.changeSaveButton = function () {
             self.saveButton.fire('change');
         };
 
-        self.currentModuleName.subscribe(changeSaveButton);
+        self.currentModuleName.subscribe(self.changeSaveButton);
+        self.currentModuleFilter.subscribe(self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};
             var report = new ReportConfig(
                 options.report_id,
                 options.header,
-                options.description,
+                options.localized_description,
+                options.xpath_description,
+                options.use_xpath_description,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
@@ -308,15 +349,13 @@ var ReportModule = (function () {
                 options.filters,
                 self.reportFilters,
                 self.lang,
-                changeSaveButton
+                self.changeSaveButton
             );
-            report.display.subscribe(changeSaveButton);
-            report.reportId.subscribe(changeSaveButton);
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));
             });
             report.reportId.subscribe(function (reportId) {
-                report.description(self.defaultReportDescription(reportId));
+                report.localizedDescription(self.defaultReportDescription(reportId));
             });
 
             return report;
@@ -326,7 +365,7 @@ var ReportModule = (function () {
         };
         this.removeReport = function (report) {
             self.reports.remove(report);
-            changeSaveButton();
+            self.changeSaveButton();
         };
 
         // add existing reports to UI

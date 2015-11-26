@@ -11,7 +11,7 @@ import uuid
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -26,7 +26,9 @@ from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
+from crispy_forms import bootstrap as twbscrispy
 
 from django.core.urlresolvers import reverse
 
@@ -92,19 +94,55 @@ class ProjectSettingsForm(forms.Form):
     global_timezone = forms.CharField(
         initial="UTC",
         label="Project Timezone",
-        widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
+        widget=forms.HiddenInput
+    )
     override_global_tz = forms.BooleanField(
         initial=False,
         required=False,
         label="",
         widget=BootstrapCheckboxInput(
-            attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
-            inline_label=ugettext_noop("Override project's timezone setting just for me.")))
+            inline_label=ugettext_noop("Override project's timezone setting just for me.")
+        )
+    )
     user_timezone = TimeZoneChoiceField(
         label="My Timezone",
-        initial=global_timezone.initial,
-        widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
-                                   'data-bind': 'event: {change: updateForm}'}))
+        initial=global_timezone.initial
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'my-project-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.all().wrap_together(crispy.Fieldset, 'Override Project Timezone')
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Override Project Timezone',
+                crispy.Field('global_timezone', css_class='input-xlarge'),
+                twbscrispy.PrependedText(
+                    'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'user_timezone',
+                        css_class='input-xlarge',
+                        data_bind='event: {change: updateForm}'
+                    ),
+                    data_bind='visible: override_tz'
+                )
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update My Settings"),
+                    type="submit",
+                    css_id="update-proj-settings",
+                    css_class='btn-primary disabled',
+                    data_bind="hqbSubmitReady: form_is_ready"
+                )
+            )
+        )
 
     def clean_user_timezone(self):
         data = self.cleaned_data['user_timezone']
@@ -143,14 +181,18 @@ class SnapshotApplicationForm(forms.Form):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
-            'publish',
-            'name',
-            'description',
-            'deployment_date',
-            'phone_model',
-            'user_type',
-            'attribution_notes',
+            twbscrispy.PrependedText('publish', ''),
+            crispy.Div(
+                'name',
+                'description',
+                'deployment_date',
+                'phone_model',
+                'user_type',
+                'attribution_notes'
+            )
         )
 
 
@@ -164,7 +206,7 @@ class SnapshotFixtureForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            'publish',
+            twbscrispy.PrependedText('publish', ''),
             'description',
         )
 
@@ -207,6 +249,8 @@ class SnapshotSettingsForm(forms.Form):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -232,19 +276,20 @@ class SnapshotSettingsForm(forms.Form):
             ),
             crispy.Fieldset(
                 'Content',
-                'share_multimedia',
-                'share_reminders',
+                twbscrispy.PrependedText('share_multimedia', ''),
+                twbscrispy.PrependedText('share_reminders', '')
             ),
             crispy.Fieldset(
                 'Licensing',
                 'license',
-                'cda_confirmed',
+                twbscrispy.PrependedText('cda_confirmed', ''),
             ),
         )
 
         if self.is_superuser:
-            self.helper.layout.append(crispy.Fieldset('Starter App', 'is_starter_app',),)
-
+            self.helper.layout.append(
+                crispy.Fieldset('Starter App', twbscrispy.PrependedText('is_starter_app', ''))
+            )
 
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
@@ -478,22 +523,39 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        domain = kwargs.pop('domain', None)
+        self.domain = kwargs.pop('domain', None)
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[3] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[4] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Basic Info"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
         if not self.can_use_custom_logo:
             del self.fields['logo']
             del self.fields['delete_logo']
 
-        if domain:
-            if not CALLCENTER.enabled(domain):
-                self.fields['call_center_enabled'].widget = forms.HiddenInput()
-                self.fields['call_center_type'].widget = forms.HiddenInput()
-                self.fields['call_center_case_owner'].widget = forms.HiddenInput()
-                self.fields['call_center_case_type'].widget = forms.HiddenInput()
+        if self.domain:
+            if not CALLCENTER.enabled(self.domain):
+                del self.fields['call_center_enabled']
+                del self.fields['call_center_type']
+                del self.fields['call_center_case_owner']
+                del self.fields['call_center_case_type']
             else:
-                groups = Group.get_case_sharing_groups(domain)
-                users = CommCareUser.by_domain(domain)
+                groups = Group.get_case_sharing_groups(self.domain)
+                users = CommCareUser.by_domain(self.domain)
 
                 call_center_user_choices = [
                     (user._id, user.raw_username + ' [user]') for user in users
@@ -502,7 +564,7 @@ class DomainGlobalSettingsForm(forms.Form):
                     (group._id, group.name + ' [group]') for group in groups
                 ]
                 call_center_location_choices = []
-                if CALL_CENTER_LOCATION_OWNERS.enabled(domain):
+                if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
                     call_center_location_choices = [
                         (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
                         (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
@@ -616,7 +678,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
         if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
-            self.fields['cloudcare_releases'].widget = forms.HiddenInput()
+            del self.fields['cloudcare_releases']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
@@ -664,6 +726,34 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
     )
+    hipaa_compliant = BooleanField(
+        label=ugettext_lazy("HIPAA compliant"),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        user_name = kwargs.pop('user_name')
+        super(PrivacySecurityForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
+        self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
+        self.helper[2] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper[3] = twbscrispy.PrependedText('hipaa_compliant', '')
+        if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
+            self.helper.layout.pop(3)
+        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Privacy Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
 
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
@@ -677,6 +767,8 @@ class PrivacySecurityForm(forms.Form):
                     app.secure_submissions = secure_submissions
                     apps_to_save.append(app)
         domain.secure_submissions = secure_submissions
+        domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+
         domain.save()
 
         if apps_to_save:

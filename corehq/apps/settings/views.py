@@ -1,7 +1,9 @@
 import re
 from django.views.decorators.debug import sensitive_post_parameters
 from corehq.apps.hqwebapp.models import MySettingsTab
+from corehq.apps.settings.forms import HQPasswordChangeForm
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.users.forms import AddPhoneNumberForm
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
@@ -93,7 +95,14 @@ class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
     api_key = None
-    template_name = 'settings/edit_my_account.b2.html'
+    template_name = 'settings/edit_my_account.b3.html'
+
+    @use_bootstrap3
+    @use_select2
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
     def get_or_create_api_key(self):
         if not self.api_key:
@@ -131,6 +140,7 @@ class MyAccountSettingsView(BaseMyAccountView):
         user = self.request.couch_user
         return {
             'form': self.settings_form,
+            'add_phone_number_form': AddPhoneNumberForm(),
             'api_key': self.get_or_create_api_key(),
             'phonenumbers': user.phone_numbers_extended(user),
             'user_type': 'mobile' if user.is_commcare_user() else 'web',
@@ -200,6 +210,12 @@ class MyProjectsList(BaseMyAccountView):
     page_title = ugettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
 
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
     @property
     def all_domains(self):
         all_domains = self.request.couch_user.get_domains()
@@ -240,12 +256,18 @@ class ChangeMyPasswordView(BaseMyAccountView):
     template_name = 'settings/change_my_password.html'
     page_title = ugettext_lazy("Change My Password")
 
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def password_change_form(self):
         if self.request.method == 'POST':
-            return PasswordChangeForm(user=self.request.user, data=self.request.POST)
-        return PasswordChangeForm(user=self.request.user)
+            return HQPasswordChangeForm(user=self.request.user, data=self.request.POST)
+        return HQPasswordChangeForm(user=self.request.user)
 
     @property
     def page_context(self):

@@ -30,6 +30,16 @@ def require_permission_raw(permission_check, login_decorator=login_and_domain_re
     return decorator
 
 
+def get_permission_name(permission):
+    try:
+        return permission.name
+    except AttributeError:
+        try:
+            return permission.__name__
+        except AttributeError:
+            return None
+
+
 def require_permission(permission, data=None, login_decorator=login_and_domain_required):
     try:
         permission = permission.name

@@ -1,7 +1,7 @@
 import uuid
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.apps.groups.models import Group
@@ -9,7 +9,7 @@ from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.hqcase.utils import assign_case
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class CaseAssignmentTest(TestCase):
@@ -136,13 +136,13 @@ class CaseAssignmentTest(TestCase):
     def _check_state(self, new_owner_id, expected_changed, update=None):
         expected_ids = set(c._id for c in expected_changed)
         for case in expected_changed:
-            expected = FormProcessorInterface().case_model.get(case._id)
+            expected = CaseAccessors(self.domain).get_case(case._id)
             self.assertEqual(new_owner_id, expected.owner_id)
             if update:
                 for prop, value in update.items():
                     self.assertEqual(getattr(expected, prop), value)
         for case in (c for c in self.all if c._id not in expected_ids):
-            remaining = FormProcessorInterface().case_model.get(case._id)
+            remaining = CaseAccessors(self.domain).get_case(case._id)
             self.assertEqual(self.original_owner._id, remaining.owner_id)
 
     def _new_case(self, index=None):
@@ -155,5 +155,5 @@ class CaseAssignmentTest(TestCase):
             owner_id=self.original_owner._id,
             index=index,
         ).as_xml()
-        _, [case] = FormProcessorInterface().post_case_blocks([case_block], {'domain': self.domain})
+        _, [case] = post_case_blocks([case_block], {'domain': self.domain})
         return case
