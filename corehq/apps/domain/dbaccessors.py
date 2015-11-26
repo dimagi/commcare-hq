@@ -33,6 +33,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
         'CallCenterIndicatorConfig',
         'CommCareCaseGroup',
         'CommtrackConfig',
+        'Group',
         'Invitation',
         'PerformanceConfiguration',
         'ReportConfiguration',

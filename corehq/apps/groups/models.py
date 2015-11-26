@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from itertools import imap
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from dimagi.ext.couchdbkit import *
 import re
 from dimagi.utils.couch.database import iter_docs
@@ -8,9 +9,8 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
 from corehq.apps.groups.dbaccessors import (
-    refresh_group_views,
-    stale_group_by_domain,
-    stale_group_by_name,
+    group_by_domain,
+    group_by_name,
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
@@ -49,7 +49,6 @@ class Group(UndoableDocument):
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
         super(Group, self).save(*args, **kwargs)
-        refresh_group_views()
 
     @classmethod
     def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
@@ -57,18 +56,15 @@ class Group(UndoableDocument):
         for doc in docs:
             doc['last_modified'] = utcnow
         super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
-        refresh_group_views()
 
     bulk_save = save_docs
 
     def delete(self):
         super(Group, self).delete()
-        refresh_group_views()
 
     @classmethod
     def delete_docs(cls, docs, **params):
         super(Group, cls).delete_docs(docs, **params)
-        refresh_group_views()
 
     bulk_delete = delete_docs
 
@@ -164,7 +160,7 @@ class Group(UndoableDocument):
 
     @classmethod
     def by_domain(cls, domain):
-        return stale_group_by_domain(domain)
+        return group_by_domain(domain)
 
     @classmethod
     def choices_by_domain(cls, domain):
@@ -176,11 +172,11 @@ class Group(UndoableDocument):
 
     @classmethod
     def ids_by_domain(cls, domain):
-        return [r['id'] for r in stale_group_by_domain(domain, include_docs=False)]
+        return get_doc_ids_in_domain_by_class(domain)
 
     @classmethod
     def by_name(cls, domain, name, one=True):
-        result = stale_group_by_name(domain, name)
+        result = group_by_name(domain, name)
         if one and result:
             return result[0]
         else:
@@ -216,14 +212,10 @@ class Group(UndoableDocument):
 
     @classmethod
     def get_reporting_groups(cls, domain):
-        key = ['^Reporting', domain]
-        return cls.view(
-            'groups/by_name',
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=True,
-            # stale=settings.COUCH_STALE_QUERY,
-        ).all()
+        return filter(
+            lambda group: group.reporting,
+            group_by_domain(domain)
+        )
 
     def create_delete_record(self, *args, **kwargs):
         return DeleteGroupRecord(*args, **kwargs)
