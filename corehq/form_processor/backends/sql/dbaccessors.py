@@ -23,7 +23,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         try:
-            return XFormInstanceSQL.objects.get(form_uuid=form_id)
+            return XFormInstanceSQL.objects.get(form_id=form_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
@@ -31,16 +31,16 @@ class FormAccessorSQL(AbstractFormAccessor):
     def get_with_attachments(form_id):
         try:
             return XFormInstanceSQL.objects.prefetch_related(
-                Prefetch('attachments', to_attr='cached_attachments')
-            ).get(form_uuid=form_id)
+                Prefetch('attachment_set', to_attr='cached_attachments')
+            ).get(form_id=form_id)
         except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids):
         return XFormInstanceSQL.objects.prefetch_related(
-            Prefetch('attachments', to_attr='cached_attachments')
-        ).filter(form_uuid__in=form_ids)
+            Prefetch('attachment_set', to_attr='cached_attachments')
+        ).filter(form_id__in=form_ids)
 
     @staticmethod
     def get_forms_by_type(domain, type_, recent_first=False, limit=None):
@@ -58,7 +58,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
-        query = XFormInstanceSQL.objects.filter(form_uuid=form_id)
+        query = XFormInstanceSQL.objects.filter(form_id=form_id)
         if domain:
             query = query.filter(domain=domain)
         return query.exists()
@@ -66,9 +66,9 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(form_ids):
         with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(xform_id__in=form_ids).delete()
-            XFormOperationSQL.objects.filter(xform_id__in=form_ids).delete()
-            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
+            XFormAttachmentSQL.objects.filter(form_id__in=form_ids).delete()
+            XFormOperationSQL.objects.filter(form_id__in=form_ids).delete()
+            XFormInstanceSQL.objects.filter(form_id__in=form_ids).delete()
 
     @staticmethod
     def archive_form(form_id, user_id=None):
@@ -77,11 +77,11 @@ class FormAccessorSQL(AbstractFormAccessor):
                 user=user_id,
                 operation=XFormOperationSQL.ARCHIVE,
                 date=datetime.utcnow(),
-                xform_id=form_id
+                form_id=form_id
             )
             operation.save()
-            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.ARCHIVED)
-            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=True)
+            XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.ARCHIVED)
+            CaseTransaction.objects.filter(form_id=form_id).update(revoked=True)
 
     @staticmethod
     def unarchive_form(form_id, user_id=None):
@@ -90,19 +90,19 @@ class FormAccessorSQL(AbstractFormAccessor):
                 user=user_id,
                 operation=XFormOperationSQL.UNARCHIVE,
                 date=datetime.utcnow(),
-                xform_id=form_id
+                form_id=form_id
             )
             operation.save()
-            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.NORMAL)
-            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=False)
+            XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.NORMAL)
+            CaseTransaction.objects.filter(form_id=form_id).update(revoked=False)
 
     @staticmethod
     def get_form_history(form_id):
-        return list(XFormOperationSQL.objects.filter(xform_id=form_id).order_by('date'))
+        return list(XFormOperationSQL.objects.filter(form_id=form_id).order_by('date'))
 
     @staticmethod
     def get_attachment(form_id, attachment_name):
-        return XFormAttachmentSQL.objects.filter(xform_id=form_id, name=attachment_name).first()
+        return XFormAttachmentSQL.objects.filter(form_id=form_id, name=attachment_name).first()
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -110,13 +110,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case(case_id):
         try:
-            return CommCareCaseSQL.objects.get(case_uuid=case_id)
+            return CommCareCaseSQL.objects.get(case_id=case_id)
         except CommCareCaseSQL.DoesNotExist:
             raise CaseNotFound
 
     @staticmethod
     def get_cases(case_ids, ordered=False):
-        cases = list(CommCareCaseSQL.objects.filter(case_uuid__in=list(case_ids)).all())
+        cases = list(CommCareCaseSQL.objects.filter(case_id__in=list(case_ids)).all())
         if ordered:
             # SQL won't return the rows in any particular order so we need to order them ourselves
             index_map = {id_: index for index, id_ in enumerate(case_ids)}
@@ -135,7 +135,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Assumes that the case exists in the DB.
         """
         return not CommCareCaseSQL.objects.filter(
-            case_uuid=case_id,
+            case_id=case_id,
             server_modified_on=server_modified_on
         ).exists()
 
@@ -144,9 +144,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(CaseTransaction.objects.filter(
             case_id=case_id,
             revoked=False,
-            form_uuid__isnull=False,
+            form_id__isnull=False,
             type=CaseTransaction.TYPE_FORM
-        ).values_list('form_uuid', flat=True))
+        ).values_list('form_id', flat=True))
 
     @staticmethod
     def get_indices(case_id):
@@ -168,7 +168,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             CommCareCaseIndexSQL.objects.filter(case_id=case_id).delete()
             CaseAttachmentSQL.objects.filter(case_id=case_id).delete()
             CaseTransaction.objects.filter(case_id=case_id).delete()
-            CommCareCaseSQL.objects.filter(case_uuid=case_id).delete()
+            CommCareCaseSQL.objects.filter(case_id=case_id).delete()
 
     @staticmethod
     def get_attachment(case_id, attachment_name):
@@ -192,7 +192,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CommCareCaseSQL.objects.filter(
                 domain=domain,
                 type='supply-point',
-                location_uuid=location_id
+                location_id=location_id
             ).get()
         except CommCareCaseSQL.DoesNotExist:
             return None
@@ -202,4 +202,4 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         query = CommCareCaseSQL.objects.filter(domain=domain)
         if type:
             query.filter(type=type)
-        return list(query.values_list('case_uuid', flat=True))
+        return list(query.values_list('case_id', flat=True))
