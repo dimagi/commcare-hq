@@ -323,23 +323,23 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
             to_return[key] = self.get_data('form/' + key)
         return to_return
 
-    def archive(self, user=None):
+    def archive(self, user_id=None):
         if self.is_archived:
             return
         self.doc_type = "XFormArchived"
         self.history.append(XFormOperation(
-            user=user,
+            user=user_id,
             operation='archive',
         ))
         self.save()
         xform_archived.send(sender="couchforms", xform=self)
 
-    def unarchive(self, user=None):
+    def unarchive(self, user_id=None):
         if not self.is_archived:
             return
         self.doc_type = "XFormInstance"
         self.history.append(XFormOperation(
-            user=user,
+            user=user_id,
             operation='unarchive',
         ))
         XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
