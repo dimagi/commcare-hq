@@ -20,6 +20,7 @@
 {% endblock %}
 
 {% block stylesheets %}
+    <link rel="stylesheet" href="{% new_static 'nprogress/nprogress.css' %}">
     <link rel="stylesheet" href="{% new_static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
     <link type="text/css"
           rel="stylesheet"
@@ -32,6 +33,7 @@
 
 {% block js %} {{ block.super }}
     <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% new_static 'nprogress/nprogress.js' %}"></script>
 
     <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
@@ -63,8 +65,6 @@
 
     var translatedStrings = {
         saved : "{% trans "Form successfully saved" %}",
-        loading : "{% trans "Loading..." %}",
-        saving : "{% trans "Saving..." %}",
         errSaving : "{% trans "Error saving!" %}",
         errSavingDetail : "{% trans "Save failed. Details: " %}",
         unknownError: "{% trans "Unknown error: " %}",
@@ -226,10 +226,6 @@
             {% endif %}
         {% endif %}
         <section id="cloudcare-notifications"></section>
-        <div id="loading" class="well" style="display: none; position: fixed; right: 0; margin-right: 40px; top: 40px;">
-            <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
-            {% trans "Loading" %}...
-        </div>
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>

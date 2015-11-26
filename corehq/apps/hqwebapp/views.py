@@ -44,7 +44,6 @@ from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
 from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username

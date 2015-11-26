@@ -1,6 +1,6 @@
 import datetime
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.receiverwrapper.models import RepeatRecord
+from corehq.apps.repeaters.models import RepeatRecord
 from dimagi.utils.post import simple_post
 
 
