@@ -42,7 +42,7 @@
         $scope, djangoRMI, formFieldSlugs, formDefaults, djangoRMICallbackName,
         processApplicationDataFormSuccessCallback, formModalSelector
     ) {
-        var self = {};
+        var self = this;
         $scope._ = _;  // use underscore.js in templates
 
         $scope.showNoAppsError = false;
@@ -64,6 +64,8 @@
         self._forms_by_app_by_module = {};
         self._case_types_by_app = {};
 
+        self._select2Test = {};
+
         var _formElemGetter = function(fieldSlug) {
             return $('#id_' + fieldSlug);
         };
@@ -82,6 +84,11 @@
                             .find('.select2-choice').addClass('select2-default')
                             .find('.select2-chosen').text(self._placeholders[fieldSlug]);
                     }
+                    self._select2Test[fieldSlug] = {
+                        data: field_data,
+                        placeholder: self._placeholders[fieldSlug],
+                        defaults: formDefaults[fieldSlug]
+                    }
                 }
             };
         };
@@ -96,6 +103,11 @@
                         data: self._app_types || [],
                         triggerChange: true
                     }).select2('val', formDefaults.app_type).trigger('change');
+                }
+                self._select2Test.app_type = {
+                    data: self._app_types || [],
+                    placeholder: null,
+                    defaults: formDefaults.app_type
                 }
             },
             setApps: _formSelect2Setter(formFieldSlugs.application),
