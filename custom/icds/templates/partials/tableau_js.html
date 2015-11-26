@@ -20,16 +20,18 @@
         workbook = viz.getWorkbook();
         var sheets = workbook.getPublishedSheetsInfo();
         _.each(sheets, function(sheet) {
+            // TODO: This is a bit hacky, $0 was the only item in the sheet object though (maybe has to do with dashboards vs sheets?)
             addNavigationLink(sheet.$0.name, sheet.$0.isActive)
-        })
-        $(".btn").click(function (){
-            var btn = $(this);
-            workbook.activateSheetAsync(btn[0].textContent);
-            $(".btn.btn-success").removeClass('btn-success').addClass('btn-default');
-            btn.removeClass('btn-default').addClass('btn-success');
-            // TODO: This should handle resetting filters and setting view by to state as well
+        });
+        $(".nav-link").click(function (){
+            var link = $(this);
+            workbook.activateSheetAsync(link[0].textContent);
+            // TODO: Breadcrumbs to indicate current report?
+            // $(".btn.btn-success").removeClass('btn-success').addClass('btn-default');
+            // btn.removeClass('btn-default').addClass('btn-success');
 
-        })
+            // TODO: This should handle resetting filters and setting view by to state as well
+        });
 
         viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
     }
@@ -37,7 +39,7 @@
     function addNavigationLink(sheetName, isActive) {
         var btnColor = isActive  ? 'success' : 'default';
         // var html = "<div class='row'><button class='btn btn-block btn-" + btnColor + "'>" + sheetName + "</btn></div>";
-        var html = "<li><a href='#'>" + sheetName + "</a></li>";
+        var html = "<li><a href='#' class='nav-link'>" + sheetName + "</a></li>";
         $(".dropdown-menu").append(html);
     }
 
@@ -64,6 +66,7 @@
                 html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
 
                 // Find the sheet we are navigating to
+                // TODO: Handle the case where js_sheet isn't defined
                 if(pair.fieldName === 'js_sheet') {
                     console.log('sheetName = ', pair.formattedValue);
                     sheetName = pair.formattedValue;
