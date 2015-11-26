@@ -2,12 +2,12 @@ import uuid
 from django.contrib.auth.models import User
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 class OtaRestoreBugTest(TestCase):
@@ -34,7 +34,7 @@ class OtaRestoreBugTest(TestCase):
                 user_id=user._id,
                 owner_id=user._id,
             ).as_xml()
-            _, [case] = FormProcessorInterface().post_case_blocks([case_block], {'domain': domain})
+            _, [case] = post_case_blocks([case_block], {'domain': domain})
             return case
 
         good_case = _submit_case(good_domain)

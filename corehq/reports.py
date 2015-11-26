@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
-from corehq.apps.receiverwrapper import reports as receiverwrapper
+from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.userreports.models import (
     StaticReportConfiguration,
     ReportConfiguration,
@@ -32,10 +32,6 @@ from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
 from corehq.apps.importer.base import ImportCases
-from corehq.apps.reports.standard.export import (
-    FormExportInterface,
-    CaseExportInterface,
-)
 from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
@@ -221,20 +217,6 @@ FIXTURE_INTERFACES = (
     (_('Lookup Tables'), (
         FixtureEditInterface,
         FixtureViewInterface,
-    )),
-)
-
-EXPORT_DATA_INTERFACES = (
-    (_('Export Data'), (
-        FormExportInterface,
-        CaseExportInterface,
-    )),
-)
-
-DATA_DOWNLOAD_INTERFACES = (
-    ('', (
-        export.FormExportReport,
-        export.NewCaseExportReport,
     )),
 )
 

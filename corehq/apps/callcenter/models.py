@@ -3,6 +3,7 @@ from collections import namedtuple
 import itertools
 from django.conf import settings
 from corehq.apps.callcenter.const import DATE_RANGES
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.util.quickcache import skippable_quickcache
 from dimagi.ext.couchdbkit import *
 
@@ -52,13 +53,8 @@ class CallCenterIndicatorConfig(Document):
     @classmethod
     @skippable_quickcache(['domain'], lambda *_: settings.UNIT_TESTING)
     def for_domain(cls, domain):
-        res = cls.view(
-            "callcenter/config_by_domain",
-            key=domain,
-            reduce=False,
-            include_docs=True).all()
-
-        return res[0] if len(res) else cls.default_config(domain)
+        res = get_docs_in_domain_by_class(domain, cls)
+        return res[0] if res else cls.default_config(domain)
 
     @classmethod
     def default_config(cls, domain, include_legacy=True):

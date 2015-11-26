@@ -11,7 +11,7 @@ import uuid
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -47,14 +47,12 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     FeatureType,
-    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
     EntryPoint,
-    FundingSource
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
@@ -728,8 +726,13 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
     )
+    hipaa_compliant = BooleanField(
+        label=ugettext_lazy("HIPAA compliant"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
+        user_name = kwargs.pop('user_name')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
@@ -738,6 +741,9 @@ class PrivacySecurityForm(forms.Form):
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
         self.helper[2] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper[3] = twbscrispy.PrependedText('hipaa_compliant', '')
+        if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
+            self.helper.layout.pop(3)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -761,6 +767,8 @@ class PrivacySecurityForm(forms.Form):
                     app.secure_submissions = secure_submissions
                     apps_to_save.append(app)
         domain.secure_submissions = secure_submissions
+        domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+
         domain.save()
 
         if apps_to_save:
@@ -1173,7 +1181,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.SELF_SERVICE,
                         pro_bono_status=ProBonoStatus.NO,
-                        funding_source=FundingSource.CLIENT
                     )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
@@ -1269,7 +1276,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 adjustment_method=SubscriptionAdjustmentMethod.USER,
                 service_type=SubscriptionType.SELF_SERVICE,
                 pro_bono_status=ProBonoStatus.NO,
-                funding_source=FundingSource.CLIENT,
                 new_version=self.renewed_version,
             )
         except SubscriptionRenewalError as e:
@@ -1390,7 +1396,6 @@ class InternalSubscriptionManagementForm(forms.Form):
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
                 entry_point=EntryPoint.CONTRACTED,
-                pre_or_post_pay=PreOrPostPay.POSTPAY
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1501,7 +1506,6 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
         fields.update({
             'do_not_invoice': True,
-            'service_type': SubscriptionType.INTERNAL,
         })
         return fields
 

@@ -228,11 +228,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
-    @unit_testing_only
-    def hard_delete(self):
-        from casexml.apps.case.cleanup import safe_hard_delete
-        safe_hard_delete(self)
-
     def to_full_dict(self):
         """
         Include calculated properties that need to be available to the case
@@ -308,19 +303,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             return super(CommCareCase, cls).get(id, **kwargs)
         except ResourceNotFound:
             raise CaseNotFound
-
-    @classmethod
-    def get_case_xform_ids(cls, case_id):
-        return get_case_xform_ids(case_id)
-
-    @classmethod
-    def get_cases(cls, ids):
-        return [
-            CommCareCase.wrap(doc) for doc in iter_docs(
-                CommCareCase.get_db(),
-                ids
-            )
-        ]
 
     @classmethod
     def get_lite(cls, id, wrap=True):

@@ -10,8 +10,8 @@ import random
 import json
 import types
 import re
+import datetime
 from collections import defaultdict, namedtuple
-from datetime import datetime
 from functools import wraps
 from copy import deepcopy
 from urllib2 import urlopen
@@ -703,6 +703,30 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+class CommentMixin(DocumentSchema):
+    """
+    Documentation comment for app builders and maintainers
+    """
+    comment = StringProperty(default='')
+
+    @property
+    def short_comment(self):
+        """
+        Trim comment to 72 chars
+
+        >>> form = CommentMixin(
+        ...     comment=u"Twas bryllyg, and þe slythy toves "
+        ...             u"Did gyre and gymble in þe wabe: "
+        ...             u"All mimsy were þe borogoves; "
+        ...             u"And þe mome raths outgrabe."
+        ... )
+        >>> form.short_comment
+        u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'
+
+        """
+        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -994,7 +1018,7 @@ class FormBase(DocumentSchema):
         return bool(self.case_list_modules)
 
 
-class IndexedFormBase(FormBase, IndexedSchema):
+class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def get_app(self):
         return self._parent._parent
 
@@ -1773,7 +1797,7 @@ class CaseListForm(NavMenuItemMediaMixin):
         _rename_key(self.label, old_lang, new_lang)
 
 
-class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
+class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(unicode)
     unique_id = StringProperty()
     case_type = StringProperty()
@@ -2162,7 +2186,13 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return self.get_form(index or -1)
 
     def validate_for_build(self):
-        return super(Module, self).validate_for_build() + self.validate_details_for_build()
+        errors = super(Module, self).validate_for_build() + self.validate_details_for_build()
+        if not self.forms and not self.case_list.show:
+            errors.append({
+                'type': 'no forms or case list',
+                'module': self.get_module_info(),
+            })
+        return errors
 
     def requires(self):
         r = set(["none"])
@@ -3247,6 +3277,7 @@ class ReportAppFilter(DocumentSchema):
                 'StaticChoiceFilter': StaticChoiceFilter,
                 'StaticChoiceListFilter': StaticChoiceListFilter,
                 'StaticDatespanFilter': StaticDatespanFilter,
+                'CustomDatespanFilter': CustomDatespanFilter,
                 'MobileSelectFilter': MobileSelectFilter,
             }
             try:
@@ -3340,6 +3371,53 @@ class StaticDatespanFilter(ReportAppFilter):
         return DateSpan(startdate=start_date, enddate=end_date)
 
 
+class CustomDatespanFilter(ReportAppFilter):
+    operator = StringProperty(
+        choices=[
+            '=',
+            '<=',
+            '>=',
+            '>',
+            '<',
+            'between'
+        ],
+        required=True,
+    )
+    date_number = StringProperty(required=True)
+    date_number2 = StringProperty()
+
+    def get_filter_value(self, user):
+        today = datetime.date.today()
+        start_date = end_date = None
+        days = int(self.date_number)
+        if self.operator == 'between':
+            days2 = int(self.date_number2)
+            # allows user to have specified the two numbers in either order
+            if days > days2:
+                end = days2
+                start = days
+            else:
+                start = days2
+                end = days
+            start_date = today - datetime.timedelta(days=start)
+            end_date = today - datetime.timedelta(days=end)
+        elif self.operator == '=':
+            start_date = end_date = today - datetime.timedelta(days=days)
+        elif self.operator == '>=':
+            start_date = None
+            end_date = today - datetime.timedelta(days=days)
+        elif self.operator == '<=':
+            start_date = today - datetime.timedelta(days=days)
+            end_date = None
+        elif self.operator == '<':
+            start_date = today - datetime.timedelta(days=days - 1)
+            end_date = None
+        elif self.operator == '>':
+            start_date = None
+            end_date = today - datetime.timedelta(days=days + 1)
+        return DateSpan(startdate=start_date, enddate=end_date)
+
+
 class MobileSelectFilter(ReportAppFilter):
     def get_filter_value(self, user):
         return []
@@ -3351,7 +3429,9 @@ class ReportAppConfig(DocumentSchema):
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
-    description = StringProperty()
+    localized_description = DictProperty()
+    xpath_description = StringProperty()
+    use_xpath_description = BooleanProperty(default=False)
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -3365,13 +3445,15 @@ class ReportAppConfig(DocumentSchema):
 
     @classmethod
     def wrap(cls, doc):
-        # for backwards compatibility with apps that have localized descriptions
-        from corehq.apps.userreports.util import default_language, localize
-        if isinstance(doc.get('description'), dict):
-            if doc['description']:
-                doc['description'] = localize(doc['description'], default_language())
-            else:
-                doc['description'] = ''
+        # for backwards compatibility with apps that have localized or xpath descriptions
+        old_description = doc.get('description')
+        if old_description:
+            if isinstance(old_description, basestring) and not doc.get('xpath_description'):
+                doc['xpath_description'] = old_description
+            elif isinstance(old_description, dict) and not doc.get('localized_description'):
+                doc['localized_description'] = old_description
+        if not doc.get('xpath_description'):
+            doc['xpath_description'] = '""'
 
         return super(ReportAppConfig, cls).wrap(doc)
 
@@ -3421,16 +3503,19 @@ class ReportModule(ModuleBase):
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self):
-        yield suite_models.Menu(
+        menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
-            text=suite_models.Text(
-                locale=suite_models.Locale(id=id_strings.module_locale(self))
-            ),
-            commands=[
-                suite_models.Command(id=id_strings.report_command(config.uuid))
-                for config in self.report_configs
-            ]
+            menu_locale_id=id_strings.module_locale(self),
+            media_image=bool(len(self.all_image_paths())),
+            media_audio=bool(len(self.all_audio_paths())),
+            image_locale_id=id_strings.module_icon_locale(self),
+            audio_locale_id=id_strings.module_audio_locale(self),
         )
+        menu.commands.extend([
+            suite_models.Command(id=id_strings.report_command(config.uuid))
+            for config in self.report_configs
+        ])
+        yield menu
 
     def check_report_validity(self):
         """
@@ -3727,7 +3812,8 @@ def absolute_url_property(method):
 
 
 class ApplicationBase(VersionedDoc, SnapshotMixin,
-                      CommCareFeatureSupportMixin):
+                      CommCareFeatureSupportMixin,
+                      CommentMixin):
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
@@ -3789,6 +3875,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     amplifies_project = StringProperty(
         choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
         default=AMPLIFIES_NOT_SET
+    )
+    minimum_use_threshold = StringProperty(
+        default='15'
     )
 
     # exchange properties
@@ -4098,7 +4187,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 self.lazy_fetch_attachment('CommCare.jar'),
             )
         except (ResourceError, KeyError):
-            built_on = datetime.utcnow()
+            built_on = datetime.datetime.utcnow()
             all_files = self.create_all_files()
             jad_settings = {
                 'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
@@ -4262,7 +4351,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         record = DeleteApplicationRecord(
             domain=self.domain,
             app_id=self.id,
-            datetime=datetime.utcnow()
+            datetime=datetime.datetime.utcnow()
         )
         record.save()
         return record
@@ -4683,7 +4772,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if self.show_user_registration:
             yield self.get_user_registration() if bare else {
                 'type': 'user_registration',
-                'form': self.get_user_registration()
+                'form': self.get_user_registration(),
             }
         for module in self.get_modules():
             for form in module.get_forms():
@@ -4729,7 +4818,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             app_id=self.id,
             module_id=module.id,
             module=module,
-            datetime=datetime.utcnow()
+            datetime=datetime.datetime.utcnow()
         )
         del self.modules[module.id]
         record.save()
@@ -4752,7 +4841,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             module_unique_id=module_unique_id,
             form_id=form.id,
             form=form,
-            datetime=datetime.utcnow(),
+            datetime=datetime.datetime.utcnow(),
         )
         record.save()
 
@@ -5340,7 +5429,7 @@ class CareplanConfig(Document):
     def for_domain(cls, domain):
         res = cache_core.cached_view(
             cls.get_db(),
-            "domain/docs",
+            "by_domain_doc_type_date/view",
             key=[domain, 'CareplanConfig', None],
             reduce=False,
             include_docs=True,

@@ -32,6 +32,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
+from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -43,11 +44,11 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
-    InitiateAddSMSBackendForm, SubscribeSMSForm,
-    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
-    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
-    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL)
+                                   InitiateAddSMSBackendForm, SubscribeSMSForm,
+                                   SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
+                                   DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+                                   WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
+                                   WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
@@ -132,16 +133,30 @@ def messaging(request, domain, template="sms/default.html"):
     return render(request, template, context)
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def compose_message(request, domain, template="sms/compose.html"):
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['now'] = datetime.utcnow()
-    tz = get_timezone_for_user(request.couch_user, domain)
-    context['timezone'] = tz
-    context['timezone_now'] = datetime.now(tz=tz)
-    return render(request, template, context)
+class ComposeMessageView(BaseMessagingSectionView):
+    template_name = 'sms/compose.html'
+    urlname = 'sms_compose_message'
+    page_title = _('Compose SMS Message')
+
+    @property
+    def page_context(self):
+        page_context = super(ComposeMessageView, self).page_context
+        tz = get_timezone_for_user(self.request.couch_user, self.domain)
+        page_context.update({
+            'now': datetime.utcnow(),
+            'timezone': tz,
+            'timezone_now': datetime.now(tz=tz),
+            'form': ComposeMessageForm(domain=self.domain)
+        })
+        page_context.update(get_sms_autocomplete_context(self.request, self.domain))
+        return page_context
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_typeahead
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
 def post(request, domain):

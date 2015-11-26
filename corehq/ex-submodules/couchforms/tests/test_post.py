@@ -7,8 +7,7 @@ from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
 
 from corehq.util.test_utils import TestFileMixin
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
 
 
 class PostTest(TestCase, TestFileMixin):
@@ -48,7 +47,7 @@ class PostTest(TestCase, TestFileMixin):
         instance = self.get_xml(name)
         expected = self.get_json(self._get_expected_name(name, tz_differs))
 
-        xform = FormProcessorInterface().post_xform(instance)
+        xform = post_xform(instance)
         xform_json = json.loads(json.dumps(xform.to_json()))
 
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):

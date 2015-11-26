@@ -106,9 +106,9 @@ class ConfigurableReportDataSource(SqlData):
         return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
-    def get_data(self, slugs=None):
+    def get_data(self):
         try:
-            ret = super(ConfigurableReportDataSource, self).get_data(slugs)
+            ret = super(ConfigurableReportDataSource, self).get_data()
             for report_column in self.column_configs:
                 report_column.format_data(ret)
         except (

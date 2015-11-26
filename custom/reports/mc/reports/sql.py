@@ -579,7 +579,7 @@ class WeeklyForms(SqlData):
             DatabaseColumn(_('form/stock/stock_gloves'), SimpleColumn('stock_gloves'))
         ]
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         data = super(WeeklyForms, self).get_data()
         weekly = {}
         for row in sorted(data, key=lambda x: x['date']):

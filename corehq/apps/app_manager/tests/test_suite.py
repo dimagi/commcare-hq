@@ -24,6 +24,7 @@ from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtra
 from corehq.apps.app_manager.xpath import (
     session_var,
 )
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -614,7 +615,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             report_id=report._id,
             header={'en': 'CommBugz'},
             uuid='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i',
-            description='report description',
+            xpath_description='"report description"',
+            use_xpath_description=True
         )
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
@@ -624,13 +626,30 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             app.create_suite(),
             "./menu",
         )
+
+        app.multimedia_map = {
+            "jr://file/commcare/image/module0_en.png": HQMediaMapItem(
+                multimedia_id='bb4472b4b3c702f81c0b208357eb22f8',
+                media_type='CommCareImage',
+                unique_id='fe06454697634053cdb75fd9705ac7e6',
+            ),
+        }
+        report_module.media_image = {
+            'en': 'jr://file/commcare/image/module0_en.png',
+        }
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_menu_multimedia'),
+            app.create_suite(),
+            "./menu",
+        )
+
         self.assertXmlPartialEqual(
             self.get_xml('reports_module_select_detail'),
             app.create_suite(),
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select']",
         )
         self.assertXmlPartialEqual(
-            self.get_xml('reports_module_summary_detail'),
+            self.get_xml('reports_module_summary_detail_use_xpath_description'),
             app.create_suite(),
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
@@ -647,4 +666,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertIn(
             'reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i=CommBugz',
             app.create_app_strings('default'),
+        )
+
+        report_app_config.use_xpath_description = False
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_summary_detail_use_localized_description'),
+            app.create_suite(),
+            "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )

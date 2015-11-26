@@ -82,6 +82,12 @@
         $scope.filterUsers = function () {
             self.getUsers();
         };
+
+        $scope.updateOnEnter = function (keyEvent) {
+            if (keyEvent.keyCode === 13) {
+                self.getUsers();
+            }
+        };
     };
     users.controller(usersControllers);
 

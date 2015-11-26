@@ -1,7 +1,9 @@
 import redis
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseSQL
 
 
@@ -28,29 +30,26 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
                 try:
                     case, lock = CommCareCaseSQL.get_locked_obj(_id=case_id)
                 except redis.RedisError:
-                    case = CommCareCaseSQL.get(case_id)
+                    case = CaseAccessorSQL.get_case(case_id)
                 else:
                     self.locks.append(lock)
             else:
-                case = CommCareCaseSQL.get(case_id)
-        except CommCareCaseSQL.DoesNotExist:
+                case = CaseAccessorSQL.get_case(case_id)
+        except CaseNotFound:
             return None
 
         return case
 
     def _iter_cases(self, case_ids):
-        return CommCareCaseSQL.objects.filter(case_uuid__in=case_ids).all()
+        return CaseAccessorSQL.get_cases(case_ids)
 
     def get_cases_for_saving(self, now):
         cases = self.get_changed()
 
         for case in cases:
             if case.is_saved():
-                unchanged_case = CommCareCaseSQL.objects.filter(
-                    case_uuid=case.case_id,
-                    server_modified_on=case.server_modified_on
-                )
-                assert unchanged_case.exists(), (
+                modified = CaseAccessorSQL.case_modified_since(case.case_id, case.server_modified_on)
+                assert not modified, (
                     "Aborting because the case has been modified"
                     " by another process. {}".format(case.case_id)
                 )
@@ -58,6 +57,4 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         return cases
 
     def get_reverse_indexed_cases(self, case_ids):
-        return CommCareCaseSQL.objects.filter(
-            domain=self.domain, index__referenced_id__in=case_ids
-        ).defer("case_json").prefetch_related('indices')
+        return CaseAccessorSQL.get_reverse_indexed_cases(self.domain, case_ids)

@@ -27,7 +27,7 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
                 try:
                     uploader.upload_chunked()
                 except ErrorResponse, e:
-                    if retries < helper.max_retries:
+                    if retries < max_retries:
                         retries += 1
                     else:
                         helper.failure_reason = str(e)
