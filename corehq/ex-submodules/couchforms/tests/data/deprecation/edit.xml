@@ -1,11 +1,11 @@
 <?xml version='1.0' ?>
 <general xmlns="http://openrosa.org/app/general">
 	<Meta>
-		<TimeStart>2010-07-22T13:54:27.971</TimeStart>
-		<TimeEnd>2010-07-24T13:55:11.648</TimeEnd>
+		<tmeStart>2010-07-22T13:54:27.971</tmeStart>
+		<timeEnd>2010-07-24T13:55:11.648</timeEnd>
 		<username>admin</username>
-		<uid>7H46J37FGH3</uid>
-        <user_id>f7f0c79e-8b79-11df-b7de-005056c00008</user_id>
+		<instanceID>7afa8ac1-3237-424e-8cd5-e437dd541232</instanceID>
+        <userID>f7f0c79e-8b79-11df-b7de-005056c00008</userID>
 	</Meta>
 	<encounter_date>2010-07-22</encounter_date>
     <vitals>

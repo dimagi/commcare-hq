@@ -10,7 +10,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, UuidAssertMixin
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -23,7 +23,7 @@ class SimpleCaseBugTests(SimpleTestCase):
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-class CaseBugTest(TestCase, TestFileMixin):
+class CaseBugTest(TestCase, TestFileMixin, UuidAssertMixin):
     """
     Tests bugs that come up in case processing
     """
@@ -72,7 +72,6 @@ class CaseBugTest(TestCase, TestFileMixin):
 
         _test({'case_name': value})
         _test({'case_type': value})
-        _test({'user_id': value})
 
     @run_with_all_backends
     def testDateInCasePropertyBug(self):
@@ -122,7 +121,7 @@ class CaseBugTest(TestCase, TestFileMixin):
 
         ids = case.xform_ids
         self.assertEqual(1, len(ids))
-        self.assertEqual(form.form_id, ids[0])
+        self.assertUuidEqual(form.form_id, ids[0])
 
     @run_with_all_backends
     def testLotsOfSubcases(self):

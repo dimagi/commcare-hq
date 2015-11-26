@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import collections
 
@@ -108,18 +109,18 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     hash_property = 'form_uuid'
 
-    form_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    form_uuid = UUIDField(unique=True, db_index=True, hyphenate=True)
 
     domain = models.CharField(max_length=255)
-    app_id = models.CharField(max_length=255, null=True)
+    app_id = UUIDField(unique=False, null=True, hyphenate=True)
     xmlns = models.CharField(max_length=255)
-    user_id = models.CharField(max_length=255, null=True)
+    user_id = UUIDField(unique=False, null=True, hyphenate=True)
 
     # When a form is deprecated, the existing form receives a new id and its original id is stored in orig_id
-    orig_id = models.CharField(max_length=255, null=True)
+    orig_id = UUIDField(null=True, hyphenate=True)
 
     # When a form is deprecated, the new form gets a reference to the deprecated form
-    deprecated_form_id = models.CharField(max_length=255, null=True)
+    deprecated_form_id = UUIDField(null=True, hyphenate=True)
 
     # Stores the datetime of when a form was deprecated
     edited_on = models.DateTimeField(null=True)
@@ -133,11 +134,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     openrosa_headers = JSONField(lazy=True, default=dict)
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
-    last_sync_token = models.CharField(max_length=255, null=True)
+    last_sync_token = UUIDField(unique=False, null=True, hyphenate=True)
     problem = models.TextField(null=True)
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
-    build_id = models.CharField(max_length=255, null=True)
+    build_id = UUIDField(unique=False, null=True, hyphenate=True)
     # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
@@ -253,9 +254,23 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         FormAccessorSQL.unarchive_form(self.form_id, user_id=user)
         xform_unarchived.send(sender="form_processor", xform=self)
 
+    @memoized
+    def get_sync_token(self):
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        if self.last_sync_token:
+            from couchdbkit import ResourceNotFound
+            try:
+                return get_properly_wrapped_sync_log(str(self.last_sync_token))
+            except ResourceNotFound:
+                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
+                    self.last_sync_token, self.form_id, self.domain,
+                ))
+                raise
+        return None
+
 
 class AbstractAttachment(models.Model):
-    attachment_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    attachment_uuid = UUIDField(unique=True, db_index=True, hyphenate=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
@@ -263,8 +278,8 @@ class AbstractAttachment(models.Model):
     @property
     def filepath(self):
         if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', self.attachment_uuid)
-        return os.path.join('/tmp/', self.attachment_uuid)
+            return os.path.join('/home/travis/', str(self.attachment_uuid))
+        return os.path.join('/tmp/', str(self.attachment_uuid))
 
     def write_content(self, content):
         with open(self.filepath, 'w+') as f:
@@ -290,7 +305,7 @@ class XFormOperationSQL(models.Model):
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
 
-    user = models.CharField(max_length=255, null=True)
+    user = UUIDField(unique=False, null=True, hyphenate=True)
     operation = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
     xform = models.ForeignKey(XFormInstanceSQL, to_field='form_uuid')
@@ -352,34 +367,34 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
                       SupplyPointCaseMixin):
     hash_property = 'case_uuid'
 
-    case_uuid = models.CharField(max_length=255, unique=True, db_index=True)
+    case_uuid = UUIDField(unique=True, db_index=True, hyphenate=True)
     domain = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
     name = models.CharField(max_length=255, null=True)
 
-    owner_id = models.CharField(max_length=255)
+    owner_id = UUIDField(unique=False, hyphenate=True)
 
     opened_on = models.DateTimeField(null=True)
-    opened_by = models.CharField(max_length=255, null=True)
+    opened_by = UUIDField(unique=False, null=True, hyphenate=True)
 
     modified_on = models.DateTimeField(null=False)
     server_modified_on = models.DateTimeField(null=False)
-    modified_by = models.CharField(max_length=255)
+    modified_by = UUIDField(unique=False, hyphenate=True)
 
     closed = models.BooleanField(default=False, null=False)
     closed_on = models.DateTimeField(null=True)
-    closed_by = models.CharField(max_length=255, null=True)
+    closed_by = UUIDField(unique=False, null=True, hyphenate=True)
 
     deleted = models.BooleanField(default=False, null=False)
 
     external_id = models.CharField(max_length=255)
-    location_uuid = UUIDField(null=True, unique=False)
+    location_uuid = UUIDField(null=True, unique=False, hyphenate=True)
 
     case_json = JSONField(lazy=True, default=dict)
 
     @property
     def case_id(self):
-        return self.case_uuid
+        return str(self.case_uuid)
 
     @case_id.setter
     def case_id(self, _id):
@@ -531,7 +546,7 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
     identifier = models.CharField(max_length=255, null=False)
-    referenced_id = models.CharField(max_length=255, null=False)
+    referenced_id = UUIDField(unique=False, null=False, hyphenate=True)
     referenced_type = models.CharField(max_length=255, null=False)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
@@ -582,7 +597,7 @@ class CaseTransaction(models.Model):
         'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
     )
-    form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
+    form_uuid = UUIDField(max_length=255, null=True, hyphenate=True)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)

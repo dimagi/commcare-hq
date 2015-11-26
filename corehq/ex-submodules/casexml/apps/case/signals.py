@@ -13,7 +13,7 @@ def rebuild_form_cases(sender, xform, *args, **kwargs):
     transactions = StockTransaction.objects.filter(report__form_id=xform.form_id)
     stock_case_ids = transactions.values_list('case_id', flat=True).distinct()
     case_ids.update(stock_case_ids)
-    detail = FormArchiveRebuild(form_id=xform.form_id, archived=xform.is_archived)
+    detail = FormArchiveRebuild(form_id=str(xform.form_id), archived=xform.is_archived)
     for case_id in case_ids:
         rebuild_case_from_forms(domain, case_id, detail)
 

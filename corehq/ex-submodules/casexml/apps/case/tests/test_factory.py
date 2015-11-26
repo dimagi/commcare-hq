@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, UuidAssertMixin
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 
 
@@ -101,7 +101,7 @@ class CaseStructureTest(SimpleTestCase):
         )
 
 
-class CaseFactoryTest(TestCase):
+class CaseFactoryTest(TestCase, UuidAssertMixin):
 
     @run_with_all_backends
     def test_simple_create(self):
@@ -190,7 +190,7 @@ class CaseFactoryTest(TestCase):
         factory = CaseFactory(domain=domain)
         [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': token_id})
         form = FormAccessors(domain).get_form(case.xform_ids[0])
-        self.assertEqual(token_id, form.last_sync_token)
+        self.assertUuidEqual(token_id, form.last_sync_token)
 
     @run_with_all_backends
     def test_form_extras_default(self):
@@ -202,7 +202,7 @@ class CaseFactoryTest(TestCase):
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         case = factory.create_case()
         form = FormAccessors(domain).get_form(case.xform_ids[0])
-        self.assertEqual(token_id, form.last_sync_token)
+        self.assertUuidEqual(token_id, form.last_sync_token)
 
     @run_with_all_backends
     def test_form_extras_override_defaults(self):
@@ -210,6 +210,7 @@ class CaseFactoryTest(TestCase):
         LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
-        [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': 'differenttoken'})
+        new_token = uuid.uuid4().hex
+        [case] = factory.create_or_update_case(CaseStructure(), form_extras={'last_sync_token': new_token})
         form = FormAccessors(domain).get_form(case.xform_ids[0])
-        self.assertEqual('differenttoken', form.last_sync_token)
+        self.assertUuidEqual(new_token, form.last_sync_token)

@@ -1,4 +1,6 @@
 import functools
+from uuid import UUID
+
 from couchdbkit import ResourceNotFound
 from django.db.models.query_utils import Q
 
@@ -125,3 +127,24 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
     with result.get_locked_forms() as xforms:
         FormProcessorInterface(domain).save_processed_models(xforms[0], xforms)
         return xforms[0]
+
+
+class UuidAssertMixin(object):
+    def to_uuid_safe(self, id_):
+        return id_ if id_ is None or isinstance(id_, UUID) else UUID(id_)
+
+    def assertUuidEqual(self, id1, id2):
+        return self.assertEqual(self.to_uuid_safe(id1), self.to_uuid_safe(id2))
+
+    def assertUuidNotEqual(self, id1, id2):
+        return self.assertNotEqual(self.to_uuid_safe(id1), self.to_uuid_safe(id2))
+
+    def assertUuidListEqual(self, list1, list2):
+        def to_uuids(alist):
+            if alist and isinstance(alist[0], UUID):
+                return alist
+
+            return [
+                UUID(id_) for id_ in alist
+            ]
+        return self.assertEqual(to_uuids(list1), to_uuids(list2))

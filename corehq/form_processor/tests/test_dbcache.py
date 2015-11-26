@@ -8,10 +8,10 @@ from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, UuidAssertMixin
 
 
-class CaseDbCacheTest(TestCase):
+class CaseDbCacheTest(TestCase, UuidAssertMixin):
     """
     Tests the functionality of the CaseDbCache object
     """
@@ -21,10 +21,12 @@ class CaseDbCacheTest(TestCase):
     @run_with_all_backends
     def testDomainCheck(self):
         id = uuid.uuid4().hex
+        user_id = uuid.uuid4().hex
         post_case_blocks([
                 CaseBlock(
                     create=True, case_id=id,
-                    user_id='some-user'
+                    user_id=user_id,
+                    owner_id=user_id
                 ).as_xml()
             ], {'domain': 'good-domain'}
         )
@@ -36,7 +38,7 @@ class CaseDbCacheTest(TestCase):
             pass
         good_cache = self.interface.casedb_cache(domain='good-domain')
         case = good_cache.get(id)
-        self.assertEqual('some-user', case.user_id) # just sanity check it's the right thing
+        self.assertUuidEqual(user_id, case.user_id) # just sanity check it's the right thing
 
     def testDocTypeCheck(self):
         id = uuid.uuid4().hex
@@ -164,11 +166,13 @@ class CaseDbCacheNoDbTest(SimpleTestCase):
 
 def _make_some_cases(howmany, domain='dbcache-test'):
     ids = [uuid.uuid4().hex for i in range(howmany)]
+    user_id = uuid.uuid4().hex
     post_case_blocks([
         CaseBlock(
             create=True,
             case_id=ids[i],
-            user_id='some-user',
+            user_id=user_id,
+            owner_id=user_id,
             update={
                 'my_index': i,
             }

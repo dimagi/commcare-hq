@@ -28,7 +28,7 @@ class CaseProcessingErrorsTest(TestCase):
         _, xform, _ = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
-                    <instanceID>abc-easy-as-123</instanceID>
+                    <instanceID>e1f4ec50-a2f7-4b7a-b833-8a387924f976</instanceID>
                 </meta>
             <case case_id="" xmlns="http://commcarehq.org/case/transaction/v2">
                 <update><foo>bar</foo></update>
@@ -53,9 +53,9 @@ class CaseProcessingErrorsTest(TestCase):
         _, xform, _ = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
-                    <instanceID>abc-easy-as-456</instanceID>
+                    <instanceID>e1f4ec50-a2f7-4b7a-b833-8a387924f977</instanceID>
                 </meta>
-            <case case_id="123" xmlns="http://commcarehq.org/case/transaction/v2">
+            <case case_id="e1f4ec50-a2f7-4b7a-b833-8a387924f978" xmlns="http://commcarehq.org/case/transaction/v2">
                 <referral>
                     <referral_id>456</referral_id>
                     <open>

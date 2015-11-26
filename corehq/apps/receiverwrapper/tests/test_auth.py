@@ -164,7 +164,6 @@ class _AuthTest(TestCase):
             expected_status=403,
         )
 
-    @run_with_all_backends
     def test_case_noauth(self):
         self._test_post(
             file_path=self.form_with_demo_case,
