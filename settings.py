@@ -1240,18 +1240,17 @@ SMS_HANDLERS = [
 ]
 
 SMS_LOADED_BACKENDS = [
-    "corehq.messaging.smsbackends.unicel.api.UnicelBackend",
-    "corehq.messaging.smsbackends.mach.api.MachBackend",
-    "corehq.messaging.smsbackends.tropo.api.TropoBackend",
-    "corehq.messaging.smsbackends.http.api.HttpBackend",
-    "corehq.messaging.smsbackends.telerivet.models.TelerivetBackend",
-    "corehq.messaging.smsbackends.test.api.TestSMSBackend",
-    "corehq.apps.sms.backend.test.TestBackend",
-    "corehq.messaging.smsbackends.grapevine.api.GrapevineBackend",
-    "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
-    "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
-    "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
-    "corehq.messaging.smsbackends.apposit.models.AppositBackend",
+    'corehq.messaging.smsbackends.unicel.models.UnicelBackend',
+    'corehq.messaging.smsbackends.mach.models.MachBackend',
+    'corehq.messaging.smsbackends.tropo.models.TropoBackend',
+    'corehq.messaging.smsbackends.http.models.HttpBackend',
+    'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.TestSMSBackend',
+    'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
+    'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
+    'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SMSGHBackend',
+    'corehq.messaging.smsbackends.apposit.models.AppositBackend',
 ]
 
 IVR_BACKEND_MAP = {

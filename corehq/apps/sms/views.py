@@ -42,7 +42,7 @@ from corehq.apps.sms.models import (
     LastReadMessage, MessagingEvent, SelfRegistrationInvitation
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
-    SMSLoadBalancingMixin)
+    SMSLoadBalancingMixin, UnrecognizedBackendException)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
@@ -683,7 +683,7 @@ def default_sms_admin_interface(request):
 @require_superuser
 def delete_backend(request, backend_id):
     # We need to keep this until we move over the admin sms gateway UIs
-    backend = SMSBackend.get(backend_id)
+    backend = SMSBackend.get_wrapped(backend_id)
     if not backend.is_global or backend.base_doc != "MobileBackend":
         raise Http404
     backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
@@ -1152,8 +1152,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def get_deleted_item_data(self, item_id):
         try:
-            backend = SMSBackend.get(item_id)
-        except ResourceNotFound:
+            backend = SMSBackend.get_wrapped(item_id)
+        except UnrecognizedBackendException:
             raise Http404()
         if (backend.is_global or backend.domain != self.domain or
             backend.base_doc != "MobileBackend"):

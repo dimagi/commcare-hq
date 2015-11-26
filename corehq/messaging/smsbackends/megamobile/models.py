@@ -3,7 +3,7 @@ from urllib import urlencode, quote
 from urllib2 import urlopen
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMSLog, SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.megamobile.forms import MegamobileBackendForm
 from django.conf import settings
@@ -59,3 +59,23 @@ class MegamobileBackend(SMSBackend):
         url = "http://api.mymegamobile.com/%s?%s" % (api_account_name, params)
         response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLMegamobileBackend
+
+
+class SQLMegamobileBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return MegamobileBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'api_account_name',
+            'source_identifier',
+        ]
