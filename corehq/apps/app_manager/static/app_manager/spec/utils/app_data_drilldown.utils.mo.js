@@ -76,7 +76,7 @@
                 application: 'Select Application',
                     case_type: 'Select Case Type'
             }
-        }
+        };
     };
 
     window.AppDrill.getSingleAppResponse = function () {

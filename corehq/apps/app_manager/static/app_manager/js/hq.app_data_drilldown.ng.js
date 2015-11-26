@@ -88,7 +88,7 @@
                         data: field_data,
                         placeholder: self._placeholders[fieldSlug],
                         defaults: formDefaults[fieldSlug]
-                    }
+                    };
                 }
             };
         };
@@ -108,7 +108,7 @@
                     data: self._app_types || [],
                     placeholder: null,
                     defaults: formDefaults.app_type
-                }
+                };
             },
             setApps: _formSelect2Setter(formFieldSlugs.application),
             setModules: _formSelect2Setter(formFieldSlugs.module),
