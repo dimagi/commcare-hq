@@ -282,10 +282,14 @@ class XFormOperationSQL(models.Model):
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
 
-    user = models.CharField(max_length=255, null=True)
+    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
+    user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
-    form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
+
+    @property
+    def user(self):
+        return self.user_id
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):
