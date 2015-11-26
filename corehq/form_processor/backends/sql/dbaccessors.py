@@ -192,7 +192,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return CommCareCaseSQL.objects.filter(
                 domain=domain,
                 type='supply-point',
-                location_uuid=location_id
+                location_id=location_id
             ).get()
         except CommCareCaseSQL.DoesNotExist:
             return None
