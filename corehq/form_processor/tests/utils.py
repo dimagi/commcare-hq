@@ -4,6 +4,8 @@ from django.db.models.query_utils import Q
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
@@ -109,3 +111,17 @@ run_with_all_backends = functools.partial(
         ),
     ]
 )
+
+
+@unit_testing_only
+def post_xform(instance_xml, attachments=None, domain='test-domain'):
+    """
+    create a new xform and releases the lock
+
+    this is a testing entry point only and is not to be used in real code
+
+    """
+    result = process_xform_xml(domain, instance_xml, attachments=attachments)
+    with result.get_locked_forms() as xforms:
+        FormProcessorInterface(domain).save_processed_models(xforms[0], xforms)
+        return xforms[0]

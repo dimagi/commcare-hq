@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 # bit of a hack, but the tests optimize around this flag to run faster

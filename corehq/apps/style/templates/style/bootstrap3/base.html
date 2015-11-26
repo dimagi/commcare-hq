@@ -370,6 +370,13 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_typeahead %}
+        {% compress js %}
+        <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
+        <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
         {% compress js %}
         {% block js %}{% endblock js %}
         {% endcompress %}

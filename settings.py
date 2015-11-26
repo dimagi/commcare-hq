@@ -254,6 +254,7 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
+    'corehq.apps.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.facilities',
@@ -1144,7 +1145,7 @@ COUCHDB_APPS = [
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('performance_sms', 'meta'),
-    ('receiverwrapper', 'receiverwrapper'),
+    ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
     ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
@@ -1409,7 +1410,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
-    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

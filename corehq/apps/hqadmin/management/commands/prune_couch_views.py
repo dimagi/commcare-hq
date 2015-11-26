@@ -55,8 +55,24 @@ class Command(BaseCommand):
                     '',
             ])).lower() == 'delete designs':
                 for db, design_docs in designs_to_delete.items():
+                    for design_doc in design_docs:
+                        delete_conflicts(db, design_doc['_id'])
                     db.delete_docs(design_docs)
             else:
                 print 'aborted!'
         else:
             print 'database already completely pruned!'
+
+
+class MyConflictsDontDie(Exception):
+    pass
+
+
+def delete_conflicts(db, doc_id):
+    doc_with_conflicts = db.get(doc_id, conflicts=True)
+    if '_conflicts' in doc_with_conflicts:
+        conflict_revs = doc_with_conflicts['_conflicts']
+        db.bulk_delete([{'_id': doc_id, '_rev': rev} for rev in conflict_revs])
+        doc_with_conflicts = db.get(doc_id, conflicts=True)
+        if '_conflicts' in doc_with_conflicts:
+            raise MyConflictsDontDie(doc_with_conflicts)

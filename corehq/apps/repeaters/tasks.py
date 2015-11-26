@@ -4,7 +4,7 @@ from celery.task import periodic_task
 from celery.utils.log import get_task_logger
 from django.conf import settings
 
-from corehq.apps.receiverwrapper.models import RepeatRecord
+from corehq.apps.repeaters.models import RepeatRecord
 
 logging = get_task_logger(__name__)
 

@@ -55,9 +55,6 @@
 (function (angular, undefined) {
    'use strict';
     var downloadExportsApp = angular.module('downloadExportsApp', ['hq.download_export']);
-    downloadExportsApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-    }]);
     downloadExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
@@ -65,6 +62,17 @@
     downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
     downloadExportsApp.constant('defaultDateRange', '{{ default_date_range }}');
     downloadExportsApp.constant('checkForMultimedia', {{ check_for_multimedia|BOOL }});
+    downloadExportsApp.constant('formElement', {
+        progress: function () {
+            return $('#download-progress-bar');
+        },
+        group: function () {
+            return $('#id_group');
+        },
+        user_type: function () {
+            return $('#id_user_types');
+        }
+    });
 }(window.angular));
 </script>
 {% endblock %}

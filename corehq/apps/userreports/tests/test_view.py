@@ -3,6 +3,7 @@ import uuid
 from django.test import TestCase
 
 from corehq.apps.userreports import tasks
+from corehq.apps.userreports.dbaccessors import get_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
 from casexml.apps.case.mock import CaseBlock
@@ -36,7 +37,7 @@ class ConfigurableReportTestMixin(object):
         delete_all_cases()
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
+        for config in get_all_report_configs():
             config.delete()
 
 

@@ -61,6 +61,8 @@ class ReportFixturesProvider(object):
         report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
         report = ReportConfiguration.get(report_config.report_id)
         report_elem.append(self._element('name', localize(report_config.header, user.language)))
+        if not report_config.use_xpath_description:
+            report_elem.append(self._element('description', localize(report_config.localized_description, user.language)))
         data_source = ReportFactory.from_spec(report)
 
         data_source.set_filter_values({

@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
-from corehq.apps.receiverwrapper import reports as receiverwrapper
+from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.userreports.models import (
     StaticReportConfiguration,
     ReportConfiguration,

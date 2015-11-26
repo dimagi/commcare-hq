@@ -1,19 +1,18 @@
 from django.core.urlresolvers import reverse, NoReverseMatch
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from couchforms.dbaccessors import get_forms_by_type, \
     get_number_of_forms_by_type, get_number_of_forms_of_all_types
-from corehq.apps.receiverwrapper.filters import SubmissionErrorType, \
-    SubmissionTypeFilter
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
 from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 
 
-def compare_submissions(x, y):
+def _compare_submissions(x, y):
     # these are backwards because we want most recent to come first
     return cmp(y.received_on, x.received_on)
 
@@ -44,8 +43,7 @@ class SubmissionErrorReport(DeploymentsReport):
     ajax_pagination = True
     asynchronous = False
 
-    fields = ['corehq.apps.receiverwrapper.filters.SubmissionTypeFilter',
-              ]
+    fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
 
     @property
     def headers(self):
@@ -70,7 +68,7 @@ class SubmissionErrorReport(DeploymentsReport):
     def paginator_results(self):
         if self._paginator_results is None:
             filters = [SubmitFilter(self.domain, toggle.doc_type) for toggle in self.submitfilter if toggle.show]
-            self._paginator_results = FilteredPaginator(filters, compare_submissions)
+            self._paginator_results = FilteredPaginator(filters, _compare_submissions)
         return self._paginator_results
 
     @property
