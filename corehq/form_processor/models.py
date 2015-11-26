@@ -574,7 +574,7 @@ class CaseTransaction(models.Model):
         'CommCareCaseSQL', to_field='case_uuid', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
     )
-    form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
+    form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
@@ -591,11 +591,11 @@ class CaseTransaction(models.Model):
     @property
     def form(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        if not self.form_uuid:
+        if not self.form_id:
             return None
         form = getattr(self, 'cached_form', None)
         if not form:
-            self.cached_form = FormAccessorSQL.get_form(self.form_uuid)
+            self.cached_form = FormAccessorSQL.get_form(self.form_id)
         return self.cached_form
 
     def __eq__(self, other):
@@ -605,18 +605,17 @@ class CaseTransaction(models.Model):
         return (
             self.case_id == other.case_id and
             self.type == other.type and
-            self.form_uuid == other.form_uuid
+            self.form_id == other.form_id
         )
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
-
     @classmethod
     def form_transaction(cls, case, xform):
         return CaseTransaction(
             case=case,
-            form_uuid=xform.form_id,
+            form_id=xform.form_id,
             server_date=xform.received_on,
             type=CaseTransaction.TYPE_FORM,
             revoked=not xform.is_normal
@@ -635,14 +634,14 @@ class CaseTransaction(models.Model):
         return (
             "CaseTransaction("
             "case_id='{self.case_id}', "
-            "form_id='{self.form_uuid}', "
+            "form_id='{self.form_id}', "
             "type='{self.type}', "
             "server_date='{self.server_date}', "
             "revoked='{self.revoked}'"
         ).format(self=self)
 
     class Meta:
-        unique_together = ("case", "form_uuid")
+        unique_together = ("case", "form_id")
         ordering = ['server_date']
 
 

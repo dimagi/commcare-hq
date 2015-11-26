@@ -81,7 +81,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
             operation.save()
             XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.ARCHIVED)
-            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=True)
+            CaseTransaction.objects.filter(form_id=form_id).update(revoked=True)
 
     @staticmethod
     def unarchive_form(form_id, user_id=None):
@@ -94,7 +94,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
             operation.save()
             XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.NORMAL)
-            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=False)
+            CaseTransaction.objects.filter(form_id=form_id).update(revoked=False)
 
     @staticmethod
     def get_form_history(form_id):
@@ -144,9 +144,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(CaseTransaction.objects.filter(
             case_id=case_id,
             revoked=False,
-            form_uuid__isnull=False,
+            form_id__isnull=False,
             type=CaseTransaction.TYPE_FORM
-        ).values_list('form_uuid', flat=True))
+        ).values_list('form_id', flat=True))
 
     @staticmethod
     def get_indices(case_id):

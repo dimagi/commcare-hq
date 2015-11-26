@@ -263,7 +263,7 @@ class FormProcessorSQL(object):
 
 def get_case_transactions(case_id, updated_xforms=None):
     transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
-    form_ids = {tx.form_uuid for tx in transactions}
+    form_ids = {tx.form_id for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
@@ -281,10 +281,10 @@ def get_case_transactions(case_id, updated_xforms=None):
             raise XFormNotFound
 
     for transaction in transactions:
-        if transaction.form_uuid:
+        if transaction.form_id:
             try:
-                transaction.cached_form = get_form(transaction.form_uuid)
+                transaction.cached_form = get_form(transaction.form_id)
             except XFormNotFound:
-                logging.error('Form not found during rebuild: %s', transaction.form_uuid)
+                logging.error('Form not found during rebuild: %s', transaction.form_id)
 
     return transactions
