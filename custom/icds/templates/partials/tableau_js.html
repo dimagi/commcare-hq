@@ -66,6 +66,7 @@
                 html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
 
                 // Find the sheet we are navigating to
+                // TODO: Handle the case where js_sheet isn't defined
                 if(pair.fieldName === 'js_sheet') {
                     console.log('sheetName = ', pair.formattedValue);
                     sheetName = pair.formattedValue;
