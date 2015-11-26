@@ -502,7 +502,7 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
 class CaseAttachmentSQL(AbstractAttachment):
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        'CommCareCaseSQL', to_field='case_uuid', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
@@ -518,7 +518,7 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=True,
+        'CommCareCaseSQL', to_field='case_uuid', db_index=True,
         related_name="index_set", related_query_name="index"
     )
     domain = models.CharField(max_length=255)  # TODO SK 2015-11-05: is this necessary or should we join on case?
@@ -571,7 +571,7 @@ class CaseTransaction(models.Model):
         TYPE_FORM,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False,
+        'CommCareCaseSQL', to_field='case_uuid', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
     )
     form_uuid = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
