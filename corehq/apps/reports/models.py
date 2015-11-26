@@ -25,7 +25,10 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
-from corehq.apps.reports.dbaccessors import stale_get_exports_json
+from corehq.apps.reports.dbaccessors import (
+    hq_group_export_configs_by_domain,
+    stale_get_exports_json,
+)
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import (
@@ -1036,12 +1039,7 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
 
     @classmethod
     def by_domain(cls, domain):
-        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain",
-            key=domain,
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap,
-        )
+        return hq_group_export_configs_by_domain(domain, cls)
 
     @classmethod
     def get_for_domain(cls, domain):
