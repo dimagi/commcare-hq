@@ -44,7 +44,6 @@ class GroupGenerationCache(GenerationCache):
         "groups/by_user_type",
         "groups/by_name",
         "groups/all_groups",
-        "groups/by_domain",
         "users/by_group",
     ]
 
