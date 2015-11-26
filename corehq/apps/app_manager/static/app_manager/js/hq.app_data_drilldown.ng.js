@@ -75,7 +75,7 @@
                 if (fieldSlug) {
                     $scope.formData[fieldSlug] = '';
                     var $formElem = _formElemGetter(fieldSlug);
-                    if ($formElem) {
+                    if ($formElem.length > 0) {
                         $formElem.select2({
                             data: field_data || [],
                             triggerChange: true
@@ -98,7 +98,7 @@
                 $scope.formData.app_type = formDefaults.app_type;
 
                 var $formElem = _formElemGetter('app_type');
-                if ($formElem) {
+                if ($formElem.length > 0) {
                     $formElem.select2({
                         data: self._app_types || [],
                         triggerChange: true
