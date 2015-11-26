@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from itertools import imap
+
+from django.conf import settings
+
 from dimagi.ext.couchdbkit import *
 import re
 from dimagi.utils.couch.database import iter_docs
@@ -223,7 +226,7 @@ class Group(UndoableDocument):
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-            # stale=settings.COUCH_STALE_QUERY,
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
 
     def create_delete_record(self, *args, **kwargs):
