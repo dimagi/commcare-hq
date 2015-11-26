@@ -63,30 +63,38 @@ class Migration(migrations.Migration):
             old_name='xform',
             new_name='form',
         ),
+        # ---- the next 4 operartions are to rename xforminstancesql.form_uuid to xforminstancesql_form_id
+        # see https://code.djangoproject.com/ticket/25817#comment:5
+        migrations.AlterField(
+            model_name='xformattachmentsql',
+            name='form',
+            field=models.CharField(max_length=255),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='xformoperationsql',
+            name='form',
+            field=models.CharField(max_length=255),
+            preserve_default=True,
+        ),
         migrations.RenameField(
             model_name='xforminstancesql',
             old_name='form_uuid',
             new_name='form_id',
         ),
-        # workaround for https://code.djangoproject.com/ticket/25817
-        # but another bug prevents squashing: https://code.djangoproject.com/ticket/25818
-        migrations.RunSQL(
-            NOOP, NOOP,
-            state_operations=[
-                migrations.AlterField(
-                    model_name='xformattachmentsql',
-                    name='form',
-                    field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'form_id', to='form_processor.XFormInstanceSQL'),
-                    preserve_default=True,
-                ),
-                migrations.AlterField(
-                    model_name='xformoperationsql',
-                    name='form',
-                    field=models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_id'),
-                    preserve_default=True,
-                ),
-            ]
+        migrations.AlterField(
+            model_name='xformattachmentsql',
+            name='form',
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'form_id', to='form_processor.XFormInstanceSQL'),
+            preserve_default=True,
         ),
+        migrations.AlterField(
+            model_name='xformoperationsql',
+            name='form',
+            field=models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_id'),
+            preserve_default=True,
+        ),
+        # ---- end rename xforminstancesql.form_uuid rename
         migrations.AlterField(
             model_name='caseattachmentsql',
             name='case',
@@ -114,36 +122,50 @@ class Migration(migrations.Migration):
             name='casetransaction',
             unique_together=set([('case', 'form_id')]),
         ),
+        # ---- the next 7 operartions are to rename commcarecasesql.case_uuid to commcarecasesql.case_id
+        # see https://code.djangoproject.com/ticket/25817#comment:5
+        migrations.AlterField(
+            model_name='caseattachmentsql',
+            name='case',
+            field=models.CharField(max_length=255),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='commcarecaseindexsql',
+            name='case',
+            field=models.CharField(max_length=255),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='casetransaction',
+            name='case',
+            field=models.CharField(max_length=255),
+            preserve_default=True,
+        ),
         migrations.RenameField(
             model_name='commcarecasesql',
             old_name='case_uuid',
             new_name='case_id',
         ),
-        # workaround for https://code.djangoproject.com/ticket/25817
-        # but another bug prevents squashing: https://code.djangoproject.com/ticket/25818
-        migrations.RunSQL(
-            NOOP, NOOP,
-            state_operations=[
-                migrations.AlterField(
-                    model_name='caseattachmentsql',
-                    name='case',
-                    field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
-                    preserve_default=True,
-                ),
-                migrations.AlterField(
-                    model_name='casetransaction',
-                    name='case',
-                    field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', db_index=False),
-                    preserve_default=True,
-                ),
-                migrations.AlterField(
-                    model_name='commcarecaseindexsql',
-                    name='case',
-                    field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
-                    preserve_default=True,
-                ),
-            ]
+        migrations.AlterField(
+            model_name='caseattachmentsql',
+            name='case',
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
+            preserve_default=True,
         ),
+        migrations.AlterField(
+            model_name='casetransaction',
+            name='case',
+            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', db_index=False),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='commcarecaseindexsql',
+            name='case',
+            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
+            preserve_default=True,
+        ),
+        # ---- end rename commcarecasesql.case_uuid rename
         migrations.AlterField(
             model_name='caseattachmentsql',
             name='case',
