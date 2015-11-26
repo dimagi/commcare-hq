@@ -77,7 +77,6 @@ from corehq.apps.accounting.user_text import (
     get_feature_recurring_interval,
 )
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
-from corehq.apps import receiverwrapper
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required
@@ -95,9 +94,9 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord
+from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
+    RepeatRecord, repeater_types
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -534,7 +533,7 @@ def test_repeater(request, domain):
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
-        repeater_class=receiverwrapper.models.repeater_types[repeater_type]
+        repeater_class=repeater_types[repeater_type]
     )
     if form.is_valid():
         url = form.cleaned_data["url"]
@@ -2124,7 +2123,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def repeater_class(self):
         try:
-            return receiverwrapper.models.repeater_types[self.repeater_type]
+            return repeater_types[self.repeater_type]
         except KeyError:
             raise Http404()
 

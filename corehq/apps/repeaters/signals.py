@@ -5,17 +5,17 @@ from couchforms.signals import successful_form_received
 
 
 def create_form_repeat_records(sender, xform, **kwargs):
-    from corehq.apps.receiverwrapper.models import FormRepeater
+    from corehq.apps.repeaters.models import FormRepeater
     create_repeat_records(FormRepeater, xform)
 
 
 def create_case_repeat_records(sender, case, **kwargs):
-    from corehq.apps.receiverwrapper.models import CaseRepeater
+    from corehq.apps.repeaters.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
 
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
-    from corehq.apps.receiverwrapper.models import ShortFormRepeater
+    from corehq.apps.repeaters.models import ShortFormRepeater
     create_repeat_records(ShortFormRepeater, xform)
 
 

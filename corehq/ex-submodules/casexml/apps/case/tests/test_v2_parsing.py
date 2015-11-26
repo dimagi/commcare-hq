@@ -10,7 +10,7 @@ from datetime import datetime
 from casexml.apps.case.xml import V2
 from casexml.apps.case import const
 from casexml.apps.phone import xml
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

@@ -14,12 +14,12 @@ from django.test.client import Client
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
-from corehq.apps.receiverwrapper.models import (
+from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
     RegisterGenerator)
-from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from couchforms.models import XFormInstance
 
 case_id = "ABC123CASEID"
@@ -178,7 +178,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertEqual(len(self.log), 4)
 
         # The following is pretty fickle and depends on which of
-        #   - corehq.apps.receiverwrapper.signals
+        #   - corehq.apps.repeaters.signals
         #   - casexml.apps.case.signals
         # gets loaded first.
         # This is deterministic but easily affected by minor code changes

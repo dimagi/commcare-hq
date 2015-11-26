@@ -6,6 +6,7 @@ from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.dbaccessors import get_extension_chain
 from casexml.apps.case.signals import cases_received
+from casexml.apps.case.util import validate_phone_datetime
 from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
@@ -16,7 +17,6 @@ from casexml.apps.case.exceptions import (
     NoDomainProvided,
 )
 from django.conf import settings
-from couchforms.validators import validate_phone_datetime
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const

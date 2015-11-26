@@ -15,9 +15,13 @@ from django.utils.translation import ugettext as _
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
-from couchforms.util import is_override
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
+
+
+def _is_override(xform):
+    # it's an override if we've explicitly set the "deprecated_form_id" property on it.
+    return bool(getattr(xform, 'deprecated_form_id', None))
 
 
 class ActionsUpdateStrategy(UpdateStrategy):
@@ -125,7 +129,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
             # short circuit the rest of this since we don't actually want to
             # do any case processing
             return
-        elif is_override(xformdoc):
+        elif _is_override(xformdoc):
             # This form is overriding a deprecated form.
             # Apply the actions just after the last action with this form type.
             # This puts the overriding actions in the right order relative to the others.

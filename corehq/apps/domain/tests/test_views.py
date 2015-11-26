@@ -7,7 +7,7 @@ from django.test.client import Client
 
 from corehq import toggles
 from corehq.apps.users.models import WebUser
-from corehq.apps.receiverwrapper.models import AppStructureRepeater
+from corehq.apps.repeaters.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.domain.views import CreateNewExchangeSnapshotView

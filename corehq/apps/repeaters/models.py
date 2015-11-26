@@ -493,4 +493,4 @@ class RepeatRecord(Document, LockableMixIn):
                     self.update_failure()
 
 # import signals
-from corehq.apps.receiverwrapper import signals
+from corehq.apps.repeaters import signals
