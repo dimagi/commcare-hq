@@ -122,6 +122,7 @@ corehq.apps.receiverwrapper:
 corehq.form_processor:
   - casexml.apps.case
   - casexml.apps.phone
+  - corehq.apps.hqcase
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms

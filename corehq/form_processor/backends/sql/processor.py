@@ -25,7 +25,7 @@ class FormProcessorSQL(object):
         for attachment in attachments:
             xform_attachment = XFormAttachmentSQL(
                 name=attachment.name,
-                attachment_uuid=unicode(uuid.uuid4()),
+                attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
                 md5=attachment.md5,
             )
@@ -40,7 +40,7 @@ class FormProcessorSQL(object):
 
         return XFormInstanceSQL(
             # other properties can be set post-wrap
-            form_uuid=form_id,
+            form_id=form_id,
             xmlns=form_data.get('@xmlns'),
             received_on=datetime.datetime.utcnow(),
             user_id=extract_meta_user_id(form_data),
@@ -83,18 +83,18 @@ class FormProcessorSQL(object):
                     'Reassigning attachments and operations to deprecated form: %s -> %s',
                     xform.orig_id, xform.form_id
                 )
-                attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
-                attachments.update(xform_id=xform.form_id)
+                attachments = XFormAttachmentSQL.objects.filter(form_id=xform.orig_id)
+                attachments.update(form_id=xform.form_id)
 
-                operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
-                operations.update(xform_id=xform.form_id)
+                operations = XFormOperationSQL.objects.filter(form_id=xform.orig_id)
+                operations.update(form_id=xform.form_id)
 
             unsaved_attachments = getattr(xform, 'unsaved_attachments', None)
             if unsaved_attachments:
                 logging.debug('Saving %s attachments for form: %s', len(unsaved_attachments), xform.form_id)
                 for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.xform = xform
-                xform.attachments.bulk_create(unsaved_attachments)
+                    unsaved_attachment.form = xform
+                xform.attachment_set.bulk_create(unsaved_attachments)
                 del xform.unsaved_attachments
 
     @classmethod
@@ -181,7 +181,7 @@ class FormProcessorSQL(object):
     def submission_error_form_instance(cls, domain, instance, message):
         xform = XFormInstanceSQL(
             domain=domain,
-            form_uuid=uuid.uuid4().hex,
+            form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
             state=XFormInstanceSQL.SUBMISSION_ERROR_LOG
@@ -238,7 +238,7 @@ class FormProcessorSQL(object):
             assert case.domain == domain
             found = True
         except CaseNotFound:
-            case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
+            case = CommCareCaseSQL(case_id=case_id, domain=domain)
             found = False
 
         case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
@@ -263,7 +263,7 @@ class FormProcessorSQL(object):
 
 def get_case_transactions(case_id, updated_xforms=None):
     transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
-    form_ids = {tx.form_uuid for tx in transactions}
+    form_ids = {tx.form_id for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
@@ -281,10 +281,10 @@ def get_case_transactions(case_id, updated_xforms=None):
             raise XFormNotFound
 
     for transaction in transactions:
-        if transaction.form_uuid:
+        if transaction.form_id:
             try:
-                transaction.cached_form = get_form(transaction.form_uuid)
+                transaction.cached_form = get_form(transaction.form_id)
             except XFormNotFound:
-                logging.error('Form not found during rebuild: %s', transaction.form_uuid)
+                logging.error('Form not found during rebuild: %s', transaction.form_id)
 
     return transactions
