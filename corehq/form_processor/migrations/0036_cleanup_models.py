@@ -52,6 +52,12 @@ class Migration(migrations.Migration):
             old_name='xform',
             new_name='form',
         ),
+        migrations.AlterField(
+            model_name='xformattachmentsql',
+            name='form',
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'form_uuid', to='form_processor.XFormInstanceSQL'),
+            preserve_default=True,
+        ),
         migrations.RenameField(
             model_name='xformoperationsql',
             old_name='xform',
