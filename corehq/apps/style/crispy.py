@@ -1,4 +1,6 @@
 import re
+from contextlib import contextmanager
+
 from django.utils.safestring import mark_safe
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
 from crispy_forms.layout import Field as OldField, LayoutObject
@@ -71,6 +73,19 @@ class StaticField(LayoutObject):
         return render_to_string(self.template, context)
 
 
+@contextmanager
+def edited_classes(context, label_class, field_class):
+    original_label_class = context.get('label_class')
+    original_field_class = context.get('field_class')
+    try:
+        context['label_class'] = label_class or context.get('label_class')
+        context['field_class'] = field_class or context.get('field_class')
+        yield
+    finally:
+        context['label_class'] = original_label_class
+        context['field_class'] = original_field_class
+
+
 class B3MultiField(LayoutObject):
     template = 'style/crispy/multi_field.html'
 
@@ -79,6 +94,8 @@ class B3MultiField(LayoutObject):
         self.label_html = field_label
         self.css_class = kwargs.pop('css_class', '')
         self.css_id = kwargs.pop('css_id', '')
+        self.field_class = kwargs.pop('field_class', None)
+        self.label_class = kwargs.pop('label_class', None)
         self.flat_attrs = flatatt(kwargs)
 
     def render(self, form, form_style, context, template_pack=None):
@@ -97,7 +114,13 @@ class B3MultiField(LayoutObject):
             'multifield': self,
             'error_list': errors
         })
-        return render_to_string(self.template, context)
+
+        if not (self.field_class or self.label_class):
+            return render_to_string(self.template, context)
+
+        with edited_classes(context, self.label_class, self.field_class):
+            rendered_view = render_to_string(self.template, context)
+        return rendered_view
 
     def _get_errors(self, form, fields):
         errors = []

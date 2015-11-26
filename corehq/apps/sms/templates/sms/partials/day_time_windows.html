@@ -16,7 +16,7 @@
             <tr>
                 <td>
                     <div>
-                        <select class="form-control" data-bind="value: day">
+                        <select class="form-control" data-bind="value: day" style="width: auto">
                             <option value="-1">{% trans "Any Day" %}</option>
                             <option value="0">{% trans "Monday" %}</option>
                             <option value="1">{% trans "Tuesday" %}</option>
@@ -31,7 +31,7 @@
                 </td>
                 <td>
                     <div class="row">
-                        <div class="controls col-md-3 col-lg-3">
+                        <div class="controls col-lg-3" data-bind="css: { 'col-md-3': time_input_relationship() === 'BETWEEN', 'col-md-4': time_input_relationship() !== 'BETWEEN' }" style="width: auto; max-width: 150px">
                             <select class="form-control" data-bind="value: time_input_relationship">
                                 <option value="BEFORE">{% trans "Before" %}</option>
                                 <option value="AFTER">{% trans "After" %}</option>

@@ -9,11 +9,9 @@ from django.forms.forms import Form
 from django.forms.fields import *
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, HiddenFieldWithErrors, FieldsetAccordionGroup)
 from corehq.apps.style.crispy import FieldWithHelpBubble
-from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
@@ -256,7 +254,7 @@ class SettingsForm(Form):
                         "use_default_sms_response",
                         data_bind="value: use_default_sms_response",
                     ),
-                    css_class='col-sm-2'
+                    css_class='col-sm-4'
                 ),
                 crispy.Div(
                     InlineField(
@@ -265,12 +263,13 @@ class SettingsForm(Form):
                         placeholder=_("Enter Default Response"),
                         data_bind="visible: showDefaultSMSResponse",
                     ),
-                    css_class='col-sm-4'
+                    css_class='col-sm-8'
                 ),
                 help_bubble_text=_("Enable this option to provide a "
                                    "default response when a user's incoming SMS does not "
                                    "answer an open survey or match a known keyword."),
                 css_id="default-sms-response-group",
+                field_class='col-sm-6 col-md-9 col-lg-9'
             ),
             FieldWithHelpBubble(
                 "use_restricted_sms_times",
@@ -291,6 +290,7 @@ class SettingsForm(Form):
                               "}",
                 ),
                 data_bind="visible: showRestrictedSMSTimes",
+                field_class='col-md-10 col-lg-10'
             ),
             FieldWithHelpBubble(
                 "send_to_duplicated_case_numbers",
@@ -369,7 +369,7 @@ class SettingsForm(Form):
                         "use_custom_case_username",
                         data_bind="value: use_custom_case_username",
                     ),
-                    css_class='col-sm-2'
+                    css_class='col-sm-4'
                 ),
                 crispy.Div(
                     InlineField(
@@ -377,13 +377,14 @@ class SettingsForm(Form):
                         css_class="input-large",
                         data_bind="visible: showCustomCaseUsername",
                     ),
-                    css_class='col-sm-3'
+                    css_class='col-sm-8'
                 ),
                 help_bubble_text=_("By default, when chatting with a case, "
                     "the chat window will use the case's \"name\" case "
                     "property when displaying the case's name. To use a "
                     "different case property, specify it here."),
                 css_id="custom-case-username-group",
+                field_class='col-sm-6 col-md-9 col-lg-9'
             ),
             hqcrispy.B3MultiField(
                 _("Message Counter"),
@@ -392,7 +393,7 @@ class SettingsForm(Form):
                         "use_custom_message_count_threshold",
                         data_bind="value: use_custom_message_count_threshold",
                     ),
-                    css_class='col-sm-2'
+                    css_class='col-sm-4'
                 ),
                 crispy.Div(
                     InlineField(
@@ -400,7 +401,7 @@ class SettingsForm(Form):
                         css_class="input-large",
                         data_bind="visible: showCustomMessageCountThreshold",
                     ),
-                    css_class='col-sm-3'
+                    css_class='col-sm-8'
                 ),
 
 
@@ -410,6 +411,7 @@ class SettingsForm(Form):
                     "reached. By default, the counter is disabled. To enable "
                     "it, enter the desired threshold here."),
                 css_id="custom-message-count-threshold-group",
+                field_class='col-sm-6 col-md-9 col-lg-9'
             ),
             FieldWithHelpBubble(
                 "use_sms_conversation_times",
@@ -429,6 +431,8 @@ class SettingsForm(Form):
                               "}",
                 ),
                 data_bind="visible: showSMSConversationTimes",
+                label_class='hide',
+                field_class='col-md-12 col-lg-10'
             ),
             crispy.Div(
                 FieldWithHelpBubble(
@@ -466,18 +470,19 @@ class SettingsForm(Form):
                             "use_custom_chat_template",
                             data_bind="value: use_custom_chat_template",
                         ),
-                        css_class='col-sm-2'
+                        css_class='col-sm-4'
                     ),
                     crispy.Div(
                         InlineField(
                             "custom_chat_template",
                             data_bind="visible: showCustomChatTemplate",
                         ),
-                        css_class='col-sm-2'
+                        css_class='col-sm-8'
                     ),
                     help_bubble_text=_("To use a custom template to render the "
                         "chat window, enter it here."),
                     css_id="custom-chat-template-group",
+                    field_class='col-sm-6 col-md-9 col-lg-9'
                 )
             )
         return crispy.Fieldset(
@@ -494,8 +499,8 @@ class SettingsForm(Form):
 
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-10 col-lg-8'
+        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-2 col-md-3 col-lg-3'
         self.helper.layout = crispy.Layout(
             self.section_general,
             self.section_registration,
