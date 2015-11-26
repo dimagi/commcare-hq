@@ -1,5 +1,6 @@
 describe('DownloadExportFormController - Prepare Download', function() {
     DnldExpData.prepareTests();
+    DnldExpData.prepareDownloadController();
     DnldExpData.prepareBackends();
     var downloadId = 'uuid-downloadTest';
 
