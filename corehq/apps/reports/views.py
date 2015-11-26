@@ -1174,7 +1174,7 @@ def undo_close_case_view(request, domain, case_id):
         closing_form_id = request.POST['closing_form']
         assert closing_form_id in case.xform_ids
         form = XFormInstance.get(closing_form_id)
-        form.archive(user=request.couch_user._id)
+        form.archive(user_id=request.couch_user._id)
         messages.success(request, u'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
@@ -1527,7 +1527,7 @@ def archive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance":
-        instance.archive(user=request.couch_user._id)
+        instance.archive(user_id=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
@@ -1572,7 +1572,7 @@ def unarchive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
-        instance.unarchive(user=request.couch_user._id)
+        instance.unarchive(user_id=request.couch_user._id)
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))

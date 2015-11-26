@@ -91,7 +91,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for key, value in update_action.dynamic_properties.items():
             if key == 'location_id':
                 # special treatment of location_id
-                self.case.location_uuid = value
+                self.case.location_id = value
             elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
