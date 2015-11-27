@@ -83,8 +83,7 @@ class FormAccessorTests(TestCase):
         )
 
         with self.assertRaises(AttachmentNotFound):
-            a = FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
-            print a.name, a.form_id, a.content_type
+            FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
 
         with self.assertNumQueries(1):
             attachment_meta = FormAccessorSQL.get_attachment_by_name(form.form_id, 'form.xml')
