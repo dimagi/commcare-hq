@@ -14,7 +14,7 @@ from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
 from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch.database import get_db, iter_docs
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 
 
