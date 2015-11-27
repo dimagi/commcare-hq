@@ -74,17 +74,18 @@ class FormAccessorTests(TestCase):
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
 
-    def test_get_attachment(self):
+    def test_get_attachment_by_name(self):
         _, form, _ = submit_form_locally(
             instance=SIMPLE_FORM,
             domain=DOMAIN,
         )
 
         with self.assertRaises(AttachmentNotFound):
-            FormAccessorSQL.get_attachment(form.form_id, 'not_a_form.xml')
+            a = FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
+            print a.name, a.form_id, a.content_type
 
         with self.assertNumQueries(1):
-            attachment_meta = FormAccessorSQL.get_attachment(form.form_id, 'form.xml')
+            attachment_meta = FormAccessorSQL.get_attachment_by_name(form.form_id, 'form.xml')
 
         self.assertEqual(form.form_id, attachment_meta.form_id)
         self.assertEqual('form.xml', attachment_meta.name)

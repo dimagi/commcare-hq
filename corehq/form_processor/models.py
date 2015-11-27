@@ -202,7 +202,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachment(self.form_id, attachment_name)
+        return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
 
     def get_xml_element(self):
         xml = self.get_xml()

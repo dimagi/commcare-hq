@@ -47,7 +47,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         return form
 
     @staticmethod
-    def get_attachment(form_id, attachment_name):
+    def get_attachment_by_name(form_id, attachment_name):
         try:
             return XFormAttachmentSQL.objects.raw(
                 'select * from get_form_attachment_by_name(%s, %s)',
