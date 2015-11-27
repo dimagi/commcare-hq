@@ -6,8 +6,7 @@ from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
-    BuildVersionSource
+from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -39,8 +38,8 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
         return super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
 
 
-def _build_html(version, version_source):
-    version = version or _("Unknown")
+def _build_html(version_info):
+    version = version_info.build_version or _("Unknown")
     def fmt(title, extra_class=u'', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'
@@ -50,15 +49,15 @@ def _build_html(version, version_source):
             extra_class=extra_class,
             extra_text=extra_text,
         )
-    if version_source == BuildVersionSource.BUILD_ID:
+    if version_info.source == BuildVersionSource.BUILD_ID:
         return fmt(title=_("This was taken from build id"),
                    extra_class=u' label-success')
-    elif version_source == BuildVersionSource.APPVERSION_TEXT:
+    elif version_info.source == BuildVersionSource.APPVERSION_TEXT:
         return fmt(title=_("This was taken from appversion text"))
-    elif version_source == BuildVersionSource.XFORM_VERSION:
+    elif version_info.source == BuildVersionSource.XFORM_VERSION:
         return fmt(title=_("This was taken from xform version"),
                    extra_text=u'≥ ')
-    elif version_source == BuildVersionSource.NONE:
+    elif version_info.source == BuildVersionSource.NONE:
         return fmt(title=_("Unable to determine the build version"))
     else:
         raise AssertionError('version_source must be '
@@ -102,7 +101,7 @@ class ApplicationStatusReport(DeploymentsReport):
 
             if xform:
                 last_seen = xform.received_on
-                build_version, build_version_source = get_build_version(xform)
+                app_version_info = get_app_version_info(xform)
 
                 if xform.app_id:
                     try:
@@ -114,7 +113,7 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     app_name = get_meta_appversion_text(xform)
 
-                build_html = _build_html(build_version, build_version_source)
+                build_html = _build_html(app_version_info)
                 app_name = app_name or _("Unknown App")
                 app_name = format_html(
                     u'{} {}', app_name, mark_safe(build_html),

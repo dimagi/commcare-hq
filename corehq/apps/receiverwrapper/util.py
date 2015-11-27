@@ -1,3 +1,4 @@
+from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import ApplicationBase
@@ -131,28 +132,32 @@ class BuildVersionSource:
     NONE = object()
 
 
-def get_build_version(xform):
+AppVersionInfo = namedtuple('AppInfo', ['build_version', 'commcare_version', 'source'])
+
+
+def get_app_version_info(xform):
     """
     there are a bunch of unreliable places to look for a build version
     this abstracts that out
 
     """
+    appversion_text = get_meta_appversion_text(xform)
+    commcare_version = get_commcare_version_from_appversion_text(appversion_text)
+    build_version = get_version_from_build_id(xform.domain, xform.build_id)
+    if build_version:
+        return AppVersionInfo(build_version, commcare_version, BuildVersionSource.BUILD_ID)
 
-    version = get_version_from_build_id(xform.domain, xform.build_id)
-    if version:
-        return version, BuildVersionSource.BUILD_ID
-
-    version = get_version_from_appversion_text(
+    build_version = get_version_from_appversion_text(
         get_meta_appversion_text(xform)
     )
-    if version:
-        return version, BuildVersionSource.APPVERSION_TEXT
+    if build_version:
+        return AppVersionInfo(build_version, commcare_version, BuildVersionSource.APPVERSION_TEXT)
 
     xform_version = xform.version
     if xform_version and xform_version != '1':
-        return int(xform_version), BuildVersionSource.XFORM_VERSION
+        return AppVersionInfo(int(xform_version), commcare_version, BuildVersionSource.XFORM_VERSION)
 
-    return None, BuildVersionSource.NONE
+    return AppVersionInfo(None, commcare_version, BuildVersionSource.NONE)
 
 
 @quickcache(['domain', 'build_or_app_id'], timeout=24*60*60)
