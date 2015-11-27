@@ -285,11 +285,6 @@ class LocationForm(forms.Form):
                                  loc=location,
                                  moved=reparented)
 
-        if reparented:
-            # post-location move processing here
-            # (none for now; do it as a batch job)
-            pass
-
         return location
 
 
