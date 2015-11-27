@@ -1776,6 +1776,7 @@ class AdjustBalanceForm(forms.Form):
             )
             CreditLine.add_credit(
                 self.amount,
+                permit_inactive=True,
                 **kwargs
             )
         elif method == CreditAdjustmentReason.TRANSFER:
