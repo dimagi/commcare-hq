@@ -6,7 +6,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from crispy_forms.tests.utils import override_settings
@@ -204,6 +204,30 @@ class FormAccessorTests(TestCase):
         self.assertEqual(1, len(forms))
         self.assertEqual(form_ids[0], forms[0].form_id)
 
+
+    def test_archive_form(self):
+        case_id = uuid.uuid4().hex
+        form_id = _submit_simple_form(case_id)
+        form = FormAccessorSQL.get_form(form_id)
+        self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
+        self.assertEqual(0, len(form.history))
+
+        transactions = CaseAccessorSQL.get_transactions(case_id)
+        self.assertEqual(1, len(transactions))
+        self.assertFalse(transactions[0].revoked)
+
+        FormAccessorSQL.archive_form(form_id, 'user1')
+        form = FormAccessorSQL.get_form(form_id)
+        self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
+        operations = form.history
+        self.assertEqual(1, len(operations))
+        self.assertEqual(form_id, operations[0].form_id)
+        self.assertEqual('user1', operations[0].user_id)
+
+        transactions = CaseAccessorSQL.get_transactions(case_id)
+        self.assertEqual(1, len(transactions))
+        self.assertTrue(transactions[0].revoked)
+
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstanceSQL)
         self.assertIsNotNone(form)
@@ -212,8 +236,8 @@ class FormAccessorTests(TestCase):
         return form
 
 
-def _submit_simple_form():
-    case_id = uuid.uuid4().hex
+def _submit_simple_form(case_id=None):
+    case_id = case_id or uuid.uuid4().hex
     return submit_case_blocks(
         CaseBlock(create=True, case_id=case_id).as_string(),
         domain=DOMAIN,

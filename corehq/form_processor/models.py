@@ -466,7 +466,8 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def transactions(self):
-        return list(self.transaction_set.all())
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_transactions(self.case_id)
 
     @property
     @memoized

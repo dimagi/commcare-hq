@@ -109,16 +109,9 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def archive_form(form_id, user_id=None):
-        with transaction.atomic():
-            operation = XFormOperationSQL(
-                user_id=user_id,
-                operation=XFormOperationSQL.ARCHIVE,
-                date=datetime.utcnow(),
-                form_id=form_id
-            )
-            operation.save()
-            XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.ARCHIVED)
-            CaseTransaction.objects.filter(form_id=form_id).update(revoked=True)
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT archive_form(%s, %s)', [form_id, user_id])
+            cursor.execute('SELECT revoke_case_transactions_for_form(%s)', [form_id])
 
     @staticmethod
     def unarchive_form(form_id, user_id=None):
@@ -203,6 +196,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_attachments(case_id):
         return list(CaseAttachmentSQL.objects.filter(case_id=case_id).all())
+
+    @staticmethod
+    def get_transactions(case_id):
+        return list(CaseTransaction.objects.filter(case_id=case_id).all())
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
