@@ -498,7 +498,8 @@ class Location(CachedCouchDocumentMixin, Document):
         parent_id = self.parent_id
         if parent_id:
             sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
-
+        else:
+            sql_location.parent = None
         return sql_location
 
     @property
