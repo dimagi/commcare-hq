@@ -29,23 +29,6 @@ var localize = function(obj, language) {
 };
 localize.NOT_FOUND = '?';
 
-var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-    var url = urlRoot;
-    if (appId !== undefined) {
-        url = url + "view/" + appId;
-        if (moduleId !== undefined) {
-            url = url + "/" + moduleId;
-            if (formId !== undefined) {
-                url = url + "/" + formId;
-                if (caseId !== undefined) {
-                    url = url + "/" + caseId;
-                }
-            }
-        }  
-    }
-    return url;
-};
-
 var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
     // TODO: make this cleaner
     var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
