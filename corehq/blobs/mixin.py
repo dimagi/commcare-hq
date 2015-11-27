@@ -14,6 +14,7 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
     StringProperty,
 )
+from dimagi.utils.decorators.memoized import memoized
 
 
 class BlobMeta(DocumentSchema):
@@ -39,7 +40,7 @@ class BlobMixin(Document):
         if self._id is None:
             raise ResourceNotFound(
                 "cannot manipulate attachment on unidentified document")
-        return join(self.doc_type, self._id)
+        return join(_get_couchdb_name(type(self)), self._id)
 
     @property
     def blobs(self):
@@ -148,3 +149,8 @@ class BlobMixin(Document):
                         self.delete_attachment(name)
                 raise typ, exc, tb
         return atomic_blobs_context()
+
+
+@memoized
+def _get_couchdb_name(doc_class):
+    return doc_class.get_db().dbname

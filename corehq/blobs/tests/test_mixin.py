@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import uuid
 from hashlib import md5
+from os.path import join
 from unittest import TestCase
 from StringIO import StringIO
 
@@ -74,6 +75,15 @@ class TestBlobMixin(TestCase):
         self.obj.put_attachment(content, name, content_type="text/plain")
         self.assertEqual(self.obj.blobs[name].content_type, "text/plain")
         self.assertEqual(self.obj.blobs[name].content_length, 7)
+
+    def test_blob_directory(self):
+        name = "test.1"
+        content = StringIO(b"test_blob_directory content")
+        self.obj.put_attachment(content, name)
+        bucket = join("commcarehq_test", self.obj._id)
+        path = self.db._getpath(name, bucket)
+        with open(path) as fh:
+            self.assertEqual(fh.read(), b"test_blob_directory content")
 
     def test_fallback_on_fetch_fail(self):
         name = "test.1"
@@ -159,8 +169,11 @@ class FakeCouchDocument(mod.BlobMixin, Document):
     doc_type = "FakeCouchDocument"
     saved = False
 
-    def get_db(self):
+    @classmethod
+    def get_db(cls):
         class fake_db:
+            dbname = "commcarehq_test"
+
             class server:
                 @staticmethod
                 def next_uuid():
@@ -194,6 +207,12 @@ class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
     doc_type = "FallbackToCouchDocument"
     migrating_blobs_from_couch = True
+
+    @classmethod
+    def get_db(cls):
+        class fake_db:
+            dbname = "commcarehq_test"
+        return fake_db
 
 
 class BlowUp(Exception):
