@@ -40,7 +40,7 @@ class TestNoCouchLocationTypes(TestCase):
     def setUp(self):
         self.loc = Location(
             domain='test-domain',
-            name='test-type',
+            name='test-type-location-name',
             location_type='test-type',
         )
         self.loc.save()
