@@ -18,4 +18,5 @@ class Migration(migrations.Migration):
         migrate_sql_function('get_form_attachment_by_name'),
         migrate_sql_function('get_forms_by_id'),
         migrate_sql_function('get_form_operations'),
+        migrate_sql_function('get_multiple_forms_attachments'),
     ]

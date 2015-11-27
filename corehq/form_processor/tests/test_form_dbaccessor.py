@@ -1,5 +1,6 @@
 import uuid
 
+from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
@@ -22,7 +23,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
         <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>
         <n1:username>eve</n1:username>
         <n1:userID>cruella_deville</n1:userID>
-        <n1:instanceID>674befa0-2633-43f5-85df-f31f12184e07c</n1:instanceID>
+        <n1:instanceID>{}</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
     </n1:meta>
 </data>"""
@@ -75,8 +76,9 @@ class FormAccessorTests(TestCase):
         self.assertEqual('text/xml', attachment_meta.content_type)
 
     def test_get_attachment_by_name(self):
+        form_xml = SIMPLE_FORM.format(uuid.uuid4().hex)
         _, form, _ = submit_form_locally(
-            instance=SIMPLE_FORM,
+            instance=form_xml,
             domain=DOMAIN,
         )
 
@@ -90,11 +92,11 @@ class FormAccessorTests(TestCase):
         self.assertEqual(form.form_id, attachment_meta.form_id)
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
-        self.assertEqual(SIMPLE_FORM, attachment_meta.read_content())
+        self.assertEqual(form_xml, attachment_meta.read_content())
 
     def test_get_form_operations(self):
         _, form, _ = submit_form_locally(
-            instance=SIMPLE_FORM,
+            instance=SIMPLE_FORM.format(uuid.uuid4().hex),
             domain=DOMAIN,
         )
 
@@ -117,6 +119,41 @@ class FormAccessorTests(TestCase):
         self.assertEqual(XFormOperationSQL.UNARCHIVE, operations[1].operation)
         self.assertIsNotNone(operations[1].date)
         self.assertGreater(operations[1].date, operations[0].date)
+
+    def test_get_forms_with_attachments_meta(self):
+        attachment_file = open('./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg', 'rb')
+        attachments = {
+            'pic.jpg': UploadedFile(attachment_file, 'pic.jpg', content_type='image/jpeg')
+        }
+        _, form_with_pic, _ = submit_form_locally(
+            instance=SIMPLE_FORM.format(uuid.uuid4().hex),
+            domain=DOMAIN,
+            attachments=attachments
+        )
+        _, plain_form, _ = submit_form_locally(
+            instance=SIMPLE_FORM.format(uuid.uuid4().hex),
+            domain=DOMAIN,
+        )
+
+        forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic.form_id, plain_form.form_id])
+        self.assertEqual(2, len(forms))
+        self.assertEqual(form_with_pic.form_id, forms[0].form_id)
+        with self.assertNumQueries(0):
+            expected = {
+                'form.xml': 'text/xml',
+                'pic.jpg': 'image/jpeg',
+            }
+            attachments = forms[0].get_attachments()
+            self.assertEqual(2, len(attachments))
+            self.assertEqual(expected, {att.name: att.content_type for att in attachments})
+
+        with self.assertNumQueries(0):
+            expected = {
+                'form.xml': 'text/xml',
+            }
+            attachments = forms[1].get_attachments()
+            self.assertEqual(1, len(attachments))
+            self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
     def _submit_simple_form(self):
         case_id = uuid.uuid4().hex

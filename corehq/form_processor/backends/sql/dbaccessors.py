@@ -1,4 +1,6 @@
 from datetime import datetime
+from itertools import groupby
+
 from django.db import transaction
 from django.db.models import Prefetch
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
@@ -61,10 +63,25 @@ class FormAccessorSQL(AbstractFormAccessor):
         return list(XFormOperationSQL.objects.raw('SELECT * from get_form_operations(%s)', [form_id]))
 
     @staticmethod
-    def get_forms_with_attachments_meta(form_ids):
-        return XFormInstanceSQL.objects.prefetch_related(
-            Prefetch('attachment_set', to_attr='cached_attachments')
-        ).filter(form_id__in=form_ids)
+    def get_forms_with_attachments_meta(form_ids, ordered=False):
+        forms = FormAccessorSQL.get_forms(form_ids)
+
+        # attachments are already sorted by form_id in SQL
+        attachments = XFormAttachmentSQL.objects.raw(
+            'SELECT * from get_mulitple_forms_attachments(%s)',
+            [form_ids]
+        )
+
+        forms_by_id = {form.form_id: form for form in forms}
+        grouped_attachments = groupby(attachments, lambda x: x.form_id)
+        for form_id, attachments_group in grouped_attachments:
+            form = forms_by_id[form_id]
+            form.cached_attachments = list(attachments_group)
+
+        if ordered:
+            _order_list(form_ids, forms, 'form_id')
+
+        return forms
 
     @staticmethod
     def get_forms_by_type(domain, type_, recent_first=False, limit=None):
