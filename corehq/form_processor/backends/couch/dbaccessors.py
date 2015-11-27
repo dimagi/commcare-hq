@@ -13,7 +13,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         return XFormInstance.get(form_id)
 
     @staticmethod
-    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+    def get_forms_by_type(domain, type_, limit, recent_first=False):
         return get_forms_by_type(domain, type_, recent_first, limit)
 
     @staticmethod

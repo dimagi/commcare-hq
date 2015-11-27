@@ -84,7 +84,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         return forms
 
     @staticmethod
-    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+    def get_forms_by_type(domain, type_, limit, recent_first=False):
         state = doc_type_to_state[type_]
         assert limit is not None
 
