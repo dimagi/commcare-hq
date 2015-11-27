@@ -271,9 +271,10 @@ class LocationForm(forms.Form):
         orig_parent_id = self.cleaned_data.get('orig_parent_id')
         reparented = orig_parent_id is not None
         if reparented:
+            # todo: this property isn't used. could be deleted if we aren't expecting
+            # to do anything more with the data
             location.flag_post_move = True
             location.previous_parents.append(orig_parent_id)
-
         if commit:
             location.save()
 
