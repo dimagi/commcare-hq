@@ -1138,6 +1138,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
             ),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
+            DataTablesColumn("Invoice"),
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
             DataTablesColumn("By User"),
@@ -1145,7 +1146,11 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import EditSubscriptionView, ManageBillingAccountView
+        from corehq.apps.accounting.views import (
+            EditSubscriptionView,
+            InvoiceSummaryView,
+            ManageBillingAccountView,
+        )
         return [
             map(lambda x: x or '', [
                 credit_adj.date_created,
@@ -1180,6 +1185,13 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     )
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(
+                        reverse(InvoiceSummaryView.urlname, args=(credit_adj.invoice.id,)),
+                        credit_adj.invoice.invoice_number
+                    )),
+                    credit_adj.invoice.id,
+                ) if credit_adj.invoice else None,
                 credit_adj.note,
                 quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,
