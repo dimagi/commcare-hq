@@ -25,4 +25,4 @@ class HQGroupExportConfigurationDbAccessorsTest(TestCase):
         self.assertEqual(len(hq_group_export_configs_by_domain('domain2')), 2)
 
     def test_get_all_hq_group_export_configs(self):
-        self.assertEqual(len(list(get_all_hq_group_export_configs)), 3)
+        self.assertEqual(len(list(get_all_hq_group_export_configs())), 3)
