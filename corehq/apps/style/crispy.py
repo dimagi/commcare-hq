@@ -96,6 +96,7 @@ class B3MultiField(LayoutObject):
         self.css_id = kwargs.pop('css_id', '')
         self.field_class = kwargs.pop('field_class', None)
         self.label_class = kwargs.pop('label_class', None)
+        self.help_bubble_text = kwargs.pop('help_bubble_text', '')
         self.flat_attrs = flatatt(kwargs)
 
     def render(self, form, form_style, context, template_pack=None):
@@ -112,7 +113,8 @@ class B3MultiField(LayoutObject):
             'label_html': mark_safe(self.label_html),
             'field_html': mark_safe(html),
             'multifield': self,
-            'error_list': errors
+            'error_list': errors,
+            'help_bubble_text': self.help_bubble_text,
         })
 
         if not (self.field_class or self.label_class):
