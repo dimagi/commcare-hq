@@ -53,10 +53,11 @@ class UserPillow(AliasedElasticPillow):
         """
         user_data = doc_dict.get('user_data', {})
         if user_data and type(user_data) is dict:
-            try:
-                doc_dict['user_data'] = {k: unicode(v) for k, v in user_data.iteritems()}
-            except UnicodeDecodeError:
-                pass            # If we can't decode it, let elastic deal with it
+            for k, v in user_data.iteritems():
+                try:
+                    doc_dict['user_data'][k] = unicode(v)
+                except UnicodeDecodeError:
+                    doc_dict['user_data'][k] = v  # If we can't decode it, let elastic deal with it
         return doc_dict
 
 
