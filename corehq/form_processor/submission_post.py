@@ -181,6 +181,7 @@ class SubmissionPost(object):
                 case_post_save.send(case.__class__, case=case)
 
         unfinished_submission_stub.delete()
+        case_result.close_extensions()
 
         return cases
 
