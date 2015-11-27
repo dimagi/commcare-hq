@@ -2302,7 +2302,7 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class Invitation(CachedCouchDocumentMixin, Document):
+class Invitation(Document):
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
