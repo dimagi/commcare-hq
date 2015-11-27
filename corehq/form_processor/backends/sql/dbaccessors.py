@@ -102,10 +102,11 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def hard_delete_forms(form_ids):
-        with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(form_id__in=form_ids).delete()
-            XFormOperationSQL.objects.filter(form_id__in=form_ids).delete()
-            XFormInstanceSQL.objects.filter(form_id__in=form_ids).delete()
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT * FROM hard_delete_forms(%s)', [form_ids])
+            result = fetchone_as_namedtuple(cursor)
+            print result
+            return result.deleted_count
 
     @staticmethod
     def archive_form(form_id, user_id=None):

@@ -194,6 +194,16 @@ class FormAccessorTests(TestCase):
         self.assertTrue(FormAccessorSQL.form_with_id_exists(form_id1))
         self.assertTrue(FormAccessorSQL.form_with_id_exists(form_id1, DOMAIN))
 
+    def test_hard_delete_forms(self):
+        form_ids = [_submit_simple_form() for i in range(3)]
+        forms = FormAccessorSQL.get_forms(form_ids)
+        self.assertEqual(3, len(forms))
+
+        FormAccessorSQL.hard_delete_forms(form_ids[1:])
+        forms = FormAccessorSQL.get_forms(form_ids)
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_ids[0], forms[0].form_id)
+
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstanceSQL)
         self.assertIsNotNone(form)
