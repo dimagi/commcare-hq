@@ -105,7 +105,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         with connection.cursor() as cursor:
             cursor.execute('SELECT * FROM hard_delete_forms(%s)', [form_ids])
             result = fetchone_as_namedtuple(cursor)
-            print result
             return result.deleted_count
 
     @staticmethod
