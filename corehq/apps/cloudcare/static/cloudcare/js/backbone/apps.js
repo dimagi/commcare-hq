@@ -707,7 +707,6 @@ cloudCare.AppView = Backbone.View.extend({
                             readOnly: true,
                             lineNumbers: true,
                         });
-$('#debugger-xml-instance-tab')
 
                         $instanceTab.off();
                         $instanceTab.on('shown.bs.tab', function() {
