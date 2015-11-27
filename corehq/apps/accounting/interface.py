@@ -73,6 +73,17 @@ from .utils import (
 )
 
 
+def invoice_column_cell(invoice):
+    from corehq.apps.accounting.views import InvoiceSummaryView
+    return format_datatables_data(
+        mark_safe(make_anchor_tag(
+            reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+            invoice.invoice_number
+        )),
+        invoice.id,
+    )
+
+
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
     exportable = True
@@ -713,10 +724,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             invoice_href = reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
 
             columns = [
-                format_datatables_data(
-                    mark_safe(make_anchor_tag(invoice_href, invoice.invoice_number)),
-                    invoice.id,
-                ),
+                invoice_column_cell(invoice),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_href, account_name)),
                     invoice.subscription.account.name
@@ -1148,7 +1156,6 @@ class CreditAdjustmentInterface(GenericTabularReport):
     def rows(self):
         from corehq.apps.accounting.views import (
             EditSubscriptionView,
-            InvoiceSummaryView,
             ManageBillingAccountView,
         )
         return [
@@ -1185,13 +1192,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     )
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
-                format_datatables_data(
-                    mark_safe(make_anchor_tag(
-                        reverse(InvoiceSummaryView.urlname, args=(credit_adj.invoice.id,)),
-                        credit_adj.invoice.invoice_number
-                    )),
-                    credit_adj.invoice.id,
-                ) if credit_adj.invoice else None,
+                invoice_column_cell(credit_adj.invoice) if credit_adj.invoice else None,
                 credit_adj.note,
                 quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,
