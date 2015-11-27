@@ -974,6 +974,29 @@ class SubscribeSMSForm(Form):
         )
     )
 
+    def __init__(self, *args, **kwargs):
+        super(SubscribeSMSForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Subscribe settings'),
+                twbscrispy.PrependedText('stock_out_facilities', ''),
+                twbscrispy.PrependedText('stock_out_commodities', ''),
+                twbscrispy.PrependedText('stock_out_rates', ''),
+                twbscrispy.PrependedText('non_report', '')
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Update settings"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            )
+        )
+
     def save(self, commtrack_settings):
         alert_config = commtrack_settings.alert_config
         alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
