@@ -506,7 +506,6 @@ class OPMCaseRow(object):
                 return False
         return True
 
-
     @property
     def child_has_diarhea_in_this_month(self):
         for form in self.filtered_forms(CHILDREN_FORMS, 1):
