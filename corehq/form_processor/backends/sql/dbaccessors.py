@@ -28,6 +28,14 @@ class FormAccessorSQL(AbstractFormAccessor):
             raise XFormNotFound
 
     @staticmethod
+    def get_forms(form_ids, ordered=False):
+        forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        if ordered:
+            forms = _order_list(form_ids, forms, 'form_id')
+
+        return forms
+
+    @staticmethod
     def get_form_attachments(form_id):
         return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
 
@@ -126,13 +134,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def get_cases(case_ids, ordered=False):
         cases = list(CommCareCaseSQL.objects.filter(case_id__in=list(case_ids)).all())
         if ordered:
-            # SQL won't return the rows in any particular order so we need to order them ourselves
-            index_map = {id_: index for index, id_ in enumerate(case_ids)}
-            ordered_cases = [None] * len(case_ids)
-            for case in cases:
-                ordered_cases[index_map[case.case_id]] = case
-
-            cases = ordered_cases
+            cases = _order_list(case_ids, cases, 'case_id')
 
         return cases
 
@@ -214,3 +216,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if type:
             query.filter(type=type)
         return list(query.values_list('case_id', flat=True))
+
+
+def _order_list(id_list, object_list, id_property):
+    # SQL won't return the rows in any particular order so we need to order them ourselves
+    index_map = {id_: index for index, id_ in enumerate(id_list)}
+    ordered_list = [None] * len(id_list)
+    for obj in object_list:
+        ordered_list[index_map[getattr(obj, id_property)]] = obj
+
+    return ordered_list

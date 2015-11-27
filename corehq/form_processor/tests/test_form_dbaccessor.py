@@ -41,6 +41,22 @@ class FormAccessorTests(TestCase):
         with self.assertRaises(XFormNotFound):
             FormAccessorSQL.get_form('missing_form')
 
+    def test_get_forms(self):
+        form_id1 = self._submit_simple_form()
+        form_id2 = self._submit_simple_form()
+
+        forms = FormAccessorSQL.get_forms(['missing_form'])
+        self.assertEqual([], forms)
+
+        forms = FormAccessorSQL.get_forms([form_id1])
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_id1, forms[0].form_id)
+
+        forms = FormAccessorSQL.get_forms([form_id1, form_id2], ordered=True)
+        self.assertEqual(2, len(forms))
+        self.assertEqual(form_id1, forms[0].form_id)
+        self.assertEqual(form_id2, forms[1].form_id)
+
     def test_get_with_attachments(self):
         form_id = self._submit_simple_form()
         form = FormAccessorSQL.get_form(form_id)
