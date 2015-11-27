@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.db import transaction
 from django.db.models import Prefetch
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
@@ -104,7 +104,10 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_attachment(form_id, attachment_name):
-        return XFormAttachmentSQL.objects.filter(form_id=form_id, name=attachment_name).first()
+        try:
+            return XFormAttachmentSQL.objects.filter(form_id=form_id, name=attachment_name)[0]
+        except IndexError:
+            raise AttachmentNotFound(attachment_name)
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -174,7 +177,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_attachment(case_id, attachment_name):
-        return CaseAttachmentSQL.objects.filter(case_id=case_id, name=attachment_name).first()
+        try:
+            return CaseAttachmentSQL.objects.filter(case_id=case_id, name=attachment_name)[0]
+        except IndexError:
+            raise AttachmentNotFound(attachment_name)
 
     @staticmethod
     def get_attachments(case_id):
