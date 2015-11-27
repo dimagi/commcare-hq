@@ -24,7 +24,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def get_form(form_id):
         try:
             return XFormInstanceSQL.objects.raw('SELECT * from get_form_by_id(%s)', [form_id])[0]
-        except XFormInstanceSQL.DoesNotExist:
+        except IndexError:
             raise XFormNotFound
 
     @staticmethod
