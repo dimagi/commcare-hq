@@ -105,7 +105,10 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_attachment(form_id, attachment_name):
         try:
-            return XFormAttachmentSQL.objects.filter(form_id=form_id, name=attachment_name)[0]
+            return XFormAttachmentSQL.objects.raw(
+                'select * from get_form_attachment_by_name(%s, %s)',
+                [form_id, attachment_name]
+            )[0]
         except IndexError:
             raise AttachmentNotFound(attachment_name)
 
