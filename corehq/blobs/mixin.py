@@ -143,7 +143,7 @@ class BlobMixin(Document):
                 self.save()
             except:
                 typ, exc, tb = sys.exc_info()
-                for name, blob in self.blobs.items():
+                for name in list(self.blobs):
                     if name not in non_atomic_blobs:
                         self.delete_attachment(name)
                 raise typ, exc, tb

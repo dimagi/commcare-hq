@@ -35,7 +35,7 @@ models' attachments to the blob database:
    Don't forget to add a test to verify that your migration actually
    works.
 
-4. Use the `makemigrations` management command to create an new
+4. Use the `makemigrations` management command to create a new
    migration:
    ```
    ./manage.py makemigrations --empty blobs
