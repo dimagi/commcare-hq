@@ -1,3 +1,4 @@
+from unittest import skip
 import uuid
 from xml.etree import ElementTree
 from couchdbkit import ResourceNotFound
@@ -670,6 +671,21 @@ class SyncTokenUpdateTest(SyncBaseTest):
             {parent.case_id: [grandparent.case_id],
              grandparent.case_id: []}
         )
+
+    def test_reassign_case_and_sync(self):
+        case = self.factory.create_case()
+        # reassign from an empty sync token, simulating a web-reassignment on HQ
+        self.factory.create_or_update_case(
+            CaseStructure(
+                case_id=case.case_id,
+                attrs={'owner_id': 'irrelevant'},
+            ),
+            form_extras={'last_sync_token': None}
+        )
+        assert_user_has_case(self, self.user, case._id, restore_id=self.sync_log._id)
+        payload = generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id, version=V2)
+        next_sync_log = synclog_from_restore_payload(payload)
+        self.assertFalse(next_sync_log.phone_is_holding_case(case.case_id))
 
 
 class SyncDeletedCasesTest(SyncBaseTest):

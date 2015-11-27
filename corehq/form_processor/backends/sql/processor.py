@@ -8,6 +8,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
 
 from corehq.form_processor.models import (
@@ -211,18 +212,23 @@ class FormProcessorSQL(object):
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
                 case = case_db.get(case_id)
+                previous_owner = case.owner_id
+                is_creation = False
                 if not case:
                     case = CommCareCaseSQL(domain=domain, case_id=case_id)
+                    is_creation = True
                     case_db.set(case_id, case)
                 case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
                 if case:
-                    touched_cases[case.case_id] = case
+                    touched_cases[case.case_id] = CaseUpdateMetadata(
+                        case=case, is_creation=is_creation, previous_owner_id=previous_owner,
+                    )
         else:
             xform = xforms[0]
             for case_update in get_case_updates(xform):
-                case = case_db.get_case_from_case_update(case_update, xform)
-                if case:
-                    touched_cases[case.case_id] = case
+                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+                if case_update_meta.case:
+                    touched_cases[case_update_meta.case.case_id] = case_update_meta
                 else:
                     logging.error(
                         "XForm %s had a case block that wasn't able to create a case! "

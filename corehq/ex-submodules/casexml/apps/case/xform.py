@@ -236,18 +236,25 @@ def _get_or_update_cases(xforms, case_db):
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
                     yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
+    def _get_dirtiness_flags_for_reassigned_case(case_metas):
+        for case_update_meta in case_metas:
+            if (case_update_meta.previous_owner_id
+                    and case_update_meta.case.owner_id != case_update_meta.previous_owner_id):
+                yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
+
     dirtiness_flags = []
     extensions_to_close = set()
 
-    for case in touched_cases.values():
-        _validate_indices(case)
-        extensions_to_close = extensions_to_close | get_extensions_to_close(case, domain)
-        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case))
-    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
+    for case_update_meta in touched_cases.values():
+        _validate_indices(case_update_meta.case)
+        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
+        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_update_meta.case))
+    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases([meta.case for meta in touched_cases.values()]))
+    dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
 
     return CaseProcessingResult(
         domain,
-        touched_cases.values(),
+        [update.case for update in touched_cases.values()],
         dirtiness_flags,
         extensions_to_close
     )

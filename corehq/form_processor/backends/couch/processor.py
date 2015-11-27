@@ -131,9 +131,9 @@ class FormProcessorCouch(object):
         touched_cases = {}
         for xform in sorted_forms:
             for case_update in get_case_updates(xform):
-                case_doc = case_db.get_case_from_case_update(case_update, xform)
-                if case_doc:
-                    touched_cases[case_doc.case_id] = case_doc
+                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+                if case_update_meta.case:
+                    touched_cases[case_update_meta.case.case_id] = case_update_meta
                 else:
                     logging.error(
                         "XForm %s had a case block that wasn't able to create a case! "
