@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS check_form_exists(text, text);
+DROP FUNCTION IF EXISTS archive_form(text, text);
 
-CREATE FUNCTION check_form_exists(form_id text, domain_name text DEFAULT NULL, form_exists OUT BOOLEAN) AS $$
+CREATE FUNCTION archive_form(form_id text, archiving_user_id text) RETURNS BOOLEAN AS $$
 DECLARE
     inner_query   text;
     select_expr   text := 'SELECT 1 FROM form_processor_xforminstancesql WHERE form_id = $1';

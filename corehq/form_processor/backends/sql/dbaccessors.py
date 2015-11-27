@@ -98,7 +98,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         with connection.cursor() as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
             result = fetchone_as_namedtuple(cursor)
-            return result.check_form_exists
+            return result.form_exists
 
     @staticmethod
     def hard_delete_forms(form_ids):
