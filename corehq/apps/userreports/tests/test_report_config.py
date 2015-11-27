@@ -3,7 +3,8 @@ from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.dbaccessors import get_all_report_configs
+from corehq.apps.userreports.dbaccessors import get_all_report_configs, \
+    delete_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -336,8 +337,7 @@ class ReportConfigurationDbTest(TestCase):
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in get_all_report_configs():
-            config.delete()
+        delete_all_report_configs()
         for domain in Domain.get_all():
             domain.delete()
 
@@ -403,8 +403,7 @@ class ReportTranslationTest(TestCase):
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in get_all_report_configs():
-            config.delete()
+        delete_all_report_configs()
 
     def setUp(self):
         report = ReportConfiguration.by_domain(self.DOMAIN)[0]
