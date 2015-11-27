@@ -1,4 +1,4 @@
-from unittest import TestCase
+from django.test import TestCase
 
 from corehq.apps.reports.dbaccessors import (
     get_all_hq_group_export_configs,
