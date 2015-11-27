@@ -18,7 +18,7 @@ from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location, SQLLocation
 from .signals import location_created, location_edited
-from .util import allowed_child_types
+from .util import allowed_child_types, get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
@@ -259,9 +259,8 @@ class LocationForm(forms.Form):
         coords = self.cleaned_data['coordinates']
         setattr(location, 'latitude', coords[0] if coords else None)
         setattr(location, 'longitude', coords[1] if coords else None)
-        location.lineage = Location(
-            parent=self.cleaned_data['parent_id']
-        ).lineage
+        if self.cleaned_data['parent_id']:
+            location.lineage = get_lineage_from_location_id(self.cleaned_data['parent_id'])
         location.metadata = self.custom_data.get_data_to_save()
 
         for k, v in self.cleaned_data.iteritems():

@@ -296,3 +296,11 @@ def get_locations_from_ids(location_ids, domain):
     if len(locations) != expected_count:
         raise SQLLocation.DoesNotExist('One or more of the locations was not found.')
     return locations
+
+
+def get_lineage_from_location_id(location_id):
+    return get_lineage_from_location(Location.get(location_id))
+
+
+def get_lineage_from_location(location):
+    return list(reversed(location.path))
