@@ -1,4 +1,3 @@
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
@@ -6,9 +5,7 @@ from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from corehq.util.spreadsheets.excel import flatten_json, json_to_headers
-from dimagi.utils.couch.database import iter_bulk_delete
 from dimagi.utils.decorators.memoized import memoized
-from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
