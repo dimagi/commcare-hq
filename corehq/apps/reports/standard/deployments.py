@@ -15,12 +15,11 @@ from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
+from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from couchforms.analytics import get_last_form_submission_for_user_for_app
-from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
@@ -42,7 +41,6 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 def _build_html(version, version_source):
     version = version or _("Unknown")
-
     def fmt(title, extra_class=u'', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'

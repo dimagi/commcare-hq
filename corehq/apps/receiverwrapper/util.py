@@ -6,7 +6,6 @@ from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
-import couchforms
 
 
 def get_submit_url(domain, app_id=None):
