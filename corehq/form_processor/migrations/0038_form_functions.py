@@ -20,4 +20,5 @@ class Migration(migrations.Migration):
         migrate_sql_function('get_form_operations'),
         migrate_sql_function('get_multiple_forms_attachments'),
         migrate_sql_function('get_forms_by_state'),
+        migrate_sql_function('check_form_exists'),
     ]

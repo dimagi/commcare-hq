@@ -1,7 +1,7 @@
 from datetime import datetime
 from itertools import groupby
 
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import Prefetch
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
@@ -9,6 +9,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
 )
+from corehq.form_processor.utils.sql import fetchone_as_namedtuple
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -94,10 +95,10 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
-        query = XFormInstanceSQL.objects.filter(form_id=form_id)
-        if domain:
-            query = query.filter(domain=domain)
-        return query.exists()
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
+            result = fetchone_as_namedtuple(cursor)
+            return result.check_form_exists
 
     @staticmethod
     def hard_delete_forms(form_ids):

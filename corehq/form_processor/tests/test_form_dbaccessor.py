@@ -186,6 +186,14 @@ class FormAccessorTests(TestCase):
         self.assertEqual(1, len(forms))
         self.assertEqual(form_id2, forms[0].form_id)
 
+    def test_form_with_id_exists(self):
+        form_id1 = _submit_simple_form()
+
+        self.assertFalse(FormAccessorSQL.form_with_id_exists('not a form'))
+        self.assertFalse(FormAccessorSQL.form_with_id_exists(form_id1, 'wrong domain'))
+        self.assertTrue(FormAccessorSQL.form_with_id_exists(form_id1))
+        self.assertTrue(FormAccessorSQL.form_with_id_exists(form_id1, DOMAIN))
+
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstanceSQL)
         self.assertIsNotNone(form)
