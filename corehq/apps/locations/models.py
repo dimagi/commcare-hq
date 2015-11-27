@@ -417,13 +417,15 @@ class Location(CachedCouchDocumentMixin, Document):
         return super(Location, cls).wrap(data)
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.locations.util import get_lineage_from_location, get_lineage_from_location_id
         if 'parent' in kwargs:
             parent = kwargs['parent']
             if parent:
-                if not isinstance(parent, Document):
+                if isinstance(parent, Document):
+                    lineage = get_lineage_from_location(parent)
+                else:
                     # 'parent' is a doc id
-                    parent = Location.get(parent)
-                lineage = list(reversed(parent.path))
+                    lineage = get_lineage_from_location_id(parent)
             else:
                 lineage = []
             kwargs['lineage'] = lineage
