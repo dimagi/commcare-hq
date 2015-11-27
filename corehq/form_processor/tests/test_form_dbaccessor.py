@@ -25,6 +25,23 @@ class FormAccessorTests(TestCase):
         with self.assertRaises(XFormNotFound):
             FormAccessorSQL.get_form('missing_form')
 
+    def test_get_with_attachments(self):
+        form_id = self._submit_simple_form()
+        form = FormAccessorSQL.get_form(form_id)
+        with self.assertNumQueries(1):
+            form.get_attachment_meta('form.xml')
+
+        with self.assertNumQueries(2):
+            form = FormAccessorSQL.get_with_attachments(form_id)
+
+        self._check_simple_form(form)
+        with self.assertNumQueries(0):
+            attachment_meta = form.get_attachment_meta('form.xml')
+
+        self.assertEqual(form_id, attachment_meta.form_id)
+        self.assertEqual('form.xml', attachment_meta.name)
+        self.assertEqual('text/xml', attachment_meta.content_type)
+
     def _submit_simple_form(self):
         case_id = uuid.uuid4().hex
         return submit_case_blocks(

@@ -28,13 +28,15 @@ class FormAccessorSQL(AbstractFormAccessor):
             raise XFormNotFound
 
     @staticmethod
+    def get_form_attachments(form_id):
+        return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
+
+    @staticmethod
     def get_with_attachments(form_id):
-        try:
-            return XFormInstanceSQL.objects.prefetch_related(
-                Prefetch('attachment_set', to_attr='cached_attachments')
-            ).get(form_id=form_id)
-        except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
+        form = FormAccessorSQL.get_form(form_id)
+        attachments = FormAccessorSQL.get_form_attachments(form_id)
+        form.cached_attachments = attachments
+        return form
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids):
