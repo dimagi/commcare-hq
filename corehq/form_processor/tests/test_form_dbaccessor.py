@@ -7,7 +7,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-form-accessor'
@@ -91,6 +91,32 @@ class FormAccessorTests(TestCase):
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
         self.assertEqual(SIMPLE_FORM, attachment_meta.read_content())
+
+    def test_get_form_operations(self):
+        _, form, _ = submit_form_locally(
+            instance=SIMPLE_FORM,
+            domain=DOMAIN,
+        )
+
+        operations = FormAccessorSQL.get_form_operations('missing_form')
+        self.assertEqual([], operations)
+
+        operations = FormAccessorSQL.get_form_operations(form.form_id)
+        self.assertEqual([], operations)
+
+        # don't call form.archive to avoid sending the signals
+        FormAccessorSQL.archive_form(form.form_id, user_id='user1')
+        FormAccessorSQL.unarchive_form(form.form_id, user_id='user2')
+
+        operations = FormAccessorSQL.get_form_operations(form.form_id)
+        self.assertEqual(2, len(operations))
+        self.assertEqual('user1', operations[0].user_id)
+        self.assertEqual(XFormOperationSQL.ARCHIVE, operations[0].operation)
+        self.assertIsNotNone(operations[0].date)
+        self.assertEqual('user2', operations[1].user_id)
+        self.assertEqual(XFormOperationSQL.UNARCHIVE, operations[1].operation)
+        self.assertIsNotNone(operations[1].date)
+        self.assertGreater(operations[1].date, operations[0].date)
 
     def _submit_simple_form(self):
         case_id = uuid.uuid4().hex

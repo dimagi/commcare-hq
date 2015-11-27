@@ -57,8 +57,8 @@ class FormAccessorSQL(AbstractFormAccessor):
             raise AttachmentNotFound(attachment_name)
 
     @staticmethod
-    def get_form_history(form_id):
-        return list(XFormOperationSQL.objects.filter(form_id=form_id).order_by('date'))
+    def get_form_operations(form_id):
+        return list(XFormOperationSQL.objects.raw('SELECT * from get_form_operations(%s)', [form_id]))
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids):
