@@ -142,7 +142,7 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
             administrative: commtrack_enabled ? !this.tracks_stock() : true,
             shares_cases: this.shares_cases() === true,
             view_descendants: this.view_descendants() === true,
-            code: this.code() || ''
+            code: this.code().trim() || ''
         };
     };
 }
