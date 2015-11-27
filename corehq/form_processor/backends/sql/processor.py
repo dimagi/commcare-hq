@@ -212,12 +212,12 @@ class FormProcessorSQL(object):
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
                 case = case_db.get(case_id)
-                previous_owner = case.owner_id
                 is_creation = False
                 if not case:
                     case = CommCareCaseSQL(domain=domain, case_id=case_id)
                     is_creation = True
                     case_db.set(case_id, case)
+                previous_owner = case.owner_id
                 case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
                 if case:
                     touched_cases[case.case_id] = CaseUpdateMetadata(
