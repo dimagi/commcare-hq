@@ -247,9 +247,6 @@ var ReportModule = (function () {
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
-        _.defer(function(){
-            $(options.containerId + ' input').on('textchange', self.changeSaveButton);
-        });
         self.lang = options.lang;
         self.moduleName = options.moduleName;
         self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
@@ -324,6 +321,7 @@ var ReportModule = (function () {
 
         self.currentModuleName.subscribe(self.changeSaveButton);
         self.currentModuleFilter.subscribe(self.changeSaveButton);
+        $(options.containerId + ' input').on('textchange', self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};
