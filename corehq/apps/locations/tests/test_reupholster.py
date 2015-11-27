@@ -1,25 +1,67 @@
 from django.test import TestCase
+from corehq.apps.locations.util import get_lineage_from_location_id, get_lineage_from_location
 
 from ..models import Location, LocationType
 from .test_locations import LocationTestBase
 from .util import make_loc, delete_all_locations
 
 
-class TestPath(LocationTestBase):
-    def test_path(self):
+class TestPathLineageAndHierarchy(LocationTestBase):
+
+    def setUp(self):
+        super(TestPathLineageAndHierarchy, self).setUp()
         locs = [
             ('Mass', 'state'),
             ('Suffolk', 'district'),
             ('Boston', 'block'),
         ]
         parent = None
+        self.all_locs = []
         for name, type_ in locs:
             parent = make_loc(name, type=type_, parent=parent)
-        boston = parent
-        self.assertEqual(boston.path, boston.sql_location.path)
+            self.all_locs.append(parent)
+        self.all_loc_ids = [l._id for l in self.all_locs]
+
+    def test_path(self):
+        for i in range(len(self.all_locs)):
+            self.assertEqual(self.all_loc_ids[:i+1], self.all_locs[i].path)
+
+    def test_lineage(self):
+        for i in range(len(self.all_locs)):
+            expected_lineage = list(reversed(self.all_loc_ids[:i+1]))
+            self.assertEqual(expected_lineage, get_lineage_from_location_id(self.all_loc_ids[i]))
+            self.assertEqual(expected_lineage, get_lineage_from_location(self.all_locs[i]))
+
+    def test_move(self):
+        original_parent = self.all_locs[1]
+        new_state = make_loc('New York', type='state')
+        new_district = make_loc('NYC', type='block', parent=original_parent)
+        self.assertEqual(original_parent._id, new_district.sql_location.parent.location_id)
+        # this is ugly, but how it is done in the UI
+        new_district.lineage = get_lineage_from_location(new_state)
+        new_district.save()
+        self.assertEqual(new_state._id, new_district.sql_location.parent.location_id)
+
+    def test_move_to_root(self):
+        original_parent = self.all_locs[1]
+        new_district = make_loc('NYC', type='block', parent=original_parent)
+        self.assertEqual(original_parent._id, new_district.sql_location.parent.location_id)
+        # this is ugly, but how it is done in the UI
+        new_district.lineage = []
+        new_district.save()
+        self.assertEqual(None, new_district.sql_location.parent)
 
 
 class TestNoCouchLocationTypes(TestCase):
+    dependent_apps = [
+        'corehq.apps.commtrack',
+        'corehq.apps.products',
+        'corehq.couchapps',
+        'custom.logistics',
+        'custom.ilsgateway',
+        'custom.ewsghana',
+    ]
+
     @classmethod
     def setUpClass(cls):
         LocationType.objects.create(domain='test-domain', name='test-type')
@@ -31,7 +73,7 @@ class TestNoCouchLocationTypes(TestCase):
     def setUp(self):
         self.loc = Location(
             domain='test-domain',
-            name='test-type',
+            name='test-type-location-name',
             location_type='test-type',
         )
         self.loc.save()
