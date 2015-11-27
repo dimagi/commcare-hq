@@ -86,20 +86,42 @@ def get_version_from_appversion_text(appversion_text):
     ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
     ... )
     19
-
     """
-
     patterns = [
         r' #(\d+) ',
         'b\[(\d+)\]',
         r'App v(\d+).',
     ]
-    if appversion_text:
+    version_string = _first_group_match(appversion_text, patterns)
+    if version_string:
+        return int(version_string)
+
+
+def get_commcare_version_from_appversion_text(appversion_text):
+    """
+    >>> get_commcare_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.11.0"(29272). App v65. '
+    ...     'CommCare Version 2.11. Build 29272, built on: February-14-2014'
+    ... )
+    '2.11.0'
+    >>> get_commcare_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.4.1"(10083). App v19.'
+    ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
+    ... )
+    '2.4.1'
+    """
+    patterns = [
+        r'version "([\d.]+)"',
+    ]
+    return _first_group_match(appversion_text, patterns)
+
+
+def _first_group_match(text, patterns):
+    if text:
         for pattern in patterns:
-            match = re.search(pattern, appversion_text)
+            match = re.search(pattern, text)
             if match:
-                build_number, = match.groups()
-                return int(build_number)
+                return match.groups()[0]
 
 
 class BuildVersionSource:
