@@ -195,13 +195,20 @@ class PaymentMethodType(object):
 
 
 class SubscriptionType(object):
-    CONTRACTED = "CONTRACTED"
-    SELF_SERVICE = "SELF_SERVICE"
+    CONTRACTED = "IMPLEMENTATION"
+    SELF_SERVICE = "PRODUCT"
+    TRIAL = "TRIAL"
+    EXTENDED_TRIAL = "EXTENDED_TRIAL"
+    SANDBOX = "SANDBOX"
+    INTERNAL = "INTERNAL"
     NOT_SET = "NOT_SET"
     CHOICES = (
-        (CONTRACTED, "Contracted"),
-        (SELF_SERVICE, "Self-service"),
-        (NOT_SET, "Not Set"),
+        (CONTRACTED, "Implementation"),
+        (SELF_SERVICE, "Product"),
+        (TRIAL, "Trial"),
+        (EXTENDED_TRIAL, "Extended Trial"),
+        (SANDBOX, "Sandbox"),
+        (INTERNAL, "Internal"),
     )
 
 
