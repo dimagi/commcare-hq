@@ -14,7 +14,6 @@ BEGIN
         inner_query := select_expr || limit_expr;
     END IF;
 
-    RAISE NOTICE 'running query select exists(%s)', inner_query;
     EXECUTE format('SELECT exists(%s)', inner_query)
         INTO form_exists
         USING form_id, domain_name;
