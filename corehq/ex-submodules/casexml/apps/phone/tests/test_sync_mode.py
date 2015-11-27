@@ -1,4 +1,3 @@
-from unittest import skip
 import uuid
 from xml.etree import ElementTree
 from couchdbkit import ResourceNotFound
