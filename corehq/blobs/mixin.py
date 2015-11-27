@@ -80,8 +80,8 @@ class BlobMixin(Document):
         result = db.put(content, name, bucket)
         self.external_blobs[name] = BlobMeta(
             content_type=content_type,
-            content_length=result["length"],
-            digest=result["digest"],
+            content_length=result.length,
+            digest=result.digest,
         )
         return True
 

@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import os
 import re
 import shutil
+from collections import namedtuple
 from hashlib import md5
 from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
 
@@ -49,7 +50,7 @@ class FilesystemBlobDB(object):
                 fh.write(chunk)
                 length += len(chunk)
                 digest.update(chunk)
-        return {"length": length, "digest": "md5-" + digest.hexdigest()}
+        return BlobInfo(length, "md5-" + digest.hexdigest())
 
     def get(self, name, bucket=DEFAULT_BUCKET):
         """Get a blob
@@ -92,6 +93,9 @@ class FilesystemBlobDB(object):
             name = name.encode("utf-8")
         hash = md5(name).hexdigest()
         return safejoin(bucket_path, prefix + "." + hash)
+
+
+BlobInfo = namedtuple("BlobInfo", ["length", "digest"])
 
 
 def safejoin(root, subpath):
