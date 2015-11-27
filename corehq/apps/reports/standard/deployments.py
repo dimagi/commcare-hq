@@ -101,7 +101,6 @@ class ApplicationStatusReport(DeploymentsReport):
 
             if xform:
                 last_seen = xform.received_on
-                app_version_info = get_app_version_info(xform)
 
                 if xform.app_id:
                     try:
@@ -113,10 +112,19 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     app_name = get_meta_appversion_text(xform)
 
+                app_version_info = get_app_version_info(xform)
                 build_html = _build_html(app_version_info)
+                commcare_version = (
+                    'CommCare {}'.format(app_version_info.commcare_version)
+                    if app_version_info.commcare_version
+                    else _("Unknown CommCare Version")
+                )
+                commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
+                    commcare_version)
+                )
                 app_name = app_name or _("Unknown App")
                 app_name = format_html(
-                    u'{} {}', app_name, mark_safe(build_html),
+                    u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
                 )
 
             if app_name is None and selected_app:
