@@ -36,13 +36,13 @@ class FormAccessorSQL(AbstractFormAccessor):
         return forms
 
     @staticmethod
-    def get_form_attachments(form_id):
+    def get_attachments(form_id):
         return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
 
     @staticmethod
     def get_with_attachments(form_id):
         form = FormAccessorSQL.get_form(form_id)
-        attachments = FormAccessorSQL.get_form_attachments(form_id)
+        attachments = FormAccessorSQL.get_attachments(form_id)
         form.cached_attachments = attachments
         return form
 
