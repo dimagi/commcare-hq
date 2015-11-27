@@ -87,15 +87,10 @@ class FormAccessorSQL(AbstractFormAccessor):
     def get_forms_by_type(domain, type_, limit, recent_first=False):
         state = doc_type_to_state[type_]
         assert limit is not None
-
-        order = 'received_on'
-        if recent_first:
-            order = '-{}'.format(order)
-
-        return XFormInstanceSQL.objects.filter(
-            domain=domain,
-            state=state
-        ).order_by(order)[0:limit]
+        return list(XFormInstanceSQL.objects.raw(
+            'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
+            [domain, state, limit, recent_first]
+        ))
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):

@@ -33,7 +33,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 class FormAccessorTests(TestCase):
 
     def test_get_form_by_id(self):
-        form_id = self._submit_simple_form()
+        form_id = _submit_simple_form()
         with self.assertNumQueries(1):
             form = FormAccessorSQL.get_form(form_id)
         self._check_simple_form(form)
@@ -43,8 +43,8 @@ class FormAccessorTests(TestCase):
             FormAccessorSQL.get_form('missing_form')
 
     def test_get_forms(self):
-        form_id1 = self._submit_simple_form()
-        form_id2 = self._submit_simple_form()
+        form_id1 = _submit_simple_form()
+        form_id2 = _submit_simple_form()
 
         forms = FormAccessorSQL.get_forms(['missing_form'])
         self.assertEqual([], forms)
@@ -59,7 +59,7 @@ class FormAccessorTests(TestCase):
         self.assertEqual(form_id2, forms[1].form_id)
 
     def test_get_with_attachments(self):
-        form_id = self._submit_simple_form()
+        form_id = _submit_simple_form()
         form = FormAccessorSQL.get_form(form_id)
         with self.assertNumQueries(1):
             form.get_attachment_meta('form.xml')
@@ -155,13 +155,36 @@ class FormAccessorTests(TestCase):
             self.assertEqual(1, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-    def _submit_simple_form(self):
-        case_id = uuid.uuid4().hex
-        return submit_case_blocks(
-            CaseBlock(create=True, case_id=case_id).as_string(),
-            domain=DOMAIN,
-            user_id='user1',
-        )
+    def test_get_forms_by_type(self):
+        form_id1 = _submit_simple_form()
+        form_id2 = _submit_simple_form()
+
+        # basic check
+        forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5)
+        self.assertEqual(2, len(forms))
+        self.assertEqual([form_id1, form_id2], [f.form_id for f in forms])
+
+        # check reverse ordering
+        forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5, recent_first=True)
+        self.assertEqual(2, len(forms))
+        self.assertEqual([form_id2, form_id1], [f.form_id for f in forms])
+
+        # check limit
+        forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 1)
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_id1, forms[0].form_id)
+
+        # change state of form1
+        FormAccessorSQL.archive_form(form_id1, 'user1')
+
+        # check filtering by state
+        forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormArchived', 2)
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_id1, forms[0].form_id)
+
+        forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 2)
+        self.assertEqual(1, len(forms))
+        self.assertEqual(form_id2, forms[0].form_id)
 
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstanceSQL)
@@ -169,3 +192,12 @@ class FormAccessorTests(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+
+
+def _submit_simple_form():
+    case_id = uuid.uuid4().hex
+    return submit_case_blocks(
+        CaseBlock(create=True, case_id=case_id).as_string(),
+        domain=DOMAIN,
+        user_id='user1',
+    )
