@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from copy import copy
 import os
 import unittest
@@ -65,6 +66,7 @@ class AppAndTestMap(object):
         self.required_apps = set([
             'django.contrib.auth',
             'django.contrib.contenttypes',
+            'django.contrib.sessions'
         ])
         self.apps = set([])
         self.tests = []  # contains tuples of app_labels and test classes
@@ -115,27 +117,26 @@ class AppAndTestMap(object):
         return dependencies
 
 
-class optimize_apps_for_test_labels(object):
+@contextmanager
+def optimize_apps_for_test_labels(test_labels):
+    test_map = AppAndTestMap()
+    for label in test_labels:
+        if '.' in label:
+            test_map.add_test(label.split('.')[0], build_test(label))
+        else:
+            test_map.add_app(label)
 
-    def __init__(self, test_labels):
-        self.test_map = AppAndTestMap()
-        for label in test_labels:
-            if '.' in label:
-                self.test_map.add_test(label.split('.')[0], build_test(label))
-            else:
-                self.test_map.add_app(label)
-
-    def __enter__(self):
-        self._real_installed_apps = settings.INSTALLED_APPS
-        needed_apps = self.test_map.get_needed_installed_apps()
-        print 'overriding settings.INSTALLED_APPS to {}'.format(
-            ','.join(self.test_map.get_needed_installed_apps())
-        )
-        settings.INSTALLED_APPS = tuple(needed_apps)
-        apps.set_installed_apps(settings.INSTALLED_APPS)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        settings.INSTALLED_APPS = self._real_installed_apps
+    _real_installed_apps = settings.INSTALLED_APPS
+    needed_apps = test_map.get_needed_installed_apps()
+    print 'overriding settings.INSTALLED_APPS to {}'.format(
+        ','.join(test_map.get_needed_installed_apps())
+    )
+    settings.INSTALLED_APPS = tuple(needed_apps)
+    apps.set_installed_apps(settings.INSTALLED_APPS)
+    try:
+        yield
+    finally:
+        settings.INSTALLED_APPS = _real_installed_apps
         apps.unset_installed_apps()
 
 

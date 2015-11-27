@@ -2187,7 +2187,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build() + self.validate_details_for_build()
-        if not self.forms:
+        if not self.forms and not self.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
                 'module': self.get_module_info(),
@@ -3429,7 +3429,9 @@ class ReportAppConfig(DocumentSchema):
     """
     report_id = StringProperty(required=True)
     header = DictProperty()
-    description = StringProperty()
+    localized_description = DictProperty()
+    xpath_description = StringProperty()
+    use_xpath_description = BooleanProperty(default=False)
     graph_configs = DictProperty(ReportGraphConfig)
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -3443,13 +3445,15 @@ class ReportAppConfig(DocumentSchema):
 
     @classmethod
     def wrap(cls, doc):
-        # for backwards compatibility with apps that have localized descriptions
-        from corehq.apps.userreports.util import default_language, localize
-        if isinstance(doc.get('description'), dict):
-            if doc['description']:
-                doc['description'] = localize(doc['description'], default_language())
-            else:
-                doc['description'] = ''
+        # for backwards compatibility with apps that have localized or xpath descriptions
+        old_description = doc.get('description')
+        if old_description:
+            if isinstance(old_description, basestring) and not doc.get('xpath_description'):
+                doc['xpath_description'] = old_description
+            elif isinstance(old_description, dict) and not doc.get('localized_description'):
+                doc['localized_description'] = old_description
+        if not doc.get('xpath_description'):
+            doc['xpath_description'] = '""'
 
         return super(ReportAppConfig, cls).wrap(doc)
 
@@ -3871,6 +3875,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     amplifies_project = StringProperty(
         choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
         default=AMPLIFIES_NOT_SET
+    )
+    minimum_use_threshold = StringProperty(
+        default='15'
     )
 
     # exchange properties

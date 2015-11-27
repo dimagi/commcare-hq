@@ -9,7 +9,7 @@ from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
 from corehq.util.quickcache import quickcache

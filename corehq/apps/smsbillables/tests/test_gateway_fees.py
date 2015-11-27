@@ -212,7 +212,6 @@ class TestGatewayFee(TestCase):
             SMSLog.by_domain_asc(generator.TEST_DOMAIN).all()
         )
 
-        SMSBackend.get_db().delete_docs(
-            SMSBackend.get_db().all_docs(
-                keys=self.backend_ids.values(), include_docs=True).all()
-        )
+        backend_classes = get_available_backends(index_by_api_id=True)
+        for api_id, backend_id in self.backend_ids.iteritems():
+            backend_classes[api_id].get(backend_id).delete()

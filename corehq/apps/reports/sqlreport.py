@@ -235,10 +235,9 @@ class SqlData(ReportDataSource):
     def query_context(self):
         return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
 
-    def get_data(self, slugs=None):
-        data = self._get_data(slugs=slugs)
-        columns = [c for c in self.columns if not slugs or c.slug in slugs]
-        formatter = DataFormatter(DictDataFormat(columns, no_value=None))
+    def get_data(self):
+        data = self._get_data()
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
         if self.group_by:
@@ -249,14 +248,13 @@ class SqlData(ReportDataSource):
     def slugs(self):
         return [c.slug for c in self.columns]
 
-    def _get_data(self, slugs=None):
+    def _get_data(self):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
         for c in self.columns:
-            if not slugs or c.slug in slugs:
-                qc.append_column(c.view)
+            qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
         try:

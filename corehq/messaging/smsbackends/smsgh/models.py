@@ -1,6 +1,6 @@
 import requests
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.sms.models import SMS
+from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
 from dimagi.ext.couchdbkit import StringProperty
@@ -75,3 +75,25 @@ class SMSGHBackend(SMSBackend):
             self.handle_error(response, msg)
         else:
             self.handle_success(response, msg)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLSMSGHBackend
+
+
+class SQLSMSGHBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return SMSGHBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'from_number',
+            'client_id',
+            'client_secret',
+        ]

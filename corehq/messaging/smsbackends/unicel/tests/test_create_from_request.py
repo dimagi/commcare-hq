@@ -5,7 +5,7 @@ from django.test.client import Client
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.messaging.smsbackends.unicel.api import InboundParams
+from corehq.messaging.smsbackends.unicel.models import InboundParams
 import json
 
 class IncomingPostTest(TestCase):

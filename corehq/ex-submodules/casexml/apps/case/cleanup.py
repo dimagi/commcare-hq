@@ -86,4 +86,4 @@ def safe_hard_delete(case):
         if any([c.id != case.case_id for c in case_updates]):
             raise CommCareCaseError("You can't hard delete a case that has shared forms with other cases!")
 
-    interface.bulk_delete(case, forms)
+    interface.hard_delete_case_and_forms(case, forms)

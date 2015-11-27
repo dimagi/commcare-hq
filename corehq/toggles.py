@@ -423,12 +423,6 @@ FORM_LINK_WORKFLOW = StaticToggle(
 
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
-VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
-    'transaction_question_types',
-    "Adds transaction-related question types in the form builder",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
@@ -701,12 +695,13 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-USE_SQL_BACKEND = StaticToggle(
-    'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
+# Removed until ready for production
+# USE_SQL_BACKEND = StaticToggle(
+#     'sql_backend',
+#     'Uses a sql backend instead of a couch backend for form processing',
+#     TAG_PRODUCT_CORE,
+#     [NAMESPACE_DOMAIN]
+# )
 
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',

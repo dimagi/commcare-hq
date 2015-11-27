@@ -574,7 +574,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and sp.closed:
             for action in sp.actions:
                 if action.action_type == 'close':
-                    action.xform.archive(user=COMMTRACK_USERNAME)
+                    action.xform.archive(user_id=COMMTRACK_USERNAME)
                     break
 
     def unarchive(self):

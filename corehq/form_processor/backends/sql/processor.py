@@ -1,40 +1,23 @@
 import datetime
 import logging
 import uuid
-import hashlib
 
 from django.db import transaction
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from couchforms.const import ATTACHMENT_NAME
-from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
+    CommCareCaseSQL, FormEditRebuild, Attachment)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
 class FormProcessorSQL(object):
-
-    @classmethod
-    def post_xform(cls, instance_xml, attachments=None, process=None, domain='test-domain'):
-        """
-        create a new xform and releases the lock
-
-        this is a testing entry point only and is not to be used in real code
-
-        """
-        if not process:
-            def process(xform):
-                xform.domain = domain
-        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
-        with xform_lock as xforms:
-            cls.save_processed_models(xforms)
-            return xforms[0]
 
     @classmethod
     def store_attachments(cls, xform, attachments):
@@ -42,7 +25,7 @@ class FormProcessorSQL(object):
         for attachment in attachments:
             xform_attachment = XFormAttachmentSQL(
                 name=attachment.name,
-                attachment_uuid=unicode(uuid.uuid4()),
+                attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
                 md5=attachment.md5,
             )
@@ -57,31 +40,21 @@ class FormProcessorSQL(object):
 
         return XFormInstanceSQL(
             # other properties can be set post-wrap
-            form_uuid=form_id,
+            form_id=form_id,
             xmlns=form_data.get('@xmlns'),
             received_on=datetime.datetime.utcnow(),
             user_id=extract_meta_user_id(form_data),
         )
 
     @classmethod
-    def is_duplicate(cls, xform):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform.form_id).exists()
+    def is_duplicate(cls, xform_id, domain=None):
+        return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
-    def should_handle_as_duplicate_or_edit(cls, xform_id, domain):
-        return XFormInstanceSQL.objects.filter(form_uuid=xform_id, domain=domain).exists()
-
-    @classmethod
-    def bulk_delete(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(xform__in=xforms).delete()
-            XFormOperationSQL.objects.filter(xform__in=xforms).delete()
-            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
-            CommCareCaseIndexSQL.objects.filter(case=case).delete()
-            CaseAttachmentSQL.objects.filter(case=case).delete()
-            CaseTransaction.objects.filter(case=case).delete()
-            case.delete()
+        FormAccessorSQL.hard_delete_forms(form_ids)
+        CaseAccessorSQL.hard_delete_case(case.case_id)
 
     @classmethod
     def save_processed_models(cls, xforms, cases=None):
@@ -110,18 +83,18 @@ class FormProcessorSQL(object):
                     'Reassigning attachments and operations to deprecated form: %s -> %s',
                     xform.orig_id, xform.form_id
                 )
-                attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
-                attachments.update(xform_id=xform.form_id)
+                attachments = XFormAttachmentSQL.objects.filter(form_id=xform.orig_id)
+                attachments.update(form_id=xform.form_id)
 
-                operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
-                operations.update(xform_id=xform.form_id)
+                operations = XFormOperationSQL.objects.filter(form_id=xform.orig_id)
+                operations.update(form_id=xform.form_id)
 
             unsaved_attachments = getattr(xform, 'unsaved_attachments', None)
             if unsaved_attachments:
                 logging.debug('Saving %s attachments for form: %s', len(unsaved_attachments), xform.form_id)
                 for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.xform = xform
-                xform.attachments.bulk_create(unsaved_attachments)
+                    unsaved_attachment.form = xform
+                xform.attachment_set.bulk_create(unsaved_attachments)
                 del xform.unsaved_attachments
 
     @classmethod
@@ -205,9 +178,10 @@ class FormProcessorSQL(object):
         return instance
 
     @classmethod
-    def log_submission_error(cls, instance, message, callback):
+    def submission_error_form_instance(cls, domain, instance, message):
         xform = XFormInstanceSQL(
-            form_uuid=uuid.uuid4().hex,
+            domain=domain,
+            form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
             state=XFormInstanceSQL.SUBMISSION_ERROR_LOG
@@ -218,10 +192,6 @@ class FormProcessorSQL(object):
             content_type='text/xml',
         )])
 
-        if callback:
-            callback(xform)
-
-        cls.save_xform(xform)
         return xform
 
     @staticmethod
@@ -264,11 +234,11 @@ class FormProcessorSQL(object):
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail):
         try:
-            case = CommCareCaseSQL.get(case_id)
+            case = CaseAccessorSQL.get_case(case_id)
             assert case.domain == domain
             found = True
         except CaseNotFound:
-            case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
+            case = CommCareCaseSQL(case_id=case_id, domain=domain)
             found = False
 
         case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
@@ -286,19 +256,20 @@ class FormProcessorSQL(object):
         return case
 
     @staticmethod
-    def get_xforms(xform_ids):
-        return XFormInstanceSQL.get_forms_with_attachments(xform_ids)
+    def get_case_forms(case_id):
+        xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
+        return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
 
 
 def get_case_transactions(case_id, updated_xforms=None):
-    transactions = CaseTransaction.get_transactions_for_case_rebuild(case_id)
-    form_ids = {tx.form_uuid for tx in transactions}
+    transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
+    form_ids = {tx.form_id for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
 
     form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
-    xform_map = {form.form_id: form for form in XFormInstanceSQL.get_forms_with_attachments(form_ids_to_fetch)}
+    xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):
         if form_id in updated_xforms_map:
@@ -310,10 +281,10 @@ def get_case_transactions(case_id, updated_xforms=None):
             raise XFormNotFound
 
     for transaction in transactions:
-        if transaction.form_uuid:
+        if transaction.form_id:
             try:
-                transaction.cached_form = get_form(transaction.form_uuid)
+                transaction.cached_form = get_form(transaction.form_id)
             except XFormNotFound:
-                logging.error('Form not found during rebuild: %s', transaction.form_uuid)
+                logging.error('Form not found during rebuild: %s', transaction.form_id)
 
     return transactions
