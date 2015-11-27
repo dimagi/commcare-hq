@@ -204,8 +204,7 @@ class FormAccessorTests(TestCase):
         self.assertEqual(1, len(forms))
         self.assertEqual(form_ids[0], forms[0].form_id)
 
-
-    def test_archive_form(self):
+    def test_archive_unarchive_form(self):
         case_id = uuid.uuid4().hex
         form_id = _submit_simple_form(case_id)
         form = FormAccessorSQL.get_form(form_id)
@@ -227,6 +226,18 @@ class FormAccessorTests(TestCase):
         transactions = CaseAccessorSQL.get_transactions(case_id)
         self.assertEqual(1, len(transactions))
         self.assertTrue(transactions[0].revoked)
+
+        FormAccessorSQL.unarchive_form(form_id, 'user2')
+        form = FormAccessorSQL.get_form(form_id)
+        self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
+        operations = form.history
+        self.assertEqual(2, len(operations))
+        self.assertEqual(form_id, operations[1].form_id)
+        self.assertEqual('user2', operations[1].user_id)
+
+        transactions = CaseAccessorSQL.get_transactions(case_id)
+        self.assertEqual(1, len(transactions))
+        self.assertFalse(transactions[0].revoked)
 
     def _check_simple_form(self, form):
         self.assertIsInstance(form, XFormInstanceSQL)
