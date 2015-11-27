@@ -39,6 +39,20 @@ class FormAccessorSQL(AbstractFormAccessor):
         return form
 
     @staticmethod
+    def get_attachment(form_id, attachment_name):
+        try:
+            return XFormAttachmentSQL.objects.raw(
+                'select * from get_form_attachment_by_name(%s, %s)',
+                [form_id, attachment_name]
+            )[0]
+        except IndexError:
+            raise AttachmentNotFound(attachment_name)
+
+    @staticmethod
+    def get_form_history(form_id):
+        return list(XFormOperationSQL.objects.filter(form_id=form_id).order_by('date'))
+
+    @staticmethod
     def get_forms_with_attachments_meta(form_ids):
         return XFormInstanceSQL.objects.prefetch_related(
             Prefetch('attachment_set', to_attr='cached_attachments')
@@ -97,20 +111,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.save()
             XFormInstanceSQL.objects.filter(form_id=form_id).update(state=XFormInstanceSQL.NORMAL)
             CaseTransaction.objects.filter(form_id=form_id).update(revoked=False)
-
-    @staticmethod
-    def get_form_history(form_id):
-        return list(XFormOperationSQL.objects.filter(form_id=form_id).order_by('date'))
-
-    @staticmethod
-    def get_attachment(form_id, attachment_name):
-        try:
-            return XFormAttachmentSQL.objects.raw(
-                'select * from get_form_attachment_by_name(%s, %s)',
-                [form_id, attachment_name]
-            )[0]
-        except IndexError:
-            raise AttachmentNotFound(attachment_name)
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
