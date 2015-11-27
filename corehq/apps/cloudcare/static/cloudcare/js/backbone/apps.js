@@ -695,7 +695,10 @@ cloudCare.AppView = Backbone.View.extend({
                     url: self.options.renderFormRoot,
                     data: {'session_id': sessionId},
                     success: function (data) {
-                        var codeMirror = CodeMirror(function(el) {
+                        var $instanceTab = $('#debugger-xml-instance-tab'),
+                            codeMirror;
+
+                        codeMirror = CodeMirror(function(el) {
                             $('#xml-viewer-pretty').html(el);
                         }, {
                             value: data.instance_xml,
@@ -703,6 +706,12 @@ cloudCare.AppView = Backbone.View.extend({
                             viewportMargin: Infinity,
                             readOnly: true,
                             lineNumbers: true,
+                        });
+$('#debugger-xml-instance-tab')
+
+                        $instanceTab.off();
+                        $instanceTab.on('shown.bs.tab', function() {
+                            codeMirror.refresh();
                         });
 
                         $("#question-viewer-pretty").html(data.form_data || 'Could not render form');
