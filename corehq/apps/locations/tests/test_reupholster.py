@@ -1,22 +1,37 @@
 from django.test import TestCase
+from corehq.apps.locations.util import get_lineage_from_location_id, get_lineage_from_location
 
 from ..models import Location, LocationType
 from .test_locations import LocationTestBase
 from .util import make_loc, delete_all_locations
 
 
-class TestPath(LocationTestBase):
-    def test_path(self):
+class TestPathLineageAndHierarchy(LocationTestBase):
+
+    def setUp(self):
+        super(TestPathLineageAndHierarchy, self).setUp()
         locs = [
             ('Mass', 'state'),
             ('Suffolk', 'district'),
             ('Boston', 'block'),
         ]
         parent = None
+        self.all_locs = []
         for name, type_ in locs:
             parent = make_loc(name, type=type_, parent=parent)
-        boston = parent
-        self.assertEqual(boston.path, boston.sql_location.path)
+            self.all_locs.append(parent)
+        self.all_loc_ids = [l._id for l in self.all_locs]
+
+    def test_path(self):
+        for i in range(len(self.all_locs)):
+            self.assertEqual(self.all_loc_ids[:i+1], self.all_locs[i].path)
+
+    def test_lineage(self):
+        for i in range(len(self.all_locs)):
+            expected_lineage = list(reversed(self.all_loc_ids[:i+1]))
+            self.assertEqual(expected_lineage, get_lineage_from_location_id(self.all_loc_ids[i]))
+            self.assertEqual(expected_lineage, get_lineage_from_location(self.all_locs[i]))
+
 
 
 class TestNoCouchLocationTypes(TestCase):
