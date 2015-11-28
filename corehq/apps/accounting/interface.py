@@ -695,7 +695,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
 
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
-            header.add_column(DataTablesColumn("View Invoice"))
         return header
 
     @property
@@ -787,14 +786,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
                     "data-target": adjust_href,
                     "class": "btn",
                 }
-                columns.extend([
+                columns.append(
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
-                    mark_safe(make_anchor_tag(
-                        invoice_href,
-                        "Go to Invoice",
-                        {"class": "btn"},
-                    ))
-                ])
+                )
             rows.append(columns)
         return rows
 
