@@ -656,6 +656,7 @@ class AliasedElasticPillow(BasicPillow):
     def calc_mapping_hash(mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
+    @classmethod
     def get_unique_id(self):
         """
         a unique identifier for the pillow - typically the hash associated with the index
@@ -663,7 +664,8 @@ class AliasedElasticPillow(BasicPillow):
         # for legacy reasons this is the default until we remove it.
         return self.calc_meta()
 
-    def calc_meta(self):
+    @classmethod
+    def calc_meta(cls):
         # todo: we should get rid of this and have subclasses override get_unique_id
         # instead of calc_meta
         raise NotImplementedError("Need to either override get_unique_id or implement your own meta calculator")
@@ -721,8 +723,12 @@ class AliasedElasticPillow(BasicPillow):
         Gets the doc_name in which to set the checkpoint for itself, based upon
         class name and the hashed name representation.
         """
+        return self.get_legacy_name()
+
+    @classmethod
+    def get_legacy_name(cls):
         return "%s.%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self.get_unique_id(), get_machine_id())
+            cls.__module__, cls.__name__, cls.get_unique_id(), get_machine_id())
 
 
 def retry_on_connection_failure(fn):

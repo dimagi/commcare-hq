@@ -25,9 +25,10 @@ class TestElasticPillow(AliasedElasticPillow):
         }
     }
 
-    def calc_meta(self):
+    @classmethod
+    def calc_meta(cls):
         # must be overridden by subclasses of AliasedElasticPillow
-        return self.es_index
+        return cls.es_index
 
 
 class ElasticPillowTest(SimpleTestCase):
