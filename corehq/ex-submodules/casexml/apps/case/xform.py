@@ -237,6 +237,8 @@ def _get_or_update_cases(xforms, case_db):
                     yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
     def _get_dirtiness_flags_for_reassigned_case(case_metas):
+        # for reassigned cases, we mark them temporarily dirty to allow phones to sync
+        # the latest changes. these will get cleaned up when the weekly rebuild triggers
         for case_update_meta in case_metas:
             if (case_update_meta.previous_owner_id
                     and case_update_meta.case.owner_id != case_update_meta.previous_owner_id):
@@ -245,12 +247,13 @@ def _get_or_update_cases(xforms, case_db):
     dirtiness_flags = []
     extensions_to_close = set()
 
+    # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
+    dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
     for case_update_meta in touched_cases.values():
         _validate_indices(case_update_meta.case)
         extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
         dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_update_meta.case))
     dirtiness_flags += list(_get_dirtiness_flags_for_child_cases([meta.case for meta in touched_cases.values()]))
-    dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
 
     return CaseProcessingResult(
         domain,
