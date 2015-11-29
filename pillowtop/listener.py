@@ -663,7 +663,8 @@ class AliasedElasticPillow(BasicPillow):
         # for legacy reasons this is the default until we remove it.
         return self.calc_meta()
 
-    def calc_meta(self):
+    @classmethod
+    def calc_meta(cls):
         # todo: we should get rid of this and have subclasses override get_unique_id
         # instead of calc_meta
         raise NotImplementedError("Need to either override get_unique_id or implement your own meta calculator")
