@@ -1,5 +1,6 @@
 from decimal import Decimal
 import logging
+from django.db import transaction
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -404,7 +405,8 @@ class AutoPayInvoicePaymentHandler(object):
                 self._handle_card_errors(invoice, payment_method, e)
                 continue
             else:
-                invoice.pay_invoice(payment_record)
+                with transaction.atomic():
+                    invoice.pay_invoice(payment_record)
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
