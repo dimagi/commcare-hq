@@ -4,9 +4,11 @@ from casexml.apps.case.xform import extract_case_blocks
 
 from corehq.pillows.base import convert_property_dict
 from .mappings.reportxform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from .xform import XFormPillow
 
 COMPUTED_CASEBLOCKS_KEY = '_case_blocks'
+
 
 class ReportXFormPillow(XFormPillow):
     """
@@ -20,8 +22,12 @@ class ReportXFormPillow(XFormPillow):
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
 
+    def __init__(self, create_index=True, online=True):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(ReportXFormPillow, self).__init__(create_index=create_index, online=online, checkpoint=checkpoint)
+
     @classmethod
-    def get_unique_id(self):
+    def get_unique_id(cls):
         return REPORT_XFORM_INDEX
 
     def change_transform(self, doc_dict):
