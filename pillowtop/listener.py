@@ -723,8 +723,12 @@ class AliasedElasticPillow(BasicPillow):
         Gets the doc_name in which to set the checkpoint for itself, based upon
         class name and the hashed name representation.
         """
+        return self.get_legacy_name()
+
+    @classmethod
+    def get_legacy_name(cls):
         return "%s.%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self.get_unique_id(), get_machine_id())
+            cls.__module__, cls.__name__, cls.get_unique_id(), get_machine_id())
 
 
 def retry_on_connection_failure(fn):
