@@ -1482,6 +1482,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
             *self.form_actions
         )
 
+    @transaction.atomic
     def process_subscription_management(self):
         enterprise_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, SoftwarePlanEdition.ENTERPRISE
@@ -1561,6 +1562,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             *self.form_actions
         )
 
+    @transaction.atomic
     def process_subscription_management(self):
         advanced_trial_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
@@ -1705,23 +1707,21 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 *self.form_actions
             )
 
+    @transaction.atomic
     def process_subscription_management(self):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
 
         if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
-            with transaction.atomic():
-                # atomically create new subscription
-                new_subscription = Subscription.new_domain_subscription(
-                    self.next_account,
-                    self.domain,
-                    new_plan_version,
-                    date_start=self.cleaned_data['start_date'],
-                    **self.subscription_default_fields
-                )
+            new_subscription = Subscription.new_domain_subscription(
+                self.next_account,
+                self.domain,
+                new_plan_version,
+                date_start=self.cleaned_data['start_date'],
+                **self.subscription_default_fields
+            )
         else:
-            # change plan method is already atomic
             new_subscription = self.current_subscription.change_plan(
                 new_plan_version,
                 transfer_credits=self.current_subscription.account == self.next_account,
