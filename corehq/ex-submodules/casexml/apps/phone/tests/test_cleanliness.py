@@ -9,10 +9,7 @@ from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_val
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from casexml.apps.phone.restore import RestoreState, RestoreParams
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
