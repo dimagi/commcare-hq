@@ -1109,6 +1109,8 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                                               "Did you forget the country code?"))
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
+    # Does not use the commit kwarg.
+    # TODO - Should support it or otherwise change the function name
     @transaction.atomic
     def save(self, commit=True):
         billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
