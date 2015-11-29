@@ -20,6 +20,7 @@ class ReportXFormPillow(XFormPillow):
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
 
+    @classmethod
     def get_unique_id(self):
         return REPORT_XFORM_INDEX
 

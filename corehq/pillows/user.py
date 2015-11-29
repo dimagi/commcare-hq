@@ -38,6 +38,7 @@ class UserPillow(AliasedElasticPillow):
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
+    @classmethod
     def get_unique_id(self):
         return USER_INDEX
 
