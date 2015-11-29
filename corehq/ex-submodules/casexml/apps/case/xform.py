@@ -240,8 +240,7 @@ def _get_or_update_cases(xforms, case_db):
         # for reassigned cases, we mark them temporarily dirty to allow phones to sync
         # the latest changes. these will get cleaned up when the weekly rebuild triggers
         for case_update_meta in case_metas:
-            if (case_update_meta.previous_owner_id
-                    and case_update_meta.case.owner_id != case_update_meta.previous_owner_id):
+            if _is_change_of_ownership(case_update_meta.previous_owner_id, case_update_meta.case.owner_id):
                 yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
 
     dirtiness_flags = []
@@ -260,6 +259,14 @@ def _get_or_update_cases(xforms, case_db):
         [update.case for update in touched_cases.values()],
         dirtiness_flags,
         extensions_to_close
+    )
+
+
+def _is_change_of_ownership(previous_owner_id, next_owner_id):
+    return (
+        previous_owner_id
+        and previous_owner_id != UNOWNED_EXTENSION_OWNER_ID
+        and previous_owner_id != next_owner_id
     )
 
 
