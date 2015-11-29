@@ -1109,6 +1109,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                                               "Did you forget the country code?"))
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
+    @transaction.atomic
     def save(self, commit=True):
         billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
         billing_contact_info.account = self.account
@@ -1165,39 +1166,40 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         )
 
     def save(self, commit=True):
-        account_save_success = super(ConfirmNewSubscriptionForm, self).save(commit=False)
-        if not account_save_success:
-            return False
-
         try:
-            if self.current_subscription is not None:
-                if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                    self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
-                                                                  web_user=self.creating_user)
+            with transaction.atomic():
+                account_save_success = super(ConfirmNewSubscriptionForm, self).save(commit=False)
+                if not account_save_success:
+                    return False
+
+                if self.current_subscription is not None:
+                    if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
+                        self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
+                                                                      web_user=self.creating_user)
+                    else:
+                        subscription = self.current_subscription.change_plan(
+                            self.plan_version,
+                            web_user=self.creating_user,
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            service_type=SubscriptionType.SELF_SERVICE,
+                            pro_bono_status=ProBonoStatus.NO,
+                        )
+                        subscription.is_active = True
+                        if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                            subscription.do_not_invoice = True
+                        subscription.save()
                 else:
-                    subscription = self.current_subscription.change_plan(
-                        self.plan_version,
+                    subscription = Subscription.new_domain_subscription(
+                        self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
-                        service_type=SubscriptionType.SELF_SERVICE,
-                        pro_bono_status=ProBonoStatus.NO,
-                    )
+                        service_type=SubscriptionType.SELF_SERVICE)
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        # this point can only be reached if the initiating user was a superuser
                         subscription.do_not_invoice = True
                     subscription.save()
-            else:
-                subscription = Subscription.new_domain_subscription(
-                    self.account, self.domain, self.plan_version,
-                    web_user=self.creating_user,
-                    adjustment_method=SubscriptionAdjustmentMethod.USER,
-                    service_type=SubscriptionType.SELF_SERVICE)
-                subscription.is_active = True
-                if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                    # this point can only be reached if the initiating user was a superuser
-                    subscription.do_not_invoice = True
-                subscription.save()
-            return True
+                return True
         except Exception:
             logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
                              "Go quickly!" % (self.domain, self.plan_version.plan.name))
@@ -1266,18 +1268,18 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         )
 
     def save(self, commit=True):
-        account_save_success = super(ConfirmSubscriptionRenewalForm, self).save(commit=False)
-        if not account_save_success:
-            return False
-
         try:
-            self.current_subscription.renew_subscription(
-                web_user=self.creating_user,
-                adjustment_method=SubscriptionAdjustmentMethod.USER,
-                service_type=SubscriptionType.SELF_SERVICE,
-                pro_bono_status=ProBonoStatus.NO,
-                new_version=self.renewed_version,
-            )
+            with transaction.atomic():
+                account_save_success = super(ConfirmSubscriptionRenewalForm, self).save(commit=False)
+                if not account_save_success:
+                    return False
+                self.current_subscription.renew_subscription(
+                    web_user=self.creating_user,
+                    adjustment_method=SubscriptionAdjustmentMethod.USER,
+                    service_type=SubscriptionType.SELF_SERVICE,
+                    pro_bono_status=ProBonoStatus.NO,
+                    new_version=self.renewed_version,
+                )
         except SubscriptionRenewalError as e:
             logger.error("[BILLING] Subscription for %(domain)s failed to "
                          "renew due to: %(error)s." % {
