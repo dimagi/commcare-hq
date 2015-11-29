@@ -1,3 +1,4 @@
+from collections import namedtuple
 import logging
 
 from couchdbkit.exceptions import BulkSaveError
@@ -6,6 +7,9 @@ from redis.exceptions import RedisError
 from dimagi.utils.decorators.memoized import memoized
 
 from ..utils import should_use_sql_backend
+
+
+CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 
 
 class FormProcessorInterface(object):
@@ -127,6 +131,10 @@ class FormProcessorInterface(object):
         return self.processor.hard_rebuild_case(self.domain, case_id, detail)
 
     def get_cases_from_forms(self, xforms, case_db):
+        """
+        Returns a dict of case_ids to CaseUpdateMetadata objects containing the touched cases
+        (with the forms' updates already applied to the cases)
+        """
         return self.processor.get_cases_from_forms(xforms, case_db)
 
     def submission_error_form_instance(self, instance, message):

@@ -7,7 +7,7 @@ from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTEN
 from casexml.apps.case.dbaccessors import get_extension_chain
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime
-from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
+from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -236,20 +236,37 @@ def _get_or_update_cases(xforms, case_db):
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
                     yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
+    def _get_dirtiness_flags_for_reassigned_case(case_metas):
+        # for reassigned cases, we mark them temporarily dirty to allow phones to sync
+        # the latest changes. these will get cleaned up when the weekly rebuild triggers
+        for case_update_meta in case_metas:
+            if _is_change_of_ownership(case_update_meta.previous_owner_id, case_update_meta.case.owner_id):
+                yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
+
     dirtiness_flags = []
     extensions_to_close = set()
 
-    for case in touched_cases.values():
-        _validate_indices(case)
-        extensions_to_close = extensions_to_close | get_extensions_to_close(case, domain)
-        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case))
-    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(touched_cases.values()))
+    # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
+    dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
+    for case_update_meta in touched_cases.values():
+        _validate_indices(case_update_meta.case)
+        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
+        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_update_meta.case))
+    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases([meta.case for meta in touched_cases.values()]))
 
     return CaseProcessingResult(
         domain,
-        touched_cases.values(),
+        [update.case for update in touched_cases.values()],
         dirtiness_flags,
         extensions_to_close
+    )
+
+
+def _is_change_of_ownership(previous_owner_id, next_owner_id):
+    return (
+        previous_owner_id
+        and previous_owner_id != UNOWNED_EXTENSION_OWNER_ID
+        and previous_owner_id != next_owner_id
     )
 
 
