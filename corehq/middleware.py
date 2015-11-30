@@ -96,3 +96,12 @@ class TimeoutMiddleware(object):
                 del request.session['last_request']
                 return HttpResponseRedirect(reverse('logout'))
         request.session['last_request'] = json_format_datetime(now)
+
+
+class NoCacheMiddleware(object):
+
+    def process_response(self, request, response):
+        response['Cache-Control'] = "no-cache, no-store, must-revalidate"
+        response['Expires'] = "-1"
+        response['Pragma'] = "no-cache"
+        return response
