@@ -22,6 +22,7 @@ class ToggleBaseView(BasePageView):
     def toggle_map(self):
         return dict([(t.slug, t) for t in all_toggles()])
 
+
 class ToggleListView(ToggleBaseView):
     urlname = 'toggle_list'
     page_title = "Feature Flags"
@@ -41,6 +42,7 @@ class ToggleListView(ToggleBaseView):
         domain_counts = {}
         user_counts = {}
         last_used = {}
+        last_modified = {}
         if self.show_usage:
             for t in toggles:
                 counter = Counter()
@@ -56,6 +58,7 @@ class ToggleListView(ToggleBaseView):
                     domain_counts[t.slug] = counter.get(NAMESPACE_DOMAIN, 0)
                     user_counts[t.slug] = counter.get(NAMESPACE_USER, 0)
                     last_used[t.slug] = _get_usage_info(usage)["_latest"]
+                    last_modified[t.slug] = usage.last_modified
         return {
             'domain_counts': domain_counts,
             'page_url': self.page_url,
@@ -64,6 +67,7 @@ class ToggleListView(ToggleBaseView):
             'tags': ALL_TAGS,
             'user_counts': user_counts,
             'last_used': last_used,
+            'last_modified': last_modified,
         }
 
 
