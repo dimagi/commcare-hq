@@ -38,6 +38,7 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
@@ -688,10 +689,13 @@ def loadtest(request):
     return render(request, template, context)
 
 
-def _lookup_id_in_couch(doc_id):
-    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
-    for url in db_urls:
-        db = Database(url)
+def _lookup_id_in_couch(doc_id, db_name=None):
+    if db_name:
+        dbs = [couch_config.get_db(db_name)]
+    else:
+        dbs = couch_config.all_dbs_by_slug.values()
+
+    for db in dbs:
         try:
             doc = db.get(doc_id)
         except ResourceNotFound:
@@ -743,7 +747,8 @@ def doc_in_es(request):
 @require_superuser
 def raw_couch(request):
     doc_id = request.GET.get("id")
-    context = _lookup_id_in_couch(doc_id) if doc_id else {}
+    db_name = request.GET.get("db_name", None)
+    context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
     return render(request, "hqadmin/raw_couch.html", context)
 
 
