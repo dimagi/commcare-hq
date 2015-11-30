@@ -11,8 +11,8 @@ def get_sql_from_file(file):
 
 
 def migrate_sql_function(name):
-    forward = get_sql_from_file('{}_create.sql'.format(name))
-    reverse = get_sql_from_file('{}_drop.sql'.format(name))
+    forward = get_sql_from_file('{}.sql'.format(name))
+    reverse = 'SELECT 1'  # no need to drop the function
     return migrations.RunSQL(
         forward,
         reverse

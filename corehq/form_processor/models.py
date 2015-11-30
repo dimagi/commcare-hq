@@ -64,6 +64,14 @@ class AttachmentMixin(SaveStateMixin):
     """
     ATTACHMENTS_RELATED_NAME = 'attachment_set'
 
+    def get_attachments(self):
+        for list_attr in ('unsaved_attachments', 'cached_attachments'):
+            if hasattr(self, list_attr):
+                return getattr(self, list_attr)
+
+        if self.is_saved():
+            return self._get_attachments_from_db()
+
     def get_attachment(self, attachment_name):
         attachment = self.get_attachment_meta(attachment_name)
         if not attachment:
@@ -84,6 +92,9 @@ class AttachmentMixin(SaveStateMixin):
             return self._get_attachment_from_db(attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
+        raise NotImplementedError
+
+    def _get_attachments_from_db(self):
         raise NotImplementedError
 
 
@@ -185,7 +196,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     @property
     def history(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form_history(self.form_id)
+        return FormAccessorSQL.get_form_operations(self.form_id)
 
     @property
     def metadata(self):
@@ -202,7 +213,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachment(self.form_id, attachment_name)
+        return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
+
+    def _get_attachments_from_db(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachments(self.form_id)
 
     def get_xml_element(self):
         xml = self.get_xml()
@@ -444,17 +459,20 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_attachment(self.case_id, attachment_name)
 
+    def _get_attachments_from_db(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_attachments(self.case_id)
+
     @property
     @memoized
     def transactions(self):
-        return list(self.transaction_set.all())
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_transactions(self.case_id)
 
     @property
     @memoized
     def case_attachments(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        attachments = CaseAccessorSQL.get_attachments(self.case_id)
-        return {attachment.name: attachment for attachment in attachments}
+        return {attachment.name: attachment for attachment in self.get_attachments()}
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
