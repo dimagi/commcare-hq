@@ -42,11 +42,12 @@ class StockProcessingResult(object):
             self.xform.get_sync_token().invalidate_cached_payloads()
 
         # create the django models
+        processor = FormProcessorInterface(domain=self.domain).ledger_processor
         for stock_report_helper in self.stock_report_helpers:
             if stock_report_helper.deprecated:
-                delete_models_for_stock_report(self.domain, stock_report_helper)
+                processor.delete_models_for_stock_report_helper(stock_report_helper)
             else:
-                create_models_for_stock_report(self.domain, stock_report_helper)
+                processor.create_models_for_stock_report_helper(stock_report_helper)
 
 
 @transaction.atomic
