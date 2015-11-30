@@ -1,7 +1,6 @@
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult
 from corehq.form_processor.models import LedgerValue
-from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 
 class LedgerProcessorSQL(LedgerProcessorInterface):
