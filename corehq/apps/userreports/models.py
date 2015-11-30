@@ -301,7 +301,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def ui_filters(self):
-        return [ReportFilterFactory.from_spec(f) for f in self.filters]
+        return [ReportFilterFactory.from_spec(f, self) for f in self.filters]
 
     @property
     @memoized
