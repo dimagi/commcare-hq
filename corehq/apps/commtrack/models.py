@@ -439,6 +439,10 @@ class StockState(models.Model):
     include_archived = models.Manager()
 
     @property
+    def entry_id(self):
+        return self.product_id
+
+    @property
     def balance(self):
         return self.stock_on_hand
 

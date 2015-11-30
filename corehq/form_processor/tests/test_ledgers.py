@@ -39,7 +39,7 @@ class LedgerTests(TestCase):
         self.assertEqual(1, len(ledgers))
         ledger = ledgers[0]
         self.assertEqual(self.case.case_id, ledger.case_id)
-        self.assertEqual(self.product._id, ledger.product_id)
+        self.assertEqual(self.product._id, ledger.entry_id)
         self.assertEqual('stock', ledger.section_id)
         self.assertEqual(100, ledger.balance)
         # make sure the form is part of the case's history

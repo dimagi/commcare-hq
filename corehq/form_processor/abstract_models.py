@@ -132,7 +132,7 @@ class AbstractLedgerValue(six.with_metaclass(ABCMeta)):
         pass
 
     @abstractproperty
-    def product_id(self):
+    def entry_id(self):
         pass
 
     @abstractproperty

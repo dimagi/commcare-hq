@@ -10,7 +10,7 @@ from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.products.models import Product
 
 
-UniqueLedgerReference = namedtuple('UniqueLedgerReference', ['case_id', 'section_id', 'product_id'])
+UniqueLedgerReference = namedtuple('UniqueLedgerReference', ['case_id', 'section_id', 'entry_id'])
 
 
 class StockReportHelper(jsonobject.JsonObject):
@@ -70,7 +70,7 @@ class StockTransactionHelper(jsonobject.JsonObject):
     @property
     def ledger_reference(self):
         return UniqueLedgerReference(
-            case_id=self.case_id, section_id=self.section_id, product_id=self.product_id
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
         )
 
     @property

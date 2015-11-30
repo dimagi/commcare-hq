@@ -688,7 +688,9 @@ class LedgerValue(models.Model):
     """
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
     case = models.ForeignKey(CommCareCaseSQL, to_field='case_id', db_index=True)
-    product_id = models.CharField(max_length=100, db_index=True)  # todo: make a foreign key to products?
+    # can't be a foreign key to products because of sharding.
+    # also still unclear whether we plan to support ledgers to non-products
+    entry_id = models.CharField(max_length=100, db_index=True)
     section_id = models.CharField(max_length=100, db_index=True)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
