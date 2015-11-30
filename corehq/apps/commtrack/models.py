@@ -439,6 +439,10 @@ class StockState(models.Model):
     include_archived = models.Manager()
 
     @property
+    def balance(self):
+        return self.stock_on_hand
+
+    @property
     def months_remaining(self):
         return months_of_stock_remaining(
             self.stock_on_hand,
