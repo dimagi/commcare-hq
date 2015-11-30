@@ -40,6 +40,7 @@ class ToggleListView(ToggleBaseView):
         toggles = list(all_toggles())
         domain_counts = {}
         user_counts = {}
+        last_used = {}
         if self.show_usage:
             for t in toggles:
                 counter = Counter()
@@ -54,7 +55,7 @@ class ToggleListView(ToggleBaseView):
                         counter[namespace] += 1
                     domain_counts[t.slug] = counter.get(NAMESPACE_DOMAIN, 0)
                     user_counts[t.slug] = counter.get(NAMESPACE_USER, 0)
-
+                    last_used[t.slug] = _get_usage_info(usage)["_latest"]
         return {
             'domain_counts': domain_counts,
             'page_url': self.page_url,
@@ -62,6 +63,7 @@ class ToggleListView(ToggleBaseView):
             'toggles': toggles,
             'tags': ALL_TAGS,
             'user_counts': user_counts,
+            'last_used': last_used,
         }
 
 
@@ -129,37 +131,8 @@ class ToggleEditView(ToggleBaseView):
                 key=lambda domain_tup: (not domain_tup[1], domain_tup[0])
             )
         if self.usage_info:
-            context['last_used'] = self._get_usage_info(toggle)
+            context['last_used'] = _get_usage_info(toggle)
         return context
-
-    def _get_usage_info(self, toggle):
-        DATE_FORMAT = "%Y-%m-%d"
-        last_used = {}
-        for enabled in toggle.enabled_users:
-            name = self._enabled_item_name(enabled)
-            try:
-                if self._get_namespace(enabled) == NAMESPACE_DOMAIN:
-                    last_used[name] = Domain.get_by_name(name).last_modified.strftime(DATE_FORMAT)
-                else:
-                    last_used[name] = CouchUser.get_by_username(name).last_login.strftime(DATE_FORMAT)
-            except (ResourceNotFound, AttributeError):
-                last_used[name] = "Not Found"
-        latest_used = sorted(last_used, key=last_used.get, reverse=True)[0]
-        last_used["_latest"] = {
-            'name': latest_used,
-            'date': last_used[latest_used]
-        }
-
-        return last_used
-
-    def _get_namespace(self, enabled_item):
-        return enabled_item.split(":")[0]
-
-    def _enabled_item_name(self, enabled_item):
-        try:
-            return enabled_item.split(":")[1]
-        except IndexError:
-            return enabled_item.split(":")[0]
 
     def call_save_fn(self, changed_entries, currently_enabled):
         if self.static_toggle.save_fn is None:
@@ -190,5 +163,40 @@ class ToggleEditView(ToggleBaseView):
             'items': item_list
         }
         if self.usage_info:
-            data['last_used'] = self._get_usage_info(toggle)
+            data['last_used'] = _get_usage_info(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
+
+
+def _get_usage_info(toggle):
+    DATE_FORMAT = "%Y-%m-%d"
+    last_used = {}
+    for enabled in toggle.enabled_users:
+        name = _enabled_item_name(enabled)
+        try:
+            if _get_namespace(enabled) == NAMESPACE_DOMAIN:
+                last_used[name] = Domain.get_by_name(name).last_modified.strftime(DATE_FORMAT)
+            else:
+                last_used[name] = CouchUser.get_by_username(name).last_login.strftime(DATE_FORMAT)
+        except (ResourceNotFound, AttributeError):
+            last_used[name] = "Not Found"
+    try:
+        latest_used = sorted(last_used, key=last_used.get, reverse=True)[0]
+    except IndexError:
+        latest_used = None
+    last_used["_latest"] = {
+        'name': latest_used,
+        'date': last_used[latest_used]
+    } if latest_used else None
+
+    return last_used
+
+
+def _get_namespace(enabled_item):
+    return enabled_item.split(":")[0]
+
+
+def _enabled_item_name(enabled_item):
+    try:
+        return enabled_item.split(":")[1]
+    except IndexError:
+        return enabled_item.split(":")[0]

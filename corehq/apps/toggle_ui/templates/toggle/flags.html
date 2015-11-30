@@ -65,6 +65,7 @@
             {% if show_usage %}
                 <th>{% trans "Domains" %}</th>
                 <th>{% trans "Users" %}</th>
+                <th>{% trans "Usage" %}</th>
             {% endif %}
             <th></th>
         </thead>
@@ -82,6 +83,13 @@
                 {% if show_usage %}
                     <td>{{ domain_counts|dict_lookup:toggle.slug }}</td>
                     <td>{{ user_counts|dict_lookup:toggle.slug }}</td>
+                    {% with lu=last_used|dict_lookup:toggle.slug %}
+                        {% if lu %}
+                            <td>{{ lu|dict_lookup:'date' }}: {{ lu|dict_lookup:'name'}}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                    {% endwith %}
                 {% endif %}
                 <td>
                     <a href="{% url "edit_toggle" toggle.slug %}" role="button" data-toggle="modal" class="btn btn-primary">{% trans "Edit" %}</a>
