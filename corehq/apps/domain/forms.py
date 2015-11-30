@@ -1594,6 +1594,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
+            'service_type': SubscriptionType.EXTENDED_TRIAL
         })
         return fields
 
