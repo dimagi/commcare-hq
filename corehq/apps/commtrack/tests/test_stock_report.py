@@ -10,7 +10,6 @@ from corehq.apps.commtrack.models import SQLProduct
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.form_processor.backends.couch.ledger import create_models_for_stock_report
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
 from couchforms.models import XFormInstance
