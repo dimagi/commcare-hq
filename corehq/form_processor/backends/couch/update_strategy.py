@@ -39,12 +39,7 @@ class ActionsUpdateStrategy(UpdateStrategy):
         else:
             # for now we only allow commtrack actions to be processed this way so just assert that's the case
             assert case_action_intent.action_type == CASE_ACTION_COMMTRACK
-            case_action = CommCareCaseAction.from_parsed_action(
-                date=case_action_intent.form.received_on,
-                user_id=case_action_intent.form.metadata.userID,
-                xformdoc=case_action_intent.form,
-                action=AbstractAction(CASE_ACTION_COMMTRACK),
-            )
+            case_action = case_action_intent.get_couch_action()
             # hack: clear the sync log id so this modification always counts
             # since consumption data could change server-side
             case_action.sync_log_id = ''

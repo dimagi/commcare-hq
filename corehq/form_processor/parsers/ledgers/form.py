@@ -25,7 +25,18 @@ class LedgerFormat(object):
     PER_ENTRY = object()
 
 
-CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])
+class CaseActionIntent(namedtuple('CaseActionIntent',
+                                  ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])):
+    def get_couch_action(self):
+        assert self.action_type == CASE_ACTION_COMMTRACK
+        return CommCareCaseAction.from_parsed_action(
+            date=self.form.received_on,
+            user_id=self.form.metadata.userID,
+            xformdoc=self.form,
+            action=AbstractAction(self.action_type),
+        )
+
+
 StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_action_intents'])
 LedgerInstruction = namedtuple(
     'LedgerInstruction',

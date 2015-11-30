@@ -199,7 +199,7 @@ def _get_actions_from_forms(domain, sorted_forms, case_id):
         for u in filtered_updates:
             case_actions.extend(u.get_case_actions(form))
         stock_actions = get_stock_actions(form)
-        case_actions.extend([intent.action
+        case_actions.extend([intent.get_couch_action()
                              for intent in stock_actions.case_action_intents
                              if not intent.is_deprecation])
     return case_actions
