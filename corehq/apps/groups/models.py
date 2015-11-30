@@ -78,6 +78,10 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
 
     bulk_delete = delete_docs
 
+    def clear_caches(self):
+        self.by_domain.clear(self.__class__, self.domain)
+        self.ids_by_domain.clear(self.__class__, self.domain)
+
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
