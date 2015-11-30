@@ -20,13 +20,12 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
                 to_delete=StockReport.objects.filter(domain=self.domain, form_id=stock_report_helper.form_id)
             )
         if stock_report_helper.report_type not in const.VALID_REPORT_TYPES:
-            return
-        to_save = []
-        to_save.append(_get_model_for_stock_report(stock_report_helper))
+            return None
+        report_model = _get_model_for_stock_report(self.domain, stock_report_helper)
+        to_save = [report_model]
         for transaction_helper in stock_report_helper.transactions:
-            to_save.append(_get_model_for_stock_transaction(stock_report_helper, transaction_helper))
+            to_save.append(_get_model_for_stock_transaction(report_model, transaction_helper))
         return StockModelUpdateResult(to_save=to_save)
-
 
     @transaction.atomic
     def create_models_for_stock_report_helper(self, stock_report_helper):
