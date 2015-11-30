@@ -42,7 +42,7 @@ def _create_model_for_stock_report(domain, stock_report_helper):
     return StockReport.objects.create(
         form_id=stock_report_helper.form_id,
         date=stock_report_helper.timestamp,
-        type=stock_report_helper.tag,
+        type=stock_report_helper.report_type,
         domain=domain,
         server_date=stock_report_helper.server_date,
     )

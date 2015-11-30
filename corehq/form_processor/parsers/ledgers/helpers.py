@@ -22,6 +22,11 @@ class StockReportHelper(jsonobject.JsonObject):
     server_date = jsonobject.DateTimeProperty()
     deprecated = jsonobject.BooleanProperty()
 
+    @property
+    def report_type(self):
+        # this is for callers to be able to use a less confusing name
+        return self.tag
+
     @classmethod
     def make_from_form(cls, form, timestamp, tag, transactions):
         deprecated = form.is_deprecated
