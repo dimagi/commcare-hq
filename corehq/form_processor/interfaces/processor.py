@@ -64,6 +64,15 @@ class FormProcessorInterface(object):
         else:
             return CaseDbCacheCouch
 
+    @property
+    @memoized
+    def ledger_processor(self):
+        from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
+        if should_use_sql_backend(self.domain):
+            raise NotImplementedError('not supported yet!')
+        else:
+            return LedgerProcessorCouch
+
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
 
