@@ -36,6 +36,11 @@ class StockReportDomainTest(TestCase):
         )
         return report, form
 
+    def _create_models_for_stock_report_helper(self, stock_report_helper):
+        models_to_update = self.ledger_processor.get_models_to_update(stock_report_helper)
+        if models_to_update:
+            models_to_update.commit()
+
     def setUp(self):
         self.case_ids = {'c1': 10, 'c2': 30, 'c3': 50}
         self.section_ids = {'s1': 2, 's2': 9}
@@ -67,7 +72,7 @@ class StockReportDomainTest(TestCase):
                     self.transactions.setdefault(case, {}).setdefault(section, {})[product] = bal
 
         self.new_stock_report, self.form = self.create_report(transactions_flat)
-        self.ledger_processor.create_models_for_stock_report_helper(self.new_stock_report)
+        self._create_models_for_stock_report_helper(self.new_stock_report)
 
     def tearDown(self):
         delete_all_xforms()
@@ -106,7 +111,7 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=864)
         ], date=date)
-        self.ledger_processor.create_models_for_stock_report_helper(report)
+        self._create_models_for_stock_report_helper(report)
 
         # create second report with the same date
         # results should have this transaction and not the previous one
@@ -118,7 +123,7 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=1)
         ], date=date)
-        self.ledger_processor.create_models_for_stock_report_helper(report)
+        self._create_models_for_stock_report_helper(report)
 
         new_trans = self.transactions.copy()
         new_trans['c1']['s1']['p1'] = 1
