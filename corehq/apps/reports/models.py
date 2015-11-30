@@ -19,7 +19,10 @@ from sqlalchemy.util import immutabledict
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import (
+    CachedCouchDocumentMixin,
+    QuickCachedDocumentMixin,
+)
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import FormQuestionSchema
@@ -1000,7 +1003,7 @@ def _apply_removal(export_tables, removal_list):
     return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
 
 
-class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfiguration):
+class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfiguration):
     """
     HQ's version of a group export, tagged with a domain
     """
