@@ -720,12 +720,18 @@ class ProjectDataTab(UITab):
         if not self.can_edit_commcare_data:
             return []
         from corehq.apps.export.views import (
-                FormExportListView,
-                CaseExportListView,
+            FormExportListView,
+            CaseExportListView,
         )
         return [
-            dropdown_dict(FormExportListView.page_title, url=reverse(FormExportListView.urlname, args=(self.domain,))),
-            dropdown_dict(CaseExportListView.page_title, url=reverse(CaseExportListView.urlname, args=(self.domain,))),
+            dropdown_dict(
+                FormExportListView.page_title,
+                url=reverse(FormExportListView.urlname, args=(self.domain,))
+            ),
+            dropdown_dict(
+                CaseExportListView.page_title,
+                url=reverse(CaseExportListView.urlname, args=(self.domain,))
+            ),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
         ]
