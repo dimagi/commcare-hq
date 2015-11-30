@@ -13,7 +13,7 @@ from couchforms.const import ATTACHMENT_NAME
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment)
+    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -106,6 +106,7 @@ class FormProcessorSQL(object):
             case.save()
             FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
             FormProcessorSQL.save_tracked_models(case, CaseTransaction)
+            FormProcessorSQL.save_tracked_models(case, CaseAttachmentSQL)
             case.clear_tracked_models()
 
     @staticmethod

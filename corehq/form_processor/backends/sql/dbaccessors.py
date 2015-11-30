@@ -7,8 +7,8 @@ from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, Attach
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
-    CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
-)
+    CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
+    SupplyPointCaseMixin)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple
 
 doc_type_to_state = {
@@ -179,7 +179,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def get_reverse_indexed_cases(domain, case_ids):
         return CommCareCaseSQL.objects.filter(
             domain=domain, index__referenced_id__in=case_ids
-        ).defer("case_json").prefetch_related('indices')
+        ).defer("case_json").prefetch_related('index_set')
 
     @staticmethod
     def hard_delete_case(case_id):
@@ -217,7 +217,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         try:
             return CommCareCaseSQL.objects.filter(
                 domain=domain,
-                type='supply-point',
+                type=SupplyPointCaseMixin.CASE_TYPE,
                 location_id=location_id
             ).get()
         except CommCareCaseSQL.DoesNotExist:
@@ -227,7 +227,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def get_case_ids_in_domain(domain, type=None):
         query = CommCareCaseSQL.objects.filter(domain=domain)
         if type:
-            query.filter(type=type)
+            query = query.filter(type=type)
         return list(query.values_list('case_id', flat=True))
 
 

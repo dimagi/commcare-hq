@@ -339,6 +339,8 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
 
 
 class SupplyPointCaseMixin(object):
+    CASE_TYPE = 'supply-point'
+
     @property
     @memoized
     def location(self):
@@ -539,6 +541,15 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     @relationship.setter
     def relationship(self, relationship):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
+
+    def __eq__(self, other):
+        return isinstance(other, CommCareCaseIndexSQL) and (
+            self.case_id == other.case_id and
+            self.identifier == other.identifier,
+            self.referenced_id == other.referenced_id,
+            self.referenced_type == other.referenced_type,
+            self.relationship_id == other.relationship_id,
+        )
 
     def __unicode__(self):
         return (
