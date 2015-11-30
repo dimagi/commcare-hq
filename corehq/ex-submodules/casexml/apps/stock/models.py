@@ -67,7 +67,9 @@ class StockTransaction(models.Model):
         # form processing workflows
         if self.report_id is None and self.report and self.report.id is not None:
             self.report_id = self.report.id
-        super(StockTransaction, self).save(force_insert=force_insert)
+        super(StockTransaction, self).save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
     def get_previous_transaction(self):
         siblings = StockTransaction.get_ordered_transactions_for_stock(
