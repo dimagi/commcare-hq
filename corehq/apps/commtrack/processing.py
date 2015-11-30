@@ -129,6 +129,7 @@ def mark_cases_changed(case_action_intents, case_db):
 
     return relevant_cases
 
+
 def _compute_ledger_values(original_balance, stock_transaction):
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:
         quantity = stock_transaction.stock_on_hand
