@@ -491,12 +491,12 @@ class OPMCaseRow(object):
     @property
     def child_received_ors_in_this_window(self):
         months = self.child_age % 3
-        if months == 0:
-            months_before = 3
-        elif months == 1:
-            months_before = 1
-        else:
-            months_before = 2
+        if months == 0:  # child age is multiple of three
+            months_before = 3  # then we must check forms for 3 months before
+        elif months == 1:  # child age is 1, 4, 7 etc
+            months_before = 1  # then we must check forms for 1 month before
+        else:  # child age is 2, 5, 8 etc
+            months_before = 2  # we must check forms for 2 month before
         if not self.is_service_available('stock_ors', months=months_before):
             return True
 
