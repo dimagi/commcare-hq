@@ -10,7 +10,7 @@ from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from dimagi.ext.couchdbkit import Document
 
 
-class TestBlobMixin(TestCase):
+class BaseTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -25,6 +25,9 @@ class TestBlobMixin(TestCase):
 
     def setUp(self):
         self.obj = self.make_doc(FakeCouchDocument)
+
+
+class TestBlobMixin(BaseTestCase):
 
     def test_put_attachment_without_name(self):
         with self.assertRaises(mod.InvalidAttachment):

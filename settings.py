@@ -1298,7 +1298,6 @@ PILLOWTOPS = {
         'corehq.pillows.domain.DomainPillow',
         'corehq.pillows.user.UserPillow',
         'corehq.pillows.application.AppPillow',
-        'corehq.pillows.blobs.BlobDeletionPillow',
         'corehq.pillows.group.GroupPillow',
         'corehq.pillows.sms.SMSPillow',
         'corehq.pillows.user.GroupToUserPillow',
@@ -1360,7 +1359,11 @@ PILLOWTOPS = {
             'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
         },
-
+        {
+            'name': 'BlobDeletionPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+        },
     ]
 }
 
