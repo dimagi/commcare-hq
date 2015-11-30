@@ -268,7 +268,7 @@ def get_case_transactions(case_id, updated_xforms=None):
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
 
-    form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
+    form_ids_to_fetch = list(form_ids - set(updated_xforms_map.keys()))
     xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):
