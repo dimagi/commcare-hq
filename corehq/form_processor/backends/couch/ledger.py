@@ -28,18 +28,6 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
         return StockModelUpdateResult(to_save=to_save)
 
     @transaction.atomic
-    def create_models_for_stock_report_helper(self, stock_report_helper):
-        """
-        Save stock report and stock transaction models to the database.
-        """
-        assert stock_report_helper.domain == self.domain
-        if stock_report_helper.report_type not in const.VALID_REPORT_TYPES:
-            return
-        report = _create_model_for_stock_report(self.domain, stock_report_helper)
-        for transaction_helper in stock_report_helper.transactions:
-            _create_model_for_stock_transaction(report, transaction_helper)
-
-    @transaction.atomic
     def delete_models_for_stock_report_helper(self, stock_report_helper):
         """
         Delete all stock reports and stock transaction models associated with the helper from the database.
@@ -60,12 +48,6 @@ def _get_model_for_stock_report(domain, stock_report_helper):
         domain=domain,
         server_date=stock_report_helper.server_date,
     )
-
-
-def _create_model_for_stock_report(domain, stock_report_helper):
-    report = _get_model_for_stock_report(domain, stock_report_helper)
-    report.save()
-    return report
 
 
 def _get_model_for_stock_transaction(report, transaction_helper):
@@ -96,10 +78,4 @@ def _get_model_for_stock_transaction(report, transaction_helper):
     if report.domain:
         # set this as a shortcut for post save signal receivers
         txn.domain = report.domain
-    return txn
-
-
-def _create_model_for_stock_transaction(report, transaction_helper):
-    txn = _get_model_for_stock_transaction(report, transaction_helper)
-    txn.save()
     return txn

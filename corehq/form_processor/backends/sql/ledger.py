@@ -1,6 +1,5 @@
-from django.db import transaction
 from corehq.apps.commtrack.processing import compute_ledger_values
-from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface
+from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult
 from corehq.form_processor.models import LedgerValue
 
 
@@ -10,11 +9,6 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     """
 
     def get_models_to_update(self, stock_report_helper):
-        # todo
-        pass
-
-    @transaction.atomic
-    def create_models_for_stock_report_helper(self, stock_report_helper):
         latest_values = {}
         for stock_trans in stock_report_helper.transactions:
             def _lazy_original_balance():
@@ -29,14 +23,18 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
                 _lazy_original_balance, stock_report_helper.report_type, stock_trans.relative_quantity
             )
             latest_values[stock_trans.ledger_reference] = new_ledger_values.balance
+
+        to_save = []
         for touched_ledger_reference, quantity in latest_values.items():
-            ledger_value, created = LedgerValue.objects.get_or_create(
-                defaults={'balance': quantity},
-                **touched_ledger_reference._asdict()
-            )
-            if not created and ledger_value.quantity != quantity:
-                ledger_value.balance = quantity
-                ledger_value.save()
+            try:
+                ledger_value, created = LedgerValue.objects.get(
+                    **touched_ledger_reference._asdict()
+                )
+            except LedgerValue.DoesNotExist:
+                ledger_value = LedgerValue(**touched_ledger_reference._asdict())
+            ledger_value.balance = quantity
+            to_save.append(ledger_value)
+        return StockModelUpdateResult(to_save=to_save)
 
     def delete_models_for_stock_report_helper(self, stock_report_helper):
         pass
