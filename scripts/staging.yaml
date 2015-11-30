@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - mobile-select-filters-fixture  # Danny 11/30
   - jquery-ui-1.8.23-legacy  # Danny 11/23
   - vellum-staging # J$ 11/13
   - two-factor+websockets
