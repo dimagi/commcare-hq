@@ -1,21 +1,22 @@
 import uuid
 
+from datetime import datetime
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, Attachment, CommCareCaseSQL, \
+    CaseTransaction
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-form-accessor'
 
 SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
-    xmlns="http://openrosa.org/formdesigner/1DFD8610-91E3-4409-BF8B-02D3B4FF3530">
+    xmlns="http://openrosa.org/formdesigner/form-processor">
     <dalmation_count>yes</dalmation_count>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>DEV IL</n1:deviceID>
@@ -23,17 +24,19 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
         <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>
         <n1:username>eve</n1:username>
         <n1:userID>cruella_deville</n1:userID>
-        <n1:instanceID>{}</n1:instanceID>
+        <n1:instanceID>{uuid}</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
     </n1:meta>
+    {case_block}
 </data>"""
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class FormAccessorTests(TestCase):
+    dependent_apps = []
 
     def test_get_form_by_id(self):
-        form_id = _submit_simple_form()
+        form_id = _create_form()
         with self.assertNumQueries(1):
             form = FormAccessorSQL.get_form(form_id)
         self._check_simple_form(form)
@@ -43,8 +46,8 @@ class FormAccessorTests(TestCase):
             FormAccessorSQL.get_form('missing_form')
 
     def test_get_forms(self):
-        form_id1 = _submit_simple_form()
-        form_id2 = _submit_simple_form()
+        form_id1 = _create_form()
+        form_id2 = _create_form()
 
         forms = FormAccessorSQL.get_forms(['missing_form'])
         self.assertEqual([], forms)
@@ -59,7 +62,7 @@ class FormAccessorTests(TestCase):
         self.assertEqual(form_id2, forms[1].form_id)
 
     def test_get_with_attachments(self):
-        form_id = _submit_simple_form()
+        form_id = _create_form()
         form = FormAccessorSQL.get_form(form_id)
         with self.assertNumQueries(1):
             form.get_attachment_meta('form.xml')
@@ -76,40 +79,34 @@ class FormAccessorTests(TestCase):
         self.assertEqual('text/xml', attachment_meta.content_type)
 
     def test_get_attachment_by_name(self):
-        form_xml = SIMPLE_FORM.format(uuid.uuid4().hex)
-        _, form, _ = submit_form_locally(
-            instance=form_xml,
-            domain=DOMAIN,
-        )
+        form_id = _create_form()
+        form_xml = _get_form_data(form_id)
 
         with self.assertRaises(AttachmentNotFound):
-            FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
+            FormAccessorSQL.get_attachment_by_name(form_id, 'not_a_form.xml')
 
         with self.assertNumQueries(1):
-            attachment_meta = FormAccessorSQL.get_attachment_by_name(form.form_id, 'form.xml')
+            attachment_meta = FormAccessorSQL.get_attachment_by_name(form_id, 'form.xml')
 
-        self.assertEqual(form.form_id, attachment_meta.form_id)
+        self.assertEqual(form_id, attachment_meta.form_id)
         self.assertEqual('form.xml', attachment_meta.name)
         self.assertEqual('text/xml', attachment_meta.content_type)
         self.assertEqual(form_xml, attachment_meta.read_content())
 
     def test_get_form_operations(self):
-        _, form, _ = submit_form_locally(
-            instance=SIMPLE_FORM.format(uuid.uuid4().hex),
-            domain=DOMAIN,
-        )
+        form_id = _create_form()
 
         operations = FormAccessorSQL.get_form_operations('missing_form')
         self.assertEqual([], operations)
 
-        operations = FormAccessorSQL.get_form_operations(form.form_id)
+        operations = FormAccessorSQL.get_form_operations(form_id)
         self.assertEqual([], operations)
 
         # don't call form.archive to avoid sending the signals
-        FormAccessorSQL.archive_form(form.form_id, user_id='user1')
-        FormAccessorSQL.unarchive_form(form.form_id, user_id='user2')
+        FormAccessorSQL.archive_form(form_id, user_id='user1')
+        FormAccessorSQL.unarchive_form(form_id, user_id='user2')
 
-        operations = FormAccessorSQL.get_form_operations(form.form_id)
+        operations = FormAccessorSQL.get_form_operations(form_id)
         self.assertEqual(2, len(operations))
         self.assertEqual('user1', operations[0].user_id)
         self.assertEqual(XFormOperationSQL.ARCHIVE, operations[0].operation)
@@ -124,19 +121,12 @@ class FormAccessorTests(TestCase):
         attachments = {
             'pic.jpg': UploadedFile(attachment_file, 'pic.jpg', content_type='image/jpeg')
         }
-        _, form_with_pic, _ = submit_form_locally(
-            instance=SIMPLE_FORM.format(uuid.uuid4().hex),
-            domain=DOMAIN,
-            attachments=attachments
-        )
-        _, plain_form, _ = submit_form_locally(
-            instance=SIMPLE_FORM.format(uuid.uuid4().hex),
-            domain=DOMAIN,
-        )
+        form_with_pic_id = _create_form(attachments=attachments)
+        plain_form_id = _create_form()
 
-        forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic.form_id, plain_form.form_id])
+        forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic_id, plain_form_id])
         self.assertEqual(2, len(forms))
-        self.assertEqual(form_with_pic.form_id, forms[0].form_id)
+        self.assertEqual(form_with_pic_id, forms[0].form_id)
         with self.assertNumQueries(0):
             expected = {
                 'form.xml': 'text/xml',
@@ -155,8 +145,8 @@ class FormAccessorTests(TestCase):
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
     def test_get_forms_by_type(self):
-        form_id1 = _submit_simple_form()
-        form_id2 = _submit_simple_form()
+        form_id1 = _create_form()
+        form_id2 = _create_form()
 
         # basic check
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5)
@@ -186,7 +176,7 @@ class FormAccessorTests(TestCase):
         self.assertEqual(form_id2, forms[0].form_id)
 
     def test_form_with_id_exists(self):
-        form_id1 = _submit_simple_form()
+        form_id1 = _create_form()
 
         self.assertFalse(FormAccessorSQL.form_with_id_exists('not a form'))
         self.assertFalse(FormAccessorSQL.form_with_id_exists(form_id1, 'wrong domain'))
@@ -194,7 +184,7 @@ class FormAccessorTests(TestCase):
         self.assertTrue(FormAccessorSQL.form_with_id_exists(form_id1, DOMAIN))
 
     def test_hard_delete_forms(self):
-        form_ids = [_submit_simple_form() for i in range(3)]
+        form_ids = [_create_form() for i in range(3)]
         forms = FormAccessorSQL.get_forms(form_ids)
         self.assertEqual(3, len(forms))
 
@@ -205,7 +195,7 @@ class FormAccessorTests(TestCase):
 
     def test_archive_unarchive_form(self):
         case_id = uuid.uuid4().hex
-        form_id = _submit_simple_form(case_id)
+        form_id = _create_form(case_id=case_id)
         form = FormAccessorSQL.get_form(form_id)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
         self.assertEqual(0, len(form.history))
@@ -244,12 +234,61 @@ class FormAccessorTests(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+    
 
+def _create_form(case_id=None, attachments=None):
+    """
+    Create the models directly so that these tests aren't dependent on any
+    other apps. Not testing form processing here anyway.
+    :param case_id: create case with ID if supplied
+    :param attachments: additional attachments dict
+    :return: form_id
+    """
+    form_id = uuid.uuid4().hex
+    user_id = 'user1'
+    utcnow = datetime.utcnow()
 
-def _submit_simple_form(case_id=None):
-    case_id = case_id or uuid.uuid4().hex
-    return submit_case_blocks(
-        CaseBlock(create=True, case_id=case_id).as_string(),
-        domain=DOMAIN,
-        user_id='user1',
+    form_data = _get_form_data(form_id, case_id)
+
+    form = XFormInstanceSQL(
+        form_id=form_id,
+        xmlns='http://openrosa.org/formdesigner/form-processor',
+        received_on=utcnow,
+        user_id=user_id,
+        domain=DOMAIN
     )
+    
+    attachments = attachments or {}
+    attachment_tuples = map(
+        lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
+        attachments.items()
+    )
+    attachment_tuples.append(Attachment('form.xml', form_data, 'text/xml'))
+
+    FormProcessorSQL.store_attachments(form, attachment_tuples)
+
+    cases = []
+    if case_id:
+        case = CommCareCaseSQL(
+            case_id=case_id,
+            domain=DOMAIN,
+            type='',
+            owner_id=user_id,
+            opened_on=utcnow,
+            modified_on=utcnow,
+            modified_by=user_id,
+            server_modified_on=utcnow,
+        )
+        case.track_create(CaseTransaction.form_transaction(case, form))
+        cases = [case]
+
+    FormProcessorSQL.save_processed_models([form], cases)
+    return form_id
+
+
+def _get_form_data(form_id, case_id=None):
+    case_block = ''
+    if case_id:
+        case_block = CaseBlock(create=True, case_id=case_id).as_string()
+    form_data = SIMPLE_FORM.format(uuid=form_id, case_block=case_block)
+    return form_data
