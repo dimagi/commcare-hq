@@ -9,6 +9,10 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     Ledger processor for new SQL-based code.
     """
 
+    def get_models_to_update(self, stock_report_helper):
+        # todo
+        pass
+
     @transaction.atomic
     def create_models_for_stock_report_helper(self, stock_report_helper):
         latest_values = {}
