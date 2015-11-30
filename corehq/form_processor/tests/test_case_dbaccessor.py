@@ -120,7 +120,7 @@ class CaseAccessorTests(TestCase):
             case.track_create(index1)
 
             FormProcessorSQL.save_case(case)
-            return case_id
+            return case.case_id
 
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
         expected_case_ids = [_create_case_with_index(case_id) for case_id in referenced_case_ids]
