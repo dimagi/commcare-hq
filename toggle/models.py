@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from datetime import datetime
 from dimagi.ext.couchdbkit import *
 
 
@@ -12,10 +13,12 @@ class Toggle(Document):
     """
     slug = StringProperty()
     enabled_users = ListProperty()
+    last_modified = DateTimeProperty()
 
     def save(self, **params):
         if ('_id' not in self._doc):
             self._doc['_id'] = generate_toggle_id(self.slug)
+        self.last_modified = datetime.utcnow()
         super(Toggle, self).save(**params)
 
     @classmethod
