@@ -7,6 +7,7 @@ from dimagi.ext.couchdbkit import *
 import re
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
@@ -23,7 +24,7 @@ from corehq.util.quickcache import quickcache
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
 
-class Group(UndoableDocument):
+class Group(QuickCachedDocumentMixin, UndoableDocument):
     """
     The main use case for these 'groups' of users is currently
     so that we can break down reports by arbitrary regions.
