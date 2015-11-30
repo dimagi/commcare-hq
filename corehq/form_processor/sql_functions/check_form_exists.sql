@@ -8,7 +8,7 @@ DECLARE
     limit_expr    text := ' LIMIT 1';
     exists        boolean;
 BEGIN
-    IF domain_name <> '' THEN
+    IF $2 <> '' THEN
         inner_query := select_expr || domain_filter || limit_expr;
     ELSE
         inner_query := select_expr || limit_expr;
@@ -16,6 +16,6 @@ BEGIN
 
     EXECUTE format('SELECT exists(%s)', inner_query)
         INTO form_exists
-        USING form_id, domain_name;
+        USING $1, $2;
 END;
 $$ LANGUAGE plpgsql;

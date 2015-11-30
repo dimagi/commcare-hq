@@ -10,15 +10,15 @@ CREATE FUNCTION get_forms_by_state(
 DECLARE
     sort_dir text;
 BEGIN
-    IF recent_first THEN
+    IF $4 THEN
         sort_dir := 'DESC';
     ELSE
         sort_dir := 'ASC';
     END IF;
     RETURN QUERY EXECUTE format(
         'SELECT * FROM form_processor_xforminstancesql WHERE domain = $1 AND state = $2 ORDER BY received_on %s LIMIT %s',
-        sort_dir, limit_to
+        sort_dir, $3
         )
-        USING domain_name, state;
+        USING $1, $2;
 END;
 $$ LANGUAGE plpgsql;
