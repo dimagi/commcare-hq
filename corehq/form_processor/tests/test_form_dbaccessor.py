@@ -234,7 +234,7 @@ class FormAccessorTests(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
-    
+
 
 def _create_form(case_id=None, attachments=None):
     """
@@ -257,7 +257,7 @@ def _create_form(case_id=None, attachments=None):
         user_id=user_id,
         domain=DOMAIN
     )
-    
+
     attachments = attachments or {}
     attachment_tuples = map(
         lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
