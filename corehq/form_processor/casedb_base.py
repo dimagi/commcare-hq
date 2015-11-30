@@ -142,3 +142,10 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     @abstractmethod
     def get_reverse_indexed_cases(self, case_ids):
         pass
+
+    def apply_action_intent(self, case, case_action_intent):
+        """
+        Apply a CaseActionIntent object to the case.
+        """
+        # This is only used by ledger actions currently
+        self.case_update_strategy(case).apply_action_intent(case_action_intent)

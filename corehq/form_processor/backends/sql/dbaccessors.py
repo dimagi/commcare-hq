@@ -164,7 +164,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             case_id=case_id,
             revoked=False,
             form_id__isnull=False,
-            type=CaseTransaction.TYPE_FORM
+            type__in=(CaseTransaction.TYPE_FORM, CaseTransaction.TYPE_LEDGER),
         ).values_list('form_id', flat=True))
 
     @staticmethod

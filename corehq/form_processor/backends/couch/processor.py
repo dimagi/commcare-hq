@@ -63,10 +63,12 @@ class FormProcessorCouch(object):
         case.get_db().bulk_delete(docs)
 
     @classmethod
-    def save_processed_models(cls, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None, stock_updates=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
+        for stock_update in stock_updates or []:
+            stock_update.commit()
 
     @classmethod
     def save_xform(cls, xform):
@@ -197,7 +199,7 @@ def _get_actions_from_forms(domain, sorted_forms, case_id):
         for u in filtered_updates:
             case_actions.extend(u.get_case_actions(form))
         stock_actions = get_stock_actions(form)
-        case_actions.extend([intent.action
+        case_actions.extend([intent.get_couch_action()
                              for intent in stock_actions.case_action_intents
                              if not intent.is_deprecation])
     return case_actions

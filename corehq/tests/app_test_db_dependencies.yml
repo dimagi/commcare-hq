@@ -35,6 +35,21 @@ casexml.apps.case:
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
+casexml.apps.stock:
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.apps.commtrack
+  - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tzmigration
+  - couchforms
+  - phonelog
 corehq.apps.commtrack:
   - auditcare
   - couchforms
@@ -135,7 +150,12 @@ corehq.apps.receiverwrapper:
 corehq.form_processor:
   - casexml.apps.case
   - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.apps.commtrack
+  - corehq.apps.domain
   - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms

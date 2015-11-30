@@ -564,6 +564,7 @@ class CaseTransaction(models.Model):
     TYPE_REBUILD_USER_ARCHIVED = 3
     TYPE_REBUILD_FORM_ARCHIVED = 4
     TYPE_REBUILD_FORM_EDIT = 5
+    TYPE_LEDGER = 6
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -571,6 +572,7 @@ class CaseTransaction(models.Model):
         (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+        (TYPE_LEDGER, 'ledger'),
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
@@ -618,11 +620,19 @@ class CaseTransaction(models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_FORM)
+
+    @classmethod
+    def ledger_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_LEDGER)
+
+    @classmethod
+    def _from_form(cls, case, xform, transaction_type):
         return CaseTransaction(
             case=case,
             form_id=xform.form_id,
             server_date=xform.received_on,
-            type=CaseTransaction.TYPE_FORM,
+            type=transaction_type,
             revoked=not xform.is_normal
         )
 
@@ -688,3 +698,17 @@ class FormArchiveRebuild(CaseTransactionDetail):
 class FormEditRebuild(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
     deprecated_form_id = StringProperty()
+
+
+class LedgerValue(models.Model):
+    """
+    Represents the current state of a ledger. Supercedes StockState
+    """
+    # domain not included and assumed to be accessed through the foreign key to the case table. legit?
+    case = models.ForeignKey(CommCareCaseSQL, to_field='case_id', db_index=True)
+    # can't be a foreign key to products because of sharding.
+    # also still unclear whether we plan to support ledgers to non-products
+    entry_id = models.CharField(max_length=100, db_index=True)
+    section_id = models.CharField(max_length=100, db_index=True)
+    balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
+    last_modified = models.DateTimeField(auto_now=True)
