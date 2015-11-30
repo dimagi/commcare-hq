@@ -3,7 +3,7 @@ from casexml.apps.case.util import get_case_xform_ids
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from couchforms.dbaccessors import get_forms_by_type
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -18,7 +18,8 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_with_attachments(form_id):
-        return XFormInstance.get_with_attachments(form_id)
+        doc = XFormInstance.get_db().get(form_id, attachments=True)
+        return doc_types()[doc['doc_type']].wrap(doc)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):

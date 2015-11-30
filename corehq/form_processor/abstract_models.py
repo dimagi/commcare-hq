@@ -78,10 +78,6 @@ class AbstractXFormInstance(object):
     def get(self, xform_id):
         raise NotImplementedError()
 
-    @classmethod
-    def get_with_attachments(self, xform_id):
-        raise NotImplementedError()
-
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log
