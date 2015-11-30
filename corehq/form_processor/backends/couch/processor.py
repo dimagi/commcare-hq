@@ -63,10 +63,12 @@ class FormProcessorCouch(object):
         case.get_db().bulk_delete(docs)
 
     @classmethod
-    def save_processed_models(cls, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None, stock_updates=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
+        for stock_update in stock_updates or []:
+            stock_update.commit()
 
     @classmethod
     def save_xform(cls, xform):

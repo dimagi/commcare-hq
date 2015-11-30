@@ -61,6 +61,14 @@ class StockTransaction(models.Model):
             case=self.case_id, product=self.product_id, section_id=self.section_id,
         )
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        # this is a bit hacky, but allows us to create StockReport and StockTransaction objects
+        # in a place that isn't exactly where we save them, which fits better with the current
+        # form processing workflows
+        if self.report_id is None and self.report and self.report.id is not None:
+            self.report_id = self.report.id
+        super(StockTransaction, self).save(force_insert=force_insert)
+
     def get_previous_transaction(self):
         siblings = StockTransaction.get_ordered_transactions_for_stock(
             self.case_id, self.section_id, self.product_id).exclude(pk=self.pk)

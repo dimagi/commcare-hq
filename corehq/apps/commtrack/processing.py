@@ -30,6 +30,15 @@ class StockProcessingResult(object):
         self.relevant_cases = relevant_cases or []
         self.stock_report_helpers = stock_report_helpers or []
 
+    def get_models_to_save(self):
+        processor = FormProcessorInterface(domain=self.domain).ledger_processor
+        update_results = []
+        for stock_report_helper in self.stock_report_helpers:
+            this_result = processor.get_models_to_update(stock_report_helper)
+            if this_result:
+                update_results.append(this_result)
+        return update_results
+
     @transaction.atomic
     def commit(self):
         """
@@ -39,14 +48,6 @@ class StockProcessingResult(object):
         # this ensures that ledger updates will sync back down
         if self.relevant_cases and self.xform.get_sync_token():
             self.xform.get_sync_token().invalidate_cached_payloads()
-
-        # create the django models
-        processor = FormProcessorInterface(domain=self.domain).ledger_processor
-        for stock_report_helper in self.stock_report_helpers:
-            if stock_report_helper.deprecated:
-                processor.delete_models_for_stock_report_helper(stock_report_helper)
-            else:
-                processor.create_models_for_stock_report_helper(stock_report_helper)
 
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])

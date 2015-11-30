@@ -8,8 +8,19 @@ class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_dele
 
     to_delete should be an iterable of anything with a .delete() function (typically django objects or querysets)
     """
-    def __init__(self, to_save=None, to_delete=None):
-        super(StockModelUpdateResult, self).__init__(to_save or [], to_delete or [])
+    def __new__(cls, to_save=None, to_delete=None):
+        # http://stackoverflow.com/a/16721002/8207
+        return super(StockModelUpdateResult, cls).__new__(
+            cls,
+            to_save=to_save or [],
+            to_delete=to_delete or [],
+        )
+
+    def commit(self):
+        for to_save in self.to_save:
+            to_save.save()
+        for to_delete in self.to_delete:
+            to_delete.delete()
 
 
 class LedgerProcessorInterface(object):
