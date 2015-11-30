@@ -9,9 +9,9 @@ import sys
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import ReconciliationError, MissingServerDate, UsesReferrals
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import primary_actions
-from casexml.apps.case.xml.parser import KNOWN_PROPERTIES, AbstractAction
+from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from django.utils.translation import ugettext as _
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
