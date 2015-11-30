@@ -779,6 +779,7 @@ class CreditForm(forms.Form):
             product_type=product_type,
             note=note,
             web_user=web_user,
+            permit_inactive=True,
         )
         return True
 
