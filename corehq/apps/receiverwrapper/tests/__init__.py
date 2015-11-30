@@ -1,5 +1,6 @@
 import logging
-from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
+from corehq.apps.receiverwrapper.util import get_version_from_appversion_text, \
+    get_commcare_version_from_appversion_text
 
 try:
     from .test_submissions import *
@@ -14,4 +15,5 @@ except ImportError, e:
 
 __test__ = {
     'get_version_from_appversion_text': get_version_from_appversion_text,
+    'get_commcare_version_from_appversion_text': get_commcare_version_from_appversion_text,
 }
