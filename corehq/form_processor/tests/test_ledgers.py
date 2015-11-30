@@ -3,7 +3,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests import FormProcessorTestUtils
+from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
 
 DOMAIN = 'ledger-tests'
 
@@ -17,7 +17,7 @@ class LedgerTests(TestCase):
         cls.product = make_product(DOMAIN, 'A Product', 'prodcode')
 
     def setUp(self):
-        self.interface = FormProcessorInterface()
+        self.interface = FormProcessorInterface(domain=DOMAIN)
         self.factory = CaseFactory(domain=DOMAIN)
         self.case = self.factory.create_case()
 
@@ -26,6 +26,7 @@ class LedgerTests(TestCase):
             ledger_block.format(case_id=self.case.case_id, product_id=self.product._id), DOMAIN
         )
 
+    @run_with_all_backends
     def test_balance_submission(self):
         BALANCE_BLOCK = """
         <balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="2000-01-01" section-id="stock">

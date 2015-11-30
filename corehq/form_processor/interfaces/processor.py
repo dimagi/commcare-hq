@@ -68,8 +68,9 @@ class FormProcessorInterface(object):
     @memoized
     def ledger_processor(self):
         from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
+        from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
         if should_use_sql_backend(self.domain):
-            raise NotImplementedError('not supported yet!')
+            return LedgerProcessorSQL(domain=self.domain)
         else:
             return LedgerProcessorCouch(domain=self.domain)
 
