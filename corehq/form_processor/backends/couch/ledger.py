@@ -13,8 +13,17 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     form and case models, which is why it lives in the "couch" module.
     """
 
+    @transaction.atomic
     def create_models_for_stock_report_helper(self, stock_report_helper):
-        return create_models_for_stock_report(self.domain, stock_report_helper)
+        """
+        Save stock report and stock transaction models to the database.
+        """
+        assert stock_report_helper.domain == self.domain
+        if stock_report_helper.tag not in const.VALID_REPORT_TYPES:
+            return
+        report = _create_model_for_stock_report(self.domain, stock_report_helper)
+        for transaction_helper in stock_report_helper.transactions:
+            _create_model_for_stock_transaction(report, transaction_helper)
 
     @transaction.atomic
     def delete_models_for_stock_report_helper(self, stock_report_helper):
@@ -37,19 +46,6 @@ def _create_model_for_stock_report(domain, stock_report_helper):
         domain=domain,
         server_date=stock_report_helper.server_date,
     )
-
-
-@transaction.atomic
-def create_models_for_stock_report(domain, stock_report_helper):
-    """
-    Save stock report and stock transaction models to the database.
-    """
-    assert stock_report_helper.domain == domain
-    if stock_report_helper.tag not in const.VALID_REPORT_TYPES:
-        return
-    report = _create_model_for_stock_report(domain, stock_report_helper)
-    for transaction_helper in stock_report_helper.transactions:
-        _create_model_for_stock_transaction(report, transaction_helper)
 
 
 def _create_model_for_stock_transaction(report, transaction_helper):
