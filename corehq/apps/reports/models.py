@@ -1074,3 +1074,7 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
         if updated:
             group.save()
         return group
+
+    def clear_caches(self):
+        super(HQGroupExportConfiguration, self).clear_caches()
+        self.by_domain.clear(self.__class__, self.domain)
