@@ -1,4 +1,3 @@
-
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface
 
 
@@ -17,3 +16,7 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     def delete_models_for_stock_report_helper(self, stock_report_helper):
         from corehq.apps.commtrack.processing import delete_models_for_stock_report
         return delete_models_for_stock_report(self.domain, stock_report_helper)
+
+    def get_ledgers_for_case(self, case_id):
+        from corehq.apps.commtrack.models import StockState
+        return StockState.objects.filter(case_id=case_id)

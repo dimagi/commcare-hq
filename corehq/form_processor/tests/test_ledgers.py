@@ -33,4 +33,10 @@ class LedgerTests(TestCase):
         </balance>
         """
         self._submit_ledgers(BALANCE_BLOCK)
-
+        ledgers = self.interface.ledger_processor.get_ledgers_for_case(self.case.case_id)
+        self.assertEqual(1, len(ledgers))
+        ledger = ledgers[0]
+        self.assertEqual(self.case.case_id, ledger.case_id)
+        self.assertEqual(self.product._id, ledger.product_id)
+        self.assertEqual('stock', ledger.section_id)
+        self.assertEqual(100, ledger.balance)
