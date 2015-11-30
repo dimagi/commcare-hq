@@ -9,7 +9,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     Ledger processor for new SQL-based code.
     """
 
-    def get_models_to_update(self, stock_report_helper, ledger_db):
+    def get_models_to_update(self, stock_report_helper, ledger_db=None):
         latest_values = {}
         for stock_trans in stock_report_helper.transactions:
             def _lazy_original_balance():

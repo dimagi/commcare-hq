@@ -1,7 +1,8 @@
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import compute_ledger_values
-from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult
+from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
+    LedgerDB
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 
@@ -13,7 +14,8 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     form and case models, which is why it lives in the "couch" module.
     """
 
-    def get_models_to_update(self, stock_report_helper, ledger_db):
+    def get_models_to_update(self, stock_report_helper, ledger_db=None):
+        ledger_db = ledger_db or LedgerDB(self)
         assert stock_report_helper.domain == self.domain
         if stock_report_helper.deprecated:
             return StockModelUpdateResult(
