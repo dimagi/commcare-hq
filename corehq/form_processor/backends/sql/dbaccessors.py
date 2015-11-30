@@ -141,7 +141,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_cases(case_ids, ordered=False):
-        cases = list(CommCareCaseSQL.objects.filter(case_id__in=list(case_ids)).all())
+        assert isinstance(case_ids, list)
+        cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
         if ordered:
             cases = _order_list(case_ids, cases, 'case_id')
 
