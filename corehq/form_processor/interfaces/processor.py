@@ -71,7 +71,7 @@ class FormProcessorInterface(object):
         if should_use_sql_backend(self.domain):
             raise NotImplementedError('not supported yet!')
         else:
-            return LedgerProcessorCouch
+            return LedgerProcessorCouch(domain=self.domain)
 
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
