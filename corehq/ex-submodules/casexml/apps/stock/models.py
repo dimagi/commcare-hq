@@ -77,8 +77,7 @@ class StockTransaction(models.Model):
 
     @classmethod
     def latest(cls, case_id, section_id, product_id):
-        relevant = cls.get_ordered_transactions_for_stock(
-            case_id, section_id, product_id)
+        relevant = cls.get_ordered_transactions_for_stock(case_id, section_id, product_id)
         try:
             return relevant.select_related()[0]
         except IndexError:
