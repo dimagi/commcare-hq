@@ -13,9 +13,8 @@ from django.utils.safestring import mark_safe
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
-from corehq.apps.app_manager.models import Application
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
@@ -31,17 +30,12 @@ from corehq.apps.export.forms import (
     FilterCaseExportDownloadForm,
 )
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
     HQGroupExportConfiguration
-from corehq.apps.reports.standard.export import (
-    CaseExportReport,
-    ExcelExportReport,
-)
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
@@ -52,7 +46,7 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
-from corehq.apps.users.decorators import require_permission, get_permission_name
+from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.couchapps.dbaccessors import \
     get_attachment_size_by_domain_app_id_xmlns
@@ -70,12 +64,6 @@ from django_prbac.utils import has_privilege
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
-
-require_form_export_permission = require_permission(
-    Permissions.view_report,
-    'corehq.apps.reports.standard.export.ExcelExportReport',
-    login_decorator=None
-)
 
 
 class ExportsPermissionsMixin(object):
@@ -119,9 +107,7 @@ class BaseExportView(BaseProjectDataView):
     @property
     def parent_pages(self):
         return [{
-            'title': (self.report_class.page_title
-                      if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS)
-                      else self.report_class.name),
+            'title': self.report_class.page_title,
             'url': self.export_home_url,
         }]
 
@@ -131,24 +117,16 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def export_home_url(self):
-        if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
-            return reverse(self.report_class.urlname, args=(self.domain,))
-        return self.report_class.get_url(domain=self.domain)
+        return reverse(self.report_class.urlname, args=(self.domain,))
 
     @property
     @memoized
     def report_class(self):
         try:
-            if toggle_enabled(self.request, toggles.REVAMPED_EXPORTS):
-                base_views = {
-                    'form': FormExportListView,
-                    'case': CaseExportListView,
-                }
-            else:
-                base_views = {
-                    'form': ExcelExportReport,
-                    'case': CaseExportReport,
-                }
+            base_views = {
+                'form': FormExportListView,
+                'case': CaseExportListView,
+            }
             return base_views[self.export_type]
         except KeyError:
             raise SuspiciousOperation
@@ -225,7 +203,7 @@ class BaseCreateCustomExportView(BaseExportView):
             return HttpResponseBadRequest()
 
         if self.export_helper.export_type == "form" and not export_tag[1]:
-            return HttpResponseRedirect(ExcelExportReport.get_url(domain=self.domain))
+            return HttpResponseRedirect(reverse(FormExportListView.urlname, args=(self.domain,)))
 
         schema = build_latest_schema(export_tag)
 

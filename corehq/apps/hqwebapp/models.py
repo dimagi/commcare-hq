@@ -610,9 +610,8 @@ class ProjectDataTab(UITab):
             'domain': self.domain,
         }
 
-        new_exports_views = []
-        if self.can_edit_commcare_data and toggle_enabled(self._request,
-                                                          toggles.REVAMPED_EXPORTS):
+        export_data_views = []
+        if self.can_edit_commcare_data:
             from corehq.apps.export.views import (
                 FormExportListView,
                 CaseExportListView,
@@ -624,11 +623,13 @@ class ProjectDataTab(UITab):
                 EditCustomFormExportView,
                 EditCustomCaseExportView,
             )
-            new_exports_views.extend([
+            export_data_views.extend([
                 {
                     'title': FormExportListView.page_title,
                     'url': reverse(FormExportListView.urlname,
                                    args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'icon': 'icon icon-list-alt fa fa-list-alt',
                     'subpages': [
                         {
                             'title': CreateCustomFormExportView.page_title,
@@ -652,6 +653,8 @@ class ProjectDataTab(UITab):
                     'title': CaseExportListView.page_title,
                     'url': reverse(CaseExportListView.urlname,
                                    args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'icon': 'icon icon-share fa fa-share-square-o',
                     'subpages': [
                         {
                             'title': CreateCustomCaseExportView.page_title,
@@ -669,12 +672,9 @@ class ProjectDataTab(UITab):
                 },
             ])
         from corehq.apps.export.views import DeIdFormExportListView
-        if (
-            DeIdFormExportListView.has_deid_permissions(self._request, self.domain)
-            and toggle_enabled(self._request, toggles.REVAMPED_EXPORTS)
-        ):
+        if DeIdFormExportListView.has_deid_permissions(self._request, self.domain):
             from corehq.apps.export.views import DownloadFormExportView
-            new_exports_views.append({
+            export_data_views.append({
                 'title': DeIdFormExportListView.page_title,
                 'url': reverse(DeIdFormExportListView.urlname,
                                args=(self.domain,)),
@@ -685,13 +685,8 @@ class ProjectDataTab(UITab):
                     },
                 ]
             })
-        if new_exports_views:
-            items.append([_("Export Data [New - IN UAT/QA]"), new_exports_views])
-
-        if self.can_export_data:
-            from corehq.apps.data_interfaces.dispatcher \
-                import DataInterfaceDispatcher
-            items.extend(DataInterfaceDispatcher.navigation_sections(context))
+        if export_data_views:
+            items.append([_("Export Data"), export_data_views])
 
         if self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.dispatcher \
@@ -719,6 +714,21 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
 
         return items
+
+    @property
+    def dropdown_items(self):
+        if not self.can_edit_commcare_data:
+            return []
+        from corehq.apps.export.views import (
+                FormExportListView,
+                CaseExportListView,
+        )
+        return [
+            dropdown_dict(FormExportListView.page_title, url=reverse(FormExportListView.urlname, args=(self.domain,))),
+            dropdown_dict(CaseExportListView.page_title, url=reverse(CaseExportListView.urlname, args=(self.domain,))),
+            dropdown_dict(None, is_divider=True),
+            dropdown_dict(_("View All"), url=self.url),
+        ]
 
 
 class ApplicationsTab(UITab):

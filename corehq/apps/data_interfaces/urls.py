@@ -44,5 +44,4 @@ urlpatterns = patterns(
     url(r'^$', "default", name="data_interfaces_default"),
     (r'^edit/', include(edit_data_urls)),
     (r'^export/', include('corehq.apps.export.urls')),
-    DataInterfaceDispatcher.url_pattern(),
 )
