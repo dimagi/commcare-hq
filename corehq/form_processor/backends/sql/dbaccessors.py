@@ -154,10 +154,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Return True if a case has been modified since the given modification date.
         Assumes that the case exists in the DB.
         """
-        return not CommCareCaseSQL.objects.filter(
-            case_id=case_id,
-            server_modified_on=server_modified_on
-        ).exists()
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
+            result = fetchone_as_namedtuple(cursor)
+            return result.case_modified
 
     @staticmethod
     def get_case_xform_ids(case_id):
