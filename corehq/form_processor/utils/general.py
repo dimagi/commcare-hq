@@ -36,7 +36,7 @@ def cache_return_value(fn):
         obj = args[0]
 
         cached_value = getattr(obj, cached_property_name, Ellipsis)
-        if cached_value != Ellipsis:
+        if cached_value is not Ellipsis:
             return cached_value
 
         value = fn(*args, **kwargs)
