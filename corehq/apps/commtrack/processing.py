@@ -42,10 +42,9 @@ class StockProcessingResult(object):
                 update_results.append(this_result)
         return update_results
 
-    @transaction.atomic
-    def commit(self):
+    def finalize(self):
         """
-        Commit changes to the database
+        Finalize anything else that needs to happen - this runs after models are saved.
         """
         # if cases were changed we should purge the sync token cache
         # this ensures that ledger updates will sync back down

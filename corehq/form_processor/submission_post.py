@@ -176,7 +176,7 @@ class SubmissionPost(object):
             unfinished_submission_stub.saved = True
             unfinished_submission_stub.save()
             case_result.commit_dirtiness_flags()
-            stock_result.commit()
+            stock_result.finalize()
             for case in cases:
                 case_post_save.send(case.__class__, case=case)
 

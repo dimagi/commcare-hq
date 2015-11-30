@@ -626,6 +626,6 @@ def reprocess_form(sender, xform, *args, **kwargs):
     for to_save in result.get_models_to_save():
         if to_save:
             to_save.commit()
-    result.commit()
+    result.finalize()
     # todo: use LedgerProcessor
     CommCareCase.get_db().bulk_save(result.relevant_cases)
