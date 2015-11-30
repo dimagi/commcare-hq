@@ -25,7 +25,7 @@ class LedgerFormat(object):
     PER_ENTRY = object()
 
 
-CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action'])
+CaseActionIntent = namedtuple('CaseActionIntent', ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])
 StockFormActions = namedtuple('StockFormActions', ['stock_report_helpers', 'case_action_intents'])
 LedgerInstruction = namedtuple(
     'LedgerInstruction',
@@ -73,22 +73,19 @@ def _get_case_action_intents(xform, transaction_helpers):
     # list of cases that had stock reports in the form
     case_ids = list(set(transaction_helper.case_id
                         for transaction_helper in transaction_helpers))
-
-    user_id = xform.metadata.userID
-    submit_time = xform.received_on
     case_action_intents = []
     for case_id in case_ids:
         if xform.is_deprecated:
             case_action_intents.append(CaseActionIntent(
-                case_id=case_id, form_id=xform.orig_id, is_deprecation=True, action=None
+                case_id=case_id, form_id=xform.orig_id, is_deprecation=True, action_type=None, form=xform,
             ))
         else:
-            # todo: convert to CaseTransaction object
-            case_action = CommCareCaseAction.from_parsed_action(
-                submit_time, user_id, xform, AbstractAction(CASE_ACTION_COMMTRACK)
-            )
             case_action_intents.append(CaseActionIntent(
-                case_id=case_id, form_id=xform.form_id, is_deprecation=False, action=case_action
+                case_id=case_id,
+                form_id=xform.form_id,
+                is_deprecation=False,
+                action_type=CASE_ACTION_COMMTRACK,
+                form=xform
             ))
     return case_action_intents
 

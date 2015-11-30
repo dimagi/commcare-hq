@@ -546,6 +546,7 @@ class CaseTransaction(models.Model):
     TYPE_REBUILD_USER_ARCHIVED = 3
     TYPE_REBUILD_FORM_ARCHIVED = 4
     TYPE_REBUILD_FORM_EDIT = 5
+    TYPE_LEDGER = 6
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -553,6 +554,7 @@ class CaseTransaction(models.Model):
         (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+        (TYPE_LEDGER, 'ledger'),
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
@@ -600,11 +602,19 @@ class CaseTransaction(models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_FORM)
+
+    @classmethod
+    def ledger_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_LEDGER)
+
+    @classmethod
+    def _from_form(cls, case, xform, transaction_type):
         return CaseTransaction(
             case=case,
             form_id=xform.form_id,
             server_date=xform.received_on,
-            type=CaseTransaction.TYPE_FORM,
+            type=transaction_type,
             revoked=not xform.is_normal
         )
 

@@ -5,7 +5,6 @@ from django.db import transaction
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.log_exception import log_exception
 
-from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
