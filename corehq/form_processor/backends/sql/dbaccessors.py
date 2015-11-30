@@ -135,8 +135,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case(case_id):
         try:
-            return CommCareCaseSQL.objects.get(case_id=case_id)
-        except CommCareCaseSQL.DoesNotExist:
+            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
+        except IndexError:
             raise CaseNotFound
 
     @staticmethod
