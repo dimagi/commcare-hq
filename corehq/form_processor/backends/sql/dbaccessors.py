@@ -9,7 +9,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
     SupplyPointCaseMixin)
-from corehq.form_processor.utils.sql import fetchone_as_namedtuple
+from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -161,12 +161,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        return list(CaseTransaction.objects.filter(
-            case_id=case_id,
-            revoked=False,
-            form_id__isnull=False,
-            type=CaseTransaction.TYPE_FORM
-        ).values_list('form_id', flat=True))
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT form_id FROM get_case_form_ids(%s)', [case_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
 
     @staticmethod
     def get_indices(case_id):

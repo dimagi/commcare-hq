@@ -1,21 +1,13 @@
-DROP FUNCTION IF EXISTS check_form_exists(text, text);
+DROP FUNCTION IF EXISTS get_case_form_ids(text);
 
-CREATE FUNCTION check_form_exists(form_id text, domain_name text DEFAULT NULL, form_exists OUT BOOLEAN) AS $$
-DECLARE
-    inner_query   text;
-    select_expr   text := 'SELECT 1 FROM form_processor_xforminstancesql WHERE form_id = $1';
-    domain_filter text := ' AND domain = $2';
-    limit_expr    text := ' LIMIT 1';
-    exists        boolean;
+CREATE FUNCTION get_case_form_ids(case_id text) RETURNS TABLE (form_id VARCHAR(255)) AS $$
 BEGIN
-    IF $2 <> '' THEN
-        inner_query := select_expr || domain_filter || limit_expr;
-    ELSE
-        inner_query := select_expr || limit_expr;
-    END IF;
-
-    EXECUTE format('SELECT exists(%s)', inner_query)
-        INTO form_exists
-        USING $1, $2;
+    RETURN QUERY
+    SELECT form_processor_casetransaction.form_id FROM form_processor_casetransaction
+    WHERE form_processor_casetransaction.case_id = $1
+    AND form_processor_casetransaction.revoked = FALSE
+    AND form_processor_casetransaction.form_id IS NOT NULL
+    AND form_processor_casetransaction.type = 0
+    ORDER BY form_processor_casetransaction.server_date;
 END;
 $$ LANGUAGE plpgsql;

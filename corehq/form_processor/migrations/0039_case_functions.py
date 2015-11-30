@@ -16,4 +16,5 @@ class Migration(migrations.Migration):
         migrate_sql_function('get_case_by_id'),
         migrate_sql_function('get_cases_by_id'),
         migrate_sql_function('case_modified_since'),
+        migrate_sql_function('get_case_form_ids'),
     ]
