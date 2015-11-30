@@ -162,7 +162,6 @@ def process_stock(xforms, case_db=None):
         stock_report_helpers += actions_for_form.stock_report_helpers
         case_action_intents += actions_for_form.case_action_intents
 
-    # omitted: normalize_transactions (used for bulk requisitions?)
     # validate the parsed transactions
     for stock_report_helper in stock_report_helpers:
         stock_report_helper.validate()
