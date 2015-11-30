@@ -28,6 +28,7 @@ class LedgerTests(TestCase):
 
     @run_with_all_backends
     def test_balance_submission(self):
+        orignal_form_count = len(self.interface.get_case_forms(self.case.case_id))
         BALANCE_BLOCK = """
         <balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="2000-01-01" section-id="stock">
             <entry id="{product_id}" quantity="100" />
@@ -41,3 +42,5 @@ class LedgerTests(TestCase):
         self.assertEqual(self.product._id, ledger.product_id)
         self.assertEqual('stock', ledger.section_id)
         self.assertEqual(100, ledger.balance)
+        # make sure the form is part of the case's history
+        self.assertEqual(orignal_form_count + 1, len(self.interface.get_case_forms(self.case.case_id)))
