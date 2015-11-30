@@ -13,7 +13,6 @@ from corehq.util.xml_utils import serialize
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.util import localize
 
 
 class ReportFixturesProvider(object):
