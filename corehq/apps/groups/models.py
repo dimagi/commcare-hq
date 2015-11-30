@@ -18,6 +18,7 @@ from corehq.apps.groups.dbaccessors import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
+from corehq.util.quickcache import quickcache
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
@@ -167,6 +168,7 @@ class Group(UndoableDocument):
         return self.get_users(is_active)
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
         return group_by_domain(domain)
 
@@ -179,6 +181,7 @@ class Group(UndoableDocument):
         return group_choices
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def ids_by_domain(cls, domain):
         return get_group_ids_by_domain(domain)
 
