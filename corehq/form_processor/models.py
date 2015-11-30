@@ -47,6 +47,11 @@ class Attachment(collections.namedtuple('Attachment', 'name raw_content content_
 
 
 class PreSaveHashableMixin(object):
+    """
+    Mixin to allow hashing of Django objects prior to saving. By
+    default Django uses the primary key as the hash key which
+    doesn't exist prior to saving.
+    """
     hash_property = None
 
     def __hash__(self):
@@ -62,8 +67,6 @@ class SaveStateMixin(object):
 
 
 class AttachmentMixin(SaveStateMixin):
-    """Requires the model to be linked to the attachments model via the 'attachments' related name.
-    """
     ATTACHMENTS_RELATED_NAME = 'attachment_set'
 
     def get_attachments(self):
