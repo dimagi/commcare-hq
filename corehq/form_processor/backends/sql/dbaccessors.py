@@ -190,7 +190,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             CommCareCaseSQL.objects.filter(case_id=case_id).delete()
 
     @staticmethod
-    def get_attachment(case_id, attachment_name):
+    def get_attachment_by_name(case_id, attachment_name):
         try:
             return CaseAttachmentSQL.objects.filter(case_id=case_id, name=attachment_name)[0]
         except IndexError:

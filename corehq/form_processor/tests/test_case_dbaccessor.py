@@ -172,10 +172,10 @@ class CaseAccessorTests(TestCase):
         FormProcessorSQL.save_case(case)
 
         with self.assertRaises(AttachmentNotFound):
-            CaseAccessorSQL.get_attachment(case.case_id, 'missing')
+            CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
         with self.assertNumQueries(1):
-            attachment_meta = CaseAccessorSQL.get_attachment(case.case_id, 'pic.jpg')
+            attachment_meta = CaseAccessorSQL.get_attachment_by_name(case.case_id, 'pic.jpg')
 
         self.assertEqual(case.case_id, attachment_meta.case_id)
         self.assertEqual('pic.jpg', attachment_meta.name)
@@ -199,7 +199,7 @@ class CaseAccessorTests(TestCase):
         FormProcessorSQL.save_case(case)
 
         with self.assertRaises(AttachmentNotFound):
-            CaseAccessorSQL.get_attachment(case.case_id, 'missing')
+            CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
         with self.assertNumQueries(1):
             attachments = CaseAccessorSQL.get_attachments(case.case_id)
