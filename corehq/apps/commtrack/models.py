@@ -615,6 +615,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
+    # todo: use LedgerProcessor
     StockReport.objects.filter(form_id=xform.form_id).delete()
 
 
@@ -622,5 +623,9 @@ def remove_data(sender, xform, *args, **kwargs):
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
     result = process_stock([xform])
+    for to_save in result.get_models_to_save():
+        if to_save:
+            to_save.commit()
     result.commit()
+    # todo: use LedgerProcessor
     CommCareCase.get_db().bulk_save(result.relevant_cases)
