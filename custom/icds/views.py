@@ -5,9 +5,11 @@ from corehq import toggles
 
 
 @toggles.ICDS_REPORTS.required_decorator()
-def tableau(request, domain):
+def tableau(request, domain, env, workbook):
+    # TODO: In production we should limit this to only the actual workbook, but this makes iteration much easier
+    report_view = "{}/{}".format(env, workbook)
     context = {
-        'report_view': 'POCReports/MainDashboard'
+        'report_view': report_view
     }
     response = render_to_string('tableau.html', context)
     # trusted_ticket = _get_tableau_trusted_ticket(request.)
