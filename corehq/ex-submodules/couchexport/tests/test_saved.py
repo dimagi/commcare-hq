@@ -55,7 +55,7 @@ class SavedExportTest(TestCase):
         saved_export.save()
         saved_export.set_payload("content")
         name = saved_export.get_attachment_name()
-        assert saved_export.has_file()
+        self.assertTrue(saved_export.has_file())
         self.assertIn(name, saved_export.external_blobs)
         self.assertEqual(saved_export.size, 7)
         with saved_export.get_payload(stream=True) as fh:

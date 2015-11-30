@@ -98,8 +98,8 @@ class TestBlobMixin(BaseTestCase):
         name = "test.1"
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments[name] = {"content": b"couch content"}
-        assert doc.delete_attachment(name), "couch attachment not deleted"
-        assert name not in doc._attachments, doc._attachments
+        self.assertTrue(doc.delete_attachment(name), "couch attachment not deleted")
+        self.assertNotIn(name, doc._attachments)
 
     def test_blobs_property(self):
         couch_digest = "md5-" + md5(b"couch content").hexdigest()
@@ -129,7 +129,7 @@ class TestBlobMixin(BaseTestCase):
         _id = self.obj._id
         with self.obj.atomic_blobs():
             self.obj.put_attachment("content", name)
-        assert self.obj.saved
+        self.assertTrue(self.obj.saved)
         self.assertEqual(self.obj._id, _id)
         self.assertEqual(self.obj.fetch_attachment(name), "content")
         self.assertIn(name, self.obj.blobs)
@@ -140,8 +140,8 @@ class TestBlobMixin(BaseTestCase):
         obj._id = None
         with obj.atomic_blobs():
             obj.put_attachment("content", name)
-        assert obj.saved
-        assert obj._id is not None
+        self.assertTrue(obj.saved)
+        self.assertTrue(obj._id is not None)
         self.assertEqual(obj.fetch_attachment(name), "content")
         self.assertIn(name, obj.blobs)
 
@@ -152,7 +152,7 @@ class TestBlobMixin(BaseTestCase):
             with self.obj.atomic_blobs():
                 self.obj.put_attachment("content", name)
                 raise BlowUp("while saving atomic blobs")
-        assert not self.obj.saved
+        self.assertFalse(self.obj.saved)
         self.assertEqual(self.obj._id, _id)
         with self.assertRaises(mod.ResourceNotFound):
             self.obj.fetch_attachment(name)

@@ -56,29 +56,29 @@ class TestFilesystemBlobDB(TestCase):
         bucket = "doc.4"
         self.db.put(StringIO(b"content"), name, bucket)
 
-        assert self.db.delete(name, bucket), 'delete failed'
+        self.assertTrue(self.db.delete(name, bucket), 'delete failed')
 
         with self.assertRaises(mod.NotFound):
             self.db.get(name, bucket)
 
-        assert not self.db.delete(name, bucket), 'delete should fail'
+        self.assertFalse(self.db.delete(name, bucket), 'delete should fail')
 
     def test_delete_bucket(self):
         name = "test.1"
         bucket = join("doctype", "ys7v136b")
         self.db.put(StringIO(b"content"), name, bucket)
-        assert self.db.delete(bucket=bucket)
+        self.assertTrue(self.db.delete(bucket=bucket))
 
         names = os.listdir(join(self.rootdir, "doctype"))
-        assert "ys7v136b" not in names, "bucket not deleted"
+        self.assertNotIn("ys7v136b", names, "bucket not deleted")
 
     def test_bucket_path(self):
         name = "test.1"
         bucket = join("doctype", "8cd98f0")
         self.db.put(StringIO(b"content"), name, bucket)
         path = join(self.rootdir, bucket)
-        assert isdir(path), path
-        assert os.listdir(path)
+        self.assertTrue(isdir(path), path)
+        self.assertTrue(os.listdir(path))
 
     def test_safe_attachment_path(self):
         name = "test.1"
