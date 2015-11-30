@@ -45,6 +45,7 @@ from corehq.apps.reports.exportfilters import (
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 
@@ -1038,6 +1039,7 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
         return self.exports_of_type('case')
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
         return hq_group_export_configs_by_domain(domain, cls)
 
