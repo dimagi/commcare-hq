@@ -19,7 +19,7 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
         Save stock report and stock transaction models to the database.
         """
         assert stock_report_helper.domain == self.domain
-        if stock_report_helper.tag not in const.VALID_REPORT_TYPES:
+        if stock_report_helper.report_type not in const.VALID_REPORT_TYPES:
             return
         report = _create_model_for_stock_report(self.domain, stock_report_helper)
         for transaction_helper in stock_report_helper.transactions:
