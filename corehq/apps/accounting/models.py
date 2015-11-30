@@ -2308,7 +2308,7 @@ class LineItem(models.Model):
     base_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     unit_description = models.TextField(blank=True, null=True)
     unit_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    quantity = models.IntegerField(default=1)
+    quantity = models.IntegerField(default=1, validators=integer_field_validators)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = LineItemManager()

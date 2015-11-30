@@ -1,5 +1,6 @@
 from decimal import Decimal
 import logging
+from django.db import transaction
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -94,11 +95,12 @@ class BaseStripePaymentHandler(object):
             },
         }
         try:
-            if remove_card:
-                self.payment_method.remove_card(card)
-                return {'success': True, 'removedCard': card, }
-            if save_card:
-                card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
+            with transaction.atomic():
+                if remove_card:
+                    self.payment_method.remove_card(card)
+                    return {'success': True, 'removedCard': card, }
+                if save_card:
+                    card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
             if save_card or is_saved_card:
                 customer = self.payment_method.customer
 
@@ -130,11 +132,11 @@ class BaseStripePaymentHandler(object):
                 }, exc_info=True)
             return generic_error
 
-        payment_record = PaymentRecord.create_record(
-            self.payment_method, charge.id, amount
-        )
-
-        self.update_credits(payment_record)
+        with transaction.atomic():
+            payment_record = PaymentRecord.create_record(
+                self.payment_method, charge.id, amount
+            )
+            self.update_credits(payment_record)
 
         try:
             self.send_email(payment_record)
@@ -421,9 +423,11 @@ class AutoPayInvoicePaymentHandler(object):
                 self._handle_card_errors(invoice, payment_method, e)
                 continue
             else:
-                invoice.pay_invoice(payment_record)
-                invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
-                invoice.account.save()
+                with transaction.atomic():
+                    invoice.pay_invoice(payment_record)
+                    invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                    invoice.account.save()
+
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):

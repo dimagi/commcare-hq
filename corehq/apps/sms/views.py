@@ -42,7 +42,7 @@ from corehq.apps.sms.models import (
     LastReadMessage, MessagingEvent, SelfRegistrationInvitation
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
-    SMSLoadBalancingMixin)
+    SMSLoadBalancingMixin, UnrecognizedBackendException)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
@@ -94,7 +94,7 @@ SMS_CHAT_HISTORY_CHOICES = (
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(compose_message, args=[domain]))
+    return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):
@@ -354,7 +354,7 @@ def send_to_recipients(request, domain):
 
     return HttpResponseRedirect(
         request.META.get('HTTP_REFERER') or
-        reverse(compose_message, args=[domain])
+        reverse(ComposeMessageView.urlname, args=[domain])
     )
 
 @domain_admin_required
@@ -683,7 +683,7 @@ def default_sms_admin_interface(request):
 @require_superuser
 def delete_backend(request, backend_id):
     # We need to keep this until we move over the admin sms gateway UIs
-    backend = SMSBackend.get(backend_id)
+    backend = SMSBackend.get_wrapped(backend_id)
     if not backend.is_global or backend.base_doc != "MobileBackend":
         raise Http404
     backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
@@ -1152,8 +1152,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def get_deleted_item_data(self, item_id):
         try:
-            backend = SMSBackend.get(item_id)
-        except ResourceNotFound:
+            backend = SMSBackend.get_wrapped(item_id)
+        except UnrecognizedBackendException:
             raise Http404()
         if (backend.is_global or backend.domain != self.domain or
             backend.base_doc != "MobileBackend"):

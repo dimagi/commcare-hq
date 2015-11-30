@@ -27,6 +27,9 @@ class KeywordHandler(object):
         if location:
             return location.sql_location
 
+        if not self.args:
+            return
+
         try:
             return SQLLocation.objects.get(domain=self.domain, site_code=self.args[0])
         except SQLLocation.DoesNotExist:

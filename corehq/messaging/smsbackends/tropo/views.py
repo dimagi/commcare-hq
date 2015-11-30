@@ -1,5 +1,5 @@
 import json
-from .api import TropoBackend
+from .models import TropoBackend
 from tropo import Tropo
 from corehq.apps.ivr.api import incoming as incoming_call
 from corehq.apps.sms.api import incoming as incoming_sms

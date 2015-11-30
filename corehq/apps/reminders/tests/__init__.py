@@ -8,7 +8,7 @@ from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
 from corehq.apps.sms.mixin import BackendMapping
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
 from corehq.apps.domain.models import Domain

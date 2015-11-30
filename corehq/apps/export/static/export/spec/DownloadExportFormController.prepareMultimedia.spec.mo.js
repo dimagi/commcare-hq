@@ -1,5 +1,6 @@
 describe('DownloadExportFormController - Prepare Multimedia Download', function() {
     DnldExpData.prepareTests();
+    DnldExpData.prepareDownloadController();
     DnldExpData.prepareBackends();
     var downloadId = 'uuid-multimediaTest';
 

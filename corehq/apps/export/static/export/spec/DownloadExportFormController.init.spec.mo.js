@@ -1,5 +1,6 @@
 describe('DownloadExportFormController - Initialization', function() {
     DnldExpData.prepareTests();
+    DnldExpData.prepareDownloadController();
 
     beforeEach(function () {
         DnldExpData.$httpBackend

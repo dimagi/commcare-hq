@@ -8,9 +8,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 class AbstractXFormInstance(object):
 
-    @property
-    def form_id(self):
-        raise NotImplementedError()
+    # @property
+    # def form_id(self):
+    #     raise NotImplementedError()
 
     @property
     def form_data(self):
@@ -53,10 +53,10 @@ class AbstractXFormInstance(object):
     def get_attachment(self, attachment_name):
         raise NotImplementedError()
 
-    def archive(self, user=None):
+    def archive(self, user_id=None):
         raise NotImplementedError()
 
-    def unarchive(self, user=None):
+    def unarchive(self, user_id=None):
         raise NotImplementedError()
 
     def get_xml_element(self):
@@ -78,10 +78,6 @@ class AbstractXFormInstance(object):
     def get(self, xform_id):
         raise NotImplementedError()
 
-    @classmethod
-    def get_with_attachments(self, xform_id):
-        raise NotImplementedError()
-
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log
@@ -98,9 +94,9 @@ class AbstractXFormInstance(object):
 
 class AbstractCommCareCase(object):
 
-    @property
-    def case_id(self):
-        raise NotImplementedError()
+    # @property
+    # def case_id(self):
+    #     raise NotImplementedError()
 
     @property
     def case_name(self):
