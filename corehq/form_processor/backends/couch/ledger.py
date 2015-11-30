@@ -16,21 +16,17 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     def create_models_for_stock_report_helper(self, stock_report_helper):
         return create_models_for_stock_report(self.domain, stock_report_helper)
 
+    @transaction.atomic
     def delete_models_for_stock_report_helper(self, stock_report_helper):
-        return delete_models_for_stock_report(self.domain, stock_report_helper)
+        """
+        Delete all stock reports and stock transaction models associated with the helper from the database.
+        """
+        assert stock_report_helper.domain == self.domain
+        StockReport.objects.filter(domain=self.domain, form_id=stock_report_helper.form_id).delete()
 
     def get_ledgers_for_case(self, case_id):
         from corehq.apps.commtrack.models import StockState
         return StockState.objects.filter(case_id=case_id)
-
-
-@transaction.atomic
-def delete_models_for_stock_report(domain, stock_report_helper):
-    """
-    Delete all stock reports and stock transaction models associated with the helper from the database.
-    """
-    assert stock_report_helper.domain == domain
-    StockReport.objects.filter(domain=domain, form_id=stock_report_helper.form_id).delete()
 
 
 def _create_model_for_stock_report(domain, stock_report_helper):
