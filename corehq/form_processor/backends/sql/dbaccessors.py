@@ -32,6 +32,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
+        assert isinstance(form_ids, list)
         forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
             forms = _order_list(form_ids, forms, 'form_id')
@@ -70,6 +71,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
+        assert isinstance(form_ids, list)
         forms = FormAccessorSQL.get_forms(form_ids)
 
         # attachments are already sorted by form_id in SQL
@@ -107,6 +109,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def hard_delete_forms(form_ids):
+        assert isinstance(form_ids, list)
         with connection.cursor() as cursor:
             cursor.execute('SELECT * FROM hard_delete_forms(%s)', [form_ids])
             result = fetchone_as_namedtuple(cursor)
