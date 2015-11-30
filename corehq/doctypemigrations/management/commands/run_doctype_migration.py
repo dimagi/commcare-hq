@@ -6,8 +6,10 @@ from corehq.doctypemigrations.migrator_instances import get_migrator_by_slug, \
 
 USAGE = """You may run either of the following commands
 
+./manage.py run_doctype_migration <slug> --stats
 ./manage.py run_doctype_migration <slug> --initial
 ./manage.py run_doctype_migration <slug> --continuous
+./manage.py run_doctype_migration <slug> --cleanup
 
 with with the following slugs:
 
@@ -53,21 +55,27 @@ class Command(BaseCommand):
             '--initial',
             action='store_true',
             default=False,
+            help="Do a full, initial bulk migration.",
         ),
         make_option(
             '--continuous',
             action='store_true',
             default=False,
+            help=("Start a continuous migration to keep things topped off "
+                  "based on the changes feed.  This should be run in a screen "
+                  "session and cancelled with ^C once it's no longer needed."),
         ),
         make_option(
             '--cleanup',
             action='store_true',
             default=False,
+            help="Delete the old documents still in the source db.",
         ),
         make_option(
             '--stats',
             action='store_true',
             default=False,
+            help="Output misc info about the status of the migration.",
         ),
         make_option(
             '--erase-continuous-progress',

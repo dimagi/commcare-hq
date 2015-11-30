@@ -11,7 +11,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
@@ -21,7 +21,7 @@ from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from couchforms.xml import (
+from couchforms.openrosa_response import (
     ResponseNature,
     get_simple_response_xml,
 )
@@ -388,6 +388,14 @@ class RestoreState(object):
             return self.project.commtrack_settings.get_ota_restore_settings()
         else:
             return StockSettings()
+
+    @property
+    def is_first_extension_sync(self):
+        extension_toggle_enabled = EXTENSION_CASES_SYNC_ENABLED.enabled(self.domain)
+        try:
+            return extension_toggle_enabled and not self.last_sync_log.extensions_checked
+        except AttributeError:
+            return extension_toggle_enabled
 
     def start_sync(self):
         self.start_time = datetime.utcnow()

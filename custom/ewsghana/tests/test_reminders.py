@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.commtrack.tests.util import TEST_BACKEND
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.mixin import VerifiedNumber
@@ -17,7 +16,6 @@ from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third
     stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, create_backend, \
     set_sms_notifications
-from corehq.apps.sms.backend import test
 
 
 TEST_DOMAIN = 'ews-reminders-test-domain'
@@ -48,7 +46,6 @@ class TestReminders(TestCase):
     def setUpClass(cls):
         cls.domain = prepare_domain(TEST_DOMAIN)
         cls.sms_backend_mapping, cls.backend = create_backend()
-        test.bootstrap(TEST_BACKEND, to_console=True)
         cls.loc1 = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=TEST_DOMAIN)
         cls.loc2 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN)
         cls.region = make_loc(code="region", name="Test Region", type="region", domain=TEST_DOMAIN)

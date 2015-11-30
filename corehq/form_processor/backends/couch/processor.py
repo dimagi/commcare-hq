@@ -9,7 +9,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.exceptions import CaseNotFound
-from couchforms.util import process_xform, deprecation_type, fetch_and_wrap_form
+from couchforms.util import fetch_and_wrap_form
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog
@@ -19,23 +19,6 @@ from corehq.form_processor.utils import extract_meta_instance_id
 
 
 class FormProcessorCouch(object):
-
-    @classmethod
-    def post_xform(cls, instance_xml, attachments=None, process=None, domain='test-domain'):
-        """
-        create a new xform and releases the lock
-
-        this is a testing entry point only and is not to be used in real code
-
-        """
-        if not process:
-            def process(xform):
-                xform.domain = domain
-        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
-        with xform_lock as xforms:
-            for xform in xforms:
-                xform.save()
-            return xforms[0]
 
     @classmethod
     def store_attachments(cls, xform, attachments):
@@ -64,7 +47,7 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def is_duplicate(cls, xform_id, domain=False):
+    def is_duplicate(cls, xform_id, domain=None):
         if domain:
             try:
                 existing_doc = XFormInstance.get_db().get(xform_id)
@@ -105,7 +88,7 @@ class FormProcessorCouch(object):
         new_xform._rev, existing_xform._rev = existing_xform._rev, new_xform._rev
 
         # flag the old doc with metadata pointing to the new one
-        existing_xform.doc_type = deprecation_type()
+        existing_xform.doc_type = XFormDeprecated.__name__
         existing_xform.orig_id = old_id
 
         # and give the new doc server data of the old one and some metadata
@@ -134,12 +117,10 @@ class FormProcessorCouch(object):
         return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     @classmethod
-    def log_submission_error(cls, instance, message, callback):
-        error = SubmissionErrorLog.from_instance(instance, message)
-        if callback:
-            callback(error)
-        error.save()
-        return error
+    def submission_error_form_instance(cls, domain, instance, message):
+        log = SubmissionErrorLog.from_instance(instance, message)
+        log.domain = domain
+        return log
 
     @staticmethod
     def get_cases_from_forms(case_db, xforms):
@@ -150,9 +131,9 @@ class FormProcessorCouch(object):
         touched_cases = {}
         for xform in sorted_forms:
             for case_update in get_case_updates(xform):
-                case_doc = case_db.get_case_from_case_update(case_update, xform)
-                if case_doc:
-                    touched_cases[case_doc.case_id] = case_doc
+                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+                if case_update_meta.case:
+                    touched_cases[case_update_meta.case.case_id] = case_update_meta
                 else:
                     logging.error(
                         "XForm %s had a case block that wasn't able to create a case! "

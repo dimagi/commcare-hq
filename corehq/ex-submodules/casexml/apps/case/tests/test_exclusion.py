@@ -4,7 +4,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 TEST_DOMAIN = 'test-domain'
 

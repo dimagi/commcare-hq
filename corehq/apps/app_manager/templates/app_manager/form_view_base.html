@@ -99,7 +99,6 @@
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
-    <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -226,6 +225,22 @@
             {% if allow_cloudcare %}
                 // tag the 'preview in cloudcare' button with the right url
                 // unfortunately, has to be done in javascript
+                var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
+                    var url = urlRoot;
+                    if (appId !== undefined) {
+                        url = url + "view/" + appId;
+                        if (moduleId !== undefined) {
+                            url = url + "/" + moduleId;
+                            if (formId !== undefined) {
+                                url = url + "/" + formId;
+                                if (caseId !== undefined) {
+                                    url = url + "/" + caseId;
+                                }
+                            }
+                        }
+                    }
+                    return url;
+                };
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
                 $('#cloudcare-preview-url').click(function(e) {

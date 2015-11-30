@@ -160,7 +160,7 @@ jQuery(document).ready(function($) {
     info.addTo(map);
 
     // todo: should probably be getting this from somewhere else and possibly not on every page load.
-    $.getJSON('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json', function (data) {
+    $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
         countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
     });
 

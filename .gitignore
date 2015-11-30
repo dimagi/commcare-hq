@@ -19,7 +19,6 @@ bad/
 CommCare.ja*
 startover.sh
 celery.db
-*.sql
 tmp.sh
 /resource_versions.py
 /loadtest/results/

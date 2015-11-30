@@ -7,8 +7,7 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
-from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
-from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -299,57 +298,70 @@ def delete_reminder(request, domain, handler_id):
     return HttpResponseRedirect(reverse(view_name, args=[domain]))
 
 
-@reminders_framework_permission
-def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
-    timezone = Domain.get_by_name(domain).get_default_timezone()
-    reminders = CaseReminderHandler.get_all_reminders(domain)
-    dates = []
-    now = datetime.utcnow()
-    timezone_now = datetime.now(timezone)
-    today = timezone_now.date()
+class ScheduledRemindersCalendarView(BaseMessagingSectionView):
+    urlname = 'scheduled_reminders'
+    page_title = ugettext_noop("Reminder Calendar")
+    template_name = 'reminders/partial/scheduled_reminders.html'
 
-    def adjust_next_fire_to_timezone(reminder_utc):
-        return ServerTime(reminder_utc.next_fire).user_time(timezone).done()
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(reminders_framework_permission)
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
-    if reminders:
-        start_date = adjust_next_fire_to_timezone(reminders[0]).date()
-        if today < start_date:
-            start_date = today
-        end_date = adjust_next_fire_to_timezone(reminders[-1]).date()
-    else:
-        start_date = end_date = today
-    # make sure start date is a Monday and enddate is a Sunday
-    start_date -= timedelta(days=start_date.weekday())
-    end_date += timedelta(days=6-end_date.weekday())
-    while start_date <= end_date:
-        dates.append(start_date)
-        start_date += timedelta(days=1)
-    
-    reminder_data = []
-    for reminder in reminders:
-        handler = reminder.handler
-        recipient = reminder.recipient
-        recipient_desc = get_recipient_name(recipient)
-        case = reminder.case
-        
-        reminder_data.append({
-            "handler_name" : handler.nickname,
-            "next_fire" : adjust_next_fire_to_timezone(reminder),
-            "recipient_desc" : recipient_desc,
-            "recipient_type" : handler.recipient,
-            "case_id" : case.get_id if case is not None else None,
-            "case_name" : case.name if case is not None else None,
+    @property
+    def page_context(self):
+        page_context = super(ScheduledRemindersCalendarView, self).page_context
+        timezone = Domain.get_by_name(self.domain).get_default_timezone()
+        reminders = CaseReminderHandler.get_all_reminders(self.domain)
+        dates = []
+        now = datetime.utcnow()
+        timezone_now = datetime.now(timezone)
+        today = timezone_now.date()
+
+        def adjust_next_fire_to_timezone(reminder_utc):
+            return ServerTime(reminder_utc.next_fire).user_time(timezone).done()
+
+        if reminders:
+            start_date = adjust_next_fire_to_timezone(reminders[0]).date()
+            if today < start_date:
+                start_date = today
+            end_date = adjust_next_fire_to_timezone(reminders[-1]).date()
+        else:
+            start_date = end_date = today
+        # make sure start date is a Monday and enddate is a Sunday
+        start_date -= timedelta(days=start_date.weekday())
+        end_date += timedelta(days=6 - end_date.weekday())
+        while start_date <= end_date:
+            dates.append(start_date)
+            start_date += timedelta(days=1)
+
+        reminder_data = []
+        for reminder in reminders:
+            handler = reminder.handler
+            recipient = reminder.recipient
+            recipient_desc = get_recipient_name(recipient)
+            case = reminder.case
+
+            reminder_data.append({
+                "handler_name": handler.nickname,
+                "next_fire": adjust_next_fire_to_timezone(reminder),
+                "recipient_desc": recipient_desc,
+                "recipient_type": handler.recipient,
+                "case_id": case.get_id if case is not None else None,
+                "case_name": case.name if case is not None else None,
+            })
+
+        page_context.update({
+            'domain': self.domain,
+            'reminder_data': reminder_data,
+            'dates': dates,
+            'today': today,
+            'now': now,
+            'timezone': timezone,
+            'timezone_now': timezone_now,
         })
-    
-    return render(request, template, {
-        'domain': domain,
-        'reminder_data': reminder_data,
-        'dates': dates,
-        'today': today,
-        'now': now,
-        'timezone': timezone,
-        'timezone_now': timezone_now,
-    })
+        return page_context
 
 
 class CreateScheduledReminderView(BaseMessagingSectionView):

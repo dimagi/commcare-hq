@@ -18,7 +18,7 @@ from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location, SQLLocation
 from .signals import location_created, location_edited
-from .util import allowed_child_types
+from .util import allowed_child_types, get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
@@ -259,9 +259,8 @@ class LocationForm(forms.Form):
         coords = self.cleaned_data['coordinates']
         setattr(location, 'latitude', coords[0] if coords else None)
         setattr(location, 'longitude', coords[1] if coords else None)
-        location.lineage = Location(
-            parent=self.cleaned_data['parent_id']
-        ).lineage
+        if self.cleaned_data['parent_id']:
+            location.lineage = get_lineage_from_location_id(self.cleaned_data['parent_id'])
         location.metadata = self.custom_data.get_data_to_save()
 
         for k, v in self.cleaned_data.iteritems():
@@ -272,9 +271,10 @@ class LocationForm(forms.Form):
         orig_parent_id = self.cleaned_data.get('orig_parent_id')
         reparented = orig_parent_id is not None
         if reparented:
+            # todo: this property isn't used. could be deleted if we aren't expecting
+            # to do anything more with the data
             location.flag_post_move = True
             location.previous_parents.append(orig_parent_id)
-
         if commit:
             location.save()
 
@@ -284,11 +284,6 @@ class LocationForm(forms.Form):
             location_edited.send(sender='loc_mgmt',
                                  loc=location,
                                  moved=reparented)
-
-        if reparented:
-            # post-location move processing here
-            # (none for now; do it as a batch job)
-            pass
 
         return location
 
