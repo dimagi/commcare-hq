@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
@@ -81,6 +82,10 @@ class ToggleEditView(ToggleBaseView):
         return self.request.GET.get('expand') == 'true'
 
     @property
+    def usage_info(self):
+        return self.request.GET.get('usage_info') == 'true'
+
+    @property
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
@@ -110,18 +115,51 @@ class ToggleEditView(ToggleBaseView):
     @property
     def page_context(self):
         toggle_meta = self.toggle_meta()
+        toggle = self.get_toggle()
         context = {
             'toggle_meta': toggle_meta,
-            'toggle': self.get_toggle(),
+            'toggle': toggle,
             'expanded': self.expanded,
             'namespaces': [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces],
+            'usage_info': self.usage_info,
         }
         if self.expanded:
             context['domain_toggle_list'] = sorted(
                 [(row['key'], toggle_meta.enabled(row['key'])) for row in Domain.get_all(include_docs=False)],
                 key=lambda domain_tup: (not domain_tup[1], domain_tup[0])
             )
+        if self.usage_info:
+            context['last_used'] = self._get_usage_info(toggle)
         return context
+
+    def _get_usage_info(self, toggle):
+        DATE_FORMAT = "%Y-%m-%d"
+        last_used = {}
+        for enabled in toggle.enabled_users:
+            name = self._enabled_item_name(enabled)
+            try:
+                if self._get_namespace(enabled) == NAMESPACE_DOMAIN:
+                    last_used[name] = Domain.get_by_name(name).last_modified.strftime(DATE_FORMAT)
+                else:
+                    last_used[name] = CouchUser.get_by_username(name).last_login.strftime(DATE_FORMAT)
+            except (ResourceNotFound, AttributeError):
+                last_used[name] = "Not Found"
+        latest_used = sorted(last_used, key=last_used.get, reverse=True)[0]
+        last_used["_latest"] = {
+            'name': latest_used,
+            'date': last_used[latest_used]
+        }
+
+        return last_used
+
+    def _get_namespace(self, enabled_item):
+        return enabled_item.split(":")[0]
+
+    def _enabled_item_name(self, enabled_item):
+        try:
+            return enabled_item.split(":")[1]
+        except IndexError:
+            return enabled_item.split(":")[0]
 
     def call_save_fn(self, changed_entries, currently_enabled):
         if self.static_toggle.save_fn is None:
@@ -149,6 +187,8 @@ class ToggleEditView(ToggleBaseView):
             clear_toggle_cache(toggle.slug, item)
 
         data = {
-            'item_list': item_list
+            'items': item_list
         }
+        if self.usage_info:
+            data['last_used'] = self._get_usage_info(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
