@@ -1,6 +1,7 @@
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult
 from corehq.form_processor.models import LedgerValue
+from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 
 class LedgerProcessorSQL(LedgerProcessorInterface):
@@ -8,7 +9,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     Ledger processor for new SQL-based code.
     """
 
-    def get_models_to_update(self, stock_report_helper):
+    def get_models_to_update(self, stock_report_helper, ledger_db):
         latest_values = {}
         for stock_trans in stock_report_helper.transactions:
             def _lazy_original_balance():
