@@ -44,6 +44,11 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_with_attachments(form_id):
+        """
+        It's necessary to store these on the form rather than use a memoized property
+        since the form_id can change (in the case of a deprecated form) which breaks
+        the memoize hash.
+        """
         form = FormAccessorSQL.get_form(form_id)
         attachments = FormAccessorSQL.get_attachments(form_id)
         form.cached_attachments = attachments
