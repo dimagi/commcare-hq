@@ -23,6 +23,10 @@ def cache_return_value(fn):
     Requires that the first arg is 'self' and that no other args or kwargs are being
     passed in.
 
+    Note that there is no provision for caching different return values. Once a value
+    is cached it will always return the same value regardless of any changes to internal
+    state of the object.
+
     :param fn: a function or property with no args (other than 'self')
     """
     cached_property_name = '{}__cached_value'.format(fn.__name__)
