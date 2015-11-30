@@ -124,22 +124,9 @@ def mark_cases_changed(case_action_intents, case_db):
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        if action_intent.is_deprecation:
-            # just remove the old stock actions for the form from the case
-            case.actions = [
-                a for a in case.actions if not
-                (a.xform_id == action_intent.form_id and a.action_type == CASE_ACTION_COMMTRACK)
-            ]
-        else:
-            case_action = action_intent.action
-            # hack: clear the sync log id so this modification always counts
-            # since consumption data could change server-side
-            case_action.sync_log_id = ''
-            case.actions.append(case_action)
-            if action_intent.form_id not in case.xform_ids:
-                case.xform_ids.append(action_intent.form_id)
-
+        case_db.apply_action_intent(case, action_intent)
         case_db.mark_changed(case)
+
     return relevant_cases
 
 def _compute_ledger_values(original_balance, stock_transaction):

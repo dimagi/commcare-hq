@@ -23,6 +23,10 @@ def _convert_type(property_name, value):
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
 
+    def apply_action_intent(self, case_action_intent):
+        # todo: do something here
+        pass
+
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 

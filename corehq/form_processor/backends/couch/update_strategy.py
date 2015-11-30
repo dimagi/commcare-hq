@@ -7,6 +7,7 @@ from StringIO import StringIO
 from couchdbkit import BadValueError
 import sys
 from casexml.apps.case import const
+from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import ReconciliationError, MissingServerDate, UsesReferrals
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import primary_actions
@@ -26,6 +27,26 @@ def _is_override(xform):
 
 class ActionsUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCase
+
+    def apply_action_intent(self, case_action_intent):
+        case = self.case
+        if case_action_intent.is_deprecation:
+            # just remove the old stock actions for the form from the case
+            case.actions = [
+                a for a in case.actions if not
+                (a.xform_id == case_action_intent.form_id and a.action_type == CASE_ACTION_COMMTRACK)
+            ]
+        else:
+
+            case_action = case_action_intent.action
+            # for now we only allow commtrack actions to be processed this way so just assert that's the case
+            assert case_action.action_type == CASE_ACTION_COMMTRACK
+            # hack: clear the sync log id so this modification always counts
+            # since consumption data could change server-side
+            case_action.sync_log_id = ''
+            case.actions.append(case_action)
+            if case_action_intent.form_id not in case.xform_ids:
+                case.xform_ids.append(case_action_intent.form_id)
 
     def check_action_order(self):
         action_dates = [a.server_date for a in self.case.actions if a.server_date]
