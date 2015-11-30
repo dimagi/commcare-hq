@@ -1,4 +1,3 @@
-from django.db import transaction
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import compute_ledger_values
@@ -26,14 +25,6 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
         for transaction_helper in stock_report_helper.transactions:
             to_save.append(_get_model_for_stock_transaction(report_model, transaction_helper))
         return StockModelUpdateResult(to_save=to_save)
-
-    @transaction.atomic
-    def delete_models_for_stock_report_helper(self, stock_report_helper):
-        """
-        Delete all stock reports and stock transaction models associated with the helper from the database.
-        """
-        assert stock_report_helper.domain == self.domain
-        StockReport.objects.filter(domain=self.domain, form_id=stock_report_helper.form_id).delete()
 
     def get_ledgers_for_case(self, case_id):
         from corehq.apps.commtrack.models import StockState

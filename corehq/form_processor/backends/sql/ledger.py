@@ -36,9 +36,6 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
             to_save.append(ledger_value)
         return StockModelUpdateResult(to_save=to_save)
 
-    def delete_models_for_stock_report_helper(self, stock_report_helper):
-        pass
-
     def get_ledgers_for_case(self, case_id):
         return LedgerValue.objects.filter(case_id=case_id)
 

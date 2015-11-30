@@ -37,9 +37,5 @@ class LedgerProcessorInterface(object):
         pass
 
     @abstractmethod
-    def delete_models_for_stock_report_helper(self, stock_report_helper):
-        pass
-
-    @abstractmethod
     def get_ledgers_for_case(self, case_id):
         pass
