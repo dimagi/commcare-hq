@@ -12,19 +12,19 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     @transaction.atomic
     def create_models_for_stock_report_helper(self, stock_report_helper):
         latest_values = {}
-        for transaction in stock_report_helper.transactions:
+        for stock_trans in stock_report_helper.transactions:
             def _lazy_original_balance():
                 # needs to be in closures because it's zero-argument.
                 # see compute_ledger_values for more information
-                if transaction.ledger_reference in latest_values:
-                    return latest_values[transaction.ledger_reference]
+                if stock_trans.ledger_reference in latest_values:
+                    return latest_values[stock_trans.ledger_reference]
                 else:
-                    return self.get_current_ledger_value(transaction.ledger_reference)
+                    return self.get_current_ledger_value(stock_trans.ledger_reference)
 
             new_ledger_values = compute_ledger_values(
-                _lazy_original_balance, stock_report_helper.report_type, transaction.relative_quantity
+                _lazy_original_balance, stock_report_helper.report_type, stock_trans.relative_quantity
             )
-            latest_values[transaction.ledger_reference] = new_ledger_values.balance
+            latest_values[stock_trans.ledger_reference] = new_ledger_values.balance
         for touched_ledger_reference, quantity in latest_values.items():
             ledger_value, created = LedgerValue.objects.get_or_create(
                 defaults={'balance': quantity},
