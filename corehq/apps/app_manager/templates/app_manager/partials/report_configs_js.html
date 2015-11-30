@@ -14,10 +14,12 @@
             saveURL: saveURL,
             lang: {{ lang|JSON }},
             menuImage: menuImage,
-            menuAudio: menuAudio
+            menuAudio: menuAudio,
+            containerId: "#settings"
         });
         ko.applyBindings(reportModule, document.getElementById("save-button"));
         ko.applyBindings(reportModule, document.getElementById("module-name"));
+        ko.applyBindings(reportModule, document.getElementById("module-filter"));
         ko.applyBindings(reportModule, document.getElementById("report-list"));
         ko.applyBindings(reportModule, document.getElementById("add-report-btn"));
         menuImage.ref.subscribe(function() {

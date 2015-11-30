@@ -264,9 +264,9 @@ var ReportModule = (function () {
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
-        self.moduleFilter = options.moduleFilter;
+        self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
-        self.currentModuleFilter = ko.observable(options.moduleFilter);
+        self.currentModuleFilter = ko.observable(self.moduleFilter);
         self.menuImage = options.menuImage;
         self.menuAudio = options.menuAudio;
         self.reportTitles = {};
@@ -312,7 +312,10 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
-                self.moduleFilter = self.currentModuleFilter();
+
+                var filter = self.currentModuleFilter().trim();
+                self.moduleFilter = filter === '' ? undefined : filter;
+
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
@@ -333,6 +336,7 @@ var ReportModule = (function () {
 
         self.currentModuleName.subscribe(self.changeSaveButton);
         self.currentModuleFilter.subscribe(self.changeSaveButton);
+        $(options.containerId + ' input').on('textchange', self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};
