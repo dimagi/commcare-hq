@@ -749,6 +749,7 @@ def raw_couch(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
     context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
+    context['all_databases'] = couch_config.all_dbs_by_slug.keys()
     return render(request, "hqadmin/raw_couch.html", context)
 
 
