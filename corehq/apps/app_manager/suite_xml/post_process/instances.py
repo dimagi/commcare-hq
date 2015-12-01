@@ -56,7 +56,6 @@ class EntryInstances(PostProcessor):
                     for datum in frame.datums:
                         xpaths.add(datum.value)
         xpaths.discard(None)
-
         instances = EntryInstances.get_required_instances(xpaths)
 
         entry.require_instance(*instances)
