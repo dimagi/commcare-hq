@@ -167,7 +167,7 @@ def print_status(num, total):
 def assert_migration_complete(slug):
 
     def forwards(apps, schema_editor):
-        if settings.UNIT_TESTING or getattr(settings, 'IS_TRAVIS', False):
+        if settings.UNIT_TESTING:
             return
 
         try:
