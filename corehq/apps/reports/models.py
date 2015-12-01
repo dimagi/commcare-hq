@@ -1044,7 +1044,7 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
     @classmethod
     @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
-        return hq_group_export_configs_by_domain(domain, cls)
+        return hq_group_export_configs_by_domain(domain)
 
     @classmethod
     def get_for_domain(cls, domain):
