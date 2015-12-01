@@ -1352,6 +1352,11 @@ class SubscribeSMSView(BaseMessagingSectionView):
     urlname = 'subscribe_sms'
     page_title = ugettext_noop("Subscribe SMS")
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(SubscribeSMSView, self).dispatch(*args, **kwargs)
+
     @property
     def commtrack_settings(self):
         return Domain.get_by_name(self.domain).commtrack_settings
@@ -1360,7 +1365,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-             return SubscribeSMSForm(self.request.POST)
+            return SubscribeSMSForm(self.request.POST)
 
         if self.commtrack_settings and self.commtrack_settings.alert_config:
             alert_config = self.commtrack_settings.alert_config
