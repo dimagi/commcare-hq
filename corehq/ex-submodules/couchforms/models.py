@@ -344,19 +344,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     def is_archived(self):
         return self.doc_type == "XFormArchived"
 
-    @memoized
-    def get_sync_token(self):
-        from casexml.apps.phone.models import get_properly_wrapped_sync_log
-        if self.last_sync_token:
-            try:
-                return get_properly_wrapped_sync_log(self.last_sync_token)
-            except ResourceNotFound:
-                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
-                    self.last_sync_token, self.form_id, self.domain,
-                ))
-                raise
-        return None
-
 
 class XFormError(XFormInstance):
     """
