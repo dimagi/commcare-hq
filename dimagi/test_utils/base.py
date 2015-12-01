@@ -78,8 +78,8 @@ class DimagiUtilsTestCase(TestCase):
         self.assertEquals(p.full_name, 'Danny Roberts')
         self.assertEquals(calls['full_name'], 1)
 
-        self.assertEquals(Person("Danny", "Roberts")._full_name_cache, {(Person('Danny', 'Roberts'),): 'Danny Roberts'})
-        self.assertEquals(Person.get_full_name.get_cache(p), {(Person('Danny', 'Roberts'),): 'Danny Roberts'})
+        self.assertEquals(Person("Danny", "Roberts")._full_name_cache, {(): 'Danny Roberts'})
+        self.assertEquals(Person.get_full_name.get_cache(p), {(): 'Danny Roberts'})
 
         self.assertEquals(p.complicated_method(5), (5, 10, (), {}))
         self.assertEquals(calls['complicated_method'], 1)
