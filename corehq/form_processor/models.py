@@ -44,16 +44,6 @@ class Attachment(collections.namedtuple('Attachment', 'name raw_content content_
         return hashlib.md5(self.content).hexdigest()
 
 
-class PreSaveHashableMixin(object):
-    hash_property = None
-
-    def __hash__(self):
-        hash_val = getattr(self, self.hash_property, None)
-        if not hash_val:
-            raise TypeError("Form instances without form ID value are unhashable")
-        return hash(hash_val)
-
-
 class SaveStateMixin(object):
     def is_saved(self):
         return bool(self._get_pk_val())
@@ -98,7 +88,7 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -357,7 +347,7 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
+class CommCareCaseSQL(models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin):
     hash_property = 'case_id'
