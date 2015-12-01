@@ -16,7 +16,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import TestFileMixin
 
 

@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractproperty, abstractmethod
 
 
 class UpdateStrategy(object):
@@ -31,4 +31,8 @@ class UpdateStrategy(object):
 
     @abstractproperty
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+        pass
+
+    @abstractmethod
+    def apply_action_intent(self, case_action_intent):
         pass

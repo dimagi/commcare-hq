@@ -1,7 +1,7 @@
 import datetime
 from django.test import TestCase
 
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from couchforms.dbaccessors import get_forms_by_type, \
     get_number_of_forms_by_type, get_number_of_forms_of_all_types, \
     get_form_ids_by_type, get_number_of_forms_all_domains_in_couch

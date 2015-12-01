@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class TestHardDelete(TestCase):

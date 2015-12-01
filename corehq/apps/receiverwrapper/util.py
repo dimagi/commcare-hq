@@ -1,11 +1,12 @@
+from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.form_processor.submission_post import SubmissionPost
 from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
-import couchforms
 
 
 def get_submit_url(domain, app_id=None):
@@ -18,7 +19,7 @@ def get_submit_url(domain, app_id=None):
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
-    response, xform, cases = couchforms.SubmissionPost(
+    response, xform, cases = SubmissionPost(
         domain=domain,
         instance=instance,
         **kwargs
@@ -32,7 +33,7 @@ def submit_form_locally(instance, domain, **kwargs):
 
 
 def get_meta_appversion_text(xform):
-    form_data = xform.form
+    form_data = xform.form_data
     try:
         text = form_data['meta']['appVersion']['#text']
     except KeyError:
@@ -86,20 +87,42 @@ def get_version_from_appversion_text(appversion_text):
     ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
     ... )
     19
-
     """
-
     patterns = [
         r' #(\d+) ',
         'b\[(\d+)\]',
         r'App v(\d+).',
     ]
-    if appversion_text:
+    version_string = _first_group_match(appversion_text, patterns)
+    if version_string:
+        return int(version_string)
+
+
+def get_commcare_version_from_appversion_text(appversion_text):
+    """
+    >>> get_commcare_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.11.0"(29272). App v65. '
+    ...     'CommCare Version 2.11. Build 29272, built on: February-14-2014'
+    ... )
+    '2.11.0'
+    >>> get_commcare_version_from_appversion_text(
+    ...     'CommCare ODK, version "2.4.1"(10083). App v19.'
+    ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
+    ... )
+    '2.4.1'
+    """
+    patterns = [
+        r'version "([\d.]+)"',
+    ]
+    return _first_group_match(appversion_text, patterns)
+
+
+def _first_group_match(text, patterns):
+    if text:
         for pattern in patterns:
-            match = re.search(pattern, appversion_text)
+            match = re.search(pattern, text)
             if match:
-                build_number, = match.groups()
-                return int(build_number)
+                return match.groups()[0]
 
 
 class BuildVersionSource:
@@ -109,28 +132,32 @@ class BuildVersionSource:
     NONE = object()
 
 
-def get_build_version(xform):
+AppVersionInfo = namedtuple('AppInfo', ['build_version', 'commcare_version', 'source'])
+
+
+def get_app_version_info(xform):
     """
     there are a bunch of unreliable places to look for a build version
     this abstracts that out
 
     """
+    appversion_text = get_meta_appversion_text(xform)
+    commcare_version = get_commcare_version_from_appversion_text(appversion_text)
+    build_version = get_version_from_build_id(xform.domain, xform.build_id)
+    if build_version:
+        return AppVersionInfo(build_version, commcare_version, BuildVersionSource.BUILD_ID)
 
-    version = get_version_from_build_id(xform.domain, xform.build_id)
-    if version:
-        return version, BuildVersionSource.BUILD_ID
-
-    version = get_version_from_appversion_text(
+    build_version = get_version_from_appversion_text(
         get_meta_appversion_text(xform)
     )
-    if version:
-        return version, BuildVersionSource.APPVERSION_TEXT
+    if build_version:
+        return AppVersionInfo(build_version, commcare_version, BuildVersionSource.APPVERSION_TEXT)
 
     xform_version = xform.version
     if xform_version and xform_version != '1':
-        return int(xform_version), BuildVersionSource.XFORM_VERSION
+        return AppVersionInfo(int(xform_version), commcare_version, BuildVersionSource.XFORM_VERSION)
 
-    return None, BuildVersionSource.NONE
+    return AppVersionInfo(None, commcare_version, BuildVersionSource.NONE)
 
 
 @quickcache(['domain', 'build_or_app_id'], timeout=24*60*60)

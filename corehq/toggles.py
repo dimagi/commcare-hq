@@ -314,6 +314,13 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
+    'extension_sync',
+    'Enable extension syncing',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
@@ -589,12 +596,6 @@ LINK_SUPPLY_POINT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-REVAMPED_EXPORTS = StaticToggle(
-    'revamped_exports',
-    'Revamped Form and Case exports',
-    TAG_PRODUCT_PATH,
-)
-
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
@@ -702,12 +703,13 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-USE_SQL_BACKEND = StaticToggle(
-    'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
+# Removed until ready for production
+# USE_SQL_BACKEND = StaticToggle(
+#     'sql_backend',
+#     'Uses a sql backend instead of a couch backend for form processing',
+#     TAG_PRODUCT_CORE,
+#     [NAMESPACE_DOMAIN]
+# )
 
 TWO_FACTOR_AUTH = StaticToggle(
     'two_factor_auth',

@@ -64,7 +64,6 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from couchforms.models import XFormInstance, doc_types, XFormDeprecated
-import couchforms.views as couchforms_views
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -1175,7 +1174,7 @@ def undo_close_case_view(request, domain, case_id):
         closing_form_id = request.POST['closing_form']
         assert closing_form_id in case.xform_ids
         form = XFormInstance.get(closing_form_id)
-        form.archive(user=request.couch_user._id)
+        form.archive(user_id=request.couch_user._id)
         messages.success(request, u'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
@@ -1404,7 +1403,11 @@ def case_form_data(request, domain, case_id, xform_id):
 def download_form(request, domain, instance_id):
     instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
-    return couchforms_views.download_form(request, instance_id)
+
+    instance = XFormInstance.get(instance_id)
+    response = HttpResponse(content_type='application/xml')
+    response.write(instance.get_xml())
+    return response
 
 
 def _form_instance_to_context_url(domain, instance):
@@ -1506,7 +1509,15 @@ def download_attachment(request, domain, instance_id):
         return HttpResponseBadRequest("Invalid attachment.")
     instance = _get_form_or_404(instance_id)
     assert(domain == instance.domain)
-    return couchforms_views.download_attachment(request, instance_id, attachment)
+
+    instance = XFormInstance.get(instance_id)
+    try:
+        attach = instance._attachments[attachment]
+    except KeyError:
+        raise Http404()
+    response = HttpResponse(content_type=attach["content_type"])
+    response.write(instance.fetch_attachment(attachment))
+    return response
 
 
 @require_form_view_permission
@@ -1516,7 +1527,7 @@ def archive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormInstance":
-        instance.archive(user=request.couch_user._id)
+        instance.archive(user_id=request.couch_user._id)
         notif_msg = _("Form was successfully archived.")
     elif instance.doc_type == "XFormArchived":
         notif_msg = _("Form was already archived.")
@@ -1561,7 +1572,7 @@ def unarchive_form(request, domain, instance_id):
     instance = _get_form_to_edit(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.doc_type == "XFormArchived":
-        instance.unarchive(user=request.couch_user._id)
+        instance.unarchive(user_id=request.couch_user._id)
     else:
         assert instance.doc_type == "XFormInstance"
     messages.success(request, _("Form was successfully restored."))

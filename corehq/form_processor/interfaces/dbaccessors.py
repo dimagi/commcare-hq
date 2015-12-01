@@ -17,7 +17,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+    def get_forms_by_type(domain, type_, limit, recent_first=False):
         raise NotImplementedError
 
     @abstractmethod
@@ -45,8 +45,8 @@ class FormAccessors(object):
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
 
-    def get_forms_by_type(self, type_, recent_first=False, limit=None):
-        return self.db_accessor.get_forms_by_type(self.domain, type_, recent_first, limit)
+    def get_forms_by_type(self, type_, limit, recent_first=False):
+        return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)

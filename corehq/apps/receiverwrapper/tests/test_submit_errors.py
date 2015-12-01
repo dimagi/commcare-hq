@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.test_utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
 
@@ -101,8 +101,7 @@ class SubmissionErrorTest(TestCase):
             self.assertIn('Invalid XML', res.content)
 
         # make sure we logged it
-        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog',
-                                  limit=1)
+        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)

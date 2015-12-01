@@ -31,7 +31,7 @@ class Command(LabelCommand):
         for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
             try:
                 xform = XFormInstance.wrap(xform_doc)
-                xform.archive(user=archiving_user)
+                xform.archive(user_id=archiving_user)
                 print "Archived form %s in domain %s" % (
                     xform._id, xform.domain
                 )
