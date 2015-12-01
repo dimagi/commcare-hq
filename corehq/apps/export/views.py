@@ -666,7 +666,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
                 e.message,
                 log_error=True,
                 exception=e,
-                request=self.request,
             )
         return format_angular_success({
             'download_id': download.download_id,
