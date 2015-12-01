@@ -582,7 +582,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     css_class='btn-primary',
                     type='submit',
                 ),
-                crispy.HTML('<a href="%s" class="btn">%s</a>' % (
+                crispy.HTML('<a href="%s" class="btn btn-default">%s</a>' % (
                     reverse(RemindersListView.urlname, args=[self.domain]),
                     _("Cancel")
                 )),
