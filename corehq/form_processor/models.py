@@ -1,9 +1,11 @@
 import hashlib
 import json
+import logging
 import os
 import collections
 
 from datetime import datetime
+
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
@@ -14,7 +16,7 @@ from django.db import models
 from uuidfield import UUIDField
 
 from corehq.form_processor.track_related import TrackRelatedChanges
-
+from corehq.form_processor.utils.general import cache_return_value
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators.memoized import memoized
@@ -45,6 +47,11 @@ class Attachment(collections.namedtuple('Attachment', 'name raw_content content_
 
 
 class PreSaveHashableMixin(object):
+    """
+    Mixin to allow hashing of Django objects prior to saving. By
+    default Django uses the primary key as the hash key which
+    doesn't exist prior to saving.
+    """
     hash_property = None
 
     def __hash__(self):
@@ -60,8 +67,6 @@ class SaveStateMixin(object):
 
 
 class AttachmentMixin(SaveStateMixin):
-    """Requires the model to be linked to the attachments model via the 'attachments' related name.
-    """
     ATTACHMENTS_RELATED_NAME = 'attachment_set'
 
     def get_attachments(self):
@@ -98,7 +103,7 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -114,8 +119,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
-
-    hash_property = 'form_id'
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
@@ -185,7 +188,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         return self.state == self.SUBMISSION_ERROR_LOG
 
     @property
-    @memoized
+    @cache_return_value
     def form_data(self):
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
@@ -258,6 +261,20 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
+
+    @cache_return_value
+    def get_sync_token(self):
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        from couchdbkit import ResourceNotFound
+        if self.last_sync_token:
+            try:
+                return get_properly_wrapped_sync_log(self.last_sync_token)
+            except ResourceNotFound:
+                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
+                    self.last_sync_token, self.form_id, self.domain,
+                ))
+                raise
+        return None
 
 
 class AbstractAttachment(models.Model):
