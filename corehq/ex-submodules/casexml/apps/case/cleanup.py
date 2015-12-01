@@ -79,7 +79,7 @@ def safe_hard_delete(case):
     """
     if not settings.UNIT_TESTING:
         from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-        if not (is_deleted(case) or case.type == USER_LOCATION_OWNER_MAP_TYPE):
+        if not (case.is_deleted or case.type == USER_LOCATION_OWNER_MAP_TYPE):
             raise CommCareCaseError("Attempt to hard delete a live case whose type isn't white listed")
 
     if case.reverse_indices:
