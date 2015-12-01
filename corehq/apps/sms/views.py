@@ -32,7 +32,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_timepicker, use_typeahead
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -1683,6 +1683,9 @@ class SMSSettingsView(BaseMessagingSectionView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_knockout_js
+    @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 
