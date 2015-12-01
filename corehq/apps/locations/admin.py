@@ -24,6 +24,7 @@ class LocationAdmin(admin.ModelAdmin):
         'domain',
         'name',
         'location_type',
+        'parent',
         'is_archived',
         'location_id',
         'supply_point_id'

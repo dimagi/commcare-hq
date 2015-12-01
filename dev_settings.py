@@ -53,3 +53,6 @@ PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 CELERY_ALWAYS_EAGER = True
 # Fail hard in tasks so you get a traceback
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+
+# default inactivity timeout to 1 year
+INACTIVITY_TIMEOUT = 60 * 24 * 365

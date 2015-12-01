@@ -1,5 +1,5 @@
 from django.conf.urls import *
-from .api import GrapevineResource
+from .models import GrapevineResource
 
 gvi_resource = GrapevineResource()
 

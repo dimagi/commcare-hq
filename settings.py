@@ -95,7 +95,6 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
-    'djangobower.finders.BowerFinder',
 )
 
 STATICFILES_DIRS = (
@@ -136,6 +135,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
+    'corehq.middleware.TimeoutMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
@@ -146,6 +146,9 @@ MIDDLEWARE_CLASSES = [
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+# time in minutes before forced logout due to inactivity
+INACTIVITY_TIMEOUT = 30
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -190,7 +193,6 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
-    'djangobower',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -251,6 +253,7 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
+    'corehq.apps.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.facilities',
@@ -380,7 +383,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
-    'djangobower',
     'django_prbac',
     'djcelery',
     'djtables',
@@ -1142,7 +1144,7 @@ COUCHDB_APPS = [
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('performance_sms', 'meta'),
-    ('receiverwrapper', 'receiverwrapper'),
+    ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
     ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
@@ -1240,18 +1242,17 @@ SMS_HANDLERS = [
 ]
 
 SMS_LOADED_BACKENDS = [
-    "corehq.messaging.smsbackends.unicel.api.UnicelBackend",
-    "corehq.messaging.smsbackends.mach.api.MachBackend",
-    "corehq.messaging.smsbackends.tropo.api.TropoBackend",
-    "corehq.messaging.smsbackends.http.api.HttpBackend",
-    "corehq.messaging.smsbackends.telerivet.models.TelerivetBackend",
-    "corehq.messaging.smsbackends.test.api.TestSMSBackend",
-    "corehq.apps.sms.backend.test.TestBackend",
-    "corehq.messaging.smsbackends.grapevine.api.GrapevineBackend",
-    "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
-    "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
-    "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
-    "corehq.messaging.smsbackends.apposit.models.AppositBackend",
+    'corehq.messaging.smsbackends.unicel.models.UnicelBackend',
+    'corehq.messaging.smsbackends.mach.models.MachBackend',
+    'corehq.messaging.smsbackends.tropo.models.TropoBackend',
+    'corehq.messaging.smsbackends.http.models.HttpBackend',
+    'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.TestSMSBackend',
+    'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
+    'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
+    'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SMSGHBackend',
+    'corehq.messaging.smsbackends.apposit.models.AppositBackend',
 ]
 
 IVR_BACKEND_MAP = {
@@ -1407,7 +1408,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
-    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

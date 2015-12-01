@@ -10,17 +10,9 @@ from django.core.urlresolvers import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
-# bit of a hack, but the tests optimize around this flag to run faster
-# so when we actually want to test this functionality we need to set
-# the flag to False explicitly
-from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
-
-
-@override_settings(UNIT_TESTING=False)
 class SubmissionTest(TestCase):
     maxDiff = None
 
@@ -34,10 +26,8 @@ class SubmissionTest(TestCase):
         self.url = reverse("receiver_post", args=[self.domain])
 
         self.use_sql = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False)
-        update_toggle_cache(USE_SQL_BACKEND.slug, self.domain.name, self.use_sql, NAMESPACE_DOMAIN)
 
     def tearDown(self):
-        clear_toggle_cache(USE_SQL_BACKEND.slug, self.domain.name, NAMESPACE_DOMAIN)
         self.couch_user.delete()
         self.domain.delete()
 

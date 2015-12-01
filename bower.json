@@ -25,9 +25,11 @@
     "bootstrap-daterangepicker": "2.1.13",
     "datatables": "1.10.9",
     "datatables-bootstrap3": "0.1",
+    "nprogress": "0.2.0",
     "d3": "3.1",
     "nvd3": "1.1.10-beta",
-    "codemirror": "5.5.0"
+    "codemirror": "5.5.0",
+    "bootstrap3-typeahead": "~3.1.1"
   },
   "devDependencies": {
     "chai": "3.3.0",

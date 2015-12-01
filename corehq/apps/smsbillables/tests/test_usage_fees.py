@@ -4,6 +4,7 @@ from corehq.apps.accounting.generator import init_default_currency
 
 from corehq.apps.smsbillables.models import *
 from corehq.apps.smsbillables import generator
+from corehq.apps.sms.util import get_available_backends
 
 
 class TestUsageFee(TestCase):
@@ -78,5 +79,6 @@ class TestUsageFee(TestCase):
         SmsUsageFeeCriteria.objects.all().delete()
         SmsGatewayFee.objects.all().delete()
         self.currency_usd.delete()
-        for backend_instance in self.backend_ids.values():
-            SMSBackend.get(backend_instance).delete()
+        backend_classes = get_available_backends(index_by_api_id=True)
+        for api_id, backend_id in self.backend_ids.iteritems():
+            backend_classes[api_id].get(backend_id).delete()

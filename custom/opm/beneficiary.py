@@ -489,6 +489,24 @@ class OPMCaseRow(object):
             return True
 
     @property
+    def child_received_ors_in_this_window(self):
+        months = self.child_age % 3
+        if months == 0:  # child age is multiple of three
+            months_before = 3  # then we must check forms for 3 months before
+        elif months == 1:  # child age is 1, 4, 7 etc
+            months_before = 1  # then we must check forms for 1 month before
+        else:  # child age is 2, 5, 8 etc
+            months_before = 2  # we must check forms for 2 month before
+        if not self.is_service_available('stock_ors', months=months_before):
+            return True
+
+        for form in self.filtered_forms(CHILDREN_FORMS, months_before):
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
+            if form.get_data(xpath) == '0':
+                return False
+        return True
+
+    @property
     def child_has_diarhea_in_this_month(self):
         for form in self.filtered_forms(CHILDREN_FORMS, 1):
             xpath = self.child_xpath('form/child_{num}/child{num}_suffer_diarrhea')
@@ -534,7 +552,7 @@ class OPMCaseRow(object):
                 return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 3)
+                for form in self.filtered_forms(CFU1_XMLNS, 6)
             )
 
     @property
@@ -859,9 +877,9 @@ class ConditionsMet(OPMCaseRow):
                                             "पोषण दिवस में उपस्थित नही", self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, "बच्चे का वज़न लिया गया",
                                             "बच्चे का वज़न लिया गया", self.child_growth_calculated)
-            if self.child_has_diarhea and self.child_received_ors:
+            if self.child_has_diarhea and self.child_received_ors_in_this_window:
                 self.three = self.img_elem % (ORSZNTREAT_Y, "दस्त होने पर ओ.आर.एस एवं जिंक लिया")
-            elif self.child_has_diarhea and not self.child_received_ors:
+            elif self.child_has_diarhea and not self.child_received_ors_in_this_window:
                 self.three = self.img_elem % (ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस एवं जिंक नहीं लिया")
             elif not self.child_has_diarhea:
                 self.three = self.img_elem % (ORSZNTREAT_Y, "बच्चे को दस्त नहीं हुआ")

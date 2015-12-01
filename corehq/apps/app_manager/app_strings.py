@@ -83,6 +83,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
             for config in module.report_configs:
                 yield id_strings.report_command(config.uuid), trans(config.header)
                 yield id_strings.report_name(config.uuid), trans(config.header)
+                yield id_strings.report_description(config.uuid), trans(config.localized_description)
                 for column in config.report.report_columns:
                     yield (
                         id_strings.report_column_header(config.uuid, column.column_id),

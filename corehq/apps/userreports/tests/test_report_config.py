@@ -1,5 +1,10 @@
 from django.test import SimpleTestCase, TestCase
+
 from jsonobject.exceptions import BadValueError
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.dbaccessors import get_all_report_configs, \
+    delete_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -319,16 +324,22 @@ class ReportConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        ReportConfiguration(domain='foo', config_id='foo1').save()
-        ReportConfiguration(domain='foo', config_id='foo2').save()
-        ReportConfiguration(domain='bar', config_id='bar1').save()
+        domain_foo = Domain(name='foo')
+        domain_foo.save()
+        domain_bar = Domain(name='bar')
+        domain_bar.save()
+
+        ReportConfiguration(domain=domain_foo.name, config_id='foo1').save()
+        ReportConfiguration(domain=domain_foo.name, config_id='foo2').save()
+        ReportConfiguration(domain=domain_bar.name, config_id='bar1').save()
 
     @classmethod
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
-            config.delete()
+        delete_all_report_configs()
+        for domain in Domain.get_all():
+            domain.delete()
 
     def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
@@ -340,7 +351,7 @@ class ReportConfigurationDbTest(TestCase):
         self.assertEqual(0, len(results))
 
     def test_get_all(self):
-        self.assertEqual(3, len(list(ReportConfiguration.all())))
+        self.assertEqual(3, len(list(get_all_report_configs())))
 
     def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
@@ -392,8 +403,7 @@ class ReportTranslationTest(TestCase):
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
-            config.delete()
+        delete_all_report_configs()
 
     def setUp(self):
         report = ReportConfiguration.by_domain(self.DOMAIN)[0]

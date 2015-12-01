@@ -213,30 +213,45 @@ var ReportModule = (function () {
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }
 
-    function ReportConfig(report_id, display, description, uuid, availableReportIds,
+    function ReportConfig(report_id, display,
+                          localizedDescription, xpathDescription, useXpathDescription,
+                          uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
                           language, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
-        this.availableReportIds = availableReportIds;
-        this.display = ko.observable(this.fullDisplay[this.lang]);
-        this.description = ko.observable(description);
-        this.description.subscribe(changeSaveButton);
+        this.fullLocalizedDescription = localizedDescription || {};
         this.uuid = uuid;
+        this.availableReportIds = availableReportIds;
+
         this.reportId = ko.observable(report_id);
+        this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
+        this.xpathDescription = ko.observable(xpathDescription);
+        this.useXpathDescription = ko.observable(useXpathDescription);
+
+        this.reportId.subscribe(changeSaveButton);
+        this.display.subscribe(changeSaveButton);
+        this.localizedDescription.subscribe(changeSaveButton);
+        this.xpathDescription.subscribe(changeSaveButton);
+        this.useXpathDescription.subscribe(changeSaveButton);
+
         this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
+            self.fullLocalizedDescription[self.lang] = self.localizedDescription();
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
-                description: self.description(),
+                localized_description: self.fullLocalizedDescription,
+                xpath_description: self.xpathDescription(),
+                use_xpath_description: self.useXpathDescription(),
                 uuid: self.uuid
             };
         };
@@ -249,9 +264,9 @@ var ReportModule = (function () {
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
-        self.moduleFilter = options.moduleFilter;
+        self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
-        self.currentModuleFilter = ko.observable(options.moduleFilter);
+        self.currentModuleFilter = ko.observable(self.moduleFilter);
         self.menuImage = options.menuImage;
         self.menuAudio = options.menuAudio;
         self.reportTitles = {};
@@ -297,7 +312,10 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
-                self.moduleFilter = self.currentModuleFilter();
+
+                var filter = self.currentModuleFilter().trim();
+                self.moduleFilter = filter === '' ? undefined : filter;
+
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
@@ -318,13 +336,16 @@ var ReportModule = (function () {
 
         self.currentModuleName.subscribe(self.changeSaveButton);
         self.currentModuleFilter.subscribe(self.changeSaveButton);
+        $(options.containerId + ' input').on('textchange', self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};
             var report = new ReportConfig(
                 options.report_id,
                 options.header,
-                options.description,
+                options.localized_description,
+                options.xpath_description,
+                options.use_xpath_description,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
@@ -334,13 +355,11 @@ var ReportModule = (function () {
                 self.lang,
                 self.changeSaveButton
             );
-            report.display.subscribe(self.changeSaveButton);
-            report.reportId.subscribe(self.changeSaveButton);
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));
             });
             report.reportId.subscribe(function (reportId) {
-                report.description(self.defaultReportDescription(reportId));
+                report.localizedDescription(self.defaultReportDescription(reportId));
             });
 
             return report;

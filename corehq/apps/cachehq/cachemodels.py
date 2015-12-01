@@ -100,11 +100,3 @@ class UserReportsDataSourceCache(GenerationCache):
     views = [
         'userreports/data_sources_by_build_info',
     ]
-
-
-class UserReportsReportConfigCache(GenerationCache):
-    generation_key = '#gen#userreports#reportconfig#'
-    doc_types = ['ReportConfiguration']
-    views = [
-        'userreports/report_configs_by_domain',
-    ]

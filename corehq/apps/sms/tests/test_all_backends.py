@@ -6,15 +6,15 @@ from corehq.apps.sms.api import send_sms
 from corehq.apps.sms.models import SMS, CommConnectCase
 from corehq.apps.sms import mixin as backend_api
 from corehq.apps.sms.tests.util import BaseSMSTest
-from corehq.messaging.smsbackends.unicel.api import UnicelBackend, InboundParams
-from corehq.messaging.smsbackends.mach.api import MachBackend
-from corehq.messaging.smsbackends.tropo.api import TropoBackend
-from corehq.messaging.smsbackends.http.api import HttpBackend
+from corehq.messaging.smsbackends.unicel.models import UnicelBackend, InboundParams
+from corehq.messaging.smsbackends.mach.models import MachBackend
+from corehq.messaging.smsbackends.tropo.models import TropoBackend
+from corehq.messaging.smsbackends.http.models import HttpBackend
 from corehq.messaging.smsbackends.telerivet.models import TelerivetBackend
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
-from corehq.messaging.smsbackends.grapevine.api import GrapevineBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend
 from corehq.messaging.smsbackends.twilio.models import TwilioBackend
-from corehq.messaging.smsbackends.megamobile.api import MegamobileBackend
+from corehq.messaging.smsbackends.megamobile.models import MegamobileBackend
 from corehq.messaging.smsbackends.smsgh.models import SMSGHBackend
 from corehq.messaging.smsbackends.apposit.models import AppositBackend
 from dimagi.utils.parsing import json_format_datetime
@@ -126,15 +126,15 @@ class AllBackendTest(BaseSMSTest):
         response = fcn(url, payload)
         self.assertEqual(response.status_code, 200)
 
-    @patch('corehq.messaging.smsbackends.unicel.api.UnicelBackend.send')
-    @patch('corehq.messaging.smsbackends.mach.api.MachBackend.send')
-    @patch('corehq.messaging.smsbackends.tropo.api.TropoBackend.send')
-    @patch('corehq.messaging.smsbackends.http.api.HttpBackend.send')
+    @patch('corehq.messaging.smsbackends.unicel.models.UnicelBackend.send')
+    @patch('corehq.messaging.smsbackends.mach.models.MachBackend.send')
+    @patch('corehq.messaging.smsbackends.tropo.models.TropoBackend.send')
+    @patch('corehq.messaging.smsbackends.http.models.HttpBackend.send')
     @patch('corehq.messaging.smsbackends.telerivet.models.TelerivetBackend.send')
-    @patch('corehq.messaging.smsbackends.test.api.TestSMSBackend.send')
-    @patch('corehq.messaging.smsbackends.grapevine.api.GrapevineBackend.send')
+    @patch('corehq.messaging.smsbackends.test.models.TestSMSBackend.send')
+    @patch('corehq.messaging.smsbackends.grapevine.models.GrapevineBackend.send')
     @patch('corehq.messaging.smsbackends.twilio.models.TwilioBackend.send')
-    @patch('corehq.messaging.smsbackends.megamobile.api.MegamobileBackend.send')
+    @patch('corehq.messaging.smsbackends.megamobile.models.MegamobileBackend.send')
     @patch('corehq.messaging.smsbackends.smsgh.models.SMSGHBackend.send')
     @patch('corehq.messaging.smsbackends.apposit.models.AppositBackend.send')
     def test_outbound_sms(

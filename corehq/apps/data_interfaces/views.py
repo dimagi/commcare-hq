@@ -57,12 +57,13 @@ def default(request, domain):
 
 
 def default_data_view_url(request, domain):
-    if request.couch_user.can_view_reports():
-        return reverse(DataInterfaceDispatcher.name(), args=[domain, ExcelExportReport.slug])
+    if request.couch_user.can_edit_data():
+        from corehq.apps.export.views import FormExportListView
+        return reverse(FormExportListView.urlname, args=[domain])
 
-    exportable_reports = request.couch_user.get_exportable_reports(domain)
-    if exportable_reports:
-        return reverse(DataInterfaceDispatcher.name(), args=[domain, exportable_reports[0]])
+    from corehq.apps.export.views import DeIdFormExportListView
+    if DeIdFormExportListView.has_deid_permissions(request, domain):
+        return reverse(DeIdFormExportListView.urlname, args=[domain])
 
     if request.couch_user.can_edit_data():
         return reverse(EditDataInterfaceDispatcher.name(), args=[domain, CaseReassignmentInterface.slug])
