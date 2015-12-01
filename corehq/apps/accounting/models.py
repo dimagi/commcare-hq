@@ -1382,7 +1382,9 @@ class Subscription(models.Model):
 
             billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
             if billing_contact_emails is None:
-                raise SubscriptionReminderError("This billing account doesn't have any contact emails")
+                raise SubscriptionReminderError(
+                    "Billing account %d doesn't have any contact emails" % self.account.id
+                )
             billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 

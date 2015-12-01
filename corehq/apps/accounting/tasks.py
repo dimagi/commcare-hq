@@ -232,9 +232,12 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
     if exclude_trials:
         ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
-        # only send reminder emails if the subscription isn't renewed
-        if not subscription.is_renewed:
-            subscription.send_ending_reminder_email()
+        try:
+            # only send reminder emails if the subscription isn't renewed
+            if not subscription.is_renewed:
+                subscription.send_ending_reminder_email()
+        except Exception as e:
+            logger.error("[BILLING] %s" % e)
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):
