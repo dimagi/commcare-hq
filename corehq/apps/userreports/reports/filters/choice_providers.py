@@ -3,10 +3,14 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.users.analytics import get_search_mobile_workers_in_domain_es_query, \
+    get_bulk_get_users_by_id_es_query
+from corehq.apps.users.util import raw_username
 
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
+USER = 'user'
 
 
 class ChoiceQueryContext(object):
@@ -97,3 +101,20 @@ class LocationChoiceProvider(ChoiceProvider):
             SQLLocation.active_objects.filter(location_id__in=values)
             .values_list('location_id', 'display_name'))
         return [Choice(value, display_name_by_id.get(value, value)) for value in values]
+
+
+class UserChoiceProvider(ChoiceProvider):
+    def query(self, query_context):
+        user_es = get_search_mobile_workers_in_domain_es_query(
+            self.domain, query_context.query,
+            limit=query_context.limit, page=query_context.page)
+        return self.get_choices_from_es_query(user_es)
+
+    def get_choices_for_values(self, values):
+        user_es = get_bulk_get_users_by_id_es_query(self.domain, values)
+        return self.get_choices_from_es_query(user_es)
+
+    @staticmethod
+    def get_choices_from_es_query(user_es):
+        return [Choice(user_id, raw_username(username))
+                for user_id, username in user_es.values_list('_id', 'username')]

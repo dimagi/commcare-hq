@@ -1,4 +1,5 @@
 from corehq.apps.es import UserES
+from corehq.apps.es.filters import doc_id
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couch import stale_ok
 
@@ -68,3 +69,10 @@ def get_search_mobile_workers_in_domain_es_query(domain, search_string, limit, p
             .search_string_query(search_string, default_search_fields)
             .start(limit * page)
             .size(limit))
+
+
+def get_bulk_get_users_by_id_es_query(domain, user_ids):
+    """
+    returns a UserES object
+    """
+    return UserES().domain(domain).mobile_users().filter(doc_id(user_ids))
