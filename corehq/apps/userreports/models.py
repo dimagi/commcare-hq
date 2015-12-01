@@ -1,6 +1,7 @@
 from copy import copy, deepcopy
 import json
 from corehq.db import UCR_ENGINE_ID
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -368,8 +369,13 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         self.sort_order
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
         return get_report_configs_for_domain(domain)
+
+    def clear_caches(self):
+        super(ReportConfiguration, self).clear_caches()
+        self.by_domain.clear(self.__class__, self.domain)
 
 
 STATIC_PREFIX = 'static-'
