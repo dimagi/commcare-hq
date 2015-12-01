@@ -224,7 +224,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """
         Return the number of ReportConfigurations that reference this data source.
         """
-        return get_number_of_report_configs_by_data_source(self.domain, self._id)
+        return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
@@ -373,9 +373,15 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     def by_domain(cls, domain):
         return get_report_configs_for_domain(domain)
 
+    @classmethod
+    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
+    def count_by_data_source(cls, domain, data_source_id):
+        return get_number_of_report_configs_by_data_source(domain, data_source_id)
+
     def clear_caches(self):
         super(ReportConfiguration, self).clear_caches()
         self.by_domain.clear(self.__class__, self.domain)
+        self.count_by_data_source.clear(self.__class__, self.domain, self.config_id)
 
 
 STATIC_PREFIX = 'static-'
