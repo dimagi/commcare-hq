@@ -14,7 +14,7 @@ from couchforms.const import ATTACHMENT_NAME
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment)
+    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -52,10 +52,10 @@ class FormProcessorSQL(object):
         return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
-    def hard_delete_case_and_forms(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        FormAccessorSQL.hard_delete_forms(form_ids)
-        CaseAccessorSQL.hard_delete_case(case.case_id)
+        FormAccessorSQL.hard_delete_forms(domain, form_ids)
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
     @classmethod
     def save_processed_models(cls, xforms, cases=None, stock_updates=None):
@@ -109,6 +109,7 @@ class FormProcessorSQL(object):
             case.save()
             FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
             FormProcessorSQL.save_tracked_models(case, CaseTransaction)
+            FormProcessorSQL.save_tracked_models(case, CaseAttachmentSQL)
             case.clear_tracked_models()
 
     @staticmethod

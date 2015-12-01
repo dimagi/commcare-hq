@@ -93,7 +93,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         Use this if you know you are going to need to access these later for performance gains.
         Does NOT overwrite what is already in the cache if there is already something there.
         """
-        case_ids = set(case_ids) - set(self.cache.keys())
+        case_ids = list(set(case_ids) - set(self.cache.keys()))
         for case in self._iter_cases(case_ids):
             self.set(_get_id_for_case(case), case)
 
