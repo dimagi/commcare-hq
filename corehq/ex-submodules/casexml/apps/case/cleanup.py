@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
-from dimagi.utils.couch.undo import is_deleted
 
 from django.conf import settings
 
