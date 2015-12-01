@@ -58,7 +58,7 @@ class FormProcessorCouch(object):
             return xform_id in XFormInstance.get_db()
 
     @classmethod
-    def hard_delete_case_and_forms(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, domain, case, xforms):
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
 

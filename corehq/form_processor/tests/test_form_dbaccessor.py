@@ -185,10 +185,13 @@ class FormAccessorTests(TestCase):
 
     def test_hard_delete_forms(self):
         form_ids = [_create_form() for i in range(3)]
+        other_form_id = _create_form(domain='other_domain')
+        self.addCleanup(lambda: FormAccessorSQL.hard_delete_forms('other_domain', [other_form_id]))
         forms = FormAccessorSQL.get_forms(form_ids)
         self.assertEqual(3, len(forms))
 
-        FormAccessorSQL.hard_delete_forms(form_ids[1:])
+        deleted = FormAccessorSQL.hard_delete_forms(DOMAIN, form_ids[1:] + [other_form_id])
+        self.assertEqual(2, deleted)
         forms = FormAccessorSQL.get_forms(form_ids)
         self.assertEqual(1, len(forms))
         self.assertEqual(form_ids[0], forms[0].form_id)
@@ -236,7 +239,7 @@ class FormAccessorTests(TestCase):
         return form
 
 
-def _create_form(case_id=None, attachments=None):
+def _create_form(domain=None, case_id=None, attachments=None):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -244,6 +247,7 @@ def _create_form(case_id=None, attachments=None):
     :param attachments: additional attachments dict
     :return: form_id
     """
+    domain = domain or DOMAIN
     form_id = uuid.uuid4().hex
     user_id = 'user1'
     utcnow = datetime.utcnow()
@@ -255,7 +259,7 @@ def _create_form(case_id=None, attachments=None):
         xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
-        domain=DOMAIN
+        domain=domain
     )
 
     attachments = attachments or {}

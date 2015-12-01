@@ -21,4 +21,7 @@ class Migration(migrations.Migration):
         migrate_sql_function('get_case_indices_reverse'),
         migrate_sql_function('get_reverse_indexed_cases'),
         migrate_sql_function('get_multiple_cases_indices'),
+        migrate_sql_function('hard_delete_cases'),
+        migrations.RunSQL('DROP FUNCTION IF EXISTS hard_delete_forms(text[]);'),  # delete old one
+        migrate_sql_function('hard_delete_forms'),  # updated
     ]

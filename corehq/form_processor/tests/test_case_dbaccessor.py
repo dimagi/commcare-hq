@@ -55,7 +55,7 @@ class CaseAccessorTests(TestCase):
 
     def test_get_case_xform_ids(self):
         form_id1 = uuid.uuid4().hex
-        case = _create_case(form_id1)
+        case = _create_case(form_id=form_id1)
 
         form_ids = _create_case_transactions(case)
 
@@ -129,30 +129,33 @@ class CaseAccessorTests(TestCase):
         self.assertEqual(set(expected_case_ids), {c.case_id for c in cases})
 
     def test_hard_delete_case(self):
-        case = _create_case()
+        case1 = _create_case()
+        case2 = _create_case(domain='other_domain')
+        self.addCleanup(lambda: CaseAccessorSQL.hard_delete_cases('other_domain', [case2.case_id]))
 
-        case.track_create(CommCareCaseIndexSQL(
-            case=case,
+        case1.track_create(CommCareCaseIndexSQL(
+            case=case1,
             identifier='parent',
             referenced_type='mother',
             referenced_id=uuid.uuid4().hex,
             relationship_id=CommCareCaseIndexSQL.CHILD
         ))
-        case.track_create(CaseAttachmentSQL(
-            case=case,
+        case1.track_create(CaseAttachmentSQL(
+            case=case1,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
             content_type='image/jpeg'
         ))
-        FormProcessorSQL.save_case(case)
+        FormProcessorSQL.save_case(case1)
 
-        CaseAccessorSQL.hard_delete_case(case.case_id)
+        num_deleted = CaseAccessorSQL.hard_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
+        self.assertEqual(1, num_deleted)
         with self.assertRaises(CaseNotFound):
-            CaseAccessorSQL.get_case(case.case_id)
+            CaseAccessorSQL.get_case(case1.case_id)
 
-        self.assertEqual([], CaseAccessorSQL.get_indices(case.case_id))
-        self.assertEqual([], CaseAccessorSQL.get_attachments(case.case_id))
-        self.assertEqual([], CaseAccessorSQL.get_transactions(case.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_indices(case1.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_attachments(case1.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
 
     def test_get_attachment_by_name(self):
         case = _create_case()
@@ -213,7 +216,7 @@ class CaseAccessorTests(TestCase):
 
     def test_get_transactions(self):
         form_id = uuid.uuid4().hex
-        case = _create_case(form_id)
+        case = _create_case(form_id=form_id)
         transactions = CaseAccessorSQL.get_transactions(case.case_id)
         self.assertEqual(1, len(transactions))
         self.assertEqual(form_id, transactions[0].form_id)
@@ -226,7 +229,7 @@ class CaseAccessorTests(TestCase):
 
     def test_get_transactions_for_case_rebuild(self):
         form_id = uuid.uuid4().hex
-        case = _create_case(form_id)
+        case = _create_case(form_id=form_id)
         form_ids = _create_case_transactions(case)
 
         transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
@@ -260,12 +263,13 @@ class CaseAccessorTests(TestCase):
         self.assertEqual({case1.case_id, case3.case_id}, set(case_ids))
 
 
-def _create_case(form_id=None, case_type=None):
+def _create_case(domain=None, form_id=None, case_type=None):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
     :return: case_id
     """
+    domain = domain or DOMAIN
     form_id = form_id or uuid.uuid4().hex
     case_id = uuid.uuid4().hex
     user_id = 'user1'
@@ -276,14 +280,14 @@ def _create_case(form_id=None, case_type=None):
         xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
-        domain=DOMAIN
+        domain=domain
     )
 
     cases = []
     if case_id:
         case = CommCareCaseSQL(
             case_id=case_id,
-            domain=DOMAIN,
+            domain=domain,
             type=case_type or '',
             owner_id=user_id,
             opened_on=utcnow,

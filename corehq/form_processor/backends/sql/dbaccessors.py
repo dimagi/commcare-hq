@@ -105,10 +105,10 @@ class FormAccessorSQL(AbstractFormAccessor):
             return result.form_exists
 
     @staticmethod
-    def hard_delete_forms(form_ids):
+    def hard_delete_forms(domain, form_ids):
         assert isinstance(form_ids, list)
         with connection.cursor() as cursor:
-            cursor.execute('SELECT * FROM hard_delete_forms(%s)', [form_ids])
+            cursor.execute('SELECT * FROM hard_delete_forms(%s, %s)', [domain, form_ids])
             result = fetchone_as_namedtuple(cursor)
             return result.deleted_count
 
@@ -188,12 +188,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
-    def hard_delete_case(case_id):
-        with transaction.atomic():
-            CommCareCaseIndexSQL.objects.filter(case_id=case_id).delete()
-            CaseAttachmentSQL.objects.filter(case_id=case_id).delete()
-            CaseTransaction.objects.filter(case_id=case_id).delete()
-            CommCareCaseSQL.objects.filter(case_id=case_id).delete()
+    def hard_delete_cases(domain, case_ids):
+        assert isinstance(case_ids, list)
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT * FROM hard_delete_cases(%s, %s)', [domain, case_ids])
+            result = fetchone_as_namedtuple(cursor)
+            return result.deleted_count
 
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
