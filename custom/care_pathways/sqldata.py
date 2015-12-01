@@ -72,15 +72,25 @@ class CareQueryMeta(QueryMeta):
         table_card_group = []
         if 'group_name' in self.group_by:
             table_card_group.append('group_name')
-        s1 = alias(select(['doc_id', 'group_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols + external_cols,
-                                from_obj='"fluff_FarmerRecordFluff"',
-                                group_by=['doc_id', 'group_id'] + filter_cols + external_cols), name='x')
-        s2 = alias(select(['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as gender'] + table_card_group, from_obj='"fluff_FarmerRecordFluff"',
-                                group_by=['group_id'] + table_card_group + having_group_by, having=group_having), name='y')
+        s1 = alias(
+            select(
+                ['doc_id', 'group_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols +
+                external_cols, from_obj='"fluff_FarmerRecordFluff"',
+                group_by=['doc_id', 'group_id'] + filter_cols + external_cols
+            ),
+            name='x'
+        )
+        s2 = alias(
+            select(
+                ['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as gender'] +
+                table_card_group, from_obj='"fluff_FarmerRecordFluff"',
+                group_by=['group_id'] + table_card_group + having_group_by, having=group_having
+            ), name='y'
+        )
         return select(['COUNT(x.doc_id) as %s' % self.key] + self.group_by,
                group_by=['maxmin'] + filter_cols + self.group_by,
                having=AND(having).build_expression(table.alias('x')),
-               from_obj=join(s1, s2, s1.c.group_id==s2.c.group_id)).params(filter_values)
+               from_obj=join(s1, s2, s1.c.group_id == s2.c.group_id)).params(filter_values)
 
 
 class CareCustomColumn(CustomQueryColumn):
@@ -213,14 +223,26 @@ class AdoptionBarChartReportSqlData(CareSqlData):
                 'All', self.percent_fn,
                 [
                     CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")]),
-                    AliasColumn('some'), 
+                    AliasColumn('some'),
                     AliasColumn('none')
                 ]
             ),
-            AggregateColumn('Some', self.percent_fn,
-                            [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1"),]), AliasColumn('all'), AliasColumn('none')]),
-            AggregateColumn('None', self.percent_fn,
-                            [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0"),]), AliasColumn('all'), AliasColumn('some')])
+            AggregateColumn(
+                'Some', self.percent_fn,
+                [
+                    CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")]),
+                    AliasColumn('all'),
+                    AliasColumn('none')
+                ]
+            ),
+            AggregateColumn(
+                'None', self.percent_fn,
+                [
+                    CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")]),
+                    AliasColumn('all'),
+                    AliasColumn('some')
+                ]
+            )
         ]
 
     @property
