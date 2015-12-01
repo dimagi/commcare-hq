@@ -79,6 +79,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     bulk_delete = delete_docs
 
     def clear_caches(self):
+        super(Group, self).clear_caches()
         self.by_domain.clear(self.__class__, self.domain)
         self.ids_by_domain.clear(self.__class__, self.domain)
 
