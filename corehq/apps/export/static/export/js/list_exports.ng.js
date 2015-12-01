@@ -93,6 +93,8 @@
             })
                 .success(function (data) {
                     if (data.success) {
+                        var exportType = exp.exportType.charAt(0).toUpperCase() + exp.exportType.slice(1);
+                        analytics.usage("Update Saved Export", exportType, "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
                     }
