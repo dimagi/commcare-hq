@@ -11,7 +11,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -58,7 +58,7 @@ class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
 
 
-class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+class DataSourceConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     A data source configuration. These map 1:1 with database tables that get created.
     Each data source can back an arbitrary number of reports.
@@ -269,7 +269,7 @@ class ReportMeta(DocumentSchema):
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker'])
 
 
-class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
     """
