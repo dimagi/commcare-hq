@@ -77,7 +77,9 @@ class EntryInstances(PostProcessor):
                 if instance:
                     instances.add(instance)
                 else:
-                    raise UnknownInstanceError("Instance reference not recognized: {}".format(instance_name))
+                    raise UnknownInstanceError(
+                        "Instance reference not recognized: {} in xpath \"{}\""
+                        .format(instance_name, xpath))
         return instances
 
 
