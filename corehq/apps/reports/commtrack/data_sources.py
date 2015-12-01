@@ -272,7 +272,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             if self.config.get('aggregate'):
                 return self.aggregated_data(stock_states)
             else:
-                return self.raw_product_states(stock_states, slugs)
+                return self.raw_product_states(stock_states)
 
     def leaf_node_data(self, stock_states):
         for state in stock_states:
@@ -374,10 +374,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             return result
 
-    def raw_product_states(self, stock_states, slugs):
+    def raw_product_states(self, stock_states):
         for state in stock_states:
             yield {
-                slug: f(state) for slug, f in self._slug_attrib_map.items() if not slugs or slug in slugs
+                slug: f(state) for slug, f in self._slug_attrib_map.items()
             }
 
 

@@ -31,7 +31,7 @@
         </header>
         <template>
           <text>
-            <xpath function='description'/>
+            <locale id="cchq.reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.description"/>
           </text>
         </template>
       </field>

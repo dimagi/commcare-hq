@@ -6,6 +6,7 @@ from django.conf import settings
 from django.template.loader_tags import ExtendsNode
 from django.core.management import call_command
 from django.test import SimpleTestCase
+from unittest.util import safe_repr
 
 BLOCK_JS = ' block js '
 BLOCK_CSS = ' block stylesheets '
@@ -19,14 +20,16 @@ DISALLOWED_TAGS = [
 
 class TestDjangoCompressOffline(SimpleTestCase):
 
-    def _assert_valid_import(self, line):
+    def _assert_valid_import(self, line, filename):
         if not line.strip():
             return
         for tag in DISALLOWED_TAGS:
             self.assertNotRegexpMatches(tag[0], line.strip(), tag[1])
         if 'src' not in line and 'href' not in line:
             return
-        self.assertIn('new_static', line)
+        self.assertIn(
+            'new_static', line, msg='new_static not found in %s in file %s' % (safe_repr(line), filename)
+        )
 
     def _is_b3(self, filename):
         parser = DjangoParser(charset=settings.FILE_CHARSET)
@@ -70,4 +73,4 @@ class TestDjangoCompressOffline(SimpleTestCase):
                             in_compress_block = False
 
                         if in_compress_block:
-                            self._assert_valid_import(line)
+                            self._assert_valid_import(line, filename)

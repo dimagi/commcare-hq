@@ -1,5 +1,5 @@
 import logging
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six as six
 from couchdbkit import ResourceNotFound
@@ -78,18 +78,8 @@ class AbstractXFormInstance(object):
     def get(self, xform_id):
         raise NotImplementedError()
 
-    @memoized
     def get_sync_token(self):
-        from casexml.apps.phone.models import get_properly_wrapped_sync_log
-        if self.last_sync_token:
-            try:
-                return get_properly_wrapped_sync_log(self.last_sync_token)
-            except ResourceNotFound:
-                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
-                    self.last_sync_token, self.form_id, self.domain,
-                ))
-                raise
-        return None
+        raise NotImplementedError()
 
 
 class AbstractCommCareCase(object):
@@ -116,6 +106,24 @@ class AbstractCommCareCase(object):
 
     def dynamic_case_properties(self):
         raise NotImplementedError()
+
+
+class AbstractLedgerValue(six.with_metaclass(ABCMeta)):
+    @abstractproperty
+    def case_id(self):
+        pass
+
+    @abstractproperty
+    def section_id(self):
+        pass
+
+    @abstractproperty
+    def entry_id(self):
+        pass
+
+    @abstractproperty
+    def balance(self):
+        pass
 
 
 class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):

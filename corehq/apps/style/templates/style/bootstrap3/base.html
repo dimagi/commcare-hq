@@ -96,6 +96,15 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_timepicker %}
+        {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static "bootstrap-timepicker/less/timepicker.less" %}" />
+        {% endcompress %}
+        {% endif %}
+
         {% if request.use_jquery_ui %}
         {% compress css %}
             <link type="text/css"
@@ -374,6 +383,12 @@
         {% compress js %}
         <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_timepicker %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
         {% endcompress %}
         {% endif %}
 

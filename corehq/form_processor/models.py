@@ -1,9 +1,11 @@
 import hashlib
 import json
+import logging
 import os
 import collections
 
 from datetime import datetime
+
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
@@ -14,7 +16,7 @@ from django.db import models
 from uuidfield import UUIDField
 
 from corehq.form_processor.track_related import TrackRelatedChanges
-
+from corehq.form_processor.utils.general import cache_return_value
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators.memoized import memoized
@@ -45,6 +47,11 @@ class Attachment(collections.namedtuple('Attachment', 'name raw_content content_
 
 
 class PreSaveHashableMixin(object):
+    """
+    Mixin to allow hashing of Django objects prior to saving. By
+    default Django uses the primary key as the hash key which
+    doesn't exist prior to saving.
+    """
     hash_property = None
 
     def __hash__(self):
@@ -60,8 +67,6 @@ class SaveStateMixin(object):
 
 
 class AttachmentMixin(SaveStateMixin):
-    """Requires the model to be linked to the attachments model via the 'attachments' related name.
-    """
     ATTACHMENTS_RELATED_NAME = 'attachment_set'
 
     def get_attachments(self):
@@ -98,7 +103,7 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
     """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
@@ -114,8 +119,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
-
-    hash_property = 'form_id'
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
@@ -185,7 +188,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         return self.state == self.SUBMISSION_ERROR_LOG
 
     @property
-    @memoized
+    @cache_return_value
     def form_data(self):
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
@@ -258,6 +261,20 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
+
+    @cache_return_value
+    def get_sync_token(self):
+        from casexml.apps.phone.models import get_properly_wrapped_sync_log
+        from couchdbkit import ResourceNotFound
+        if self.last_sync_token:
+            try:
+                return get_properly_wrapped_sync_log(self.last_sync_token)
+            except ResourceNotFound:
+                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
+                    self.last_sync_token, self.form_id, self.domain,
+                ))
+                raise
+        return None
 
 
 class AbstractAttachment(models.Model):
@@ -575,6 +592,7 @@ class CaseTransaction(models.Model):
     TYPE_REBUILD_USER_ARCHIVED = 3
     TYPE_REBUILD_FORM_ARCHIVED = 4
     TYPE_REBUILD_FORM_EDIT = 5
+    TYPE_LEDGER = 6
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -582,6 +600,7 @@ class CaseTransaction(models.Model):
         (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+        (TYPE_LEDGER, 'ledger'),
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
@@ -629,11 +648,19 @@ class CaseTransaction(models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_FORM)
+
+    @classmethod
+    def ledger_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_LEDGER)
+
+    @classmethod
+    def _from_form(cls, case, xform, transaction_type):
         return CaseTransaction(
             case=case,
             form_id=xform.form_id,
             server_date=xform.received_on,
-            type=CaseTransaction.TYPE_FORM,
+            type=transaction_type,
             revoked=not xform.is_normal
         )
 
@@ -699,3 +726,17 @@ class FormArchiveRebuild(CaseTransactionDetail):
 class FormEditRebuild(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
     deprecated_form_id = StringProperty()
+
+
+class LedgerValue(models.Model):
+    """
+    Represents the current state of a ledger. Supercedes StockState
+    """
+    # domain not included and assumed to be accessed through the foreign key to the case table. legit?
+    case = models.ForeignKey(CommCareCaseSQL, to_field='case_id', db_index=True)
+    # can't be a foreign key to products because of sharding.
+    # also still unclear whether we plan to support ledgers to non-products
+    entry_id = models.CharField(max_length=100, db_index=True)
+    section_id = models.CharField(max_length=100, db_index=True)
+    balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
+    last_modified = models.DateTimeField(auto_now=True)

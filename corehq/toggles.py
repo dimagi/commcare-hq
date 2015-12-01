@@ -314,6 +314,13 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
+    'extension_sync',
+    'Enable extension syncing',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
@@ -587,12 +594,6 @@ LINK_SUPPLY_POINT = StaticToggle(
     'because this is not a great way to display additional information.',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-REVAMPED_EXPORTS = StaticToggle(
-    'revamped_exports',
-    'Revamped Form and Case exports',
-    TAG_PRODUCT_PATH,
 )
 
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(

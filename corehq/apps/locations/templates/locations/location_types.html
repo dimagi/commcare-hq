@@ -152,11 +152,8 @@
                             </select>
                         </td>
                         <!-- ko if:$parent.advanced_mode() -->
-                        <td class="control-group" data-bind="css: { 'error': code_error }">
+                        <td class="control-group">
                             <input class="typecode" data-bind="value: code" type="text" />
-                            <div class="help-inline" data-bind="visible: code_error">
-                                {% trans "Required" %}
-                            </div>
                         </td>
                         <!-- /ko -->
                         {% if commtrack_enabled %}
