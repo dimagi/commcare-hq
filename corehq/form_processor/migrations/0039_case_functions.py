@@ -9,7 +9,7 @@ from corehq.form_processor.utils.migration import migrate_sql_function
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0038_form_functions'),
+        ('form_processor', '0039_auto_20151130_1748'),
     ]
 
     operations = [
