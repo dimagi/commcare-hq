@@ -36,15 +36,14 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.es import UserES
-from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.users.analytics import get_search_mobile_workers_in_domain_es_query
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
-from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader
@@ -59,7 +58,6 @@ from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
@@ -475,13 +473,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         }
 
     def _user_query(self, search_string, page, limit):
-        default_search_fields = ["username", "last_name", "first_name"]
-        return (UserES()
-                .domain(self.domain)
-                .mobile_users()
-                .search_string_query(search_string, default_search_fields)
-                .start(limit * (page - 1))
-                .size(limit))
+        return get_search_mobile_workers_in_domain_es_query(
+            domain=self.domain, search_string=search_string, page=page, limit=limit)
 
     @allow_remote_invocation
     def get_pagination_data(self, in_data):
@@ -495,10 +488,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         except ValueError:
             limit = 10
 
+        # front end pages start at one
         page = in_data.get('page', 1)
         query = in_data.get('query')
 
-        users_query = self._user_query(query, page, limit)
+        # backend pages start at 0
+        users_query = self._user_query(query, page - 1, limit)
         if in_data.get('showDeactivatedUsers', False):
             users_query = users_query.show_only_inactive()
         users_data = users_query.run()
