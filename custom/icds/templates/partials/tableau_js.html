@@ -1,6 +1,6 @@
 <script>
     var viz = {};
-    var workbook = {}
+    var workbook = {};
     function initializeViz() {
         var placeholderDiv = document.getElementById("tableauPlaceholder");
         var url = "https://icds.commcarehq.org/#/views/{{ report_view }}";
@@ -129,8 +129,8 @@
                         return last_worksheet;
                     }).otherwise(function(err){
                         console.log(err);
-                    })
-            ;
+                    });
+            enableResetFiltersButton();
         }).prop('disabled', false);
 
         console.log(filters)
@@ -141,6 +141,18 @@
         $("#drilldown").empty();
         // TODO: Disabling the button doesn't work
         $("#inspectButton").prop('disabled', true);
+    }
+
+    function enableResetFiltersButton() {
+        $("#resetFilters").prop('disabled', false).click(function () {
+            console.log('resetting filters')
+            viz.revertAllAsync();
+            disableResetFiltersButton();
+        })
+    }
+
+    function disableResetFiltersButton() {
+        $("#resetFilters").prop('disabled', true).unbind('click');
     }
 
     initializeViz()
