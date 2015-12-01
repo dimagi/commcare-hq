@@ -66,11 +66,11 @@ class Memoized(object):
     Computing full name
     'Danny Roberts'
     >>> Person("Danny", "Roberts")._full_name_cache
-    {(Person('Danny', 'Roberts'),): 'Danny Roberts'}
+    {(): 'Danny Roberts'}
     >>> p.full_name
     'Danny Roberts'
     >>> Person.get_full_name.get_cache(p)
-    {(Person('Danny', 'Roberts'),): 'Danny Roberts'}
+    {(): 'Danny Roberts'}
     >>> p.complicated_method(5)
     Calling complicated method
     (5, 10, (), {})
@@ -115,10 +115,11 @@ class Memoized(object):
         self.get_cache(obj).clear()
 
     def __call__(self, *args, **kwargs):
-        key = self.get_args_tuple(*args, **kwargs)
         if self.is_method:
+            key = self.get_args_tuple(*args, **kwargs)[1:]
             obj = args[0]
         else:
+            key = self.get_args_tuple(*args, **kwargs)
             obj = None
         cache = self.get_cache(obj)
         try:
