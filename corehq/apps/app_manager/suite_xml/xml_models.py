@@ -4,6 +4,7 @@ from eulxml.xmlmap import (
     load_xmlobject_from_string,
 )
 from lxml import etree
+from corehq.apps.app_manager.exceptions import UnknownInstanceError
 
 
 class XPathField(StringField):
@@ -373,7 +374,7 @@ class Entry(OrderedXmlObject, XmlObject):
 
     assertions = NodeListField('assertions/assert', Assertion)
 
-    def require_instance(self, *instances):
+    def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
         for instance in instances:
             if (instance.id, instance.src) not in used:
@@ -392,6 +393,15 @@ class Entry(OrderedXmlObject, XmlObject):
                     self.node.remove(instance_node)
                     self.node.insert(self.node.index(command_node) + 1,
                                      instance_node)
+        covered_ids = {instance_id for instance_id, _ in used}
+        for instance_id in instance_ids:
+            if instance_id not in covered_ids:
+                raise UnknownInstanceError(
+                    "Instance reference not recognized: {} in xpath \"{}\""
+                    # to get xpath context to show in this error message
+                    # make instance_id a unicode subclass with an xpath property
+                    .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
+
         sorted_instances = sorted(self.instances,
                                   key=lambda instance: instance.id)
         if sorted_instances != self.instances:

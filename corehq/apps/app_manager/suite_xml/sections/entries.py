@@ -201,8 +201,7 @@ class EntriesHelper(object):
                 for tab in module.case_details.long.tabs:
                     connectors.update(tab.connectors)
         for id, src in connectors.iteritems():
-            entry.require_instance(Instance(id=id, src=src))
-
+            entry.require_instances([Instance(id=id, src=src)])
 
     @staticmethod
     def get_assertion(test, locale_id, locale_arguments=None):
