@@ -198,43 +198,38 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
         try:
-            return CaseAttachmentSQL.objects.filter(case_id=case_id, name=attachment_name)[0]
+            return CommCareCaseSQL.objects.raw(
+                'select * from get_case_attachment_by_name(%s, %s)',
+                [case_id, attachment_name]
+            )[0]
         except IndexError:
             raise AttachmentNotFound(attachment_name)
 
     @staticmethod
     def get_attachments(case_id):
-        return list(CaseAttachmentSQL.objects.filter(case_id=case_id).all())
+        return list(CaseAttachmentSQL.objects.raw('SELECT * from get_case_attachments(%s)', [case_id]))
 
     @staticmethod
     def get_transactions(case_id):
-        return list(CaseTransaction.objects.filter(case_id=case_id).all())
+        return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
-        return list(CaseTransaction.objects.filter(
-            case_id=case_id,
-            revoked=False,
-            type__in=CaseTransaction.TYPES_TO_PROCESS
-        ).all())
+        return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions_for_rebuild(%s)', [case_id]))
 
     @staticmethod
     def get_case_by_location(domain, location_id):
         try:
-            return CommCareCaseSQL.objects.filter(
-                domain=domain,
-                type=SupplyPointCaseMixin.CASE_TYPE,
-                location_id=location_id
-            ).get()
-        except CommCareCaseSQL.DoesNotExist:
+            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_location_id(%s, %s)', [domain, location_id])[0]
+        except IndexError:
             return None
 
     @staticmethod
-    def get_case_ids_in_domain(domain, type=None):
-        query = CommCareCaseSQL.objects.filter(domain=domain)
-        if type:
-            query = query.filter(type=type)
-        return list(query.values_list('case_id', flat=True))
+    def get_case_ids_in_domain(domain, type_=None):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
 
 def _order_list(id_list, object_list, id_property):

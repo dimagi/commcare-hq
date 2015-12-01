@@ -24,4 +24,10 @@ class Migration(migrations.Migration):
         migrate_sql_function('hard_delete_cases'),
         migrations.RunSQL('DROP FUNCTION IF EXISTS hard_delete_forms(text[]);'),  # delete old one
         migrate_sql_function('hard_delete_forms'),  # updated
+        migrate_sql_function('get_case_attachment_by_name'),
+        migrate_sql_function('get_case_attachments'),
+        migrate_sql_function('get_case_transactions'),
+        migrate_sql_function('get_case_transactions_for_rebuild'),
+        migrate_sql_function('get_case_by_location_id'),
+        migrate_sql_function('get_case_ids_in_domain'),
     ]

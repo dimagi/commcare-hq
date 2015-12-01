@@ -126,10 +126,10 @@ class FormProcessorInterface(object):
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
-        domains = set([case.domain])
-        domains.update([xform.domain for xform in xforms])
-        assert len(domains) == 1, domains
-        self.processor.hard_delete_case_and_forms(domains[0], case, xforms)
+        domain = case.domain
+        all_domains = {domain} | {xform.domain for xform in xforms}
+        assert len(all_domains) == 1, all_domains
+        self.processor.hard_delete_case_and_forms(domain, case, xforms)
 
     def deprecate_xform(self, existing_xform, new_xform):
         return self.processor.deprecate_xform(existing_xform, new_xform)
