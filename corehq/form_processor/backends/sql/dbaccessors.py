@@ -81,10 +81,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         )
 
         forms_by_id = {form.form_id: form for form in forms}
-        grouped_attachments = groupby(attachments, lambda x: x.form_id)
-        for form_id, attachments_group in grouped_attachments:
-            form = forms_by_id[form_id]
-            form.cached_attachments = list(attachments_group)
+        _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
 
         if ordered:
             _order_list(form_ids, forms, 'form_id')
@@ -168,17 +165,27 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.filter(case_id=case_id).all())
+        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices(%s)', [case_id]))
 
     @staticmethod
     def get_reverse_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.filter(referenced_id=case_id).all())
+        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
 
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids):
-        return CommCareCaseSQL.objects.filter(
-            domain=domain, index__referenced_id__in=case_ids
-        ).defer("case_json").prefetch_related('index_set')
+        assert isinstance(case_ids, list)
+
+        cases = list(CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_reverse_indexed_cases(%s, %s)',
+            [domain, case_ids])
+        )
+        cases_by_id = {case.case_id: case for case in cases}
+        indices = list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_multiple_cases_indices(%s)',
+            [cases_by_id.keys()])
+        )
+        _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
+        return cases
 
     @staticmethod
     def hard_delete_case(case_id):
@@ -238,3 +245,11 @@ def _order_list(id_list, object_list, id_property):
         ordered_list[index_map[getattr(obj, id_property)]] = obj
 
     return ordered_list
+
+
+def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
+    prefetched_groups = groupby(prefetched_models, lambda x: getattr(x, link_field_name))
+    for obj_id, group in prefetched_groups:
+        obj = objects_by_id[obj_id]
+        setattr(obj, cached_attrib_name, list(group))
+

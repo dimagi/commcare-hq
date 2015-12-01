@@ -451,6 +451,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @memoized
     def _saved_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        cached_indices = 'cached_indices'
+        if hasattr(self, cached_indices):
+            return getattr(self, cached_indices)
+
         return CaseAccessorSQL.get_indices(self.case_id) if self.is_saved() else []
 
     @property
