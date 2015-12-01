@@ -2053,6 +2053,8 @@ class KeywordForm(Form):
         from corehq.apps.reminders.views import KeywordsListView
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         layout_fields = [
             crispy.Fieldset(
@@ -2077,33 +2079,45 @@ class KeywordForm(Form):
                         'structured_sms_form_unique_id',
                         data_bind="value: structured_sms_form_unique_id",
                     ),
-                    BootstrapMultiField(
+                    hqcrispy.B3MultiField(
                         _("Delimiters"),
                         crispy.Div(
-                            InlineColumnField(
-                                'use_custom_delimiter',
-                                data_bind="checked: use_custom_delimiter, "
-                                          "click: updateExampleStructuredSMS",
-                                block_css_class="span2",
+                            crispy.Div(
+                                InlineField(
+                                    twbscrispy.PrependedText('use_custom_delimiter', '',
+                                                             data_bind="checked: use_custom_delimiter, "
+                                                                       "click: updateExampleStructuredSMS"),
+
+                                    block_css_class="span2",
+                                ),
+                                css_class='col-md-2 col-lg-2'
                             ),
-                            InlineField(
-                                'delimiter',
-                                data_bind="value: delimiter, "
-                                          "valueUpdate: 'afterkeydown', "
-                                          "event: {keyup: updateExampleStructuredSMS},"
-                                          "visible: use_custom_delimiter",
-                                block_css_class="span4",
-                            ),
-                            css_class="controls-row",
+                            crispy.Div(
+                                InlineField(
+                                    'delimiter',
+                                    data_bind="value: delimiter, "
+                                              "valueUpdate: 'afterkeydown', "
+                                              "event: {keyup: updateExampleStructuredSMS},"
+                                              "visible: use_custom_delimiter",
+                                    block_css_class="span4",
+                                ),
+                                css_class='col-md-2 col-lg-2'
+                            )
+
                         ),
                     ),
-                    BootstrapMultiField(
+                    hqcrispy.B3MultiField(
                         _("Named Answers"),
-                        InlineField(
-                            'use_named_args',
-                            data_bind="checked: use_named_args, "
-                                      "click: updateExampleStructuredSMS",
+                        crispy.Div(
+                            InlineField(
+                                twbscrispy.PrependedText('use_named_args', '',
+                                                         data_bind="checked: use_named_args, "
+                                                                   "click: updateExampleStructuredSMS"),
+
+                            ),
+                            css_class='col-md-2 col-lg-2'
                         ),
+
                         ErrorsOnlyField('named_args'),
                         crispy.Div(
                             data_bind="template: {"
@@ -2113,28 +2127,35 @@ class KeywordForm(Form):
                                       "visible: use_named_args",
                         ),
                     ),
-                    BootstrapMultiField(
+                    hqcrispy.B3MultiField(
                         _("Joining Characters"),
                         crispy.Div(
-                            InlineColumnField(
-                                'use_named_args_separator',
-                                data_bind="checked: use_named_args_separator, "
-                                          "click: updateExampleStructuredSMS",
-                                block_css_class="span2",
+                            crispy.Div(
+                                InlineField(
+                                    twbscrispy.PrependedText(
+                                        'use_named_args_separator', '',
+                                        data_bind="checked: use_named_args_separator, "
+                                                  "click: updateExampleStructuredSMS"
+                                    ),
+                                ),
+                                css_class='col-md-2 col-lg-2'
                             ),
-                            InlineField(
-                                'named_args_separator',
-                                data_bind="value: named_args_separator, "
-                                          "valueUpdate: 'afterkeydown', "
-                                          "event: {keyup: updateExampleStructuredSMS},"
-                                          "visible: useJoiningCharacter",
-                                block_css_class="span4",
-                            ),
-                            css_class="controls-row",
+
+                            crispy.Div(
+                                InlineField(
+                                    'named_args_separator',
+                                    data_bind="value: named_args_separator, "
+                                              "valueUpdate: 'afterkeydown', "
+                                              "event: {keyup: updateExampleStructuredSMS},"
+                                              "visible: useJoiningCharacter",
+                                ),
+                                css_class='col-md-3 col-lg-3'
+                            )
+
                         ),
                         data_bind="visible: use_named_args",
                     ),
-                    BootstrapMultiField(
+                    hqcrispy.B3MultiField(
                         _("Example Structured Message"),
                         crispy.HTML('<pre style="background: white;" '
                                     'data-bind="text: example_structured_sms">'
@@ -2167,7 +2188,7 @@ class KeywordForm(Form):
                     'other_recipient_content_type',
                     data_bind="value: other_recipient_content_type",
                 ),
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     "",
                     crispy.Div(
                         crispy.HTML(
@@ -2206,19 +2227,19 @@ class KeywordForm(Form):
             ),
             crispy.Fieldset(
                 _("Advanced Options"),
-                crispy.Field(
-                    'override_open_sessions',
+                twbscrispy.PrependedText(
+                    'override_open_sessions', '',
                     data_bind="checked: override_open_sessions",
                 ),
                 'allow_keyword_use_by',
             ),
-            FormActions(
-                StrictButton(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
                     _("Save Keyword"),
                     css_class='btn-primary',
                     type='submit',
                 ),
-                crispy.HTML('<a href="%s" class="btn">Cancel</a>'
+                crispy.HTML('<a href="%s" class="btn btn-default">Cancel</a>'
                             % reverse(KeywordsListView.urlname, args=[self._cchq_domain]))
             ),
         ])
