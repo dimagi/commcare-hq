@@ -184,7 +184,7 @@ def monthly_reports():
 
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
-    for group_config in get_all_hq_group_export_configs:
+    for group_config in get_all_hq_group_export_configs():
         export_for_group_async.delay(group_config, 'couch')
 
 
