@@ -22,11 +22,15 @@ class ChoiceQueryContext(object):
     def __init__(self, query=None, limit=20, offset=None, page=None):
         self.query = query
         self.limit = limit
-        assert (page is None or offset is None) and not (page is None and offset is None)
-        if page:
-            self.offset = page * limit
-        if offset:
+
+        if page is not None and offset is not None:
+            raise TypeError("Only one of page or offset can be passed in")
+        if offset is not None:
             self.offset = offset
+        elif page is not None:
+            self.offset = page * limit
+        else:
+            raise TypeError("One of page or offset must be passed in")
 
 
 class ChoiceProvider(object):
