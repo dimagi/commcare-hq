@@ -112,7 +112,13 @@ class UserChoiceProvider(ChoiceProvider):
 
     def get_choices_for_values(self, values):
         user_es = get_bulk_get_users_by_id_es_query(self.domain, values)
-        return self.get_choices_from_es_query(user_es)
+        choices = self.get_choices_from_es_query(user_es)
+        used_values = {value for value, _ in choices}
+        for value in values:
+            if value not in used_values:
+                choices.append(Choice(value, value))
+                used_values.add(value)
+        return choices
 
     @staticmethod
     def get_choices_from_es_query(user_es):
