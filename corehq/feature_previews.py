@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.toggles import TAG_PREVIEW
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from .toggles import StaticToggle, NAMESPACE_DOMAIN, all_toggles
+from .toggles import StaticToggle, NAMESPACE_DOMAIN
 
 
 class FeaturePreview(StaticToggle):
