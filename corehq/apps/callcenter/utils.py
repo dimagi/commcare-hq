@@ -195,11 +195,11 @@ def call_center_location_owner(user, ancestor_level):
         owner_id = user.location_id
     else:
         location = SQLLocation.objects.get(location_id=user.location_id)
-        ancestors = location.get_ancestors(ascending=True, include_self=True)
+        ancestors = location.get_ancestors(ascending=True, include_self=True).only("location_id")
         try:
             owner_id = ancestors[ancestor_level].location_id
         except IndexError:
-            owner_id = ancestors[-1].location_id
+            owner_id = ancestors.last().location_id
     return owner_id
 
 
