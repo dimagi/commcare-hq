@@ -119,11 +119,13 @@ class AutomaticUpdateRuleCriteria(models.Model):
     MATCH_DAYS_SINCE = 'DAYS'
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
+    MATCH_HAS_VALUE = 'HAS_VALUE'
 
     MATCH_TYPE_CHOICES = (
         (MATCH_DAYS_SINCE, MATCH_DAYS_SINCE),
         (MATCH_EQUAL, MATCH_EQUAL),
         (MATCH_NOT_EQUAL, MATCH_NOT_EQUAL),
+        (MATCH_HAS_VALUE, MATCH_HAS_VALUE),
     )
 
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
@@ -155,11 +157,20 @@ class AutomaticUpdateRuleCriteria(models.Model):
     def check_not_equal(self, case, now):
         return case.get_case_property(self.property_name) != self.property_value
 
+    def check_has_value(self, case, now):
+        value = case.get_case_property(self.property_name)
+        if value is None:
+            return False
+        if isinstance(value, basestring) and not value.strip():
+            return False
+        return True
+
     def matches(self, case, now):
         return {
             self.MATCH_DAYS_SINCE: self.check_days_since,
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,
+            self.MATCH_HAS_VALUE: self.check_has_value,
         }.get(self.match_type)(case, now)
 
 
