@@ -92,15 +92,15 @@ class CallCenterLocationOwnerTest(TestCase):
         self.user.save()
         self.assertCallCenterCaseOwner(self.root_location._id)
 
-        self.user.set_location(self.child_location)
-        self.user.save()
-        # owner should be the highest ancestor if there aren't any further ancestors
-        self.assertCallCenterCaseOwner(self.root_location._id)
-
         self.user.unset_location()
         self.user.save()
         # Call center case owner should be "" if the user's location is not set
         self.assertCallCenterCaseOwner("")
+
+        self.user.set_location(self.child_location)
+        self.user.save()
+        # owner should be the highest ancestor if there aren't any further ancestors
+        self.assertCallCenterCaseOwner(self.root_location._id)
 
         # Reset config
         self.domain.call_center_config.user_location_ancestor_level = original_setting
