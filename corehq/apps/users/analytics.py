@@ -58,7 +58,7 @@ def _get_commcare_users_in_domain(active_flag, domain, start_at, limit):
     ).all()
 
 
-def get_search_users_in_domain_es_query(domain, search_string, limit, page):
+def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     """
     returns a UserES object
     """
@@ -66,7 +66,7 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, page):
     return (UserES()
             .domain(domain)
             .search_string_query(search_string, default_search_fields)
-            .start(limit * page)
+            .start(offset)
             .size(limit))
 
 

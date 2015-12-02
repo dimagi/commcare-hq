@@ -474,7 +474,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     def _user_query(self, search_string, page, limit):
         user_es = get_search_users_in_domain_es_query(
-            domain=self.domain, search_string=search_string, page=page, limit=limit)
+            domain=self.domain, search_string=search_string,
+            offset=page * limit, limit=limit)
         return user_es.mobile_users()
 
     @allow_remote_invocation
