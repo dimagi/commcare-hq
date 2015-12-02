@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, validate_slug
 from django import forms
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models import ProtectedError
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
@@ -201,6 +202,7 @@ class BillingAccountBasicForm(forms.Form):
             )
         return transfer_subs
 
+    @transaction.atomic
     def create_account(self):
         name = self.cleaned_data['name']
         salesforce_account_id = self.cleaned_data['salesforce_account_id']
@@ -223,6 +225,7 @@ class BillingAccountBasicForm(forms.Form):
 
         return account
 
+    @transaction.atomic
     def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
@@ -570,6 +573,7 @@ class SubscriptionForm(forms.Form):
 
         return self.cleaned_data
 
+    @transaction.atomic
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
         domain = self.cleaned_data['domain']
@@ -606,6 +610,7 @@ class SubscriptionForm(forms.Form):
                                     "current account to transfer to."))
         return transfer_account
 
+    @transaction.atomic
     def update_subscription(self):
         self.subscription.update_subscription(
             date_start=self.cleaned_data['start_date'],
@@ -688,6 +693,7 @@ class ChangeSubscriptionForm(forms.Form):
             ),
         )
 
+    @transaction.atomic
     def change_subscription(self):
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['new_plan_version'])
         return self.subscription.change_plan(
@@ -757,6 +763,7 @@ class CreditForm(forms.Form):
             )))
         return amount
 
+    @transaction.atomic
     def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
@@ -772,6 +779,7 @@ class CreditForm(forms.Form):
             product_type=product_type,
             note=note,
             web_user=web_user,
+            permit_inactive=True,
         )
         return True
 
@@ -1309,6 +1317,7 @@ class SoftwarePlanVersionForm(forms.Form):
             raise ValidationError(_("A name is required for this new role."))
         return val
 
+    @transaction.atomic
     def save(self, request):
         if not self.is_update:
             messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
@@ -1533,6 +1542,7 @@ class TriggerInvoiceForm(forms.Form):
             )
         )
 
+    @transaction.atomic
     def trigger_invoice(self):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
@@ -1759,6 +1769,7 @@ class AdjustBalanceForm(forms.Form):
             raise ValidationError(_("Received invalid adjustment type: %s")
                                   % adjustment_type)
 
+    @transaction.atomic
     def adjust_balance(self, web_user=None):
         method = self.cleaned_data['method']
         kwargs = {
@@ -1977,6 +1988,7 @@ class CreateAdminForm(forms.Form):
             )
         )
 
+    @transaction.atomic
     def add_admin_user(self):
         # create UserRole for user
         username = self.cleaned_data['username']

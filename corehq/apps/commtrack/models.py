@@ -439,6 +439,14 @@ class StockState(models.Model):
     include_archived = models.Manager()
 
     @property
+    def entry_id(self):
+        return self.product_id
+
+    @property
+    def balance(self):
+        return self.stock_on_hand
+
+    @property
     def months_remaining(self):
         return months_of_stock_remaining(
             self.stock_on_hand,
@@ -607,6 +615,7 @@ def post_loc_created(sender, loc=None, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
+    # todo: use LedgerProcessor
     StockReport.objects.filter(form_id=xform.form_id).delete()
 
 
@@ -614,5 +623,9 @@ def remove_data(sender, xform, *args, **kwargs):
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
     result = process_stock([xform])
-    result.commit()
+    for to_save in result.get_models_to_save():
+        if to_save:
+            to_save.commit()
+    result.finalize()
+    # todo: use LedgerProcessor
     CommCareCase.get_db().bulk_save(result.relevant_cases)

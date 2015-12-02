@@ -64,6 +64,14 @@ class AttachmentMixin(SaveStateMixin):
     """
     ATTACHMENTS_RELATED_NAME = 'attachment_set'
 
+    def get_attachments(self):
+        for list_attr in ('unsaved_attachments', 'cached_attachments'):
+            if hasattr(self, list_attr):
+                return getattr(self, list_attr)
+
+        if self.is_saved():
+            return self._get_attachments_from_db()
+
     def get_attachment(self, attachment_name):
         attachment = self.get_attachment_meta(attachment_name)
         if not attachment:
@@ -84,6 +92,9 @@ class AttachmentMixin(SaveStateMixin):
             return self._get_attachment_from_db(attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
+        raise NotImplementedError
+
+    def _get_attachments_from_db(self):
         raise NotImplementedError
 
 
@@ -185,7 +196,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     @property
     def history(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form_history(self.form_id)
+        return FormAccessorSQL.get_form_operations(self.form_id)
 
     @property
     def metadata(self):
@@ -202,7 +213,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachment(self.form_id, attachment_name)
+        return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
+
+    def _get_attachments_from_db(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachments(self.form_id)
 
     def get_xml_element(self):
         xml = self.get_xml()
@@ -444,17 +459,20 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_attachment(self.case_id, attachment_name)
 
+    def _get_attachments_from_db(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_attachments(self.case_id)
+
     @property
     @memoized
     def transactions(self):
-        return list(self.transaction_set.all())
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_transactions(self.case_id)
 
     @property
     @memoized
     def case_attachments(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        attachments = CaseAccessorSQL.get_attachments(self.case_id)
-        return {attachment.name: attachment for attachment in attachments}
+        return {attachment.name: attachment for attachment in self.get_attachments()}
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
@@ -546,6 +564,7 @@ class CaseTransaction(models.Model):
     TYPE_REBUILD_USER_ARCHIVED = 3
     TYPE_REBUILD_FORM_ARCHIVED = 4
     TYPE_REBUILD_FORM_EDIT = 5
+    TYPE_LEDGER = 6
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -553,6 +572,7 @@ class CaseTransaction(models.Model):
         (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+        (TYPE_LEDGER, 'ledger'),
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
@@ -600,11 +620,19 @@ class CaseTransaction(models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_FORM)
+
+    @classmethod
+    def ledger_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_LEDGER)
+
+    @classmethod
+    def _from_form(cls, case, xform, transaction_type):
         return CaseTransaction(
             case=case,
             form_id=xform.form_id,
             server_date=xform.received_on,
-            type=CaseTransaction.TYPE_FORM,
+            type=transaction_type,
             revoked=not xform.is_normal
         )
 
@@ -670,3 +698,17 @@ class FormArchiveRebuild(CaseTransactionDetail):
 class FormEditRebuild(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
     deprecated_form_id = StringProperty()
+
+
+class LedgerValue(models.Model):
+    """
+    Represents the current state of a ledger. Supercedes StockState
+    """
+    # domain not included and assumed to be accessed through the foreign key to the case table. legit?
+    case = models.ForeignKey(CommCareCaseSQL, to_field='case_id', db_index=True)
+    # can't be a foreign key to products because of sharding.
+    # also still unclear whether we plan to support ledgers to non-products
+    entry_id = models.CharField(max_length=100, db_index=True)
+    section_id = models.CharField(max_length=100, db_index=True)
+    balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
+    last_modified = models.DateTimeField(auto_now=True)

@@ -596,12 +596,6 @@ LINK_SUPPLY_POINT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-REVAMPED_EXPORTS = StaticToggle(
-    'revamped_exports',
-    'Revamped Form and Case exports',
-    TAG_PRODUCT_PATH,
-)
-
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',

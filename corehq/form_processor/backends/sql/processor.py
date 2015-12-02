@@ -58,7 +58,7 @@ class FormProcessorSQL(object):
         CaseAccessorSQL.hard_delete_case(case.case_id)
 
     @classmethod
-    def save_processed_models(cls, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None, stock_updates=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Ensure already saved forms get saved first to avoid ID conflicts
@@ -69,6 +69,8 @@ class FormProcessorSQL(object):
             if cases:
                 for case in cases:
                     cls.save_case(case)
+            for stock_update in stock_updates or []:
+                stock_update.commit()
 
     @classmethod
     def save_xform(cls, xform, is_deprecation=False):
@@ -274,7 +276,7 @@ def get_case_transactions(case_id, updated_xforms=None):
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
 
-    form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
+    form_ids_to_fetch = list(form_ids - set(updated_xforms_map.keys()))
     xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):

@@ -95,7 +95,6 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
-    'djangobower.finders.BowerFinder',
 )
 
 STATICFILES_DIRS = (
@@ -194,7 +193,6 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
-    'djangobower',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -385,7 +383,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
-    'djangobower',
     'django_prbac',
     'djcelery',
     'djtables',
