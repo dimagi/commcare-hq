@@ -114,8 +114,6 @@ class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, Abstra
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
 
-    hash_property = 'form_id'
-
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     domain = models.CharField(max_length=255)
