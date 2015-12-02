@@ -251,7 +251,7 @@
         });
 
         $scope.sendAnalytics = function () {
-            analytics.usage("Download Export", exportDownloadService.exportType, "Saved");
+            analytics.usage("Download Export", _(exportDownloadService.exportType).capitalize(), "Saved");
         };
     };
     download_export.controller(exportsControllers);
