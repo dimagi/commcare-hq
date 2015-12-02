@@ -252,7 +252,7 @@
 
         $scope.sendAnalytics = function () {
             analytics.usage("Download Export", exportDownloadService.exportType, "Saved");
-        }
+        };
     };
     download_export.controller(exportsControllers);
 
