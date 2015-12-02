@@ -174,12 +174,13 @@ class GroupChoiceProvider(ChoiceProvider):
         return group_es.size(0).run().total
 
     def get_choices_for_known_values(self, values):
-        pass
+        group_es = GroupES().domain(self.domain).is_case_sharing().filter(doc_id(values))
+        return self.get_choices_from_es_query(group_es)
 
     @staticmethod
     def get_choices_from_es_query(group_es):
-        return [Choice(user_id, name)
-                for user_id, name in group_es.values_list('_id', 'name')]
+        return [Choice(group_id, name)
+                for group_id, name in group_es.values_list('_id', 'name')]
 
 
 class AbstractMultiProvider(ChoiceProvider):
