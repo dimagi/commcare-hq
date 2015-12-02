@@ -101,7 +101,7 @@
         self._getGroups();
 
         var exportType = $scope.exportList[0].export_type;
-        self.exportType = exportType.charAt(0).toUpperCase() + exportType.slice(1);
+        self.exportType = _(exportType).capitalize();
 
         self.sendAnalytics = function () {
             _.each($scope.formData.user_types, function (user_type) {

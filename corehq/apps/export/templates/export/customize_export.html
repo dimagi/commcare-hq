@@ -392,7 +392,7 @@
 
                 self.save_no_preview = function() {
                     var exportType = self.export_type();
-                    exportType = exportType.charAt(0).toUpperCase() + exportType.slice(1);
+                    exportType = _(exportType).capitalize();
                     var action = "Regular";
                     if (self.presave()) {
                         action = "Saved";
