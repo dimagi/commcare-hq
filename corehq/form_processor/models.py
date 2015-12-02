@@ -414,8 +414,9 @@ class CommCareCaseSQL(models.Model, RedisLockableMixIn,
         self.modified_by = value
 
     def soft_delete(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         self.deleted = True
-        self.save()
+        CaseAccessorSQL.save_case(self)
 
     @property
     def is_deleted(self):
