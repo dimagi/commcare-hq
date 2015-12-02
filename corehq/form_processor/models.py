@@ -27,6 +27,16 @@ from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
 from .exceptions import AttachmentNotFound
 
 
+XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
+XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
+XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
+
+CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
+CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
+CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
+CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
+
+
 class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
     @property
     @memoized
@@ -89,7 +99,6 @@ class AttachmentMixin(SaveStateMixin):
 
 
 class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
-    """An XForms SQL instance."""
     NORMAL = 0
     ARCHIVED = 1
     DEPRECATED = 2
@@ -256,6 +265,9 @@ class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, Abstra
             "domain='{f.domain}')"
         ).format(f=self)
 
+    class Meta:
+        db_table = XFormInstanceSQL_DB_TABLE
+
 
 class AbstractAttachment(models.Model):
     attachment_id = UUIDField(unique=True, db_index=True)
@@ -288,6 +300,9 @@ class XFormAttachmentSQL(AbstractAttachment):
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
+    class Meta:
+        db_table = XFormAttachmentSQL_DB_TABLE
+
 
 class XFormOperationSQL(models.Model):
     ARCHIVE = 'archive'
@@ -301,6 +316,9 @@ class XFormOperationSQL(models.Model):
     @property
     def user(self):
         return self.user_id
+
+    class Meta:
+        db_table = XFormOperationSQL_DB_TABLE
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):
@@ -359,8 +377,6 @@ class SupplyPointCaseMixin(object):
 class CommCareCaseSQL(models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin):
-    hash_property = 'case_id'
-
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
@@ -506,6 +522,7 @@ class CommCareCaseSQL(models.Model, RedisLockableMixIn,
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+        db_table = CommCareCaseSQL_DB_TABLE
 
 
 class CaseAttachmentSQL(AbstractAttachment):
@@ -513,6 +530,9 @@ class CaseAttachmentSQL(AbstractAttachment):
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
+
+    class Meta:
+        db_table = CaseAttachmentSQL_DB_TABLE
 
 
 class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
@@ -567,6 +587,7 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
         index_together = [
             ["domain", "referenced_id"],
         ]
+        db_table = CommCareCaseIndexSQL_DB_TABLE
 
 
 class CaseTransaction(models.Model):
@@ -670,6 +691,7 @@ class CaseTransaction(models.Model):
     class Meta:
         unique_together = ("case", "form_id")
         ordering = ['server_date']
+        db_table = CaseTransaction_DB_TABLE
 
 
 class CaseTransactionDetail(JsonObject):

@@ -1,6 +1,14 @@
 import json
 from collections import namedtuple
-from psycopg2.extensions import adapt, register_adapter, AsIs
+
+from json_field.fields import JSONEncoder
+from psycopg2.extensions import adapt, AsIs
+
+from corehq.form_processor.models import (
+    CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
+    CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
+    XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE
+)
 
 
 def fetchall_as_namedtuple(cursor):
@@ -35,8 +43,8 @@ def form_adapter(form):
         adapt(form.date_header).getquoted(),
         adapt(form.build_id).getquoted(),
         adapt(form.state).getquoted(),
-        adapt(json.dumps(form.auth_context)).getquoted(),
-        adapt(json.dumps(form.openrosa_headers)).getquoted(),
+        adapt(json.dumps(form.auth_context, cls=JSONEncoder)).getquoted(),
+        adapt(json.dumps(form.openrosa_headers, cls=JSONEncoder)).getquoted(),
         adapt(form.deprecated_form_id).getquoted(),
         adapt(form.edited_on).getquoted(),
         adapt(form.orig_id).getquoted(),
@@ -44,10 +52,10 @@ def form_adapter(form):
         adapt(form.user_id).getquoted(),
         adapt(form.initial_processing_complete).getquoted(),
     ]
-    return _adapt_fields(fields, 'form_processor_xforminstancesql')
+    return _adapt_fields(fields, XFormInstanceSQL_DB_TABLE)
 
 
-def formattachment_adapter(attachment):
+def form_attachment_adapter(attachment):
     fields = [
         adapt(attachment.id).getquoted(),
         adapt(attachment.attachment_id).getquoted(),
@@ -56,7 +64,69 @@ def formattachment_adapter(attachment):
         adapt(attachment.md5).getquoted(),
         adapt(attachment.form_id).getquoted(),
     ]
-    return _adapt_fields(fields, 'form_processor_xformattachmentsql')
+    return _adapt_fields(fields, XFormAttachmentSQL_DB_TABLE)
+
+
+def case_adapter(case):
+    fields = [
+        adapt(case.id).getquoted(),
+        adapt(case.case_id).getquoted(),
+        adapt(case.domain).getquoted(),
+        adapt(case.type).getquoted(),
+        adapt(case.owner_id).getquoted(),
+        adapt(case.opened_on).getquoted(),
+        adapt(case.opened_by).getquoted(),
+        adapt(case.modified_on).getquoted(),
+        adapt(case.server_modified_on).getquoted(),
+        adapt(case.modified_by).getquoted(),
+        adapt(case.closed).getquoted(),
+        adapt(case.closed_on).getquoted(),
+        adapt(case.closed_by).getquoted(),
+        adapt(case.deleted).getquoted(),
+        adapt(case.external_id).getquoted(),
+        adapt(json.dumps(case.case_json, cls=JSONEncoder)).getquoted(),
+        adapt(case.name).getquoted(),
+        adapt(case.location_id).getquoted(),
+    ]
+    return _adapt_fields(fields, CommCareCaseSQL_DB_TABLE)
+
+
+def case_attachment_adapter(attachment):
+    fields = [
+        adapt(attachment.id).getquoted(),
+        adapt(attachment.attachment_id).getquoted(),
+        adapt(attachment.name).getquoted(),
+        adapt(attachment.content_type).getquoted(),
+        adapt(attachment.md5).getquoted(),
+        adapt(attachment.case_id).getquoted(),
+    ]
+    return _adapt_fields(fields, CaseAttachmentSQL_DB_TABLE)
+
+
+def case_index_adapter(index):
+    fields = [
+        adapt(index.id).getquoted(),
+        adapt(index.domain).getquoted(),
+        adapt(index.identifier).getquoted(),
+        adapt(index.referenced_id).getquoted(),
+        adapt(index.referenced_type).getquoted(),
+        adapt(index.relationship_id).getquoted(),
+        adapt(index.case_id).getquoted(),
+    ]
+    return _adapt_fields(fields, CommCareCaseIndexSQL_DB_TABLE)
+
+
+def case_transaction_adapter(transaction):
+    fields = [
+        adapt(transaction.id).getquoted(),
+        adapt(transaction.form_id).getquoted(),
+        adapt(transaction.server_date).getquoted(),
+        adapt(transaction.type).getquoted(),
+        adapt(transaction.case_id).getquoted(),
+        adapt(transaction.revoked).getquoted(),
+        adapt(json.dumps(transaction.details, cls=JSONEncoder)).getquoted(),
+    ]
+    return _adapt_fields(fields, CaseTransaction_DB_TABLE)
 
 
 def _adapt_fields(fields, table_name):
