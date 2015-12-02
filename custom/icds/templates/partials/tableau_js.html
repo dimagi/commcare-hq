@@ -14,6 +14,11 @@
             }
         };
         viz = new tableau.Viz(placeholderDiv, url, options);
+        // I am envisioning the history object possibly containing things like the base params for filtering
+        var historyObject = {
+            'location': 'base'
+        };
+        history.pushState(historyObject, '', '#top-level')
     }
 
     function setUpNav(viz) {
@@ -119,22 +124,20 @@
                                 worksheet.getFiltersAsync().then(function(filters) {console.log(filters)})
                             })
                         });
-                        key = 'View By';
-                        value = params[key];
-
-                        console.log('Applying parameter to: ', key, ' value: ', value);
+                        var key = 'View By',
+                            value = params[key],
+                            // TODO: historyObject should be an actual object
+                            historyObject = {
+                                'location': sheetName,
+                                'params': params
+                            };
+                        history.pushState(historyObject, sheetName, '#' + sheetName);
                         return workbook.changeParameterValueAsync(key, value);
-                        //});
-
-                        return last_worksheet;
                     }).otherwise(function(err){
-                        console.log(err);
+                        alert(err);
                     });
             enableResetFiltersButton();
         }).prop('disabled', false);
-
-        console.log(filters)
-        console.log(params)
     }
 
     function clearDrilldown() {
@@ -155,7 +158,7 @@
         $("#resetFilters").prop('disabled', true).unbind('click');
     }
 
-    initializeViz()
+    initializeViz();
 
     window.onpopstate = function (event) {
         // If base_report -> viz.revertallAsync()
