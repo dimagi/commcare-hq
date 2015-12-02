@@ -4,6 +4,7 @@ import functools
 import json
 import os
 import tempfile
+from django.conf import settings
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -104,6 +105,8 @@ def swallow_programming_errors(fn):
         try:
             return fn(request, domain, *args, **kwargs)
         except ProgrammingError as e:
+            if settings.DEBUG:
+                raise
             messages.error(
                 request,
                 _('There was a problem processing your request. '
