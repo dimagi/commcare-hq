@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import uuid
+from base64 import b64encode
 from hashlib import md5
 from os.path import join
 from unittest import TestCase
@@ -102,7 +103,7 @@ class TestBlobMixin(BaseTestCase):
         self.assertNotIn(name, doc._attachments)
 
     def test_blobs_property(self):
-        couch_digest = "md5-" + md5(b"couch content").hexdigest()
+        couch_digest = "md5-" + b64encode(md5(b"content").digest())
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments["att"] = {
             "content": b"couch content",
@@ -117,7 +118,7 @@ class TestBlobMixin(BaseTestCase):
         self.assertEqual(doc.blobs["att"].digest, couch_digest)
         self.assertEqual(doc.blobs["blob"].content_length, 7)
         self.assertEqual(doc.blobs["blob"].digest,
-                         "md5-" + md5(b"content").hexdigest())
+                         "md5-" + b64encode(md5(b"content").digest()))
 
     def test_unsaved_document(self):
         obj = FakeCouchDocument()

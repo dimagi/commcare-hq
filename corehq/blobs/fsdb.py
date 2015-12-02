@@ -1,6 +1,7 @@
 """Filesystem database for large binary data objects (blobs)
 """
 from __future__ import absolute_import
+import base64
 import os
 import re
 import shutil
@@ -50,7 +51,8 @@ class FilesystemBlobDB(object):
                 fh.write(chunk)
                 length += len(chunk)
                 digest.update(chunk)
-        return BlobInfo(length, "md5-" + digest.hexdigest())
+        b64digest = base64.b64encode(digest.digest())
+        return BlobInfo(length, "md5-" + b64digest)
 
     def get(self, name, bucket=DEFAULT_BUCKET):
         """Get a blob
