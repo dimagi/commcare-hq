@@ -118,7 +118,7 @@
         </template>
       </field>
     </detail>
-    <detail nodeset="instance('external')/some/data">
+    <detail nodeset="instance('commtrack:products')/some/data">
       <title>
         <text>
           <locale id="m0.case_long.tab.3.title"/>
@@ -160,7 +160,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="external" src="jr://blahblah"/>
+    <instance id="commtrack:products" src="jr://fixture/commtrack:products"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='song'][@status='open']"
              value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
@@ -173,7 +173,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
-    <instance id="external" src="jr://blahblah"/>
+    <instance id="commtrack:products" src="jr://fixture/commtrack:products"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='song'][@status='open']"
              value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
