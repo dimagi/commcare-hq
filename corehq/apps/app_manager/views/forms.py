@@ -72,6 +72,7 @@ from corehq.apps.app_manager.models import (
     FormDatum)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.tour import tours
 
 
 @no_conflict_require_POST
@@ -371,6 +372,11 @@ def view_user_registration(request, domain, app_id):
 
 
 def get_form_view_context_and_template(request, domain, form, langs, is_user_registration, messages=messages):
+    if (toggles.GUIDED_TOUR.enabled(domain)
+        and tours.SIMPLE_NEW_APP.is_tour_available(request, domain)
+    ):
+        request.guided_tour = tours.SIMPLE_NEW_APP.get_tour_data()
+        tours.SIMPLE_NEW_APP.clear_cache(request, domain)
     xform_questions = []
     xform = None
     form_errors = []
