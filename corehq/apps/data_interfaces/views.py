@@ -687,6 +687,7 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
     @property
     def initial_rule_form(self):
         return AddAutomaticCaseUpdateRuleForm(
+            domain=self.domain,
             initial={
                 'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
             }
@@ -696,7 +697,7 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
     @memoized
     def rule_form(self):
         if self.request.method == 'POST':
-            return AddAutomaticCaseUpdateRuleForm(self.request.POST)
+            return AddAutomaticCaseUpdateRuleForm(self.request.POST, domain=self.domain)
         else:
             return self.initial_rule_form
 
@@ -811,7 +812,21 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             'update_property_name': update_property_name,
             'update_property_value': update_property_value,
         }
-        return AddAutomaticCaseUpdateRuleForm(initial=initial)
+        return AddAutomaticCaseUpdateRuleForm(domain=self.domain, initial=initial)
+
+    @property
+    @memoized
+    def rule_form(self):
+        if self.request.method == 'POST':
+            return AddAutomaticCaseUpdateRuleForm(
+                self.request.POST,
+                domain=self.domain,
+                # Pass the original case_type so that we can always continue to
+                # properly display and edit rules based off of deleted case types
+                initial={'case_type': self.rule.case_type}
+            )
+        else:
+            return self.initial_rule_form
 
     def post(self, request, *args, **kwargs):
         if self.rule_form.is_valid():

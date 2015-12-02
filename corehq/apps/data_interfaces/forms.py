@@ -1,5 +1,6 @@
 import json
 from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
@@ -108,7 +109,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         label=ugettext_lazy("Name"),
         required=True,
     )
-    case_type = TrimmedCharField(
+    case_type = forms.ChoiceField(
         label=ugettext_lazy("Case Type"),
         required=True,
     )
@@ -147,8 +148,24 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             values[field_name] = value
         return values
 
+    def set_case_type_choices(self, initial):
+        case_types = get_case_types_for_domain(self.domain)
+        if initial and initial not in case_types:
+            # Include the deleted case type in the list of choices so that
+            # we always allow proper display and edit of rules
+            case_types.append(initial)
+        case_types.sort()
+        self.fields['case_type'].choices = (
+            (case_type, case_type) for case_type in case_types
+        )
+
     def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception("Expected domain in kwargs")
+        self.domain = kwargs.pop('domain')
+
         super(AddAutomaticCaseUpdateRuleForm, self).__init__(*args, **kwargs)
+        self.set_case_type_choices(self.initial.get('case_type'))
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
