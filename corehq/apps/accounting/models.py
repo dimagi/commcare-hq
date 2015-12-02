@@ -1639,6 +1639,10 @@ class InvoiceBase(models.Model):
         raise NotImplementedError()
 
     @property
+    def account(self):
+        raise NotImplementedError()
+
+    @property
     def is_paid(self):
         return bool(self.date_paid)
 
