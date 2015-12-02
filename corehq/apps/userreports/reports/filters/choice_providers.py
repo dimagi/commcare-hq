@@ -11,20 +11,21 @@ from corehq.apps.users.util import raw_username
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
 USER = 'user'
+OWNER = 'owner'
 
 
 class ChoiceQueryContext(object):
     """
     Context that will be passed to a choice provider function.
     """
-    def __init__(self, query=None, limit=20, page=0):
+    def __init__(self, query=None, limit=20, offset=None, page=None):
         self.query = query
         self.limit = limit
-        self.page = page
-
-    @property
-    def offset(self):
-        return self.page * self.limit
+        assert (page is None or offset is None) and not (page is None and offset is None)
+        if page:
+            self.offset = page * limit
+        if offset:
+            self.offset = offset
 
 
 class ChoiceProvider(object):
@@ -107,7 +108,7 @@ class UserChoiceProvider(ChoiceProvider):
     def query(self, query_context):
         user_es = get_search_users_in_domain_es_query(
             self.domain, query_context.query,
-            limit=query_context.limit, page=query_context.page)
+            limit=query_context.limit, offset=query_context.offset)
         return self.get_choices_from_es_query(user_es)
 
     def get_choices_for_values(self, values):
