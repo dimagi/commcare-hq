@@ -51,7 +51,7 @@ class FormProcessorSQLTests(TestCase):
         new_form = _create_form()
         new_form.form_id = existing_form.form_id
 
-        FormProcessorSQL.deprecate_xform(existing_form, new_form)
+        FormProcessorSQL.apply_deprecation(existing_form, new_form)
         self.assertNotEqual(existing_form.form_id, new_form.form_id)
 
         FormProcessorSQL.save_xform(existing_form, is_deprecation=True)
@@ -68,7 +68,7 @@ class FormProcessorSQLTests(TestCase):
         new_form = _create_form()
         new_form.form_id = existing_form.form_id
 
-        FormProcessorSQL.deprecate_xform(existing_form, new_form)
+        FormProcessorSQL.apply_deprecation(existing_form, new_form)
         self.assertNotEqual(existing_form.form_id, new_form.form_id)
 
         FormProcessorSQL.save_processed_models([new_form, existing_form])

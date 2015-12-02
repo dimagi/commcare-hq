@@ -75,7 +75,7 @@ class FormProcessorCouch(object):
         xform.save()
 
     @classmethod
-    def deprecate_xform(cls, existing_xform, new_xform):
+    def apply_deprecation(cls, existing_xform, new_xform):
         # if the form contents are not the same:
         #  - "Deprecate" the old form by making a new document with the same contents
         #    but a different ID and a doc_type of XFormDeprecated
