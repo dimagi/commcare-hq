@@ -168,7 +168,6 @@ describe('ListExportsController Unit Tests', function() {
             });
 
             it('analytics ok', function() {
-                assert.equal(analytics.usage.callCount, 1);
                 assert.isTrue(analytics.usage.calledWith("Update Saved Export", "Form", "Saved"));
                 $httpBackend.flush();
             });
