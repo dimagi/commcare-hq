@@ -49,7 +49,8 @@ class ConfigurableReportDataSource(SqlData):
     @property
     def aggregation_columns(self):
         return self._aggregation_columns + [
-            deferred_filter.field for deferred_filter in self._deferred_filters.values()]
+            deferred_filter.field for deferred_filter in self._deferred_filters.values()
+            if deferred_filter.field not in self._aggregation_columns]
 
     @property
     def config(self):
@@ -105,9 +106,13 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def columns(self):
-        return [c for sql_conf in self.sql_column_configs for c in sql_conf.columns] + [
+        db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        fields = {c.slug for c in db_columns}
+
+        return db_columns + [
             DatabaseColumn('', SimpleColumn(deferred_filter.field))
-            for deferred_filter in self._deferred_filters.values()]
+            for deferred_filter in self._deferred_filters.values()
+            if deferred_filter.field not in fields]
 
     @property
     def sql_column_configs(self):
