@@ -233,7 +233,7 @@ class AbstractMultiProvider(ChoiceProvider):
         remaining_values = set(values)
         choices = []
         for choice_provider in self.choice_providers:
-            if remaining_values <= 0:
+            if len(remaining_values) <= 0:
                 break
             new_choices = choice_provider.get_choices_for_known_values(list(remaining_values))
             remaining_values -= {value for value, _ in new_choices}
