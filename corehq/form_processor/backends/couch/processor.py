@@ -71,10 +71,6 @@ class FormProcessorCouch(object):
             stock_update.commit()
 
     @classmethod
-    def save_xform(cls, xform):
-        xform.save()
-
-    @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         # swap the revs
         new_xform._rev, existing_xform._rev = existing_xform._rev, new_xform._rev

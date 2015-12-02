@@ -15,6 +15,7 @@ import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
@@ -53,6 +54,7 @@ class SubmissionPost(object):
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
         self.interface = FormProcessorInterface(domain)
+        self.formdb = FormAccessors(domain)
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -114,7 +116,7 @@ class SubmissionPost(object):
         self._post_process_form(submitted_form)
 
         if submitted_form.is_submission_error_log:
-            self.interface.save_xform(submitted_form)
+            self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
             return response, None, []
 
@@ -125,7 +127,7 @@ class SubmissionPost(object):
                 process_device_log(self.domain, instance)
 
             elif instance.is_duplicate:
-                self.interface.save_xform(instance)
+                self.formdb.save_new_form(instance)
 
             elif not instance.is_error:
                 try:
@@ -202,7 +204,7 @@ class SubmissionPost(object):
                 errors.append(error_message)
         if errors:
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
-            self.interface.save_xform(instance)
+            self.formdb.save_new_form(instance)
         return errors
 
     @staticmethod
@@ -289,4 +291,4 @@ def handle_unexpected_error(interface, instance, e):
         u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance.orig_id, error_message, instance.form_id))
-    interface.save_xform(instance)
+    FormAccessors(interface.domain).save_new_form(instance)

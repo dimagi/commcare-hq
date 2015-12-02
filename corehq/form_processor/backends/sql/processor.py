@@ -65,46 +65,15 @@ class FormProcessorSQL(object):
             is_deprecation = len(xforms) > 1
             for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
                 if is_deprecation and xform.is_deprecated:
-                    cls.save_deprecated_form(xform)
+                    FormAccessorSQL.save_deprecated_form(xform)
                 else:
-                    cls.save_xform(xform)
+                    FormAccessorSQL.save_new_form(xform)
 
             if cases:
                 for case in cases:
                     cls.save_case(case)
             for stock_update in stock_updates or []:
                 stock_update.commit()
-
-    @classmethod
-    def save_deprecated_form(cls, form):
-        assert form.is_saved(), "Can't deprecate an unsaved form"
-        assert form.is_deprecated, 'Re-saving already saved forms not supported'
-        assert getattr(form, 'unsaved_attachments', None) is None, \
-            'Adding attachments to saved form not supported'
-
-        logging.debug('Deprecating form: %s', form)
-
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
-
-    @classmethod
-    def save_xform(cls, xform, is_deprecation=False):
-        """
-        :param xform: The xform to save
-        :param is_deprecation: Set to True if this save is part of a deprecation save.
-        """
-        with transaction.atomic():
-            assert not xform.is_saved(), 'form already saved'
-            logging.debug('Saving new form: %s', xform)
-            unsaved_attachments = getattr(xform, 'unsaved_attachments', [])
-            if unsaved_attachments:
-                del xform.unsaved_attachments
-                for unsaved_attachment in unsaved_attachments:
-                        unsaved_attachment.form = xform
-            with connection.cursor() as cursor:
-                cursor.execute('SELECT form_pk FROM save_new_form_with_attachments(%s, %s)', [xform, unsaved_attachments])
-                result = fetchone_as_namedtuple(cursor)
-                xform.id = result.form_pk
 
     @classmethod
     def save_case(cls, case):

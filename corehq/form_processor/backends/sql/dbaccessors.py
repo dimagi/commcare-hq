@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from itertools import groupby
 
@@ -125,6 +126,36 @@ class FormAccessorSQL(AbstractFormAccessor):
         with connection.cursor() as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s)', [form_id, archive])
+
+    @staticmethod
+    def save_new_form(form):
+        """
+        Save a previously unsaved form
+        """
+        with transaction.atomic():
+            assert not form.is_saved(), 'form already saved'
+            logging.debug('Saving new form: %s', form)
+            unsaved_attachments = getattr(form, 'unsaved_attachments', [])
+            if unsaved_attachments:
+                del form.unsaved_attachments
+                for unsaved_attachment in unsaved_attachments:
+                        unsaved_attachment.form = form
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT form_pk FROM save_new_form_with_attachments(%s, %s)', [form, unsaved_attachments])
+                result = fetchone_as_namedtuple(cursor)
+                form.id = result.form_pk
+
+    @staticmethod
+    def save_deprecated_form(form):
+        assert form.is_saved(), "Can't deprecate an unsaved form"
+        assert form.is_deprecated, 'Re-saving already saved forms not supported'
+        assert getattr(form, 'unsaved_attachments', None) is None, \
+            'Adding attachments to saved form not supported'
+
+        logging.debug('Deprecating form: %s', form)
+
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):

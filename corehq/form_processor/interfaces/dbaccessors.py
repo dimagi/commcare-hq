@@ -24,6 +24,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     def get_with_attachments(form_id):
         raise NotImplementedError
 
+    @abstractmethod
+    def save_new_form(form):
+        raise NotImplementedError
+
 
 class FormAccessors(object):
     """
@@ -50,6 +54,9 @@ class FormAccessors(object):
 
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)
+
+    def save_new_form(self, form):
+        self.db_accessor.save_new_form(form)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):

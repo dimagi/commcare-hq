@@ -177,7 +177,7 @@ def _handle_duplicate(new_doc, instance):
         #  - "Deprecate" the old form by making a new document with the same contents
         #    but a different ID and a doc_type of XFormDeprecated
         #  - Save the new instance to the previous document to preserve the ID
-        existing_doc, new_doc = apply_deprecation(interface, existing_doc, new_doc)
+        existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
 
         return FormProcessingResult(new_doc, existing_doc)
     else:
@@ -187,11 +187,13 @@ def _handle_duplicate(new_doc, instance):
         return FormProcessingResult(duplicate)
 
 
-def apply_deprecation(interface, existing_xform, new_xform):
+def apply_deprecation(existing_xform, new_xform, interface=None):
     # if the form contents are not the same:
     #  - "Deprecate" the old form by making a new document with the same contents
     #    but a different ID and a doc_type of XFormDeprecated
     #  - Save the new instance to the previous document to preserve the ID
+
+    interface = interface or FormProcessorInterface(existing_xform.domain)
 
     new_xform.form_id = existing_xform.form_id
     existing_xform = interface.assign_new_id(existing_xform)
