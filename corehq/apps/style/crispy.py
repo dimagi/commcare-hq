@@ -127,7 +127,7 @@ class B3MultiField(LayoutObject):
         for field in fields:
             if isinstance(field, OldField) or issubclass(field.__class__, OldField):
                 fname = field.fields[0]
-                if fname not in form:
+                if fname not in form.fields:
                     continue
                 error = form[fname].errors
                 if error:

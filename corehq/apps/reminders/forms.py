@@ -2090,7 +2090,7 @@ class KeywordForm(Form):
 
                                     block_css_class="span2",
                                 ),
-                                css_class='col-md-2 col-lg-2'
+                                css_class='col-md-4 col-lg-4'
                             ),
                             crispy.Div(
                                 InlineField(
@@ -2101,7 +2101,7 @@ class KeywordForm(Form):
                                               "visible: use_custom_delimiter",
                                     block_css_class="span4",
                                 ),
-                                css_class='col-md-2 col-lg-2'
+                                css_class='col-md-4 col-lg-4'
                             )
 
                         ),
@@ -2115,7 +2115,7 @@ class KeywordForm(Form):
                                                                    "click: updateExampleStructuredSMS"),
 
                             ),
-                            css_class='col-md-2 col-lg-2'
+                            css_class='col-md-4 col-lg-4'
                         ),
 
                         ErrorsOnlyField('named_args'),
@@ -2138,7 +2138,7 @@ class KeywordForm(Form):
                                                   "click: updateExampleStructuredSMS"
                                     ),
                                 ),
-                                css_class='col-md-2 col-lg-2'
+                                css_class='col-md-4 col-lg-4'
                             ),
 
                             crispy.Div(
@@ -2149,7 +2149,7 @@ class KeywordForm(Form):
                                               "event: {keyup: updateExampleStructuredSMS},"
                                               "visible: useJoiningCharacter",
                                 ),
-                                css_class='col-md-3 col-lg-3'
+                                css_class='col-md-6 col-lg-4'
                             )
 
                         ),
