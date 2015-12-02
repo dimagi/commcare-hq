@@ -89,6 +89,15 @@ class TestBlobMixin(BaseTestCase):
         with open(path) as fh:
             self.assertEqual(fh.read(), b"test_blob_directory content")
 
+    def test_put_attachment_deletes_couch_attachment(self):
+        name = "test"
+        content = StringIO(b"content")
+        doc = self.make_doc(FallbackToCouchDocument)
+        doc._attachments = {name: {"length": 25}}
+        doc.put_attachment(content, name)
+        self.assertEqual(doc.fetch_attachment(name), "content")
+        self.assertNotIn(name, doc._attachments)
+
     def test_fallback_on_fetch_fail(self):
         name = "test.1"
         doc = self.make_doc(FallbackToCouchDocument)

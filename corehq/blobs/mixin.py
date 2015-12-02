@@ -84,6 +84,8 @@ class BlobMixin(Document):
             content_length=result.length,
             digest=result.digest,
         )
+        if self.migrating_blobs_from_couch and self._attachments:
+            self._attachments.pop(name, None)
         return True
 
     def fetch_attachment(self, name, stream=False):
