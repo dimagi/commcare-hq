@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import ProgrammingError
+from corehq.apps.es import GroupES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
@@ -152,6 +153,31 @@ class UserChoiceProvider(ChoiceProvider):
                 for user_id, username in user_es.values_list('_id', 'username')]
 
 
+class GroupChoiceProvider(ChoiceProvider):
+    def query(self, query_context):
+        group_es = (
+            GroupES().domain(self.domain).is_case_sharing()
+            .search_string_query(query_context.query, default_fields=['name'])
+            .size(query_context.limit).start(query_context.offset)
+        )
+        return self.get_choices_from_es_query(group_es)
+
+    def query_count(self, query):
+        group_es = (
+            GroupES().domain(self.domain).is_case_sharing()
+            .search_string_query(query, default_fields=['name'])
+        )
+        return group_es.size(0).run().total
+
+    def get_choices_for_known_values(self, values):
+        pass
+
+    @staticmethod
+    def get_choices_from_es_query(group_es):
+        return [Choice(user_id, name)
+                for user_id, name in group_es.values_list('_id', 'name')]
+
+
 class AbstractMultiProvider(ChoiceProvider):
 
     choice_provider_classes = ()
@@ -190,3 +216,10 @@ class AbstractMultiProvider(ChoiceProvider):
             remaining_values -= {value for value, _ in new_choices}
             choices.extend(new_choices)
         return choices
+
+
+class OwnerChoiceProvider(AbstractMultiProvider):
+    """
+    Maps ids to CommCareUser, WebUser, Group, or Location objects
+    """
+    choice_provider_classes = (GroupChoiceProvider, UserChoiceProvider, LocationChoiceProvider)
