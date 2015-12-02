@@ -68,10 +68,3 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
             .search_string_query(search_string, default_search_fields)
             .start(offset)
             .size(limit))
-
-
-def get_bulk_get_users_by_id_es_query(domain, user_ids):
-    """
-    returns a UserES object
-    """
-    return UserES().domain(domain).mobile_users().filter(doc_id(user_ids))

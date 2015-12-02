@@ -1,11 +1,11 @@
 from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.es import GroupES
+from corehq.apps.es import GroupES, UserES
+from corehq.apps.es.filters import doc_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query, \
-    get_bulk_get_users_by_id_es_query
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 
 
@@ -148,7 +148,7 @@ class UserChoiceProvider(ChoiceProvider):
         return user_es.run().total
 
     def get_choices_for_known_values(self, values):
-        user_es = get_bulk_get_users_by_id_es_query(self.domain, values)
+        user_es = UserES().domain(self.domain).filter(doc_id(values))
         return self.get_choices_from_es_query(user_es)
 
     @staticmethod
