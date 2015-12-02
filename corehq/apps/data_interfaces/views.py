@@ -828,9 +828,20 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
         else:
             return self.initial_rule_form
 
+    def update_rule(self, rule):
+        with transaction.atomic():
+            rule.name = self.rule_form.cleaned_data['name']
+            rule.case_type = self.rule_form.cleaned_data['case_type']
+            rule.server_modified_boundary = self.rule_form.cleaned_data['server_modified_boundary']
+            rule.last_run = None
+            rule.save()
+            rule.automaticupdaterulecriteria_set.all().delete()
+            rule.automaticupdateaction_set.all().delete()
+            self.create_criteria(rule)
+            self.create_actions(rule)
+
     def post(self, request, *args, **kwargs):
         if self.rule_form.is_valid():
-            self.rule.soft_delete()
-            self.create_rule()
+            self.update_rule(self.rule)
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
