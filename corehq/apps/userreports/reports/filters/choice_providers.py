@@ -3,7 +3,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.users.analytics import get_search_mobile_workers_in_domain_es_query, \
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query, \
     get_bulk_get_users_by_id_es_query
 from corehq.apps.users.util import raw_username
 
@@ -105,7 +105,7 @@ class LocationChoiceProvider(ChoiceProvider):
 
 class UserChoiceProvider(ChoiceProvider):
     def query(self, query_context):
-        user_es = get_search_mobile_workers_in_domain_es_query(
+        user_es = get_search_users_in_domain_es_query(
             self.domain, query_context.query,
             limit=query_context.limit, page=query_context.page)
         return self.get_choices_from_es_query(user_es)

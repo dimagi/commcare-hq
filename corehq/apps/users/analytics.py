@@ -58,14 +58,13 @@ def _get_commcare_users_in_domain(active_flag, domain, start_at, limit):
     ).all()
 
 
-def get_search_mobile_workers_in_domain_es_query(domain, search_string, limit, page):
+def get_search_users_in_domain_es_query(domain, search_string, limit, page):
     """
     returns a UserES object
     """
     default_search_fields = ["username", "last_name", "first_name"]
     return (UserES()
             .domain(domain)
-            .mobile_users()
             .search_string_query(search_string, default_search_fields)
             .start(limit * page)
             .size(limit))
