@@ -1006,7 +1006,7 @@ def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py compress --force'.format(venv))
+        sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 
