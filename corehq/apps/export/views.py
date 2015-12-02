@@ -605,7 +605,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
         return export_object.get_download_task(
             filter=export_filter,
-            filename="{}{}".format(export_object.name,
+            filename=u"{}{}".format(export_object.name,
                                    date.today().isoformat()),
             previous_export_id=None,
             max_column_size=max_column_size,
