@@ -52,10 +52,6 @@ class ChoiceProvider(object):
     def query(self, query_context):
         pass
 
-    @abstractmethod
-    def query_count(self, query):
-        pass
-
     def get_choices_for_values(self, values):
         choices = self.get_choices_for_known_values(values)
         used_values = {value for value, _ in choices}
@@ -67,6 +63,22 @@ class ChoiceProvider(object):
 
     @abstractmethod
     def get_choices_for_known_values(self, values):
+        pass
+
+
+class ChainableChoiceProvider(ChoiceProvider):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def query(self, query_context):
+        pass
+
+    @abstractmethod
+    def get_choices_for_known_values(self, values):
+        pass
+
+    @abstractmethod
+    def query_count(self, query_context):
         pass
 
 
@@ -104,7 +116,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         return []
 
 
-class LocationChoiceProvider(ChoiceProvider):
+class LocationChoiceProvider(ChainableChoiceProvider):
 
     def _locations_query(self, query_text):
         if query_text:
@@ -136,7 +148,7 @@ class LocationChoiceProvider(ChoiceProvider):
                 if value in display_name_by_id]
 
 
-class UserChoiceProvider(ChoiceProvider):
+class UserChoiceProvider(ChainableChoiceProvider):
     def query(self, query_context):
         user_es = get_search_users_in_domain_es_query(
             self.domain, query_context.query,
@@ -157,7 +169,7 @@ class UserChoiceProvider(ChoiceProvider):
                 for user_id, username in user_es.values_list('_id', 'username')]
 
 
-class GroupChoiceProvider(ChoiceProvider):
+class GroupChoiceProvider(ChainableChoiceProvider):
     def query(self, query_context):
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
@@ -188,7 +200,13 @@ class AbstractMultiProvider(ChoiceProvider):
 
     def __init__(self, report, filter_slug):
         super(AbstractMultiProvider, self).__init__(report, filter_slug)
-        self.choice_providers = [klass(report, filter_slug) for klass in self.choice_provider_classes]
+
+        self.choice_providers = [
+            klass(report, filter_slug) for klass in self.choice_provider_classes]
+        bad_choice_providers = [
+            choice_provider for choice_provider in self.choice_providers
+            if not isinstance(choice_provider, ChainableChoiceProvider)]
+        assert not bad_choice_providers, bad_choice_providers
 
     def query(self, query_context):
         limit = query_context.limit
