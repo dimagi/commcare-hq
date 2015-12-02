@@ -142,24 +142,36 @@ describe('ListExportsController Unit Tests', function() {
             assert.equal(currentScope.bulkExportList.length, 2);
             assert.isFalse(currentScope.showBulkExportDownload);
         });
+        describe('updateEmailedExportData()', function () {
+            var exportToUpdate, component;
 
-        it('updateEmailedExportData()', function() {
-            $httpBackend
+            beforeEach(function () {
+                $httpBackend
                 .when('POST', mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA)
                 .respond({
                     success: true
                 });
-            createController();
-            $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
-            $httpBackend.flush();
-            var exportToUpdate = currentScope.exports[0];
-            var component = exportToUpdate.emailedExports[0];
-            $httpBackend.expectPOST(mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA);
-            currentScope.updateEmailedExportData(component, exportToUpdate);
-            assert.isTrue(component.updatingData);
-            $httpBackend.flush();
-            assert.isFalse(component.updatingData);
-            assert.isTrue(component.updatedDataTriggered);
+                createController();
+                $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
+                $httpBackend.flush();
+                $httpBackend.expectPOST(mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA);
+                exportToUpdate = currentScope.exports[0];
+                component = exportToUpdate.emailedExports[0];
+                currentScope.updateEmailedExportData(component, exportToUpdate);
+            });
+
+            it('success ok', function() {
+                assert.isTrue(component.updatingData);
+                $httpBackend.flush();
+                assert.isFalse(component.updatingData);
+                assert.isTrue(component.updatedDataTriggered);
+            });
+
+            it('analytics ok', function() {
+                assert.equal(analytics.usage.callCount, 1);
+                assert.isTrue(analytics.usage.calledWith("Update Saved Export", "Form", "Saved"));
+                $httpBackend.flush();
+            });
         });
     });
 
