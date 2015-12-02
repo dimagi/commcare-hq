@@ -1,6 +1,6 @@
 DROP FUNCTION IF EXISTS deprecate_form(TEXT, TEXT, TIMESTAMP);
 
-CREATE FUNCTION deprecate_form(form_id TEXT, orig_id TEXT, edited_on TIMESTAMP) RETURNS VOID AS $$
+CREATE FUNCTION deprecate_form(new_form_id TEXT, orig_id TEXT, edited_on TIMESTAMP) RETURNS VOID AS $$
 DECLARE
     deprecated_state INT := 2;
 BEGIN
