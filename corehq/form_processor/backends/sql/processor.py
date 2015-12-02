@@ -2,19 +2,17 @@ import datetime
 import logging
 import uuid
 
-from django.db import transaction, connection
+from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
-from corehq.form_processor.utils.sql import fetchone_as_namedtuple
 from couchforms.const import ATTACHMENT_NAME
 
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormAttachmentSQL,
-    XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
+    XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
+    CommCareCaseSQL, FormEditRebuild, Attachment)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
