@@ -1274,7 +1274,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                   and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
                 subscription_type = "advanced_extended_trial"
 
-        return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
+        return SelectSubscriptionTypeForm(
+            {'subscription_type': subscription_type},
+            disable_input=not self.is_form_editable,
+        )
 
     @property
     def is_form_editable(self):

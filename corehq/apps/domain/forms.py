@@ -1845,14 +1845,26 @@ class SelectSubscriptionTypeForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, *args, **kwargs):
-        super(SelectSubscriptionTypeForm, self).__init__(*args, **kwargs)
+    def __init__(self, defaults=None, disable_input=False, **kwargs):
+        defaults = defaults or {}
+        super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
-        self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'subscription_type',
-                data_bind='value: subscriptionType',
+        if defaults and disable_input:
+            self.helper.layout = crispy.Layout(
+                TextField(
+                    'subscription_type', {
+                        form.slug: form.subscription_type
+                        for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
+                    }[defaults.get('subscription_type')]
+                ),
             )
-        )
+        else:
+            self.helper.layout = crispy.Layout(
+                crispy.Field(
+                    'subscription_type',
+                    data_bind='value: subscriptionType',
+                    css_class="disabled"
+                )
+            )
