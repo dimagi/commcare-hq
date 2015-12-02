@@ -15,4 +15,5 @@ class Migration(migrations.Migration):
     operations = [
         migrate_sql_function('save_new_form_with_attachments'),
         migrate_sql_function('deprecate_form'),
+        migrate_sql_function('save_case_and_related_models'),
     ]

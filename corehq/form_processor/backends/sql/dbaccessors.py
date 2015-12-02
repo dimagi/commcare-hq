@@ -2,14 +2,14 @@ import logging
 from datetime import datetime
 from itertools import groupby
 
-from django.db import transaction, connection
+from django.db import transaction, connection, InternalError
 from django.db.models import Prefetch
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    SupplyPointCaseMixin)
+    SupplyPointCaseMixin, CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple
 
 doc_type_to_state = {
@@ -263,34 +263,36 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def save_case(cls, case):
-        with transaction.atomic():
-            logging.debug('Saving case: %s', case)
-            if logging.root.isEnabledFor(logging.DEBUG):
-                logging.debug(case.dumps(pretty=True))
-            case.save()
-            CaseAccessorSQL._save_tracked_models(case, CommCareCaseIndexSQL)
-            CaseAccessorSQL._save_tracked_models(case, CaseTransaction)
-            CaseAccessorSQL._save_tracked_models(case, CaseAttachmentSQL)
-            case.clear_tracked_models()
+    def save_case(case):
+        transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
 
-    @staticmethod
-    def _save_tracked_models(case, model_class):
-        to_delete = case.get_tracked_models_to_delete(model_class)
-        if to_delete:
-            logging.debug('Deleting %s: %s', model_class, to_delete)
-            ids = [index.pk for index in to_delete]
-            model_class.objects.filter(pk__in=ids).delete()
+        indices_to_save_or_update = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
+        indices_to_save_or_update.extend(case.get_tracked_models_to_update(CommCareCaseIndexSQL))
+        index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
 
-        to_update = case.get_tracked_models_to_update(model_class)
-        for model in to_update:
-            logging.debug('Updating %s: %s', model_class, model)
-            model.save()
+        attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
+        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
 
-        to_create = case.get_tracked_models_to_create(model_class)
-        for i, model in enumerate(to_create):
-            logging.debug('Creating %s %s: %s', i, model_class, model)
-            model.save()
+        # cast arrays that can be empty to appropriate type
+        query = """SELECT case_pk FROM save_case_and_related_models(
+            %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
+        )"""
+        query = query.format(CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute(query, [
+                    case,
+                    transactions_to_save,
+                    indices_to_save_or_update,
+                    attachments_to_save,
+                    index_ids_to_delete,
+                    attachment_ids_to_delete
+                ])
+                result = fetchone_as_namedtuple(cursor)
+                case.id = result.case_pk
+                case.clear_tracked_models()
+            except InternalError as e:
+                raise CaseSaveError(e)
 
 
 def _order_list(id_list, object_list, id_property):
