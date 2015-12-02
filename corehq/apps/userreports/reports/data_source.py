@@ -187,7 +187,7 @@ class ConfigurableReportDataSource(SqlData):
                         reverse=is_descending
                     )
                 return data
-            # Otherwise sort by the first column
+            # Otherwise sort by the first column (if the report has columns)
             elif self.column_configs:
                 return sorted(data, key=lambda x: x.get(
                     self.column_configs[0].column_id,
