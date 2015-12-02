@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.toggles import TAG_PREVIEW
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from .toggles import StaticToggle, NAMESPACE_DOMAIN
+from .toggles import StaticToggle, NAMESPACE_DOMAIN, all_toggles
 
 
 class FeaturePreview(StaticToggle):
@@ -34,6 +34,17 @@ class FeaturePreview(StaticToggle):
             return True
 
         return prbac_has_privilege(request, self.privilege)
+
+
+def all_previews():
+    for toggle_name, toggle in globals().items():
+        if not toggle_name.startswith('__'):
+            if isinstance(toggle, StaticToggle):
+                yield toggle
+
+
+def previews_dict(domain):
+    return {t.slug: True for t in all_previews() if t.enabled(domain)}
 
 
 SUBMIT_HISTORY_FILTERS = FeaturePreview(
