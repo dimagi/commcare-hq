@@ -86,7 +86,8 @@ from corehq.apps.domain.forms import (
     SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS)
+    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
@@ -1267,12 +1268,12 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         else:
             plan = subscription.plan_version.plan
             if subscription.service_type == SubscriptionType.CONTRACTED:
-                subscription_type = "contracted_partner"
+                subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                subscription_type = "dimagi_only_enterprise"
+                subscription_type = DimagiOnlyEnterpriseForm.slug
             elif (plan.edition == SoftwarePlanEdition.ADVANCED
                   and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
-                subscription_type = "advanced_extended_trial"
+                subscription_type = AdvancedExtendedTrialForm.slug
 
         return SelectSubscriptionTypeForm(
             {'subscription_type': subscription_type},
