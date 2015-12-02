@@ -776,4 +776,7 @@ class SQLPillowMixIn(object):
 
 
 class SQLPillow(SQLPillowMixIn, BasicPillow):
-    pass
+
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(SQLPillow, self).__init__(checkpoint=checkpoint)
