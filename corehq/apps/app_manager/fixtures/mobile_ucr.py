@@ -68,13 +68,13 @@ class ReportFixturesProvider(object):
             for filter_slug, filter in report_config.filters.items()
         }
         filter_values = {
-            filter_slug: filter for filter_slug, filter in all_filter_values.items()
-            if filter is not None
+            filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
+            if filter_value is not None
         }
         defer_filters = {
             filter_slug: report.get_ui_filter(filter_slug)
-            for filter_slug, filter in all_filter_values.items()
-            if filter is None
+            for filter_slug, filter_value in all_filter_values.items()
+            if filter_value is None
         }
         data_source.set_filter_values(filter_values)
         data_source.defer_filters(defer_filters)
