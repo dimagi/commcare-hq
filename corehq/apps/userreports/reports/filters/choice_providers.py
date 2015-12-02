@@ -225,14 +225,12 @@ class AbstractMultiProvider(ChoiceProvider):
                 offset -= choice_provider.query_count(query)
         return choices
 
-    def query_count(self, query):
-        return sum(choice_provider.query_count(query)
-                   for choice_provider in self.choice_providers)
-
     def get_choices_for_known_values(self, values):
         remaining_values = set(values)
         choices = []
         for choice_provider in self.choice_providers:
+            if remaining_values <= 0:
+                break
             new_choices = choice_provider.get_choices_for_known_values(list(remaining_values))
             remaining_values -= {value for value, _ in new_choices}
             choices.extend(new_choices)
