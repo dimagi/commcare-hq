@@ -14,10 +14,6 @@ def migrate_es_pillows(apps, schema_editor):
         'SMSPillow',
         'UserPillow',
         'XFormPillow',
-        # 'corehq.pillows.user.GroupToUserPillow',
-        # 'corehq.pillows.user.UnknownUsersPillow',
-        # 'corehq.pillows.sofabed.FormDataPillow',
-        # 'corehq.pillows.sofabed.CaseDataPillow',
     ]
     migrate_legacy_pillows(apps, pillow_names)
 
