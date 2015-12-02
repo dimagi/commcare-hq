@@ -2,13 +2,13 @@ import datetime
 import logging
 import uuid
 
-from django.db import transaction
-
+from django.db import transaction, connection
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
+from corehq.form_processor.utils.sql import fetchone_as_namedtuple
 from couchforms.const import ATTACHMENT_NAME
 
 from corehq.form_processor.models import (
@@ -64,7 +64,10 @@ class FormProcessorSQL(object):
             # Ensure already saved forms get saved first to avoid ID conflicts
             is_deprecation = len(xforms) > 1
             for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
-                cls.save_xform(xform, is_deprecation)
+                if is_deprecation and xform.is_deprecated:
+                    cls.save_deprecated_form(xform)
+                else:
+                    cls.save_xform(xform)
 
             if cases:
                 for case in cases:
@@ -73,32 +76,35 @@ class FormProcessorSQL(object):
                 stock_update.commit()
 
     @classmethod
+    def save_deprecated_form(cls, form):
+        assert form.is_saved(), "Can't deprecate an unsaved form"
+        assert form.is_deprecated, 'Re-saving already saved forms not supported'
+        assert getattr(form, 'unsaved_attachments', None) is None, \
+            'Adding attachments to saved form not supported'
+
+        logging.debug('Deprecating form: %s', form)
+
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
+
+    @classmethod
     def save_xform(cls, xform, is_deprecation=False):
         """
         :param xform: The xform to save
         :param is_deprecation: Set to True if this save is part of a deprecation save.
         """
         with transaction.atomic():
-            logging.debug('Saving form: %s', xform)
-            xform.save()
-            if is_deprecation and xform.is_deprecated:
-                logging.debug(
-                    'Reassigning attachments and operations to deprecated form: %s -> %s',
-                    xform.orig_id, xform.form_id
-                )
-                attachments = XFormAttachmentSQL.objects.filter(form_id=xform.orig_id)
-                attachments.update(form_id=xform.form_id)
-
-                operations = XFormOperationSQL.objects.filter(form_id=xform.orig_id)
-                operations.update(form_id=xform.form_id)
-
-            unsaved_attachments = getattr(xform, 'unsaved_attachments', None)
+            assert not xform.is_saved(), 'form already saved'
+            logging.debug('Saving new form: %s', xform)
+            unsaved_attachments = getattr(xform, 'unsaved_attachments', [])
             if unsaved_attachments:
-                logging.debug('Saving %s attachments for form: %s', len(unsaved_attachments), xform.form_id)
-                for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.form = xform
-                xform.attachment_set.bulk_create(unsaved_attachments)
                 del xform.unsaved_attachments
+                for unsaved_attachment in unsaved_attachments:
+                        unsaved_attachment.form = xform
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT form_pk FROM save_new_form_with_attachments(%s, %s)', [xform, unsaved_attachments])
+                result = fetchone_as_namedtuple(cursor)
+                xform.id = result.form_pk
 
     @classmethod
     def save_case(cls, case):
