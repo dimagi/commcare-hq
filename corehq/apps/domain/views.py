@@ -1230,6 +1230,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
+            'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
@@ -1274,6 +1275,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                 subscription_type = "advanced_extended_trial"
 
         return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
+
+    @property
+    def is_form_editable(self):
+        return not self.slug_to_form[ContractedPartnerForm.slug].is_uneditable
 
 
 class SelectPlanView(DomainAccountingSettings):
