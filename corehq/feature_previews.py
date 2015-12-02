@@ -106,3 +106,14 @@ MODULE_FILTER = FeaturePreview(
         '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
     ),
 )
+
+
+VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
+    slug='advanced_itemsets',
+    label=_("Custom Single and Multiple Answer Questions"),
+    description=_(
+        "Allows display of case sharing groups or locations as choices in Single Answer or"
+        " Multiple Answer questions."
+    ),
+)
+
