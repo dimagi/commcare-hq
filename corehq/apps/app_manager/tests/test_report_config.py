@@ -10,7 +10,9 @@ from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportM
 from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
+from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration, ReportMeta
+from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider
 from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec
 from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
     GraphDisplayColumn
@@ -72,6 +74,21 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'mobile_ucr'
     root = os.path.dirname(__file__)
 
+    @staticmethod
+    def make_report_config(domain, report_id):
+        class MockChoiceProvider(ChoiceProvider):
+            def query(self, query_context):
+                pass
+
+            def get_choices_for_values(self, values):
+                _map = {'cory': 'Cory Zue', 'ctsims': 'Clayton Sims', 'daniel': 'Daniel Roberts'}
+                return [Choice(value, _map.get(value, value)) for value in values]
+
+        report_configuration = MAKE_REPORT_CONFIG(domain, report_id)
+        ui_filter = report_configuration.get_ui_filter('computed_owner_name_40cc88a0_1')
+        ui_filter.choice_provider = MockChoiceProvider(None, None)
+        return report_configuration
+
     @classmethod
     def setUpClass(cls):
         cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
@@ -84,7 +101,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         )
         update_toggle_cache(MOBILE_UCR.slug, cls.domain, True, NAMESPACE_DOMAIN)
 
-        report_configuration = MAKE_REPORT_CONFIG(cls.domain, cls.report_id)
+        report_configuration = cls.make_report_config(cls.domain, cls.report_id)
         cls.report_configs_by_id = {
             cls.report_id: report_configuration
         }
@@ -203,7 +220,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         </partial>
         """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary']/detail/field/template[@form='graph']")
 
-    def test_fixture(self):
+    def test_fixture_rows(self):
         self.assertXmlPartialEqual("""
         <partial>
           <rows>
@@ -225,3 +242,16 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
           </rows>
         </partial>
         """, self.fixture, "reports/report/rows")
+
+    def test_fixture_filters(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <filters>
+            <filter field="computed_owner_name_40cc88a0_1">
+              <option value="ctsims">Clayton Sims</option>
+              <option value="cory">Cory Zue</option>
+              <option value="daniel">Daniel Roberts</option>
+            </filter>
+          </filters>
+        </partial>
+        """, self.fixture, "reports/report/filters")
