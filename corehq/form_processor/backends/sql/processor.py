@@ -138,27 +138,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
-        # if the form contents are not the same:
-        #  - "Deprecate" the old form by making a new document with the same contents
-        #    but a different ID and a doc_type of XFormDeprecated
-        #  - Save the new instance to the previous document to preserve the ID
-
-        old_id = existing_xform.form_id
-        new_xform = cls.assign_new_id(new_xform)
-
-        # swap the two documents so the original ID now refers to the new one
-        # and mark original as deprecated
-        new_xform.form_id, existing_xform.form_id = old_id, new_xform.form_id
-
-        # flag the old doc with metadata pointing to the new one
         existing_xform.state = XFormInstanceSQL.DEPRECATED
-        existing_xform.orig_id = old_id
-
-        # and give the new doc server data of the old one and some metadata
-        new_xform.received_on = existing_xform.received_on
-        new_xform.deprecated_form_id = existing_xform.form_id
-        new_xform.edited_on = datetime.datetime.utcnow()
-        existing_xform.edited_on = datetime.datetime.utcnow()
         return existing_xform, new_xform
 
     @classmethod
