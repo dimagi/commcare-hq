@@ -1,6 +1,13 @@
 [_test1]
 10.162.36.196
 
+[db0]
+10.162.36.205
+
+[es0]
+10.162.36.214
+
+
 [proxy:children]
 _test1
 
@@ -11,10 +18,10 @@ _test1
 _test1
 
 [postgresql:children]
-_test1
+db0
 
 [rabbitmq:children]
-_test1
+db0
 
 [zookeeper:children]
 _test1
@@ -35,7 +42,7 @@ _test1
 _test1
 
 [elasticsearch:children]
-_test1
+es0
 
 [shared_dir_host:children]
 _test1
