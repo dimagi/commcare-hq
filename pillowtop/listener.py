@@ -19,7 +19,7 @@ import sys
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
 from pillow_retry.models import PillowError
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import PillowCheckpoint, get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.const import CHECKPOINT_FREQUENCY
 from pillowtop.couchdb import CachedCouchDB
@@ -449,6 +449,8 @@ class AliasedElasticPillow(BasicPillow):
         """
         create_index if the index doesn't exist on the ES cluster
         """
+        if 'checkpoint' not in kwargs:
+            kwargs['checkpoint'] = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(AliasedElasticPillow, self).__init__(**kwargs)
         # online=False is used in unit tests
         self.online = online
@@ -774,4 +776,7 @@ class SQLPillowMixIn(object):
 
 
 class SQLPillow(SQLPillowMixIn, BasicPillow):
-    pass
+
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(SQLPillow, self).__init__(checkpoint=checkpoint)
