@@ -189,6 +189,8 @@ def _get_call_center_case_and_owner(user, domain):
 
 
 def call_center_location_owner(user, ancestor_level):
+    if user.location_id is None:
+        return ""
     if ancestor_level == 0:
         owner_id = user.location_id
     else:
