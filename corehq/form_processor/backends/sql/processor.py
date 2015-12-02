@@ -158,6 +158,7 @@ class FormProcessorSQL(object):
         new_xform.received_on = existing_xform.received_on
         new_xform.deprecated_form_id = existing_xform.form_id
         new_xform.edited_on = datetime.datetime.utcnow()
+        existing_xform.edited_on = datetime.datetime.utcnow()
         return existing_xform, new_xform
 
     @classmethod
