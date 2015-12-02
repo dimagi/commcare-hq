@@ -1,41 +1,48 @@
 [_test1]
 10.162.36.196
 
-[proxy]
+[db0]
+10.162.36.205
+
+[es0]
+10.162.36.214
+
+
+[proxy:children]
 _test1
 
-[webworkers]
+[webworkers:children]
 _test1
 
 [couchdb]
 _test1
 
-[postgresql]
+[postgresql:children]
+db0
+
+[rabbitmq:children]
+db0
+
+[zookeeper:children]
 _test1
 
-[rabbitmq]
-_test1
-
-[zookeeper]
-_test1
-
-[kafka]
+[kafka:children]
 _test1 kafka_broker_id=0
 
-[celery]
+[celery:children]
 _test1
 
-[pillowtop]
+[pillowtop:children]
 _test1
 
-[touchforms]
+[touchforms:children]
 _test1
 
-[redis]
+[redis:children]
 _test1
 
-[elasticsearch]
-_test1
+[elasticsearch:children]
+es0
 
-[shared_dir_host]
+[shared_dir_host:children]
 _test1
