@@ -119,11 +119,12 @@ MODULE_FILTER = FeaturePreview(
 )
 
 
+# Only used in Vellum
 VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
     slug='advanced_itemsets',
     label=_("Custom Single and Multiple Answer Questions"),
     description=_(
-        "Allows display of case sharing groups or locations as choices in Single Answer or"
-        " Multiple Answer questions."
+        "Allows display of custom lists, such as case sharing groups or locations as choices in Single Answer or "
+        "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic."
     ),
 )
