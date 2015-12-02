@@ -27,7 +27,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         to_save = []
         for touched_ledger_reference, quantity in latest_values.items():
             try:
-                ledger_value, created = LedgerValue.objects.get(
+                ledger_value = LedgerValue.objects.get(
                     **touched_ledger_reference._asdict()
                 )
             except LedgerValue.DoesNotExist:
@@ -40,5 +40,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         return LedgerValue.objects.filter(case_id=case_id)
 
     def get_current_ledger_value(self, unique_ledger_reference):
-        # todo
-        return 0
+        try:
+            return LedgerValue.objects.get(**unique_ledger_reference._asdict()).balance
+        except LedgerValue.DoesNotExist:
+            return 0
