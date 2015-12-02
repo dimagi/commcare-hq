@@ -27,7 +27,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         to_save = []
         for touched_ledger_reference, quantity in latest_values.items():
             try:
-                ledger_value, created = LedgerValue.objects.get(
+                ledger_value = LedgerValue.objects.get(
                     **touched_ledger_reference._asdict()
                 )
             except LedgerValue.DoesNotExist:
