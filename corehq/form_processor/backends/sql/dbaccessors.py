@@ -11,6 +11,7 @@ from corehq.form_processor.models import (
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
     SupplyPointCaseMixin, CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple
+from corehq.util.test_utils import unit_testing_only
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -156,6 +157,14 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         with connection.cursor() as cursor:
             cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
+
+    @staticmethod
+    @unit_testing_only
+    def get_form_ids_in_domain(domain, user_id=None):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT form_id FROM get_form_ids_in_domain(%s, %s)', [domain, user_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):

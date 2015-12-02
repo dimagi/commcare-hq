@@ -4,6 +4,8 @@ from django.db.models.query_utils import Q
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
+from corehq.apps.domain.dbaccessors import get_all_domain_names
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
@@ -38,10 +40,14 @@ class FormProcessorTestUtils(object):
                 query.filter(domain_filter)
             query.all().delete()
 
-        _sql_delete(CommCareCaseIndexSQL.objects, Q(case__domain=domain))
-        _sql_delete(CaseAttachmentSQL.objects, Q(case__domain=domain))
-        _sql_delete(CaseTransaction.objects, Q(case__domain=domain))
-        _sql_delete(CommCareCaseSQL.objects, Q(domain=domain))
+        if domain:
+            domains = [domain]
+        else:
+            domains = get_all_domain_names()
+
+        for domain in domains:
+            case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain)
+            CaseAccessorSQL.hard_delete_cases(domain, case_ids)
 
     @classmethod
     @unit_testing_only
@@ -66,12 +72,16 @@ class FormProcessorTestUtils(object):
             view,
             **view_kwargs
         )
-        query = XFormInstanceSQL.objects
-        if domain is not None:
-            query = query.filter(domain=domain)
-        if user_id is not None:
-            query = query.filter(user_id=user_id)
-        query.all().delete()
+
+        if domain:
+            domains = [domain]
+        else:
+            assert user_id is None, 'domain must be specified with user_id'
+            domains = get_all_domain_names()
+
+        for domain in domains:
+            form_ids = FormAccessorSQL.get_form_ids_in_domain(domain, user_id)
+            FormAccessorSQL.hard_delete_forms(domain, form_ids)
 
     @classmethod
     @unit_testing_only
