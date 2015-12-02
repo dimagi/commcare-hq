@@ -106,7 +106,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     ACTION_UPDATE_AND_CLOSE = 'UPDATE_AND_CLOSE'
 
     name = TrimmedCharField(
-        label=ugettext_lazy("Name"),
+        label=ugettext_lazy("Rule Name"),
         required=True,
     )
     case_type = forms.ChoiceField(
