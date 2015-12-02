@@ -40,7 +40,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.users.analytics import get_search_mobile_workers_in_domain_es_query
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
@@ -473,8 +473,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         }
 
     def _user_query(self, search_string, page, limit):
-        return get_search_mobile_workers_in_domain_es_query(
+        user_es = get_search_users_in_domain_es_query(
             domain=self.domain, search_string=search_string, page=page, limit=limit)
+        return user_es.mobile_users()
 
     @allow_remote_invocation
     def get_pagination_data(self, in_data):
