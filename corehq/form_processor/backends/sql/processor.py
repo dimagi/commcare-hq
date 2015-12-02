@@ -71,39 +71,9 @@ class FormProcessorSQL(object):
 
             if cases:
                 for case in cases:
-                    cls.save_case(case)
+                    CaseAccessorSQL.save_case(case)
             for stock_update in stock_updates or []:
                 stock_update.commit()
-
-    @classmethod
-    def save_case(cls, case):
-        with transaction.atomic():
-            logging.debug('Saving case: %s', case)
-            if logging.root.isEnabledFor(logging.DEBUG):
-                logging.debug(case.dumps(pretty=True))
-            case.save()
-            FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
-            FormProcessorSQL.save_tracked_models(case, CaseTransaction)
-            FormProcessorSQL.save_tracked_models(case, CaseAttachmentSQL)
-            case.clear_tracked_models()
-
-    @staticmethod
-    def save_tracked_models(case, model_class):
-        to_delete = case.get_tracked_models_to_delete(model_class)
-        if to_delete:
-            logging.debug('Deleting %s: %s', model_class, to_delete)
-            ids = [index.pk for index in to_delete]
-            model_class.objects.filter(pk__in=ids).delete()
-
-        to_update = case.get_tracked_models_to_update(model_class)
-        for model in to_update:
-            logging.debug('Updating %s: %s', model_class, model)
-            model.save()
-
-        to_create = case.get_tracked_models_to_create(model_class)
-        for i, model in enumerate(to_create):
-            logging.debug('Creating %s %s: %s', i, model_class, model)
-            model.save()
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
@@ -209,7 +179,7 @@ class FormProcessorSQL(object):
         case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
         if case.is_deleted and not found:
             return None
-        FormProcessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(case)
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):

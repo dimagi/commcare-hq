@@ -262,6 +262,36 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 
+    @staticmethod
+    def save_case(cls, case):
+        with transaction.atomic():
+            logging.debug('Saving case: %s', case)
+            if logging.root.isEnabledFor(logging.DEBUG):
+                logging.debug(case.dumps(pretty=True))
+            case.save()
+            CaseAccessorSQL._save_tracked_models(case, CommCareCaseIndexSQL)
+            CaseAccessorSQL._save_tracked_models(case, CaseTransaction)
+            CaseAccessorSQL._save_tracked_models(case, CaseAttachmentSQL)
+            case.clear_tracked_models()
+
+    @staticmethod
+    def _save_tracked_models(case, model_class):
+        to_delete = case.get_tracked_models_to_delete(model_class)
+        if to_delete:
+            logging.debug('Deleting %s: %s', model_class, to_delete)
+            ids = [index.pk for index in to_delete]
+            model_class.objects.filter(pk__in=ids).delete()
+
+        to_update = case.get_tracked_models_to_update(model_class)
+        for model in to_update:
+            logging.debug('Updating %s: %s', model_class, model)
+            model.save()
+
+        to_create = case.get_tracked_models_to_create(model_class)
+        for i, model in enumerate(to_create):
+            logging.debug('Creating %s %s: %s', i, model_class, model)
+            model.save()
+
 
 def _order_list(id_list, object_list, id_property):
     # SQL won't return the rows in any particular order so we need to order them ourselves

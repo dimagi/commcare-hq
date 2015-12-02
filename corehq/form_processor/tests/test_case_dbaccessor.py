@@ -80,7 +80,7 @@ class CaseAccessorTests(TestCase):
         )
         case.track_create(index2)
 
-        FormProcessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(case)
 
         indices = CaseAccessorSQL.get_indices(case.case_id)
         self.assertEqual(2, len(indices))
@@ -100,7 +100,7 @@ class CaseAccessorTests(TestCase):
         )
         case.track_create(index1)
 
-        FormProcessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(case)
 
         indices = CaseAccessorSQL.get_reverse_indices(referenced_case_id)
         self.assertEqual(1, len(indices))
@@ -119,7 +119,7 @@ class CaseAccessorTests(TestCase):
             )
             case.track_create(index1)
 
-            FormProcessorSQL.save_case(case)
+            CaseAccessorSQL.save_case(case)
             return case.case_id
 
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
@@ -146,7 +146,7 @@ class CaseAccessorTests(TestCase):
             name='pic.jpg',
             content_type='image/jpeg'
         ))
-        FormProcessorSQL.save_case(case1)
+        CaseAccessorSQL.save_case(case1)
 
         num_deleted = CaseAccessorSQL.hard_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
         self.assertEqual(1, num_deleted)
@@ -172,7 +172,7 @@ class CaseAccessorTests(TestCase):
             name='doc',
             content_type='text/xml'
         ))
-        FormProcessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(case)
 
         with self.assertRaises(AttachmentNotFound):
             CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
@@ -199,7 +199,7 @@ class CaseAccessorTests(TestCase):
             name='doc',
             content_type='text/xml'
         ))
-        FormProcessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(case)
 
         with self.assertRaises(AttachmentNotFound):
             CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
@@ -240,7 +240,7 @@ class CaseAccessorTests(TestCase):
         case = _create_case(case_type=SupplyPointCaseMixin.CASE_TYPE)
         location_id = uuid.uuid4().hex
         case.location_id = location_id
-        FormProcessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(case)
 
         fetched_case = CaseAccessorSQL.get_case_by_location(DOMAIN, location_id)
         self.assertEqual(case.id, fetched_case.id)
@@ -257,7 +257,7 @@ class CaseAccessorTests(TestCase):
         self.assertEqual({case1.case_id, case2.case_id}, set(case_ids))
 
         case2.domain = 'new_domain'
-        FormProcessorSQL.save_case(case2)
+        CaseAccessorSQL.save_case(case2)
 
         case_ids = CaseAccessorSQL.get_case_ids_in_domain(DOMAIN)
         self.assertEqual({case1.case_id, case3.case_id}, set(case_ids))
@@ -327,5 +327,5 @@ def _create_case_transactions(case):
         revoked=False
     ))
     form_ids = [t.form_id for t in case.get_tracked_models_to_create(CaseTransaction)]
-    FormProcessorSQL.save_case(case)
+    CaseAccessorSQL.save_case(case)
     return form_ids
