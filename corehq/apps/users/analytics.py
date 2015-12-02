@@ -1,5 +1,4 @@
 from corehq.apps.es import UserES
-from corehq.apps.es.filters import doc_id
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couch import stale_ok
 
