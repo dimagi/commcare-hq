@@ -80,7 +80,7 @@
     "CaseDataPillow": {
         "advertised_name": "corehq.pillows.sofabed.CaseDataPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_corehq.pillows.sofabed.CaseDataPillow.testhq", 
+        "checkpoint_id": "corehq.pillows.sofabed.CaseDataPillow.testhq",
         "couch_filter": "case/casedocs", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
@@ -185,7 +185,7 @@
     "FormDataPillow": {
         "advertised_name": "corehq.pillows.sofabed.FormDataPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "pillowtop_corehq.pillows.sofabed.FormDataPillow.testhq", 
+        "checkpoint_id": "corehq.pillows.sofabed.FormDataPillow.testhq",
         "couch_filter": "couchforms/xforms", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
