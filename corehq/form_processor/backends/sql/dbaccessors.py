@@ -10,7 +10,8 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
     SupplyPointCaseMixin, CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
-from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple
+from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
+    case_transaction_adapter, case_index_adapter, case_attachment_adapter
 from corehq.util.test_utils import unit_testing_only
 
 doc_type_to_state = {
@@ -301,6 +302,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 case.id = result.case_pk
                 case.clear_tracked_models()
             except InternalError as e:
+                if logging.root.isEnabledFor(logging.DEBUG):
+                    msg = 'save_case_and_related_models called with args: \n{}, {}, {}, {} ,{} ,{}'.format(
+                        case_adapter(case).getquoted(),
+                        [case_transaction_adapter(t).getquoted() for t in transactions_to_save],
+                        [case_index_adapter(i).getquoted() for i in indices_to_save_or_update],
+                        [case_attachment_adapter(a).getquoted() for a in attachments_to_save],
+                        index_ids_to_delete,
+                        attachment_ids_to_delete
+                    )
+                    logging.debug(msg)
                 raise CaseSaveError(e)
 
 
