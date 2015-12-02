@@ -3420,7 +3420,7 @@ class CustomDatespanFilter(ReportAppFilter):
 
 class MobileSelectFilter(ReportAppFilter):
     def get_filter_value(self, user):
-        return []
+        return None
 
 
 class ReportAppConfig(DocumentSchema):
