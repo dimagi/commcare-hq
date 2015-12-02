@@ -1,18 +1,23 @@
 import functools
+from uuid import uuid4
+
 from couchdbkit import ResourceNotFound
+from datetime import datetime
 from django.db.models.query_utils import Q
 
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.dbaccessors import get_all_domain_names
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, \
-    CaseTransaction
+    CaseTransaction, Attachment
 from django.conf import settings
 
 
@@ -135,3 +140,80 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
     with result.get_locked_forms() as xforms:
         FormProcessorInterface(domain).save_processed_models(xforms[0], xforms)
         return xforms[0]
+
+
+def create_form_for_test(domain, case_id=None, attachments=None, save=True):
+    """
+    Create the models directly so that these tests aren't dependent on any
+    other apps. Not testing form processing here anyway.
+    :param case_id: create case with ID if supplied
+    :param attachments: additional attachments dict
+    :param save: if False return the unsaved form
+    :return: form_id
+    """
+    form_id = uuid4().hex
+    user_id = 'user1'
+    utcnow = datetime.utcnow()
+
+    form_data = get_simple_form_data(form_id, case_id)
+
+    form = XFormInstanceSQL(
+        form_id=form_id,
+        xmlns='http://openrosa.org/formdesigner/form-processor',
+        received_on=utcnow,
+        user_id=user_id,
+        domain=domain
+    )
+
+    attachments = attachments or {}
+    attachment_tuples = map(
+        lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
+        attachments.items()
+    )
+    attachment_tuples.append(Attachment('form.xml', form_data, 'text/xml'))
+
+    FormProcessorSQL.store_attachments(form, attachment_tuples)
+
+    cases = []
+    if case_id:
+        case = CommCareCaseSQL(
+            case_id=case_id,
+            domain=domain,
+            type='',
+            owner_id=user_id,
+            opened_on=utcnow,
+            modified_on=utcnow,
+            modified_by=user_id,
+            server_modified_on=utcnow,
+        )
+        case.track_create(CaseTransaction.form_transaction(case, form))
+        cases = [case]
+
+    if save:
+        FormProcessorSQL.save_processed_models([form], cases)
+    return form
+
+
+SIMPLE_FORM = """<?xml version='1.0' ?>
+<data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+    xmlns="http://openrosa.org/formdesigner/form-processor">
+    <dalmation_count>yes</dalmation_count>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>DEV IL</n1:deviceID>
+        <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
+        <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>
+        <n1:username>eve</n1:username>
+        <n1:userID>cruella_deville</n1:userID>
+        <n1:instanceID>{uuid}</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
+    </n1:meta>
+    {case_block}
+</data>"""
+
+
+def get_simple_form_data(form_id, case_id=None):
+    case_block = ''
+    if case_id:
+        case_block = CaseBlock(create=True, case_id=case_id).as_string()
+    form_data = SIMPLE_FORM.format(uuid=form_id, case_block=case_block)
+    return form_data
