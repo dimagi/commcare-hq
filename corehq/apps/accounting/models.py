@@ -1648,8 +1648,9 @@ class InvoiceBase(models.Model):
 
     @property
     def contact_emails(self):
-        contact_emails = self.account.billingcontactinfo.emails if self.account.billingcontactinfo else None
-        contact_emails = contact_emails.split(',') if contact_emails else []
+        billing_contact_info = BillingContactInfo.objects.filter(account=self.account)
+        contact_email_str = billing_contact_info[0].emails if billing_contact_info else None
+        contact_emails = contact_email_str.split(',') if contact_email_str else []
         if not contact_emails:
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [a.email if a.email else a.username for a in admins]
