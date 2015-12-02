@@ -20,14 +20,20 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-7">
-            {#    TODO: update this div to use B3 spacing that is the right size.#}
-            <div id="tableauPlaceholder" style="width:1100px; height:900px;"></div>
-        </div>
         <div class="col-md-2">
+            <button id="resetFilters" class="btn btn-block btn-primary" disabled="disabled">Reset Filtering</button>
             <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
             <div id="drilldown" class="well">
             </div>
+        </div>
+        <div class="col-md-10">
+            <Ul class="breadcrumb">
+                <li><a href="#"><strong>Bread</strong></a></li>
+                <li><a href="#">Crumb</a></li>
+                <li class="active">Placeholder</li>
+            </ul>
+            {#    TODO: update this div to use B3 spacing that is the right size.#}
+            <div id="tableauPlaceholder" style="width:1100px; height:900px;"></div>
         </div>
     </div>
 
