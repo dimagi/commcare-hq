@@ -249,6 +249,13 @@ class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, Abstra
         FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
 
+    def __unicode__(self):
+        return (
+            "XFormInstance("
+            "form_id='{f.form_id}', "
+            "domain='{f.domain}')"
+        ).format(f=self)
+
 
 class AbstractAttachment(models.Model):
     attachment_id = UUIDField(unique=True, db_index=True)
