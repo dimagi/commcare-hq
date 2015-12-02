@@ -83,10 +83,10 @@ class LocationChoiceProvider(ChoiceProvider):
         # see e.g. locations.views.child_locations_for_select2
         if query_context.query:
             locations = SQLLocation.active_objects.filter_path_by_user_input(
-                domain=query_context.domain, user_input=query_context.query
+                domain=self.domain, user_input=query_context.query
             )
         else:
-            locations = SQLLocation.active_objects.filter(domain=query_context.domain)
+            locations = SQLLocation.active_objects.filter(domain=self.domain)
         return [
             Choice(loc.location_id, loc.display_name) for loc in
             locations[query_context.offset:query_context.offset + query_context.limit]
