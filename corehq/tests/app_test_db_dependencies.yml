@@ -143,3 +143,5 @@ corehq.form_processor:
   - corehq.couchapps
   - couchforms
 corehq.apps.toggle_ui: []
+corehq.doctypemigrations:
+  - corehq.couchapps
