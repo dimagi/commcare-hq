@@ -2483,7 +2483,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 if isinstance(preview, feature_previews.FeaturePreview) and preview.has_privilege(self.request):
                     features.append((preview, preview.enabled(self.domain)))
 
-        return features
+        return sorted(features, key=lambda feature: feature[0].label)
 
     def get_toggle(self, slug):
         if not slug in [f.slug for f, _ in self.features()]:
