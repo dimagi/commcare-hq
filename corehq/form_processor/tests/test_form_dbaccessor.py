@@ -103,7 +103,7 @@ class FormAccessorTestsSQL(TestCase):
         attachments = {
             'pic.jpg': UploadedFile(attachment_file, 'pic.jpg', content_type='image/jpeg')
         }
-        form_with_pic = create_form_for_test(attachments=attachments)
+        form_with_pic = create_form_for_test(DOMAIN, attachments=attachments)
         plain_form = create_form_for_test(DOMAIN)
 
         forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic.form_id, plain_form.form_id])
