@@ -17,19 +17,20 @@
                 };
 
                 $.post("{% url "test_repeater" domain %}", data, function(resp) {
-                    var jsonResp = JSON.parse(response);
+                    var jsonResp = JSON.parse(response),
+                        message;
                     $testResult.removeClass("hide bg-danger bg-success");
                     if (jsonResp.status) {
-                        msg = jsonResp.status + ": " + jsonResp.response;
+                        message = jsonResp.status + ": " + jsonResp.response;
                     } else {
-                        msg = jsonResp.response;
+                        message = jsonResp.response;
                     }
                     if (jsonResp.success) {
                         $testResult.addClass("bg-success");
-                        $testResult.text("{% trans 'Success! Response is' %}: " + msg);
+                        $testResult.text("{% trans 'Success! Response is' %}: " + message);
                     } else {
                         $testResult.addClass("bg-danger");
-                        $testResult.text("{% trans 'Failed! Response is' %}: " + msg);
+                        $testResult.text("{% trans 'Failed! Response is' %}: " + message);
                     }
                 });
             });
