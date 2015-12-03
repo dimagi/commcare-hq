@@ -90,23 +90,12 @@ class ExportsPermissionsMixin(object):
 
     @property
     def has_edit_permissions(self):
-        return self.request.couch_user.has_permission(self.domain, get_permission_name(Permissions.edit_data))
-
-    @staticmethod
-    def check_deid_read_permissions(request, domain):
-        return request.couch_user.has_permission(
-            domain,
-            get_permission_name(Permissions.view_report),
-            data='corehq.apps.reports.standard.export.DeidExportReport'
-        )
+        return self.request.couch_user.can_edit_data()
 
     @property
-    def has_deid_read_permissions(self):
-        return self.check_deid_read_permissions(self.request, self.domain)
-
-    @property
-    def can_view_deid(self):
-        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+    def has_deid_view_permissions(self):
+        # just a convenience wrapper around user_can_view_deid_exports
+        return self.user_can_view_deid_exports(self.domain, self.request.couch_user)
 
 
 class BaseExportView(BaseProjectDataView):
@@ -406,7 +395,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions or (self.has_deid_read_permissions and self.can_view_deid)):
+        if not (self.has_edit_permissions
+                or self.has_deid_view_permissions):
             raise Http404()
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
@@ -506,7 +496,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
         # check deid if the user has readonly permissions
         if not self.has_edit_permissions:
-            if not self.can_view_deid:
+            if not self.has_deid_view_permissions:
                 raise Http404()
             exports = filter(lambda x: x.is_safe, exports)
 
@@ -607,7 +597,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
         # if the export is de-identified (is_safe), check that
         # the requesting domain has access to the deid feature.
-        if export_object.is_safe and not self.can_view_deid:
+        if export_object.is_safe and not self.has_deid_view_permissions:
             raise ExportAsyncException(
                 _("You do not have permission to export this "
                   "De-Identified export.")
@@ -843,8 +833,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         if not (self.has_edit_permissions or (self.is_deid
-                                              and self.has_deid_read_permissions
-                                              and self.can_view_deid)):
+                                              and self.has_deid_view_permissions)):
             raise Http404()
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
@@ -1041,7 +1030,7 @@ class FormExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
-        if not self.can_view_deid:
+        if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
 
@@ -1138,7 +1127,7 @@ class CaseExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
-        if not self.can_view_deid:
+        if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
 
