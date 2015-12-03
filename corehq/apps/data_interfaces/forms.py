@@ -203,7 +203,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 ),
             ),
             Fieldset(
-                _("Conditions"),
+                _("Filter Cases to Close (Optional)"),
                 Field(
                     'conditions',
                     type='hidden',

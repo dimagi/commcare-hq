@@ -49,10 +49,10 @@
         {% crispy form %}
     </div>
     <script type="text/ng-template" id="conditions.tpl">
-        <table class="table table-responsive">
+        <table class="table table-responsive" ng-show="conditions_objs.length > 0">
             <thead>
                 <tr>
-                    <th class="col-xs-2">{% trans "Property Name" %}</th>
+                    <th class="col-xs-2">{% trans "Case Property Name" %}</th>
                     <th class="col-xs-2">{% trans "Match Type" %}</th>
                     <th class="col-xs-1">{% trans "Value" %}</th>
                     <th class="col-xs-1"></th>
@@ -60,22 +60,6 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>server_modified_on</div>
-                    <td>{% trans "after date by" %}</td>
-                    <td>
-                        <input class="textinput textInput form-control"
-                               type="text"
-                               name="server_modified_boundary"
-                               ng-model="server_modified_boundary" />
-                        {% if form.server_modified_boundary.errors %}
-                        <span class="help-block">
-                            <strong>{{ form.server_modified_boundary.errors.0 }}</strong>
-                        </span>
-                        {% endif %}
-                    </td>
-                    <td>{% trans "days" %}</td>
-                </tr>
                 <tr ng-repeat="condition in conditions_objs">
                     {% angularjs %}
                     <td>
@@ -123,7 +107,7 @@
             <button type="button"
                     class="btn btn-success"
                     ng-click="addCondition();">
-                <i class="fa fa-plus"></i> {% trans "Add Condition" %}
+                <i class="fa fa-plus"></i> {% trans "Add Filter" %}
             </button>
         </div>
     </script>
