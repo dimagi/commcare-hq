@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
 {% endblock %}
