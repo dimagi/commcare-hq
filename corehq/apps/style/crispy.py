@@ -2,7 +2,7 @@ import re
 from contextlib import contextmanager
 
 from django.utils.safestring import mark_safe
-from crispy_forms.bootstrap import FormActions as OriginalFormActions
+from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField
 from crispy_forms.layout import Field as OldField, LayoutObject
 from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import Context
