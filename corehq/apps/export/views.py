@@ -847,6 +847,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
             'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
             'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
+            'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
         }
 
