@@ -19,7 +19,8 @@
 </style>
 {% endblock %}
 {% block js %}{{ block.super }}
-<script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
+<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+<script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
 <script src="{% static 'hqwebapp/js/lib/jquery.sparkline.min.js' %}"></script>
 <script>
     $(function () {

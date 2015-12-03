@@ -5,8 +5,9 @@
 {% if show_time_notice %}{% endif %}
 
 {% block js %}
-    <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
-    <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+    {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
     {{ block.super }}
 {% endblock %}
 
