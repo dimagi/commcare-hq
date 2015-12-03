@@ -58,7 +58,7 @@ class GenericRepeaterForm(forms.Form):
                 crispy.Div(
                     crispy.Div(
                         css_id='test-forward-result',
-                        css_class='bg-success',
+                        css_class='bg-success hide',
                     ),
                     twbscrispy.StrictButton(
                         _('Test Link'),

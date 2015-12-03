@@ -18,17 +18,17 @@
 
                 $.post("{% url "test_repeater" domain %}", data, function(resp) {
                     var jsonResp = JSON.parse(response);
-                    $testResult.removeClass("hide label-danger label-success");
+                    $testResult.removeClass("hide bg-danger bg-success");
                     if (jsonResp.status) {
                         msg = jsonResp.status + ": " + jsonResp.response;
                     } else {
                         msg = jsonResp.response;
                     }
                     if (jsonResp.success) {
-                        $testResult.addClass("label-success");
+                        $testResult.addClass("bg-success");
                         $testResult.text("{% trans 'Success! Response is' %}: " + msg);
                     } else {
-                        $testResult.addClass("label-danger");
+                        $testResult.addClass("bg-danger");
                         $testResult.text("{% trans 'Failed! Response is' %}: " + msg);
                     }
                 });
