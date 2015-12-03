@@ -701,8 +701,7 @@ class FluffPillow(PythonPillow):
     # see explanation in IndicatorDocument for how this is used
     deleted_types = ()
 
-    def __init__(self, chunk_size=None, checkpoint=None):
-        # the arguments to this function are just for tests.
+    def __init__(self, chunk_size=None, checkpoint=None, change_feed=None):
         # explicitly check against None since we want to pass chunk_size=0 through
         chunk_size = chunk_size if chunk_size is not None else PYTHONPILLOW_CHUNK_SIZE
         # fluff pillows should default to SQL checkpoints
@@ -710,6 +709,7 @@ class FluffPillow(PythonPillow):
         super(FluffPillow, self).__init__(
             chunk_size=chunk_size,
             checkpoint=checkpoint,
+            change_feed=change_feed,
         )
 
     @classmethod
