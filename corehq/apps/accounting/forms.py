@@ -231,7 +231,7 @@ class BillingAccountBasicForm(forms.Form):
             salesforce_account_id=salesforce_account_id,
             currency=currency,
             entry_point=self.cleaned_data['entry_point'],
-            last_payment_medthod=self.cleaned_data['last_payment_method'],
+            last_payment_method=self.cleaned_data['last_payment_method'],
             pre_or_post_pay=self.cleaned_data['pre_or_post_pay']
         )
         account.save()
