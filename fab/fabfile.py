@@ -822,6 +822,24 @@ def _tag_commit():
     return diff_url
 
 
+@task
+@roles(['deploy'])
+def manage():
+    """
+    run a management command
+
+    usage:
+        fab <env> manage --set cmd='<command>'
+    e.g.
+        fab production manage --set cmd='prune_couch_views'
+    """
+    _require_target()
+    require('cmd')
+    with cd(env.code_current):
+        sudo('{env.virtualenv_current}/bin/python manage.py {env.cmd}'
+             .format(env=env))
+
+
 @task(alias='deploy')
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
@@ -998,7 +1016,7 @@ def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
+        sudo('{}/bin/python manage.py collectstatic --noinput -v 0'.format(venv))
         sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
 
 

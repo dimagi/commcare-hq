@@ -1,13 +1,13 @@
 from collections import OrderedDict
 
-from django.utils.translation import ugettext as _
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
 )
+from sqlagg.columns import SimpleColumn
 from sqlalchemy.exc import ProgrammingError
 
-from corehq.apps.reports.sqlreport import SqlData
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     SortConfigurationError)
@@ -34,8 +34,9 @@ class ConfigurableReportDataSource(SqlData):
 
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
+        self._deferred_filters = {}
         self._order_by = []
-        self.aggregation_columns = aggregation_columns
+        self._aggregation_columns = aggregation_columns
         self._column_configs = OrderedDict()
         for column in columns:
             # should be caught in validation prior to reaching this
@@ -44,6 +45,12 @@ class ConfigurableReportDataSource(SqlData):
                     self._config_id, self.domain, column.column_id,
                 )
             self._column_configs[column.column_id] = column
+
+    @property
+    def aggregation_columns(self):
+        return self._aggregation_columns + [
+            deferred_filter.field for deferred_filter in self._deferred_filters.values()
+            if deferred_filter.field not in self._aggregation_columns]
 
     @property
     def config(self):
@@ -71,6 +78,10 @@ class ConfigurableReportDataSource(SqlData):
         for filter_slug, value in filter_values.items():
             self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
 
+    def defer_filters(self, filter_slugs):
+        self._deferred_filters.update({
+            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
+
     def set_order_by(self, columns):
         self._order_by = columns
 
@@ -95,7 +106,13 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def columns(self):
-        return [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        fields = {c.slug for c in db_columns}
+
+        return db_columns + [
+            DatabaseColumn('', SimpleColumn(deferred_filter.field))
+            for deferred_filter in self._deferred_filters.values()
+            if deferred_filter.field not in fields]
 
     @property
     def sql_column_configs(self):
@@ -115,7 +132,7 @@ class ConfigurableReportDataSource(SqlData):
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
-            raise UserReportsError(e.message)
+            raise UserReportsError(unicode(e))
         except TableNotFoundException as e:
             raise TableNotFoundWarning
 

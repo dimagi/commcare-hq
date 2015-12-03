@@ -519,7 +519,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
 class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
-    def testArchiveLastForm(self):
+    def test_archive_last_form(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         self.submit_xml_form(
             balance_submission(initial_amounts),
@@ -560,7 +560,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form.unarchive()
         _assert_initial_state()
 
-    def testArchiveOnlyForm(self):
+    def test_archive_only_form(self):
         # check no data in stock states
         self.assertEqual(0, StockState.objects.filter(case_id=self.sp.case_id).count())
 

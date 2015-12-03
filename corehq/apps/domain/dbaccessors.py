@@ -34,6 +34,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
         'CommCareCaseGroup',
         'CommtrackConfig',
         'HQGroupExportConfiguration',
+        'Group',
         'Invitation',
         'PerformanceConfiguration',
         'ReportConfiguration',

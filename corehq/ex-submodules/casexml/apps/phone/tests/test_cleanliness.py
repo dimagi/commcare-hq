@@ -9,10 +9,7 @@ from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_val
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from casexml.apps.phone.restore import RestoreState, RestoreParams
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
@@ -83,10 +80,21 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )[0]
 
     def assert_owner_clean(self):
-        return self.assertTrue(self.owner_cleanliness.is_clean)
+        self.assertTrue(self.owner_cleanliness.is_clean)
 
     def assert_owner_dirty(self):
-        return self.assertFalse(self.owner_cleanliness.is_clean)
+        self.assertFalse(self.owner_cleanliness.is_clean)
+
+    def assert_owner_temporarily_dirty(self):
+        """
+        Changing any case's owner makes the previous owner ID temporarily dirty, to allow
+        syncs to happen, but the should become clean on a rebuild.
+
+        This checks that workflow and rebuilds the cleanliness flag.
+        """
+        self.assertFalse(self.owner_cleanliness.is_clean)
+        set_cleanliness_flags(self.domain, self.owner_id, force_full=True)
+        self.assertTrue(self.owner_cleanliness.is_clean)
 
     def _set_owner(self, case_id, owner_id):
         case = self.factory.create_or_update_case(
@@ -104,14 +112,14 @@ class OwnerCleanlinessTest(SyncBaseTest):
         """change the owner ID of a normal case, should remain clean"""
         new_owner = uuid.uuid4().hex
         self._set_owner(self.sample_case.case_id, new_owner)
-        self.assert_owner_clean()
+        self.assert_owner_temporarily_dirty()
         self._verify_set_cleanliness_flags()
 
     def test_change_owner_child_case_stays_clean(self):
         """change the owner ID of a child case, should remain clean"""
         new_owner = uuid.uuid4().hex
         self._set_owner(self.child.case_id, new_owner)
-        self.assert_owner_clean()
+        self.assert_owner_temporarily_dirty()
         self._verify_set_cleanliness_flags()
 
     def test_add_clean_parent_stays_clean(self):
@@ -164,7 +172,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         new_owner = uuid.uuid4().hex
         self._owner_cleanliness_for_id(new_owner)
         self._set_owner(self.host.case_id, new_owner)
-        self.assert_owner_clean()
+
+        self.assert_owner_temporarily_dirty()
         self.assertTrue(self._owner_cleanliness_for_id(new_owner).is_clean)
         self._verify_set_cleanliness_flags()
 
@@ -323,9 +332,9 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
     def test_simple_unowned_extension(self):
         """Simple unowned extensions should be clean"""
-        [extension, host] = self.factory.create_or_update_case(
+        self.factory.create_or_update_case(
             CaseStructure(
-                case_id=self.sample_case.case_id,
+                case_id=uuid.uuid4().hex,
                 attrs={'owner_id': UNOWNED_EXTENSION_OWNER_ID},
                 indices=[
                     CaseIndex(

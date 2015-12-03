@@ -1382,7 +1382,9 @@ class Subscription(models.Model):
 
             billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
             if billing_contact_emails is None:
-                raise SubscriptionReminderError("This billing account doesn't have any contact emails")
+                raise SubscriptionReminderError(
+                    "Billing account %d doesn't have any contact emails" % self.account.id
+                )
             billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
@@ -2237,7 +2239,7 @@ class LineItem(models.Model):
     base_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     unit_description = models.TextField(blank=True, null=True)
     unit_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    quantity = models.IntegerField(default=1)
+    quantity = models.IntegerField(default=1, validators=integer_field_validators)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = LineItemManager()

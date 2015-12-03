@@ -56,6 +56,10 @@ class Command(BaseCommand):
             ])).lower() == 'delete designs':
                 for db, design_docs in designs_to_delete.items():
                     for design_doc in design_docs:
+                        # If we don't delete conflicts, then they take the place of the
+                        # document when it's deleted. (That's how couch works.)
+                        # This results in a huge reindex for an old conflicted version
+                        # of a design doc we don't even want anymore.
                         delete_conflicts(db, design_doc['_id'])
                     db.delete_docs(design_docs)
             else:

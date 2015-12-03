@@ -23,6 +23,7 @@
     "less": "1.7.3",
     "backbone": "0.9.1",
     "bootstrap-daterangepicker": "2.1.13",
+    "bootstrap-timepicker": "0.5.1",
     "datatables": "1.10.9",
     "datatables-bootstrap3": "0.1",
     "nprogress": "0.2.0",
@@ -37,5 +38,8 @@
     "sinon": "http://sinonjs.org/releases/sinon-1.17.0.js",
     "angular-mocks": "1.4.4"
   },
-  "private": true
+  "private": true,
+  "resolutions": {
+    "jquery": "1.11.1"
+  }
 }

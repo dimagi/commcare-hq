@@ -1,3 +1,4 @@
+import base64
 from copy import deepcopy
 from django.test import TestCase
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
@@ -27,7 +28,13 @@ class TestDocTypeMigrations(TestCase):
 
         self.docs = [
             {'doc_type': 'CommCareUser', 'username': 'johnny@example.com'},
-            {'doc_type': 'CommCareUser', 'username': 'fatima@example.com'},
+            {'doc_type': 'CommCareUser', 'username': 'fatima@example.com',
+             '_attachments': {
+                 "greeting.txt": {
+                     "content_type": "text/plain", "data": base64.b64encode("hi"),
+                     "digest": "md5-QTVOnBwGnrw6Tx9YG1ZRyA==", "revpos": 1,
+                 }
+             }},
             {'doc_type': 'Group', 'name': 'User Group'},
             {'doc_type': 'Group-Deleted', 'name': 'Deleted User Group'},
         ]
@@ -122,7 +129,8 @@ class TestDocTypeMigrations(TestCase):
 
 def _get_non_design_docs(db):
     docs = get_docs(db, [result['id'] for result in db
-                         if not result['id'].startswith('_design/')])
+                         if not result['id'].startswith('_design/')],
+                    attachments=True)
     _sort_by_doc_id(docs)
     return docs
 

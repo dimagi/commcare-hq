@@ -36,6 +36,7 @@ class DomainPillow(HQPillow):
         }
     }
 
+    @classmethod
     def get_unique_id(self):
         return DOMAIN_INDEX
 

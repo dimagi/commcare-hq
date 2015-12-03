@@ -8,12 +8,13 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
 
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL,
     XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment)
+    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
@@ -51,13 +52,13 @@ class FormProcessorSQL(object):
         return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
-    def hard_delete_case_and_forms(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        FormAccessorSQL.hard_delete_forms(form_ids)
-        CaseAccessorSQL.hard_delete_case(case.case_id)
+        FormAccessorSQL.hard_delete_forms(domain, form_ids)
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
     @classmethod
-    def save_processed_models(cls, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None, stock_updates=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Ensure already saved forms get saved first to avoid ID conflicts
@@ -68,6 +69,8 @@ class FormProcessorSQL(object):
             if cases:
                 for case in cases:
                     cls.save_case(case)
+            for stock_update in stock_updates or []:
+                stock_update.commit()
 
     @classmethod
     def save_xform(cls, xform, is_deprecation=False):
@@ -106,6 +109,7 @@ class FormProcessorSQL(object):
             case.save()
             FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
             FormProcessorSQL.save_tracked_models(case, CaseTransaction)
+            FormProcessorSQL.save_tracked_models(case, CaseAttachmentSQL)
             case.clear_tracked_models()
 
     @staticmethod
@@ -211,18 +215,23 @@ class FormProcessorSQL(object):
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
                 case = case_db.get(case_id)
+                is_creation = False
                 if not case:
                     case = CommCareCaseSQL(domain=domain, case_id=case_id)
+                    is_creation = True
                     case_db.set(case_id, case)
+                previous_owner = case.owner_id
                 case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
                 if case:
-                    touched_cases[case.case_id] = case
+                    touched_cases[case.case_id] = CaseUpdateMetadata(
+                        case=case, is_creation=is_creation, previous_owner_id=previous_owner,
+                    )
         else:
             xform = xforms[0]
             for case_update in get_case_updates(xform):
-                case = case_db.get_case_from_case_update(case_update, xform)
-                if case:
-                    touched_cases[case.case_id] = case
+                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+                if case_update_meta.case:
+                    touched_cases[case_update_meta.case.case_id] = case_update_meta
                 else:
                     logging.error(
                         "XForm %s had a case block that wasn't able to create a case! "
@@ -268,7 +277,7 @@ def get_case_transactions(case_id, updated_xforms=None):
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
 
-    form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
+    form_ids_to_fetch = list(form_ids - set(updated_xforms_map.keys()))
     xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):

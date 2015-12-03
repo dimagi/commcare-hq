@@ -16,5 +16,6 @@ class GroupPillow(HQPillow):
     es_index = GROUP_INDEX
     default_mapping = GROUP_MAPPING
 
+    @classmethod
     def get_unique_id(self):
         return GROUP_INDEX

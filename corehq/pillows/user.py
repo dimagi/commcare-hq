@@ -5,6 +5,7 @@ from corehq.elastic import ES_URLS, stream_es_query, get_es, doc_exists_in_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from django.conf import settings
 
@@ -38,6 +39,7 @@ class UserPillow(AliasedElasticPillow):
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
+    @classmethod
     def get_unique_id(self):
         return USER_INDEX
 
@@ -64,8 +66,9 @@ class UserPillow(AliasedElasticPillow):
 class GroupToUserPillow(PythonPillow):
     document_class = CommCareUser
 
-    def __init__(self, **kwargs):
-        super(GroupToUserPillow, self).__init__(**kwargs)
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(GroupToUserPillow, self).__init__(checkpoint=checkpoint)
 
     def python_filter(self, change):
         return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
@@ -92,8 +95,9 @@ class UnknownUsersPillow(PythonPillow):
     include_docs_when_preindexing = False
     es_path = USER_INDEX + "/user/"
 
-    def __init__(self, **kwargs):
-        super(UnknownUsersPillow, self).__init__(**kwargs)
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 

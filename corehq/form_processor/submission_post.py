@@ -171,12 +171,12 @@ class SubmissionPost(object):
 
             cases = case_db.get_cases_for_saving(instance.received_on)
 
-            self.interface.save_processed_models(instance, xforms, cases)
+            self.interface.save_processed_models(instance, xforms, cases, stock_result.get_models_to_save())
 
             unfinished_submission_stub.saved = True
             unfinished_submission_stub.save()
             case_result.commit_dirtiness_flags()
-            stock_result.commit()
+            stock_result.finalize()
             for case in cases:
                 case_post_save.send(case.__class__, case=case)
 

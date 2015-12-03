@@ -21,7 +21,7 @@
                     </div>
                 </div>
                 {% if request|feature_preview_enabled:"MODULE_FILTER" %}
-                <div class="control-group">
+                <div class="control-group" id="module-filter">
                     <label class="control-label">{% trans "Module Filter" %}</label>
                     <div class="controls">
                         <input type="text" data-bind="value: currentModuleFilter">

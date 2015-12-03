@@ -58,15 +58,17 @@ class FormProcessorCouch(object):
             return xform_id in XFormInstance.get_db()
 
     @classmethod
-    def hard_delete_case_and_forms(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, domain, case, xforms):
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
 
     @classmethod
-    def save_processed_models(cls, xforms, cases=None):
+    def save_processed_models(cls, xforms, cases=None, stock_updates=None):
         docs = xforms + (cases or [])
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
+        for stock_update in stock_updates or []:
+            stock_update.commit()
 
     @classmethod
     def save_xform(cls, xform):
@@ -131,9 +133,9 @@ class FormProcessorCouch(object):
         touched_cases = {}
         for xform in sorted_forms:
             for case_update in get_case_updates(xform):
-                case_doc = case_db.get_case_from_case_update(case_update, xform)
-                if case_doc:
-                    touched_cases[case_doc.case_id] = case_doc
+                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+                if case_update_meta.case:
+                    touched_cases[case_update_meta.case.case_id] = case_update_meta
                 else:
                     logging.error(
                         "XForm %s had a case block that wasn't able to create a case! "
@@ -197,7 +199,7 @@ def _get_actions_from_forms(domain, sorted_forms, case_id):
         for u in filtered_updates:
             case_actions.extend(u.get_case_actions(form))
         stock_actions = get_stock_actions(form)
-        case_actions.extend([intent.action
+        case_actions.extend([intent.get_couch_action()
                              for intent in stock_actions.case_action_intents
                              if not intent.is_deprecation])
     return case_actions

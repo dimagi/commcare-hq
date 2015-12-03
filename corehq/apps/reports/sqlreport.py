@@ -54,8 +54,6 @@ class DatabaseColumn(Column):
         Args:
             :param header:
                 The column header.
-            :param name:
-                The name of the column. This must match up to a column name in the report database.
             :param args:
                 Additional positional arguments will be passed on when creating the DataTablesColumn
             :param agg_column:

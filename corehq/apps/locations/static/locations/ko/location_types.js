@@ -121,7 +121,7 @@ function LocationTypeModel(loc_type, commtrack_enabled) {
     this.tracks_stock = ko.observable(!loc_type.administrative);
     this.shares_cases = ko.observable(loc_type.shares_cases);
     this.view_descendants = ko.observable(loc_type.view_descendants);
-    this.code = ko.observable(loc_type.code);
+    this.code = ko.observable(loc_type.code || '');
 
     this.name_error = ko.observable(false);
 

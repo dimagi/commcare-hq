@@ -4,6 +4,7 @@ import functools
 import json
 import os
 import tempfile
+from django.conf import settings
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -104,6 +105,8 @@ def swallow_programming_errors(fn):
         try:
             return fn(request, domain, *args, **kwargs)
         except ProgrammingError as e:
+            if settings.DEBUG:
+                raise
             messages.error(
                 request,
                 _('There was a problem processing your request. '
@@ -729,15 +732,13 @@ def choice_list_api(request, domain, report_id, filter_id):
 
     if hasattr(report_filter, 'choice_provider'):
         query_context = ChoiceQueryContext(
-            report=report,
-            report_filter=report_filter,
             query=request.GET.get('q', None),
             limit=int(request.GET.get('limit', 20)),
             page=int(request.GET.get('page', 1)) - 1
         )
         return json_response([
             choice._asdict() for choice in
-            report_filter.choice_provider(query_context)
+            report_filter.choice_provider.query(query_context)
         ])
     else:
         # mobile UCR hits this API for invalid filters. Just return no choices.

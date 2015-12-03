@@ -5,18 +5,6 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
 
 
-class BasicFilterTest(SimpleTestCase):
-
-    def test_invalid_slug(self):
-        with self.assertRaises(BadSpecError):
-            FilterFactory.from_spec({
-                'type': 'property_match',
-                'property_name': 'foo',
-                'property_value': 'bar',
-                'slug': 'this-is-bad',
-            })
-
-
 class PropertyMatchFilterTest(SimpleTestCase):
 
     def get_filter(self):

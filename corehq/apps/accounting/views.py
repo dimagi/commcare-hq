@@ -1,3 +1,4 @@
+from datetime import date
 import json
 import logging
 
@@ -371,6 +372,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
+            "subscription_has_ended": not self.subscription.is_active and self.subscription.date_start <= date.today(),
             'subscription': self.subscription,
             'subscription_canceled':
                 self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,

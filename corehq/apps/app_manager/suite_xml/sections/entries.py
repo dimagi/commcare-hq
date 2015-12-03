@@ -142,7 +142,6 @@ class EntriesHelper(object):
                 e.datums.append(datum)
                 e.assertions.extend(assertions)
 
-            self._add_extra_entry_connectors(e, module)
             results.append(e)
 
         if hasattr(module, 'case_list') and module.case_list.show:
@@ -184,25 +183,12 @@ class EntriesHelper(object):
                         value="./@id",
                         detail_select=self.details_helper.get_detail_id_safe(module, 'product_short')
                     ))
-            self._add_extra_entry_connectors(e, module)
             results.append(e)
 
         for entry in module.get_custom_entries():
             results.append(entry)
 
         return results
-
-    def _add_extra_entry_connectors(self, entry, module):
-        # Collect any extra connectors specified for details with nodesets
-        connectors = {}
-        detail_ids = [datum.detail_confirm for datum in entry.datums]
-        if hasattr(module, 'case_details'):
-            if self.details_helper.get_detail_id_safe(module, 'case_long') in detail_ids:
-                for tab in module.case_details.long.tabs:
-                    connectors.update(tab.connectors)
-        for id, src in connectors.iteritems():
-            entry.require_instance(Instance(id=id, src=src))
-
 
     @staticmethod
     def get_assertion(test, locale_id, locale_arguments=None):
