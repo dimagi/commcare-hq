@@ -672,7 +672,7 @@ class ProjectDataTab(UITab):
                 },
             ])
         from corehq.apps.export.views import DeIdFormExportListView
-        if DeIdFormExportListView.has_deid_permissions(self._request, self.domain):
+        if DeIdFormExportListView.user_can_view_deid_exports(self.domain, self.couch_user):
             from corehq.apps.export.views import DownloadFormExportView
             export_data_views.append({
                 'title': DeIdFormExportListView.page_title,

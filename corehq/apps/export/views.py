@@ -92,14 +92,6 @@ class ExportsPermissionsMixin(object):
     def has_edit_permissions(self):
         return self.request.couch_user.has_permission(self.domain, get_permission_name(Permissions.edit_data))
 
-    @classmethod
-    def has_deid_permissions(cls, request, domain):
-        return (
-            has_privilege(request, privileges.DEIDENTIFIED_DATA)
-            and hasattr(request, 'couch_user')
-            and cls.check_deid_read_permissions(request, domain)
-        )
-
     @staticmethod
     def check_deid_read_permissions(request, domain):
         return request.couch_user.has_permission(

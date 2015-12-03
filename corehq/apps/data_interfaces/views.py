@@ -62,7 +62,7 @@ def default_data_view_url(request, domain):
         return reverse(FormExportListView.urlname, args=[domain])
 
     from corehq.apps.export.views import DeIdFormExportListView
-    if DeIdFormExportListView.has_deid_permissions(request, domain):
+    if DeIdFormExportListView.user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
 
     raise Http404()
