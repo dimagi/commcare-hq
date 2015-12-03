@@ -1,6 +1,6 @@
 import datetime
 from django.test import SimpleTestCase
-from corehq.apps.userreports.reports.sorting import get_default_sort_value, ASCENDING, DESCENDING
+from corehq.apps.userreports.reports.sorting import get_default_sort_value
 
 
 class SortingTestCase(SimpleTestCase):
