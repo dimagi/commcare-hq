@@ -11,6 +11,26 @@ from corehq.apps.style import crispy as hqcrispy
 
 class GenericRepeaterForm(forms.Form):
 
+    url = forms.URLField(
+        required=True,
+        label='URL to forward to',
+        help_text='Please enter the full url, like http://www.example.com/forwarding/',
+        widget=forms.TextInput(attrs={"class": "url"})
+    )
+    use_basic_auth = forms.BooleanField(
+        required=False,
+        label='Use basic authentication?',
+    )
+    username = forms.CharField(
+        required=False,
+        label='Username',
+    )
+    password = forms.CharField(
+        required=False,
+        label='Password',
+        widget=forms.PasswordInput()
+    )
+
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
@@ -52,26 +72,6 @@ class GenericRepeaterForm(forms.Form):
             cleaned_data['format'] = self.formats[0][0]
 
         return cleaned_data
-
-    url = forms.URLField(
-        required=True,
-        label='URL to forward to',
-        help_text='Please enter the full url, like http://www.example.com/forwarding/',
-        widget=forms.TextInput(attrs={"class": "url"})
-    )
-    use_basic_auth = forms.BooleanField(
-        required=False,
-        label='Use basic authentication?',
-    )
-    username = forms.CharField(
-        required=False,
-        label='Username',
-    )
-    password = forms.CharField(
-        required=False,
-        label='Password',
-        widget=forms.PasswordInput()
-    )
 
 
 class FormRepeaterForm(GenericRepeaterForm):
