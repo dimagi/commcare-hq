@@ -6,39 +6,56 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function() {
+        $(document).ready(function() {
             var $testLinkButton = $('#test-forward-link'),
                 $testResult = $('#test-forward-result');
+
+            var handleSuccess = function(resp) {
+                var jsonResp = JSON.parse(resp),
+                    message;
+                $testResult.removeClass("hide text-danger text-success");
+                $testLinkButton.enableButton();
+
+                if (jsonResp.status) {
+                    message = jsonResp.status + ": " + jsonResp.response;
+                } else {
+                    message = jsonResp.response;
+                }
+
+                if (jsonResp.success) {
+                    $testResult.addClass("text-success");
+                    $testResult.text("{% trans 'Success! Response is' %}: " + message);
+                } else {
+                    $testResult.addClass("text-danger");
+                    $testResult.text("{% trans 'Failed! Response is' %}: " + message);
+                }
+            };
+
+            var handleFailure = function(resp) {
+                $testLinkButton.enableButton();
+                $testResult
+                    .removeClass("hide text-success")
+                    .addClass("text-danger");
+                $testResult.text("{% trans 'HQ was unable to make the request' %}: " + resp.statusText);
+            };
+
             $testLinkButton.click(function () {
                 var data = {
                     url: $('#id_url').val(),
                     format: $('#id_format').val(),
-                    type: {{ repeater_type|to_javascript_string }}
+                    repeater_type: {{ repeater_type|to_javascript_string }}
                 };
+                $testLinkButton.disableButton();
 
-                $.post("{% url "test_repeater" domain %}", data, function(resp) {
-                    var jsonResp = JSON.parse(response),
-                        message;
-                    $testResult.removeClass("hide bg-danger bg-success");
-                    if (jsonResp.status) {
-                        message = jsonResp.status + ": " + jsonResp.response;
-                    } else {
-                        message = jsonResp.response;
-                    }
-                    if (jsonResp.success) {
-                        $testResult.addClass("bg-success");
-                        $testResult.text("{% trans 'Success! Response is' %}: " + message);
-                    } else {
-                        $testResult.addClass("bg-danger");
-                        $testResult.text("{% trans 'Failed! Response is' %}: " + message);
-                    }
-                });
+                $.post("{% url "test_repeater" domain %}", data)
+                    .success(handleSuccess)
+                    .fail(handleFailure);
             });
             $('#id_url').change(function () {
                 if ($(this).val()) {
-                    $testLinkButton.removeClass('hide');
+                    $testLinkButton.removeClass('disabled');
                 } else {
-                    $testLinkButton.addClass('hide');
+                    $testLinkButton.addClass('disabled');
                 }
             });
         });

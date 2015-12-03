@@ -58,12 +58,13 @@ class GenericRepeaterForm(forms.Form):
                 crispy.Div(
                     crispy.Div(
                         css_id='test-forward-result',
-                        css_class='bg-success hide',
+                        css_class='text-success hide',
                     ),
                     twbscrispy.StrictButton(
                         _('Test Link'),
                         type='button',
-                        css_class='btn btn-info test-forward-link hide',
+                        css_id='test-forward-link',
+                        css_class='btn btn-info disabled',
                     ),
                     css_class=self.helper.field_class,
                 ),
