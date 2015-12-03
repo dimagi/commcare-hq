@@ -594,7 +594,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     name = StringProperty()
     default_format = StringProperty()
 
-    is_safe = BooleanProperty(default=False)
+    is_safe = BooleanProperty(default=False)  # Is the export de-identified?
     # self.index should always match self.schema.index
     # needs to be here so we can use in couch views
     index = JsonProperty()
