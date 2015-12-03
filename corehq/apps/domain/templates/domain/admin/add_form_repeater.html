@@ -11,6 +11,10 @@
                 $testResult = $('#test-forward-result');
 
             var handleSuccess = function(resp) {
+                /*
+                 * Handles a successful attempt to test the link. Note, just gets run when HQ returns
+                 * successful not if the link being tested returns successful
+                 */
                 var jsonResp = JSON.parse(resp),
                     message;
                 $testResult.removeClass("hide text-danger text-success");
@@ -32,6 +36,9 @@
             };
 
             var handleFailure = function(resp) {
+                /*
+                 * Handles an HQ failure to test the URL
+                 */
                 $testLinkButton.enableButton();
                 $testResult
                     .removeClass("hide text-success")
