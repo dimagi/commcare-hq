@@ -227,7 +227,7 @@ class BaseEditUserView(BaseUserSettingsView):
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
+                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
 
         return self.get(request, *args, **kwargs)
 
