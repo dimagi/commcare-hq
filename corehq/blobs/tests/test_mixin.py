@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import os
 import uuid
 from base64 import b64encode
 from hashlib import md5
@@ -85,7 +86,7 @@ class TestBlobMixin(BaseTestCase):
         content = StringIO(b"test_blob_directory content")
         self.obj.put_attachment(content, name)
         bucket = join("commcarehq_test", self.obj._id)
-        path = self.db._getpath(name, bucket)
+        path = self.db.get_path(self.obj.blobs[name].id, bucket)
         with open(path) as fh:
             self.assertEqual(fh.read(), b"test_blob_directory content")
 
@@ -175,6 +176,38 @@ class TestBlobMixin(BaseTestCase):
                 self.obj.put_attachment("content", "inside")
                 raise BlowUp("while saving atomic blobs")
         self.assertEqual(set(self.obj.blobs), {"outside"})
+
+    def test_atomic_blobs_fail_does_not_overwrite_existing_blob(self):
+        name = "name"
+        self.obj.put_attachment("content", name)
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("new content", name)
+                raise BlowUp("while saving atomic blobs")
+        self.assertEqual(self.obj.blobs[name].content_length, 7)
+        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        # verify cleanup
+        path = self.db.get_path(bucket=self.obj._blobdb_bucket())
+        self.assertEqual(len(os.listdir(path)), len(self.obj.blobs))
+
+    def test_atomic_blobs_fail_restores_couch_attachments(self):
+        couch_digest = "md5-" + b64encode(md5(b"content").digest())
+        doc = self.make_doc(FallbackToCouchDocument)
+        doc._attachments["att"] = {
+            "content": b"couch content",
+            "content_type": None,
+            "digest": couch_digest,
+            "length": 13,
+        }
+        with self.assertRaises(BlowUp):
+            with doc.atomic_blobs():
+                doc.put_attachment("new content", "att")
+                raise BlowUp("while saving atomic blobs")
+        self.assertEqual(doc.blobs["att"].content_length, 13)
+        self.assertEqual(doc.fetch_attachment("att"), "couch content")
+        # verify cleanup
+        path = self.db.get_path(bucket=doc._blobdb_bucket())
+        self.assertEqual(len(os.listdir(path)), 0)
 
 
 class FakeCouchDocument(mod.BlobMixin, Document):

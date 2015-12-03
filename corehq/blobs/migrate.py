@@ -26,16 +26,13 @@ models' attachments to the blob database:
    `_attachments` property to use `blobs` instead (this is more than
    a simple find and replace; see `corehq.blobs.mixin` for details).
 
-2. Add new `BlobMixin` models to the list of doc types in
-   `corehq/pillow/blobs.py`: `BlobDeletionPillow.doc_types`
-
-3. Add a `Migrator` instance to the list of `MIGRATIONS` in
+2. Add a `Migrator` instance to the list of `MIGRATIONS` in
    `corehq/blobs/migrate.py`. It will look something like
    `Migrator("<your_slug>", [<list of new BlobMixin couch models>])`.
    Don't forget to add a test to verify that your migration actually
    works.
 
-4. Use the `makemigrations` management command to create a new
+3. Use the `makemigrations` management command to create a new
    migration:
    ```
    ./manage.py makemigrations --empty blobs
@@ -50,7 +47,8 @@ models' attachments to the blob database:
    `from corehq.blobs.migrate import assert_migration_complete`
    at the top of the file.
 
-5. Run tests and test your migrations.
+4. Make sure the management command gets run on prod sometime after the
+   your new migrations are deployed.
 
 That's it, you're done!
 """

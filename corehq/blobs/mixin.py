@@ -18,6 +18,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class BlobMeta(DocumentSchema):
+    id = StringProperty()
     content_type = StringProperty()
     content_length = IntegerProperty()
     digest = StringProperty()
@@ -52,9 +53,10 @@ class BlobMixin(Document):
         if not self.migrating_blobs_from_couch or not self._attachments:
             return self.external_blobs
         value = {name: BlobMeta(
-            content_length=info["length"],
-            content_type=info["content_type"],
-            digest=info["digest"],
+            id=None,
+            content_length=info.get("length", None),
+            content_type=info.get("content_type", None),
+            digest=info.get("digest", None),
         ) for name, info in self._attachments.iteritems()}
         value.update(self.external_blobs)
         return value
@@ -76,13 +78,14 @@ class BlobMixin(Document):
         elif isinstance(content, bytes):
             content = StringIO(content)
 
-        # do we need to worry about BlobDB reading beyond content_length?
         bucket = self._blobdb_bucket()
-        result = db.put(content, name, bucket)
+        # do we need to worry about BlobDB reading beyond content_length?
+        info = db.put(content, name, bucket)
         self.external_blobs[name] = BlobMeta(
+            id=info.name,
             content_type=content_type,
-            content_length=result.length,
-            digest=result.digest,
+            content_length=info.length,
+            digest=info.digest,
         )
         if self.migrating_blobs_from_couch and self._attachments:
             self._attachments.pop(name, None)
@@ -97,8 +100,9 @@ class BlobMixin(Document):
         """
         db = get_blob_db()
         try:
-            blob = db.get(name, self._blobdb_bucket())
-        except NotFound:
+            meta = self.external_blobs[name]
+            blob = db.get(meta.id, self._blobdb_bucket())
+        except (KeyError, NotFound):
             if self.migrating_blobs_from_couch:
                 return super(BlobMixin, self).fetch_attachment(name, stream=stream)
             raise ResourceNotFound(u"{model} attachment: {name!r}".format(
@@ -117,12 +121,14 @@ class BlobMixin(Document):
         return body
 
     def delete_attachment(self, name):
-        if self.migrating_blobs_from_couch:
-            deleted = super(BlobMixin, self).delete_attachment(name)
+        if self.migrating_blobs_from_couch and self._attachments:
+            deleted = bool(self._attachments.pop(name, None))
         else:
             deleted = False
-        self.external_blobs.pop(name, None)
-        return get_blob_db().delete(name, self._blobdb_bucket()) or deleted
+        meta = self.external_blobs.pop(name, None)
+        if meta is None:
+            return deleted
+        return get_blob_db().delete(meta.id, self._blobdb_bucket()) or deleted
 
     def atomic_blobs(self):
         """Return a context manager to atomically save doc + blobs
@@ -140,15 +146,20 @@ class BlobMixin(Document):
         def atomic_blobs_context():
             if self._id is None:
                 self._id = self.get_db().server.next_uuid()
-            non_atomic_blobs = set(self.blobs)
+            non_atomic_blobs = dict(self.blobs)
+            old_external_blobs = dict(self.external_blobs)
+            old_attachments = dict(self._attachments) if self._attachments else None
             try:
                 yield
                 self.save()
             except:
                 typ, exc, tb = sys.exc_info()
-                for name in list(self.blobs):
-                    if name not in non_atomic_blobs:
+                # list blobs items to avoid dict-changed-during-iteration error
+                for name, meta in list(self.blobs.iteritems()):
+                    if meta is not non_atomic_blobs.get(name):
                         self.delete_attachment(name)
+                self._attachments = old_attachments
+                self.external_blobs = old_external_blobs
                 raise typ, exc, tb
         return atomic_blobs_context()
 
