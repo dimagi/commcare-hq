@@ -21,24 +21,29 @@ class Command(LabelCommand):
             with codecs.open(less_file, 'r', 'utf-8') as fd:
                 content = fd.read()
                 if content is not None:
-                    B3_REGEX = r"@\{b3-import-[a-z]+-[a-z]+\}"
-                    p = re.search(B3_REGEX, content)
-                    if p is not None:
-                        path_def = p.group(0)
-                        path_file = path_def.split('-')[-2]
-                        new_path = settings.LESS_B3_PATHS.get(path_file)
-                        if new_path is not None:
-                            print ("[CORRECTING] %(f_name)s path in %(less_file)s: "
-                                   "%(new_path)s" % {
-                                       'f_name': path_file,
-                                       'less_file': less_file,
-                                       'new_path': new_path,
-                                   })
-                            content = re.sub(B3_REGEX, new_path, content)
+                    BOWER_PATH =  '../../../../../../bower_components'
+                    if BOWER_PATH in content:
+                        print("Updated less @imports in {}".format(less_file))
+                        content = content.replace(BOWER_PATH, '../..')
+                    else:
+                        B3_REGEX = r"@\{b3-import-[a-z]+-[a-z]+\}"
+                        p = re.search(B3_REGEX, content)
+                        if p is not None:
+                            path_def = p.group(0)
+                            path_file = path_def.split('-')[-2]
+                            new_path = settings.LESS_B3_PATHS.get(path_file)
+                            if new_path is not None:
+                                print ("[CORRECTING] %(f_name)s path in %(less_file)s: "
+                                       "%(new_path)s" % {
+                                           'f_name': path_file,
+                                           'less_file': less_file,
+                                           'new_path': new_path,
+                                       })
+                                content = re.sub(B3_REGEX, new_path, content)
+                            else:
+                                content = None
                         else:
                             content = None
-                    else:
-                        content = None
             if content is not None:
                 with open(less_file, 'w') as fd:
                     fd.write(content)
