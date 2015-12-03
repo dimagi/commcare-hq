@@ -93,7 +93,7 @@ class ServiceAvailabilityTestMixIn(object):
             dod=self.valid_dod,
         )
         row = MockCaseRow(case, self.report, data_provider)
-        self.assertEqual(True, self.get_condition(row))
+        self.assertEqual(False, self.get_condition(row))
 
     def test_service_unavailable_partial(self):
         date = add_months_to_date(self.report_date, -2)
