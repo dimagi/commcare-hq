@@ -262,10 +262,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 data_source.set_order_by(
                     [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
                 )
-            else:
-                # Use defined sort expression initially
-                data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
-
             total_records = data_source.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:
