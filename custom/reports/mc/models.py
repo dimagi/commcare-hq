@@ -7,8 +7,6 @@ import fluff
 from corehq.fluff.calculators import xform as xcalculators
 from fluff.filters import NOTFilter, ANDFilter, ORFilter
 from fluff.models import SimpleCalculator
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
-from pillowtop.pillow.interface import ConstructedPillow
 
 ADULT_REGISTRATION_XMLNS = 'http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2'
 ADULT_FOLLOWUP_XMLNS = 'http://openrosa.org/formdesigner/af5f05c6c5389959335491450381219523e4eaff'
