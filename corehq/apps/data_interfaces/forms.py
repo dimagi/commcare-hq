@@ -1,6 +1,7 @@
 import json
 from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
@@ -114,6 +115,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         required=True,
     )
     server_modified_boundary = forms.IntegerField(
+        label=ugettext_lazy("enter number of days"),
         required=True,
     )
     conditions = forms.CharField(
@@ -182,6 +184,22 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 Field(
                     'case_type',
                     ng_model='case_type',
+                ),
+                hqcrispy.B3MultiField(
+                    _("Close Case"),
+                    Div(
+                        InlineField(
+                            'server_modified_boundary',
+                            ng_model='server_modified_boundary',
+                        ),
+                        css_class='col-sm-6',
+                    ),
+                    Div(
+                        HTML(_("<p>days after the case was last modified</p>")),
+                        css_class='col-sm-6',
+                    ),
+                    label_class=self.helper.label_class,
+                    field_class='col-sm-8 col-md-6',
                 ),
             ),
             Fieldset(
