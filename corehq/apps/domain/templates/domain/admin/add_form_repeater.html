@@ -18,23 +18,23 @@
 
                 $.post("{% url "test_repeater" domain %}", data, function(resp) {
                     var jsonResp = JSON.parse(response);
-                    $testLabel.removeClass("hide label-danger label-success");
+                    $testResult.removeClass("hide label-danger label-success");
                     if (jsonResp.status) {
                         msg = jsonResp.status + ": " + jsonResp.response;
                     } else {
                         msg = jsonResp.response;
                     }
                     if (jsonResp.success) {
-                        $testLabel.addClass("label-success");
-                        $testLabel.text("{% trans 'Success! Response is' %}: " + msg);
+                        $testResult.addClass("label-success");
+                        $testResult.text("{% trans 'Success! Response is' %}: " + msg);
                     } else {
-                        $testLabel.addClass("label-danger");
-                        $testLabel.text("{% trans 'Failed! Response is' %}: " + msg);
+                        $testResult.addClass("label-danger");
+                        $testResult.text("{% trans 'Failed! Response is' %}: " + msg);
                     }
                 });
             });
             $('#id_url').after($testLinkButton);
-            $testLinkButton.after($testLabel.addClass('hide'));
+            $testLinkButton.after($testResult.addClass('hide'));
             $('#id_url').change(function () {
                 if ($(this).val()) {
                     $testLinkButton.removeClass('hide');
