@@ -140,6 +140,18 @@ class B3MultiField(LayoutObject):
         return errors
 
 
+class MultiInlineField(InlineField):
+    """
+    An InlineField to be used within a B3MultiField.
+
+    (Bootstrap 3 Crispy's InlineField adds the form-group class to
+    the field's containing div, which is redundant because
+    B3MultiField adds form-group at a higher level, and that makes
+    the field not render properly.)
+    """
+    template = 'style/crispy/multi_inline_field.html'
+
+
 class CrispyTemplate(object):
 
     def __init__(self, template, context):
