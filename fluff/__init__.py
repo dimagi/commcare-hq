@@ -701,8 +701,7 @@ class FluffPillow(PythonPillow):
     # see explanation in IndicatorDocument for how this is used
     deleted_types = ()
 
-    def __init__(self, chunk_size=None, checkpoint=None):
-        # the arguments to this function are just for tests.
+    def __init__(self, chunk_size=None, checkpoint=None, change_feed=None):
         # explicitly check against None since we want to pass chunk_size=0 through
         chunk_size = chunk_size if chunk_size is not None else PYTHONPILLOW_CHUNK_SIZE
         # fluff pillows should default to SQL checkpoints
@@ -710,6 +709,7 @@ class FluffPillow(PythonPillow):
         super(FluffPillow, self).__init__(
             chunk_size=chunk_size,
             checkpoint=checkpoint,
+            change_feed=change_feed,
         )
 
     @classmethod
@@ -754,18 +754,7 @@ class FluffPillow(PythonPillow):
             else:
                 return None
 
-        indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
-
-        try:
-            current_indicator = self.indicator_class.get(indicator_id)
-        except ResourceNotFound:
-            current_indicator = None
-
-        if not current_indicator:
-            indicator = self.indicator_class(_id=indicator_id)
-        else:
-            indicator = current_indicator
-
+        indicator = _get_indicator_doc_from_class_and_id(self.indicator_class, doc.get_id)
         if not self._is_doc_type_deleted_match(doc.doc_type):
             indicator.calculate(doc)
         else:
@@ -800,6 +789,15 @@ class FluffPillow(PythonPillow):
             diff=diff,
             backend=backend
         )
+
+
+def _get_indicator_doc_from_class_and_id(indicator_class, doc_id):
+    indicator_id = '%s-%s' % (indicator_class.__name__, doc_id)
+    try:
+        return indicator_class.get(indicator_id)
+    except ResourceNotFound:
+        return indicator_class(_id=indicator_id)
+
 
 try:
     # make sure this module gets called, as it is auto-registering
