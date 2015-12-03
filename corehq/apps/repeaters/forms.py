@@ -46,12 +46,33 @@ class GenericRepeaterForm(forms.Form):
                 choices=self.formats,
             )
 
-        self.form_fields.extend(['url', twbscrispy.PrependedText('use_basic_auth', ''), 'username', 'password'])
-
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        self.form_fields.extend([
+            'url',
+            crispy.Div(
+                crispy.Div('', css_class=self.helper.label_class),
+                crispy.Div(
+                    crispy.Div(
+                        css_id='test-forward-result',
+                        css_class='bg-success',
+                    ),
+                    twbscrispy.StrictButton(
+                        _('Test Link'),
+                        type='button',
+                        css_class='btn btn-info test-forward-link hide',
+                    ),
+                    css_class=self.helper.field_class,
+                ),
+                css_class='form-group'
+            ),
+            twbscrispy.PrependedText('use_basic_auth', ''),
+            'username',
+            'password'
+        ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Forwarding Settings',

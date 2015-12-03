@@ -7,9 +7,8 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function() {
-            var $testLinkButton = $('<a style="margin-left: 5px;" class="btn btn-info hide" href="#" />'),
-                     $testLabel = $('<span style="margin-left: 5px;" class="label" />');
-            $testLinkButton.text("{% trans 'Test Link' %}");
+            var $testLinkButton = $('#test-forward-link'),
+                $testResult = $('#test-forward-result');
             $testLinkButton.click(function () {
                 var url = $("#id_url").val(),
                     format = $("#id_format").val(),
