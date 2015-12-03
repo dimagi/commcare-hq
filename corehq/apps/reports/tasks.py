@@ -56,6 +56,7 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 
+from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
 from .models import (
     FormExportSchema,
@@ -183,8 +184,7 @@ def monthly_reports():
 
 @periodic_task(run_every=crontab(hour=[22], minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def saved_exports():
-    for group_config in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False,
-                                                        include_docs=True).all():
+    for group_config in get_all_hq_group_export_configs():
         export_for_group_async.delay(group_config, 'couch')
 
 
