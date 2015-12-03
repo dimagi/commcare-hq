@@ -97,7 +97,10 @@ class FilesystemBlobDB(object):
 
     @staticmethod
     def get_unique_name(basename):
-        prefix = basename if SAFENAME.match(basename) else "unsafe"
+        if SAFENAME.match(basename) and "/" not in basename:
+            prefix = basename
+        else:
+            prefix = "unsafe"
         return prefix + "." + uuid4().hex
 
     def get_path(self, name=None, bucket=DEFAULT_BUCKET):

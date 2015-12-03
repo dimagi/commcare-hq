@@ -95,6 +95,15 @@ class TestFilesystemBlobDB(TestCase):
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_unsafe_attachment_name(self):
+        name = "test/1"  # name with directory separator
+        bucket = join("doctype", "8cd98f0")
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(info.name.startswith("unsafe."), info.name)
+        path = join(self.rootdir, bucket, info.name)
+        with open(path, "rb") as fh:
+            self.assertEqual(fh.read(), b"content")
+
 
 @generate_cases([
     ("test.1", "\u4500.1"),
