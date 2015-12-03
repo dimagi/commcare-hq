@@ -61,7 +61,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
-from django_prbac.utils import has_privilege
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -91,6 +90,10 @@ class ExportsPermissionsMixin(object):
     @property
     def has_edit_permissions(self):
         return self.request.couch_user.can_edit_data()
+
+    @property
+    def has_view_permissions(self):
+        return self.request.couch_user.can_view_reports()
 
     @property
     def has_deid_view_permissions(self):
@@ -396,6 +399,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         if not (self.has_edit_permissions
+                or self.has_view_permissions
                 or self.has_deid_view_permissions):
             raise Http404()
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
@@ -494,11 +498,11 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         elif self.export_id:
             exports = [self.get_export_schema(self.export_id)]
 
-        # check deid if the user has readonly permissions
-        if not self.has_edit_permissions:
-            if not self.has_deid_view_permissions:
+        if not self.has_view_permissions:
+            if self.has_deid_view_permissions:
+                exports = filter(lambda x: x.is_safe, exports)
+            else:
                 raise Http404()
-            exports = filter(lambda x: x.is_safe, exports)
 
         # if there are no exports, this page doesn't exist
         if not exports:
@@ -832,8 +836,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions or (self.is_deid
-                                              and self.has_deid_view_permissions)):
+        if not (self.has_edit_permissions or self.has_view_permissions):
             raise Http404()
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 

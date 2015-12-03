@@ -57,7 +57,7 @@ def default(request, domain):
 
 
 def default_data_view_url(request, domain):
-    if request.couch_user.can_edit_data():
+    if request.couch_user.can_view_reports():
         from corehq.apps.export.views import FormExportListView
         return reverse(FormExportListView.urlname, args=[domain])
 
