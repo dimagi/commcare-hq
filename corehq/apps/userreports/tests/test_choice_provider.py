@@ -7,6 +7,8 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
     ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider, \
     OwnerChoiceProvider
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.util import normalize_username
 
 
 class SearchableChoice(Choice):
@@ -111,7 +113,6 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         cls.domain = 'location-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
         bootstrap_location_types(cls.domain)
-        cls.choice_provider = LocationChoiceProvider(report, None)
 
         location_code_name_pairs = (
             ('cambridge_ma', 'Cambridge'),
@@ -127,6 +128,7 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             choices.append(SearchableChoice(location.location_id, location.sql_location.display_name,
                                             searchable_text=[location_code, location_name]))
 
+        cls.choice_provider = LocationChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
 
     @classmethod
@@ -147,8 +149,32 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     def setUpClass(cls):
         cls.domain = 'user-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
+
+        def make_mobile_worker(username):
+            user = CommCareUser(username=normalize_username(username, cls.domain), domain=cls.domain)
+            user.save()
+            return user
+
+        def make_web_user(email):
+            user = WebUser(username=email, domain=cls.domain)
+            user.save()
+            return user
+        users = [
+            make_mobile_worker('bernice'),
+            make_mobile_worker('dennis'),
+            make_mobile_worker('elizabeth'),
+            make_web_user('candice@example.com'),
+            make_mobile_worker('albert'),
+        ]
+        users.sort(key=lambda user: user.username)
+        choices = [
+            SearchableChoice(
+                user.get_id, user.username,
+                searchable_text=[user.username, user.last_name, user.first_name])
+            for user in users
+        ]
         cls.choice_provider = UserChoiceProvider(report, None)
-        cls.static_choice_provider = StaticChoiceProvider([])
+        cls.static_choice_provider = StaticChoiceProvider(choices)
 
     def test_query_search(self):
         pass
