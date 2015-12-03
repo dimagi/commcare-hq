@@ -69,7 +69,6 @@ class BaseStripePaymentHandler(object):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
-
     def update_payment_information(self, account):
         account.last_payment_method = LastPayment.CC_ONE_TIME
         account.pre_or_post_pay = PreOrPostPay.POSTPAY
@@ -344,7 +343,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             currency=settings.DEFAULT_CURRENCY,
             description="Payment for %s" % self.cost_item_name,
         )
-
 
     def update_payment_information(self, account):
         account.last_payment_method = LastPayment.CC_ONE_TIME

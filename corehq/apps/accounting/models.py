@@ -1011,9 +1011,9 @@ class Subscription(models.Model):
         default=ProBonoStatus.NO,
     )
     funding_source = models.CharField(
-        max_length = 25,
-        choices = FundingSource.CHOICES,
-        default = FundingSource.CLIENT
+        max_length=25,
+        choices=FundingSource.CHOICES,
+        default=FundingSource.CLIENT
     )
     last_modified = models.DateTimeField(auto_now=True)
 
