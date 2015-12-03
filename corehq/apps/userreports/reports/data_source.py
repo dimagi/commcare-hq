@@ -196,6 +196,7 @@ class ConfigurableReportDataSource(SqlData):
                     self.column_configs[0].column_id,
                     next(x.itervalues())
                 ))
+            return data
         except (SortConfigurationError, TypeError):
             # if the data isn't sortable according to the report spec
             # just return the data in the order we got it
