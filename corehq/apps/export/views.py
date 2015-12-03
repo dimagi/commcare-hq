@@ -14,6 +14,7 @@ from django.utils.safestring import mark_safe
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
@@ -68,7 +69,24 @@ from soil.util import get_download_context
 
 class ExportsPermissionsMixin(object):
     """For mixing in with a subclass of BaseDomainView
+
+    Users need to have edit permissions to create or update exports
+    Users need the "view reports" permission to download exports
+    The DEIDENTIFIED_DATA privilege is a pro-plan feature, and without it,
+        users should not be able to create, update, or download deid exports.
+    There are some users with access to a specific DeidExportReport.  If these
+        users do not have the "view reports" permission, they should only be
+        able to access deid reports.
     """
+
+    @staticmethod
+    def user_can_view_deid_exports(domain, couch_user):
+        return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
+                and couch_user.has_permission(
+                    domain,
+                    get_permission_name(Permissions.view_report),
+                    data='corehq.apps.reports.standard.export.DeidExportReport'
+                ))
 
     @property
     def has_edit_permissions(self):
