@@ -359,7 +359,7 @@
     }, 
     "MalariaConsortiumFluffPillow": {
         "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
+        "change_feed_type": "KafkaChangeFeed", 
         "checkpoint_id": "fluff.MalariaConsortiumFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
