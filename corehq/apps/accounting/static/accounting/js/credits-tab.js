@@ -1,5 +1,5 @@
 var $form = $('#credit-form');
-if ($form.length) {
+//if ($form.length) {
     var CreditFormModel = function () {
         var self = this;
         self.rateType = ko.observable("");
@@ -12,5 +12,6 @@ if ($form.length) {
     };
 
     var creditFormModel = new CreditFormModel();
-    ko.applyBindings(creditFormModel, $form.get(0));
-}
+    //ko.applyBindings(creditFormModel, $form.get(0));
+    $form.koApplyBindings(creditFormModel);
+//}
