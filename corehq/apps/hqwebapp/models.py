@@ -588,11 +588,6 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
-    def can_view_reports(self):
-        return self.couch_user.can_view_reports()
-
-    @property
-    @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_export_data())
@@ -616,7 +611,7 @@ class ProjectDataTab(UITab):
         }
 
         export_data_views = []
-        if self.can_edit_commcare_data:
+        if self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,
                 CaseExportListView,
@@ -635,11 +630,11 @@ class ProjectDataTab(UITab):
                                    args=(self.domain,)),
                     'show_in_dropdown': True,
                     'icon': 'icon icon-list-alt fa fa-list-alt',
-                    'subpages': [
+                    'subpages': filter(None, [
                         {
                             'title': CreateCustomFormExportView.page_title,
                             'urlname': CreateCustomFormExportView.urlname,
-                        },
+                        } if self.can_edit_commcare_data else None,
                         {
                             'title': BulkDownloadFormExportView.page_title,
                             'urlname': BulkDownloadFormExportView.urlname,
@@ -651,8 +646,8 @@ class ProjectDataTab(UITab):
                         {
                             'title': EditCustomFormExportView.page_title,
                             'urlname': EditCustomFormExportView.urlname,
-                        },
-                    ]
+                        } if self.can_edit_commcare_data else None,
+                    ])
                 },
                 {
                     'title': CaseExportListView.page_title,
@@ -660,11 +655,11 @@ class ProjectDataTab(UITab):
                                    args=(self.domain,)),
                     'show_in_dropdown': True,
                     'icon': 'icon icon-share fa fa-share-square-o',
-                    'subpages': [
+                    'subpages': filter(None, [
                         {
                             'title': CreateCustomCaseExportView.page_title,
                             'urlname': CreateCustomCaseExportView.urlname,
-                        },
+                        } if self.can_edit_commcare_data else None,
                         {
                             'title': DownloadCaseExportView.page_title,
                             'urlname': DownloadCaseExportView.urlname,
@@ -672,48 +667,8 @@ class ProjectDataTab(UITab):
                         {
                             'title': EditCustomCaseExportView.page_title,
                             'urlname': EditCustomCaseExportView.urlname,
-                        },
-                    ]
-                },
-            ])
-        elif self.can_view_reports:
-            from corehq.apps.export.views import (
-                FormExportListView,
-                CaseExportListView,
-                DownloadFormExportView,
-                DownloadCaseExportView,
-                BulkDownloadFormExportView,
-            )
-            export_data_views.extend([
-                {
-                    'title': FormExportListView.page_title,
-                    'url': reverse(FormExportListView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'icon': 'icon icon-list-alt fa fa-list-alt',
-                    'subpages': [
-                        {
-                            'title': BulkDownloadFormExportView.page_title,
-                            'urlname': BulkDownloadFormExportView.urlname,
-                        },
-                        {
-                            'title': DownloadFormExportView.page_title,
-                            'urlname': DownloadFormExportView.urlname,
-                        },
-                    ]
-                },
-                {
-                    'title': CaseExportListView.page_title,
-                    'url': reverse(CaseExportListView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'icon': 'icon icon-share fa fa-share-square-o',
-                    'subpages': [
-                        {
-                            'title': DownloadCaseExportView.page_title,
-                            'urlname': DownloadCaseExportView.urlname,
-                        },
-                    ]
+                        } if self.can_edit_commcare_data else None,
+                    ])
                 },
             ])
 
@@ -763,7 +718,7 @@ class ProjectDataTab(UITab):
 
     @property
     def dropdown_items(self):
-        if not self.can_edit_commcare_data:
+        if not self.can_export_data:
             return []
         from corehq.apps.export.views import (
             FormExportListView,
