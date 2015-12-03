@@ -21,7 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 class ConfigurableReportDataSource(SqlData):
 
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns):
+    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
         self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
@@ -35,7 +35,7 @@ class ConfigurableReportDataSource(SqlData):
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
         self._deferred_filters = {}
-        self._order_by = []
+        self._order_by = order_by
         self._aggregation_columns = aggregation_columns
         self._column_configs = OrderedDict()
         for column in columns:
