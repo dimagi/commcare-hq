@@ -1,3 +1,4 @@
+import sys
 from optparse import make_option
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
@@ -26,4 +27,6 @@ class Command(BaseCommand):
             migrator = MIGRATIONS[slug]
         except KeyError:
             raise CommandError(USAGE)
-        migrator.migrate(file)
+        total, skips = migrator.migrate(file)
+        if skips:
+            sys.exit(skips)

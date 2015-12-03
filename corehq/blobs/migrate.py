@@ -21,10 +21,13 @@ Complete each of the following steps when migrating a new set of couch
 models' attachments to the blob database:
 
 1. Add `BlobMixin` as a base class of each couch model with attachments
-   to be migrated to the blob database. The mixin must come before
-   `Document` in the list of base classes. Also adapt any uses of the
-   `_attachments` property to use `blobs` instead (this is more than
-   a simple find and replace; see `corehq.blobs.mixin` for details).
+   to be migrated to the blob database. For each new `BlobMixin` model:
+
+   a. The mixin must come before `Document` in the list of base classes.
+   b. Add `migrating_blobs_from_couch = True` to the class.
+   c. Adapt any uses of the `_attachments` property to use `blobs`
+      instead (this is more than a simple find and replace; see
+      `corehq.blobs.mixin` for details).
 
 2. Add a `Migrator` instance to the list of `MIGRATIONS` in
    `corehq/blobs/migrate.py`. It will look something like
@@ -32,8 +35,16 @@ models' attachments to the blob database:
    Don't forget to add a test to verify that your migration actually
    works.
 
-3. Use the `makemigrations` management command to create a new
-   migration:
+3. Deploy.
+
+4. Run the management command to migrate attachments out of couch:
+   `./manage.py run_blob_migration <your_slug>`
+
+5. Remove `migrating_blobs_from_couch = True` from each of your
+   `BlobMixin` models.
+
+6. Create a new django migration with the `makemigrations` management
+   command:
    ```
    ./manage.py makemigrations --empty blobs
    ```
@@ -47,8 +58,7 @@ models' attachments to the blob database:
    `from corehq.blobs.migrate import assert_migration_complete`
    at the top of the file.
 
-4. Make sure the management command gets run on prod sometime after the
-   your new migrations are deployed.
+7. Deploy.
 
 That's it, you're done!
 """
@@ -66,7 +76,7 @@ from corehq.dbaccessors.couchapps.all_docs import (
     get_all_docs_with_doc_types,
     get_doc_count_by_type,
 )
-from corehq.util.couch import IterDB
+from couchdbkit import ResourceConflict
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -92,6 +102,12 @@ It should be set to a real directory. Update localsettings.py and
 retry the migration.
 """
 
+MIGRATIONS_SKIPPED_WARNING = """
+WARNING {} documents were not migrated due to concurrent modification
+during migration. Run the migration again until you do not see this
+message.
+"""
+
 
 class Migrator(object):
 
@@ -115,6 +131,7 @@ def migrate(slug, doc_types, filename=None):
 
     :param doc_types: List of couch model classes with attachments to be migrated.
     :param filename: File path for intermediate storage of migration data.
+    :returns: A tuple `(<docs migrated>, <docs skipped>)`
     """
     couchdb = doc_types[0].get_db()
     assert all(t.get_db() is couchdb for t in doc_types[1:]), repr(doc_types)
@@ -127,35 +144,42 @@ def migrate(slug, doc_types, filename=None):
 
     print("Loading documents: {}...".format(", ".join(type_map)))
     total = 0
+    skips = 0
     with open(filename, 'w') as f:
         for doc in get_all_docs_with_doc_types(couchdb, list(type_map)):
             if doc.get("_attachments"):
                 f.write('{}\n'.format(json.dumps(doc)))
                 total += 1
 
-    with IterDB(couchdb) as iter_db, open(filename, 'r') as f:
+    with open(filename, 'r') as f:
         for n, line in enumerate(f):
             if n % 100 == 0:
                 print_status(n + 1, total)
             doc = json.loads(line)
             obj = type_map[doc["doc_type"]](doc)
-            for name, meta in obj._attachments.iteritems():
-                content = StringIO(meta["data"].decode("base64"))
-                obj.put_attachment(
-                    content, name, content_type=meta["content_type"])
-
-            # delete couch attachments - http://stackoverflow.com/a/2750476
-            obj._attachments.clear()
-
-            iter_db.save(obj.to_json())
+            try:
+                with obj.atomic_blobs():
+                    for name, meta in list(obj._attachments.iteritems()):
+                        content = StringIO(meta["data"].decode("base64"))
+                        obj.put_attachment(
+                            content, name, content_type=meta["content_type"])
+            except ResourceConflict:
+                # Do not migrate document if `atomic_blobs()` fails.
+                # This is an unlikely state, but could happen if the
+                # document is (externally) modified between when the
+                # migration fetches and processes the document.
+                skips += 1
 
     if dirpath is not None:
         os.remove(filename)
         os.rmdir(dirpath)
 
-    BlobMigrationState.objects.get_or_create(slug=slug)[0].save()
-    print("Migrated {} documents with attachments. Done.".format(total))
-    return total
+    print("Migrated {} documents with attachments.".format(total - skips))
+    if skips:
+        print(MIGRATIONS_SKIPPED_WARNING.format(skips))
+    else:
+        BlobMigrationState.objects.get_or_create(slug=slug)[0].save()
+    return total - skips, skips
 
 
 def print_status(num, total):
@@ -192,7 +216,9 @@ def assert_migration_complete(slug):
             raise MigrationNotComplete(message)
 
         # just do the migration if the number of documents is small
-        migrator.migrate()
+        migrated, skipped = migrator.migrate()
+        if skipped:
+            raise MigrationNotComplete(MIGRATIONS_SKIPPED_WARNING.format(skipped))
 
     def reverse(apps, schema_editor):
         # NOTE: this does not move blobs back into couch. It only
