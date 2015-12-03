@@ -66,6 +66,15 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
 
+def user_can_view_deid_exports(domain, couch_user):
+    return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
+            and couch_user.has_permission(
+                domain,
+                get_permission_name(Permissions.view_report),
+                data='corehq.apps.reports.standard.export.DeidExportReport'
+            ))
+
+
 class ExportsPermissionsMixin(object):
     """For mixing in with a subclass of BaseDomainView
 
@@ -78,15 +87,6 @@ class ExportsPermissionsMixin(object):
         able to access deid reports.
     """
 
-    @staticmethod
-    def user_can_view_deid_exports(domain, couch_user):
-        return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
-                and couch_user.has_permission(
-                    domain,
-                    get_permission_name(Permissions.view_report),
-                    data='corehq.apps.reports.standard.export.DeidExportReport'
-                ))
-
     @property
     def has_edit_permissions(self):
         return self.request.couch_user.can_edit_data()
@@ -98,7 +98,7 @@ class ExportsPermissionsMixin(object):
     @property
     def has_deid_view_permissions(self):
         # just a convenience wrapper around user_can_view_deid_exports
-        return self.user_can_view_deid_exports(self.domain, self.request.couch_user)
+        return user_can_view_deid_exports(self.domain, self.request.couch_user)
 
 
 class BaseExportView(BaseProjectDataView):

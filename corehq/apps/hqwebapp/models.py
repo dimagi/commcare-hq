@@ -717,9 +717,9 @@ class ProjectDataTab(UITab):
                 },
             ])
 
-        from corehq.apps.export.views import DeIdFormExportListView
-        if DeIdFormExportListView.user_can_view_deid_exports(self.domain, self.couch_user):
-            from corehq.apps.export.views import DownloadFormExportView
+        from corehq.apps.export.views import user_can_view_deid_exports
+        if user_can_view_deid_exports(self.domain, self.couch_user):
+            from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
             export_data_views.append({
                 'title': DeIdFormExportListView.page_title,
                 'url': reverse(DeIdFormExportListView.urlname,
