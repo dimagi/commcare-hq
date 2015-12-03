@@ -148,7 +148,11 @@ class BlobMixin(Document):
                 self._id = self.get_db().server.next_uuid()
             non_atomic_blobs = dict(self.blobs)
             old_external_blobs = dict(self.external_blobs)
-            old_attachments = dict(self._attachments) if self._attachments else None
+            if self.migrating_blobs_from_couch:
+                if self._attachments:
+                    old_attachments = dict(self._attachments)
+                else:
+                    old_attachments = None
             try:
                 yield
                 self.save()
@@ -158,8 +162,9 @@ class BlobMixin(Document):
                 for name, meta in list(self.blobs.iteritems()):
                     if meta is not non_atomic_blobs.get(name):
                         self.delete_attachment(name)
-                self._attachments = old_attachments
                 self.external_blobs = old_external_blobs
+                if self.migrating_blobs_from_couch:
+                    self._attachments = old_attachments
                 raise typ, exc, tb
         return atomic_blobs_context()
 
