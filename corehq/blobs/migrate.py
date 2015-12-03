@@ -127,8 +127,6 @@ MIGRATIONS = {m.slug: m for m in [
 def migrate(slug, doc_types, filename=None):
     """Migrate attachments from couchdb to blob storage
 
-    The blob storage backend is associated with the model class.
-
     :param doc_types: List of couch model classes with attachments to be migrated.
     :param filename: File path for intermediate storage of migration data.
     :returns: A tuple `(<docs migrated>, <docs skipped>)`

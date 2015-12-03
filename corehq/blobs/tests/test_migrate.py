@@ -52,7 +52,7 @@ class TestSavedExportsMigrations(TestCase):
         exp = SavedBasicExport.get(saved._id)
         self.assertNotEqual(exp._rev, saved._rev)
         self.assertEqual(len(exp.blobs), 1)
-        self.assertTrue(not exp._attachments, exp._attachments)
+        self.assertFalse(exp._attachments, exp._attachments)
         self.assertEqual(len(exp.external_blobs), 1)
         self.assertEqual(exp.get_payload(), payload)
 

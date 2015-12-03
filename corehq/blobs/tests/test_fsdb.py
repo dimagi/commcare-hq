@@ -67,13 +67,13 @@ class TestFilesystemBlobDB(TestCase):
         self.db.put(StringIO(b"content"), bucket=bucket)
         self.assertTrue(self.db.delete(bucket=bucket))
 
-        names = os.listdir(join(self.rootdir, "doctype"))
+        names = os.listdir(self.db.get_path(bucket="doctype"))
         self.assertNotIn("ys7v136b", names, "bucket not deleted")
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
         self.db.put(StringIO(b"content"), bucket=bucket)
-        path = join(self.rootdir, bucket)
+        path = self.db.get_path(bucket=bucket)
         self.assertTrue(isdir(path), path)
         self.assertTrue(os.listdir(path))
 
@@ -82,7 +82,7 @@ class TestFilesystemBlobDB(TestCase):
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
         self.assertTrue(info.name.startswith(name + "."), info.name)
-        path = join(self.rootdir, bucket, info.name)
+        path = self.db.get_path(info.name, bucket)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
 
@@ -91,7 +91,7 @@ class TestFilesystemBlobDB(TestCase):
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
         self.assertTrue(info.name.startswith("unsafe."), info.name)
-        path = join(self.rootdir, bucket, info.name)
+        path = self.db.get_path(info.name, bucket)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
 
@@ -100,7 +100,7 @@ class TestFilesystemBlobDB(TestCase):
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
         self.assertTrue(info.name.startswith("unsafe."), info.name)
-        path = join(self.rootdir, bucket, info.name)
+        path = self.db.get_path(info.name, bucket)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
 

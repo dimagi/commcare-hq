@@ -38,7 +38,6 @@ class FilesystemBlobDB(object):
         in the persistent storage medium. This may be delimited with
         file path separators. Nested directories will be created for
         each logical path element, so it must be a valid relative path.
-        Blob names within a single bucket must be unique.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `name` member that must be used to get or delete the blob. It
         should not be confused with the optional `basename` parameter.
