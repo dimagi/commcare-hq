@@ -7,13 +7,10 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
         <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2.css' %}" />
-        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
 
         {% compress js %}
             <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
         {% endcompress %}
 
         {# CodeMirror uses granular resources as a means of config #}
@@ -22,14 +19,6 @@
         <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
-
-        <script type="text/javascript">
-            $(function () {
-                $('select#databases').select2({
-                    placeholder: "All databases",
-                });
-            });
-        </script>
 
         <style>
             .CodeMirror {
@@ -44,7 +33,7 @@
                 <h1>Enter a doc id</h1>
                 <form class="form-inline" method="GET" action="">
                     <input name="id" class="form-control" type="search" style="width: 30em"/>
-                    <select id="databases" class="form-control" name="db_name" style="width: 12em">
+                    <select class="form-control" name="db_name" style="width: 12em">
                         <option value="">All Databases</option>
                         {% for db in all_databases %}
                             <option value="{{ db }}">{{ db }}</option>
