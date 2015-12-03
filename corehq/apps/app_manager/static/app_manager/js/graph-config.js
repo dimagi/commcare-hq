@@ -41,7 +41,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             self.fire("change");
         };
 
-console.log("doing stuff");
         // Load the modal with the copy
         var $modalDiv = $('<div data-bind="template: \'graph_configuration_modal\'"></div>');
 
