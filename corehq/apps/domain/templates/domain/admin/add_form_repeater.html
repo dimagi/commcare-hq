@@ -10,19 +10,21 @@
             var $testLinkButton = $('#test-forward-link'),
                 $testResult = $('#test-forward-result');
             $testLinkButton.click(function () {
-                var url = $("#id_url").val(),
-                    format = $("#id_format").val(),
-                    type = {{ repeater_type|to_javascript_string }},
-                    data = {url: url, repeater_type: type, format: format};
-                jQuery.post("{% url "test_repeater" domain %}", data, function(data) {
-                    json_res = JSON.parse(data);
+                var data = {
+                    url: $('#id_url').val(),
+                    format: $('#id_format').val(),
+                    type: {{ repeater_type|to_javascript_string }}
+                };
+
+                $.post("{% url "test_repeater" domain %}", data, function(resp) {
+                    var jsonResp = JSON.parse(response);
                     $testLabel.removeClass("hide label-danger label-success");
-                    if (json_res.status) {
-                        msg = json_res.status + ": " + json_res.response;
+                    if (jsonResp.status) {
+                        msg = jsonResp.status + ": " + jsonResp.response;
                     } else {
-                        msg = json_res.response;
+                        msg = jsonResp.response;
                     }
-                    if (json_res.success) {
+                    if (jsonResp.success) {
                         $testLabel.addClass("label-success");
                         $testLabel.text("{% trans 'Success! Response is' %}: " + msg);
                     } else {
