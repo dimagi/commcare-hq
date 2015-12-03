@@ -180,7 +180,10 @@ class ConfigurableReportDataSource(SqlData):
 
                     def sort_by(row):
                         value = row.get(sort_column_id, None)
-                        return value or get_default_sort_value(datatype)
+                        if value is not None:
+                            return value
+                        else:
+                            return get_default_sort_value(datatype)
 
                     data.sort(
                         key=sort_by,
