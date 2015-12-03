@@ -30,6 +30,7 @@ before_install:
   - "uname -a"
   - "lsb_release -a"
 install:
+  - "python -c 'import tempfile; print(tempfile.gettempdir())'"
   - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
   - "scripts/uninstall-requirements.sh"
