@@ -145,9 +145,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return self._locations_query(query).count()
 
     def get_choices_for_known_values(self, values):
-        return (
+        return [
             Choice(loc.location_id, loc.display_name) for loc in
-            SQLLocation.active_objects.filter(location_id__in=values))
+            SQLLocation.active_objects.filter(location_id__in=values)]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):

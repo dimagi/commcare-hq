@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
+from corehq.apps.locations.tests import delete_all_locations
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
@@ -7,15 +9,29 @@ from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvi
     OwnerChoiceProvider
 
 
+class SearchableChoice(Choice):
+    def __new__(cls, value, display, searchable_text=None):
+        self = super(SearchableChoice, cls).__new__(cls, value, display)
+        self.searchable_text = searchable_text or []
+        return self
+
+
 class StaticChoiceProvider(ChoiceProvider):
 
     def __init__(self, choices):
-        self.choices = choices
+        self.choices = [
+            choice if isinstance(choice, SearchableChoice)
+            else SearchableChoice(
+                choice.value, choice.display,
+                searchable_text=[choice.display]
+            )
+            for choice in choices
+        ]
         super(StaticChoiceProvider, self).__init__(None, None)
 
     def query(self, query_context):
         filtered_set = [choice for choice in self.choices
-                        if query_context.query in choice.display]
+                        if any(query_context.query in text for text in choice.searchable_text)]
         return filtered_set[query_context.offset:query_context.offset + query_context.limit]
 
     def get_choices_for_known_values(self, values):
@@ -84,19 +100,46 @@ class ChoiceProviderTestMixin(object):
         pass
 
 
-class LocationChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
+class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+    dependent_apps = [
+        'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',
+        'custom.logistics', 'custom.ilsgateway', 'custom.ewsghana', 'corehq.couchapps'
+    ]
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'location-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
+        bootstrap_location_types(cls.domain)
         cls.choice_provider = LocationChoiceProvider(report, None)
-        cls.static_choice_provider = StaticChoiceProvider([])
+
+        location_code_name_pairs = (
+            ('cambridge_ma', 'Cambridge'),
+            ('somerville_ma', 'Somerville'),
+            ('boston_ma', 'Boston'),
+        )
+        cls.locations = []
+        choices = []
+
+        for location_code, location_name in location_code_name_pairs:
+            location = make_loc(location_code, location_name, type='outlet', domain=cls.domain)
+            cls.locations.append(location)
+            choices.append(SearchableChoice(location.location_id, location.sql_location.display_name,
+                                            searchable_text=[location_code, location_name]))
+
+        cls.static_choice_provider = StaticChoiceProvider(choices)
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_locations()
 
     def test_query_search(self):
-        pass
+        self._test_query(ChoiceQueryContext('e', 2, page=0))
+        self._test_query(ChoiceQueryContext('e', 2, page=1))
 
     def test_get_choices_for_values(self):
-        pass
+        self._test_get_choices_for_values(
+            ['made-up', self.locations[0].location_id, self.locations[1].location_id])
 
 
 class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
