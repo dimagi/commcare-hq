@@ -213,7 +213,7 @@ def get_sms_autocomplete_context(request, domain):
     phone_users = CouchUser.view("users/phone_users_by_domain",
         startkey=[domain], endkey=[domain, {}], include_docs=True
     )
-    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
+    groups = Group.by_domain(domain)
 
     contacts = ["[send to all]"]
     contacts.extend(['%s [group]' % group.name for group in groups])
