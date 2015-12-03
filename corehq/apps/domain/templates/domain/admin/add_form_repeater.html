@@ -34,8 +34,6 @@
                     }
                 });
             });
-            $('#id_url').after($testLinkButton);
-            $testLinkButton.after($testResult.addClass('hide'));
             $('#id_url').change(function () {
                 if ($(this).val()) {
                     $testLinkButton.removeClass('hide');
