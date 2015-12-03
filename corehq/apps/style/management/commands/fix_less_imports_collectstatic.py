@@ -4,6 +4,9 @@ import re
 from django.core.management.base import LabelCommand
 from django.conf import settings
 
+BOWER_PATH = '../../../../../../bower_components'
+B3_REGEX = r"@\{b3-import-[a-z]+-[a-z]+\}"
+
 
 class Command(LabelCommand):
     help = ("check to see which files are using the b3 import variable"
@@ -21,12 +24,10 @@ class Command(LabelCommand):
             with codecs.open(less_file, 'r', 'utf-8') as fd:
                 content = fd.read()
                 if content is not None:
-                    BOWER_PATH =  '../../../../../../bower_components'
                     if BOWER_PATH in content:
                         print("Updated less @imports in {}".format(less_file))
                         content = content.replace(BOWER_PATH, '../..')
                     else:
-                        B3_REGEX = r"@\{b3-import-[a-z]+-[a-z]+\}"
                         p = re.search(B3_REGEX, content)
                         if p is not None:
                             path_def = p.group(0)
