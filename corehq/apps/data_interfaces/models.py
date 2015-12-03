@@ -79,7 +79,8 @@ class AutomaticUpdateRule(models.Model):
             elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
                 close = True
 
-        update_case(case.domain, case.get_id, case_properties=properties, close=close)
+        update_case(case.domain, case.get_id, case_properties=properties, close=close,
+            xmlns='http://commcarehq.org/hq_case_update_rule')
         return close
 
     def apply_rule(self, case, now):
