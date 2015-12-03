@@ -65,8 +65,6 @@ def default_data_view_url(request, domain):
     if DeIdFormExportListView.has_deid_permissions(request, domain):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
 
-    if request.couch_user.can_edit_data():
-        return reverse(EditDataInterfaceDispatcher.name(), args=[domain, CaseReassignmentInterface.slug])
     raise Http404()
 
 
