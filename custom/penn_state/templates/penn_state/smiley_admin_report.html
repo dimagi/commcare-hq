@@ -46,8 +46,9 @@
     </section>
 </article>
 
-    <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
-    <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+    {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
     <script src="{% static 'penn_state/js/charts.js' %}"></script>

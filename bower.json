@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "dependencies": {
     "jquery": "1.11.1",
-    "jquery-1.7.1-legacy": "jquery#1.7.1",
     "underscore": "1.6.0",
     "underscore-legacy": "underscore#1.4.4",
     "jquery-form": "3.45.0",

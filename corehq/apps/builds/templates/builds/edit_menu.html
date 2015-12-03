@@ -102,8 +102,9 @@
     </div>
     <div style="height:150px;"></div>
 
-    <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
-    <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+    {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
     <script type="text/javascript" src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
     <script type="text/javascript" src="{% static 'underscore-legacy/underscore-min.js' %}"></script>

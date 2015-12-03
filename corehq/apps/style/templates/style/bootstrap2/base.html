@@ -352,7 +352,7 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
+        {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
         <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
         {% block js %}
