@@ -1,6 +1,27 @@
-from corehq.apps.tour.models import StaticGuidedTour, GuidedTourStep
+import collections
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop as _
+from corehq.apps.tour.utils import tour_is_enabled_for_user
+
+
+GuidedTourStep = collections.namedtuple('GuidedTourStep', ['element', 'title', 'content'])
+
+
+class StaticGuidedTour(object):
+
+    def __init__(self, slug, steps):
+        self.slug = slug
+        if not isinstance(steps, list):
+            raise ValueError("steps should be a list of GuidedTourStep")
+        self.steps = steps
+
+    def get_tour_data(self):
+        return {
+            'steps': map(lambda s: dict(s._asdict()), self.steps),
+        }
+
+    def is_enabled(self, user):
+        return tour_is_enabled_for_user(self.slug, user)
 
 
 SIMPLE_NEW_APP = StaticGuidedTour('simple_new_app', [
