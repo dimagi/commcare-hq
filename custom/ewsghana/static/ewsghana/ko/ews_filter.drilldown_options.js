@@ -141,7 +141,7 @@ var EWSDrilldownOption = function (select, drilldown_map) {
 $.fn.ewsdrilldownOptionFilter = function (options) {
     this.each(function(i) {
         var viewModel = new EWSDrilldownOptionFilterControl(options);
-        ko.applyBindings(viewModel, $(this).get(i));
+        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
         viewModel.init();
     });
 };

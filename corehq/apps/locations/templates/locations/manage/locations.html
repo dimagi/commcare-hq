@@ -63,7 +63,7 @@ archive_loc = function(button, name, loc_id) {
         "archive_fn": archive_fn,
     };
     ko.cleanNode(archive_location_modal);
-    ko.applyBindings(modal_context, archive_location_modal);
+    $(archive_location_modal).koApplyBindings(modal_context);
     $(archive_location_modal).modal('show');
 
 }
@@ -87,7 +87,7 @@ remove_elements_after_action = function(button) {
 
 $(function() {
     var model = new LocationTreeViewModel(hierarchy);
-    ko.applyBindings(model, $('#location_tree')[0]);
+    $('#location_tree').koApplyBindings(model);
     model.load(locs, selected_loc);
 });
 

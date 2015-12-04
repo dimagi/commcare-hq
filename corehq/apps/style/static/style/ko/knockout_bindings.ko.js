@@ -507,7 +507,7 @@ ko.bindingHandlers.valueOrNoneUI = {
             'data-bind',
             "template: 'value-or-none-ui-template'"
         ).appendTo(element);
-        ko.applyBindings(helper, subElement.get(0));
+        subElement.koApplyBindings(helper);
         return {controlsDescendantBindings: true};
     }
 };
@@ -786,8 +786,8 @@ ko.bindingHandlers.paste = {
  *     </div>
  * </div>
  *
- * ko.applyBindings({}, $("#a"));
- * ko.applyBindings({}, $("#b"));
+ * $('#a').koApplyBindings({});
+ * $('#b').koApplyBindings({});
  *
  *
  * Taken straight from:

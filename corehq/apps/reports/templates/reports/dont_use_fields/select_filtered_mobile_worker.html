@@ -12,7 +12,7 @@
     $(function() {
         var groups = {{ group_options|JSON }},
                 users = {{ users|JSON }};
-        ko.applyBindings(new SelectFilteredMWGroup(users, '{{ individual }}', groups), $('#fieldset_{{ slug }}')[0]);
+        $('#fieldset_{{ slug }}').koApplyBindings(new SelectFilteredMWGroup(users, '{{ individual }}', groups));
     });
 
 </script>

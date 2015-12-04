@@ -15,7 +15,7 @@
     <script type="text/javascript">
         var reference_controller = new MultimediaReferenceController({{ references|JSON }}, {{ object_map|JSON }}, {{ totals|JSON }});
         reference_controller.render();
-        ko.applyBindings(reference_controller, $("#multimedia-reference-checker").get(0));
+        $("#multimedia-reference-checker").koApplyBindings(reference_controller);
 
 {# Commented out until search is fixed #}
 {#        var searchUrl = '{% url "hqmedia_search" domain app.get_id %}';#}

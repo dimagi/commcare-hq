@@ -19,9 +19,11 @@
 </div>
 <script type="text/javascript">
     $(function() {
-        ko.applyBindings({selected_individual: ko.observable('{{ individual|default:'' }}')}, $('#individual_select').parent().get(0));
+        $('#individual_select').parent().koApplyBindings({
+            selected_individual: ko.observable('{{ individual|default:'' }}'),
+        });
         $('#individual_select').combobox({
-            placeholder: '{{ default_option|safe }}'
+            placeholder: '{{ default_option|safe }}',
         });
     });
 </script>

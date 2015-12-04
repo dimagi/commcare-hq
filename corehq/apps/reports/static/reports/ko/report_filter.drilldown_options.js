@@ -78,7 +78,7 @@ var DrilldownOption = function (select, drilldown_map) {
 $.fn.drilldownOptionFilter = function (options) {
     this.each(function(i) {
         var viewModel = new DrilldownOptionFilterControl(options);
-        ko.applyBindings(viewModel, $(this).get(i));
+        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
         viewModel.init();
     });
 };

@@ -78,7 +78,7 @@
                  }
              }
              if ($('#delete_user_{{ couch_user.user_id }}').get(0)) {
-                 ko.applyBindings(new DeleteUserButtonModel(), $('#delete_user_{{ couch_user.user_id }}').get(0));
+                 $('#delete_user_{{ couch_user.user_id }}').koApplyBindings(new DeleteUserButtonModel());
              }
 
             // Event tracking

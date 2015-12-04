@@ -12,10 +12,10 @@ var DeletedFormsControl = function (options) {
 $.fn.advanceFormsOptions = function (options) {
     this.each(function(i) {
         var viewModel = new DeletedFormsControl(options);
-        ko.applyBindings(viewModel, $(this).get(i));
+        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
         var $css_class = $('.' + viewModel.css_class);
         for (var j = 0; j < $css_class.length; j++) {
-            ko.applyBindings(viewModel, $css_class.get(j));
+            $($css_class.get(j)).koApplyBindings(viewModel); // TODO: fix
         }
 
         viewModel.show.subscribe(function(newValue) {

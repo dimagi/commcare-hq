@@ -243,7 +243,7 @@
             self.show_pillow_dialog = function (operation) {
                 var element = $('#pillow_operation_modal').get(0);
                 ko.cleanNode(element);
-                ko.applyBindings(new PillowOperationViewModel(self, operation), element);
+                $(element).koApplyBindings(new PillowOperationViewModel(self, operation));
                 $('#pillow_operation_modal').modal({
                     backdrop: 'static',
                     keyboard: false,
@@ -336,17 +336,17 @@
 
         var autoRefresh = new AutoRefreshModel();
         $(function () {
-            ko.applyBindings(celeryViewModel, $("#celeryblock").get(0));
-            ko.applyBindings(couchViewModel, $("#couchblock").get(0));
-            ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
-            ko.applyBindings(dbComparisonsViewModel, $('#elastic-vs-couch').get(0));
+            $("#celeryblock").koApplyBindings(celeryViewModel);
+            $("#couchblock").koApplyBindings(couchViewModel);
+            $('#pillowtop-status').koApplyBindings(pillowtopViewModel);
+            $('#elastic-vs-couch').koApplyBindings(dbComparisonsViewModel);
             autoRefresh.addModel(celeryViewModel);
             autoRefresh.addModel(couchViewModel);
             autoRefresh.addModel(pillowtopViewModel);
             autoRefresh.addModel(dbComparisonsViewModel);
 
             autoRefresh.refreshAll();
-            ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
+            $('#autorefresh').koApplyBindings(autoRefresh);
         });
 
     </script>

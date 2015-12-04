@@ -26,7 +26,7 @@
                 return tag === viewModel.tagFilter();
             }
         );
-        ko.applyBindings(viewModel, $('#table-filters')[0]);
+        $('#table-filters').koApplyBindings(viewModel);
         var table = new HQReportDataTables({
             dataTableElem: dataTableElem,
             showAllRowsOption: true

@@ -23,8 +23,7 @@
         var caseManagementModel = new CaseManagement(OPTIONS);
         function applyBindings() {
             var $caseManagement = $('#case-management');
-            var element = $caseManagement[0];
-            ko.applyBindings(caseManagementModel, element);
+            $caseManagement.koApplyBindings(caseManagementModel);
 
             $caseManagement.find('a.select-all').click(function () {
                 $caseManagement.find('input.selected-commcare-case').attr('checked', true).change();

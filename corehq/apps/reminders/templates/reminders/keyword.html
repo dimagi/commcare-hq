@@ -11,7 +11,7 @@
 <script>
     $(function () {
         var kvm = new KeywordActionsViewModel({{ form.current_values|JSON }});
-        ko.applyBindings(kvm, $('#keywords-form').get(0));
+        $('#keywords-form').koApplyBindings(kvm);
         kvm.init();
     });
 </script>

@@ -5,7 +5,7 @@ $(function() {
     });
 
     model.load(settings);
-    ko.applyBindings(model, $("#settings").get(0));
+    $("#settings").koApplyBindings(model);
 });
 
 function CommtrackSettingsViewModel() {
