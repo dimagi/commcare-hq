@@ -5,6 +5,7 @@ from .calculators import Calculator
 from .const import *
 from .emitters import custom_date_emitter, custom_null_emitter, date_emitter, null_emitter
 from .indicators import FlatField, IndicatorDocument
+from .pillow import FluffPillow
 from .signals import indicator_document_updated
 import fluff.util
 
