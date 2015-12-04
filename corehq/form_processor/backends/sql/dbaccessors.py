@@ -160,6 +160,14 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
 
     @staticmethod
+    def update_form_problem_and_state(form):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'SELECT update_form_problem_and_state(%s, %s, %s)',
+                [form.form_id, form.problem, form.state]
+            )
+
+    @staticmethod
     @unit_testing_only
     def get_form_ids_in_domain(domain, user_id=None):
         with connection.cursor() as cursor:

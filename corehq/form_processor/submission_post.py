@@ -217,7 +217,7 @@ class SubmissionPost(object):
                 errors.append(error_message)
         if errors:
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
-            self.formdb.save_new_form(instance)
+            self.formdb.update_form_problem_and_state(instance)
         return errors
 
     @staticmethod

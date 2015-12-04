@@ -28,6 +28,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     def save_new_form(form):
         raise NotImplementedError
 
+    @abstractmethod
+    def update_form_problem_and_state(form):
+        raise NotImplementedError
+
 
 class FormAccessors(object):
     """
@@ -57,6 +61,9 @@ class FormAccessors(object):
 
     def save_new_form(self, form):
         self.db_accessor.save_new_form(form)
+
+    def update_form_problem_and_state(self, form):
+        self.db_accessor.update_form_problem_and_state(form)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):

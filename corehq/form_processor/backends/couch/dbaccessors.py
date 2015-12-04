@@ -25,6 +25,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     def save_new_form(form):
         form.save()
 
+    @staticmethod
+    def update_form_problem_and_state(form):
+        form.save()
+
 
 class CaseAccessorCouch(AbstractCaseAccessor):
 
