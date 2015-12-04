@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.es import GroupES, UserES
+from corehq.apps.es import GroupES
 from corehq.apps.es.filters import doc_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
@@ -162,6 +162,7 @@ class UserChoiceProvider(ChainableChoiceProvider):
         return user_es.run().total
 
     def get_choices_for_known_values(self, values):
+        from corehq.apps.es import UserES
         user_es = UserES().domain(self.domain).filter(doc_id(values))
         return self.get_choices_from_es_query(user_es)
 

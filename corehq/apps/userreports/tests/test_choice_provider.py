@@ -1,13 +1,15 @@
 from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase, TestCase
+import mock
 from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
+from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.locations.tests import delete_all_locations
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
     ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider, \
     OwnerChoiceProvider
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.users.util import normalize_username
 
 
@@ -144,37 +146,49 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             ['made-up', self.locations[0].location_id, self.locations[1].location_id])
 
 
+@mock.patch('corehq.apps.es.UserES', UserESFake)
 class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     @classmethod
     def setUpClass(cls):
         cls.domain = 'user-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
 
-        def make_mobile_worker(username):
-            user = CommCareUser(username=normalize_username(username, cls.domain), domain=cls.domain)
-            user.save()
+        def make_mobile_worker(username, domain=None):
+            domain = domain or cls.domain
+            user = CommCareUser(username=normalize_username(username, domain),
+                                domain=domain)
+            user.domain_membership = DomainMembership(domain=domain)
+            UserESFake.save_doc(user._doc)
             return user
 
         def make_web_user(email):
-            user = WebUser(username=email, domain=cls.domain)
-            user.save()
+            user = WebUser(username=email, domains=[cls.domain])
+            user.domain_memberships = [DomainMembership(domain=cls.domain)]
+            UserESFake.save_doc(user._doc)
             return user
+
         users = [
             make_mobile_worker('bernice'),
             make_mobile_worker('dennis'),
             make_mobile_worker('elizabeth'),
             make_web_user('candice@example.com'),
             make_mobile_worker('albert'),
+            # test that docs in other domains are filtered out
+            make_mobile_worker('aaa', domain='some-other-domain'),
         ]
         users.sort(key=lambda user: user.username)
         choices = [
             SearchableChoice(
-                user.get_id, user.username,
+                user.get_id, user.raw_username,
                 searchable_text=[user.username, user.last_name, user.first_name])
-            for user in users
+            for user in users if user.is_member_of(cls.domain)
         ]
         cls.choice_provider = UserChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
+
+    @classmethod
+    def tearDownClass(cls):
+        UserESFake.reset_docs()
 
     def test_query_search(self):
         pass
