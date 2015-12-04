@@ -1,15 +1,13 @@
 import logging
-from datetime import datetime
 from itertools import groupby
 
-from django.db import transaction, connection, InternalError
-from django.db.models import Prefetch
+from django.db import connection, InternalError
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    SupplyPointCaseMixin, CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
     case_transaction_adapter, case_index_adapter, case_attachment_adapter
 from corehq.util.test_utils import unit_testing_only
@@ -142,7 +140,10 @@ class FormAccessorSQL(AbstractFormAccessor):
             for unsaved_attachment in unsaved_attachments:
                     unsaved_attachment.form = form
         with connection.cursor() as cursor:
-            cursor.execute('SELECT form_pk FROM save_new_form_with_attachments(%s, %s)', [form, unsaved_attachments])
+            cursor.execute(
+                'SELECT form_pk FROM save_new_form_with_attachments(%s, %s)',
+                [form, unsaved_attachments]
+            )
             result = fetchone_as_namedtuple(cursor)
             form.id = result.form_pk
 
@@ -263,12 +264,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
-        return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions_for_rebuild(%s)', [case_id]))
+        return list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transactions_for_rebuild(%s)',
+            [case_id])
+        )
 
     @staticmethod
     def get_case_by_location(domain, location_id):
         try:
-            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_location_id(%s, %s)', [domain, location_id])[0]
+            return CommCareCaseSQL.objects.raw(
+                'SELECT * from get_case_by_location_id(%s, %s)',
+                [domain, location_id]
+            )[0]
         except IndexError:
             return None
 
