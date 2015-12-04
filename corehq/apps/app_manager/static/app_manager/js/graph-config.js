@@ -44,7 +44,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         // Load the modal with the copy
         var $modalDiv = $('<div data-bind="template: \'graph_configuration_modal\'"></div>');
 
-        ko.applyBindings(graphViewModelCopy, $modalDiv.get(0));
+        $modalDiv.koApplyBindings(graphViewModelCopy);
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
@@ -57,7 +57,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         self.graphViewModel.graphDisplayName(name);
     };
 
-    ko.applyBindings(self, self.ui.get(0));
+    self.ui.koApplyBindings(self);
     eventize(self);
 
     /**

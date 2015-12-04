@@ -25,6 +25,36 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.$httpBackend.flush();
             assert.isFalse(DnldExpData.currentScope.preparingExport);
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
+            var lastCallNum = analytics.usage.callCount - 1;
+            var userTypeCall = analytics.usage.getCall(lastCallNum - 1);
+            assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', "mobile"));
+            assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Regular"));
+        });
+
+        it('user type analytics', function () {
+            DnldExpData.createController([
+                DnldExpData.simpleFormExport
+            ], true);
+            var testUserTypes = ['mobile', 'demo', 'admin'];
+            DnldExpData.currentScope.formData.user_types = testUserTypes;
+            DnldExpData.currentScope.prepareExport();
+            DnldExpData.$httpBackend.flush();
+            assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Regular"));
+            var lastCallNum = analytics.usage.callCount - 1;
+            for (var i = 1; i < 4; i++) {
+                var userTypeCall = analytics.usage.getCall(lastCallNum - i);
+                assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', testUserTypes[testUserTypes.length - i]));
+            }
+        });
+
+        it('bulk form analytics', function () {
+            DnldExpData.createController([
+                DnldExpData.simpleFormExport,
+                DnldExpData.simpleFormExport
+            ], true);
+            DnldExpData.currentScope.prepareExport();
+            DnldExpData.$httpBackend.flush();
+            assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Bulk"));
         });
 
         it('start exportDownloadService', function () {
@@ -82,6 +112,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
                 assert.isTrue(DnldExpData.exportDownloadService.showDownloadStatus);
                 assert.isTrue(DnldExpData.currentScope.downloadInProgress);
                 assert.isNotNull(DnldExpData.exportDownloadService.downloadStatusData);
+                assert.isNotNull(DnldExpData.exportDownloadService.exportType);
 
                 // no error functions happened
                 assert.equal(DnldExpData.exportDownloadService._numErrors, 0);
@@ -96,6 +127,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
                 assert.isFalse(DnldExpData.exportDownloadService.showDownloadStatus);
                 assert.isFalse(DnldExpData.currentScope.downloadInProgress);
                 assert.isNull(DnldExpData.exportDownloadService.downloadStatusData);
+                assert.isNull(DnldExpData.exportDownloadService.exportType);
 
                 // this remains the same
                 assert.equal(DnldExpData.exportDownloadService._numErrors, 0);

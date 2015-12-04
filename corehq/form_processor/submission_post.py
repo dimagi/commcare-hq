@@ -1,8 +1,10 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+import contextlib
 import datetime
 import logging
+from collections import namedtuple
 
 from django.http import (
     HttpRequest,
@@ -15,6 +17,7 @@ import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.tzmigration import timezone_migration_in_progress
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
@@ -25,6 +28,12 @@ from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception
 from phonelog.utils import process_device_log
+
+
+CaseStockProcessingResult = namedtuple(
+    'CaseStockProcessingResult',
+    'case_result, case_models, stock_result, stock_models'
+)
 
 
 class SubmissionPost(object):
@@ -53,6 +62,7 @@ class SubmissionPost(object):
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
         self.interface = FormProcessorInterface(domain)
+        self.formdb = FormAccessors(domain)
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -114,7 +124,7 @@ class SubmissionPost(object):
         self._post_process_form(submitted_form)
 
         if submitted_form.is_submission_error_log:
-            self.interface.save_xform(submitted_form)
+            self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
             return response, None, []
 
@@ -125,11 +135,11 @@ class SubmissionPost(object):
                 process_device_log(self.domain, instance)
 
             elif instance.is_duplicate:
-                self.interface.save_xform(instance)
+                self.formdb.save_new_form(instance)
 
             elif not instance.is_error:
                 try:
-                    cases = self.process_xforms_for_cases(xforms)
+                    case_stock_result = self.process_xforms_for_cases(xforms)
                 except (IllegalCaseId, UsesReferrals, MissingProductId, PhoneDateValueError) as e:
                     self._handle_known_error(e, instance, xforms)
                 except Exception as e:
@@ -139,15 +149,38 @@ class SubmissionPost(object):
                     # this use case as if the edit "failed"
                     handle_unexpected_error(self.interface, instance, e)
                     raise
+                else:
+                    instance.initial_processing_complete = True
+                    self.save_processed_models(instance, xforms, case_stock_result)
+                    cases = case_stock_result.case_models
 
             errors = self.process_signals(instance)
-
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
 
+    def save_processed_models(self, instance, xforms, case_stock_result):
+        from casexml.apps.case.signals import case_post_save
+        with unfinished_submission(instance) as unfinished_submission_stub:
+            self.interface.save_processed_models(
+                instance,
+                xforms,
+                case_stock_result.case_models,
+                case_stock_result.stock_models
+            )
+
+            unfinished_submission_stub.saved = True
+            unfinished_submission_stub.save()
+
+            case_stock_result.case_result.commit_dirtiness_flags()
+            case_stock_result.stock_result.finalize()
+
+            for case in case_stock_result.case_models:
+                case_post_save.send(case.__class__, case=case)
+
+        case_stock_result.case_result.close_extensions()
+
     def process_xforms_for_cases(self, xforms):
         from casexml.apps.case.xform import get_and_check_xform_domain
-        from casexml.apps.case.signals import case_post_save
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
@@ -158,32 +191,15 @@ class SubmissionPost(object):
             case_result = process_cases_with_casedb(xforms, case_db)
             stock_result = process_stock(xforms, case_db)
 
-            now = datetime.datetime.utcnow()
-            unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-                xform_id=instance.form_id,
-                timestamp=now,
-                saved=False,
-                domain=domain,
-            )
-
-            # todo: this property is only used by the MVPFormIndicatorPillow
-            instance.initial_processing_complete = True
-
             cases = case_db.get_cases_for_saving(instance.received_on)
+            stock_models = stock_result.get_models_to_save()
 
-            self.interface.save_processed_models(instance, xforms, cases, stock_result.get_models_to_save())
-
-            unfinished_submission_stub.saved = True
-            unfinished_submission_stub.save()
-            case_result.commit_dirtiness_flags()
-            stock_result.finalize()
-            for case in cases:
-                case_post_save.send(case.__class__, case=case)
-
-        unfinished_submission_stub.delete()
-        case_result.close_extensions()
-
-        return cases
+        return CaseStockProcessingResult(
+            case_result=case_result,
+            case_models=cases,
+            stock_result=stock_result,
+            stock_models=stock_models
+        )
 
     def get_response(self):
         response, _, _ = self.run()
@@ -202,7 +218,7 @@ class SubmissionPost(object):
                 errors.append(error_message)
         if errors:
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
-            self.interface.save_xform(instance)
+            self.formdb.update_form_problem_and_state(instance)
         return errors
 
     @staticmethod
@@ -289,4 +305,17 @@ def handle_unexpected_error(interface, instance, e):
         u"for form {}: {}. "
         u"Error saved as {}"
     ).format(instance.orig_id, error_message, instance.form_id))
-    interface.save_xform(instance)
+    FormAccessors(interface.domain).save_new_form(instance)
+
+
+@contextlib.contextmanager
+def unfinished_submission(instance):
+    unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+        xform_id=instance.form_id,
+        timestamp=datetime.datetime.utcnow(),
+        saved=False,
+        domain=instance.domain,
+    )
+    yield unfinished_submission_stub
+
+    unfinished_submission_stub.delete()

@@ -44,7 +44,6 @@ class GroupGenerationCache(GenerationCache):
         "groups/by_user_type",
         "groups/by_name",
         "groups/all_groups",
-        "groups/by_domain",
         "users/by_group",
     ]
 
@@ -59,13 +58,12 @@ class UserRoleGenerationCache(GenerationCache):
 
 class ReportGenerationCache(GenerationCache):
     generation_key = '#gen#reports#'
-    doc_types = ['ReportConfig', 'HQGroupExportConfiguration', 'ReportNotification']
+    doc_types = ['ReportConfig', 'ReportNotification']
     views = [
         'reportconfig/configs_by_domain',
         'reportconfig/notifications_by_config',
         "reportconfig/user_notifications",
         "reportconfig/daily_notifications",
-        'groupexport/by_domain',
     ]
 
 

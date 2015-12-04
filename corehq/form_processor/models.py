@@ -24,7 +24,16 @@ from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
-from .exceptions import AttachmentNotFound
+from .exceptions import AttachmentNotFound, AccessRestricted
+
+XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
+XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
+XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
+
+CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
+CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
+CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
+CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 
 
 class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
@@ -88,8 +97,33 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
-    """An XForms SQL instance."""
+class DisabledDbMixin(object):
+    def save(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def save_base(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def delete(self, *args, **kwargs):
+        raise AccessRestricted('Direct object deletion disabled.')
+
+
+class RestrictedManager(models.Manager):
+    def get_queryset(self):
+        raise AccessRestricted('Only "raw" queries allowed')
+
+    def raw(self, raw_query, params=None, translations=None, using=None):
+        from django.db.models.query import RawQuerySet
+        if using is None:
+            using = self._db
+        return RawQuerySet(raw_query, model=self.model,
+                params=params, translations=translations,
+                using=using)
+
+
+class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+    objects = RestrictedManager()
+
     NORMAL = 0
     ARCHIVED = 1
     DEPRECATED = 2
@@ -104,8 +138,6 @@ class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, Abstra
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
-
-    hash_property = 'form_id'
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
@@ -249,8 +281,18 @@ class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, Abstra
         FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
 
+    def __unicode__(self):
+        return (
+            "XFormInstance("
+            "form_id='{f.form_id}', "
+            "domain='{f.domain}')"
+        ).format(f=self)
 
-class AbstractAttachment(models.Model):
+    class Meta:
+        db_table = XFormInstanceSQL_DB_TABLE
+
+
+class AbstractAttachment(DisabledDbMixin, models.Model):
     attachment_id = UUIDField(unique=True, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
@@ -276,13 +318,20 @@ class AbstractAttachment(models.Model):
 
 
 class XFormAttachmentSQL(AbstractAttachment):
+    objects = RestrictedManager()
+
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id',
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
+    class Meta:
+        db_table = XFormAttachmentSQL_DB_TABLE
 
-class XFormOperationSQL(models.Model):
+
+class XFormOperationSQL(DisabledDbMixin, models.Model):
+    objects = RestrictedManager()
+
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
 
@@ -294,6 +343,9 @@ class XFormOperationSQL(models.Model):
     @property
     def user(self):
         return self.user_id
+
+    class Meta:
+        db_table = XFormOperationSQL_DB_TABLE
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):
@@ -349,10 +401,10 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
-class CommCareCaseSQL(models.Model, RedisLockableMixIn,
+class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin):
-    hash_property = 'case_id'
+    objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
@@ -393,8 +445,9 @@ class CommCareCaseSQL(models.Model, RedisLockableMixIn,
         self.modified_by = value
 
     def soft_delete(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         self.deleted = True
-        self.save()
+        CaseAccessorSQL.save_case(self)
 
     @property
     def is_deleted(self):
@@ -499,16 +552,24 @@ class CommCareCaseSQL(models.Model, RedisLockableMixIn,
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+        db_table = CommCareCaseSQL_DB_TABLE
 
 
 class CaseAttachmentSQL(AbstractAttachment):
+    objects = RestrictedManager()
+
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
+    class Meta:
+        db_table = CaseAttachmentSQL_DB_TABLE
 
-class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
+
+class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
+    objects = RestrictedManager()
+
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
@@ -560,9 +621,12 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
         index_together = [
             ["domain", "referenced_id"],
         ]
+        db_table = CommCareCaseIndexSQL_DB_TABLE
 
 
-class CaseTransaction(models.Model):
+class CaseTransaction(DisabledDbMixin, models.Model):
+    objects = RestrictedManager()
+
     TYPE_FORM = 0
     TYPE_REBUILD_WITH_REASON = 1
     TYPE_REBUILD_USER_REQUESTED = 2
@@ -663,6 +727,7 @@ class CaseTransaction(models.Model):
     class Meta:
         unique_together = ("case", "form_id")
         ordering = ['server_date']
+        db_table = CaseTransaction_DB_TABLE
 
 
 class CaseTransactionDetail(JsonObject):

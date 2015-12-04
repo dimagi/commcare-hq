@@ -131,8 +131,8 @@ class FormProcessorInterface(object):
         assert len(all_domains) == 1, all_domains
         self.processor.hard_delete_case_and_forms(domain, case, xforms)
 
-    def deprecate_xform(self, existing_xform, new_xform):
-        return self.processor.deprecate_xform(existing_xform, new_xform)
+    def apply_deprecation(self, existing_xform, new_xform):
+        return self.processor.apply_deprecation(existing_xform, new_xform)
 
     def deduplicate_xform(self, xform):
         return self.processor.deduplicate_xform(xform)

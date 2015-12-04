@@ -40,11 +40,8 @@ class EditFormTest(TestCase, TestFileMixin):
     def test_basic_edit(self):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
-        yesterday = datetime.utcnow() - timedelta(days=1)
 
         xform = post_xform(original_xml, domain=self.domain)
-        xform.received_on = yesterday  # set this back in time to simulate an edit
-        self.interface.save_xform(xform)
 
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)

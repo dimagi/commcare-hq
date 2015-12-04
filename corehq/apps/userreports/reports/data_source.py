@@ -21,7 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 class ConfigurableReportDataSource(SqlData):
 
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns):
+    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
         self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
@@ -35,7 +35,7 @@ class ConfigurableReportDataSource(SqlData):
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
         self._deferred_filters = {}
-        self._order_by = []
+        self._order_by = order_by
         self._aggregation_columns = aggregation_columns
         self._column_configs = OrderedDict()
         for column in columns:
@@ -180,19 +180,23 @@ class ConfigurableReportDataSource(SqlData):
 
                     def sort_by(row):
                         value = row.get(sort_column_id, None)
-                        return value or get_default_sort_value(datatype)
+                        if value is not None:
+                            return value
+                        else:
+                            return get_default_sort_value(datatype)
 
                     data.sort(
                         key=sort_by,
                         reverse=is_descending
                     )
                 return data
-            # Otherwise sort by the first column
-            else:
+            # Otherwise sort by the first column (if the report has columns)
+            elif self.column_configs:
                 return sorted(data, key=lambda x: x.get(
                     self.column_configs[0].column_id,
                     next(x.itervalues())
                 ))
+            return data
         except (SortConfigurationError, TypeError):
             # if the data isn't sortable according to the report spec
             # just return the data in the order we got it

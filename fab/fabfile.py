@@ -895,7 +895,7 @@ def update_virtualenv():
         # but only the ones that are actually installed (checks pip freeze)
         sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
              user=env.sudo_user)
-        sudo('%s pip install --timeout 60 --requirement %s --requirement %s' % (
+        sudo('%s pip install --timeout 60 --quiet --requirement %s --requirement %s' % (
             cmd_prefix,
             posixpath.join(requirements, 'prod-requirements.txt'),
             posixpath.join(requirements, 'requirements.txt'),
@@ -1006,7 +1006,7 @@ def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py compress --force'.format(venv))
+        sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 

@@ -130,8 +130,13 @@ describe('DownloadProgressController', function() {
                     assert.isNull(DnldExpData.currentScope.dropboxUrl);
                     assert.isNull(DnldExpData.currentScope.downloadUrl);
                 });
+
+                it('test analytics', function () {
+                    DnldExpData.exportDownloadService.exportType = 'form';
+                    DnldExpData.currentScope.sendAnalytics();
+                    assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Saved"));
+                });
             });
         });
-
     });
 });
