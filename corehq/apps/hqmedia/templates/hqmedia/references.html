@@ -26,8 +26,7 @@
     </script>
     {% url "download_multimedia_zip" domain app.get_id as media_url%}
     {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
-    {% include 'app_manager/partials/download_async_modal_inline.html'
-        with element_id='multimedia-zip-modal' download_url=media_url%}
+    {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=media_url%}
 {% endblock %}
 
 {% block centered-content %}
@@ -48,7 +47,6 @@
     </div>
     <div class="row">
         <div class="span7">
-            <h2>{% trans "Manage Your Application's Media" %}</h2>
             {% if totals|length %}
                 <p>
                     {% blocktrans %}
@@ -56,13 +54,11 @@
                     {% endblocktrans %}
                 </p>
                 <p>
-                    {% blocktrans %}
-                        Alternatively, you can upload files in <strong>bulk</strong> in a ZIP file
-                    {% endblocktrans %}:
-                </p>
-                <p>
-                    <a href="{% url "hqmedia_bulk_upload" domain app.get_id %}" class="btn btn-inverse">
-                        <i class="icon icon-cloud-upload"></i> {% trans 'Go to Bulk Upload' %}
+                    {% trans 'Alternatively, you can' %}
+                    <a href="{% url "hqmedia_bulk_upload" domain app.get_id %}">
+                        {% blocktrans %}
+                            upload files in <strong>bulk</strong>.
+                        {% endblocktrans %}
                     </a>
                 </p>
             {% else %}
@@ -74,13 +70,12 @@
         <div class="span5">
             {% if totals|length %}
             <div class="alert alert-info">
-                <h3><i class="icon-cloud-download"></i> {% trans 'Download Multimedia' %}</h3>
                 <p>
                     <a class="btn btn-primary"
                         href="#multimedia-zip-modal"
                         data-toggle="modal"
                         onclick="download_application_zip()">
-                        <i class="icon-cloud-download"></i> {% trans 'Download ZIP' %}
+                        <i class="icon-download-alt"></i> {% trans 'Download ZIP' %}
                     </a>
                 </p>
                 <ul style="margin-top:.5em;" data-bind="foreach: totals">
