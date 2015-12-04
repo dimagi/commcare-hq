@@ -12,6 +12,7 @@ env:
     - COUCHDB_USER=""
     - COUCHDB_PW=""
     - TRAVIS_INSTALL="y"
+    - TEMPDIR=$HOME/tmp
   matrix:
     - MATRIX_TYPE=javascript BOWER=yes
     - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
@@ -30,8 +31,8 @@ before_install:
   - "uname -a"
   - "lsb_release -a"
 install:
-  - "python -c 'import tempfile; print(tempfile.gettempdir())'"
   - ".travis/misc-setup.sh"
+  - "python .travis/testtmp.py"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
   - "scripts/uninstall-requirements.sh"
   - "time (pip install --exists-action w -r requirements/requirements.txt --timeout 60)"
