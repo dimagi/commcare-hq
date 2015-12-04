@@ -6,6 +6,7 @@ import dimagi.utils.couch
 import uuidfield.fields
 import json_field.fields
 import corehq.form_processor.abstract_models
+from corehq.form_processor.utils.migration import migrate_sql_function
 
 
 class Migration(migrations.Migration):
@@ -250,5 +251,36 @@ class Migration(migrations.Migration):
             ],
             options=None,
             bases=None,
-        )
+        ),
+        migrate_sql_function('archive_unarchive_form'),
+        migrate_sql_function('case_modified_since'),
+        migrate_sql_function('check_form_exists'),
+        migrate_sql_function('deprecate_form'),
+        migrate_sql_function('get_case_attachment_by_name'),
+        migrate_sql_function('get_case_attachments'),
+        migrate_sql_function('get_case_by_id'),
+        migrate_sql_function('get_case_by_location_id'),
+        migrate_sql_function('get_case_form_ids'),
+        migrate_sql_function('get_case_ids_in_domain'),
+        migrate_sql_function('get_case_indices'),
+        migrate_sql_function('get_case_indices_reverse'),
+        migrate_sql_function('get_case_transactions'),
+        migrate_sql_function('get_case_transactions_for_rebuild'),
+        migrate_sql_function('get_cases_by_id'),
+        migrate_sql_function('get_form_attachment_by_name'),
+        migrate_sql_function('get_form_attachments'),
+        migrate_sql_function('get_form_by_id'),
+        migrate_sql_function('get_form_ids_in_domain'),
+        migrate_sql_function('get_form_operations'),
+        migrate_sql_function('get_forms_by_id'),
+        migrate_sql_function('get_forms_by_state'),
+        migrate_sql_function('get_multiple_cases_indices'),
+        migrate_sql_function('get_multiple_forms_attachments'),
+        migrate_sql_function('get_reverse_indexed_cases'),
+        migrate_sql_function('hard_delete_cases'),
+        migrate_sql_function('hard_delete_forms'),
+        migrate_sql_function('revoke_restore_case_transactions_for_form'),
+        migrate_sql_function('save_case_and_related_models'),
+        migrate_sql_function('save_new_form_with_attachments'),
+        migrate_sql_function('update_form_problem_and_state'),
     ]
