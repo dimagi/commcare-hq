@@ -3,7 +3,6 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script type="text/javascript" src="{% static 'accounting/ko/accounting.payment_method_handler.js' %}"></script>
     <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 {% endblock %}
