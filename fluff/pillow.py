@@ -1,10 +1,9 @@
 from couchdbkit import ResourceNotFound
 from dimagi.utils.read_only import ReadOnlyObject
-from . import IndicatorDocument
-from fluff.signals import BACKEND_SQL, BACKEND_COUCH
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import PythonPillow, PYTHONPILLOW_CHUNK_SIZE
-from .signals import indicator_document_updated
+from .indicators import IndicatorDocument
+from .signals import BACKEND_SQL, BACKEND_COUCH, indicator_document_updated
 
 
 class FluffPillow(PythonPillow):
