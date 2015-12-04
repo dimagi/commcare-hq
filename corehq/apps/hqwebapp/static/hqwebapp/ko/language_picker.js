@@ -43,7 +43,7 @@ var LanguagePickerViewModel = function (onSuccessFn) {
 $.fn.languagePicker = function (onSuccessFn) {
     this.each(function (i) {
         var viewModel = new LanguagePickerViewModel(onSuccessFn);
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
         viewModel.init();
     })
 };

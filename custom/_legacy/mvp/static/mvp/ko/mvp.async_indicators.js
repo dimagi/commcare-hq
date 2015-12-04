@@ -107,7 +107,7 @@ var MVISIndicator = function (indicator) {
 $.fn.asyncIndicators = function (options) {
     this.each(function(i, v) {
         var viewModel = new MVISIndicatorTable(options);
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
         viewModel.init();
     });
 };

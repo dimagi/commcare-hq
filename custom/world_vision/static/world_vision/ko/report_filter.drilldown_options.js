@@ -149,7 +149,7 @@ var DrilldownOption = function (select, drilldown_map) {
 $.fn.drilldownOptionFilter = function (options) {
     this.each(function(i) {
         var viewModel = new DrilldownOptionFilterControl(options);
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
         viewModel.init();
     });
 };

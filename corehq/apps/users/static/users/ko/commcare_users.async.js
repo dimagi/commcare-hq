@@ -101,7 +101,7 @@ var CommCareUsersViewModel = function (o) {
 $.fn.asyncUsersList = function (options) {
     this.each(function(i, v) {
         var viewModel = new CommCareUsersViewModel(options);
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
         viewModel.init();
     });
 };

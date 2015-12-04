@@ -306,7 +306,7 @@ $.fn.reportConfigEditor = function (options) {
         options.filterForm = options.filterForm || $(v);
         var viewModel = new ReportConfigsViewModel(options);
 
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
 
         viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
     });
@@ -317,7 +317,7 @@ $.fn.reportUserConfigurableConfigEditor = function (options) {
         options.filterForm = options.filterForm || $(v);
         var viewModel = new ReportConfigsViewModel(options);
 
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
 
         viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
     });
@@ -326,6 +326,6 @@ $.fn.reportUserConfigurableConfigEditor = function (options) {
 $.fn.reportConfigList = function (options) {
     this.each(function(i, v) {
         var viewModel = new ReportConfigsViewModel(options);
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
     });
 };

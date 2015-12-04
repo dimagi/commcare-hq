@@ -73,7 +73,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
 $.fn.asyncProgramProductList = function (options) {
     this.each(function(i, v) {
         var viewModel = new CommtrackProductsProgramsViewModel(options);
-        $($(this).get(i)).koApplyBindings(viewModel);   // TODO: fix
+        $(this).koApplyBindings(viewModel);
         viewModel.init();
     });
 };
