@@ -32,5 +32,15 @@ class CouchConfigTest(SimpleTestCase):
     def test_get_db_for_doc_type(self):
         config = CouchConfig(db_uri=self.remote_db_uri)
         self.assertEqual(config.get_db_for_doc_type('CommCareCase').uri, self.remote_db_uri)
+
         self.assertEqual(config.get_db_for_doc_type('CommCareUser').uri,
                          '{}__users'.format(self.remote_db_uri))
+
+    def test_get_db_for_postfix(self):
+        config = CouchConfig(db_uri=self.remote_db_uri)
+        self.assertEqual('{}__users'.format(self.remote_db_uri), config.get_db_for_postfix('users').uri)
+
+    def test_get_db_for_db_name(self):
+        config = CouchConfig(db_uri=self.remote_db_uri)
+        self.assertEqual(self.remote_db_uri, config.get_db_for_db_name('cchq').uri)
+        self.assertEqual('{}__users'.format(self.remote_db_uri), config.get_db_for_db_name('cchq__users').uri)
