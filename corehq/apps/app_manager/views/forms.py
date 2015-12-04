@@ -372,11 +372,8 @@ def view_user_registration(request, domain, app_id):
 
 
 def get_form_view_context_and_template(request, domain, form, langs, is_user_registration, messages=messages):
-    if (toggles.GUIDED_TOUR.enabled(domain)
-        and tours.SIMPLE_NEW_APP.is_tour_available(request, domain)
-    ):
+    if toggles.GUIDED_TOUR.enabled(domain) and tours.SIMPLE_NEW_APP.is_enabled(request.couch_user):
         request.guided_tour = tours.SIMPLE_NEW_APP.get_tour_data()
-        tours.SIMPLE_NEW_APP.clear_cache(request, domain)
     xform_questions = []
     xform = None
     form_errors = []
