@@ -131,21 +131,20 @@ $(function() {
 <div class="row-fluid">
     <div class="span12">
         <div class="btn-toolbar">
-            <button
-                class="btn btn-primary"
-                href="{% url "location_import" domain %}"
-                {% if not has_location_types or not can_edit_any_location %}
-                    disabled
-                {% endif %}
+            <a class="btn btn-primary"
+               href="{% url "location_import" domain %}"
+               {% if not has_location_types or not can_edit_any_location %}
+                   disabled
+               {% endif %}
             >
                 <i class="icon-upload"></i> {% trans 'Bulk Import' %}
-            </button>
-            <button class="btn" href="{% url "location_types" domain %}">
+            </a>
+            <a class="btn" href="{% url "location_types" domain %}">
                 {% trans "Edit Organization Levels" %}
-            </button>
-            <button class="btn" href="{% url "location_fields_view" domain %}">
+            </a>
+            <a class="btn" href="{% url "location_fields_view" domain %}">
                 {% trans "Edit Location Fields" %}
-            </button>
+            </a>
         </div>
     </div>
 </div>
