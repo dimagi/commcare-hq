@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import datetime
 import logging
+from collections import namedtuple
 
 from django.http import (
     HttpRequest,
@@ -26,6 +27,9 @@ from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception
 from phonelog.utils import process_device_log
+
+
+CaseStockProcessingResult = namedtuple('CaseStockProcessingResult', 'case_result, case_models, stock_result, stock_models')
 
 
 class SubmissionPost(object):
@@ -131,7 +135,7 @@ class SubmissionPost(object):
 
             elif not instance.is_error:
                 try:
-                    cases = self.process_xforms_for_cases(xforms)
+                    case_stock_result = self.process_xforms_for_cases(xforms)
                 except (IllegalCaseId, UsesReferrals, MissingProductId, PhoneDateValueError) as e:
                     self._handle_known_error(e, instance, xforms)
                 except Exception as e:
@@ -141,6 +145,35 @@ class SubmissionPost(object):
                     # this use case as if the edit "failed"
                     handle_unexpected_error(self.interface, instance, e)
                     raise
+
+                from casexml.apps.case.signals import case_post_save
+
+                now = datetime.datetime.utcnow()
+                unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+                    xform_id=instance.form_id,
+                    timestamp=now,
+                    saved=False,
+                    domain=self.domain,
+                )
+
+                instance.initial_processing_complete = True
+
+                self.interface.save_processed_models(
+                    instance,
+                    xforms,
+                    case_stock_result.case_models,
+                    case_stock_result.stock_models
+                )
+
+                unfinished_submission_stub.saved = True
+                unfinished_submission_stub.save()
+                case_stock_result.case_result.commit_dirtiness_flags()
+                case_stock_result.stock_result.finalize()
+                for case in cases:
+                    case_post_save.send(case.__class__, case=case)
+
+                unfinished_submission_stub.delete()
+                case_stock_result.case_result.close_extensions()
 
             errors = self.process_signals(instance)
 
@@ -160,32 +193,15 @@ class SubmissionPost(object):
             case_result = process_cases_with_casedb(xforms, case_db)
             stock_result = process_stock(xforms, case_db)
 
-            now = datetime.datetime.utcnow()
-            unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-                xform_id=instance.form_id,
-                timestamp=now,
-                saved=False,
-                domain=domain,
-            )
-
-            # todo: this property is only used by the MVPFormIndicatorPillow
-            instance.initial_processing_complete = True
-
             cases = case_db.get_cases_for_saving(instance.received_on)
+            stock_models = stock_result.get_models_to_save()
 
-            self.interface.save_processed_models(instance, xforms, cases, stock_result.get_models_to_save())
-
-            unfinished_submission_stub.saved = True
-            unfinished_submission_stub.save()
-            case_result.commit_dirtiness_flags()
-            stock_result.finalize()
-            for case in cases:
-                case_post_save.send(case.__class__, case=case)
-
-        unfinished_submission_stub.delete()
-        case_result.close_extensions()
-
-        return cases
+        return CaseStockProcessingResult(
+            case_result=case_result,
+            case_models=cases,
+            stock_result=stock_result,
+            stock_models=stock_models
+        )
 
     def get_response(self):
         response, _, _ = self.run()
