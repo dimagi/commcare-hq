@@ -93,7 +93,7 @@ class ServiceAvailabilityTestMixIn(object):
             dod=self.valid_dod,
         )
         row = MockCaseRow(case, self.report, data_provider)
-        self.assertEqual(False, self.get_condition(row))
+        self.assertEqual(True, self.get_condition(row))
 
     def test_service_unavailable_partial(self):
         date = add_months_to_date(self.report_date, -2)
@@ -151,7 +151,7 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAva
         self.condition_getter = lambda row: row.child_received_measles_vaccine
 
 
-class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAvailabilityTestMixIn):
+class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin):
     expected_window = 6
     service_key = 'vhnd_available'
 
