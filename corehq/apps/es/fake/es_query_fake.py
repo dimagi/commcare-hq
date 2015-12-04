@@ -20,10 +20,16 @@ class ESQueryFake(object):
     _fields = None
 
     def __init__(self, result_docs=None):
-        self._result_docs = result_docs or list(self._all_docs)
+        if result_docs is None:
+            result_docs = list(self._all_docs)
 
-    def _clone(self):
-        clone = self.__class__(result_docs=list(self._result_docs))
+        self._result_docs = result_docs
+
+    def _clone(self, result_docs=None):
+        if result_docs is None:
+            result_docs = list(self._result_docs)
+
+        clone = self.__class__(result_docs=result_docs)
         clone._start = self._start
         clone._size = self._size
         clone._sort_field = self._sort_field
@@ -33,7 +39,7 @@ class ESQueryFake(object):
         return clone
 
     def _filtered(self, filter_function):
-        return self.__class__(result_docs=filter(filter_function, self._result_docs))
+        return self._clone(result_docs=filter(filter_function, self._result_docs))
 
     @classmethod
     def save_doc(cls, doc):
@@ -59,7 +65,8 @@ class ESQueryFake(object):
     def search_string_query(self, search_string, default_fields=None):
         if default_fields:
             return self._filtered(
-                lambda doc: any(search_string in doc[field] for field in default_fields))
+                lambda doc: any(doc[field] is not None and (search_string in doc[field])
+                                for field in default_fields))
         else:
             raise NotImplementedError("We'll cross that bridge when we get there")
 
