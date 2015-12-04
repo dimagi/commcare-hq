@@ -50,7 +50,7 @@ class GenerationCache(object):
         genret = rcache().get(self.generation_key, None)
         if not genret:
             # never seen key before, start from zero
-            rcache().set(self.generation_key, 0, timeout=0)
+            rcache().set(self.generation_key, 0, timeout=None)
             return str(0)
         else:
             return str(genret)
