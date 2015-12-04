@@ -2,7 +2,7 @@ import re
 from contextlib import contextmanager
 
 from django.utils.safestring import mark_safe
-from crispy_forms.bootstrap import FormActions as OriginalFormActions
+from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField
 from crispy_forms.layout import Field as OldField, LayoutObject
 from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import Context
@@ -138,6 +138,18 @@ class B3MultiField(LayoutObject):
                 except AttributeError:
                     pass
         return errors
+
+
+class MultiInlineField(InlineField):
+    """
+    An InlineField to be used within a B3MultiField.
+
+    (Bootstrap 3 Crispy's InlineField adds the form-group class to
+    the field's containing div, which is redundant because
+    B3MultiField adds form-group at a higher level, and that makes
+    the field not render properly.)
+    """
+    template = 'style/crispy/multi_inline_field.html'
 
 
 class CrispyTemplate(object):
