@@ -41,13 +41,16 @@ class FluffPillow(PythonPillow):
         return engine
 
     def python_filter(self, change):
+        self._assert_pillow_valid()
         doc = change.document
+        if doc.get('domain') in self.domains:
+            return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
+
+    def _assert_pillow_valid(self):
         assert self.domains
         assert None not in self.domains
         assert self.doc_type is not None
         assert self.doc_type not in self.deleted_types
-        if doc.get('domain') in self.domains:
-            return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
 
     @classmethod
     def _get_base_name(cls):
