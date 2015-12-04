@@ -26,12 +26,7 @@ def get_url_base():
 
 
 def get_site_domain():
-    try:
-        return settings.BASE_ADDRESS
-    except AttributeError:
-        warnings.warn("Please don't use Site to set domain anymore; "
-                      "use BASE_ADDRESS instead.", DeprecationWarning)
-        return Site.objects.get(id=settings.SITE_ID).domain
+    return settings.BASE_ADDRESS
 
 
 def render_to_response(req, template_name, dictionary=None, **kwargs):
