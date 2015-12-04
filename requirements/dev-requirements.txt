@@ -2,6 +2,7 @@ django-debug-toolbar
 django-devserver>=0.7.0
 coverage
 guppy
+testil
 werkzeug
 line_profiler==1.0
 git+git://github.com/dimagi/couchdbkit-debugpanel.git
