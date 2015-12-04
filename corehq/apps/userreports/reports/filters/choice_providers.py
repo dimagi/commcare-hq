@@ -163,7 +163,7 @@ class UserChoiceProvider(ChainableChoiceProvider):
 
     def get_choices_for_known_values(self, values):
         from corehq.apps.es import UserES
-        user_es = UserES().domain(self.domain).filter(doc_id(values))
+        user_es = UserES().domain(self.domain).doc_id(values)
         return self.get_choices_from_es_query(user_es)
 
     @staticmethod

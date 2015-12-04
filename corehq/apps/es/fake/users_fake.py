@@ -1,7 +1,7 @@
-from corehq.apps.es.fake.es_query_fake import ESQueryFake
+from corehq.apps.es.fake.es_query_fake import HQESQueryFake
 
 
-class UserESFake(ESQueryFake):
+class UserESFake(HQESQueryFake):
     _all_docs = []
 
     def domain(self, domain):

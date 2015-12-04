@@ -95,7 +95,7 @@ class ESQueryFake(object):
         if self._size is not None:
             result_docs = result_docs[self._start:self._start + self._size]
         else:
-            raise NotImplementedError("We'll cross that bridge when we get there")
+            result_docs = result_docs[self._start:]
 
         return ESQuerySet({
             'hits': {
@@ -127,3 +127,12 @@ class ESQueryFake(object):
                 )
                 return self
             return f
+
+
+class HQESQueryFake(ESQueryFake):
+    def doc_id(self, doc_id):
+        try:
+            doc_ids = list(doc_id)
+        except TypeError:
+            doc_ids = [doc_id]
+        return self._filtered(lambda doc: doc['_id'] in doc_ids)

@@ -16,7 +16,8 @@ from corehq.apps.users.util import normalize_username
 class SearchableChoice(Choice):
     def __new__(cls, value, display, searchable_text=None):
         self = super(SearchableChoice, cls).__new__(cls, value, display)
-        self.searchable_text = searchable_text or []
+        self.searchable_text = [text for text in searchable_text or []
+                                if text is not None]
         return self
 
 
@@ -154,8 +155,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         cls.domain = 'user-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
 
-        def make_mobile_worker(username, domain=None):
-            domain = domain or cls.domain
+        def make_mobile_worker(username, domain=cls.domain):
             user = CommCareUser(username=normalize_username(username, domain),
                                 domain=domain)
             user.domain_membership = DomainMembership(domain=domain)
@@ -168,7 +168,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             UserESFake.save_doc(user._doc)
             return user
 
-        users = [
+        cls.users = [
             make_mobile_worker('bernice'),
             make_mobile_worker('dennis'),
             make_mobile_worker('elizabeth'),
@@ -181,7 +181,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             SearchableChoice(
                 user.get_id, user.raw_username,
                 searchable_text=[user.username, user.last_name, user.first_name])
-            for user in users if user.is_member_of(cls.domain)
+            for user in cls.users if user.is_member_of(cls.domain)
         ]
         cls.choice_provider = UserChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
@@ -191,10 +191,11 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         UserESFake.reset_docs()
 
     def test_query_search(self):
-        pass
+        self._test_query(ChoiceQueryContext(query='ni', limit=10, page=0))
 
     def test_get_choices_for_values(self):
-        pass
+        self._test_get_choices_for_values(
+            ['unknown-user'] + [user._id for user in self.users])
 
 
 class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
