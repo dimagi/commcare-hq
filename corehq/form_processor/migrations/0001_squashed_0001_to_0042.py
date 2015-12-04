@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations, models
-import datetime
+from django.db import models, migrations
 import dimagi.utils.couch
 import uuidfield.fields
 import json_field.fields
@@ -56,7 +55,8 @@ class Migration(migrations.Migration):
         (b'form_processor', '0039_case_functions'),
         (b'form_processor', '0040_save_functions'),
         (b'form_processor', '0041_noop_specify_table_names'),
-        (b'form_processor', '0042_noop_change_choice_values')
+        (b'form_processor', '0042_noop_change_choice_values'),
+        (b'form_processor', '0043_rename_to_match'),
     ]
 
     dependencies = [
@@ -67,7 +67,7 @@ class Migration(migrations.Migration):
             name='XFormInstanceSQL',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('form_uuid', models.CharField(unique=True, max_length=255, db_index=True)),
+                ('form_id', models.CharField(unique=True, max_length=255, db_index=True)),
                 ('domain', models.CharField(max_length=255)),
                 ('app_id', models.CharField(max_length=255, null=True)),
                 ('xmlns', models.CharField(max_length=255)),
@@ -77,228 +77,76 @@ class Migration(migrations.Migration):
                 ('last_sync_token', models.CharField(max_length=255, null=True)),
                 ('date_header', models.DateTimeField(null=True)),
                 ('build_id', models.CharField(max_length=255, null=True)),
+                ('state', models.PositiveSmallIntegerField(default=0, choices=[(0, b'normal'), (1, b'archived'), (2, b'deprecated'), (4, b'duplicate'), (8, b'error'), (16, b'submission_error')])),
+                ('auth_context', json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object')),
+                ('openrosa_headers', json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object')),
+                ('deprecated_form_id', models.CharField(max_length=255, null=True)),
+                ('edited_on', models.DateTimeField(null=True)),
+                ('orig_id', models.CharField(max_length=255, null=True)),
+                ('problem', models.TextField(null=True)),
+                ('user_id', models.CharField(max_length=255, null=True)),
+                ('initial_processing_complete', models.BooleanField(default=False)),
             ],
+            options={
+            },
             bases=(models.Model, corehq.form_processor.abstract_models.AbstractXFormInstance, dimagi.utils.couch.RedisLockableMixIn),
         ),
         migrations.AlterModelTable(
             name='xforminstancesql',
             table='form_processor_xforminstancesql',
         ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='state',
-            field=models.PositiveSmallIntegerField(default=0, choices=[(0, b'normal'), (1, b'archived'), (2, b'deprecated'), (3, b'duplicate'), (4, b'error'), (5, b'submission_error')]),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='auth_context',
-            field=json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='openrosa_headers',
-            field=json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='deprecated_form_id',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='edited_on',
-            field=models.DateTimeField(null=True),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='orig_id',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='problem',
-            field=models.TextField(null=True),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='user_id',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='xforminstancesql',
-            name='initial_processing_complete',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.RenameField(
-            model_name='xforminstancesql',
-            old_name='form_uuid',
-            new_name='form_id',
-        ),
-        migrations.AlterField(
-            model_name='xforminstancesql',
-            name='state',
-            field=models.PositiveSmallIntegerField(default=0, choices=[(0, b'normal'), (1, b'archived'), (2, b'deprecated'), (4, b'duplicate'), (8, b'error'), (16, b'submission_error')]),
-        ),
-
-
-
-        
         migrations.CreateModel(
             name='XFormAttachmentSQL',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('attachment_uuid', models.CharField(unique=True, max_length=255, db_index=True)),
+                ('attachment_id', uuidfield.fields.UUIDField(unique=True, max_length=32, db_index=True)),
                 ('name', models.CharField(max_length=255, db_index=True)),
                 ('content_type', models.CharField(max_length=255)),
                 ('md5', models.CharField(max_length=255)),
-                ('xform', models.ForeignKey(related_query_name=b'attachment', related_name='attachments', db_column=b'form_uuid', to_field=b'form_uuid', to='form_processor.XFormInstanceSQL')),
+                ('form', models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field=b'form_id', to='form_processor.XFormInstanceSQL')),
             ],
+            options={
+            },
+            bases=(models.Model,),
         ),
         migrations.AlterModelTable(
             name='xformattachmentsql',
             table='form_processor_xformattachmentsql',
         ),
-        migrations.RenameField(
-            model_name='xformattachmentsql',
-            old_name='xform',
-            new_name='form',
-        ),
-        migrations.AlterField(
-            model_name='xformattachmentsql',
-            name='form',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'form_uuid', to='form_processor.XFormInstanceSQL'),
-        ),
-        migrations.RenameField(
-            model_name='xformoperationsql',
-            old_name='xform',
-            new_name='form',
-        ),
-        migrations.AlterField(
-            model_name='xformattachmentsql',
-            name='form',
-            field=models.CharField(max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='xformattachmentsql',
-            name='form',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'form_id', to='form_processor.XFormInstanceSQL'),
-        ),
-        migrations.AlterField(
-            model_name='xformattachmentsql',
-            name='form',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field=b'form_id', to='form_processor.XFormInstanceSQL'),
-        ),
-        migrations.RenameField(
-            model_name='xformattachmentsql',
-            old_name='attachment_uuid',
-            new_name='attachment_id',
-        ),
-
-        migrations.RunSQL(
-            sql='ALTER TABLE "form_processor_xformattachmentsql" ALTER COLUMN "attachment_id" TYPE uuid USING attachment_id::uuid',
-            reverse_sql='ALTER TABLE "form_processor_xformattachmentsql" ALTER COLUMN "attachment_id" TYPE varchar(255)',
-            state_operations=[migrations.AlterField(
-                model_name='xformattachmentsql',
-                name='attachment_id',
-                field=uuidfield.fields.UUIDField(unique=True, max_length=32, db_index=True),
-            )],
-        ),
         migrations.CreateModel(
             name='CommCareCaseSQL',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('case_uuid', models.CharField(max_length=255)),
+                ('case_id', models.CharField(unique=True, max_length=255, db_index=True)),
                 ('domain', models.CharField(max_length=255)),
-                ('case_type', models.CharField(max_length=255)),
+                ('type', models.CharField(max_length=255)),
                 ('owner_id', models.CharField(max_length=255)),
-                ('opened_on', models.DateTimeField()),
-                ('opened_by', models.CharField(max_length=255)),
+                ('opened_on', models.DateTimeField(null=True)),
+                ('opened_by', models.CharField(max_length=255, null=True)),
                 ('modified_on', models.DateTimeField()),
                 ('server_modified_on', models.DateTimeField()),
                 ('modified_by', models.CharField(max_length=255)),
                 ('closed', models.BooleanField(default=False)),
                 ('closed_on', models.DateTimeField(null=True)),
-                ('closed_by', models.CharField(max_length=255)),
+                ('closed_by', models.CharField(max_length=255, null=True)),
                 ('deleted', models.BooleanField(default=False)),
                 ('external_id', models.CharField(max_length=255)),
-                ('case_json', json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object')),
-                ('attachments_json', json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object')),
+                ('case_json', json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object')),
+                ('name', models.CharField(max_length=255, null=True)),
+                ('location_id', models.CharField(max_length=255, null=True)),
             ],
+            options={
+            },
             bases=(models.Model, corehq.form_processor.abstract_models.AbstractCommCareCase),
-        ),
-        migrations.AlterModelTable(
-            name='commcarecasesql',
-            table='form_processor_commcarecasesql',
-        ),
-        migrations.AlterField(
-            model_name='commcarecasesql',
-            name='case_uuid',
-            field=models.CharField(unique=True, max_length=255, db_index=True),
-        ),
-        migrations.RemoveField(
-            model_name='commcarecasesql',
-            name='attachments_json',
-        ),
-        migrations.AlterField(
-            model_name='commcarecasesql',
-            name='closed_by',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.AlterField(
-            model_name='commcarecasesql',
-            name='case_json',
-            field=json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
-        ),
-        migrations.AddField(
-            model_name='commcarecasesql',
-            name='name',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.RenameField(
-            model_name='commcarecasesql',
-            old_name='case_type',
-            new_name='type',
-        ),
-        migrations.AlterField(
-            model_name='commcarecasesql',
-            name='opened_by',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.AlterField(
-            model_name='commcarecasesql',
-            name='opened_on',
-            field=models.DateTimeField(null=True),
-        ),
-        migrations.AddField(
-            model_name='commcarecasesql',
-            name='location_uuid',
-            field=uuidfield.fields.UUIDField(max_length=32, null=True),
-        ),
-        migrations.RenameField(
-            model_name='commcarecasesql',
-            old_name='location_uuid',
-            new_name='location_id',
-        ),
-        migrations.RenameField(
-            model_name='commcarecasesql',
-            old_name='case_uuid',
-            new_name='case_id',
         ),
         migrations.AlterIndexTogether(
             name='commcarecasesql',
             index_together=set([('domain', 'owner_id'), ('domain', 'closed', 'server_modified_on')]),
         ),
-        migrations.RunSQL(
-            sql='ALTER TABLE form_processor_commcarecasesql ALTER COLUMN "location_id" TYPE varchar(255)',
-            reverse_sql='ALTER TABLE form_processor_commcarecasesql ALTER COLUMN "location_id" TYPE uuid USING location_id::uuid',
-            state_operations=[migrations.AlterField(
-                model_name='commcarecasesql',
-                name='location_id',
-                field=models.CharField(max_length=255, null=True),
-            )],
+        migrations.AlterModelTable(
+            name='commcarecasesql',
+            table='form_processor_commcarecasesql',
         ),
-
-
         migrations.CreateModel(
             name='CommCareCaseIndexSQL',
             fields=[
@@ -307,294 +155,89 @@ class Migration(migrations.Migration):
                 ('identifier', models.CharField(max_length=255)),
                 ('referenced_id', models.CharField(max_length=255)),
                 ('referenced_type', models.CharField(max_length=255)),
-                ('relationship', models.PositiveSmallIntegerField(choices=[(0, b'child'), (1, b'extension')])),
-                ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field=b'case_uuid', db_column=b'case_uuid', db_index=False)),
+                ('relationship_id', models.PositiveSmallIntegerField(choices=[(0, b'child'), (1, b'extension')])),
+                ('case', models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL')),
             ],
-        ),
-        migrations.AlterModelTable(
-            name='commcarecaseindexsql',
-            table='form_processor_commcarecaseindexsql',
-        ),
-        migrations.AlterField(
-            model_name='commcarecaseindexsql',
-            name='case',
-            field=models.ForeignKey(to='form_processor.CommCareCaseSQL', db_column=b'case_uuid', to_field=b'case_uuid'),
-        ),
-        migrations.AlterField(
-            model_name='commcarecaseindexsql',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', db_column=b'case_uuid', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL'),
-        ),
-        migrations.RenameField(
-            model_name='commcarecaseindexsql',
-            old_name='relationship',
-            new_name='relationship_id',
-        ),
-        migrations.AlterField(
-            model_name='commcarecaseindexsql',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL'),
-        ),
-        migrations.AlterField(
-            model_name='commcarecaseindexsql',
-            name='case',
-            field=models.CharField(max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='commcarecaseindexsql',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
+            options={
+            },
+            bases=(models.Model,),
         ),
         migrations.AlterIndexTogether(
             name='commcarecaseindexsql',
             index_together=set([('domain', 'referenced_id')]),
         ),
-
-
-
-        migrations.CreateModel(
-            name='CaseForms',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('form_uuid', models.CharField(max_length=255)),
-                ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field=b'case_uuid', db_column=b'case_uuid', db_index=False)),
-            ],
-        ),
-        migrations.AlterField(
-            model_name='caseforms',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'xform', related_name='xform_set', db_column=b'case_uuid', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', db_index=False),
-        ),
-        migrations.AddField(
-            model_name='caseforms',
-            name='server_date',
-            field=models.DateTimeField(default=datetime.datetime(2015, 11, 13, 9, 21, 40, 422766)),
-            preserve_default=False,
-        ),
-        migrations.AlterUniqueTogether(
-            name='caseforms',
-            unique_together=set([('case', 'form_uuid')]),
-        ),
-        migrations.AlterUniqueTogether(
-            name='caseforms',
-            unique_together=set([]),
-        ),
-        migrations.RemoveField(
-            model_name='caseforms',
-            name='case',
-        ),
-        migrations.DeleteModel(
-            name='CaseForms',
+        migrations.AlterModelTable(
+            name='commcarecaseindexsql',
+            table='form_processor_commcarecaseindexsql',
         ),
         migrations.CreateModel(
             name='XFormOperationSQL',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('user', models.CharField(max_length=255, null=True)),
+                ('user_id', models.CharField(max_length=255, null=True)),
                 ('operation', models.CharField(max_length=255)),
                 ('date', models.DateTimeField(auto_now_add=True)),
-                ('xform', models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_uuid')),
+                ('form', models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_id')),
             ],
+            options={
+            },
+            bases=(models.Model,),
         ),
         migrations.AlterModelTable(
             name='xformoperationsql',
             table='form_processor_xformoperationsql',
         ),
-        migrations.AlterField(
-            model_name='xformoperationsql',
-            name='form',
-            field=models.CharField(max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='xformoperationsql',
-            name='form',
-            field=models.ForeignKey(to='form_processor.XFormInstanceSQL', to_field=b'form_id'),
-        ),
-        migrations.RenameField(
-            model_name='xformoperationsql',
-            old_name='user',
-            new_name='user_id',
-        ),
-
-
         migrations.CreateModel(
             name='CaseAttachmentSQL',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('attachment_uuid', models.CharField(unique=True, max_length=255, db_index=True)),
+                ('attachment_id', uuidfield.fields.UUIDField(unique=True, max_length=32, db_index=True)),
                 ('name', models.CharField(max_length=255, db_index=True)),
                 ('content_type', models.CharField(max_length=255)),
                 ('md5', models.CharField(max_length=255)),
-                ('case', models.ForeignKey(related_query_name=b'attachment', related_name='attachments', db_column=b'case_uuid', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL')),
+                ('case', models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL')),
             ],
             options={
                 'abstract': False,
             },
+            bases=(models.Model,),
         ),
         migrations.AlterModelTable(
             name='caseattachmentsql',
             table='form_processor_caseattachmentsql',
         ),
-        migrations.AlterField(
-            model_name='caseattachmentsql',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL'),
-        ),
-        migrations.AlterField(
-            model_name='caseattachmentsql',
-            name='case',
-            field=models.CharField(max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='caseattachmentsql',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachments', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
-        ),
-        migrations.AlterField(
-            model_name='caseattachmentsql',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
-        ),
-        migrations.RenameField(
-            model_name='caseattachmentsql',
-            old_name='attachment_uuid',
-            new_name='attachment_id',
-        ),
-        migrations.RunSQL(
-            sql='ALTER TABLE "form_processor_caseattachmentsql" ALTER COLUMN "attachment_id" TYPE uuid USING attachment_id::uuid',
-            reverse_sql='ALTER TABLE "form_processor_caseattachmentsql" ALTER COLUMN "attachment_id" TYPE varchar(255)',
-            state_operations=[migrations.AlterField(
-                model_name='caseattachmentsql',
-                name='attachment_id',
-                field=uuidfield.fields.UUIDField(unique=True, max_length=32, db_index=True),
-            )],
-        ),
-
-
-
-
-
         migrations.CreateModel(
             name='CaseTransaction',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('form_uuid', models.CharField(max_length=255)),
+                ('form_id', models.CharField(max_length=255, null=True)),
                 ('server_date', models.DateTimeField()),
-                ('type', models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild')])),
-                ('case', models.ForeignKey(related_query_name=b'xform', related_name='xform_set', db_column=b'case_uuid', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', db_index=False)),
+                ('type', models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild_with_reason'), (2, b'user_requested_rebuild'), (4, b'user_archived_rebuild'), (8, b'form_archive_rebuild'), (16, b'form_edit_rebuild'), (32, b'ledger')])),
+                ('case', models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', db_index=True)),
+                ('revoked', models.BooleanField(default=False)),
+                ('details', json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object')),
             ],
             options={
                 'ordering': ['server_date'],
             },
-        ),
-        migrations.AlterModelTable(
-            name='casetransaction',
-            table='form_processor_casetransaction',
-        ),
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='form_uuid',
-            field=models.CharField(max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='casetransaction',
-            name='revoked',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='casetransaction',
-            name='details',
-            field=json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
-        ),
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='type',
-            field=models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild_with_reason'), (2, b'user_requested_rebuild'), (3, b'user_archived_rebuild'), (4, b'form_archive_rebuild'), (5, b'form_edit_rebuild')]),
-        ),
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', db_column=b'case_uuid', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', db_index=False),
-        ),
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_uuid', to='form_processor.CommCareCaseSQL', db_index=False),
-        ),
-        migrations.RenameField(
-            model_name='casetransaction',
-            old_name='form_uuid',
-            new_name='form_id',
-        ),
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='case',
-            field=models.CharField(max_length=255),
-        ),
-
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL'),
-        ),
-
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='case',
-            field=models.ForeignKey(related_query_name=b'transaction', related_name='transaction_set', to_field=b'case_id', to='form_processor.CommCareCaseSQL', db_index=False),
-        ),
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='type',
-            field=models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild_with_reason'), (2, b'user_requested_rebuild'), (3, b'user_archived_rebuild'), (4, b'form_archive_rebuild'), (5, b'form_edit_rebuild'), (6, b'ledger')]),
-        ),
-        migrations.AlterField(
-            model_name='casetransaction',
-            name='type',
-            field=models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild_with_reason'), (2, b'user_requested_rebuild'), (4, b'user_archived_rebuild'), (8, b'form_archive_rebuild'), (16, b'form_edit_rebuild'), (32, b'ledger')]),
+            bases=(models.Model,),
         ),
         migrations.AlterUniqueTogether(
             name='casetransaction',
             unique_together=set([('case', 'form_id')]),
         ),
-
-        migrations.RunSQL(
-            sql="\n                CREATE INDEX form_processor_commcarecasesql_supply_point_location\n                ON form_processor_commcarecasesql(domain, location_uuid) WHERE type = 'supply-point'\n            ",
-            reverse_sql='\n                DROP INDEX form_processor_commcarecasesql_supply_point_location\n            ',
+        migrations.AlterModelTable(
+            name='casetransaction',
+            table='form_processor_casetransaction',
         ),
         migrations.RunSQL(
-            sql='DROP INDEX IF EXISTS form_processor_xforminstancesql_form_uuid_12662b9ceadeeecc_like',
-            reverse_sql='SELECT 1',
+            sql="""
+                CREATE INDEX form_processor_commcarecasesql_supply_point_location
+                ON form_processor_commcarecasesql(domain, location_id) WHERE type = 'supply-point'
+            """,
+            reverse_sql='DROP INDEX form_processor_commcarecasesql_supply_point_location',
+            state_operations=None,
         ),
-        migrations.RunSQL(
-            sql='DROP INDEX IF EXISTS form_processor_xformattac_attachment_uuid_6d1d0a1eff4ada21_like',
-            reverse_sql='SELECT 1',
-        ),
-        migrations.RunSQL(
-            sql='DROP INDEX IF EXISTS form_processor_xformattachmentsql_name_4b9f1b0d840a70bc_like',
-            reverse_sql='SELECT 1',
-        ),
-        migrations.RunSQL(
-            sql='DROP INDEX IF EXISTS form_processor_xformoperationsql_xform_id_14e64e95f71c3764_like',
-            reverse_sql='SELECT 1',
-        ),
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         migrations.CreateModel(
             name='LedgerValue',
             fields=[
@@ -605,13 +248,52 @@ class Migration(migrations.Migration):
                 ('last_modified', models.DateTimeField(auto_now=True)),
                 ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field=b'case_id')),
             ],
+            options=None,
+            bases=None,
         ),
-
-
-
-
-
-
-
-
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_caseattachmentsql_case_id_2a52028042cc318d_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_caseattachmentsql_name_1d9638e12751b7c9_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_xforminstancesql_form_id_60f7da828e471288_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_xformattachmentsql_form_id_2c7940ea539d6de4_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_xformattachmentsql_name_4b9f1b0d840a70bc_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_xformoperationsql_form_id_6610a535ea713665_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_commcarecaseindexs_case_id_7db75a61e418ebfc_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_commcarecasesql_case_id_3dee99b8828d1543_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
+        migrations.RunSQL(
+            sql='DROP INDEX IF EXISTS form_processor_casetransaction_case_id_6c13626ba79fe02e_like',
+            reverse_sql='SELECT 1',
+            state_operations=None,
+        ),
     ]
