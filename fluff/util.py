@@ -1,8 +1,9 @@
 # -*- coding: UTF-8 -*-
-
 import logging
 import datetime
 import sqlalchemy
+from .const import TYPE_DATE, TYPE_DATETIME, TYPE_INTEGER, TYPE_STRING, TYPE_DECIMAL
+
 logger = logging.getLogger('fluff')
 
 metadata = sqlalchemy.MetaData()
@@ -56,7 +57,6 @@ def get_indicator_model(name, indicator_doc):
 
 
 def get_column_type(data_type):
-    from fluff import TYPE_DATE, TYPE_DATETIME, TYPE_INTEGER, TYPE_STRING, TYPE_DECIMAL
     if data_type == TYPE_DATE:
         return sqlalchemy.Date
     if data_type == TYPE_DATETIME:

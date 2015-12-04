@@ -3,7 +3,7 @@ from optparse import make_option
 from django.core.management import CommandError
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import PtopReindexer
 from dimagi.utils.modules import to_function
-from fluff import FluffPillow
+from fluff.pillow import FluffPillow
 
 CHUNK_SIZE = 500
 POOL_SIZE = 15

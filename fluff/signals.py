@@ -27,7 +27,7 @@ def catch_signal(sender, **kwargs):
     if settings.UNIT_TESTING:
         return
 
-    from fluff import FluffPillow
+    from fluff.pillow import FluffPillow
     table_pillow_map = {}
     pillow_configs = get_all_pillow_configs()
     for pillow_config in pillow_configs:

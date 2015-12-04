@@ -1,3 +1,9 @@
+
+def filter_by(fn):
+    fn._fluff_filter = True
+    return fn
+
+
 class Filter(object):
     """
     Base filter class
