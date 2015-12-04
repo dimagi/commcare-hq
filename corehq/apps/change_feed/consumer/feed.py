@@ -3,8 +3,7 @@ from dimagi.utils.logging import notify_error
 from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout
-from corehq.apps.change_feed.models import ChangeMeta
-from pillowtop.feed.interface import ChangeFeed, Change
+from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 
 MIN_TIMEOUT = 100

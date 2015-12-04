@@ -4,12 +4,12 @@ from kafka.common import KafkaUnavailableError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client
-from corehq.apps.change_feed.models import ChangeMeta
 from corehq.apps.change_feed.topics import get_topic
 from couchforms.models import all_known_formlike_doc_types
 import logging
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.feed.interface import ChangeMeta
 from pillowtop.listener import PythonPillow
 
 
