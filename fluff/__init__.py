@@ -3,17 +3,13 @@ from fluff.exceptions import EmitterValidationError
 from fluff.signals import BACKEND_SQL, BACKEND_COUCH
 from .calculators import Calculator
 from .const import *
-from .emitters import custom_date_emitter, custom_null_emitter
+from .emitters import custom_date_emitter, custom_null_emitter, date_emitter, null_emitter
 from .indicators import FlatField, IndicatorDocument
 from .signals import indicator_document_updated
 import fluff.util
 
 
 default_app_config = 'fluff.app_config.FluffAppConfig'
-
-
-date_emitter = custom_date_emitter()
-null_emitter = custom_null_emitter()
 
 
 def filter_by(fn):

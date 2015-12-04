@@ -75,3 +75,6 @@ class custom_null_emitter(base_emitter):
                     raise EmitterValidationError(
                         'Emitted value must be None: {}'.format(value['date']))
 
+
+date_emitter = custom_date_emitter()
+null_emitter = custom_null_emitter()
