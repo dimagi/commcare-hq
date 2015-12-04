@@ -31,6 +31,7 @@ class StaticChoiceProvider(ChoiceProvider):
             )
             for choice in choices
         ]
+        self.choices.sort(key=lambda choice: choice.display)
         super(StaticChoiceProvider, self).__init__(None, None)
 
     def query(self, query_context):
@@ -176,7 +177,6 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             # test that docs in other domains are filtered out
             make_mobile_worker('aaa', domain='some-other-domain'),
         ]
-        users.sort(key=lambda user: user.username)
         choices = [
             SearchableChoice(
                 user.get_id, user.raw_username,
