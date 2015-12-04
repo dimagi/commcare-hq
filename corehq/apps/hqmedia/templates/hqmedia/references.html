@@ -54,7 +54,8 @@
             {% if totals|length %}
             <div class="alert alert-info">
                 <h3><i class="icon-cloud-download"></i> {% trans 'Download Multimedia' %}</h3>
-                <p><a class="btn btn-primary" style="color: #ffffff;" href="#multimedia-zip-modal" data-toggle="modal"><i class="icon-cloud-download"></i> {% trans 'Download ZIP' %}</a></p>
+                <p><a class="btn btn-primary" style="color: #ffffff;" href="#multimedia-zip-modal"
+                data-toggle="modal" onclick="download_application_zip()"><i class="icon-cloud-download"></i> {% trans 'Download ZIP' %}</a></p>
                 <ul style="margin-top:.5em;" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}"><i data-bind="attr: {class: icon_class}"></i> <span data-bind="text: matched"></span>/<span data-bind="text: totals"></span> <span data-bind="text: media_type"></span> {% trans 'References' %}</li>
                 </ul>
