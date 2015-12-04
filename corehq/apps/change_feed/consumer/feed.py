@@ -1,4 +1,5 @@
 import json
+from dimagi.utils.logging import notify_error
 from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout
@@ -33,7 +34,15 @@ class KafkaChangeFeed(ChangeFeed):
         reset = 'smallest' if since is not None else 'largest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if since is not None:
-            offset = int(since)  # coerce sequence IDs to ints
+            try:
+                offset = int(since)  # coerce sequence IDs to ints
+            except ValueError:
+                notify_error("kafka pillow {} couldn't parse sequence ID {}. rewinding...".format(
+                    self._group_id, since
+                ))
+                # since kafka only keeps 7 days of data this isn't a big deal. Hopefully we will only see
+                # these once when each pillow moves over.
+                offset = 0
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions((self._topic, self._partition, offset))
         for message in consumer:
