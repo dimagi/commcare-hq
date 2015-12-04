@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+import contextlib
 import datetime
 import logging
 from collections import namedtuple
@@ -29,7 +30,10 @@ from dimagi.utils.logging import notify_exception
 from phonelog.utils import process_device_log
 
 
-CaseStockProcessingResult = namedtuple('CaseStockProcessingResult', 'case_result, case_models, stock_result, stock_models')
+CaseStockProcessingResult = namedtuple(
+    'CaseStockProcessingResult',
+    'case_result, case_models, stock_result, stock_models'
+)
 
 
 class SubmissionPost(object):
@@ -145,44 +149,37 @@ class SubmissionPost(object):
                     # this use case as if the edit "failed"
                     handle_unexpected_error(self.interface, instance, e)
                     raise
-
-                from casexml.apps.case.signals import case_post_save
-
-                now = datetime.datetime.utcnow()
-                unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-                    xform_id=instance.form_id,
-                    timestamp=now,
-                    saved=False,
-                    domain=self.domain,
-                )
-
-                instance.initial_processing_complete = True
-
-                self.interface.save_processed_models(
-                    instance,
-                    xforms,
-                    case_stock_result.case_models,
-                    case_stock_result.stock_models
-                )
-
-                unfinished_submission_stub.saved = True
-                unfinished_submission_stub.save()
-                case_stock_result.case_result.commit_dirtiness_flags()
-                case_stock_result.stock_result.finalize()
-                for case in cases:
-                    case_post_save.send(case.__class__, case=case)
-
-                unfinished_submission_stub.delete()
-                case_stock_result.case_result.close_extensions()
+                else:
+                    instance.initial_processing_complete = True
+                    self.save_processed_models(instance, xforms, case_stock_result)
 
             errors = self.process_signals(instance)
-
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
 
+    def save_processed_models(self, instance, xforms, case_stock_result):
+        from casexml.apps.case.signals import case_post_save
+        with unfinished_submission(instance) as unfinished_submission_stub:
+            self.interface.save_processed_models(
+                instance,
+                xforms,
+                case_stock_result.case_models,
+                case_stock_result.stock_models
+            )
+
+            unfinished_submission_stub.saved = True
+            unfinished_submission_stub.save()
+
+            case_stock_result.case_result.commit_dirtiness_flags()
+            case_stock_result.stock_result.finalize()
+
+            for case in case_stock_result.case_models:
+                case_post_save.send(case.__class__, case=case)
+
+        case_stock_result.case_result.close_extensions()
+
     def process_xforms_for_cases(self, xforms):
         from casexml.apps.case.xform import get_and_check_xform_domain
-        from casexml.apps.case.signals import case_post_save
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
@@ -308,3 +305,16 @@ def handle_unexpected_error(interface, instance, e):
         u"Error saved as {}"
     ).format(instance.orig_id, error_message, instance.form_id))
     FormAccessors(interface.domain).save_new_form(instance)
+
+
+@contextlib.contextmanager
+def unfinished_submission(instance):
+    unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+        xform_id=instance.form_id,
+        timestamp=datetime.datetime.utcnow(),
+        saved=False,
+        domain=instance.domain,
+    )
+    yield unfinished_submission_stub
+
+    unfinished_submission_stub.delete()
