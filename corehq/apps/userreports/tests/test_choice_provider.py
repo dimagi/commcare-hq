@@ -2,7 +2,9 @@ from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase, TestCase
 import mock
 from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
+from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests import delete_all_locations
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
@@ -198,19 +200,36 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             ['unknown-user'] + [user._id for user in self.users])
 
 
+@mock.patch('corehq.apps.es.GroupES', GroupESFake)
 class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     @classmethod
     def setUpClass(cls):
         cls.domain = 'group-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
+
+        def make_group(name, domain=cls.domain):
+            group = Group(name=name, domain=domain, case_sharing=True)
+            GroupESFake.save_doc(group._doc)
+            return group
+
+        cls.groups = [
+            make_group('Team C no'),
+            make_group('Team A yes'),
+            make_group('Team B no'),
+            make_group('Team E yes'),
+            make_group('Team D', domain='not-this-domain'),
+        ]
         cls.choice_provider = GroupChoiceProvider(report, None)
-        cls.static_choice_provider = StaticChoiceProvider([])
+        cls.static_choice_provider = StaticChoiceProvider([
+            SearchableChoice(group.get_id, group.name, searchable_text=[group.name])
+            for group in cls.groups if group.domain == cls.domain])
 
     def test_query_search(self):
-        pass
+        self._test_query(ChoiceQueryContext('yes', limit=10, page=0))
 
     def test_get_choices_for_values(self):
-        pass
+        self._test_get_choices_for_values(
+            ['unknown-group'] + [group.get_id for group in self.groups])
 
 
 class OwnerChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):

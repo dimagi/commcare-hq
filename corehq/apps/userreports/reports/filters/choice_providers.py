@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.es import GroupES
 from corehq.apps.es.filters import doc_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
@@ -174,14 +173,16 @@ class UserChoiceProvider(ChainableChoiceProvider):
 
 class GroupChoiceProvider(ChainableChoiceProvider):
     def query(self, query_context):
+        from corehq.apps.es import GroupES
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query_context.query, default_fields=['name'])
-            .size(query_context.limit).start(query_context.offset)
+            .size(query_context.limit).start(query_context.offset).sort('name')
         )
         return self.get_choices_from_es_query(group_es)
 
     def query_count(self, query):
+        from corehq.apps.es import GroupES
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query, default_fields=['name'])
@@ -189,7 +190,8 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         return group_es.size(0).run().total
 
     def get_choices_for_known_values(self, values):
-        group_es = GroupES().domain(self.domain).is_case_sharing().filter(doc_id(values))
+        from corehq.apps.es import GroupES
+        group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)
         return self.get_choices_from_es_query(group_es)
 
     @staticmethod
