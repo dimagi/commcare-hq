@@ -110,7 +110,7 @@ def format_sidebar(context):
             for nav in navs:
                 if (request.get_full_path().startswith(nav['url']) or
                    request.build_absolute_uri().startswith(nav['url'])):
-                    nav['is_active'] = False
+                    nav['is_active'] = True
                 else:
                     nav['is_active'] = False
 
@@ -121,7 +121,7 @@ def format_sidebar(context):
                                 actual_context = {}
                                 for d in context.dicts:
                                     actual_context.update(d)
-                                subpage['is_active'] = False
+                                subpage['is_active'] = True
                                 subpage['title'] = subpage['title'](**actual_context)
                             nav['subpage'] = subpage
                             break
