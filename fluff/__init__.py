@@ -5,20 +5,13 @@ from fluff import exceptions
 from fluff.exceptions import EmitterValidationError
 from fluff.signals import BACKEND_SQL, BACKEND_COUCH
 from .calculators import Calculator
+from .const import *
 from .emitters import custom_date_emitter, custom_null_emitter
 from .signals import indicator_document_updated
 import fluff.util
 
 
 default_app_config = 'fluff.app_config.FluffAppConfig'
-
-
-TYPE_INTEGER = 'integer'
-TYPE_DECIMAL = 'decimal'
-TYPE_STRING = 'string'
-TYPE_DATE = 'date'
-TYPE_DATETIME = 'datetime'
-ALL_TYPES = [TYPE_INTEGER, TYPE_DECIMAL, TYPE_STRING, TYPE_DATE, TYPE_DATETIME]
 
 
 date_emitter = custom_date_emitter()
