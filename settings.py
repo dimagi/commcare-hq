@@ -238,7 +238,7 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
-    'corehq.form_processor',
+    'corehq.form_processor.app_config.FormProcessorAppConfig',
     'couchforms',
     'couchexport',
     'couchlog',

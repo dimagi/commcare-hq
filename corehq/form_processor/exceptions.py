@@ -18,3 +18,7 @@ class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist, UnicodeMixIn):
 
     def __unicode__(self):
         return "Attachment '{}' not found".format(self.attachment_name)
+
+
+class CaseSaveError(Exception):
+    pass

@@ -1,15 +1,16 @@
-from datetime import datetime
+import logging
 from itertools import groupby
 
-from django.db import transaction, connection
-from django.db.models import Prefetch
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
+from django.db import connection, InternalError
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
-    SupplyPointCaseMixin)
-from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple
+    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
+    case_transaction_adapter, case_index_adapter, case_attachment_adapter
+from corehq.util.test_utils import unit_testing_only
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -126,6 +127,54 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s)', [form_id, archive])
 
+    @staticmethod
+    def save_new_form(form):
+        """
+        Save a previously unsaved form
+        """
+        assert not form.is_saved(), 'form already saved'
+        logging.debug('Saving new form: %s', form)
+        unsaved_attachments = getattr(form, 'unsaved_attachments', [])
+        if unsaved_attachments:
+            del form.unsaved_attachments
+            for unsaved_attachment in unsaved_attachments:
+                    unsaved_attachment.form = form
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'SELECT form_pk FROM save_new_form_with_attachments(%s, %s)',
+                [form, unsaved_attachments]
+            )
+            result = fetchone_as_namedtuple(cursor)
+            form.id = result.form_pk
+
+    @staticmethod
+    def save_deprecated_form(form):
+        assert form.is_saved(), "Can't deprecate an unsaved form"
+        assert form.is_deprecated, 'Re-saving already saved forms not supported'
+        assert getattr(form, 'unsaved_attachments', None) is None, \
+            'Adding attachments to saved form not supported'
+
+        logging.debug('Deprecating form: %s', form)
+
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
+
+    @staticmethod
+    def update_form_problem_and_state(form):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'SELECT update_form_problem_and_state(%s, %s, %s)',
+                [form.form_id, form.problem, form.state]
+            )
+
+    @staticmethod
+    @unit_testing_only
+    def get_form_ids_in_domain(domain, user_id=None):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT form_id FROM get_form_ids_in_domain(%s, %s)', [domain, user_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
+
 
 class CaseAccessorSQL(AbstractCaseAccessor):
 
@@ -215,12 +264,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
-        return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions_for_rebuild(%s)', [case_id]))
+        return list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transactions_for_rebuild(%s)',
+            [case_id])
+        )
 
     @staticmethod
     def get_case_by_location(domain, location_id):
         try:
-            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_location_id(%s, %s)', [domain, location_id])[0]
+            return CommCareCaseSQL.objects.raw(
+                'SELECT * from get_case_by_location_id(%s, %s)',
+                [domain, location_id]
+            )[0]
         except IndexError:
             return None
 
@@ -230,6 +285,48 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
+
+    @staticmethod
+    def save_case(case):
+        transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
+
+        indices_to_save_or_update = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
+        indices_to_save_or_update.extend(case.get_tracked_models_to_update(CommCareCaseIndexSQL))
+        index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
+
+        attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
+        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
+
+        # cast arrays that can be empty to appropriate type
+        query = """SELECT case_pk FROM save_case_and_related_models(
+            %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
+        )"""
+        query = query.format(CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute(query, [
+                    case,
+                    transactions_to_save,
+                    indices_to_save_or_update,
+                    attachments_to_save,
+                    index_ids_to_delete,
+                    attachment_ids_to_delete
+                ])
+                result = fetchone_as_namedtuple(cursor)
+                case.id = result.case_pk
+                case.clear_tracked_models()
+            except InternalError as e:
+                if logging.root.isEnabledFor(logging.DEBUG):
+                    msg = 'save_case_and_related_models called with args: \n{}, {}, {}, {} ,{} ,{}'.format(
+                        case_adapter(case).getquoted(),
+                        [case_transaction_adapter(t).getquoted() for t in transactions_to_save],
+                        [case_index_adapter(i).getquoted() for i in indices_to_save_or_update],
+                        [case_attachment_adapter(a).getquoted() for a in attachments_to_save],
+                        index_ids_to_delete,
+                        attachment_ids_to_delete
+                    )
+                    logging.debug(msg)
+                raise CaseSaveError(e)
 
 
 def _order_list(id_list, object_list, id_property):

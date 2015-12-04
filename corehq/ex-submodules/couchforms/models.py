@@ -147,6 +147,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     def form_id(self):
         return self._id
 
+    @form_id.setter
+    def form_id(self, value):
+        self._id = value
+
     @property
     def form_data(self):
         return self.form

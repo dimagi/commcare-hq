@@ -21,6 +21,14 @@ class FormAccessorCouch(AbstractFormAccessor):
         doc = XFormInstance.get_db().get(form_id, attachments=True)
         return doc_types()[doc['doc_type']].wrap(doc)
 
+    @staticmethod
+    def save_new_form(form):
+        form.save()
+
+    @staticmethod
+    def update_form_problem_and_state(form):
+        form.save()
+
 
 class CaseAccessorCouch(AbstractCaseAccessor):
 

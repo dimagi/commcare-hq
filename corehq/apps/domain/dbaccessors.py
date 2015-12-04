@@ -1,5 +1,6 @@
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
+from corehq.util.test_utils import unit_testing_only
 
 
 def get_doc_ids_in_domain_by_class(domain, doc_class):
@@ -54,6 +55,15 @@ def get_domain_ids_by_names(names):
     return [result['id'] for result in Domain.view(
         "domain/domains",
         keys=names,
+        reduce=False,
+        include_docs=False
+    )]
+
+
+@unit_testing_only
+def get_all_domain_names():
+    return [result['key'] for result in Domain.view(
+        "domain/domains",
         reduce=False,
         include_docs=False
     )]
