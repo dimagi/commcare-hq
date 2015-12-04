@@ -2160,7 +2160,6 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         return repeater
 
     def post(self, request, *args, **kwargs):
-        print self.add_repeater_form.errors
         if self.add_repeater_form.is_valid():
             repeater = self.make_repeater()
             repeater.save()
