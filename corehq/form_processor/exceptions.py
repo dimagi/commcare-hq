@@ -22,3 +22,7 @@ class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist, UnicodeMixIn):
 
 class CaseSaveError(Exception):
     pass
+
+
+class AccessRestricted(Exception):
+    pass

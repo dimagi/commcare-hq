@@ -24,8 +24,7 @@ from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
-from .exceptions import AttachmentNotFound
-
+from .exceptions import AttachmentNotFound, AccessRestricted
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -98,7 +97,33 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+class DisabledDbMixin(object):
+    def save(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def save_base(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def delete(self, *args, **kwargs):
+        raise AccessRestricted('Direct object deletion disabled.')
+
+
+class RestrictedManager(models.Manager):
+    def get_queryset(self):
+        raise AccessRestricted('Only "raw" queries allowed')
+
+    def raw(self, raw_query, params=None, translations=None, using=None):
+        from django.db.models.query import RawQuerySet
+        if using is None:
+            using = self._db
+        return RawQuerySet(raw_query, model=self.model,
+                params=params, translations=translations,
+                using=using)
+
+
+class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+    objects = RestrictedManager()
+
     NORMAL = 0
     ARCHIVED = 1
     DEPRECATED = 2
@@ -267,7 +292,7 @@ class XFormInstanceSQL(models.Model, RedisLockableMixIn, AttachmentMixin, Abstra
         db_table = XFormInstanceSQL_DB_TABLE
 
 
-class AbstractAttachment(models.Model):
+class AbstractAttachment(DisabledDbMixin, models.Model):
     attachment_id = UUIDField(unique=True, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
@@ -293,6 +318,8 @@ class AbstractAttachment(models.Model):
 
 
 class XFormAttachmentSQL(AbstractAttachment):
+    objects = RestrictedManager()
+
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id',
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
@@ -302,7 +329,9 @@ class XFormAttachmentSQL(AbstractAttachment):
         db_table = XFormAttachmentSQL_DB_TABLE
 
 
-class XFormOperationSQL(models.Model):
+class XFormOperationSQL(DisabledDbMixin, models.Model):
+    objects = RestrictedManager()
+
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
 
@@ -372,9 +401,11 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
-class CommCareCaseSQL(models.Model, RedisLockableMixIn,
+class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin):
+    objects = RestrictedManager()
+
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
@@ -525,6 +556,8 @@ class CommCareCaseSQL(models.Model, RedisLockableMixIn,
 
 
 class CaseAttachmentSQL(AbstractAttachment):
+    objects = RestrictedManager()
+
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
@@ -534,7 +567,9 @@ class CaseAttachmentSQL(AbstractAttachment):
         db_table = CaseAttachmentSQL_DB_TABLE
 
 
-class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
+class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
+    objects = RestrictedManager()
+
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
@@ -589,7 +624,9 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
         db_table = CommCareCaseIndexSQL_DB_TABLE
 
 
-class CaseTransaction(models.Model):
+class CaseTransaction(DisabledDbMixin, models.Model):
+    objects = RestrictedManager()
+
     TYPE_FORM = 0
     TYPE_REBUILD_WITH_REASON = 1
     TYPE_REBUILD_USER_REQUESTED = 2
