@@ -152,6 +152,7 @@ class SubmissionPost(object):
                 else:
                     instance.initial_processing_complete = True
                     self.save_processed_models(instance, xforms, case_stock_result)
+                    cases = case_stock_result.case_models
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
