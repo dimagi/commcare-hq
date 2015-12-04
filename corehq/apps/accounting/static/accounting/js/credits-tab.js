@@ -13,6 +13,6 @@
         };
 
         var creditFormModel = new CreditFormModel();
-        ko.applyBindings(creditFormModel, $form.get(0));
+        $form.koApplyBindings(creditFormModel);
     }
 })();
