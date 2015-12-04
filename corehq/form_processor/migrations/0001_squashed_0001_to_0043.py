@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
         (b'form_processor', '0039_case_functions'),
         (b'form_processor', '0040_save_functions'),
         (b'form_processor', '0041_noop_specify_table_names'),
-        (b'form_processor', '0042_noop_change_choice_values'),
+        (b'form_processor', '0042_change_choice_values'),
         (b'form_processor', '0043_rename_to_match'),
     ]
 

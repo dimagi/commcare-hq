@@ -21,7 +21,7 @@ def _rename_constraint(table, old_name, new_name):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0042_noop_change_choice_values'),
+        ('form_processor', '0042_change_choice_values'),
     ]
 
     operations = [
