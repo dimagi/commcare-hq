@@ -10,6 +10,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType, PreOrPostPay
 )
 from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.tour.utils import activate_tour_for_user
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.name_to_url import name_to_url
@@ -21,6 +22,7 @@ from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.tour import tours
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -90,6 +92,8 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
 
     create_30_day_trial(new_domain)
     UserRole.init_domain_with_presets(new_domain.name)
+
+    activate_tour_for_user(tours.SIMPLE_NEW_APP.slug, request.couch_user)
 
     dom_req.domain = new_domain.name
 
