@@ -118,15 +118,6 @@
 
         set_pin(30, $('#cloudcare-main'), $('#loading'));
 
-        function enableOffline() {
-            $('#debug-opts').show();
-            $('#use-offline').attr('checked', 'checked');
-        }
-        var offlineEnabled = {{ offline_enabled|JSON }};
-        if (offlineEnabled) {
-            enableOffline();
-        }
-
         $.subscribe('formplayer.dirty', function() {
             window.mainView.router.view.dirty = true
         });
@@ -153,16 +144,6 @@
 {% if sessions_enabled %}
         <nav id="sessions"></nav>
 {% endif %}
-        <!-- keep this well-hidden for now -->
-        <nav id="debug-opts" style="display: none;">
-          <ul class="nav nav-list">
-            <li>
-              <label class="checkbox">
-                <input id="use-offline" type="checkbox" /> Use offline CloudCare
-              </label>
-            </li>
-          </ul>
-        </nav>
     </section>
 {% endblock %}
 
@@ -184,13 +165,6 @@
                 {% endblocktrans %}
         </div>
     {% endif %}
-    <div id="offline-prompt" class="alert fade in alert-block alert-full alert-danger" style="display: none;">
-        {% blocktrans %}
-            Offline CloudCare is not running!
-            <a href="http://mrgris.com/a/dimagi/offline-cloudcare.jnlp">Launch it here</a>.
-            (It may take a moment to start up once it has downloaded)
-        {% endblocktrans %}
-    </div>
     <div id="cloudcare-main">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
