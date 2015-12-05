@@ -5,15 +5,17 @@ import uuid
 
 
 class SharedDriveConfiguration(object):
-    def __init__(self, shared_drive_path, restore_dir, transfer_dir, temp_dir):
+    def __init__(self, shared_drive_path, restore_dir, transfer_dir, temp_dir, blob_dir):
         self.shared_drive_path = shared_drive_path
         self.restore_dir_name = restore_dir
         self.transfer_dir_name = transfer_dir
         self.temp_dir_name = temp_dir
+        self.blob_dir_name = blob_dir
 
         self._restore_dir = self._init_dir(restore_dir)
         self.transfer_dir = self._init_dir(transfer_dir)
         self.temp_dir = self._init_dir(temp_dir)
+        self.blob_dir = self._init_dir(blob_dir)
         self.tzmigration_planning_dir = self._init_dir('tzmigration-planning')
 
     def _init_dir(self, name):
