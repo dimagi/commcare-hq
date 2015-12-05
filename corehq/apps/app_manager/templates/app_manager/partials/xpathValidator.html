@@ -1,0 +1,73 @@
+{% load hq_shared_tags %}
+<script src="{% static 'xpath/lib/biginteger.js' %}"></script>
+<script src="{% static 'xpath/lib/schemeNumber.js' %}"></script>
+<script src="{% static 'xpath/models.js"' %}></script>
+<script src="{% static 'xpath/xpath.js"' %}></script>
+<script type="text/html" id="XPathValidator.template">
+    <div class="span3 js-xpath-input-target">
+        <input type="text"
+            data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
+                       value: xpathValidator.xpathText, valueUpdate: 'textchange'"/>
+    </div>
+    <div class="span9">
+        <div data-bind="if: xpathValidator.xpathText() && !xpathValidator.error()">
+            <i class="icon icon-ok"></i>
+        </div>
+        <div data-bind="if: xpathValidator.error">
+            <i class="icon icon-exclamation-sign"
+               data-bind="popover: {title: xpathValidator.errorTitle, trigger: 'hover', html: true, content: xpathValidator.errorHtml}"></i>
+        </div>
+    </div>
+</script>
+<script>
+(function () {
+    ko.bindingHandlers.xpathValidator = {
+        init: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value === null) {
+                value = $(element).val();
+            }
+            var input = $(element).get(0);
+            ko.renderTemplate('XPathValidator.template', {
+                xpathValidator: XPathValidator(value),
+                input: input
+            }, {}, element, 'replaceNode');
+        }
+    };
+
+    var XPathValidator = function (xpathText) {
+        var self = {};
+        if (ko.isObservable(xpathText)) {
+            self.xpathText = xpathText;
+        } else {
+            self.xpathText = ko.observable(xpathText);
+        }
+        self.error = ko.observable('');
+        self.errorTitle = ko.computed(function () {
+            var errorLines = self.error().split('\n');
+            return errorLines[0];
+
+        });
+        self.errorHtml = ko.computed(function () {
+            var errorLines = self.error().split('\n');
+            var html = $('<div/>').append(
+                    $('<pre/>').text(_.rest(errorLines, 1).join('\n'))).html();
+            return html;
+        });
+        self.refreshError = function (value) {
+            var error = '';
+            if (self.xpathText()) {
+                try {
+                    xpath.parse(value);
+                } catch (e) {
+                    error = e.message;
+                }
+            }
+            self.error(error);
+        };
+        self.xpathText.subscribe(_.debounce(self.refreshError, 50));
+        self.refreshError(self.xpathText());
+        return self;
+    };
+}());
+</script>
