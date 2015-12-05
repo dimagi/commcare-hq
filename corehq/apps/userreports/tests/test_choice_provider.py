@@ -26,6 +26,9 @@ class SearchableChoice(Choice):
 class StaticChoiceProvider(ChoiceProvider):
 
     def __init__(self, choices):
+        """
+        choices must be passed in in desired sort order
+        """
         self.choices = [
             choice if isinstance(choice, SearchableChoice)
             else SearchableChoice(
@@ -34,7 +37,6 @@ class StaticChoiceProvider(ChoiceProvider):
             )
             for choice in choices
         ]
-        self.choices.sort(key=lambda choice: choice.display)
         super(StaticChoiceProvider, self).__init__(None, None)
 
     def query(self, query_context):
@@ -43,8 +45,8 @@ class StaticChoiceProvider(ChoiceProvider):
         return filtered_set[query_context.offset:query_context.offset + query_context.limit]
 
     def get_choices_for_known_values(self, values):
-        return [choice for choice in self.choices
-                if choice.value in values]
+        return {choice for choice in self.choices
+                if choice.value in values}
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
@@ -77,9 +79,12 @@ class ChoiceProviderTestMixin(object):
 
     def _test_get_choices_for_values(self, values):
         self.assertEqual(
-            set(self.choice_provider.get_choices_for_values(values)),
-            set(self.static_choice_provider.get_choices_for_values(values))
+            self.choice_provider.get_choices_for_values(values),
+            self.static_choice_provider.get_choices_for_values(values),
         )
+
+    def test_query_no_search_all(self):
+        self._test_query(ChoiceQueryContext('', limit=20, page=0))
 
     def test_query_no_search_first_short_page(self):
         self._test_query(ChoiceQueryContext('', 2, page=0))
@@ -113,10 +118,14 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',
         'custom.logistics', 'custom.ilsgateway', 'custom.ewsghana', 'corehq.couchapps'
     ]
+    domain = 'location-choice-provider'
+
+    @classmethod
+    def make_location(cls, location_code, location_name):
+        return make_loc(location_code, location_name, type='outlet', domain=cls.domain)
 
     @classmethod
     def setUpClass(cls):
-        cls.domain = 'location-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
         bootstrap_location_types(cls.domain)
 
@@ -129,11 +138,11 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         choices = []
 
         for location_code, location_name in location_code_name_pairs:
-            location = make_loc(location_code, location_name, type='outlet', domain=cls.domain)
+            location = cls.make_location(location_code, location_name)
             cls.locations.append(location)
             choices.append(SearchableChoice(location.location_id, location.sql_location.display_name,
                                             searchable_text=[location_code, location_name]))
-
+        choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = LocationChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
 
@@ -152,32 +161,37 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
 @mock.patch('corehq.apps.es.UserES', UserESFake)
 class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
+    domain = 'user-choice-provider'
+
+    @classmethod
+    def make_mobile_worker(cls, username, domain=None):
+        domain = domain or cls.domain
+        user = CommCareUser(username=normalize_username(username, domain),
+                            domain=domain)
+        user.domain_membership = DomainMembership(domain=domain)
+        UserESFake.save_doc(user._doc)
+        return user
+
+    @classmethod
+    def make_web_user(cls, email):
+        domains = [cls.domain]
+        user = WebUser(username=email, domains=domains)
+        user.domain_memberships = [DomainMembership(domain=cls.domain)]
+        UserESFake.save_doc(user._doc)
+        return user
+
     @classmethod
     def setUpClass(cls):
-        cls.domain = 'user-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
 
-        def make_mobile_worker(username, domain=cls.domain):
-            user = CommCareUser(username=normalize_username(username, domain),
-                                domain=domain)
-            user.domain_membership = DomainMembership(domain=domain)
-            UserESFake.save_doc(user._doc)
-            return user
-
-        def make_web_user(email):
-            user = WebUser(username=email, domains=[cls.domain])
-            user.domain_memberships = [DomainMembership(domain=cls.domain)]
-            UserESFake.save_doc(user._doc)
-            return user
-
         cls.users = [
-            make_mobile_worker('bernice'),
-            make_mobile_worker('dennis'),
-            make_mobile_worker('elizabeth'),
-            make_web_user('candice@example.com'),
-            make_mobile_worker('albert'),
+            cls.make_mobile_worker('albert'),
+            cls.make_mobile_worker('bernice'),
+            cls.make_web_user('candice@example.com'),
+            cls.make_mobile_worker('dennis'),
+            cls.make_mobile_worker('elizabeth'),
             # test that docs in other domains are filtered out
-            make_mobile_worker('aaa', domain='some-other-domain'),
+            cls.make_mobile_worker('aaa', domain='some-other-domain'),
         ]
         choices = [
             SearchableChoice(
@@ -202,22 +216,25 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
 @mock.patch('corehq.apps.es.GroupES', GroupESFake)
 class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
+    domain = 'group-choice-provider'
+
+    @classmethod
+    def make_group(cls, name, domain=None):
+        domain = domain or cls.domain
+        group = Group(name=name, domain=domain, case_sharing=True)
+        GroupESFake.save_doc(group._doc)
+        return group
+
     @classmethod
     def setUpClass(cls):
-        cls.domain = 'group-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
 
-        def make_group(name, domain=cls.domain):
-            group = Group(name=name, domain=domain, case_sharing=True)
-            GroupESFake.save_doc(group._doc)
-            return group
-
         cls.groups = [
-            make_group('Team C no'),
-            make_group('Team A yes'),
-            make_group('Team B no'),
-            make_group('Team E yes'),
-            make_group('Team D', domain='not-this-domain'),
+            cls.make_group('Team A yes'),
+            cls.make_group('Team B no'),
+            cls.make_group('Team C no'),
+            cls.make_group('Team D', domain='not-this-domain'),
+            cls.make_group('Team E yes'),
         ]
         cls.choice_provider = GroupChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider([
@@ -232,13 +249,30 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             ['unknown-group'] + [group.get_id for group in self.groups])
 
 
-class OwnerChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
+@mock.patch('corehq.apps.es.UserES', UserESFake)
+@mock.patch('corehq.apps.es.GroupES', GroupESFake)
+class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
+    domain = 'owner-choice-provider'
+
     @classmethod
     def setUpClass(cls):
-        cls.domain = 'owner-choice-provider'
         report = ReportConfiguration(domain=cls.domain)
+        group = GroupChoiceProviderTest.make_group('Group')
+        mobile_worker = UserChoiceProviderTest.make_mobile_worker('mobile-worker')
+        web_user = UserChoiceProviderTest.make_web_user('web-user@example.com')
+        location = LocationChoiceProviderTest.make_location('location', 'Location')
+        cls.docs = [group, mobile_worker, web_user, location]
+        cls.choices = [
+            SearchableChoice(group.get_id, group.name, [group.name]),
+            SearchableChoice(mobile_worker.get_id, mobile_worker.username,
+                             [mobile_worker.username]),
+            SearchableChoice(web_user.get_id, web_user.username,
+                             [web_user.username]),
+            SearchableChoice(location.location_id, location.name,
+                             [location.name]),
+        ]
         cls.choice_provider = OwnerChoiceProvider(report, None)
-        cls.static_choice_provider = StaticChoiceProvider([])
+        cls.static_choice_provider = StaticChoiceProvider(cls.choices)
 
     def test_query_search(self):
         pass

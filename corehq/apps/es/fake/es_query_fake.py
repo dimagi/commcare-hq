@@ -88,10 +88,10 @@ class ESQueryFake(object):
 
     def run(self):
         result_docs = list(self._result_docs)
+        total = len(result_docs)
         if self._sort_field:
             result_docs.sort(key=lambda doc: doc[self._sort_field],
                              reverse=self._sort_desc)
-
         if self._size is not None:
             result_docs = result_docs[self._start:self._start + self._size]
         else:
@@ -99,8 +99,9 @@ class ESQueryFake(object):
 
         return ESQuerySet({
             'hits': {
-                'hits': [{'_source': doc} for doc in result_docs]
-            }
+                'hits': [{'_source': doc} for doc in result_docs],
+                'total': total,
+            },
         }, self)
 
     def __getattr__(self, item):

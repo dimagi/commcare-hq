@@ -56,11 +56,11 @@ class ChoiceProvider(object):
         pass
 
     def get_choices_for_values(self, values):
-        choices = self.get_choices_for_known_values(values)
+        choices = set(self.get_choices_for_known_values(values))
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.append(Choice(value, value))
+                choices.add(Choice(value, value))
                 used_values.add(value)
         return choices
 
