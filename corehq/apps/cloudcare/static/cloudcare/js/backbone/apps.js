@@ -738,10 +738,7 @@ cloudCare.AppView = Backbone.View.extend({
                 onLoadingComplete: tfLoadingComplete
             });
         };
-        var promptForOffline = function(show) {
-            $('#offline-prompt')[show ? 'show' : 'hide']();
-        };
-        touchformsInit(data.xform_url, loadSession, promptForOffline);
+        touchformsInit(data.xform_url, loadSession);
     },
     selectForm: function (form) {
         var self = this;
