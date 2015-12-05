@@ -9,7 +9,7 @@
             data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
                        value: xpathValidator.xpathText, valueUpdate: 'textchange'"/>
     </div>
-    <div class="span9">
+    <div class="span1">
         <div data-bind="if: xpathValidator.xpathText() && !xpathValidator.error()">
             <i class="icon icon-ok"></i>
         </div>
