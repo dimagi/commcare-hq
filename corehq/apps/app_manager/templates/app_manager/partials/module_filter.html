@@ -12,9 +12,9 @@
             data-bind="xpathValidator: xpath"/>
     </div>
 </div>
-{% endif %}
 <script>
 $(function () {
     $('#module-filter').koApplyBindings({xpath: {{ module.module_filter|JSON }} || ''});
 });
 </script>
+{% endif %}
