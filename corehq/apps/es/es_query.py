@@ -380,6 +380,9 @@ class ESQuerySet(object):
         results = namedtuple('facet_results', [f.name for f in facets])
         return results(**{f.name: f.parse_result(raw) for f in facets})
 
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)
+
 
 class HQESQuery(ESQuery):
     """
