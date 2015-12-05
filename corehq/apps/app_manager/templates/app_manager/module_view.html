@@ -7,10 +7,7 @@
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
-    <script src="{% static 'xpath/lib/biginteger.js' %}"></script>
-    <script src="{% static 'xpath/lib/schemeNumber.js' %}"></script>
-    <script src="{% static 'xpath/models.js"' %}></script>
-    <script src="{% static 'xpath/xpath.js"' %}></script>
+    {% include "app_manager/partials/xpathValidator.html" %}
     <script>
     if (window.toggles === undefined) {
         window.toggles = {};
