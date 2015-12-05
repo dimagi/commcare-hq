@@ -738,7 +738,7 @@ cloudCare.AppView = Backbone.View.extend({
                 onLoadingComplete: tfLoadingComplete
             });
         };
-        touchformsInit(data.xform_url, loadSession);
+        loadSession();
     },
     selectForm: function (form) {
         var self = this;
