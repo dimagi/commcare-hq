@@ -21,6 +21,7 @@
     "knockout": "3.1.0",
     "select2-3.4.5-legacy": "select2#3.4.5",
     "less": "1.7.3",
+    "xpath": "dimagi/js-xpath",
     "backbone": "0.9.1",
     "bootstrap-daterangepicker": "2.1.13",
     "bootstrap-timepicker": "0.5.1",
@@ -30,8 +31,7 @@
     "d3": "3.1",
     "nvd3": "1.1.10-beta",
     "codemirror": "5.5.0",
-    "bootstrap3-typeahead": "~3.1.1",
-    "xpath": "dimagi/js-xpath"
+    "bootstrap3-typeahead": "~3.1.1"
   },
   "devDependencies": {
     "chai": "3.3.0",
