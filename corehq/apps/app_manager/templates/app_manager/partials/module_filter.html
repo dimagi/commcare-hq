@@ -6,15 +6,57 @@
         {% trans "Module Filter" %}
     </label>
     <div class="controls commcare-feature" data-since-version="2.20">
-        <input type="text"
-            placeholder="{% trans "XPath expression" %}"
-            name="module_filter"
-            {% if ko_value %}
-                data-bind="value: {{ ko_value }}"
-            {% else %}
-                value="{{ value }}"
-            {% endif %}
-        >
+        <div class="span3">
+            <input type="text"
+                placeholder="{% trans "XPath expression" %}"
+                name="module_filter"
+                data-bind="value: xpathText, valueUpdate: 'textchange'"/>
+        </div>
+        <div class="span9">
+            <div data-bind="if: xpathText() && !error()">
+                <i class="icon icon-ok"></i>
+            </div>
+            <div data-bind="if: error">
+                <i class="icon icon-exclamation-sign"
+                   data-bind="popover: {title: errorTitle, trigger: 'hover', html: true, content: errorHtml}"></i>
+            </div>
+        </div>
     </div>
 </div>
 {% endif %}
+<script>
+$(function () {
+    var ModuleFilter = function (xpathText) {
+        var self = {};
+        self.xpathText = ko.observable(xpathText);
+        self.error = ko.observable('');
+        self.errorTitle = ko.computed(function () {
+            var errorLines = self.error().split('\n');
+            return errorLines[0];
+
+        });
+        self.errorHtml = ko.computed(function () {
+            var errorLines = self.error().split('\n');
+            var html = $('<div/>').append(
+                    $('<pre/>').text(_.rest(errorLines, 1).join('\n'))).html();
+            return html;
+        });
+        self.refreshError = function (value) {
+            var error = '';
+            if (self.xpathText()) {
+                try {
+                    xpath.parse(value);
+                } catch (e) {
+                    error = e.message;
+                }
+            }
+            self.error(error);
+        };
+        self.xpathText.subscribe(_.debounce(self.refreshError, 50));
+        self.refreshError(self.xpathText());
+        return self;
+    };
+    var module_filter = ModuleFilter({{ module.module_filter|JSON }} || '');
+    $('#module-filter').koApplyBindings(module_filter);
+});
+</script>
