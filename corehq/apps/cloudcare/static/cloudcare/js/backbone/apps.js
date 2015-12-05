@@ -652,6 +652,10 @@ cloudCare.AppView = Backbone.View.extend({
         data.formContext = {
             case_model: caseModel ? caseModel.toJSON() : null
         };
+        data.mobileAuth = {
+            username: $('#id_mobile_username').val(),
+            password: $('#id_mobile_password').val()
+        }
         data.onsubmit = function (xml) {
             window.mainView.router.view.dirty = false;
             // post to receiver

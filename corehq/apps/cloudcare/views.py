@@ -56,6 +56,8 @@ from corehq.apps.style.decorators import (
 )
 from django.shortcuts import get_object_or_404
 
+from .forms import CloudCareControlsForm
+
 
 @require_cloudcare_access
 def default(request, domain):
@@ -188,6 +190,7 @@ class CloudcareMain(View):
             "offline_enabled": toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
+            "cloudcare_controls_form": CloudCareControlsForm(),
         }
         context.update(_url_context())
         return render(request, "cloudcare/cloudcare_home.html", context)

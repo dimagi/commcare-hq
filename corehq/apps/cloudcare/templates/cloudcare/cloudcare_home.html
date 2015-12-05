@@ -1,6 +1,7 @@
 {% extends "cloudcare/base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 
 {% block title %}
     {% if request.couch_user.is_web_user %}
@@ -182,7 +183,12 @@
                     More information can be found at the <a href="https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry">CommCare Help Site</a>.
                 {% endblocktrans %}
         </div>
+
     {% endif %}
+    <div class="cloudcare-controls">
+        {% crispy cloudcare_controls_form %}
+    </div>
+    <hr />
     <div id="offline-prompt" class="alert fade in alert-block alert-full alert-danger" style="display: none;">
         {% blocktrans %}
             Offline CloudCare is not running!
