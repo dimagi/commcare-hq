@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.couchdb_management import CouchConfig, couch_config
+from corehq.util.exceptions import DatabaseNotFound
 
 
 class CouchConfigTest(SimpleTestCase):
@@ -39,3 +40,8 @@ class CouchConfigTest(SimpleTestCase):
         config = CouchConfig(db_uri=self.remote_db_uri)
         self.assertEqual(self.remote_db_uri, config.get_db_for_db_name('cchq').uri)
         self.assertEqual('{}__users'.format(self.remote_db_uri), config.get_db_for_db_name('cchq__users').uri)
+
+    def test_get_db_for_db_name_not_found(self):
+        config = CouchConfig(db_uri=self.remote_db_uri)
+        with self.assertRaises(DatabaseNotFound):
+            config.get_db_for_db_name('missing')
