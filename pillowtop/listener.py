@@ -317,7 +317,7 @@ class PythonPillow(BasicPillow):
         for change in changes_to_process:
             if self.preload_docs:
                 doc = self.get_couch_db().open_doc(change['id'], check_main=False)
-                change.document = doc
+                change.set_document(doc)
 
             # a valid change is either a non-preload situation or a valid doc + a filter match
             valid_change = (not self.preload_docs or change.document) and self.python_filter(change)

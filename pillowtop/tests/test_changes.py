@@ -38,7 +38,7 @@ class TestCouchChange(SimpleTestCase):
         change = Change(id='id', sequence_id='', document={})
         self.assertEqual({}, change.document)
         document = {'foo': 'bar'}
-        change.document = document
+        change.set_document(document)
         self.assertEqual(document, change.document)
         self.assertEqual(document, change.to_dict()['doc'])
 

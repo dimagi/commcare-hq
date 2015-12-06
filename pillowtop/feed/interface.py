@@ -43,6 +43,12 @@ class Change(object):
             'deleted': self.deleted,
         }
 
+    def set_document(self, document):
+        self.document = document
+
+    def get_document(self):
+        return self.document
+
     def __repr__(self):
         return u'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
             self.id, self.sequence_id, self.deleted, self.metadata, self.document
