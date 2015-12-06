@@ -230,7 +230,10 @@ class BasicPillow(PillowBase):
             return LockManager(self.get_couch_db().open_doc(id), lock)
         elif changes_dict.get('doc', None) is not None:
             return changes_dict['doc']
+        elif hasattr(changes_dict, 'get_document') and changes_dict.get_document():
+            return changes_dict.get_document()
         else:
+            # todo: remove this in favor of always using get_document() above
             return self.get_couch_db().open_doc(id)
 
     def change_transform(self, doc_dict):
