@@ -246,22 +246,29 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 class RepeaterFailureTest(BaseRepeaterTest):
 
     def setUp(self):
-        self.domain = "test-domain"
-        create_domain(self.domain)
+        self.domain_name = "test-domain"
+        self.domain = create_domain(self.domain_name)
 
         self.repeater = CaseRepeater(
-            domain=self.domain,
+            domain=self.domain_name,
             url='case-repeater-url',
             version=V1,
-            format='new_format'
+            format='other_format'
         )
         self.repeater.save()
         self.post_xml(xform_xml, self.domain)
 
+    def tearDown(self):
+        self.domain.delete()
+        self.repeater.delete()
+        repeat_records = RepeatRecord.all()
+        for repeat_record in repeat_records:
+            repeat_record.delete()
+
     def test_failure(self):
         payload = "some random case"
 
-        @RegisterGenerator(CaseRepeater, 'new_format', 'XML')
+        @RegisterGenerator(CaseRepeater, 'other_format', 'XML')
         class NewCaseGenerator(BasePayloadGenerator):
             def get_payload(self, repeat_record, payload_doc):
                 return payload
