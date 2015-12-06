@@ -42,9 +42,19 @@ class FluffPillow(PythonPillow):
 
     def python_filter(self, change):
         self._assert_pillow_valid()
-        doc = change.document
-        if doc.get('domain') in self.domains:
-            return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
+
+        def domain_filter(domain):
+            return domain in self.domains
+
+        def doc_type_filter(doc_type):
+            return self._is_doc_type_match(doc_type) or self._is_doc_type_deleted_match(doc_type)
+
+        # if metadata.domain is specified this should never have to get the document out of the DB
+        domain = (change.metadata and change.metadata.domain) or change.get_document().get('domain')
+        if domain_filter(domain):
+            # same for metadata.document_type
+            doc_type = change.metadata.document_type or change.get_document().get('doc_type')
+            return doc_type_filter(doc_type)
 
     def _assert_pillow_valid(self):
         assert self.domains
