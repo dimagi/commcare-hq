@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.es.filters import doc_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
@@ -133,7 +132,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         # todo: does this need fancier permission restrictions and what not?
         # see e.g. locations.views.child_locations_for_select2
 
-        locations = self._locations_query(query_context.query)
+        locations = self._locations_query(query_context.query).order_by('name')
 
         return [
             Choice(loc.location_id, loc.display_name) for loc in
@@ -218,7 +217,6 @@ class AbstractMultiProvider(ChoiceProvider):
         limit = query_context.limit
         offset = query_context.offset
         query = query_context.query
-
         choices = []
         for choice_provider in self.choice_providers:
             if limit <= 0:
@@ -228,6 +226,7 @@ class AbstractMultiProvider(ChoiceProvider):
             choices.extend(new_choices)
             if len(new_choices):
                 limit -= len(new_choices)
+                offset = 0
             else:
                 offset -= choice_provider.query_count(query)
         return choices
