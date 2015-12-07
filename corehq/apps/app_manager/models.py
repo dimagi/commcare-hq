@@ -46,7 +46,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import (
-    dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
