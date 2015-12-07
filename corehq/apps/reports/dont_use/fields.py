@@ -145,50 +145,6 @@ class SelectMobileWorkerField(SelectMobileWorkerMixin, ReportField):
         self.context['individual'] = self.individual
 
 
-class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
-    """
-        This is a little field for use when a client really wants to filter by
-        individuals from a specific group.  Since by default we still want to
-        show all the data, no filtering is done unless the special group filter
-        is selected.
-    """
-    slug = "select_filtered_mw"
-    name = ugettext_noop("Select Mobile Worker")
-    template = "reports/dont_use_fields/select_filtered_mobile_worker.html"
-    default_option = ugettext_noop("All Mobile Workers...")
-
-    # Whether to display both the default option and "Only <group> Mobile
-    # Workers" or just the default option (useful when using a single
-    # group_name and changing default_option to All <group> Workers)
-    show_only_group_option = True
-
-    group_names = []
-
-    def update_params(self):
-        if not self.individual:
-            self.individual = self.request.GET.get('filtered_individual', '')
-        self.users = []
-        self.group_options = []
-        for group in self.group_names:
-            filtered_group = Group.by_name(self.domain, group)
-            if filtered_group:
-                if self.show_only_group_option:
-                    self.group_options.append(dict(group_id=filtered_group._id,
-                        name=_("Only %s Mobile Workers") % group))
-                self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))
-
-    def update_context(self):
-        super(SelectFilteredMobileWorkerField, self).update_context()
-        self.context['users'] = self.users_to_options(self.users)
-        self.context['group_options'] = self.group_options
-
-    @staticmethod
-    def users_to_options(user_list):
-        return [dict(val=user.user_id,
-            text=user.raw_username,
-            is_active=user.is_active) for user in user_list]
-
-
 class BooleanField(ReportField):
     slug = "checkbox"
     label = "hello"
