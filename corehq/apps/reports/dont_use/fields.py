@@ -129,16 +129,6 @@ class BooleanField(ReportField):
         self.context['checked'] = self.request.GET.get(self.slug, False)
 
 
-class StrongFilterUsersField(FilterUsersField):
-    """
-        Version of the FilterUsersField that always actually uses and shows this filter
-        When using this field:
-            if using ProjectReportParametersMixin make sure filter_users_field_class is set to this
-    """
-    always_show_filter = True
-    can_be_empty = True
-
-
 class UserOrGroupField(ReportSelectField):
     """
         To Use: Subclass and specify what the field options should be
