@@ -98,14 +98,6 @@ var CommCareUsersViewModel = function (o) {
     return view_model;
 };
 
-$.fn.asyncUsersList = function (options) {
-    this.each(function(i, v) {
-        var viewModel = new CommCareUsersViewModel(options);
-        $(this).koApplyBindings(viewModel);
-        viewModel.init();
-    });
-};
-
 ko.bindingHandlers.isPrevNextDisabled = {
     update: function(element, valueAccessor) {
         var value = valueAccessor()();

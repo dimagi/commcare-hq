@@ -10,27 +10,25 @@ var DeletedFormsControl = function (options) {
 };
 
 $.fn.advanceFormsOptions = function (options) {
-    this.each(function(i) {
-        var viewModel = new DeletedFormsControl(options);
+    var viewModel = new DeletedFormsControl(options);
+    $(this).koApplyBindings(viewModel);
+    var $css_class = $('.' + viewModel.css_class);
+    $css_class.each(function() {
         $(this).koApplyBindings(viewModel);
-        var $css_class = $('.' + viewModel.css_class);
-        $css_class.each(function(j) {
-            $(this).koApplyBindings(viewModel);
-        });
-
-        viewModel.show.subscribe(function(newValue) {
-            if (newValue) {
-                $('#' + viewModel.css_id + '_status').closest('.control-group').show();
-            } else {
-                var $app_type_select = $('#' + viewModel.css_id + '_status');
-                if ($app_type_select.val() == 'active') {
-                    $('#' + viewModel.css_id + '_status').closest('.control-group').hide();
-                }
-                viewModel.is_unknown_shown(false);
-            }
-        });
-        viewModel.show(options.show);
     });
+
+    viewModel.show.subscribe(function(newValue) {
+        if (newValue) {
+            $('#' + viewModel.css_id + '_status').closest('.control-group').show();
+        } else {
+            var $app_type_select = $('#' + viewModel.css_id + '_status');
+            if ($app_type_select.val() == 'active') {
+                $('#' + viewModel.css_id + '_status').closest('.control-group').hide();
+            }
+            viewModel.is_unknown_shown(false);
+        }
+    });
+    viewModel.show(options.show);
 };
 
 ko.bindingHandlers.hideKnownForms = {
