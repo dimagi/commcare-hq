@@ -78,6 +78,7 @@
         {% endif %}
     </div>
     <form class="well form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
+        {% csrf_token %}
         <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" />
         <button class="btn btn-success" type="submit">{% trans "Create Group" %}</button>
     </form>
