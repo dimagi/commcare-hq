@@ -92,8 +92,11 @@ class ChainableChoiceProvider(ChoiceProvider):
 class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def query(self, query_context):
-        return [Choice(value, value)
-                for value in self.get_values_for_query(query_context)]
+        try:
+            return [Choice(value, value)
+                    for value in self.get_values_for_query(query_context)]
+        except ColumnNotFoundError:
+            return []
 
     def query_count(self, query):
         # this isn't (currently) used externally, and no other choice provider relies on
