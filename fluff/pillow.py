@@ -53,7 +53,7 @@ class FluffPillow(PythonPillow):
         domain = (change.metadata and change.metadata.domain) or change.get_document().get('domain')
         if domain_filter(domain):
             # same for metadata.document_type
-            doc_type = change.metadata.document_type or change.get_document().get('doc_type')
+            doc_type = (change.metadata and change.metadata.document_type) or change.get_document().get('doc_type')
             return doc_type_filter(doc_type)
 
     def _assert_pillow_valid(self):
