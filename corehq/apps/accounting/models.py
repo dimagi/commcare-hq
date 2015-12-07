@@ -781,7 +781,7 @@ class SoftwarePlanVersion(models.Model):
             return product_rate.product.product_type
         except (IndexError, SoftwareProductRate.DoesNotExist):
             pass
-        return "CommCare"
+        return SoftwareProductType.COMMCARE
 
     @property
     def version(self):
