@@ -26,6 +26,7 @@
      *      Default is 2000 milliseconds.
      */
     function kmqPushSafe(args, timeout) {
+        console.log("called kissmetrics with", arguments);
         var lastArg = args[args.length - 1];
         if (typeof  lastArg === "function"){
             var oneTimeCallback = _.once(lastArg);
