@@ -333,6 +333,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
+    'custom.icds',
     'hsph',
     'mvp',
     'mvp_docs',
