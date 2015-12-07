@@ -48,6 +48,13 @@
         "name": "AppPillow", 
         "unique_id": "93d8007a66254463abc4f8938811eea9"
     }, 
+    "BlobDeletionPillow": {
+        "advertised_name": "BlobDeletionPillow", 
+        "change_feed_type": "KafkaChangeFeed", 
+        "checkpoint_id": "kafka-blob-deletion-pillow-checkpoint", 
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow", 
+        "name": "BlobDeletionPillow"
+    }, 
     "CacheInvalidatePillow": {
         "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 
