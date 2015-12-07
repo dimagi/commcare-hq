@@ -11,13 +11,6 @@ def _rename_index(old_name, new_name):
     )
 
 
-def _rename_constraint(table, old_name, new_name):
-    return migrations.RunSQL(
-        sql='ALTER TABLE {} RENAME CONSTRAINT {} TO {}'.format(table, old_name, new_name),
-        reverse_sql='ALTER TABLE {} RENAME CONSTRAINT {} TO {}'.format(table, new_name, old_name),
-    )
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -36,5 +29,4 @@ class Migration(migrations.Migration):
         _rename_index('form_processor_casetransaction_case_uuid_658060f617332cb8_uniq', 'form_processor_casetransaction_case_id_1664708167e61d08_uniq'),
         _rename_index('form_processor_casetransaction_case_id_6c13626ba79fe02e_uniq', 'form_processor_casetransaction_7f12ca67'),
         _rename_index('form_processor_commcarecaseindexs_case_id_7db75a61e418ebfc_uniq', 'form_processor_commcarecaseindexsql_7f12ca67'),
-        _rename_constraint('form_processor_commcarecaseindexsql', 'form_processor_commcarec_relationship_id_115232f8e102e116_check', 'form_processor_commcarecaseindexsql_relationship_id_check'),
     ]
