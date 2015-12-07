@@ -1,14 +1,18 @@
 {% load i18n %}
 
-<div id="email-trial-message-modal" class="modal hide fade">
-    <div class="modal-header">
-        <a class="close" data-dismiss="modal">&times;</a>
-        <h4>{% trans "Email Reminders Trial" %}</h4>
-    </div>
-    <div class="modal-body">
-        <p>{{ email_trial_message }}</p>
-    </div>
-    <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn">{% trans "OK" %}</a>
+<div id="email-trial-message-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h4>{% trans "Email Reminders Trial" %}</h4>
+            </div>
+            <div class="modal-body">
+                <p>{{ email_trial_message }}</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "OK" %}</a>
+            </div>
+        </div>
     </div>
 </div>

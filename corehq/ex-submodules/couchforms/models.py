@@ -139,11 +139,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         except ResourceNotFound:
             raise XFormNotFound
 
-    @classmethod
-    def get_with_attachments(cls, xform_id):
-        doc = cls.get_db().get(xform_id, attachments=True)
-        return doc_types()[doc['doc_type']].wrap(doc)
-
     @property
     def type(self):
         return self.form.get(const.TAG_TYPE, "")
@@ -151,6 +146,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     @property
     def form_id(self):
         return self._id
+
+    @form_id.setter
+    def form_id(self, value):
+        self._id = value
 
     @property
     def form_data(self):

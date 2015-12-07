@@ -16,6 +16,14 @@ def get_number_of_report_configs_by_data_source(domain, data_source_id):
     ).one()['value']
 
 
+def get_report_configs_for_domain(domain):
+    from corehq.apps.userreports.models import ReportConfiguration
+    return sorted(
+        get_docs_in_domain_by_class(domain, ReportConfiguration),
+        key=lambda report: report.title,
+    )
+
+
 @unit_testing_only
 def get_all_report_configs():
     all_domains = Domain.get_all()
@@ -28,11 +36,3 @@ def get_all_report_configs():
 def delete_all_report_configs():
     from corehq.apps.userreports.models import ReportConfiguration
     delete_all_docs_by_doc_type(ReportConfiguration.get_db(), ('ReportConfiguration',))
-
-
-def get_report_configs_for_domain(domain):
-    from corehq.apps.userreports.models import ReportConfiguration
-    return sorted(
-        get_docs_in_domain_by_class(domain, ReportConfiguration),
-        key=lambda report: report.title,
-    )

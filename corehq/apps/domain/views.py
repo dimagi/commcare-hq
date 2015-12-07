@@ -67,7 +67,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
-    StripePaymentMethod,
+    StripePaymentMethod, LastPayment
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -86,7 +86,8 @@ from corehq.apps.domain.forms import (
     SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS)
+    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
@@ -529,7 +530,7 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    format = request.POST['format']
+    format = request.POST.get('format', None)
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -1005,7 +1006,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
     def get_payment_handler(self):
         """Returns a StripePaymentHandler object
         """
-        raise NotImplementedError("You must impmenent get_payment_handler()")
+        raise NotImplementedError("You must implement get_payment_handler()")
 
     def post(self, request, *args, **kwargs):
         try:
@@ -1045,6 +1046,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             created_by=self.request.user.username,
             account_type=BillingAccountType.USER_CREATED,
             entry_point=EntryPoint.SELF_STARTED,
+            last_payment_method=LastPayment.CC_ONE_TIME,
         )[0]
 
     def get_payment_handler(self):
@@ -1230,6 +1232,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
+            'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
@@ -1266,14 +1269,21 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         else:
             plan = subscription.plan_version.plan
             if subscription.service_type == SubscriptionType.CONTRACTED:
-                subscription_type = "contracted_partner"
+                subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                subscription_type = "dimagi_only_enterprise"
+                subscription_type = DimagiOnlyEnterpriseForm.slug
             elif (plan.edition == SoftwarePlanEdition.ADVANCED
                   and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
-                subscription_type = "advanced_extended_trial"
+                subscription_type = AdvancedExtendedTrialForm.slug
 
-        return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
+        return SelectSubscriptionTypeForm(
+            {'subscription_type': subscription_type},
+            disable_input=not self.is_form_editable,
+        )
+
+    @property
+    def is_form_editable(self):
+        return not self.slug_to_form[ContractedPartnerForm.slug].is_uneditable
 
 
 class SelectPlanView(DomainAccountingSettings):
@@ -1478,7 +1488,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
+        if self.edition == SoftwarePlanEdition.ENTERPRISE:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 
@@ -2160,7 +2170,6 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         return repeater
 
     def post(self, request, *args, **kwargs):
-        print self.add_repeater_form.errors
         if self.add_repeater_form.is_valid():
             repeater = self.make_repeater()
             repeater.save()
@@ -2483,7 +2492,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 if isinstance(preview, feature_previews.FeaturePreview) and preview.has_privilege(self.request):
                     features.append((preview, preview.enabled(self.domain)))
 
-        return features
+        return sorted(features, key=lambda feature: feature[0].label)
 
     def get_toggle(self, slug):
         if not slug in [f.slug for f, _ in self.features()]:

@@ -64,6 +64,16 @@ class FormProcessorInterface(object):
         else:
             return CaseDbCacheCouch
 
+    @property
+    @memoized
+    def ledger_processor(self):
+        from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
+        from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
+        if should_use_sql_backend(self.domain):
+            return LedgerProcessorSQL(domain=self.domain)
+        else:
+            return LedgerProcessorCouch(domain=self.domain)
+
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
 
@@ -97,9 +107,9 @@ class FormProcessorInterface(object):
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
-    def save_processed_models(self, instance, xforms, cases=None):
+    def save_processed_models(self, instance, xforms, cases=None, stock_updates=None):
         try:
-            return self.processor.save_processed_models(xforms, cases=cases)
+            return self.processor.save_processed_models(xforms, cases=cases, stock_updates=stock_updates)
         except BulkSaveError as e:
             logging.error('BulkSaveError saving forms', exc_info=1,
                           extra={'details': {'errors': e.errors}})
@@ -116,10 +126,13 @@ class FormProcessorInterface(object):
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
-        self.processor.hard_delete_case_and_forms(case, xforms)
+        domain = case.domain
+        all_domains = {domain} | {xform.domain for xform in xforms}
+        assert len(all_domains) == 1, all_domains
+        self.processor.hard_delete_case_and_forms(domain, case, xforms)
 
-    def deprecate_xform(self, existing_xform, new_xform):
-        return self.processor.deprecate_xform(existing_xform, new_xform)
+    def apply_deprecation(self, existing_xform, new_xform):
+        return self.processor.apply_deprecation(existing_xform, new_xform)
 
     def deduplicate_xform(self, xform):
         return self.processor.deduplicate_xform(xform)

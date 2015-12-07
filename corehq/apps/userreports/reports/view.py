@@ -13,7 +13,6 @@ from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import (
-    cls_to_view_login_and_domain,
     ReportDispatcher,
 )
 from corehq.apps.reports.models import ReportConfig
@@ -262,10 +261,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 data_source.set_order_by(
                     [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
                 )
-            else:
-                # Use defined sort expression initially
-                data_source.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
-
             total_records = data_source.get_total_records()
         except UserReportsError as e:
             if settings.DEBUG:

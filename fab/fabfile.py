@@ -822,6 +822,24 @@ def _tag_commit():
     return diff_url
 
 
+@task
+@roles(['deploy'])
+def manage():
+    """
+    run a management command
+
+    usage:
+        fab <env> manage --set cmd='<command>'
+    e.g.
+        fab production manage --set cmd='prune_couch_views'
+    """
+    _require_target()
+    require('cmd')
+    with cd(env.code_current):
+        sudo('{env.virtualenv_current}/bin/python manage.py {env.cmd}'
+             .format(env=env))
+
+
 @task(alias='deploy')
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
@@ -877,7 +895,7 @@ def update_virtualenv():
         # but only the ones that are actually installed (checks pip freeze)
         sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
              user=env.sudo_user)
-        sudo('%s pip install --timeout 60 --requirement %s --requirement %s' % (
+        sudo('%s pip install --timeout 60 --quiet --requirement %s --requirement %s' % (
             cmd_prefix,
             posixpath.join(requirements, 'prod-requirements.txt'),
             posixpath.join(requirements, 'requirements.txt'),
@@ -988,7 +1006,7 @@ def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py compress --force'.format(venv))
+        sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 
@@ -998,7 +1016,7 @@ def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
+        sudo('{}/bin/python manage.py collectstatic --noinput -v 0'.format(venv))
         sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
 
 

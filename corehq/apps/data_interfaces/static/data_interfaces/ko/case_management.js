@@ -61,7 +61,7 @@ var CaseManagement = function (o) {
             $checkbox.data('owner', owner_id);
             $checkbox.data('ownertype', owner_type);
 
-            var $row = $checkbox.parent().parent(),
+            var $row = $checkbox.closest("tr"),
                 group_label = '';
 
             if (owner_type === 'group') {
@@ -90,7 +90,7 @@ var CaseManagement = function (o) {
             ownerType = $checkbox.data('ownertype');
 
         var ind = self.selected_cases().indexOf(caseID),
-            $selectedRow = $checkbox.parent().parent();
+            $selectedRow = $checkbox.closest('tr');
 
         if ($checkbox.is(':checked')) {
             $selectedRow.addClass('active');
@@ -122,6 +122,7 @@ var CaseManagement = function (o) {
             $modal.find('.modal-body').text("Please select an owner");
             $modal.modal('show');
         } else {
+            $(form).find("[type='submit']").disableButton();
             for (var i = 0; i < self.selected_cases().length; i++) {
                 var case_id = self.selected_cases()[i],
                     xform;
@@ -147,10 +148,12 @@ var CaseManagement = function (o) {
 ko.bindingHandlers.caseReassignmentForm = {
     update: function(element, valueAccessor) {
         var value = valueAccessor()();
+        var $element = $(element);
         if (value.length > 0) {
-            $(element).slideDown();
+            $element.slideDown();
         } else {
-            $(element).slideUp();
+            $element.find("[type='submit']").enableButton();
+            $element.slideUp();
         }
     }
 };

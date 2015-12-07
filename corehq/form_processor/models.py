@@ -24,7 +24,16 @@ from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
-from .exceptions import AttachmentNotFound
+from .exceptions import AttachmentNotFound, AccessRestricted
+
+XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
+XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
+XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
+
+CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
+CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
+CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
+CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 
 
 class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
@@ -44,16 +53,6 @@ class Attachment(collections.namedtuple('Attachment', 'name raw_content content_
         return hashlib.md5(self.content).hexdigest()
 
 
-class PreSaveHashableMixin(object):
-    hash_property = None
-
-    def __hash__(self):
-        hash_val = getattr(self, self.hash_property, None)
-        if not hash_val:
-            raise TypeError("Form instances without form ID value are unhashable")
-        return hash(hash_val)
-
-
 class SaveStateMixin(object):
     def is_saved(self):
         return bool(self._get_pk_val())
@@ -63,6 +62,14 @@ class AttachmentMixin(SaveStateMixin):
     """Requires the model to be linked to the attachments model via the 'attachments' related name.
     """
     ATTACHMENTS_RELATED_NAME = 'attachment_set'
+
+    def get_attachments(self):
+        for list_attr in ('unsaved_attachments', 'cached_attachments'):
+            if hasattr(self, list_attr):
+                return getattr(self, list_attr)
+
+        if self.is_saved():
+            return self._get_attachments_from_db()
 
     def get_attachment(self, attachment_name):
         attachment = self.get_attachment_meta(attachment_name)
@@ -86,15 +93,44 @@ class AttachmentMixin(SaveStateMixin):
     def _get_attachment_from_db(self, attachment_name):
         raise NotImplementedError
 
+    def _get_attachments_from_db(self):
+        raise NotImplementedError
 
-class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
-    """An XForms SQL instance."""
+
+class DisabledDbMixin(object):
+    def save(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def save_base(self, *args, **kwargs):
+        raise AccessRestricted('Direct object save disabled.')
+
+    def delete(self, *args, **kwargs):
+        raise AccessRestricted('Direct object deletion disabled.')
+
+
+class RestrictedManager(models.Manager):
+    def get_queryset(self):
+        raise AccessRestricted('Only "raw" queries allowed')
+
+    def raw(self, raw_query, params=None, translations=None, using=None):
+        from django.db.models.query import RawQuerySet
+        if using is None:
+            using = self._db
+        return RawQuerySet(raw_query, model=self.model,
+                params=params, translations=translations,
+                using=using)
+
+
+class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+    objects = RestrictedManager()
+
+    # states should be powers of 2
     NORMAL = 0
     ARCHIVED = 1
     DEPRECATED = 2
-    DUPLICATE = 3
-    ERROR = 4
-    SUBMISSION_ERROR_LOG = 5
+    DUPLICATE = 4
+    ERROR = 8
+    SUBMISSION_ERROR_LOG = 16
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -103,8 +139,6 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
     )
-
-    hash_property = 'form_id'
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
@@ -185,7 +219,7 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
     @property
     def history(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form_history(self.form_id)
+        return FormAccessorSQL.get_form_operations(self.form_id)
 
     @property
     def metadata(self):
@@ -202,7 +236,11 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachment(self.form_id, attachment_name)
+        return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
+
+    def _get_attachments_from_db(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachments(self.form_id)
 
     def get_xml_element(self):
         xml = self.get_xml()
@@ -244,8 +282,18 @@ class XFormInstanceSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn, A
         FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
 
+    def __unicode__(self):
+        return (
+            "XFormInstance("
+            "form_id='{f.form_id}', "
+            "domain='{f.domain}')"
+        ).format(f=self)
 
-class AbstractAttachment(models.Model):
+    class Meta:
+        db_table = XFormInstanceSQL_DB_TABLE
+
+
+class AbstractAttachment(DisabledDbMixin, models.Model):
     attachment_id = UUIDField(unique=True, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
@@ -271,13 +319,20 @@ class AbstractAttachment(models.Model):
 
 
 class XFormAttachmentSQL(AbstractAttachment):
+    objects = RestrictedManager()
+
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id',
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
+    class Meta:
+        db_table = XFormAttachmentSQL_DB_TABLE
 
-class XFormOperationSQL(models.Model):
+
+class XFormOperationSQL(DisabledDbMixin, models.Model):
+    objects = RestrictedManager()
+
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
 
@@ -289,6 +344,9 @@ class XFormOperationSQL(models.Model):
     @property
     def user(self):
         return self.user_id
+
+    class Meta:
+        db_table = XFormOperationSQL_DB_TABLE
 
 
 class XFormPhoneMetadata(jsonobject.JsonObject):
@@ -324,6 +382,8 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
 
 
 class SupplyPointCaseMixin(object):
+    CASE_TYPE = 'supply-point'
+
     @property
     @memoized
     def location(self):
@@ -342,10 +402,10 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
-class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
+class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin):
-    hash_property = 'case_id'
+    objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
@@ -386,8 +446,9 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
         self.modified_by = value
 
     def soft_delete(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         self.deleted = True
-        self.save()
+        CaseAccessorSQL.save_case(self)
 
     @property
     def is_deleted(self):
@@ -417,6 +478,10 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
     @memoized
     def _saved_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        cached_indices = 'cached_indices'
+        if hasattr(self, cached_indices):
+            return getattr(self, cached_indices)
+
         return CaseAccessorSQL.get_indices(self.case_id) if self.is_saved() else []
 
     @property
@@ -442,19 +507,22 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment(self.case_id, attachment_name)
+        return CaseAccessorSQL.get_attachment_by_name(self.case_id, attachment_name)
+
+    def _get_attachments_from_db(self):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_attachments(self.case_id)
 
     @property
     @memoized
     def transactions(self):
-        return list(self.transaction_set.all())
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        return CaseAccessorSQL.get_transactions(self.case_id)
 
     @property
     @memoized
     def case_attachments(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        attachments = CaseAccessorSQL.get_attachments(self.case_id)
-        return {attachment.name: attachment for attachment in attachments}
+        return {attachment.name: attachment for attachment in self.get_attachments()}
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
@@ -485,16 +553,25 @@ class CommCareCaseSQL(PreSaveHashableMixin, models.Model, RedisLockableMixIn,
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+        db_table = CommCareCaseSQL_DB_TABLE
 
 
 class CaseAttachmentSQL(AbstractAttachment):
+    objects = RestrictedManager()
+
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
+    class Meta:
+        db_table = CaseAttachmentSQL_DB_TABLE
 
-class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
+
+class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
+    objects = RestrictedManager()
+
+    # relationship_ids should be powers of 2
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
@@ -522,6 +599,15 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
     def relationship(self, relationship):
         self.relationship_id = self.RELATIONSHIP_MAP[relationship]
 
+    def __eq__(self, other):
+        return isinstance(other, CommCareCaseIndexSQL) and (
+            self.case_id == other.case_id and
+            self.identifier == other.identifier,
+            self.referenced_id == other.referenced_id,
+            self.referenced_type == other.referenced_type,
+            self.relationship_id == other.relationship_id,
+        )
+
     def __unicode__(self):
         return (
             "CaseIndex("
@@ -537,15 +623,20 @@ class CommCareCaseIndexSQL(models.Model, SaveStateMixin):
         index_together = [
             ["domain", "referenced_id"],
         ]
+        db_table = CommCareCaseIndexSQL_DB_TABLE
 
 
-class CaseTransaction(models.Model):
+class CaseTransaction(DisabledDbMixin, models.Model):
+    objects = RestrictedManager()
+
+    # types should be powers of 2
     TYPE_FORM = 0
     TYPE_REBUILD_WITH_REASON = 1
     TYPE_REBUILD_USER_REQUESTED = 2
-    TYPE_REBUILD_USER_ARCHIVED = 3
-    TYPE_REBUILD_FORM_ARCHIVED = 4
-    TYPE_REBUILD_FORM_EDIT = 5
+    TYPE_REBUILD_USER_ARCHIVED = 4
+    TYPE_REBUILD_FORM_ARCHIVED = 8
+    TYPE_REBUILD_FORM_EDIT = 16
+    TYPE_LEDGER = 32
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -553,6 +644,7 @@ class CaseTransaction(models.Model):
         (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+        (TYPE_LEDGER, 'ledger'),
     )
     TYPES_TO_PROCESS = (
         TYPE_FORM,
@@ -600,11 +692,19 @@ class CaseTransaction(models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_FORM)
+
+    @classmethod
+    def ledger_transaction(cls, case, xform):
+        return cls._from_form(case, xform, transaction_type=CaseTransaction.TYPE_LEDGER)
+
+    @classmethod
+    def _from_form(cls, case, xform, transaction_type):
         return CaseTransaction(
             case=case,
             form_id=xform.form_id,
             server_date=xform.received_on,
-            type=CaseTransaction.TYPE_FORM,
+            type=transaction_type,
             revoked=not xform.is_normal
         )
 
@@ -630,6 +730,7 @@ class CaseTransaction(models.Model):
     class Meta:
         unique_together = ("case", "form_id")
         ordering = ['server_date']
+        db_table = CaseTransaction_DB_TABLE
 
 
 class CaseTransactionDetail(JsonObject):
@@ -670,3 +771,17 @@ class FormArchiveRebuild(CaseTransactionDetail):
 class FormEditRebuild(CaseTransactionDetail):
     _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
     deprecated_form_id = StringProperty()
+
+
+class LedgerValue(models.Model):
+    """
+    Represents the current state of a ledger. Supercedes StockState
+    """
+    # domain not included and assumed to be accessed through the foreign key to the case table. legit?
+    case = models.ForeignKey(CommCareCaseSQL, to_field='case_id', db_index=True)
+    # can't be a foreign key to products because of sharding.
+    # also still unclear whether we plan to support ledgers to non-products
+    entry_id = models.CharField(max_length=100, db_index=True)
+    section_id = models.CharField(max_length=100, db_index=True)
+    balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
+    last_modified = models.DateTimeField(auto_now=True)

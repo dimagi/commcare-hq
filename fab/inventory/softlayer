@@ -1,41 +1,49 @@
 [_test1]
-10.162.36.196
+#10.162.36.196
+localhost ansible_connection=local
 
-[proxy]
+[db0]
+10.162.36.205
+
+[es0]
+10.162.36.214
+
+
+[proxy:children]
 _test1
 
-[webworkers]
+[webworkers:children]
 _test1
 
-[couchdb]
+[couchdb:children]
 _test1
 
-[postgresql]
+[postgresql:children]
+db0
+
+[rabbitmq:children]
+db0
+
+[zookeeper:children]
+es0
+
+[kafka:children]
+es0
+
+[celery:children]
 _test1
 
-[rabbitmq]
+[pillowtop:children]
 _test1
 
-[zookeeper]
+[touchforms:children]
 _test1
 
-[kafka]
-_test1 kafka_broker_id=0
+[redis:children]
+db0
 
-[celery]
-_test1
+[elasticsearch:children]
+es0
 
-[pillowtop]
-_test1
-
-[touchforms]
-_test1
-
-[redis]
-_test1
-
-[elasticsearch]
-_test1
-
-[shared_dir_host]
+[shared_dir_host:children]
 _test1

@@ -1563,10 +1563,6 @@ class DetailTab(IndexedSchema):
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
 
-    # Any instance connectors necessary for the nodeset,
-    # e.g., "reports" => "jr://fixture/reports"
-    connectors = DictProperty()
-
 
 class DetailColumn(IndexedSchema):
     """
@@ -3420,7 +3416,7 @@ class CustomDatespanFilter(ReportAppFilter):
 
 class MobileSelectFilter(ReportAppFilter):
     def get_filter_value(self, user):
-        return []
+        return None
 
 
 class ReportAppConfig(DocumentSchema):

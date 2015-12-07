@@ -7,12 +7,12 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_jquery_ui, use_timepicker, \
+    use_datatables
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -923,6 +923,14 @@ class CreateBroadcastView(BaseMessagingSectionView):
     template_name = 'reminders/broadcast.html'
     force_create_new_broadcast = False
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_knockout_js
+    @use_jquery_ui
+    @use_timepicker
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+
     @property
     @memoized
     def project_timezone(self):
@@ -1227,6 +1235,12 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     LIST_UPCOMING = 'list_upcoming'
     LIST_PAST = 'list_past'
     DELETE_BROADCAST = 'delete_broadcast'
+
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
     @property
     @memoized

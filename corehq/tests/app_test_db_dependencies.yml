@@ -35,6 +35,21 @@ casexml.apps.case:
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
+casexml.apps.stock:
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.apps.commtrack
+  - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tzmigration
+  - couchforms
+  - phonelog
 corehq.apps.commtrack:
   - auditcare
   - couchforms
@@ -135,7 +150,12 @@ corehq.apps.receiverwrapper:
 corehq.form_processor:
   - casexml.apps.case
   - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.apps.commtrack
+  - corehq.apps.domain
   - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
@@ -143,3 +163,24 @@ corehq.form_processor:
   - corehq.couchapps
   - couchforms
 corehq.apps.toggle_ui: []
+corehq.doctypemigrations:
+  - corehq.couchapps
+corehq.apps.repeaters:
+  - casexml.apps.case
+  - casexml.apps.stock
+  - corehq.apps.commtrack
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.domain
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - corehq.couchapps
+  - couchforms
+  - django_prbac
+  # unfortunately domain.delete() needs all of these - otherwise they could be removed
+  - custom.logistics
+  - custom.ilsgateway
+  - custom.ewsghana
+  - django_prbac
+  - corehq.apps.accounting
+  - corehq.apps.smsforms

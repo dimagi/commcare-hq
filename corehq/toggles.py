@@ -438,13 +438,6 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VELLUM_ADVANCED_ITEMSETS = StaticToggle(
-    'advanced_itemsets',
-    "Allows a user to configure itemsets for more than lookup tables",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VELLUM_EXPERIMENTAL_UI = StaticToggle(
     'experimental_ui',
     "Enables some experimental UI enhancements for the form builder",
@@ -594,12 +587,6 @@ LINK_SUPPLY_POINT = StaticToggle(
     'because this is not a great way to display additional information.',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-REVAMPED_EXPORTS = StaticToggle(
-    'revamped_exports',
-    'Revamped Form and Case exports',
-    TAG_PRODUCT_PATH,
 )
 
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(

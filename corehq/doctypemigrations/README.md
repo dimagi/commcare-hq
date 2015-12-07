@@ -29,6 +29,9 @@ EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE, (
     NEW_USERS_GROUPS_DB,
 ))
 ```
+We have some views which are meant to work on roughly all doc types.  Take a
+look at the views referenced in `corehq/couchapps/__init__.py` and make sure to
+register the appropriate views to your new database.
 
 Do a full-text search for each doc_type you're migrating across all `map.js` files
 ```bash

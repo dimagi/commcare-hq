@@ -95,7 +95,6 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
-    'djangobower.finders.BowerFinder',
 )
 
 STATICFILES_DIRS = (
@@ -128,10 +127,13 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
+CSRF_ALWAYS_OFF = True
+
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
@@ -194,7 +196,6 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
-    'djangobower',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -240,7 +241,7 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
-    'corehq.form_processor',
+    'corehq.form_processor.app_config.FormProcessorAppConfig',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -384,7 +385,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
-    'djangobower',
     'django_prbac',
     'djcelery',
     'djtables',
@@ -483,6 +483,7 @@ BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+BASE_ADDRESS = 'localhost:8000'
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -1074,7 +1075,7 @@ NEW_FIXTURES_DB = 'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
 
 NEW_DOMAINS_DB = 'domains'
-DOMAINS_DB = None
+DOMAINS_DB = NEW_DOMAINS_DB
 
 COUCHDB_APPS = [
     'api',
@@ -1321,7 +1322,6 @@ PILLOWTOPS = {
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
@@ -1341,6 +1341,11 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
+        {
+            'name': 'MalariaConsortiumFluffPillow',
+            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+            'instance': 'custom.reports.mc.models.get_pillow',
+        }
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
