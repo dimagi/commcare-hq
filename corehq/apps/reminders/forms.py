@@ -562,7 +562,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-4 col-lg-4'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -636,7 +636,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                             css_class="input-xlarge",
                             data_bind="typeahead: getAvailableCaseProperties",
                         ),
-                        css_class='col-sm-4'
+                        css_class='col-sm-6'
                     ),
                     crispy.Div(
                         InlineField(
@@ -651,9 +651,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                             style="margin-left: 5px;",
                             data_bind="visible: isStartMatchValueVisible",
                         ),
-                        css_class='col-sm-4'
+                        css_class='col-sm-2'
                     ),
-                    field_class='col-md-6 col-sm-6'
+                    field_class='col-md-8 col-sm-8'
                 ),
                 data_bind="visible: isStartReminderCaseProperty",
             ),
@@ -690,7 +690,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         css_class='col-sm-4',
                         data_bind="visible: isStartDayOfWeekVisible"
                     ),
-                    field_class='col-md-4 col-sm-4'
+                    field_class='col-md-8 col-sm-8'
                 ),
             ),
             crispy.Div(
@@ -719,7 +719,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         style='display: inline; margin-left: 5px;',
                         css_class='col-sm-2'
                     ),
-                    field_class='col-lg-4 col-md-4'
+                    field_class='col-lg-8 col-md-8'
                 ),
                 data_bind="visible: isStartReminderCaseDate"
             ),
@@ -746,14 +746,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         css_class="input-xlarge",
                         data_bind="typeahead: getAvailableSubcaseProperties",
                     ),
-                    css_class='col-sm-2'
+                    css_class='col-sm-6'
                 ),
                 crispy.Div(
                     InlineField(
                         'recipient_case_match_type',
                         data_bind="value: recipient_case_match_type",
                     ),
-                    css_class='col-sm-2'
+                    css_class='col-sm-4'
                 ),
                 crispy.Div(
                     InlineField(
@@ -763,6 +763,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     css_class='col-sm-2'
                 ),
                 data_bind="visible: isRecipientSubcase",
+                field_class='col-sm-8'
             ),
             crispy.Div(
                 crispy.Field(
@@ -792,7 +793,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 css_class="input-xlarge",
             ),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
-            HiddenFieldWithErrors('events', data_bind="value: events"),
+            hqcrispy.HiddenFieldWithErrors('events', data_bind="value: events"),
         ]
 
     @property
@@ -851,7 +852,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.HTML('<p class="help-inline">day(s)</p>'),
                     css_class="col-sm-1"
                 ),
-                field_class="col-md-4 col-lg-4",
+                field_class="col-md-8 col-lg-8",
                 data_bind="visible: isScheduleLengthVisible"
             ),
         )
@@ -884,7 +885,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                    "the start condition is no longer true or if the case that triggered the "
                                    "reminder is closed."),
                 css_id="stop-condition-group",
-                field_class='col-md-4 col-lg-4'
+                field_class='col-md-8 col-lg-8'
             ),
             crispy.Div(
                 hqcrispy.B3MultiField(
@@ -949,8 +950,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         ]
         if self.is_previewer:
             fields.append(
-                hqcrispy.B3MultiField(
-                    "",
+                crispy.Div(
                     InlineField(
                         twbscrispy.PrependedText(
                             'use_custom_content_handler', '',
@@ -958,11 +958,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         ),
                         css_class='col-sm-6'
                     ),
-                    InlineField(
-                        'custom_content_handler',
-                        css_class="col-sm-6",
-                        data_bind="visible: use_custom_content_handler",
-                    ),
+                    crispy.Div(
+                        crispy.Field(
+                            'custom_content_handler',
+                        ),
+                        data_bind="visible: use_custom_content_handler"
+                    )
                 )
             )
 
@@ -1609,7 +1610,7 @@ class SimpleScheduleCaseReminderForm(BaseScheduleCaseReminderForm):
                 help_bubble_text=_("This controls when the message will be sent. The Time in Case "
                                    "option is useful, for example, if the recipient has chosen a "
                                    "specific time to receive the message."),
-                field_class='col-md-4 col-lg-4'
+                field_class='col-md-8 col-lg-8'
             ),
             crispy.Div(
                 style="display: inline;",
@@ -1811,7 +1812,7 @@ class CaseReminderEventMessageForm(forms.Form):
         super(CaseReminderEventMessageForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(

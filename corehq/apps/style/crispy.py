@@ -129,7 +129,7 @@ class B3MultiField(LayoutObject):
         for field in fields:
             if isinstance(field, OldField) or issubclass(field.__class__, OldField):
                 fname = field.fields[0]
-                if fname not in form:
+                if fname not in form.fields:
                     continue
                 error = form[fname].errors
                 if error:
@@ -215,3 +215,12 @@ class FieldsetAccordionGroup(AccordionGroup):
         template_pack = template_pack or get_template_pack()
         self.template = self.template.format(template_pack=template_pack)
         return super(FieldsetAccordionGroup, self).render(form, form_style, context, template_pack)
+
+
+class HiddenFieldWithErrors(Field):
+    template = "style/crispy/{template_pack}/hidden_with_errors.html"
+
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        self.template = self.template.format(template_pack=template_pack)
+        return super(HiddenFieldWithErrors, self).render(form, form_style, context, template_pack)
