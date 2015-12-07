@@ -588,6 +588,39 @@ class Location(CachedCouchDocumentMixin, Document):
         for loc in [self] + self.descendants:
             loc._unarchive_single_location()
 
+    def _delete_single_couch_location(self):
+        """
+        Delete a single couch location, caller is expected to handle
+        deleting children as well.
+
+        This is just used to prevent having to do recursive
+        couch queries in `delete()`.
+
+        The django ORM automatically does cascading deletes for the child locations,
+        so we only need to deal explicitly with children for couch.
+        """
+
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        _unassign_users_from_location(self.domain, self._id)
+
+        super(Location, self).delete()
+
+    def delete(self):
+        """
+        Delete a location and its dependants.
+        This also unassigns users assigned to the location.
+        """
+        to_delete = [loc for loc in [self] + self.descendants]
+        SQLLocation.objects.get(location_id=self._id).delete()
+        for loc in to_delete:
+            loc._delete_single_couch_location()
+
     def save(self, *args, **kwargs):
         """
         Saving a couch version of Location will trigger
