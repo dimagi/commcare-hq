@@ -998,6 +998,7 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
+    do_not_email = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
