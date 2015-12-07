@@ -79,8 +79,6 @@ def last_modified(gt=None, gte=None, lt=None, lte=None):
 
 
 def in_domains(domains):
-    if type(domains) is not list:
-        domains = [domains]
     return filters.term('name', domains)
 
 
