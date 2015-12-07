@@ -7,9 +7,7 @@ from django.template.loader import render_to_string
 import pytz
 import warnings
 from corehq.apps.programs.models import Program
-from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.filters.users import get_user_toggle
 from corehq.apps.reports.models import HQUserType
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -85,24 +83,6 @@ class ReportSelectField(ReportField):
             use_combo_box=self.as_combo,
             placeholder=self.placeholder,
         )
-
-
-class FilterUsersField(ReportField):
-    # TODO: move all this to UserTypeFilter
-    slug = "ufilter"
-    template = "reports/dont_use_fields/filter_users.html"
-    always_show_filter = False
-    can_be_empty = False
-
-    def update_context(self):
-        toggle, show_filter = self.get_user_filter(self.request)
-        self.context['show_user_filter'] = show_filter
-        self.context['toggle_users'] = toggle
-        self.context['can_be_empty'] = self.can_be_empty
-
-    @classmethod
-    def get_user_filter(cls, request):
-        return get_user_toggle(request)
 
 
 class SelectMobileWorkerMixin(object):
