@@ -3,7 +3,7 @@
     var workbook = {};
     function initializeViz() {
         var placeholderDiv = document.getElementById("tableauPlaceholder");
-        var url = "https://icds.commcarehq.org/#/views/{{ report_view }}";
+        var url = "https://icds.commcarehq.org/#/views/{{ report_workbook }}/{{ report_worksheet }}";
         var options = {
             width: placeholderDiv.offsetWidth,
             height: placeholderDiv.offsetHeight,
@@ -16,9 +16,9 @@
         viz = new tableau.Viz(placeholderDiv, url, options);
         // I am envisioning the history object possibly containing things like the base params for filtering
         var historyObject = {
-            'location': 'base'
+            'location': '{{ report_worksheet }}'
         };
-        history.pushState(historyObject, '', '#top-level')
+        history.pushState(historyObject, '', '{{ report_worksheet }}')
     }
 
     function setUpNav(viz) {
@@ -72,9 +72,12 @@
 
                 // Find the sheet we are navigating to
                 // TODO: Handle the case where js_sheet isn't defined
-                if(pair.fieldName === 'js_sheet') {
-                    console.log('sheetName = ', pair.formattedValue);
+                if(pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') {
                     sheetName = pair.formattedValue;
+                }
+                if(sheetName === '') {
+                    // If we haven't specified the sheet to navigate to, take the current one
+                    sheetName = history.state.location;
                 }
 
                 // Split out params and filters to be applied
@@ -99,7 +102,6 @@
 
 
         html = html.join("");
-        console.log('html', html);
 
         $("#drilldown").append(html);
 
