@@ -47,6 +47,11 @@ class MenuContributor(SuiteContributorByModule):
             if hasattr(module, 'case_list') and module.case_list.show:
                 yield Command(id=id_strings.case_list_command(module))
 
+        supports_module_filter = (
+            self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
+            self.app.enable_module_filtering and getattr(module, 'module_filter', None)
+        )
+
         menus = []
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus():
@@ -77,9 +82,7 @@ class MenuContributor(SuiteContributorByModule):
                         'root': id_strings.menu_id(root_module) if root_module else None,
                     }
 
-                    if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
-                            self.app.enable_module_filtering and
-                            getattr(module, 'module_filter', None)):
+                    if supports_module_filter:
                         menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
                     if self.app.enable_localized_menu_media:
