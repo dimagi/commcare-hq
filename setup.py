@@ -18,7 +18,7 @@ setup(
         'dimagi-utils>=1.2.3',
         'pytz',
         'SQLAlchemy==1.0.9',
-        'alembic==0.6.0'
+        'alembic==0.6.4'
     ],
     tests_require=[
         'django==1.7.10',

@@ -18,7 +18,7 @@ class FluffPillow(PythonPillow):
     # see explanation in IndicatorDocument for how this is used
     deleted_types = ()
 
-    def __init__(self, chunk_size=None, checkpoint=None, change_feed=None):
+    def __init__(self, chunk_size=None, checkpoint=None, change_feed=None, preload_docs=True):
         # explicitly check against None since we want to pass chunk_size=0 through
         chunk_size = chunk_size if chunk_size is not None else PYTHONPILLOW_CHUNK_SIZE
         # fluff pillows should default to SQL checkpoints
@@ -27,6 +27,7 @@ class FluffPillow(PythonPillow):
             chunk_size=chunk_size,
             checkpoint=checkpoint,
             change_feed=change_feed,
+            preload_docs=preload_docs,
         )
 
     @classmethod
@@ -40,13 +41,26 @@ class FluffPillow(PythonPillow):
         return engine
 
     def python_filter(self, change):
-        doc = change.document
+        self._assert_pillow_valid()
+
+        def domain_filter(domain):
+            return domain in self.domains
+
+        def doc_type_filter(doc_type):
+            return self._is_doc_type_match(doc_type) or self._is_doc_type_deleted_match(doc_type)
+
+        # if metadata.domain is specified this should never have to get the document out of the DB
+        domain = (change.metadata and change.metadata.domain) or change.get_document().get('domain')
+        if domain_filter(domain):
+            # same for metadata.document_type
+            doc_type = (change.metadata and change.metadata.document_type) or change.get_document().get('doc_type')
+            return doc_type_filter(doc_type)
+
+    def _assert_pillow_valid(self):
         assert self.domains
         assert None not in self.domains
         assert self.doc_type is not None
         assert self.doc_type not in self.deleted_types
-        if doc.get('domain') in self.domains:
-            return self._is_doc_type_match(doc.get('doc_type')) or self._is_doc_type_deleted_match(doc.get('doc_type'))
 
     @classmethod
     def _get_base_name(cls):
