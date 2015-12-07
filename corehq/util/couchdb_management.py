@@ -2,6 +2,7 @@ from couchdbkit.client import Database
 from corehq.util.couch import get_document_class_by_doc_type
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
+from corehq.util.exceptions import DatabaseNotFound
 
 
 class CouchConfig(object):
@@ -66,7 +67,10 @@ class CouchConfig(object):
         return Database(self.get_db_uri_for_doc_type(doc_type))
 
     def get_db_for_db_name(self, db_name):
-        return self.all_dbs_by_db_name[db_name]
+        try:
+            return self.all_dbs_by_db_name[db_name]
+        except KeyError:
+            raise DatabaseNotFound('no database with name {} in settings!'.format(db_name))
 
 
 couch_config = CouchConfig()

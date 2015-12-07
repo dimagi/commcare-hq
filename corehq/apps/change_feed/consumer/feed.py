@@ -3,8 +3,9 @@ from dimagi.utils.logging import notify_error
 from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout
-from corehq.apps.change_feed.models import ChangeMeta
-from pillowtop.feed.interface import ChangeFeed, Change
+from corehq.apps.change_feed.data_sources import get_document_store
+from corehq.apps.change_feed.exceptions import UnknownDocumentStore
+from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 
 MIN_TIMEOUT = 100
@@ -70,12 +71,17 @@ class KafkaChangeFeed(ChangeFeed):
 
 def change_from_kafka_message(message):
     change_meta = change_meta_from_kafka_message(message.value)
+    try:
+        document_store = get_document_store(change_meta.data_source_type, change_meta.data_source_name)
+    except UnknownDocumentStore:
+        document_store = None
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,
         document=None,
         deleted=change_meta.is_deletion,
         metadata=change_meta,
+        document_store=document_store,
     )
 
 
