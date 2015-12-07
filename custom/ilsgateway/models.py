@@ -455,7 +455,7 @@ class ReportRun(models.Model):
     complete = models.BooleanField(default=False)
     has_error = models.BooleanField(default=False)
     domain = models.CharField(max_length=60)
-    location = models.ForeignKey(SQLLocation, null=True)
+    location = models.ForeignKey(SQLLocation, null=True, on_delete=models.PROTECT)
 
     class Meta:
         app_label = 'ilsgateway'
@@ -475,7 +475,7 @@ class ReportRun(models.Model):
 
 
 class HistoricalLocationGroup(models.Model):
-    location_id = models.ForeignKey(SQLLocation)
+    location_id = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
     date = models.DateField()
     group = models.CharField(max_length=1)
 
@@ -504,7 +504,7 @@ class SupervisionDocument(models.Model):
 
 
 class ILSNotes(models.Model):
-    location = models.ForeignKey(SQLLocation)
+    location = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
     domain = models.CharField(max_length=100, null=False)
     user_name = models.CharField(max_length=128, null=False)
     user_role = models.CharField(max_length=100, null=True)
