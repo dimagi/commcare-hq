@@ -7,7 +7,7 @@ from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, Ca
 from corehq.util.migration import RawSQLMigration
 
 
-migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_functions'), {
+migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'FORM_STATE_ARCHIVED': XFormInstanceSQL.ARCHIVED,
     'FORM_STATE_NORMAL': XFormInstanceSQL.NORMAL,
     'FORM_OPERATION_ARCHIVE': XFormOperationSQL.ARCHIVE,
