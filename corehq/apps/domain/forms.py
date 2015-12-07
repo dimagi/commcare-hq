@@ -1673,7 +1673,23 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
-        if plan_edition not in [
+
+        if self.is_uneditable:
+            self.helper.layout = crispy.Layout(
+                TextField('software_plan_edition', plan_edition),
+                TextField('fogbugz_client_name', self.current_subscription.account.name),
+                TextField('emails', self.current_contact_emails),
+                TextField('start_date', self.current_subscription.date_start),
+                TextField('end_date', self.current_subscription.date_end),
+                crispy.HTML(_(
+                    '<p><i class="icon-info-sign"></i> This project is on a contracted Enterprise '
+                    'subscription. You cannot change contracted Enterprise subscriptions here. '
+                    'Please contact the Ops team at %(accounts_email)s to request changes.</p>' % {
+                        'accounts_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
+            )
+        elif plan_edition not in [
             first for first, second in self.fields['software_plan_edition'].choices
         ]:
             self.fields['start_date'].initial = datetime.date.today()
@@ -1758,6 +1774,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         )
 
     @property
+    def is_uneditable(self):
+        return (
+            self.current_subscription
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+        )
+
+    @property
     def subscription_default_fields(self):
         fields = super(ContractedPartnerForm, self).subscription_default_fields
         fields.update({
@@ -1830,14 +1854,26 @@ class SelectSubscriptionTypeForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, *args, **kwargs):
-        super(SelectSubscriptionTypeForm, self).__init__(*args, **kwargs)
+    def __init__(self, defaults=None, disable_input=False, **kwargs):
+        defaults = defaults or {}
+        super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
-        self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'subscription_type',
-                data_bind='value: subscriptionType',
+        if defaults and disable_input:
+            self.helper.layout = crispy.Layout(
+                TextField(
+                    'subscription_type', {
+                        form.slug: form.subscription_type
+                        for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
+                    }[defaults.get('subscription_type')]
+                ),
             )
-        )
+        else:
+            self.helper.layout = crispy.Layout(
+                crispy.Field(
+                    'subscription_type',
+                    data_bind='value: subscriptionType',
+                    css_class="disabled"
+                )
+            )

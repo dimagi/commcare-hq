@@ -1063,7 +1063,7 @@ def _domain_has_legacy_toggle_set():
     # old versions of commcare (< 2.10ish) didn't purge on form completion
     # so can still modify cases that should no longer be on the phone.
     request = get_request()
-    domain = request.domain if request else None
+    domain = getattr(request, 'domain', None)
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 

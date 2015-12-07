@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
-from corehq.apps.users.models import CommCareUser
 
 
 def validate_report_parameters(parameters, config):
