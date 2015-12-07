@@ -1,0 +1,2 @@
+class PartitionValidationError(Exception):
+    pass

@@ -941,6 +941,21 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
+DATABASE_ROUTERS = []
+PARTITION_DATABASE_CONFIG = {
+    'shards': {
+        'default': {
+            'start': 0,
+            'end': 100,
+        }
+    },
+    'groups': {
+        'main': ['default'],
+        'proxy': ['default'],
+        'form_processing': ['default'],
+    }
+}
+
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
 
@@ -1026,6 +1041,7 @@ else:
     ]
 
 ### Reporting database - use same DB as main database
+
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
