@@ -400,6 +400,30 @@ def all_apps_by_domain(domain):
         yield get_correct_app_class(doc).wrap(doc)
 
 
+def all_case_properties_by_domain(domain, include_parent_properties=True):
+    result = {}
+    for app in all_apps_by_domain(domain):
+        if app.is_remote_app():
+            continue
+
+        property_map = get_case_properties(app, app.get_case_types(),
+            defaults=('name',), include_parent_properties=include_parent_properties)
+
+        for case_type, properties in property_map.iteritems():
+            if case_type in result:
+                result[case_type].extend(properties)
+            else:
+                result[case_type] = properties
+
+    cleaned_result = {}
+    for case_type, properties in result.iteritems():
+        properties = list(set(properties))
+        properties.sort()
+        cleaned_result[case_type] = properties
+
+    return cleaned_result
+
+
 def new_careplan_module(app, name, lang, target_module):
     from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
     module = app.add_module(CareplanModule.new_module(

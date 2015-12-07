@@ -221,6 +221,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     Field(
                         'update_property_name',
                         ng_model='update_property_name',
+                        css_class='case-property-typeahead',
                     ),
                     Field(
                         'update_property_value',

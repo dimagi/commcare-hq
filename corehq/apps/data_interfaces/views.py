@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -32,7 +33,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemExce
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
@@ -675,7 +676,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         }
 
 
-class AddAutomaticUpdateRuleView(DataInterfaceSection):
+class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/add_automatic_update_rule.html'
     urlname = 'add_automatic_update_rule'
     page_title = ugettext_lazy("Add Automatic Update Rule")
@@ -707,7 +708,17 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
             'form': self.rule_form,
         }
 
+    @allow_remote_invocation
+    def get_case_property_map(self):
+        data = all_case_properties_by_domain(self.domain,
+            include_parent_properties=False)
+        return {
+            'data': data,
+            'success': True,
+        }
+
     @use_bootstrap3
+    @use_typeahead
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AddAutomaticUpdateRuleView, self).dispatch(*args, **kwargs)
