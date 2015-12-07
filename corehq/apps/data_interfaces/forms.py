@@ -139,6 +139,13 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         required=False,
     )
 
+    def remove_quotes(self, value):
+        if isinstance(value, basestring) and len(value) >= 2:
+            for q in ("'", '"'):
+                if value.startswith(q) and value.endswith(q):
+                    return value[1:-1]
+        return value
+
     @property
     def current_values(self):
         values = {}
@@ -275,6 +282,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     raise ValidationError(_("Please specify a property value."))
 
                 property_value = property_value.strip()
+                property_value = self.remove_quotes(property_value)
                 if not property_value:
                     raise ValidationError(_("Please specify a property value."))
 
@@ -309,6 +317,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         value = None
         if self._updates_case():
             value = self.cleaned_data.get('update_property_value')
+            value = self.remove_quotes(value)
             if not value:
                 raise ValidationError(_("This field is required"))
         return value

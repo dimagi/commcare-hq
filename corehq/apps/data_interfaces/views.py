@@ -761,7 +761,11 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
         if self.rule_form.is_valid():
             self.create_rule()
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
+        # We can't call self.get() because JSONResponseMixin gets confused
+        # since we're processing a post request. So instead we have to call
+        # .get() directly on super(JSONResponseMixin, self), which correctly
+        # is DataInterfaceSection in this case
+        return super(JSONResponseMixin, self).get(request, *args, **kwargs)
 
 
 class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
@@ -855,4 +859,4 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
         if self.rule_form.is_valid():
             self.update_rule(self.rule)
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
+        return super(JSONResponseMixin, self).get(request, *args, **kwargs)

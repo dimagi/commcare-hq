@@ -95,7 +95,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="condition in conditions_objs">
+                <tr ng-repeat="condition in conditions_objs" {% if form.conditions.errors %}class="has-error"{% endif %}>
                     {% angularjs %}
                     <td>
                         <input class="case-property-typeahead textinput textInput form-control"
@@ -132,10 +132,12 @@
             </tbody>
         </table>
         {% if form.conditions.errors %}
-        <div>
-            <span class="help-block">
-                <strong>{{ form.conditions.errors.0 }}</strong>
-            </span>
+        <div class="has-error row">
+            <div class="col-sm-offset-3 col-md-offset-2">
+                <span class="help-block">
+                    <strong>{{ form.conditions.errors.0 }}</strong>
+                </span>
+            </div>
         </div>
         {% endif %}
         <div class="btn-toolbar" style="margin-bottom: 20px;">
