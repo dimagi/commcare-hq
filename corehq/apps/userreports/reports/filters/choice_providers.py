@@ -1,9 +1,12 @@
 from abc import ABCMeta, abstractmethod
+
 from sqlalchemy.exc import ProgrammingError
+
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.es.filters import doc_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
+from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
@@ -103,7 +106,10 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     @property
     def _sql_column(self):
-        return self._adapter.get_table().c[self.report_filter.field]
+        try:
+            return self._adapter.get_table().c[self.report_filter.field]
+        except KeyError as e:
+            raise ColumnNotFoundError(e.message)
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
