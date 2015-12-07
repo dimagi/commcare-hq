@@ -1255,12 +1255,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     @property
     @memoized
     def select_subscription_type_form(self):
-        if self.request.method == 'POST':
-            for form_slug in self.slug_to_form:
-                if form_slug in self.request.POST:
-                    return SelectSubscriptionTypeForm({
-                        'subscription_type': form_slug,
-                    })
+        if self.request.method == 'POST' and 'slug' in self.request.POST:
+            return SelectSubscriptionTypeForm({
+                'subscription_type': self.request.POST['slug'],
+            })
 
         subscription_type = None
         subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
