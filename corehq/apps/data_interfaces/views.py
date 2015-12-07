@@ -557,7 +557,7 @@ def xform_management_job_poll(request, domain, download_id,
 class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Update Cases")
+    page_title = ugettext_lazy("Automatically Close Cases")
 
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
@@ -679,7 +679,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
 class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/add_automatic_update_rule.html'
     urlname = 'add_automatic_update_rule'
-    page_title = ugettext_lazy("Add Automatic Update Rule")
+    page_title = ugettext_lazy("Add Automatic Case Close Rule")
 
     @property
     def page_url(self):
@@ -770,7 +770,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
 
 class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
     urlname = 'edit_automatic_update_rule'
-    page_title = ugettext_lazy("Edit Automatic Update Rule")
+    page_title = ugettext_lazy("Edit Automatic Case Close Rule")
 
     @property
     @memoized

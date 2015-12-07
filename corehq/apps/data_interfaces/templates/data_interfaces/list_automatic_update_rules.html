@@ -79,7 +79,7 @@
     <div class="btn-toolbar" style="margin-bottom: 20px;">
         <a href="{% url "add_automatic_update_rule" domain %}">
             <button type="button" class="btn btn-success">
-                <i class="fa fa-plus"></i> {% trans "Add Automatic Update Rule" %}
+                <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>
         </a>
     </div>
@@ -103,7 +103,7 @@
          ng-controller="PaginatedListController as paginationController"
          ng-cloak>
         <div class="panel-heading">
-            <h3 class="panel-title">{% trans 'Automatic Update Rules' %}</h3>
+            <h3 class="panel-title">{% trans 'Automatic Case Close Rules' %}</h3>
         </div>
         <div class="panel-body">
             <div class="alert alert-info" ng-hide="paginatedItems.length > 0 || notLoaded || hasError">
