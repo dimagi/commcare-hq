@@ -59,6 +59,36 @@
             {{ total_balance }}
         </td>
     </tr>
+    {% if show_plan_credits %}
+    <tr>
+        <th align="right">
+            {% trans 'Plan Credits Remaining' %}:
+        </th>
+        <td>
+            {{ plan_credits }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if show_user_credits %}
+    <tr>
+        <th align="right">
+            {% trans 'User Credits Remaining' %}:
+        </th>
+        <td>
+            {{ user_credits }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if show_sms_credits %}
+    <tr>
+        <th align="right">
+            {% trans 'SMS Credits Remaining' %}:
+        </th>
+        <td>
+            {{ sms_credits }}
+        </td>
+    </tr>
+    {% endif %}
     {% if total_balance > 0 %}
     <tr>
         <th align="right">

@@ -9,8 +9,20 @@ Project Space: {{ domain }}
 Software Plan: {{ plan_name }}
 Status: {{ payment_status }}
 Amount Due this Month: {{ amount_due }}
-Total Balance: {{ total_balance }}
 {% endblocktrans %}
+
+{% if show_plan_credits %}
+{% trans "Plan Credits Remaining" %}: {{ plan_credits }}
+{% endif %}
+{% if show_user_credits %}
+{% trans "User Credits Remaining" %}: {{ user_credits }}
+{% endif %}
+{% if show_sms_credits %}
+{% trans "SMS Credits Remaining" %}: {{ sms_credits }}
+{% endif %}
+
+{% trans "Total Balance" %}: {{ total_balance }}
+
 {% if total_balance > 0 %}
 {% blocktrans %}
     Payment Due Date: {{ date_due }}
