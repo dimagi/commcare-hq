@@ -1,4 +1,22 @@
 from abc import ABCMeta, abstractmethod
+from dimagi.ext import jsonobject
+from pillowtop.dao.exceptions import DocumentNotFoundError
+
+
+class ChangeMeta(jsonobject.JsonObject):
+    """
+    Metadata about a change. If available, this will be set on Change.metadata.
+
+    This is currently only used in kafka-based pillows.
+    """
+    document_id = jsonobject.StringProperty(required=True)
+    data_source_type = jsonobject.StringProperty(required=True)
+    data_source_name = jsonobject.StringProperty(required=True)
+    document_type = jsonobject.StringProperty()
+    document_subtype = jsonobject.StringProperty()
+    domain = jsonobject.StringProperty()
+    is_deletion = jsonobject.BooleanProperty()
+    _allow_dynamic_properties = False
 
 
 class Change(object):
@@ -12,19 +30,33 @@ class Change(object):
         'deleted': 'deleted'
     }
 
-    def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None):
+    def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None, document_store=None):
         self._dict = {}
         self.id = id
         self.sequence_id = sequence_id
         self.document = document
         self.deleted = deleted
         self.metadata = metadata
+        self.document_store = document_store
+        self._document_checked = False
         self._dict = {
             'id': self.id,
             'seq': self.sequence_id,
             'doc': self.document,
             'deleted': self.deleted,
         }
+
+    def set_document(self, document):
+        self.document = document
+
+    def get_document(self):
+        if not self.document and self.document_store and not self._document_checked:
+            try:
+                self.document = self.document_store.get_document(self.id)
+            except DocumentNotFoundError:
+                self.document = None
+                self._document_checked = True  # set this flag to avoid multiple redundant lookups
+        return self.document
 
     def __repr__(self):
         return u'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(

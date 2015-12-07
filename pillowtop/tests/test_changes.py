@@ -1,4 +1,6 @@
+import uuid
 from django.test import SimpleTestCase
+from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.feed.couch import change_from_couch_row, force_to_change
 from pillowtop.feed.interface import Change
 from pillowtop.feed.mock import RandomChangeFeed, MockChangeFeed
@@ -38,7 +40,7 @@ class TestCouchChange(SimpleTestCase):
         change = Change(id='id', sequence_id='', document={})
         self.assertEqual({}, change.document)
         document = {'foo': 'bar'}
-        change.document = document
+        change.set_document(document)
         self.assertEqual(document, change.document)
         self.assertEqual(document, change.to_dict()['doc'])
 
@@ -55,6 +57,41 @@ class TestCouchChange(SimpleTestCase):
         change.deleted = False
         self.assertFalse(change.deleted)
         self.assertFalse(change.to_dict()['deleted'])
+
+
+class TestChangeDocument(SimpleTestCase):
+
+    def setUp(self):
+        # bootstrap a dao with a doc in it
+        self.dao = MockDocumentStore()
+        self.doc_id = uuid.uuid4().hex
+        self.doc = {'id': self.doc_id, 'random_property': uuid.uuid4().hex}
+        self.dao.save_document(self.doc_id, self.doc)
+
+    def test_get_set_document(self):
+        change = Change(id='id', sequence_id='')
+        self.assertEqual(None, change.get_document())
+        doc = {'test': '123'}
+        change.set_document(doc)
+        self.assertEqual(doc, change.get_document())
+
+    def test_get_document_from_doc_store(self):
+        change = Change(id=self.doc_id, sequence_id='', document_store=self.dao)
+        self.assertEqual(self.doc, change.get_document())
+
+    def test_initial_document_overrides_doc_store(self):
+        change = Change(id=self.doc_id, sequence_id='', document={'not': 'expected'}, document_store=self.dao)
+        self.assertNotEqual(self.doc, change.get_document())
+
+    def test_set_document_overrides_doc_store(self):
+        change = Change(id=self.doc_id, sequence_id='', document_store=self.dao)
+        self.assertEqual(self.doc, change.get_document())
+        change.set_document({'something': 'else'})
+        self.assertNotEqual(self.doc, change.get_document())
+
+    def test_get_document_not_found(self):
+        change = Change(id=uuid.uuid4().hex, sequence_id='', document_store=self.dao)
+        self.assertEqual(None, change.get_document())
 
 
 class TestMockChangeFeed(SimpleTestCase):
