@@ -3,7 +3,7 @@ from sqlagg.filters import BETWEEN
 from corehq.apps.reports.datatables import DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.sql import get_table_name
-from corehq.db import UCR_ENGINE_ID
+from corehq.db.connections import UCR_ENGINE_ID
 from custom.apps.cvsu.mixins import FilterMixin, CVSUSqlDataMixin, DateColumnMixin
 from custom.apps.cvsu.sqldata import ChildProtectionData, ChildrenInHouseholdData, CVSUActivityData, \
     CVSUServicesData, CVSUIncidentResolutionData, make_trend

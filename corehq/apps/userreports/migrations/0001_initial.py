@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import migrations
 import corehq.apps.userreports.models as ucr_models
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.db import DEFAULT_ENGINE_ID
+from corehq.db.connections import DEFAULT_ENGINE_ID
 from corehq.util.couch import IterDB
 from dimagi.utils.couch import sync_docs
 from dimagi.utils.couch.database import iter_docs
