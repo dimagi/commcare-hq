@@ -47,12 +47,14 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     FeatureType,
+    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
     EntryPoint,
+    FundingSource
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
@@ -1195,7 +1197,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
-                        service_type=SubscriptionType.SELF_SERVICE)
+                        service_type=SubscriptionType.SELF_SERVICE,
+                        pro_bono_status=ProBonoStatus.NO,
+                        funding_source=FundingSource.CLIENT
+                    )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
                         # this point can only be reached if the initiating user was a superuser
@@ -1280,6 +1285,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
                     service_type=SubscriptionType.SELF_SERVICE,
                     pro_bono_status=ProBonoStatus.NO,
+                    funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
                 )
         except SubscriptionRenewalError as e:
@@ -1400,6 +1406,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
                 entry_point=EntryPoint.CONTRACTED,
+                pre_or_post_pay=PreOrPostPay.POSTPAY
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1511,6 +1518,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
         fields.update({
             'do_not_invoice': True,
+            'service_type': SubscriptionType.INTERNAL,
         })
         return fields
 
@@ -1594,6 +1602,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
+            'service_type': SubscriptionType.EXTENDED_TRIAL
         })
         return fields
 
@@ -1664,7 +1673,23 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
-        if plan_edition not in [
+
+        if self.is_uneditable:
+            self.helper.layout = crispy.Layout(
+                TextField('software_plan_edition', plan_edition),
+                TextField('fogbugz_client_name', self.current_subscription.account.name),
+                TextField('emails', self.current_contact_emails),
+                TextField('start_date', self.current_subscription.date_start),
+                TextField('end_date', self.current_subscription.date_end),
+                crispy.HTML(_(
+                    '<p><i class="icon-info-sign"></i> This project is on a contracted Enterprise '
+                    'subscription. You cannot change contracted Enterprise subscriptions here. '
+                    'Please contact the Ops team at %(accounts_email)s to request changes.</p>' % {
+                        'accounts_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
+            )
+        elif plan_edition not in [
             first for first, second in self.fields['software_plan_edition'].choices
         ]:
             self.fields['start_date'].initial = datetime.date.today()
@@ -1749,6 +1774,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         )
 
     @property
+    def is_uneditable(self):
+        return (
+            self.current_subscription
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+        )
+
+    @property
     def subscription_default_fields(self):
         fields = super(ContractedPartnerForm, self).subscription_default_fields
         fields.update({
@@ -1821,14 +1854,26 @@ class SelectSubscriptionTypeForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, *args, **kwargs):
-        super(SelectSubscriptionTypeForm, self).__init__(*args, **kwargs)
+    def __init__(self, defaults=None, disable_input=False, **kwargs):
+        defaults = defaults or {}
+        super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
-        self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'subscription_type',
-                data_bind='value: subscriptionType',
+        if defaults and disable_input:
+            self.helper.layout = crispy.Layout(
+                TextField(
+                    'subscription_type', {
+                        form.slug: form.subscription_type
+                        for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
+                    }[defaults.get('subscription_type')]
+                ),
             )
-        )
+        else:
+            self.helper.layout = crispy.Layout(
+                crispy.Field(
+                    'subscription_type',
+                    data_bind='value: subscriptionType',
+                    css_class="disabled"
+                )
+            )

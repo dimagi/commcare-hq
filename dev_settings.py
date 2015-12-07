@@ -13,6 +13,10 @@ LOCAL_APPS = (
 
 TEST_RUNNER = 'testrunner.DevTestRunner'
 
+# https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
+# https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
+TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
+
 ####### Django Extensions #######
 # These things will be imported when you run ./manage.py shell_plus
 SHELL_PLUS_POST_IMPORTS = (

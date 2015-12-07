@@ -118,77 +118,6 @@ class SelectMobileWorkerMixin(object):
         return default
 
 
-class SelectMobileWorkerField(SelectMobileWorkerMixin, ReportField):
-    template = "reports/dont_use_fields/select_mobile_worker.html"
-    default_option = ugettext_noop("All Mobile Workers")
-    filter_users_field_class = FilterUsersField
-
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None, filter_users_field_class=None):
-        super(SelectMobileWorkerField, self).__init__(request, domain, timezone, parent_report)
-        if filter_users_field_class:
-            self.filter_users_field_class = filter_users_field_class
-
-    def update_params(self):
-        pass
-
-    def update_context(self):
-        self.user_filter, _ = self.filter_users_field_class.get_user_filter(self.request)
-        self.individual = self.request.GET.get('individual', '')
-        self.default_option = self.get_default_text(self.user_filter)
-        self.users = util.user_list(self.domain)
-
-        self.update_params()
-
-        self.context['field_name'] = self.name
-        self.context['default_option'] = self.default_option
-        self.context['users'] = self.users
-        self.context['individual'] = self.individual
-
-
-class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
-    """
-        This is a little field for use when a client really wants to filter by
-        individuals from a specific group.  Since by default we still want to
-        show all the data, no filtering is done unless the special group filter
-        is selected.
-    """
-    slug = "select_filtered_mw"
-    name = ugettext_noop("Select Mobile Worker")
-    template = "reports/dont_use_fields/select_filtered_mobile_worker.html"
-    default_option = ugettext_noop("All Mobile Workers...")
-
-    # Whether to display both the default option and "Only <group> Mobile
-    # Workers" or just the default option (useful when using a single
-    # group_name and changing default_option to All <group> Workers)
-    show_only_group_option = True
-
-    group_names = []
-
-    def update_params(self):
-        if not self.individual:
-            self.individual = self.request.GET.get('filtered_individual', '')
-        self.users = []
-        self.group_options = []
-        for group in self.group_names:
-            filtered_group = Group.by_name(self.domain, group)
-            if filtered_group:
-                if self.show_only_group_option:
-                    self.group_options.append(dict(group_id=filtered_group._id,
-                        name=_("Only %s Mobile Workers") % group))
-                self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))
-
-    def update_context(self):
-        super(SelectFilteredMobileWorkerField, self).update_context()
-        self.context['users'] = self.users_to_options(self.users)
-        self.context['group_options'] = self.group_options
-
-    @staticmethod
-    def users_to_options(user_list):
-        return [dict(val=user.user_id,
-            text=user.raw_username,
-            is_active=user.is_active) for user in user_list]
-
-
 class BooleanField(ReportField):
     slug = "checkbox"
     label = "hello"
@@ -204,7 +133,6 @@ class StrongFilterUsersField(FilterUsersField):
     """
         Version of the FilterUsersField that always actually uses and shows this filter
         When using this field:
-            use SelectMobileWorkerFieldHack instead of SelectMobileWorkerField
             if using ProjectReportParametersMixin make sure filter_users_field_class is set to this
     """
     always_show_filter = True
@@ -244,12 +172,6 @@ class SelectProgramField(ReportSelectField):
         self.options = opts
 
 
-class GroupFieldMixin():
-    slug = "group"
-    name = ugettext_noop("Group")
-    cssId = "group_select"
-
-
 class ReportMultiSelectField(ReportSelectField):
     template = "reports/dont_use_fields/multiselect_generic.html"
     selected = []
@@ -262,7 +184,10 @@ class ReportMultiSelectField(ReportSelectField):
         self.selected = self.request.GET.getlist(self.slug) or self.default_option
 
 
-class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
+class MultiSelectGroupField(ReportMultiSelectField):
+    slug = "group"
+    name = ugettext_noop("Group")
+    cssId = "group_select"
     default_option = ['_all']
     placeholder = 'Click to select groups'
     help_text = "Start typing to select one or more groups"

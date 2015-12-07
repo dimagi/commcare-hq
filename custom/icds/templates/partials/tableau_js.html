@@ -31,7 +31,7 @@
 
         // Apply inital params for user level filtering
         var params = {
-            'View By': '{{ view_by|capfirst }}',
+            'view_by': '{{ view_by }}',
             'user_state': '{{ user_state|default:'' }}',
             'user_district': '{{ user_district|default:'' }}',
             'user_block': '{{ user_block|default:'' }}',

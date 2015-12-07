@@ -79,7 +79,7 @@ def last_modified(gt=None, gte=None, lt=None, lte=None):
 
 
 def in_domains(domains):
-    return filters.term('name', list(domains))
+    return filters.term('name', domains)
 
 
 def is_active(is_active=True):

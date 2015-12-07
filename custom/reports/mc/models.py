@@ -1,11 +1,12 @@
 from datetime import timedelta
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.fluff.calculators.xform import IntegerPropertyReference, FormPropertyFilter
 from couchforms.models import XFormInstance
 import fluff
 from corehq.fluff.calculators import xform as xcalculators
 from fluff.filters import NOTFilter, ANDFilter, ORFilter
 from fluff.models import SimpleCalculator
-from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 
 ADULT_REGISTRATION_XMLNS = 'http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2'
 ADULT_FOLLOWUP_XMLNS = 'http://openrosa.org/formdesigner/af5f05c6c5389959335491450381219523e4eaff'
@@ -44,6 +45,7 @@ def _and_alias(calculators):
         filter=ANDFilter([calc._filter for calc in calculators if calc._filter]),
         window=timedelta(days=1)
     )
+
 
 class MalariaConsortiumFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
@@ -626,3 +628,10 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
 
 
 MalariaConsortiumFluffPillow = MalariaConsortiumFluff.pillow()
+
+
+def get_pillow():
+    return MalariaConsortiumFluffPillow(
+        change_feed=KafkaChangeFeed(topic=topics.FORM, group_id='mc-fluff'),
+        preload_docs=False,
+    )

@@ -27,7 +27,8 @@
             editUrl: '/a/test-exports/export/custom/form/edit',
             isDeid: false,
             id: 'uuid-exportWithFileData',
-            formname: 'Test Export With File Data'
+            formname: 'Test Export With File Data',
+            exportType: 'form'
         },
         exportDeId: {
             downloadUrl: '/a/test-exports/data/export/custom/form/download',
@@ -37,7 +38,8 @@
             editUrl: '/a/test-exports/export/custom/form/edit',
             isDeid: true,
             id: 'uuid-exportDeId',
-            formname: 'Test Export De-Id'
+            formname: 'Test Export De-Id',
+            exportType: 'form'
         },
         exportSimple: {
             downloadUrl: '/a/test-exports/data/export/custom/form/download',
@@ -47,7 +49,8 @@
             editUrl: '/a/test-exports/export/custom/form/edit',
             isDeid: false,
             id: 'uuid-exportSimple',
-            formname: 'Test Export Simple'
+            formname: 'Test Export Simple',
+            exportType: 'form'
         }
     };
 

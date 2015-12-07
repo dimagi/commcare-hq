@@ -56,15 +56,15 @@ class EntryInstances(PostProcessor):
                     for datum in frame.datums:
                         xpaths.add(datum.value)
         xpaths.discard(None)
+        instances, unknown_instance_ids = EntryInstances.get_required_instances(xpaths)
 
-        instances = EntryInstances.get_required_instances(xpaths)
-
-        entry.require_instance(*instances)
+        entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
 
     @staticmethod
     def get_required_instances(xpaths):
         instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
         instances = set()
+        unknown_instance_ids = set()
         for xpath in xpaths:
             instance_names = re.findall(instance_re, xpath)
             for instance_name in instance_names:
@@ -78,8 +78,12 @@ class EntryInstances(PostProcessor):
                 if instance:
                     instances.add(instance)
                 else:
-                    raise UnknownInstanceError("Instance reference not recognized: {}".format(instance_name))
-        return instances
+                    class UnicodeWithContext(unicode):
+                        pass
+                    instance_name = UnicodeWithContext(instance_name)
+                    instance_name.xpath = xpath
+                    unknown_instance_ids.add(instance_name)
+        return instances, unknown_instance_ids
 
 
 def get_instance_factory(scheme):

@@ -96,15 +96,13 @@ cluster.name: <your hostname>
 
 Open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
 
-To set up CouchDB from the command line
+To set up CouchDB from the command line, create the database:
 
-Create the database:
+    $ curl -X PUT http://localhost:5984/commcarehq
 
-    curl -X PUT "http://localhost:5984/commcarehq"
+And add an admin user:
 
-Add the required user:
-
-    curl -X PUT "http://localhost:5984/_config/users/commcarehq" -d \"commcarehq\"
+    $ curl -X PUT http://localhost:5984/_config/admins/commcarehq -d '"commcarehq"'
 
 #### PostgreSQL Configuration
 

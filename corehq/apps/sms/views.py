@@ -32,7 +32,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_timepicker, use_typeahead
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -213,7 +213,7 @@ def get_sms_autocomplete_context(request, domain):
     phone_users = CouchUser.view("users/phone_users_by_domain",
         startkey=[domain], endkey=[domain, {}], include_docs=True
     )
-    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
+    groups = Group.by_domain(domain)
 
     contacts = ["[send to all]"]
     contacts.extend(['%s [group]' % group.name for group in groups])
@@ -1352,6 +1352,11 @@ class SubscribeSMSView(BaseMessagingSectionView):
     urlname = 'subscribe_sms'
     page_title = ugettext_noop("Subscribe SMS")
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(SubscribeSMSView, self).dispatch(*args, **kwargs)
+
     @property
     def commtrack_settings(self):
         return Domain.get_by_name(self.domain).commtrack_settings
@@ -1360,7 +1365,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-             return SubscribeSMSForm(self.request.POST)
+            return SubscribeSMSForm(self.request.POST)
 
         if self.commtrack_settings and self.commtrack_settings.alert_config:
             alert_config = self.commtrack_settings.alert_config
@@ -1683,6 +1688,9 @@ class SMSSettingsView(BaseMessagingSectionView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_knockout_js
+    @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 

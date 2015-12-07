@@ -44,7 +44,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         // Load the modal with the copy
         var $modalDiv = $('<div data-bind="template: \'graph_configuration_modal\'"></div>');
 
-        ko.applyBindings(graphViewModelCopy, $modalDiv.get(0));
+        $modalDiv.koApplyBindings(graphViewModelCopy);
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
@@ -57,7 +57,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         self.graphViewModel.graphDisplayName(name);
     };
 
-    ko.applyBindings(self, self.ui.get(0));
+    self.ui.koApplyBindings(self);
     eventize(self);
 
     /**
@@ -533,9 +533,8 @@ var BarGraphSeries = function(original, childCaseTypes, fixtures){
 
     self.xLabel = "Label";
     self.yLabel = "Value";
-    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-color', 'bar-sort']);
+    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-color']);
     self.configPropertyHints['bar-color'] = "if(x > 100, '#55ff00ff', 'ffff00ff')";
-    self.configPropertyHints['bar-sort'] = "'ascending' or 'descending'";
 };
 BarGraphSeries.prototype = new GraphSeries();
 BarGraphSeries.constructor = BarGraphSeries;

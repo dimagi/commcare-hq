@@ -1,0 +1,25 @@
+{% load crispy_forms_field %}
+{% load i18n %}
+
+{% if field.is_hidden %}
+    {{ field }}
+    {% if field.errors %}
+        <div class="alert alert-danger">
+            <strong>{% trans 'Errors' %}</strong>
+            {{ field.errors }}
+        </div>
+    {% endif %}
+{% else %}
+    {% if field|is_checkbox %}
+        <div id="div_{{ field.auto_id }}" class="checkbox">
+            <label for="{{ field.id_for_label }}" class="{% if field.field.required %} requiredField{% endif %}">
+                {% crispy_field field 'class' 'checkbox' %}
+                {{ field.label|safe }}
+            </label>
+        </div>
+    {% else %}
+        <div id="div_{{ field.auto_id }}">
+            {% crispy_field field 'placeholder' field.label %}
+        </div>
+    {% endif %}
+{% endif %}

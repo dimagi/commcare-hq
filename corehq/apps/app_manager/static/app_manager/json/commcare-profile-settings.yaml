@@ -304,7 +304,10 @@
   since: "2.21"
   
 - name: "Smart Image Inflation"
-  description: "When a value is selected, this feature controls the display size of any user-provided image such that it will be consistent with the size of the original image file, and consistent across devices. Follow the instructions here to determine which value you should use: https://confluence.dimagi.com/display/commcarepublic/Images+in+CommCare#ImagesinCommCare-ImageSizes"
+  description: "When a value is selected, this feature controls the display size of any user-provided image such
+  that it will be consistent with the size of the original image file, and consistent across devices. Follow 
+  <a href='https://confluence.dimagi.com/display/commcarepublic/Images+in+CommCare#ImagesinCommCare-ImageSize'>
+  the instructions here</a> to determine which value to use."
   id: "cc-inflation-target-density"
   values: ["120", "160", "240", "320", "480", "640", "none"]
   value_names: ["Low Density", "Medium Density", "High Density", "X-High Density", "XX-High Density", "XXX-High Density", "None"]

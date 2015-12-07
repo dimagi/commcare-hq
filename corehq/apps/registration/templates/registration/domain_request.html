@@ -36,6 +36,7 @@
     </p>
     {% endif %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
+        {% csrf_token %}
         <fieldset>
             {% for global_error in form.non_field_errors %}
                 <div class="alert alert-error">
