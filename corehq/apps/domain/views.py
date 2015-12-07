@@ -695,20 +695,19 @@ class DomainSubscriptionView(DomainAccountingSettings):
         product_info = {
             'name': product_rate.product.product_type,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'credit': None,
             'type': product_rate.product.product_type,
         }
-        credit_lines = None
-        if subscription is not None:
-            credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                subscription, product_type=product_rate.product.product_type
-            )
-        elif account is not None:
-            credit_lines = CreditLine.get_credits_for_account(
-                account, product_type=product_rate.product.product_type
-            )
-        if credit_lines:
-            product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+
+        total_product_credit = CreditLine.get_total_credits(
+            subscription=subscription,
+            account=account,
+            product_type=product_rate.product.product_type
+        )
+        if total_product_credit is not None:
+            product_info['credit'] = self._fmt_credit(total_product_credit)
+        else:
+            product_info['credit'] = None
+
         return product_info
 
     def get_feature_summary(self, plan_version, account, subscription):
@@ -723,21 +722,19 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     if feature_rate.monthly_limit != -1
                     else _('Unlimited')
                 ),
-                'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
                 'recurring_interval': get_feature_recurring_interval(feature_rate.feature.feature_type),
             }
 
-            credit_lines = None
-            if subscription is not None:
-                credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_type=feature_rate.feature.feature_type
-                )
-            elif account is not None:
-                credit_lines = CreditLine.get_credits_for_account(
-                    account, feature_type=feature_rate.feature.feature_type)
-            if credit_lines:
-                feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
+            total_feature_credit = CreditLine.get_total_credits(
+                subscription=subscription,
+                account=account,
+                feature_type=feature_rate.feature.feature_type,
+            )
+            if total_feature_credit is not None:
+                feature_info['credit'] = self._fmt_credit(total_feature_credit)
+            else:
+                feature_info['credit'] = self._fmt_credit()
 
             feature_summary.append(feature_info)
         return feature_summary

@@ -2465,6 +2465,31 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
+    def get_total_credits(cls, subscription=None, account=None, product_type=None, feature_type=None):
+        assert subscription or account
+        assert not product_type or not feature_type
+
+        kwargs = {}
+        if product_type:
+            kwargs['product_type'] = product_type
+        elif feature_type:
+            kwargs['feature_type'] = feature_type
+
+        credit_lines = []
+        if subscription is not None:
+            credit_lines = CreditLine.get_credits_by_subscription_and_features(
+                subscription, **kwargs
+            )
+        elif account is not None:
+            credit_lines = CreditLine.get_credits_for_account(
+                account, **kwargs
+            )
+
+        if credit_lines:
+            return sum(map(lambda credit_line: credit_line.balance, credit_lines))
+        return None
+
+    @classmethod
     def add_credit(cls, amount, account=None, subscription=None,
                    product_type=None, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
