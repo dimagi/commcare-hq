@@ -172,12 +172,6 @@ class SelectProgramField(ReportSelectField):
         self.options = opts
 
 
-class GroupFieldMixin():
-    slug = "group"
-    name = ugettext_noop("Group")
-    cssId = "group_select"
-
-
 class ReportMultiSelectField(ReportSelectField):
     template = "reports/dont_use_fields/multiselect_generic.html"
     selected = []
@@ -190,7 +184,10 @@ class ReportMultiSelectField(ReportSelectField):
         self.selected = self.request.GET.getlist(self.slug) or self.default_option
 
 
-class MultiSelectGroupField(GroupFieldMixin, ReportMultiSelectField):
+class MultiSelectGroupField(ReportMultiSelectField):
+    slug = "group"
+    name = ugettext_noop("Group")
+    cssId = "group_select"
     default_option = ['_all']
     placeholder = 'Click to select groups'
     help_text = "Start typing to select one or more groups"
