@@ -9,6 +9,7 @@ from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
@@ -785,6 +786,12 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     @property
     def rows(self):
+        try:
+            return self._get_rows()
+        except TooMuchDataError as e:
+            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+
+    def _get_rows(self):
         rows = []
         total = 0
         total_seconds = 0
@@ -810,7 +817,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 .extra(
                     where=[where], params=params
                 )
-
+            if results.count() > 5000:
+                raise TooMuchDataError(
+                    _('The filters you selected include too much data. Please change your filters and try again')
+                )
             for row in results:
                 completion_time = (PhoneTime(row['time_end'], self.timezone)
                                    .server_time().done())
