@@ -28,14 +28,23 @@
             // TODO: This is a bit hacky, $0 was the only item in the sheet object though (maybe has to do with dashboards vs sheets?)
             addNavigationLink(sheet.$0.name, sheet.$0.isActive)
         });
+
+        // Apply inital params for user level filtering
+        var params = {
+            'View By': '{{ view_by|capfirst }}',
+            'user_state': '{{ user_state|default:'' }}',
+            'user_district': '{{ user_district|default:'' }}',
+            'user_block': '{{ user_block|default:'' }}',
+            'user_supervisor': '{{ user_supervisor|default:''}}',
+            'user_awc': '{{ user_awc|default:'' }}'
+        };
+        applyParams(workbook, params);
+
         $(".nav-link").click(function (){
             var link = $(this);
             workbook.activateSheetAsync(link[0].textContent);
             // TODO: Breadcrumbs to indicate current report?
-            // $(".btn.btn-success").removeClass('btn-success').addClass('btn-default');
-            // btn.removeClass('btn-default').addClass('btn-success');
-
-            // TODO: This should handle resetting filters and setting view by to state as well
+            // TODO: This should handle resetting params and setting view by to state as well (I think)
         });
 
         viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
