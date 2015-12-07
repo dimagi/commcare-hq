@@ -54,6 +54,7 @@ class Format(object):
     HTML = "html"
     ZIPPED_HTML = "zipped-html"
     JSON = "json"
+    PYTHON_DICT = "dict"
     UNZIPPED_CSV = 'unzipped-csv'
     CDISC_ODM = 'cdisc-odm'
 
@@ -77,6 +78,9 @@ class Format(object):
                                  "download": True},
                    JSON: {"mimetype": "application/json",
                           "extension": "json",
+                          "download": False},
+                   PYTHON_DICT: {"mimetype": None,
+                          "extension": None,
                           "download": False},
                    UNZIPPED_CSV: {"mimetype": "text/csv",
                                   "extension": "csv",
@@ -466,7 +470,7 @@ class BaseSavedExportSchema(Document):
     def is_bulk(self):
         return False
 
-    def export_data_async(self, format=None, **kwargs):
+    def get_download_task(self, format=None, **kwargs):
         format = format or self.default_format
         download = DownloadBase()
         download.set_task(couchexport.tasks.export_async.delay(
@@ -475,6 +479,10 @@ class BaseSavedExportSchema(Document):
             format=format,
             **kwargs
         ))
+        return download
+
+    def export_data_async(self, format=None, **kwargs):
+        download = self.get_download_task(format=format, **kwargs)
         return download.get_start_response()
 
     @property
@@ -586,7 +594,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     name = StringProperty()
     default_format = StringProperty()
 
-    is_safe = BooleanProperty(default=False)
+    is_safe = BooleanProperty(default=False)  # Is the export de-identified?
     # self.index should always match self.schema.index
     # needs to be here so we can use in couch views
     index = JsonProperty()
@@ -748,7 +756,14 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
             writer.close()
 
+        if format == Format.PYTHON_DICT:
+            return writer.get_preview()
+
         return ExportFiles(path, export_schema_checkpoint, format)
+
+    def get_preview_data(self, export_filter, limit=50):
+        return self.get_export_files(Format.PYTHON_DICT, None, export_filter,
+                                     limit=limit)
 
     def download_data(self, format="", previous_export=None, filter=None, limit=0):
         """

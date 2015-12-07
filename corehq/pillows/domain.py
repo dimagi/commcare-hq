@@ -36,14 +36,22 @@ class DomainPillow(HQPillow):
         }
     }
 
+    @classmethod
     def get_unique_id(self):
         return DOMAIN_INDEX
 
+    def change_trigger(self, changes_dict):
+        doc_dict = super(DomainPillow, self).change_trigger(changes_dict)
+        if doc_dict and doc_dict['doc_type'] == 'Domain-DUPLICATE':
+            if self.doc_exists(doc_dict):
+                self.get_es().delete(path=self.get_doc_path_typed(doc_dict))
+            return None
+        else:
+            return doc_dict
+
     def change_transform(self, doc_dict):
         doc_ret = copy.deepcopy(doc_dict)
-        sub =  Subscription.objects.filter(
-                subscriber__domain=doc_dict['name'],
-                is_active=True)
+        sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
         doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
         countries = doc_dict['deployment'].get('countries', [])
         doc_ret['deployment']['countries'] = []

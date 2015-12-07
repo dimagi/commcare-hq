@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from django.views.generic.base import RedirectView
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import StockState, StockTransactionHelper
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import process
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
@@ -19,8 +19,10 @@ from corehq.apps.locations.permissions import locations_access_required, user_ca
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
+from custom.ewsghana.filters import EWSDateFilter
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
     EWSMigrationProblem
@@ -194,27 +196,6 @@ class EWSUserExtensionView(BaseCommTrackManageView):
             form.save(self.web_user, self.domain)
             messages.add_message(request, messages.SUCCESS, 'Settings updated successfully!')
         return self.get(request, *args, **kwargs)
-
-
-class DashboardRedirectReportView(RedirectView):
-
-    def get_redirect_url(self, *args, **kwargs):
-        site_code = kwargs['site_code']
-        domain = kwargs['domain']
-
-        sql_location = get_object_or_404(SQLLocation, site_code=site_code, domain=domain)
-        cls = DashboardReport
-        if not sql_location.location_type.administrative:
-            cls = StockStatus
-
-        url = make_url(
-            cls,
-            domain,
-            '?location_id=%s&filter_by_program=%s&startdate='
-            '&enddate=&report_type=&filter_by_product=%s',
-            (sql_location.location_id, ALL_OPTION, ALL_OPTION)
-        )
-        return url
 
 
 @domain_admin_required
@@ -395,3 +376,41 @@ class BalanceMigrationView(BaseDomainView):
             'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
             'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
         }
+
+
+class DashboardPageView(RedirectView):
+
+    def get_redirect_url(self, *args, **kwargs):
+        domain = kwargs['domain']
+        url = DashboardReport.get_raw_url(domain, request=self.request)
+        user = self.request.couch_user
+        dm = user.get_domain_membership(domain) if user else None
+        if dm:
+            if dm.program_id:
+                program_id = dm.program_id
+            else:
+                program_id = 'all'
+
+            loc_id = ''
+            if dm.location_id:
+                location = SQLLocation.objects.get(location_id=dm.location_id)
+                if not location.location_type.administrative:
+                    url = StockStatus.get_raw_url(domain, request=self.request)
+                loc_id = location.location_id
+            else:
+                try:
+                    extension = EWSExtension.objects.get(domain=domain, user_id=user.get_id)
+                    loc_id = extension.location_id
+                    if loc_id:
+                        url = StockStatus.get_raw_url(domain, request=self.request)
+                except EWSExtension.DoesNotExist:
+                    pass
+            start_date, end_date = EWSDateFilter.last_reporting_period()
+            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
+                url,
+                loc_id or '',
+                program_id if program_id else '',
+                start_date.strftime('%Y-%m-%d'),
+                end_date.strftime('%Y-%m-%d')
+            )
+        return url

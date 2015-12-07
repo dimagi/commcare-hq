@@ -1,18 +1,18 @@
 import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from couchforms.models import XFormInstance
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import generator
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig, \
-    SupplyPointCase
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.backend import test
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, create_backend
 from custom.logistics.tests.test_script import TestScript
@@ -84,27 +84,28 @@ class EWSScriptTest(TestScript):
         region = make_loc(code='region', name='Test region', type='region', domain=domain.name, parent=national)
         loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name,
                        parent=national)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, loc)
+        SupplyInterface.create_from_location(TEST_DOMAIN, loc)
         loc.save()
 
         rms2 = make_loc(code="wrms", name="Test RMS 2", type="Regional Medical Store", domain=domain.name,
                         parent=region)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, rms2)
+        SupplyInterface.create_from_location(TEST_DOMAIN, rms2)
         rms2.save()
 
         cms = make_loc(code="cms", name="Central Medical Stores", type="Central Medical Store",
                        domain=domain.name, parent=national)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, cms)
+        SupplyInterface.create_from_location(TEST_DOMAIN, cms)
         cms.save()
 
         loc2 = make_loc(code="tf", name="Test Facility", type="CHPS Facility", domain=domain.name, parent=region)
-        SupplyPointCase.create_from_location(TEST_DOMAIN, loc2)
+        SupplyInterface.create_from_location(TEST_DOMAIN, loc2)
         loc2.save()
 
         supply_point_id = loc.linked_supply_point().get_id
         supply_point_id2 = loc2.linked_supply_point().get_id
 
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.sms_backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
+        cls.sms_backend.save()
         cls.user1 = bootstrap_user(username='stella', first_name='test1', last_name='test1',
                                    domain=domain.name, home_loc=loc)
         cls.user2 = bootstrap_user(username='super', domain=domain.name, home_loc=loc2,
@@ -171,7 +172,7 @@ class EWSScriptTest(TestScript):
 
     @classmethod
     def tearDownClass(cls):
-        MobileBackend.load_by_name(TEST_DOMAIN, TEST_BACKEND).delete()
+        cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
         delete_all_locations()

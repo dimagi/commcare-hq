@@ -66,7 +66,7 @@ class DataSourceTest(object):
                         prod = cls.products[p_code]
                         StockState.objects.create(
                             section_id='stock',
-                            case_id=supply_point._id,
+                            case_id=supply_point.case_id,
                             product_id=prod._id,
                             stock_on_hand=stock,
                             last_modified_date=datetime.utcnow(),

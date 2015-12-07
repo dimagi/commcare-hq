@@ -1,0 +1,49 @@
+{%  extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load djangular_tags %}
+
+{% block stylesheets %}{{ block.super }}
+    <style>
+        .bulk-checkbox {
+            margin-top: 8px;
+            vertical-align: top;
+            line-height: 20px;
+            display: inline-block;
+        }
+    </style>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript" src="{% new_static 'export/js/list_exports.ng.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'app_manager/js/hq.app_data_drilldown.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script type="text/javascript">
+(function (angular, undefined) {
+   'use strict';
+    var listExportsApp = angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
+    listExportsApp.config(["$httpProvider", function($httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    }]);
+    listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+    listExportsApp.constant('formModalSelector', '#createExportOptionsModal');
+    listExportsApp.constant('processApplicationDataFormSuccessCallback', function (data) {
+        window.location = data.url;
+    });
+}(window.angular));
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <div ng-app="listExportsApp">
+        {% include 'export/partial/export_list_controller.html' %}
+        {% include 'export/partial/export_list_create_export_modal.html' %}
+    </div>
+{% endblock %}

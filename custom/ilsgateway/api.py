@@ -1,9 +1,10 @@
 from django.db import transaction
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
@@ -406,8 +407,9 @@ class ILSGatewayAPI(APISynchronization):
             location.external_id = unicode(ilsgateway_location.id)
             location.save()
 
-            if ilsgateway_location.type == 'FACILITY' and not SupplyPointCase.get_by_location(location):
-                SupplyPointCase.create_from_location(self.domain, location)
+            interface = SupplyInterface(self.domain)
+            if ilsgateway_location.type == 'FACILITY' and not interface.get_by_location(location):
+                interface.create_from_location(self.domain, location)
                 location.save()
         else:
             location_dict = {
@@ -421,13 +423,13 @@ class ILSGatewayAPI(APISynchronization):
             }
             if ilsgateway_location.groups:
                 location_dict['metadata']['group'] = ilsgateway_location.groups[0]
-            case = SupplyPointCase.get_by_location(location)
+            case = SupplyInterface(self.domain).get_by_location(location)
             if apply_updates(location, location_dict):
                 location.save()
                 if case:
                     case.update_from_location(location)
                 else:
-                    SupplyPointCase.create_from_location(self.domain, location)
+                    SupplyInterface.create_from_location(self.domain, location)
         return location
 
     def location_groups_sync(self, location_groups):

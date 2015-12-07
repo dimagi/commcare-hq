@@ -1,18 +1,19 @@
 from __future__ import absolute_import
 from xml.etree import ElementTree
+
+from django.conf import settings
+
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from couchforms import fetch_and_wrap_form
 
 
-def close_case(case_id, domain, user):
+def close_cases(case_ids, domain, user):
     """
-    Close a case by submitting a close form to it.
+    Close cases by submitting a close forms.
 
     Accepts submitting user as a user object or a fake system user string.
 
@@ -26,13 +27,17 @@ def close_case(case_id, domain, user):
         user_id = user
         username = user
 
-    case_block = ElementTree.tostring(CaseBlock(
+    case_blocks = [ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case_id,
         close=True,
-    ).as_xml())
+    ).as_xml()) for case_id in case_ids]
 
-    return submit_case_blocks([case_block], domain, username, user_id)
+    return submit_case_blocks(case_blocks, domain, username, user_id)
+
+
+def close_case(case_id, domain, user):
+    return close_cases([case_id], domain, user)
 
 
 def rebuild_case_from_actions(case, actions):
@@ -71,22 +76,18 @@ def safe_hard_delete(case):
 
     This is used primarily for cleaning up system cases/actions (e.g. the location delegate case).
     """
+    if not settings.UNIT_TESTING:
+        from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+        if not (case.is_deleted or case.type == USER_LOCATION_OWNER_MAP_TYPE):
+            raise CommCareCaseError("Attempt to hard delete a live case whose type isn't white listed")
+
     if case.reverse_indices:
-        raise CommCareCaseError("You can't hard delete a case that has other dependencies ({})!".format(case._id))
-    forms = get_case_forms(case._id)
+        raise CommCareCaseError("You can't hard delete a case that has other dependencies ({})!".format(case.case_id))
+    interface = FormProcessorInterface(case.domain)
+    forms = interface.get_case_forms(case.case_id)
     for form in forms:
         case_updates = get_case_updates(form)
-        if any([c.id != case._id for c in case_updates]):
+        if any([c.id != case.case_id for c in case_updates]):
             raise CommCareCaseError("You can't hard delete a case that has shared forms with other cases!")
 
-    docs = [case._doc] + [f._doc for f in forms]
-    case.get_db().bulk_delete(docs)
-
-
-def get_case_forms(case_id):
-    """
-    Get all forms that have submitted against a case (including archived and deleted forms)
-    wrapped by the appropriate form type.
-    """
-    form_ids = get_case_xform_ids(case_id)
-    return [fetch_and_wrap_form(id) for id in form_ids]
+    interface.hard_delete_case_and_forms(case, forms)

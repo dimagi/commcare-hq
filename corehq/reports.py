@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse
 from corehq import privileges
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
     AdminDomainStatsReport,
@@ -12,7 +13,8 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
-from corehq.apps.receiverwrapper import reports as receiverwrapper
+from corehq.apps.reports.standard.forms import reports as receiverwrapper
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     StaticReportConfiguration,
     ReportConfiguration,
@@ -32,10 +34,6 @@ from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
 from corehq.apps.importer.base import ImportCases
-from corehq.apps.reports.standard.export import (
-    FormExportInterface,
-    CaseExportInterface,
-)
 from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
@@ -170,7 +168,23 @@ def _get_configurable_reports(project):
     """
     User configurable reports
     """
-    configs = ReportConfiguration.by_domain(project.name) + StaticReportConfiguration.by_domain(project.name)
+    try:
+        configs = ReportConfiguration.by_domain(project.name)
+    except BadSpecError as e:
+        logging.exception(e)
+
+        # Pick out the UCRs that don't have spec errors
+        configs = []
+        for config_id in get_doc_ids_in_domain_by_class(project.name, ReportConfiguration):
+            try:
+                configs.append(ReportConfiguration.get(config_id))
+            except BadSpecError as e:
+                logging.error("%s with report config %s" % (e.message, config_id))
+    try:
+        configs.extend(StaticReportConfiguration.by_domain(project.name))
+    except BadSpecError as e:
+        logging.exception(e)
+
     if configs:
         def _make_report_class(config):
             from corehq.apps.reports.generic import GenericReportView
@@ -221,20 +235,6 @@ FIXTURE_INTERFACES = (
     (_('Lookup Tables'), (
         FixtureEditInterface,
         FixtureViewInterface,
-    )),
-)
-
-EXPORT_DATA_INTERFACES = (
-    (_('Export Data'), (
-        FormExportInterface,
-        CaseExportInterface,
-    )),
-)
-
-DATA_DOWNLOAD_INTERFACES = (
-    ('', (
-        export.FormExportReport,
-        export.NewCaseExportReport,
     )),
 )
 

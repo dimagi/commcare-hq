@@ -1,5 +1,6 @@
 from decimal import Decimal
 import logging
+from django.db import transaction
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -11,7 +12,9 @@ from corehq.apps.accounting.models import (
     SoftwareProductType,
     FeatureType,
     PaymentMethod,
+    PreOrPostPay,
     StripePaymentMethod,
+    LastPayment
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
@@ -66,6 +69,12 @@ class BaseStripePaymentHandler(object):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.POSTPAY
+        account.save()
+
+
     def process_request(self, request):
         customer = None
         amount = self.get_charge_amount(request)
@@ -85,15 +94,17 @@ class BaseStripePaymentHandler(object):
             },
         }
         try:
-            if remove_card:
-                self.payment_method.remove_card(card)
-                return {'success': True, 'removedCard': card, }
-            if save_card:
-                card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
+            with transaction.atomic():
+                if remove_card:
+                    self.payment_method.remove_card(card)
+                    return {'success': True, 'removedCard': card, }
+                if save_card:
+                    card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
             if save_card or is_saved_card:
                 customer = self.payment_method.customer
 
             charge = self.create_charge(amount, card=card, customer=customer)
+            self.update_payment_information(billing_account)
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body
@@ -120,11 +131,11 @@ class BaseStripePaymentHandler(object):
                 }, exc_info=True)
             return generic_error
 
-        payment_record = PaymentRecord.create_record(
-            self.payment_method, charge.id, amount
-        )
-
-        self.update_credits(payment_record)
+        with transaction.atomic():
+            payment_record = PaymentRecord.create_record(
+                self.payment_method, charge.id, amount
+            )
+            self.update_credits(payment_record)
 
         try:
             self.send_email(payment_record)
@@ -333,6 +344,12 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             description="Payment for %s" % self.cost_item_name,
         )
 
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.PREPAY
+        account.save()
+
+
     def update_credits(self, payment_record):
         for feature in self.features:
             feature_amount = feature['amount']
@@ -404,7 +421,11 @@ class AutoPayInvoicePaymentHandler(object):
                 self._handle_card_errors(invoice, payment_method, e)
                 continue
             else:
-                invoice.pay_invoice(payment_record)
+                with transaction.atomic():
+                    invoice.pay_invoice(payment_record)
+                    invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                    invoice.account.save()
+
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):

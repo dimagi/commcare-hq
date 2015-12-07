@@ -548,6 +548,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'text_input', 'platform', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
+        'comment',
         # Application only
         'cloudcare_enabled',
         'application_version',
@@ -582,7 +583,9 @@ def edit_app_attr(request, domain, app_id, attr):
         ('auto_gps_capture', None),
         ('amplifies_workers', None),
         ('amplifies_project', None),
+        ('minimum_use_threshold', None),
         ('use_grid_menus', None),
+        ('comment', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

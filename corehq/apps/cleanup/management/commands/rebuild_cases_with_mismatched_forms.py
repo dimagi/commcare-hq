@@ -1,13 +1,12 @@
 import json
 import logging
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
 from django.core.management.base import BaseCommand
 from restkit import RequestFailed
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.const import CASE_ACTION_REBUILD
-from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import RebuildWithReason
 from couchlog.models import ExceptionRecord
 
@@ -98,7 +97,7 @@ def archive_exception(exception):
 
 def should_rebuild(domain, case_id):
     try:
-        case = FormProcessorInterface(domain).case_model.get(case_id)
+        case = CaseAccessors(domain).get_case(case_id)
         return hasattr(case, 'actions') and case.actions[-1].action_type != CASE_ACTION_REBUILD
     except CaseNotFound:
         return True

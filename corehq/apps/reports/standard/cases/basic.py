@@ -212,7 +212,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             'external_id',
         ]
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         for row in self.es_results['hits'].get('hits', []):
             case = self.get_case(row)
             ci = CaseInfo(self, case)

@@ -380,7 +380,7 @@ In this example we take 3 case properties and save one row per property if it ex
                 "type": "identity",
             },
             "operator": "in",
-            "property_value": ["", null],
+            "property_value": ["", null]
         }
     }
 }

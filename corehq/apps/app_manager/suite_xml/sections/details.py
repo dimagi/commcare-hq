@@ -367,7 +367,8 @@ def get_instances_for_module(app, module, additional_xpaths=None):
         for detail_id in detail_ids:
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-        return EntryInstances.get_required_instances(xpaths)
+        instances, _ = EntryInstances.get_required_instances(xpaths)
+        return instances
 
 
 class CaseTileHelper(object):

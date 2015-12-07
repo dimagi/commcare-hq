@@ -186,6 +186,11 @@ def report_name(report_id):
     return u'cchq.reports.{report_id}.name'.format(report_id=report_id)
 
 
+@pattern('cchq.reports.%s.description')
+def report_description(report_id):
+    return u'cchq.reports.{report_id}.description'.format(report_id=report_id)
+
+
 @pattern('cchq.report_last_sync')
 def report_last_sync():
     return u'cchq.report_last_sync'

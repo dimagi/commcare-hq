@@ -109,6 +109,7 @@
                 $(".select2multiplechoicewidget").select2('data', null);
                 $scope.mobileWorker = new MobileWorker({customFields: customFields});
             }
+            ga_track_event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         $scope.submitNewMobileWorker = function () {

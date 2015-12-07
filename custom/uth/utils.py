@@ -1,6 +1,4 @@
-from casexml.apps.case.xform import get_case_updates
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.utils import convert_xform_to_json
 from casexml.apps.case.models import CommCareCase
 from lxml import etree
 import os
@@ -176,17 +174,12 @@ def create_case(case_id, files, patient_case_id=None):
     for f in files:
         file_dict[f] = UploadedFile(files[f], f)
 
-    submit_form_locally(
+    _, _, cases = submit_form_locally(
         instance=xform,
         attachments=file_dict,
         domain=UTH_DOMAIN,
     )
-    # this is a bit of a hack / abstraction violation
-    # would be nice if submit_form_locally returned info about cases updated
-    case_ids = {
-        case_update.id
-        for case_update in get_case_updates(convert_xform_to_json(xform))
-    }
+    case_ids = {case.case_id for case in cases}
     return [CommCareCase.get(case_id) for case_id in case_ids]
 
 

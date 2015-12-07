@@ -41,7 +41,7 @@
                 {% endif %}
                 method="post"
                 class="form"
-            >
+            >{% csrf_token %}
                 {% if is_renewal %}
                 <input type="hidden" name="from_plan_page" value="true">
                 {% endif %}

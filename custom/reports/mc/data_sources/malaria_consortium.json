@@ -73,7 +73,7 @@
             },
             "rdt_result": {
                 "type": "property_path",
-                "property_path": ["form", "consult", "rdt_result"]
+                "property_path": ["form", "self_report", "rdt_result"]
             },
             "diagnosis_given": {
                 "type": "property_path",
@@ -683,7 +683,7 @@
                                 "name": "diagnosis_given"
                             },
                             "type": "boolean_expression",
-                            "property_value": "3"
+                            "property_value": "pneumonia"
                         },
                         "expression_if_true": {
                             "type": "constant",

@@ -1,7 +1,6 @@
 import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
-from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -16,8 +15,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
-
-from .dbaccessors import get_all_users_by_location
 
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
@@ -420,13 +417,15 @@ class Location(CachedCouchDocumentMixin, Document):
         return super(Location, cls).wrap(data)
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.locations.util import get_lineage_from_location, get_lineage_from_location_id
         if 'parent' in kwargs:
             parent = kwargs['parent']
             if parent:
-                if not isinstance(parent, Document):
+                if isinstance(parent, Document):
+                    lineage = get_lineage_from_location(parent)
+                else:
                     # 'parent' is a doc id
-                    parent = Location.get(parent)
-                lineage = list(reversed(parent.path))
+                    lineage = get_lineage_from_location_id(parent)
             else:
                 lineage = []
             kwargs['lineage'] = lineage
@@ -493,13 +492,14 @@ class Location(CachedCouchDocumentMixin, Document):
         # sync supply point id
         sp = self.linked_supply_point()
         if sp:
-            sql_location.supply_point_id = sp._id
+            sql_location.supply_point_id = sp.case_id
 
         # sync parent connection
         parent_id = self.parent_id
         if parent_id:
             sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
-
+        else:
+            sql_location.parent = None
         return sql_location
 
     @property
@@ -510,6 +510,10 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type(self):
         return self.location_type_object.name
+
+    @property
+    def location_id(self):
+        return self._id
 
     _sql_location_type = None
     @location_type.setter
@@ -541,7 +545,7 @@ class Location(CachedCouchDocumentMixin, Document):
         # this is important because if you archive a child, then try
         # to archive the parent, we don't want to try to close again
         if sp and not sp.closed:
-            close_case(sp._id, self.domain, COMMTRACK_USERNAME)
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
 
         _unassign_users_from_location(self.domain, self._id)
 
@@ -573,7 +577,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and sp.closed:
             for action in sp.actions:
                 if action.action_type == 'close':
-                    action.xform.archive(user=COMMTRACK_USERNAME)
+                    action.xform.archive(user_id=COMMTRACK_USERNAME)
                     break
 
     def unarchive(self):
@@ -694,7 +698,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if not parent:
             parent = self.parent
         locs = (parent.children if parent else self.root_locations(self.domain))
-        return [loc for loc in locs if loc._id != self._id]
+        return [loc for loc in locs if loc.location_id != self._id]
 
     @property
     def path(self):
@@ -714,6 +718,7 @@ class Location(CachedCouchDocumentMixin, Document):
                                        .couch_locations())
 
     def linked_supply_point(self):
+        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
         return get_supply_point_case_by_location(self)
 
     @property
@@ -733,6 +738,7 @@ def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
     """
+    from corehq.apps.locations.dbaccessors import get_all_users_by_location
     for user in get_all_users_by_location(domain, location_id):
         if user.is_web_user():
             user.unset_location(domain)

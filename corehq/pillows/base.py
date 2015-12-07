@@ -80,13 +80,14 @@ class HQPillow(AliasedElasticPillow):
         }
     }
 
+    @classmethod
     @memoized
-    def calc_meta(self):
+    def calc_meta(cls):
         """
         override of the meta calculator since we're separating out all the types,
         so we just do a hash of the "prototype" instead to determind md5
         """
-        return self.calc_mapping_hash(self.default_mapping)
+        return cls.calc_mapping_hash(cls.default_mapping)
 
     def get_domain(self, doc_dict):
         """

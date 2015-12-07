@@ -717,8 +717,25 @@ cloudCare.AppView = Backbone.View.extend({
                     url: self.options.renderFormRoot,
                     data: {'session_id': sessionId},
                     success: function (data) {
-                        showRenderedForm(data.instance_xml, $("#xml-viewer-pretty"));
-                        showRenderedForm(data.form_data, $("#question-viewer-pretty"));
+                        var $instanceTab = $('#debugger-xml-instance-tab'),
+                            codeMirror;
+
+                        codeMirror = CodeMirror(function(el) {
+                            $('#xml-viewer-pretty').html(el);
+                        }, {
+                            value: data.instance_xml,
+                            mode: 'xml',
+                            viewportMargin: Infinity,
+                            readOnly: true,
+                            lineNumbers: true,
+                        });
+
+                        $instanceTab.off();
+                        $instanceTab.on('shown.bs.tab', function() {
+                            codeMirror.refresh();
+                        });
+
+                        $("#question-viewer-pretty").html(data.form_data || 'Could not render form');
                     }
                 });
             }

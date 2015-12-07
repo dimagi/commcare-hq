@@ -9,10 +9,11 @@ from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter, MISSING_APP_ID
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
@@ -20,14 +21,10 @@ from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.elastic import es_query
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
-from couchforms.analytics import get_number_of_submissions
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, json_format_date
@@ -113,7 +110,6 @@ class CompletionOrSubmissionTimeMixin(object):
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """
-    todo move this to the cached version when ready
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
@@ -790,6 +786,12 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     @property
     def rows(self):
+        try:
+            return self._get_rows()
+        except TooMuchDataError as e:
+            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+
+    def _get_rows(self):
         rows = []
         total = 0
         total_seconds = 0
@@ -815,7 +817,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 .extra(
                     where=[where], params=params
                 )
-
+            if results.count() > 5000:
+                raise TooMuchDataError(
+                    _('The filters you selected include too much data. Please change your filters and try again')
+                )
             for row in results:
                 completion_time = (PhoneTime(row['time_end'], self.timezone)
                                    .server_time().done())

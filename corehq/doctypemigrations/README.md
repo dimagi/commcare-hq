@@ -29,6 +29,9 @@ EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE, (
     NEW_USERS_GROUPS_DB,
 ))
 ```
+We have some views which are meant to work on roughly all doc types.  Take a
+look at the views referenced in `corehq/couchapps/__init__.py` and make sure to
+register the appropriate views to your new database.
 
 Do a full-text search for each doc_type you're migrating across all `map.js` files
 ```bash
@@ -65,7 +68,6 @@ users_migration = Migrator(
         'CommCareUser',
         'WebUser',
         'Invitation',
-        'DomainInvitation',
         'DomainRemovalRecord',
         'OrgRemovalRecord',
     )
@@ -117,8 +119,6 @@ CommCareUser                    82031   0
 CommCareUser-Deleted            1       0
 DeleteGroupRecord               2904    0
 DeleteGroupRecord-Deleted       0       0
-DomainInvitation                0       0
-DomainInvitation-Deleted        0       0
 DomainRemovalRecord             1259    0
 DomainRemovalRecord-Deleted     0       0
 Group                           20981   0

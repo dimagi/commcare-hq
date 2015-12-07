@@ -10,6 +10,7 @@ from corehq import privileges
 from django.core.cache import cache
 from django_prbac.utils import has_privilege
 
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -19,6 +20,7 @@ WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
     DEMO_USER_ID,           # demo mode
     'demo_user_group_id',  # demo mode with case sharing enabled
+    UNOWNED_EXTENSION_OWNER_ID,
     SYSTEM_USER_ID,
 ]
 
@@ -140,8 +142,9 @@ def user_data_from_registration_form(xform):
     Helper function for create_or_update_from_xform
     """
     user_data = {}
-    if "user_data" in xform.form and "data" in xform.form["user_data"]:
-        items = xform.form["user_data"]["data"]
+    form_data = xform.form_data
+    if "user_data" in form_data and "data" in form_data["user_data"]:
+        items = form_data["user_data"]["data"]
         if not isinstance(items, list):
             items = [items]
         for item in items:

@@ -528,10 +528,7 @@ class MetReport(CaseReportMixin, BaseReport):
     default_rows = 5
     cache_key = 'opm-report'
     show_total = True
-
-    @property
-    def exportable(self):
-        return self.request.couch_user.is_dimagi
+    exportable = True
 
     @property
     def row_objects(self):

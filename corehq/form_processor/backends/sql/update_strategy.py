@@ -1,8 +1,9 @@
 import logging
 
-from datetime import datetime
+from iso8601 import iso8601
 
 from casexml.apps.case import const
+from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
@@ -11,14 +12,33 @@ from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, 
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
+PROPERTY_TYPE_MAPPING = {
+    'opened_on': iso8601.parse_date
+}
+
+
+def _convert_type(property_name, value):
+    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
+
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
 
+    def apply_action_intent(self, case_action_intent):
+        if not case_action_intent.is_deprecation:
+            # for now we only allow commtrack actions to be processed this way so just assert that's the case
+            assert case_action_intent.action_type == CASE_ACTION_COMMTRACK
+            transaction = CaseTransaction.ledger_transaction(self.case, case_action_intent.form)
+            if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+                self.case.track_create(transaction)
+
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
 
-        self.case.track_create(CaseTransaction.form_transaction(self.case, xformdoc))
+        transaction = CaseTransaction.form_transaction(self.case, xformdoc)
+        if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+            # don't add multiple transactions for the same form
+            self.case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
         if case_update.has_referrals():
@@ -62,9 +82,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             ))
 
     def _update_known_properties(self, action):
-        for k, v in action.get_known_properties().items():
-            if v:
-                setattr(self.case, k, v)
+        for name, value in action.get_known_properties().items():
+            if value:
+                setattr(self.case, name, _convert_type(name, value))
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
@@ -78,7 +98,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._update_known_properties(update_action)
 
         for key, value in update_action.dynamic_properties.items():
-            if key not in const.CASE_TAGS:
+            if key == 'location_id':
+                # special treatment of location_id
+                self.case.location_id = value
+            elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
     def _apply_index_action(self, action):

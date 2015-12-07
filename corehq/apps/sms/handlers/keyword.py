@@ -592,9 +592,9 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
     # Log a messaging subevent for the incoming message
     subevent = logged_event.create_subevent_for_single_sms(
         msg.couch_recipient_doc_type,
-        msg.couch_recipient
+        msg.couch_recipient,
+        completed=True
     )
-    subevent.completed()
     add_msg_tags(msg, MessageMetadata(messaging_subevent_id=subevent.pk))
 
     # Close any open sessions even if it's just an sms that we're

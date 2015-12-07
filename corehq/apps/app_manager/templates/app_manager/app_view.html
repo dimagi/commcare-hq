@@ -33,7 +33,8 @@
                 },
                 permissions: {
                     cloudcare: {{ is_cloudcare_allowed|BOOL }}
-                }
+                },
+                warning: '{% trans "This is not an allowed value for this field" %}'
             }
         };
         $(function () {
@@ -335,7 +336,7 @@
         <div class="tab-pane" id="delete">
             <h3>{% trans "Delete Application" %}</h3>
             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
-
+                {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
                     <i class="icon-trash"></i>
                     {% trans "Delete this application" %}

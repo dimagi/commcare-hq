@@ -1,5 +1,6 @@
+from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs, get_db
+from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 
 
@@ -29,6 +30,9 @@ def get_case_ids_in_domain(domain, type=None):
     if type is None:
         type_keys = [[]]
     elif isinstance(type, (list, tuple)):
+        soft_assert('skelly@{}'.format('dimagi.com'))(
+            False, 'get_case_ids_in_domain called with typle / list arg for type'
+        )
         type_keys = [[t] for t in type]
     elif isinstance(type, basestring):
         type_keys = [[type]]
@@ -157,7 +161,7 @@ def get_number_of_cases_in_domain_by_owner(domain, owner_id):
 def iter_lite_cases_json(case_ids, chunksize=100):
     for case_id_chunk in chunked(case_ids, chunksize):
         rows = CommCareCase.get_db().view(
-            'case/get_lite',
+            'cases_get_lite/get_lite',
             keys=case_id_chunk,
             reduce=False,
         )
@@ -167,7 +171,7 @@ def iter_lite_cases_json(case_ids, chunksize=100):
 
 def get_lite_case_json(case_id):
     return CommCareCase.get_db().view(
-        "case/get_lite",
+        "cases_get_lite/get_lite",
         key=case_id,
         include_docs=False,
     ).one()

@@ -5,7 +5,6 @@
 {% load djangular_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% new_static 'users/js/roles.js' %}"></script>
     <script src="{% new_static 'users/js/web_users_list.ng.js' %}"></script>
 {% endblock %}
@@ -17,6 +16,8 @@
     var usersApp = angular.module('usersApp', ['hq.web_users']);
     usersApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     }]);
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
@@ -210,6 +211,7 @@
                         <div class="input-group">
                             <input type="text"
                                    class="form-control"
+                                   ng-keypress="updateOnEnter($event)"
                                    ng-model="query"
                                    placeholder="{% trans "Filter Users..." %}">
                             <span class="input-group-btn">
@@ -428,7 +430,7 @@
                                 data-content="{% trans "Modify the structure and configuration of the application." %}"></span>
                         </th>
                         <th>
-                          {% trans "Edit Reports" %}
+                          {% trans "View Reports" %}
                           <span class="hq-help-template"
                                 data-title="View Reports"
                                 data-content="{% trans "See all CommCareHQ performance reports." %}"></span>

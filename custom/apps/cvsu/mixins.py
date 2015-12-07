@@ -24,14 +24,13 @@ class CVSUSqlDataMixin(object):
             if column.slug == column_name:
                 return column
 
-    def _get_data(self, slugs=None):
+    def _get_data(self):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
         for c in self.columns:
-            if not slugs or c.slug in slugs:
-                qc.append_column(c.view)
+            qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
 

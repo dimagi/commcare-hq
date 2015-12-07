@@ -1,0 +1,27 @@
+{
+  "form_id": null,
+  "app_id": null,
+  "auth_context": {
+    "authenticated": false,
+    "doc_type": "AuthContext",
+    "domain": "submit",
+    "user_id": null
+  },
+  "build_id": null,
+  "date_header": "2011-04-11T18:24:43",
+  "domain": "submit",
+  "history": [],
+  "initial_processing_complete": true,
+  "last_sync_token": null,
+  "openrosa_headers": {
+    "HTTP_DATE": "Mon, 11 Apr 2011 18:24:43 GMT"
+  },
+  "partial_submission": false,
+  "submit_ip": "127.0.0.1",
+  "xmlns": null,
+  "edited_on": null,
+  "problem": null,
+  "state": 0,
+  "orig_id": null,
+  "deprecated_form_id": null
+}

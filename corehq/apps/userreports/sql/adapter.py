@@ -29,6 +29,8 @@ class IndicatorSqlAdapter(object):
             rebuild_table(self.engine, self.get_table())
         except ProgrammingError, e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
+        finally:
+            self.session_helper.Session.commit()
 
     def drop_table(self):
         # this will hang if there are any open sessions, so go ahead and close them

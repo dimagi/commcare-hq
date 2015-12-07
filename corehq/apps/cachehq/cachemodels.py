@@ -30,7 +30,6 @@ class UserGenerationCache(GenerationCache):
         "users/by_username",
         "users/mailing_list_emails",
         "domain/old_users",
-        "domain/docs",
         "users_extra/phones_to_domains",
         "eula_reports/non_eulized_users"
     ]
@@ -45,7 +44,6 @@ class GroupGenerationCache(GenerationCache):
         "groups/by_user_type",
         "groups/by_name",
         "groups/all_groups",
-        "groups/by_domain",
         "users/by_group",
     ]
 
@@ -60,13 +58,12 @@ class UserRoleGenerationCache(GenerationCache):
 
 class ReportGenerationCache(GenerationCache):
     generation_key = '#gen#reports#'
-    doc_types = ['ReportConfig', 'HQGroupExportConfiguration', 'ReportNotification']
+    doc_types = ['ReportConfig', 'ReportNotification']
     views = [
         'reportconfig/configs_by_domain',
         'reportconfig/notifications_by_config',
         "reportconfig/user_notifications",
         "reportconfig/daily_notifications",
-        'groupexport/by_domain',
     ]
 
 
@@ -87,20 +84,11 @@ class LocationGenerationCache(GenerationCache):
     ]
 
 
-class DomainInvitationGenerationCache(GenerationCache):
+class InvitationGenerationCache(GenerationCache):
     generation_key = '#gen#invitation#'
     doc_types = ['Invitation']
     views = [
         'users/open_invitations_by_email',
-        'users/open_invitations_by_domain',
-    ]
-
-
-class CommtrackConfigGenerationCache(GenerationCache):
-    generation_key = '#gen#commtrackconfig#'
-    doc_types = ['CommtrackConfig']
-    views = [
-        'domain/docs',
     ]
 
 
@@ -109,12 +97,4 @@ class UserReportsDataSourceCache(GenerationCache):
     doc_types = ['DataSourceConfiguration']
     views = [
         'userreports/data_sources_by_build_info',
-    ]
-
-
-class UserReportsReportConfigCache(GenerationCache):
-    generation_key = '#gen#userreports#reportconfig#'
-    doc_types = ['ReportConfiguration']
-    views = [
-        'userreports/report_configs_by_domain',
     ]

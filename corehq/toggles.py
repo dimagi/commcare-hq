@@ -244,7 +244,7 @@ GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
@@ -294,6 +294,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+REPORT_BUILDER_BETA_GROUP = StaticToggle(
+    'report_builder_beta_group',
+    'RB beta group',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -307,12 +314,26 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
+    'extension_sync',
+    'Enable extension syncing',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
+    'hipaa_compliance_checkbox',
+    'Show HIPAA compliance checkbox',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
 )
 
 REMOTE_APPS = StaticToggle(
@@ -409,24 +430,11 @@ FORM_LINK_WORKFLOW = StaticToggle(
 
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
-VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
-    'transaction_question_types',
-    "Adds transaction-related question types in the form builder",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
     TAG_UNKNOWN,
-    [NAMESPACE_DOMAIN]
-)
-
-VELLUM_ADVANCED_ITEMSETS = StaticToggle(
-    'advanced_itemsets',
-    "Allows a user to configure itemsets for more than lookup tables",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -581,12 +589,6 @@ LINK_SUPPLY_POINT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-REVAMPED_EXPORTS = StaticToggle(
-    'revamped_exports',
-    'Revamped Form and Case exports',
-    TAG_PRODUCT_PATH,
-)
-
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -687,12 +689,13 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-USE_SQL_BACKEND = StaticToggle(
-    'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
+# Removed until ready for production
+# USE_SQL_BACKEND = StaticToggle(
+#     'sql_backend',
+#     'Uses a sql backend instead of a couch backend for form processing',
+#     TAG_PRODUCT_CORE,
+#     [NAMESPACE_DOMAIN]
+# )
 
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',

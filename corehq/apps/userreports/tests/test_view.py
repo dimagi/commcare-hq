@@ -3,6 +3,7 @@ import uuid
 from django.test import TestCase
 
 from corehq.apps.userreports import tasks
+from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
 from casexml.apps.case.mock import CaseBlock
@@ -28,7 +29,7 @@ class ConfigurableReportTestMixin(object):
             case_type=cls.case_type,
             update=properties,
         ).as_xml()
-        FormProcessorInterface().post_case_blocks([case_block], {'domain': cls.domain})
+        post_case_blocks([case_block], {'domain': cls.domain})
         return CommCareCase.get(id)
 
     @classmethod
@@ -36,8 +37,7 @@ class ConfigurableReportTestMixin(object):
         delete_all_cases()
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
-            config.delete()
+        delete_all_report_configs()
 
 
 class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):

@@ -25,7 +25,11 @@
         <div class="col-md-4">
             <div class="panel panel-dashboard">
                 <div class="panel-heading">
-                    {{ template.heading }}
+                    <a class="dashboard-link"
+                        data-index="{{ forloop.counter0 }}"
+                        href="{{ template.url }}">
+                        {{ template.heading }}
+                    </a>
                 </div>
                 <div class="panel-body">
                     <p class="text-center">

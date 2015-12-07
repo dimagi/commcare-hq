@@ -2,7 +2,7 @@ from decimal import Decimal
 import datetime
 from django.test import SimpleTestCase
 
-from ..xml import serialize
+from ..xml_utils import serialize
 
 
 class XMLSerializeTest(SimpleTestCase):

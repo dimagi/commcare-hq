@@ -6,7 +6,6 @@
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
     {% else %}
         function ga() {
-            console.log('Called ga with arguments: ', arguments);
             if (arguments.length) {
                 var lastArg = arguments[arguments.length - 1];
                 if (lastArg) {

@@ -153,8 +153,9 @@ def arbitrary_backend_ids():
     for backend in get_available_backends().values():
         backend_instance = data_gen.arbitrary_unique_name("back")
         backend_ids[backend.get_api_id()] = backend_instance
-        sms_backend = SMSBackend()
+        sms_backend = backend()
         sms_backend._id = backend_instance
+        sms_backend.name = backend_instance
         sms_backend.is_global = True
         sms_backend.save()
     return backend_ids

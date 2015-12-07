@@ -1,52 +1,47 @@
 from __future__ import absolute_import
+from datetime import datetime
 import json
+import langcodes
+import logging
 import re
 import urllib
-from django.utils.decorators import method_decorator
-from django.views.decorators.debug import sensitive_post_parameters
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
-from corehq import privileges
-from corehq.apps.domain.models import Domain, toggles
-from corehq.apps.app_manager.models import Application
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.es.queries import search_string_query
-from corehq.apps.style.decorators import (
-    use_bootstrap3,
-    use_knockout_js,
-)
-from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
-from dimagi.utils.decorators.memoized import memoized
-from django_prbac.utils import has_privilege
-import langcodes
-from datetime import datetime
-from couchdbkit.exceptions import ResourceNotFound
 
-from dimagi.utils.couch.database import get_db
+from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
-from django.contrib import messages
+
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
 from django_digest.decorators import httpdigest
+from django_prbac.utils import has_privilege
 from no_exceptions.exceptions import Http403
 
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
-
-from corehq.apps.registration.forms import AdminInvitesUserForm
-from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
-                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
-from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
-                                      DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
-                                      DomainMembershipError)
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
+from corehq.apps.domain.models import Domain, toggles
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es.queries import search_string_query
+from corehq.apps.hqwebapp.utils import send_confirmation_email
+from corehq.apps.hqwebapp.views import BasePageView, logout
+from corehq.apps.registration.forms import AdminInvitesUserForm, \
+    NewWebUserRegistrationForm
+from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
@@ -55,10 +50,19 @@ from corehq.apps.sms.verify import (
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
 )
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_knockout_js,
+)
+from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
+from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
+                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
+from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
+                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
+                                      DomainMembershipError)
+from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from corehq.util.couch import get_document_or_404
-from corehq.apps.analytics.tasks import track_workflow
-
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 def _users_context(request, domain):
@@ -223,7 +227,7 @@ class BaseEditUserView(BaseUserSettingsView):
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
+                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
 
         return self.get(request, *args, **kwargs)
 
@@ -490,7 +494,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     @property
     @memoized
     def invitations(self):
-        invitations = DomainInvitation.by_domain(self.domain)
+        invitations = Invitation.by_domain(self.domain)
         for invitation in invitations:
             invitation.role_label = self.role_labels.get(invitation.role, "")
         return invitations
@@ -578,18 +582,131 @@ def delete_user_role(request, domain):
     return json_response({"_id": copy_id})
 
 
-class UserInvitationView(InvitationView):
-    inv_type = DomainInvitation
+class UserInvitationView(object):
+    # todo cleanup this view so it properly inherits from BaseSectionPageView
     template = "users/accept_invite.html"
-    need = ["domain"]
+
+    def __call__(self, request, invitation_id, **kwargs):
+        logging.warning("Don't use this view in more apps until it gets cleaned up.")
+        # add the correct parameters to this instance
+        self.request = request
+        self.inv_id = invitation_id
+        if 'domain' in kwargs:
+            self.domain = kwargs['domain']
+
+        if request.GET.get('switch') == 'true':
+            logout(request)
+            return redirect_to_login(request.path)
+        if request.GET.get('create') == 'true':
+            logout(request)
+            return HttpResponseRedirect(request.path)
+
+        try:
+            invitation = Invitation.get(invitation_id)
+        except ResourceNotFound:
+            messages.error(request, _("Sorry, it looks like your invitation has expired. "
+                                      "Please check the invitation link you received and try again, or request a "
+                                      "project administrator to send you the invitation again."))
+            return HttpResponseRedirect(reverse("login"))
+        if invitation.is_accepted:
+            messages.error(request, _("Sorry, that invitation has already been used up. "
+                                      "If you feel this is a mistake please ask the inviter for "
+                                      "another invitation."))
+            return HttpResponseRedirect(reverse("login"))
+
+        self.validate_invitation(invitation)
+
+        if invitation.is_expired:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        context = self.added_context()
+        if request.user.is_authenticated():
+            is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
+            if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
+                if is_invited_user:
+                    # if this invite was actually for this user, just mark it accepted
+                    messages.info(request, _("You are already a member of {entity}.").format(
+                        entity=self.inviting_entity))
+                    invitation.is_accepted = True
+                    invitation.save()
+                else:
+                    messages.error(request, _("It looks like you are trying to accept an invitation for "
+                                             "{invited} but you are already a member of {entity} with the "
+                                             "account {current}. Please sign out to accept this invitation "
+                                             "as another user.").format(
+                                                 entity=self.inviting_entity,
+                                                 invited=invitation.email,
+                                                 current=request.couch_user.username,
+                                             ))
+                return HttpResponseRedirect(self.redirect_to_on_success)
+
+            if not is_invited_user:
+                messages.error(request, _("The invited user {invited} and your user {current} do not match!").format(
+                    invited=invitation.email, current=request.couch_user.username))
+
+            if request.method == "POST":
+                couch_user = CouchUser.from_django_user(request.user)
+                self._invite(invitation, couch_user)
+                track_workflow(request.couch_user.get_email(),
+                               "Current user accepted a project invitation",
+                               {"Current user accepted a project invitation": "yes"})
+                return HttpResponseRedirect(self.redirect_to_on_success)
+            else:
+                mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
+                context.update({
+                    'mobile_user': mobile_user,
+                    "invited_user": invitation.email if request.couch_user.username != invitation.email else "",
+                })
+                return render(request, self.template, context)
+        else:
+            if request.method == "POST":
+                form = NewWebUserRegistrationForm(request.POST)
+                if form.is_valid():
+                    # create the new user
+                    user = activate_new_user(form)
+                    user.save()
+                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
+                    self._invite(invitation, user)
+                    authenticated = authenticate(username=form.cleaned_data["email"],
+                                                 password=form.cleaned_data["password"])
+                    if authenticated is not None and authenticated.is_active:
+                        login(request, authenticated)
+                    track_workflow(request.POST['email'],
+                                   "New User Accepted a project invitation",
+                                   {"New User Accepted a project invitation": "yes"})
+                    return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
+            else:
+                if CouchUser.get_by_username(invitation.email):
+                    return HttpResponseRedirect(reverse("login") + '?next=' +
+                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
+                domain = Domain.get_by_name(invitation.domain)
+                form = NewWebUserRegistrationForm(initial={
+                    'email': invitation.email,
+                    'hr_name': domain.display_name() if domain else invitation.domain,
+                    'create_domain': False,
+                })
+
+        context.update({"form": form})
+        return render(request, self.template, context)
+
+    def _invite(self, invitation, user):
+        self.invite(invitation, user)
+        invitation.is_accepted = True
+        invitation.save()
+        messages.success(self.request, self.success_msg)
+        send_confirmation_email(invitation)
 
     def added_context(self):
-        context = super(UserInvitationView, self).added_context()
-        context.update({
+        username = self.request.user.username
+        # Add zero-width space for better line breaking
+        username = username.replace("@", "&#x200b;@")
+
+        return {
+            'create_domain': False,
+            'formatted_username': username,
             'domain': self.domain,
             'invite_type': _('Project'),
-        })
-        return context
+        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
@@ -623,7 +740,7 @@ def accept_invitation(request, domain, invitation_id):
 def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
-        invitation = DomainInvitation.get(invitation_id)
+        invitation = Invitation.get(invitation_id)
         invitation.invited_on = datetime.utcnow()
         invitation.save()
         invitation.send_activation_email()
@@ -636,7 +753,7 @@ def reinvite_web_user(request, domain):
 @require_can_edit_web_users
 def delete_invitation(request, domain):
     invitation_id = request.POST['id']
-    invitation = DomainInvitation.get(invitation_id)
+    invitation = Invitation.get(invitation_id)
     invitation.delete()
     return json_response({'status': 'ok'})
 
@@ -681,7 +798,7 @@ class InviteWebUserView(BaseManageWebUserView):
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in DomainInvitation.by_domain(self.domain)]
+            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
@@ -732,7 +849,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                invite = DomainInvitation(**data)
+                invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
             return HttpResponseRedirect(reverse(

@@ -7,7 +7,7 @@ from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
 from corehq.apps.domain.models import Domain
@@ -15,7 +15,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product
-from corehq.apps.sms.backend import test
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.parsing import json_format_date
 
@@ -75,7 +75,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
     if home_loc == setup.loc.site_code:
-        if not get_supply_point_case_by_location(setup.loc):
+        if not SupplyInterface(domain).get_by_location(setup.loc):
             make_supply_point(domain, setup.loc)
 
         user.set_location(setup.loc)
@@ -142,7 +142,9 @@ class CommTrackTest(TestCase):
         StockReport.objects.all().delete()
         StockTransaction.objects.all().delete()
 
-        self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
+        self.backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
+        self.backend.save()
+
         self.domain = bootstrap_domain()
         bootstrap_location_types(self.domain.name)
         bootstrap_products(self.domain.name)

@@ -6,10 +6,12 @@ from couchdbkit import Database, ResourceNotFound
 
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
+from django.apps import AppConfig
 from django.conf import settings
 from django.test import TransactionTestCase
 from django.utils import unittest
 from mock import patch, Mock
+from corehq.tests.optimizer import OptimizedTestRunnerMixin
 
 import settingshelper
 
@@ -56,6 +58,8 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
+        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+        self.blob_db = TemporaryFilesystemBlobDB()
         self.newdbname = self.get_test_db_name(settings.COUCH_DATABASE_NAME)
         print "overridding the couch settings!"
         new_db_settings = settingshelper.get_dynamic_db_settings(
@@ -73,10 +77,10 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             db_name: self.get_test_db_name(url)
             for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
         }
-
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
+        self.blob_db.close()
         for db_uri in settings.EXTRA_COUCHDB_DATABASES.values():
             db = Database(db_uri)
             self._assert_is_a_test_db(db_uri)
@@ -105,8 +109,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             test_labels, extra_tests, **kwargs
         )
 
-    def _strip(self, app_name):
-        return app_name.split('.')[-1]
+    def _strip(self, entry):
+        app_config = AppConfig.create(entry)
+        return app_config.label
 
 
 class TimingTestSuite(unittest.TestSuite):
@@ -304,6 +309,12 @@ class TwoStageTestRunner(HqTestSuiteRunner):
             percent,
         )
 
+
+class DevTestRunner(OptimizedTestRunnerMixin, TwoStageTestRunner):
+    """
+    See OptimizedTestRunner.
+    """
+    pass
 
 class NonDbOnlyTestRunner(TwoStageTestRunner):
     """

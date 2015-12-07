@@ -35,7 +35,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect
+    use_jquery_ui_multiselect, use_knockout_js
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -54,7 +54,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import DomainInvitation
+from corehq.apps.users.models import Invitation
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
@@ -67,7 +67,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
-    StripePaymentMethod,
+    StripePaymentMethod, LastPayment
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -77,7 +77,6 @@ from corehq.apps.accounting.user_text import (
     get_feature_recurring_interval,
 )
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
-from corehq.apps import receiverwrapper
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required
@@ -87,7 +86,8 @@ from corehq.apps.domain.forms import (
     SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS)
+    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
@@ -95,9 +95,9 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord
+from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
+    RepeatRecord, repeater_types
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -123,7 +123,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
-    open_invitations = [e for e in DomainInvitation.by_email(email) if not e.is_expired]
+    open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domains_for_user': domains_for_user,
@@ -345,6 +345,11 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     urlname = 'domain_basic_info'
     page_title = ugettext_lazy("Basic")
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def can_user_see_meta(self):
         return self.request.couch_user.is_previewer()
@@ -381,7 +386,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 domain=self.domain_object.name,
                 can_use_custom_logo=self.can_use_custom_logo
             )
-
         if self.can_user_see_meta:
             initial.update({
                 'is_test': self.domain_object.is_test,
@@ -436,6 +440,12 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/my_project_settings.html'
     urlname = 'my_project_settings'
     page_title = ugettext_lazy("My Timezone")
+
+    @method_decorator(login_and_domain_required)
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
@@ -520,11 +530,11 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    format = request.POST['format']
+    format = request.POST.get('format', None)
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
-        repeater_class=receiverwrapper.models.repeater_types[repeater_type]
+        repeater_class=repeater_types[repeater_type]
     )
     if form.is_valid():
         url = form.cleaned_data["url"]
@@ -996,7 +1006,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
     def get_payment_handler(self):
         """Returns a StripePaymentHandler object
         """
-        raise NotImplementedError("You must impmenent get_payment_handler()")
+        raise NotImplementedError("You must implement get_payment_handler()")
 
     def post(self, request, *args, **kwargs):
         try:
@@ -1036,6 +1046,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             created_by=self.request.user.username,
             account_type=BillingAccountType.USER_CREATED,
             entry_point=EntryPoint.SELF_STARTED,
+            last_payment_method=LastPayment.CC_ONE_TIME,
         )[0]
 
     def get_payment_handler(self):
@@ -1221,6 +1232,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
+            'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
@@ -1257,14 +1269,21 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         else:
             plan = subscription.plan_version.plan
             if subscription.service_type == SubscriptionType.CONTRACTED:
-                subscription_type = "contracted_partner"
+                subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                subscription_type = "dimagi_only_enterprise"
+                subscription_type = DimagiOnlyEnterpriseForm.slug
             elif (plan.edition == SoftwarePlanEdition.ADVANCED
                   and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
-                subscription_type = "advanced_extended_trial"
+                subscription_type = AdvancedExtendedTrialForm.slug
 
-        return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
+        return SelectSubscriptionTypeForm(
+            {'subscription_type': subscription_type},
+            disable_input=not self.is_form_editable,
+        )
+
+    @property
+    def is_form_editable(self):
+        return not self.slug_to_form[ContractedPartnerForm.slug].is_uneditable
 
 
 class SelectPlanView(DomainAccountingSettings):
@@ -1334,6 +1353,11 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     urlname = "privacy_info"
     page_title = ugettext_lazy("Privacy and Security")
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def privacy_form(self):
@@ -1341,10 +1365,12 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "secure_submissions": self.domain_object.secure_submissions,
             "restrict_superusers": self.domain_object.restrict_superusers,
             "allow_domain_requests": self.domain_object.allow_domain_requests,
+            "hipaa_compliant": self.domain_object.hipaa_compliant,
         }
         if self.request.method == 'POST':
-            return PrivacySecurityForm(self.request.POST, initial=initial)
-        return PrivacySecurityForm(initial=initial)
+            return PrivacySecurityForm(self.request.POST, initial=initial,
+                                       user_name=self.request.couch_user.username)
+        return PrivacySecurityForm(initial=initial, user_name=self.request.couch_user.username)
 
     @property
     def page_context(self):
@@ -1462,7 +1488,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
+        if self.edition == SoftwarePlanEdition.ENTERPRISE:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
 
@@ -1682,6 +1708,11 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     urlname = 'domain_snapshot_settings'
     page_title = ugettext_lazy("CommCare Exchange")
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         return {
@@ -1696,6 +1727,12 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     urlname = 'domain_create_snapshot'
     page_title = ugettext_lazy("Publish New Version")
     strict_domain_fetching = True
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -1980,6 +2017,12 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Multimedia Sharing")
     template_name = 'domain/admin/media_manager.html'
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def project_media_data(self):
         return [{
@@ -2035,6 +2078,11 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def repeaters(self):
         available_repeaters = [
@@ -2056,6 +2104,11 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     page_title = ugettext_lazy("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -2080,7 +2133,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def repeater_class(self):
         try:
-            return receiverwrapper.models.repeater_types[self.repeater_type]
+            return repeater_types[self.repeater_type]
         except KeyError:
             raise Http404()
 
@@ -2266,6 +2319,12 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     page_title = ugettext_lazy("Calculated Properties")
     template_name = 'domain/internal_calculations.html'
 
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         return {
@@ -2419,6 +2478,11 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Feature Previews")
     template_name = 'domain/admin/feature_previews.html'
 
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
     @memoized
     def features(self):
         features = []
@@ -2428,7 +2492,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 if isinstance(preview, feature_previews.FeaturePreview) and preview.has_privilege(self.request):
                     features.append((preview, preview.enabled(self.domain)))
 
-        return features
+        return sorted(features, key=lambda feature: feature[0].label)
 
     def get_toggle(self, slug):
         if not slug in [f.slug for f, _ in self.features()]:

@@ -4,8 +4,8 @@ from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
-from corehq.apps.accounting import generator
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.domain.utils import DOMAIN_MODULE_KEY
@@ -23,7 +23,7 @@ from dimagi.utils.couch.database import get_db
 TEST_DOMAIN = 'ewsghana-test-input-stock'
 
 
-class TestInputStockView(TestCase):
+class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -46,21 +46,9 @@ class TestInputStockView(TestCase):
                 }
             )
         db.save_doc(module_config)
-        generator.instantiate_accounting_for_tests()
-        account = BillingAccount.get_or_create_account_by_domain(
-            cls.domain.name,
-            created_by="automated-test",
-        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            cls.domain, edition=SoftwarePlanEdition.ENTERPRISE
-        )
-        subscription = Subscription.new_domain_subscription(
-            account,
-            cls.domain.name,
-            plan
-        )
-        subscription.is_active = True
-        subscription.save()
+
+        cls.setup_subscription(TEST_DOMAIN, SoftwarePlanEdition.ENTERPRISE)
+
         cls.endpoint = MockEndpoint('http://test-api.com/', 'dummy', 'dummy')
         cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
         cls.api_object.prepare_commtrack_config()
@@ -306,3 +294,4 @@ class TestInputStockView(TestCase):
     def tearDownClass(cls):
         cls.web_user1.delete()
         cls.domain.delete()
+        cls.teardown_subscription()

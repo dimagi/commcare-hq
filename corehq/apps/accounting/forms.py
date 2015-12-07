@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, validate_slug
 from django import forms
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models import ProtectedError
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
@@ -52,7 +53,10 @@ from corehq.apps.accounting.models import (
     Feature,
     FeatureRate,
     FeatureType,
+    FundingSource,
     Invoice,
+    LastPayment,
+    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
@@ -99,6 +103,14 @@ class BillingAccountBasicForm(forms.Form):
         label=ugettext_lazy("Entry Point"),
         choices=EntryPoint.CHOICES,
     )
+    last_payment_method = forms.ChoiceField(
+        label=ugettext_lazy("Last Payment Method"),
+        choices=LastPayment.CHOICES
+    )
+    pre_or_post_pay = forms.ChoiceField(
+        label=ugettext_lazy("Prepay or Postpay"),
+        choices=PreOrPostPay.CHOICES
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -112,11 +124,15 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
+                'last_payment_method': account.last_payment_method,
+                'pre_or_post_pay': account.pre_or_post_pay,
             }
         else:
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
                 'entry_point': EntryPoint.CONTRACTED,
+                'last_payment_method': LastPayment.NONE,
+                'pre_or_post_pay': PreOrPostPay.POSTPAY,
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
@@ -148,6 +164,8 @@ class BillingAccountBasicForm(forms.Form):
                 'salesforce_account_id',
                 'currency',
                 'entry_point',
+                'last_payment_method',
+                'pre_or_post_pay',
                 crispy.Div(*additional_fields),
             ),
             FormActions(
@@ -201,6 +219,7 @@ class BillingAccountBasicForm(forms.Form):
             )
         return transfer_subs
 
+    @transaction.atomic
     def create_account(self):
         name = self.cleaned_data['name']
         salesforce_account_id = self.cleaned_data['salesforce_account_id']
@@ -212,6 +231,8 @@ class BillingAccountBasicForm(forms.Form):
             salesforce_account_id=salesforce_account_id,
             currency=currency,
             entry_point=self.cleaned_data['entry_point'],
+            last_payment_method=self.cleaned_data['last_payment_method'],
+            pre_or_post_pay=self.cleaned_data['pre_or_post_pay']
         )
         account.save()
 
@@ -223,6 +244,7 @@ class BillingAccountBasicForm(forms.Form):
 
         return account
 
+    @transaction.atomic
     def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
@@ -239,6 +261,8 @@ class BillingAccountBasicForm(forms.Form):
         )
         account.dimagi_contact = self.cleaned_data['dimagi_contact']
         account.entry_point = self.cleaned_data['entry_point']
+        account.last_payment_method = self.cleaned_data['last_payment_method']
+        account.pre_or_post_pay = self.cleaned_data['pre_or_post_pay']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
@@ -351,9 +375,14 @@ class SubscriptionForm(forms.Form):
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Pro-Bono"),
+        label=ugettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
+    )
+    funding_source = forms.ChoiceField(
+        label=ugettext_lazy("Funding Source"),
+        choices=FundingSource.CHOICES,
+        initial=FundingSource.CLIENT,
     )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -438,6 +467,7 @@ class SubscriptionForm(forms.Form):
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
+            self.fields['funding_source'].initial = subscription.funding_source
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
@@ -514,7 +544,8 @@ class SubscriptionForm(forms.Form):
                     data_bind="visible: noInvoice"),
                 'auto_generate_credits',
                 'service_type',
-                'pro_bono_status'
+                'pro_bono_status',
+                'funding_source'
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -570,6 +601,7 @@ class SubscriptionForm(forms.Form):
 
         return self.cleaned_data
 
+    @transaction.atomic
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
         domain = self.cleaned_data['domain']
@@ -583,6 +615,7 @@ class SubscriptionForm(forms.Form):
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
         service_type = self.cleaned_data['service_type']
         pro_bono_status = self.cleaned_data['pro_bono_status']
+        funding_source = self.cleaned_data['funding_source']
         sub = Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
@@ -595,6 +628,7 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=service_type,
             pro_bono_status=pro_bono_status,
+            funding_source=funding_source,
             internal_change=True,
         )
         return sub
@@ -606,6 +640,7 @@ class SubscriptionForm(forms.Form):
                                     "current account to transfer to."))
         return transfer_account
 
+    @transaction.atomic
     def update_subscription(self):
         self.subscription.update_subscription(
             date_start=self.cleaned_data['start_date'],
@@ -618,6 +653,7 @@ class SubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source']
         )
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
@@ -650,9 +686,14 @@ class ChangeSubscriptionForm(forms.Form):
         initial=SubscriptionType.CONTRACTED,
     )
     pro_bono_status = forms.ChoiceField(
-        label=ugettext_lazy("Pro-Bono"),
+        label=ugettext_lazy("Discounted"),
         choices=ProBonoStatus.CHOICES,
         initial=ProBonoStatus.NO,
+    )
+    funding_source = forms.ChoiceField(
+        label=ugettext_lazy("Funding Source"),
+        choices=FundingSource.CHOICES,
+        initial=FundingSource.CLIENT,
     )
 
     def __init__(self, subscription, web_user, *args, **kwargs):
@@ -677,6 +718,7 @@ class ChangeSubscriptionForm(forms.Form):
                 ),
                 'service_type',
                 'pro_bono_status',
+                'funding_source',
                 'subscription_change_note',
             ),
             FormActions(
@@ -688,6 +730,7 @@ class ChangeSubscriptionForm(forms.Form):
             ),
         )
 
+    @transaction.atomic
     def change_subscription(self):
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['new_plan_version'])
         return self.subscription.change_plan(
@@ -757,6 +800,7 @@ class CreditForm(forms.Form):
             )))
         return amount
 
+    @transaction.atomic
     def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
@@ -772,6 +816,7 @@ class CreditForm(forms.Form):
             product_type=product_type,
             note=note,
             web_user=web_user,
+            permit_inactive=True,
         )
         return True
 
@@ -1309,6 +1354,7 @@ class SoftwarePlanVersionForm(forms.Form):
             raise ValidationError(_("A name is required for this new role."))
         return val
 
+    @transaction.atomic
     def save(self, request):
         if not self.is_update:
             messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
@@ -1533,6 +1579,7 @@ class TriggerInvoiceForm(forms.Form):
             )
         )
 
+    @transaction.atomic
     def trigger_invoice(self):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
@@ -1759,6 +1806,7 @@ class AdjustBalanceForm(forms.Form):
             raise ValidationError(_("Received invalid adjustment type: %s")
                                   % adjustment_type)
 
+    @transaction.atomic
     def adjust_balance(self, web_user=None):
         method = self.cleaned_data['method']
         kwargs = {
@@ -1776,6 +1824,7 @@ class AdjustBalanceForm(forms.Form):
             )
             CreditLine.add_credit(
                 self.amount,
+                permit_inactive=True,
                 **kwargs
             )
         elif method == CreditAdjustmentReason.TRANSFER:
@@ -1976,6 +2025,7 @@ class CreateAdminForm(forms.Form):
             )
         )
 
+    @transaction.atomic
     def add_admin_user(self):
         # create UserRole for user
         username = self.cleaned_data['username']

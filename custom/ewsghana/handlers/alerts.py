@@ -1,9 +1,10 @@
+from collections import defaultdict, OrderedDict
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE,\
     MS_STOCKOUT, MS_RESOLVED_STOCKOUTS, NO_SUPPLY_POINT_MESSAGE
-from collections import defaultdict, OrderedDict
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
@@ -167,7 +168,7 @@ class EWSStockAndReceiptParser(StockAndReceiptParser):
                     # the user provides them)
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location'].get_id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.RECEIPTS,
@@ -175,7 +176,7 @@ class EWSStockAndReceiptParser(StockAndReceiptParser):
                     )
                     yield StockTransactionHelper(
                         domain=self.domain.name,
-                        location_id=self.location['location'].get_id,
+                        location_id=self.location.location_id,
                         case_id=self.case_id,
                         product_id=p.get_id,
                         action=const.StockActions.STOCKONHAND,

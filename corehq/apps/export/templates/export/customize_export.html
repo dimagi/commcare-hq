@@ -391,6 +391,16 @@
                 self.save.state = ko.observable('save');
 
                 self.save_no_preview = function() {
+                    var exportType = self.export_type();
+                    exportType = _(exportType).capitalize();
+                    var action = "Regular";
+                    if (self.presave()) {
+                        action = "Saved";
+                    }
+                    analytics.usage("Create Export", exportType, action);
+                    if (self.custom_export.default_format() === 'html') {
+                        analytics.usage("Create Export", exportType, "Excel Dashboard");
+                    }
                     self.save(false);
                 };
 
@@ -731,25 +741,7 @@
                     {% trans "Try Again" %}
                 </span>
             </button>
-            {% if request|toggle_enabled:"REVAMPED_EXPORTS" %}
-            <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save_preview,
-                disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
-            ">
-                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving')">
-                    <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save & Preview" %}</span>
-                    <span data-bind="visible: !custom_export._id || !custom_export._id()">{% trans "Create & Preview" %}</span>
-                </span>
-                <span data-bind="visible: save.state() === 'saving-preview'">
-                    <i class="icon-refresh icon-spin"></i>
-                    {% trans "Saving" %}
-                </span>
-                <span data-bind="visible: save.state() === 'error'">
-                    {% trans "Try Again" %}
-                </span>
-            </button>
-            {% endif %}
-            <a class="btn btn-large" href="{{ helper.back_url }}">{% trans "Cancel" %}</a>
+            <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
             {% if custom_export.get_id %}
             <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
                 <i class="icon-remove icon-white"></i>
