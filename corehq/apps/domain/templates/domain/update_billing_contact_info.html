@@ -29,9 +29,9 @@
      Stripe.setPublishableKey('{{ stripe_public_key }}');
      var cardManager = new StripeCardManager({
          cards: {{ cards|JSON }},
-         url: '{{ card_base_url }}'
+         url: '{{ card_base_url }}',
      });
-     ko.applyBindings(cardManager, $("#card-manager")[0])
+     $("#card-manager").koApplyBindings(cardManager);
     </script>
 {% endblock %}
 

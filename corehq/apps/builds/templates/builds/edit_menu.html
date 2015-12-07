@@ -186,7 +186,7 @@
         }
 
         var buildsMenu = new Menu();
-        ko.applyBindings(buildsMenu, $("#menu-form").get(0));
+        $("#menu-form").koApplyBindings(buildsMenu);
 
         function postGo(url, params) {
             var $form = $("<form>")

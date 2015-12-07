@@ -43,8 +43,7 @@
         billingInfoHandler.init();
 
     {% for adjust_balance_form in adjust_balance_forms %}
-            var adjustBalanceFormModel = new AdjustBalanceFormModel();
-            ko.applyBindings(adjustBalanceFormModel, $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').get(0));
+        $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
     {% endfor %}
 
     </script>

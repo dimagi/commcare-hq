@@ -27,7 +27,7 @@
             bulk_download_notice_text: '{{ bulk_download_notice_text }}'
         } );
 
-        ko.applyBindings(singleOrBulkExportManager, $('#downloads')[0]);
+        $('#downloads').koApplyBindings(singleOrBulkExportManager);
     </script>
 {% endblock %}
 

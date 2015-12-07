@@ -14,7 +14,7 @@
             is_new_exporter: true,
             bulkDownloadPageUrlRoot: '{{ download_page_url_root }}'
         });
-        ko.applyBindings(exportManager, $('#export-ui').get(0));
+        $('#export-ui').koApplyBindings(exportManager);
 
         var bulkExportTitle = "{% trans "What is Bulk Export?" %}";
         var bulkExportContent = (
