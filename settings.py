@@ -140,6 +140,7 @@ MIDDLEWARE_CLASSES = [
     'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.middleware.TimeoutMiddleware',
+    'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
