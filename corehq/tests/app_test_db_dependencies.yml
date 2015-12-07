@@ -165,3 +165,22 @@ corehq.form_processor:
 corehq.apps.toggle_ui: []
 corehq.doctypemigrations:
   - corehq.couchapps
+corehq.apps.repeaters:
+  - casexml.apps.case
+  - casexml.apps.stock
+  - corehq.apps.commtrack
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.domain
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - corehq.couchapps
+  - couchforms
+  - django_prbac
+  # unfortunately domain.delete() needs all of these - otherwise they could be removed
+  - custom.logistics
+  - custom.ilsgateway
+  - custom.ewsghana
+  - django_prbac
+  - corehq.apps.accounting
+  - corehq.apps.smsforms
