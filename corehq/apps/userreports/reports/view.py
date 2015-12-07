@@ -13,7 +13,6 @@ from django.http import HttpResponse, Http404
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import (
-    cls_to_view_login_and_domain,
     ReportDispatcher,
 )
 from corehq.apps.reports.models import ReportConfig
