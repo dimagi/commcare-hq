@@ -123,6 +123,7 @@
         $scope.prepareExport = function () {
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
+            window.analytics.workflow("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
