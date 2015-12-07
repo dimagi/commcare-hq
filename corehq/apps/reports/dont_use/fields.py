@@ -118,33 +118,6 @@ class SelectMobileWorkerMixin(object):
         return default
 
 
-class SelectMobileWorkerField(SelectMobileWorkerMixin, ReportField):
-    template = "reports/dont_use_fields/select_mobile_worker.html"
-    default_option = ugettext_noop("All Mobile Workers")
-    filter_users_field_class = FilterUsersField
-
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None, filter_users_field_class=None):
-        super(SelectMobileWorkerField, self).__init__(request, domain, timezone, parent_report)
-        if filter_users_field_class:
-            self.filter_users_field_class = filter_users_field_class
-
-    def update_params(self):
-        pass
-
-    def update_context(self):
-        self.user_filter, _ = self.filter_users_field_class.get_user_filter(self.request)
-        self.individual = self.request.GET.get('individual', '')
-        self.default_option = self.get_default_text(self.user_filter)
-        self.users = util.user_list(self.domain)
-
-        self.update_params()
-
-        self.context['field_name'] = self.name
-        self.context['default_option'] = self.default_option
-        self.context['users'] = self.users
-        self.context['individual'] = self.individual
-
-
 class BooleanField(ReportField):
     slug = "checkbox"
     label = "hello"
@@ -160,7 +133,6 @@ class StrongFilterUsersField(FilterUsersField):
     """
         Version of the FilterUsersField that always actually uses and shows this filter
         When using this field:
-            use SelectMobileWorkerFieldHack instead of SelectMobileWorkerField
             if using ProjectReportParametersMixin make sure filter_users_field_class is set to this
     """
     always_show_filter = True
