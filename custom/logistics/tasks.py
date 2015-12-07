@@ -122,30 +122,6 @@ def fix_groups_in_location_task(domain):
             loc.save()
 
 
-@celery.task(ignore_result=True)
-def locations_fix(domain):
-    locations = SQLLocation.objects.filter(domain=domain, location_type__in=['country', 'region', 'district'])
-    for loc in locations:
-        sp = Location.get(loc.location_id).linked_supply_point()
-        if sp:
-            sp.external_id = None
-            sp.save()
-        else:
-            fake_location = Location(
-                _id=loc.location_id,
-                name=loc.name,
-                domain=domain
-            )
-            SupplyInterface(domain).get_or_create_by_location(fake_location)
-
-
-@celery.task(ignore_result=True)
-def add_products_to_loc(api):
-    endpoint = api.endpoint
-    synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0,
-                    filters={"is_active": True})
-
-
 def sync_stock_transaction(stocktransaction, domain, case=None, bulk=False):
     case = case or get_supply_point_case_in_domain_by_id(domain, stocktransaction.supply_point)
     if not case:
