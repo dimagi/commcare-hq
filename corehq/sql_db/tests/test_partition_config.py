@@ -6,8 +6,8 @@ from ..exceptions import PartitionValidationError
 
 TEST_PARTITION_CONFIG = {
     'shards': {
-        'default': [0, 2],
-        'proxy': [2, 4],
+        'default': [0, 1],
+        'proxy': [2, 3],
     },
     'groups': {
         'main': ['default'],

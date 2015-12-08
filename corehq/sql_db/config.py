@@ -16,7 +16,7 @@ class PartitionConfig(object):
 
         shards_seen = set()
         for group, shard_range, in self.partition_config['shards'].items():
-            current_shards = set(range(*shard_range))
+            current_shards = set(range(shard_range[0], shard_range[1] + 1))
             if shards_seen & current_shards:
                 raise PartitionValidationError('{} has shards that other dbs point to'.format(group))
             shards_seen |= current_shards
@@ -38,5 +38,5 @@ class PartitionConfig(object):
         shards = self.partition_config['shards']
         shard_mapping = {}
         for db, shard_range in shards.items():
-            shard_mapping.update({shard: db for shard in range(*shard_range)})
+            shard_mapping.update({shard: db for shard in range(shard_range[0], shard_range[1] + 1)})
         return shard_mapping
