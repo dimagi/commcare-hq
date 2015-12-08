@@ -1,11 +1,11 @@
 from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import ProgrammingError
+from corehq.apps.es import UserES, GroupES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
-
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -160,7 +160,6 @@ class UserChoiceProvider(ChainableChoiceProvider):
         return user_es.run().total
 
     def get_choices_for_known_values(self, values):
-        from corehq.apps.es import UserES
         user_es = UserES().domain(self.domain).doc_id(values)
         return self.get_choices_from_es_query(user_es)
 
@@ -172,7 +171,6 @@ class UserChoiceProvider(ChainableChoiceProvider):
 
 class GroupChoiceProvider(ChainableChoiceProvider):
     def query(self, query_context):
-        from corehq.apps.es import GroupES
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query_context.query, default_fields=['name'])
@@ -181,7 +179,6 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         return self.get_choices_from_es_query(group_es)
 
     def query_count(self, query):
-        from corehq.apps.es import GroupES
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query, default_fields=['name'])
@@ -189,7 +186,6 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         return group_es.size(0).run().total
 
     def get_choices_for_known_values(self, values):
-        from corehq.apps.es import GroupES
         group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)
         return self.get_choices_from_es_query(group_es)
 

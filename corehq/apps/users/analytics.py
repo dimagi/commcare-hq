@@ -1,3 +1,4 @@
+from corehq.apps.es import UserES
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couch import stale_ok
 
@@ -60,7 +61,6 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     """
     returns a UserES object
     """
-    from corehq.apps.es import UserES
     default_search_fields = ["username", "last_name", "first_name"]
     return (UserES()
             .domain(domain)

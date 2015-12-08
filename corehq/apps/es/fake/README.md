@@ -44,10 +44,13 @@ them to look further and find the logging statement.)
 
 ## How to set up your test to use ES fakes
 
-Patch your test to use `UserESFake`(assuming you want to patch `UserES`):
+Patch your test to use `UserESFake` (assuming you want to patch `UserES`),
+making sure to patch `UserES` in the *files in which it is used*, not the file in which
+it is declared
 
 ```diff
-+ @mock.patch('corehq.apps.es.UserES', UserESFake)
++ @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
++ @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
   class MyTest(SimpleTestCase):
       def setUp(self):
 ...
@@ -57,17 +60,6 @@ Patch your test to use `UserESFake`(assuming you want to patch `UserES`):
           UserESFake.reset_docs()
 ```
 
-Any file that uses your target `ESQuery` subclass must have all top-level imports of the
-class moved within the calling functions or methods; otherwise they will not use
-the patched version.
-
-```diff
-- from corehq.apps.es import UserES
-...
-  def my_function():
-+     from corehq.apps.es import UserES
-...
-```
 ## How to set up a new ES fake
 
 Adding a new fake is very easy. See [users_fake.py](./users_fake.py) for a simple example.

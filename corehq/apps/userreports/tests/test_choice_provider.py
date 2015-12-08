@@ -160,7 +160,8 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             ['made-up', self.locations[0].location_id, self.locations[1].location_id])
 
 
-@mock.patch('corehq.apps.es.UserES', UserESFake)
+@mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
+@mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
 class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     domain = 'user-choice-provider'
 
@@ -217,7 +218,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             ['unknown-user'] + [user._id for user in self.users])
 
 
-@mock.patch('corehq.apps.es.GroupES', GroupESFake)
+@mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
 class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     domain = 'group-choice-provider'
 
@@ -258,8 +259,9 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
             ['unknown-group'] + [group.get_id for group in self.groups])
 
 
-@mock.patch('corehq.apps.es.UserES', UserESFake)
-@mock.patch('corehq.apps.es.GroupES', GroupESFake)
+@mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
+@mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
+@mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
 class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     dependent_apps = [
         'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',
