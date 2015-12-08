@@ -68,6 +68,22 @@ class StaticChoiceProviderTest(SimpleTestCase):
 
 
 class ChoiceProviderTestMixin(object):
+    """
+    A mixin for a creating uniform tests for different ChoiceProvider subclasses.
+
+    ChoiceProviderTestMixin creates a simple framework in which the real choice provider
+    being tested gets compared to a static choice provider (one that simply filters,
+    sorts, and slices Choice objects in memory), and verifies they produce the same result.
+
+    Classes that want to use this framework must
+
+    1. subclass TestCase/SimpleTestCase and ChoiceProviderTestMixin
+    2. Initialize `choice_provider` and the data it requires in setUpClass
+    3. Initialize `static_choice_provider` with Choices (or SearchableChoices)
+       that correspond to the data set up in part (2) in setUpClass
+    4. Implement the abstract test methods according to the suggestions in the docstrings
+
+    """
     __metaclass__ = ABCMeta
     choice_provider = None
     static_choice_provider = None
