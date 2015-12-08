@@ -15,6 +15,7 @@ casexml.apps.phone:
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.hqcase
   - corehq.apps.products
   - corehq.apps.reminders
@@ -29,6 +30,7 @@ casexml.apps.case:
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.hqcase
   - corehq.apps.products
   - corehq.apps.reminders
@@ -43,6 +45,7 @@ casexml.apps.stock:
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.commtrack
   - corehq.apps.hqcase
   - corehq.apps.locations
@@ -64,6 +67,7 @@ corehq.apps.commtrack:
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.consumption
   - corehq.apps.domain
   - corehq.apps.hqcase
@@ -91,6 +95,7 @@ corehq.apps.userreports:
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.app_manager
   - corehq.apps.commtrack
   - corehq.apps.domain
@@ -121,6 +126,7 @@ couchforms:
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - phonelog
 corehq.apps.receiverwrapper:
   - auditcare
@@ -139,6 +145,7 @@ corehq.apps.receiverwrapper:
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - couchforms
   - django.contrib.admin
   - django_digest
@@ -169,6 +176,7 @@ corehq.form_processor:
   - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - couchforms
 corehq.apps.toggle_ui: []
 corehq.doctypemigrations:
