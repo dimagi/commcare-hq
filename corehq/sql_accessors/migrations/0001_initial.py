@@ -23,10 +23,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # no longer required
+        migrations.RunSQL(
+            'DROP FUNCTION IF EXISTS deprecate_form(TEXT, TEXT, TIMESTAMP);'
+            'SELECT 1'
+        ),
+        # replaced by save_new_form_and_related_models
+        migrations.RunSQL(
+            'DROP FUNCTION IF EXISTS save_new_form_with_attachments(form_processor_xforminstancesql, form_processor_xformattachmentsql[]);'
+            'SELECT 1'
+        ),
         migrator.get_migration('archive_unarchive_form.sql'),
         migrator.get_migration('case_modified_since.sql'),
         migrator.get_migration('check_form_exists.sql'),
-        migrator.get_migration('deprecate_form.sql'),
         migrator.get_migration('get_case_attachment_by_name.sql'),
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),
@@ -52,6 +61,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('hard_delete_forms.sql'),
         migrator.get_migration('revoke_restore_case_transactions_for_form.sql'),
         migrator.get_migration('save_case_and_related_models.sql'),
-        migrator.get_migration('save_new_form_with_attachments.sql'),
+        migrator.get_migration('save_new_form_and_related_models.sql'),
         migrator.get_migration('update_form_problem_and_state.sql'),
     ]

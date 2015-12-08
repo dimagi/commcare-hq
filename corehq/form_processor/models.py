@@ -121,7 +121,8 @@ class RestrictedManager(models.Manager):
                 using=using)
 
 
-class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin,
+                       AbstractXFormInstance, TrackRelatedChanges):
     objects = RestrictedManager()
 
     # states should be powers of 2
