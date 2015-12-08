@@ -9,7 +9,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.filters.fixtures import OptionalAsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -266,7 +266,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     def get_location_filter(self):
         locations = []
-        location_id = AsyncLocationFilter.get_value(self.request, self.domain)
+        location_id = OptionalAsyncLocationFilter.get_value(self.request, self.domain)
         if location_id:
             locations = SQLLocation.objects.get(
                 location_id=location_id
@@ -301,7 +301,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     def fields(self):
         fields = [DatespanFilter, MessageTypeFilter]
         if self.uses_locations:
-            fields.insert(0, AsyncLocationFilter)
+            fields.append(OptionalAsyncLocationFilter)
         return fields
 
     @property
@@ -439,7 +439,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             {'name': 'startdate', 'value': start_date},
             {'name': 'enddate', 'value': end_date},
             {'name': 'log_type', 'value': MessageTypeFilter.get_value(self.request, self.domain)},
-            {'name': 'location_id', 'value': AsyncLocationFilter.get_value(self.request, self.domain)},
+            {'name': 'location_id', 'value': OptionalAsyncLocationFilter.get_value(self.request, self.domain)},
         ]
 
     @property
