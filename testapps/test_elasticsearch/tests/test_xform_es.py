@@ -4,7 +4,7 @@ import datetime
 from django.test import SimpleTestCase
 from corehq.apps.es import FormES
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests import get_simple_form_data
+from corehq.form_processor.tests import get_simple_form_xml
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.pillows.xform import XFormPillow
 from pillowtop.tests import require_explicit_elasticsearch_testing
@@ -50,7 +50,7 @@ def _make_es_ready_form(domain):
     # this is rather complicated due to form processor abstractions and ES restrictions
     # on what data needs to be in the index and is allowed in the index
     form_id = uuid.uuid4().hex
-    form_xml = get_simple_form_data(form_id=form_id)
+    form_xml = get_simple_form_xml(form_id=form_id)
     form_json = convert_xform_to_json(form_xml)
     wrapped_form = FormProcessorInterface(domain=domain).new_xform(form_json)
     wrapped_form.domain = domain

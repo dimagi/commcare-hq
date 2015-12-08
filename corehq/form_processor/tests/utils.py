@@ -155,7 +155,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     user_id = 'user1'
     utcnow = datetime.utcnow()
 
-    form_data = get_simple_form_data(form_id, case_id)
+    form_xml = get_simple_form_xml(form_id, case_id)
 
     form = XFormInstanceSQL(
         form_id=form_id,
@@ -170,7 +170,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
         lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
         attachments.items()
     )
-    attachment_tuples.append(Attachment('form.xml', form_data, 'text/xml'))
+    attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)
 
@@ -211,9 +211,9 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 </data>"""
 
 
-def get_simple_form_data(form_id, case_id=None):
+def get_simple_form_xml(form_id, case_id=None):
     case_block = ''
     if case_id:
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_data = SIMPLE_FORM.format(uuid=form_id, case_block=case_block)
-    return form_data
+    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block)
+    return form_xml
