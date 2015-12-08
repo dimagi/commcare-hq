@@ -945,10 +945,7 @@ CUSTOM_DATABASES = {}
 DATABASE_ROUTERS = []
 PARTITION_DATABASE_CONFIG = {
     'shards': {
-        'default': {
-            'start': 0,
-            'end': 100,
-        }
+        'default': [0, 100]
     },
     'groups': {
         'main': ['default'],
