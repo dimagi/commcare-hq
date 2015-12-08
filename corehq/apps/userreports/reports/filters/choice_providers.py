@@ -1,9 +1,12 @@
 from abc import ABCMeta, abstractmethod
+
 from sqlalchemy.exc import ProgrammingError
+
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.es.filters import doc_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
+from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
@@ -89,8 +92,11 @@ class ChainableChoiceProvider(ChoiceProvider):
 class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def query(self, query_context):
-        return [Choice(value, value)
-                for value in self.get_values_for_query(query_context)]
+        try:
+            return [Choice(value, value)
+                    for value in self.get_values_for_query(query_context)]
+        except ColumnNotFoundError:
+            return []
 
     def query_count(self, query):
         # this isn't (currently) used externally, and no other choice provider relies on
@@ -103,12 +109,15 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     @property
     def _sql_column(self):
-        return self._adapter.get_table().c[self.report_filter.field]
+        try:
+            return self._adapter.get_table().c[self.report_filter.field]
+        except KeyError as e:
+            raise ColumnNotFoundError(e.message)
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
         if query_context.query:
-            query = query.filter(self._sql_column.contains(query_context.query))
+            query = query.filter(self._sql_column.ilike(u"%{}%".format(query_context.query)))
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:

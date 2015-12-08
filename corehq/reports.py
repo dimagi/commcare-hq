@@ -164,26 +164,33 @@ def _make_dynamic_report(report_config, keyprefix):
     return type('DynamicReport%s' % slug, (metaclass,), kwargs)
 
 
-def _get_configurable_reports(project):
-    """
-    User configurable reports
-    """
+def _safely_get_report_configs(project_name):
     try:
-        configs = ReportConfiguration.by_domain(project.name)
+        configs = ReportConfiguration.by_domain(project_name)
     except BadSpecError as e:
         logging.exception(e)
 
         # Pick out the UCRs that don't have spec errors
         configs = []
-        for config_id in get_doc_ids_in_domain_by_class(project.name, ReportConfiguration):
+        for config_id in get_doc_ids_in_domain_by_class(project_name, ReportConfiguration):
             try:
                 configs.append(ReportConfiguration.get(config_id))
             except BadSpecError as e:
                 logging.error("%s with report config %s" % (e.message, config_id))
+
     try:
-        configs.extend(StaticReportConfiguration.by_domain(project.name))
+        configs.extend(StaticReportConfiguration.by_domain(project_name))
     except BadSpecError as e:
         logging.exception(e)
+
+    return configs
+
+
+def _get_configurable_reports(project):
+    """
+    User configurable reports
+    """
+    configs = _safely_get_report_configs(project.name)
 
     if configs:
         def _make_report_class(config):
