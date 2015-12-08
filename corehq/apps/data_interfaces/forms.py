@@ -122,12 +122,12 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         required=True,
     )
     action = forms.ChoiceField(
-        label=ugettext_lazy("When all conditions match"),
+        label=ugettext_lazy("Set a Case Property"),
         choices=(
-            (ACTION_CLOSE,
-                ugettext_lazy("close the case")),
             (ACTION_UPDATE_AND_CLOSE,
-                ugettext_lazy("set a case property and then close the case")),
+                ugettext_lazy("Yes")),
+            (ACTION_CLOSE,
+                ugettext_lazy("No")),
         ),
     )
     update_property_name = TrimmedCharField(
@@ -202,24 +202,12 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                         css_class='col-sm-6',
                     ),
                     Div(
-                        HTML(_("<p><strong>days after the case was last modified</strong></p>")),
+                        HTML(_("<p><strong>days after the case was last modified.</strong></p>")),
                         css_class='col-sm-6',
                     ),
                     label_class=self.helper.label_class,
                     field_class='col-sm-8 col-md-6',
                 ),
-            ),
-            Fieldset(
-                _("Filter Cases to Close (Optional)"),
-                Field(
-                    'conditions',
-                    type='hidden',
-                    ng_value='conditions',
-                ),
-                Div(ng_include='', src="'conditions.tpl'"),
-            ),
-            Fieldset(
-                _("Action"),
                 Field(
                     'action',
                     ng_model='action',
@@ -236,6 +224,15 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     ),
                     ng_show='showUpdateProperty()',
                 ),
+            ),
+            Fieldset(
+                _("Filter Cases to Close (Optional)"),
+                Field(
+                    'conditions',
+                    type='hidden',
+                    ng_value='conditions',
+                ),
+                Div(ng_include='', src="'conditions.tpl'"),
             ),
             FormActions(
                 StrictButton(
