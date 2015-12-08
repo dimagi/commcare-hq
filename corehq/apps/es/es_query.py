@@ -88,6 +88,7 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
+from corehq.apps.es.utils import values_list
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -310,22 +311,7 @@ class ESQuery(object):
             return self.run().hits
 
     def values_list(self, *fields, **kwargs):
-        """modeled after django's QuerySet.values_list"""
-        flat = kwargs.pop('flat', False)
-        if kwargs:
-            raise TypeError('Unexpected keyword arguments to values_list: %s'
-                            % (list(kwargs),))
-        if flat and len(fields) > 1:
-            raise TypeError("'flat' is not valid when values_list is called with more than one field.")
-        if not fields:
-            raise TypeError('must be called with at least one field')
-        if flat:
-            field, = fields
-            return [hit[field]
-                    for hit in self.fields(fields).run().hits]
-        else:
-            return [tuple(hit[field] for field in fields)
-                    for hit in self.fields(fields).run().hits]
+        return values_list(self.fields(fields).run().hits, *fields, **kwargs)
 
 
 class ESQuerySet(object):
@@ -393,6 +379,9 @@ class ESQuerySet(object):
         raw = self.raw.get('facets', {})
         results = namedtuple('facet_results', [f.name for f in facets])
         return results(**{f.name: f.parse_result(raw) for f in facets})
+
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)
 
 
 class HQESQuery(ESQuery):
