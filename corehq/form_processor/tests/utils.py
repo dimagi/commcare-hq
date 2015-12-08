@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from datetime import datetime
-from django.db.models.query_utils import Q
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -14,10 +13,10 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
+from dimagi.ext import jsonobject
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, \
-    CaseTransaction, Attachment
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from django.conf import settings
 
 
@@ -203,7 +202,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
         <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
         <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>
         <n1:username>eve</n1:username>
-        <n1:userID>cruella_deville</n1:userID>
+        <n1:userID>{user_id}</n1:userID>
         <n1:instanceID>{uuid}</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
     </n1:meta>
@@ -211,9 +210,15 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 </data>"""
 
 
-def get_simple_form_xml(form_id, case_id=None):
+class TestFormMetadata(jsonobject.JsonObject):
+    domain = jsonobject.StringProperty(required=False)
+    user_id = jsonobject.StringProperty(default='cruella_deville')
+
+
+def get_simple_form_xml(form_id, case_id=None, metadata=None):
+    metadata = metadata or TestFormMetadata()
     case_block = ''
     if case_id:
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block)
+    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
     return form_xml
