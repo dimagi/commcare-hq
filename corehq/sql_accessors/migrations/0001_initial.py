@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CaseTransaction
+from corehq.sql_db.operations import HqRunSQL
 from corehq.util.migration import RawSQLMigration
 
 
@@ -24,12 +25,12 @@ class Migration(migrations.Migration):
 
     operations = [
         # no longer required
-        migrations.RunSQL(
+        HqRunSQL(
             'DROP FUNCTION IF EXISTS deprecate_form(TEXT, TEXT, TIMESTAMP);'
             'SELECT 1'
         ),
         # replaced by save_new_form_and_related_models
-        migrations.RunSQL(
+        HqRunSQL(
             'DROP FUNCTION IF EXISTS save_new_form_with_attachments(form_processor_xforminstancesql, form_processor_xformattachmentsql[]);'
             'SELECT 1'
         ),

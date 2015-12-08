@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models, migrations
 
+from corehq.sql_db.operations import HqRunSQL
 from corehq.util.migration import RawSQLMigration
 
 
@@ -18,11 +19,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
+        HqRunSQL(
             'CREATE EXTENSION IF NOT EXISTS plproxy',
             'DROP EXTENSION plproxy'
         ),
-        migrations.RunSQL(
+        HqRunSQL(
             'CREATE EXTENSION IF NOT EXISTS hashlib',
             'DROP EXTENSION hashlib'
         ),

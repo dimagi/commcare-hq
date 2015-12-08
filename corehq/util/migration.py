@@ -4,6 +4,8 @@ from django.db import migrations
 from django.template import Context
 from django.template.loader import get_template_from_string
 
+from corehq.sql_db.routers import allow_migrate
+
 
 def noop_migration_fn(apps, schema_editor):
     pass
@@ -28,13 +30,17 @@ class RunSqlLazy(migrations.RunSQL):
         super(RunSqlLazy, self).__init__(sql_template_path, reverse_sql_template_path)
 
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        self.sql = self._render_template(self.sql)
-        super(RunSqlLazy, self).database_forwards(app_label, schema_editor, from_state, to_state)
+        db_alias = schema_editor.connection.alias
+        if allow_migrate(db_alias, app_label):
+            self.sql = self._render_template(self.sql)
+            super(RunSqlLazy, self).database_forwards(app_label, schema_editor, from_state, to_state)
 
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        if self.reverse_sql:
-            self.reverse_sql = self._render_template(self.reverse_sql)
-        super(RunSqlLazy, self).database_backwards(app_label, schema_editor, from_state, to_state)
+        db_alias = schema_editor.connection.alias
+        if allow_migrate(db_alias, app_label):
+            if self.reverse_sql:
+                self.reverse_sql = self._render_template(self.reverse_sql)
+            super(RunSqlLazy, self).database_backwards(app_label, schema_editor, from_state, to_state)
 
     def _render_template(self, path):
         with open(self.sql) as f:
