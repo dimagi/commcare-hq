@@ -133,6 +133,12 @@ class AsyncLocationFilter(BaseReportFilter):
 
 
 class OptionalAsyncLocationFilter(AsyncLocationFilter):
+    """
+    This is the same as the AsyncLocationFilter, only when the template is
+    rendered, it will give the user the option of filtering by location or
+    not. If the user chooses to not filter by location, the location_id
+    value will be blank.
+    """
     make_optional = True
 
 
