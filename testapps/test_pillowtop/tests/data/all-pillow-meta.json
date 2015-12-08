@@ -564,23 +564,7 @@
         "full_class_name": "custom.succeed.models.UCLAPatientFluffPillow", 
         "include_docs": false, 
         "name": "UCLAPatientFluffPillow"
-    }, 
-    "UnicefMalawiFluffPillow": {
-        "advertised_name": "fluff.UnicefMalawiFluffPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "fluff.UnicefMalawiFluffPillow.testhq", 
-        "couch_filter": null, 
-        "couchdb_type": "CachedCouchDB", 
-        "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
-        "document_class": "XFormInstance", 
-        "extra_args": {
-            "doc_type": "XFormInstance", 
-            "domains": "cvsulive"
-        }, 
-        "full_class_name": "custom.apps.cvsu.models.UnicefMalawiFluffPillow", 
-        "include_docs": false, 
-        "name": "UnicefMalawiFluffPillow"
-    }, 
+    },
     "UnknownUsersPillow": {
         "advertised_name": "corehq.pillows.user.UnknownUsersPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 

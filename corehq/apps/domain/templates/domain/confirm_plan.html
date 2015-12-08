@@ -87,6 +87,7 @@
     </div>
     {% else %}
     <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
+        {% csrf_token %}
         <hr />
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
         <p>

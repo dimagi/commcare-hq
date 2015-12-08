@@ -998,6 +998,7 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
+    do_not_email = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
@@ -2145,7 +2146,8 @@ class BillingRecord(BillingRecordBase):
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
                             subscription.service_type == SubscriptionType.CONTRACTED)
         hidden = self.invoice.is_hidden
-        return not (autogenerate or small_contracted or hidden)
+        do_not_email = self.invoice.subscription.do_not_email
+        return not (autogenerate or small_contracted or hidden or do_not_email)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month

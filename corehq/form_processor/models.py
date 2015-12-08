@@ -124,12 +124,13 @@ class RestrictedManager(models.Manager):
 class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
     objects = RestrictedManager()
 
+    # states should be powers of 2
     NORMAL = 0
     ARCHIVED = 1
     DEPRECATED = 2
-    DUPLICATE = 3
-    ERROR = 4
-    SUBMISSION_ERROR_LOG = 5
+    DUPLICATE = 4
+    ERROR = 8
+    SUBMISSION_ERROR_LOG = 16
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -570,6 +571,7 @@ class CaseAttachmentSQL(AbstractAttachment):
 class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     objects = RestrictedManager()
 
+    # relationship_ids should be powers of 2
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
@@ -627,13 +629,14 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
 class CaseTransaction(DisabledDbMixin, models.Model):
     objects = RestrictedManager()
 
+    # types should be powers of 2
     TYPE_FORM = 0
     TYPE_REBUILD_WITH_REASON = 1
     TYPE_REBUILD_USER_REQUESTED = 2
-    TYPE_REBUILD_USER_ARCHIVED = 3
-    TYPE_REBUILD_FORM_ARCHIVED = 4
-    TYPE_REBUILD_FORM_EDIT = 5
-    TYPE_LEDGER = 6
+    TYPE_REBUILD_USER_ARCHIVED = 4
+    TYPE_REBUILD_FORM_ARCHIVED = 8
+    TYPE_REBUILD_FORM_EDIT = 16
+    TYPE_LEDGER = 32
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
