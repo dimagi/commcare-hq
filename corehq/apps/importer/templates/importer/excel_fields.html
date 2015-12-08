@@ -151,6 +151,7 @@
     <form action="{% url "corehq.apps.importer.views.excel_commit" domain %}"
           method="post"
           id="field_form">
+          {% csrf_token %}
         <input type="hidden" name="named_columns" value="{{named_columns}}" />
         <input type="hidden" name="case_type" value="{{case_type}}" />
         <input type="hidden" name="search_column" value="{{search_column}}" />

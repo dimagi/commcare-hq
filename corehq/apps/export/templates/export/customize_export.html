@@ -503,6 +503,7 @@
         </div>
     </header>
     <form class="form-horizontal" method="post">
+        {% csrf_token %}
         <fieldset>
             <div class="control-group">
                 <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
