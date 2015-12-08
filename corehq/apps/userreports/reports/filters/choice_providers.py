@@ -108,7 +108,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
         if query_context.query:
-            query = query.filter(self._sql_column.contains(query_context.query))
+            query = query.filter(self._sql_column.ilike(u"%{}%".format(query_context.query)))
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:
