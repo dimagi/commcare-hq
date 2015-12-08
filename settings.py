@@ -942,7 +942,7 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
-DATABASE_ROUTERS = []
+DATABASE_ROUTERS = ['corehq.db.routers.MonolithRouter']
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
