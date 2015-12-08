@@ -226,7 +226,8 @@
                         {% angularjs %}
                         <td>
                             <a href="{{ export.downloadUrl }}"
-                               class="btn btn-primary">
+                               class="btn btn-primary"
+                               ng-click="sendExportAnalytics()">
                                 {% trans 'Export' %}</a>
                         </td>
                         {% endangularjs %}
