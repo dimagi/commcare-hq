@@ -1,5 +1,6 @@
 [_test1]
-10.162.36.196
+#10.162.36.196
+localhost ansible_connection=local
 
 [db0]
 10.162.36.205
@@ -14,7 +15,7 @@ _test1
 [webworkers:children]
 _test1
 
-[couchdb]
+[couchdb:children]
 _test1
 
 [postgresql:children]
@@ -24,10 +25,10 @@ db0
 db0
 
 [zookeeper:children]
-_test1
+es0
 
 [kafka:children]
-_test1 kafka_broker_id=0
+es0
 
 [celery:children]
 _test1
@@ -39,7 +40,7 @@ _test1
 _test1
 
 [redis:children]
-_test1
+db0
 
 [elasticsearch:children]
 es0

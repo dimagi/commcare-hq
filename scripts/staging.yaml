@@ -45,8 +45,8 @@
 trunk: master
 name: autostaging
 branches:
-  - mobile-select-filters-fixture-tmp  # Danny 12/2
-  - jquery-ui-1.8.23-legacy  # Danny 11/23
+  - validate-xpath  # Danny 12/05
+#  - jquery-ui-1.8.23-legacy  # Danny 11/23
   - vellum-staging # J$ 11/13
   - two-factor+websockets
   - fix-toggle+two-factor-otp-only #wsp 11/17
@@ -57,9 +57,12 @@ branches:
   - fix-toggle #wsp 11/17
   - csrf # sravan 11/24
   - extended-trial-metadata # Cal 11/25
-  - migration-tests  # Ethan 11/30
   - cache-control # Cal 11/30
-  - unicode-filename # Nick P 12/1
+  - migrate-domains  # Ethan 12/2
+  - bootstrap2-upgrade  # Biyeun 12/2
+  - saved-export-blobs # Daniel 12/3
+  - es-fix # Noah 12/7
+  - use-strict-apply-bindings # Jenny 12/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

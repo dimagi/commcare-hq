@@ -2,9 +2,10 @@ from collections import defaultdict
 
 
 class TrackRelatedChanges(object):
-    create_models = defaultdict(list)
-    update_models = defaultdict(list)
-    delete_models = defaultdict(list)
+    def __init__(self):
+        self.create_models = defaultdict(list)
+        self.update_models = defaultdict(list)
+        self.delete_models = defaultdict(list)
 
     def clear_tracked_models(self, model_class=None):
         if not model_class:

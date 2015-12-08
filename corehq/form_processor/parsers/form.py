@@ -1,5 +1,7 @@
 import hashlib
 
+import datetime
+
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -175,7 +177,7 @@ def _handle_duplicate(new_doc, instance):
         #  - "Deprecate" the old form by making a new document with the same contents
         #    but a different ID and a doc_type of XFormDeprecated
         #  - Save the new instance to the previous document to preserve the ID
-        existing_doc, new_doc = interface.deprecate_xform(existing_doc, new_doc)
+        existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
 
         return FormProcessingResult(new_doc, existing_doc)
     else:
@@ -183,3 +185,24 @@ def _handle_duplicate(new_doc, instance):
         # but a new doc_id, and a doc_type of XFormDuplicate
         duplicate = interface.deduplicate_xform(new_doc)
         return FormProcessingResult(duplicate)
+
+
+def apply_deprecation(existing_xform, new_xform, interface=None):
+    # if the form contents are not the same:
+    #  - "Deprecate" the old form by making a new document with the same contents
+    #    but a different ID and a doc_type of XFormDeprecated
+    #  - Save the new instance to the previous document to preserve the ID
+
+    interface = interface or FormProcessorInterface(existing_xform.domain)
+
+    new_xform.form_id = existing_xform.form_id
+    existing_xform = interface.assign_new_id(existing_xform)
+    existing_xform.orig_id = new_xform.form_id
+
+    # and give the new doc server data of the old one and some metadata
+    new_xform.received_on = existing_xform.received_on
+    new_xform.deprecated_form_id = existing_xform.form_id
+    new_xform.edited_on = datetime.datetime.utcnow()
+    existing_xform.edited_on = new_xform.edited_on
+
+    return interface.apply_deprecation(existing_xform, new_xform)

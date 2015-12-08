@@ -205,7 +205,7 @@ def use_typeahead(view_func):
 
 def use_timepicker(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the typeahead library at the base template
+    to enable the inclusion of the timepicker library at the base template
     level.
 
     Example:

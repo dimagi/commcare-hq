@@ -1179,7 +1179,7 @@ class TestGroupResource(APIResourceTest):
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
 
-        group_json =  {
+        group_json = {
             "case_sharing": True,
             "metadata": {
                 "localization": "Ghana"

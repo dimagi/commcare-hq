@@ -58,16 +58,14 @@ def default(request, domain):
 
 
 def default_data_view_url(request, domain):
-    if request.couch_user.can_edit_data():
+    if request.couch_user.can_view_reports():
         from corehq.apps.export.views import FormExportListView
         return reverse(FormExportListView.urlname, args=[domain])
 
-    from corehq.apps.export.views import DeIdFormExportListView
-    if DeIdFormExportListView.has_deid_permissions(request, domain):
+    from corehq.apps.export.views import DeIdFormExportListView, user_can_view_deid_exports
+    if user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
 
-    if request.couch_user.can_edit_data():
-        return reverse(EditDataInterfaceDispatcher.name(), args=[domain, CaseReassignmentInterface.slug])
     raise Http404()
 
 

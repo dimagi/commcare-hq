@@ -14,6 +14,7 @@ from django.utils.safestring import mark_safe
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
@@ -60,43 +61,44 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
-from django_prbac.utils import has_privilege
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
 
+def user_can_view_deid_exports(domain, couch_user):
+    return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
+            and couch_user.has_permission(
+                domain,
+                get_permission_name(Permissions.view_report),
+                data='corehq.apps.reports.standard.export.DeidExportReport'
+            ))
+
+
 class ExportsPermissionsMixin(object):
     """For mixing in with a subclass of BaseDomainView
+
+    Users need to have edit permissions to create or update exports
+    Users need the "view reports" permission to download exports
+    The DEIDENTIFIED_DATA privilege is a pro-plan feature, and without it,
+        users should not be able to create, update, or download deid exports.
+    There are some users with access to a specific DeidExportReport.  If these
+        users do not have the "view reports" permission, they should only be
+        able to access deid reports.
     """
 
     @property
     def has_edit_permissions(self):
-        return self.request.couch_user.has_permission(self.domain, get_permission_name(Permissions.edit_data))
-
-    @classmethod
-    def has_deid_permissions(cls, request, domain):
-        return (
-            has_privilege(request, privileges.DEIDENTIFIED_DATA)
-            and hasattr(request, 'couch_user')
-            and cls.check_deid_read_permissions(request, domain)
-        )
-
-    @staticmethod
-    def check_deid_read_permissions(request, domain):
-        return request.couch_user.has_permission(
-            domain,
-            get_permission_name(Permissions.view_report),
-            data='corehq.apps.reports.standard.export.DeidExportReport'
-        )
+        return self.request.couch_user.can_edit_data()
 
     @property
-    def has_deid_read_permissions(self):
-        return self.check_deid_read_permissions(self.request, self.domain)
+    def has_view_permissions(self):
+        return self.request.couch_user.can_view_reports()
 
     @property
-    def can_view_deid(self):
-        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+    def has_deid_view_permissions(self):
+        # just a convenience wrapper around user_can_view_deid_exports
+        return user_can_view_deid_exports(self.domain, self.request.couch_user)
 
 
 class BaseExportView(BaseProjectDataView):
@@ -396,7 +398,9 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions or (self.has_deid_read_permissions and self.can_view_deid)):
+        if not (self.has_edit_permissions
+                or self.has_view_permissions
+                or self.has_deid_view_permissions):
             raise Http404()
         return super(BaseDownloadExportView, self).dispatch(request, *args, **kwargs)
 
@@ -494,11 +498,11 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         elif self.export_id:
             exports = [self.get_export_schema(self.export_id)]
 
-        # check deid if the user has readonly permissions
-        if not self.has_edit_permissions:
-            if not self.can_view_deid:
+        if not self.has_view_permissions:
+            if self.has_deid_view_permissions:
+                exports = filter(lambda x: x.is_safe, exports)
+            else:
                 raise Http404()
-            exports = filter(lambda x: x.is_safe, exports)
 
         # if there are no exports, this page doesn't exist
         if not exports:
@@ -597,7 +601,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
         # if the export is de-identified (is_safe), check that
         # the requesting domain has access to the deid feature.
-        if export_object.is_safe and not self.can_view_deid:
+        if export_object.is_safe and not self.has_deid_view_permissions:
             raise ExportAsyncException(
                 _("You do not have permission to export this "
                   "De-Identified export.")
@@ -605,7 +609,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
         return export_object.get_download_task(
             filter=export_filter,
-            filename="{}{}".format(export_object.name,
+            filename=u"{}{}".format(export_object.name,
                                    date.today().isoformat()),
             previous_export_id=None,
             max_column_size=max_column_size,
@@ -832,9 +836,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions or (self.is_deid
-                                              and self.has_deid_read_permissions
-                                              and self.can_view_deid)):
+        if not (self.has_edit_permissions or self.has_view_permissions):
             raise Http404()
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
@@ -845,6 +847,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
             'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
             'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
+            'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
         }
 
@@ -1031,7 +1034,7 @@ class FormExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
-        if not self.can_view_deid:
+        if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
 
@@ -1060,6 +1063,7 @@ class FormExportListView(BaseExportListView):
             'name': export.name,
             'formname': export.formname,
             'addedToBulk': False,
+            'exportType': export.type,
             'emailedExports': emailed_exports,
             'editUrl': reverse(EditCustomFormExportView.urlname,
                                args=(self.domain, export.get_id)),
@@ -1075,7 +1079,6 @@ class FormExportListView(BaseExportListView):
             rmi_helper = ApplicationDataRMIHelper(self.domain)
             response = rmi_helper.get_form_rmi_response()
         except Exception as e:
-
             return format_angular_error(
                 _("Problem getting Create Export Form: {} {}").format(
                     e.__class__, e
@@ -1128,7 +1131,7 @@ class CaseExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
-        if not self.can_view_deid:
+        if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
 
@@ -1148,6 +1151,7 @@ class CaseExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'addedToBulk': False,
+            'exportType': export.type,
             'emailedExports': emailed_exports,
             'editUrl': reverse(EditCustomCaseExportView.urlname,
                                args=(self.domain, export.get_id)),
@@ -1165,7 +1169,6 @@ class CaseExportListView(BaseExportListView):
                 _("Problem getting Create Export Form: {}").format(e.message),
                 log_error=True,
                 exception=e,
-                request=self.request,
             )
         return format_angular_success(response)
 

@@ -12,7 +12,10 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,  # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
+        },
     }
 }
 

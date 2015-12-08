@@ -545,9 +545,6 @@ class OPMCaseRow(object):
     @property
     def child_birth_registered(self):
         if self.child_age == 6 and self.block == 'atri':
-            if not self.is_vhnd_last_three_months:
-                return True
-
             def _test(form):
                 return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
             return any(

@@ -5,9 +5,10 @@ from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import InlineField, FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
-import pytz
 from datetime import timedelta, datetime, time, date
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -28,11 +29,9 @@ from corehq.apps.hqwebapp.crispy import (
     BootstrapMultiField, FieldsetAccordionGroup, HiddenFieldWithErrors,
     InlineColumnField, ErrorsOnlyField,
 )
-from corehq.apps.style.crispy import FieldWithHelpBubble
+from corehq.apps.style.crispy import FieldWithHelpBubble, B3MultiField
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
-from corehq.util.spreadsheets.excel import WorksheetNotFound, \
-    WorkbookJSONReader
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -2496,6 +2495,8 @@ class BroadcastForm(Form):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-10 col-md-3 col-lg-3'
 
         from corehq.apps.reminders.views import BroadcastListView
         layout_fields = [
@@ -2511,13 +2512,13 @@ class BroadcastForm(Form):
                 _('Content'),
                 *self.crispy_content_fields
             ),
-            FormActions(
-                StrictButton(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
                     _("Save"),
                     css_class='btn-primary',
                     type='submit',
                 ),
-                crispy.HTML('<a href="%s" class="btn">Cancel</a>'
+                crispy.HTML('<a href="%s" class="btn btn-default">Cancel</a>'
                             % reverse(BroadcastListView.urlname, args=[self.domain]))
             ),
         ]
@@ -2548,8 +2549,8 @@ class BroadcastForm(Form):
                 crispy.Field(
                     'location_ids',
                 ),
-                crispy.Field(
-                    'include_child_locations',
+                twbscrispy.PrependedText(
+                    'include_child_locations', ''
                 ),
                 data_bind='visible: showLocationSelect',
             ),
@@ -2563,15 +2564,17 @@ class BroadcastForm(Form):
                 data_bind='value: timing',
             ),
             crispy.Div(
-                BootstrapMultiField(
+                B3MultiField(
                     _("Date and Time"),
-                    InlineField(
-                        'date',
-                        data_bind='value: date',
-                        css_class="input-small",
+                    crispy.Div(
+                        InlineField(
+                            'date',
+                            data_bind='value: date'
+                        ),
+                        css_class='col-sm-6'
                     ),
                     crispy.Div(
-                        template='reminders/partial/time_picker.html',
+                        template='reminders/partial/time_picker.html'
                     ),
                 ),
                 ErrorsOnlyField('time'),

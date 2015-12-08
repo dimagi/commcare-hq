@@ -6,6 +6,7 @@ from couchdbkit import Database, ResourceNotFound
 
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
+from django.apps import AppConfig
 from django.conf import settings
 from django.test import TransactionTestCase
 from django.utils import unittest
@@ -108,8 +109,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             test_labels, extra_tests, **kwargs
         )
 
-    def _strip(self, app_name):
-        return app_name.split('.')[-1]
+    def _strip(self, entry):
+        app_config = AppConfig.create(entry)
+        return app_config.label
 
 
 class TimingTestSuite(unittest.TestSuite):

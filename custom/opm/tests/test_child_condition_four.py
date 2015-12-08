@@ -151,7 +151,7 @@ class TestChildMeasles(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAva
         self.condition_getter = lambda row: row.child_received_measles_vaccine
 
 
-class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin, ServiceAvailabilityTestMixIn):
+class TestChildBirthRegistration(OPMCaseReportTestBase, ConditionFourTestMixin):
     expected_window = 6
     service_key = 'vhnd_available'
 
