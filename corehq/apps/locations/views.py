@@ -365,7 +365,7 @@ def delete_location(request, domain, loc_id):
     loc = Location.get(loc_id)
     if loc.domain != domain:
         raise Http404()
-    loc.delete()
+    loc.full_delete()
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(

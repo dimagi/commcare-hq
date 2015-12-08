@@ -609,9 +609,9 @@ class Location(CachedCouchDocumentMixin, Document):
 
         _unassign_users_from_location(self.domain, self._id)
 
-        super(Location, self).delete()
+        self.delete()
 
-    def delete(self):
+    def full_delete(self):
         """
         Delete a location and its dependants.
         This also unassigns users assigned to the location.
