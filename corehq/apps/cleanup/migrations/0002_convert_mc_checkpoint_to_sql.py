@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 from corehq.apps.cleanup.pillow_migrations import migrate_legacy_pillow_by_name, noop_reverse_migration
+from corehq.sql_db.operations import HqRunPython
 
 
 def migrate_mc_pillow(apps, schema_editor):
@@ -16,5 +17,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_mc_pillow, noop_reverse_migration)
+        HqRunPython(migrate_mc_pillow, noop_reverse_migration)
     ]

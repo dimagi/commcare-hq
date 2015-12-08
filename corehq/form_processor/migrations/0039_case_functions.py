@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 
 from corehq.form_processor.utils.migration import migrate_sql_function
+from corehq.sql_db.operations import HqRunSQL
 
 
 class Migration(migrations.Migration):
@@ -22,7 +23,7 @@ class Migration(migrations.Migration):
         migrate_sql_function('get_reverse_indexed_cases'),
         migrate_sql_function('get_multiple_cases_indices'),
         migrate_sql_function('hard_delete_cases'),
-        migrations.RunSQL('DROP FUNCTION IF EXISTS hard_delete_forms(text[]);'),  # delete old one
+        HqRunSQL('DROP FUNCTION IF EXISTS hard_delete_forms(text[]);'),  # delete old one
         migrate_sql_function('hard_delete_forms'),  # updated
         migrate_sql_function('get_case_attachment_by_name'),
         migrate_sql_function('get_case_attachments'),
