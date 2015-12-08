@@ -3,10 +3,6 @@ from .config import PartitionConfig
 PROXY_APP = 'sql_proxy_accessors'
 SQL_ACCESSORS_APP = 'sql_accessors'
 
-FORM_PROCESSING_GROUP = 'form_processing'
-PROXY_GROUP = 'proxy'
-MAIN_GROUP = 'main'
-
 
 class PartitionRouter(object):
 
@@ -15,12 +11,12 @@ class PartitionRouter(object):
 
     def allow_migrate(self, db, app_label, model=None, **hints):
         if app_label == PROXY_APP:
-            return (db in self.config.dbs_by_group(PROXY_GROUP) or
-                    db in self.config.dbs_by_group(FORM_PROCESSING_GROUP))
+            return (db == self.config.get_proxy_db or
+                    db in self.config.get_form_processing_dbs)
         elif app_label == SQL_ACCESSORS_APP:
-            return db in self.config.dbs_by_group(FORM_PROCESSING_GROUP)
+            return db in self.config.get_form_processing_dbs()
         else:
-            return db in self.config.dbs_by_group(MAIN_GROUP)
+            return db == self.config.get_main_db()
 
 
 class MonolithRouter(object):

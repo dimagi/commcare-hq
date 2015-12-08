@@ -1,6 +1,9 @@
 from django.conf import settings
-
 from .exceptions import PartitionValidationError
+
+FORM_PROCESSING_GROUP = 'form_processing'
+PROXY_GROUP = 'proxy'
+MAIN_GROUP = 'main'
 
 
 class PartitionConfig(object):
@@ -29,9 +32,21 @@ class PartitionConfig(object):
     def database_config(self):
         return settings.DATABASES
 
-    def dbs_by_group(self, group):
+    def get_proxy_db(self):
+        return self._dbs_by_group(PROXY_GROUP, 1)
+
+    def get_main_db(self):
+        return self._dbs_by_group(MAIN_GROUP, 1)[0]
+
+    def get_form_processing_dbs(self):
+        return self._dbs_by_group(FORM_PROCESSING_GROUP)
+
+    def _dbs_by_group(self, group, check_len=None):
         """Given a database group, returns the list of dbs associated with it"""
-        return self.partition_config['groups'][group]
+        dbs = self.partition_config['groups'][group]
+        if check_len:
+            assert len(dbs) == check_len
+        return dbs
 
     def shard_mapping(self):
         """Returns the shard_number mapped to database"""
