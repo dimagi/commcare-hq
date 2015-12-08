@@ -12,5 +12,4 @@ keytool -genkey \
   -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
 
 
-psql -c 'create database test_commcarehq' -U postgres
 curl -X PUT localhost:5984/commcarehq
