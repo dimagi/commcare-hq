@@ -172,7 +172,7 @@ class InvoiceResource(ModelResource):
     applied_credit = fields.DecimalField('applied_credit')
 
     class Meta(AccountingResourceMeta):
-        queryset = Invoice.objects.all().order_by('pk')
+        queryset = Invoice.api_objects.all().order_by('pk')
         fields = ['id', 'tax_rate', 'balance', 'date_due', 'date_paid', 'date_created', 'date_received',
                   'date_start', 'date_end', 'is_hidden', 'is_hidden_to_ops', 'last_modified']
         resource_name = 'invoice'
