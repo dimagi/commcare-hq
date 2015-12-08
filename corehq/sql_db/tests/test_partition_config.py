@@ -1,6 +1,8 @@
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
+from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_pl_proxy_server_config_sql, \
+    get_shard_config_strings
 from ..config import PartitionConfig
 from ..exceptions import PartitionValidationError
 
@@ -61,3 +63,16 @@ class TestPartitionConfig(SimpleTestCase):
     def test_invalid_shard_range(self):
         with self.assertRaises(PartitionValidationError):
             PartitionConfig()
+
+
+@override_settings(DATABASES=TEST_DATABASES)
+class PlProxyTests(SimpleTestCase):
+    def test_get_shard_config_strings(self):
+        shard_mapping = {
+            1: 'db1',
+            2: 'db1',
+            3: 'db2',
+        }
+        configs = get_shard_config_strings(shard_mapping)
+        self.assertEqual(3, len(configs))
+        self.assertIn("p1 'dbname=commcarehq hostname=hqdb0 port=5432'", configs)

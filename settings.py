@@ -942,6 +942,8 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
+PL_PROXY_CLUSTER_NAME = 'commcarehq'
+
 USE_PARTITIONED_DATABASE = False
 
 # number of days since last access after which a saved export is considered unused
