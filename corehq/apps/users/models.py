@@ -2301,7 +2301,10 @@ class DomainRequest(models.Model):
             WebUser.get_admins_by_domain(self.domain)}
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
-        subject = _('Request from %s to join %s') % (self.full_name, domain_name)
+        subject = _('Request from %(name)s to join %(domain)s') % {
+            'name': self.full_name,
+            'domain': domain_name,
+        }
         send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
