@@ -149,7 +149,7 @@ class BillingAccountResource(ModelResource):
         queryset = BillingAccount.objects.all().order_by('pk')
         fields = ['id', 'name', 'salesforce_account_id', 'created_by', 'date_created', 'is_auto_invoiceable',
                   'account_type', 'created_by_domain', 'date_confirmed_extra_charges', 'is_active',
-                  'dimagi_contact', 'entry_point', 'last_modified']
+                  'dimagi_contact', 'entry_point', 'last_modified', 'last_payment_method', 'pre_or_post_pay']
         resource_name = 'billing_account'
 
 
