@@ -22,7 +22,6 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.debug import print_return_value
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
@@ -31,6 +30,11 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+
+TOO_MUCH_DATA = ugettext_noop(
+    'The filters you selected include too much data. Please change your filters and try again'
+)
 
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -819,9 +823,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                     where=[where], params=params
                 )
             if results.count() > 5000:
-                raise TooMuchDataError(
-                    _('The filters you selected include too much data. Please change your filters and try again')
-                )
+                raise TooMuchDataError(_(TOO_MUCH_DATA))
             for row in results:
                 completion_time = (PhoneTime(row['time_end'], self.timezone)
                                    .server_time().done())
@@ -923,8 +925,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
-
-
                 key = make_form_couch_key(
                     self.domain,
                     user_id=user.user_id,
@@ -939,6 +939,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                 ).all()
                 all_times.extend([iso_string_to_datetime(d['key'][-1])
                                   for d in data])
+                if len(all_times) > 5000:
+                    raise TooMuchDataError()
         if self.by_submission_time:
             all_times = [ServerTime(t).user_time(self.timezone).done()
                          for t in all_times]
@@ -953,10 +955,18 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
 
     @property
     def report_context(self):
-        no_data = not self.activity_times.keys()
+        error = None
+        try:
+            activity_times = self.activity_times
+            if len(activity_times) == 0:
+                error = _("Note: No submissions matched your filters.")
+        except TooMuchDataError:
+            activity_times = defaultdict(int)
+            error = _(TOO_MUCH_DATA)
+
         return dict(
-            chart_url=self.generate_chart(self.activity_times, timezone=self.timezone),
-            no_data=no_data,
+            chart_url=self.generate_chart(activity_times, timezone=self.timezone),
+            error=error,
             timezone=self.timezone,
         )
 
