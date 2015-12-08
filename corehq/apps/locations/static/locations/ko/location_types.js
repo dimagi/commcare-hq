@@ -1,3 +1,5 @@
+define(["jquery", "knockout", "underscore"], function($, ko, _) {
+
 function LocationSettingsViewModel(loc_types, commtrack_enabled) {
     this.loc_types = ko.observableArray();
     this.loc_types($.map(loc_types, function(loc_type) {
@@ -161,3 +163,8 @@ ko.bindingHandlers.bind_element = {
         }
     }
 };
+
+    return {
+        LocationSettingsViewModel: LocationSettingsViewModel,
+    };
+});
