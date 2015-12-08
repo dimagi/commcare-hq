@@ -137,3 +137,6 @@ class HQESQueryFake(ESQueryFake):
         except TypeError:
             doc_ids = [doc_id]
         return self._filtered(lambda doc: doc['_id'] in doc_ids)
+
+    def domain(self, domain):
+        return self._filtered(lambda doc: doc['domain'] == domain)
