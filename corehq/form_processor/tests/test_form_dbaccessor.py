@@ -16,7 +16,7 @@ DOMAIN = 'test-form-accessor'
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class FormAccessorTestsSQL(TestCase):
-    dependent_apps = []
+    dependent_apps = ['corehq.sql_accessors']
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
@@ -277,5 +277,5 @@ def _simulate_form_edit():
     new_form.form_id = existing_form.form_id
 
     existing_form, new_form = apply_deprecation(existing_form, new_form)
-    assert existing_form.form_id  != new_form.form_id
+    assert existing_form.form_id != new_form.form_id
     return existing_form, new_form

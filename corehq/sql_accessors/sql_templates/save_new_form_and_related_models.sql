@@ -1,13 +1,22 @@
-DROP FUNCTION IF EXISTS save_new_form_with_attachments(form_processor_xforminstancesql, form_processor_xformattachmentsql[]);
+DROP FUNCTION IF EXISTS save_new_form_and_related_models(
+    form_processor_xforminstancesql,
+    form_processor_xformattachmentsql[],
+    form_processor_xformoperationsql[]);
 
-CREATE FUNCTION save_new_form_with_attachments(
+CREATE FUNCTION save_new_form_and_related_models(
     form form_processor_xforminstancesql,
     attachments form_processor_xformattachmentsql[],
+    operations form_processor_xformoperationsql[],
     form_pk OUT INTEGER
 ) AS $$
 DECLARE
     attachment form_processor_xformattachmentsql;
+    operation form_processor_xformoperationsql;
 BEGIN
+    IF form.id IS NOT NULL THEN
+        RAISE EXCEPTION 'Form already saved: %', form.form_id;
+    END IF;
+
     INSERT INTO form_processor_xforminstancesql (
         form_id,
         domain,
@@ -53,11 +62,25 @@ BEGIN
 
     FOREACH attachment IN ARRAY attachments
     LOOP
+        IF attachment.id IS NOT NULL THEN
+            RAISE EXCEPTION 'Form attachment already saved: form_id=%, attachment_id=%', form.form_id, attachment.attachment_id;
+        END IF;
+
         INSERT INTO form_processor_xformattachmentsql (
             attachment_id, name, content_type, md5, form_id
         ) VALUES (
             attachment.attachment_id, attachment.name, attachment.content_type, attachment.md5, attachment.form_id
         );
+    END LOOP;
+
+    FOREACH operation IN ARRAY operations
+    LOOP
+        IF operation.id IS NOT NULL THEN
+            RAISE EXCEPTION 'Form operation already saved: form_id=%, operation_id=%', form.form_id, operation.id;
+        END IF;
+
+        INSERT INTO form_processor_xformoperationsql (user_id, operation, date, form_id) VALUES
+            (operation.user_id, operation.operation, operation.date, operation.form_id);
     END LOOP;
 END
 $$
