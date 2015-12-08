@@ -50,15 +50,34 @@ def update_subscription_properties_by_user(couch_user):
 
 def _get_subscription_properties_by_user(couch_user):
 
+    def _is_paying_subscription(subscription):
+        NON_PAYING_SERVICE_TYPES = [
+            SubscriptionType.TRIAL,
+            SubscriptionType.EXTENDED_TRIAL,
+            SubscriptionType.SANDBOX,
+            SubscriptionType.INTERNAL,
+        ]
+
+        NON_PAYING_PRO_BONO_STATUSES = [
+            ProBonoStatus.YES,
+            ProBonoStatus.DISCOUNTED,
+        ]
+        paying = subscription.service_type not in NON_PAYING_SERVICE_TYPES
+        paying = paying and subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES
+        return paying
+
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
     all_subscriptions = []
+    paying_subscribed_editions = []
     subscribed_editions = []
     for domain_name in couch_user.domains:
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
         subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
             all_subscriptions.append(subscription)
+        if subscription is not None and _is_paying_subscription(subscription):
+            paying_subscribed_editions.append(plan_version.plan.edition)
 
     def _is_one_of_editions(edition):
         return 'yes' if edition in subscribed_editions else 'no'
@@ -70,6 +89,12 @@ def _get_subscription_properties_by_user(couch_user):
         service_types = [s.subscription_type for s in all_subscriptions]
         return 'yes' if SubscriptionType.EXTENDED_TRIAL in service_types else 'no'
 
+    def _max_edition():
+        for edition in paying_subscribed_editions:
+            assert edition in [e[0] for e in SoftwarePlanEdition.CHOICES]
+
+        return max(paying_subscribed_editions) if paying_subscribed_editions else None
+
     return {
         'is_on_community_plan': _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
         'is_on_standard_plan': _is_one_of_editions(SoftwarePlanEdition.STANDARD),
@@ -79,6 +104,7 @@ def _get_subscription_properties_by_user(couch_user):
         'is_on_pro_bono_plan': _is_a_pro_bono_status(ProBonoStatus.YES),
         'is_on_discounted_plan': _is_a_pro_bono_status(ProBonoStatus.DISCOUNTED),
         'is_on_extended_trial_plan': _is_on_extended_trial(),
+        'max_edition_of_paying_plan': _max_edition()
     }
 
 
