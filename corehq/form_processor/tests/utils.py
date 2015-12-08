@@ -200,7 +200,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>DEV IL</n1:deviceID>
         <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
-        <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>
+        <n1:timeEnd>{time_end}</n1:timeEnd>
         <n1:username>eve</n1:username>
         <n1:userID>{user_id}</n1:userID>
         <n1:instanceID>{uuid}</n1:instanceID>
@@ -213,6 +213,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 class TestFormMetadata(jsonobject.JsonObject):
     domain = jsonobject.StringProperty(required=False)
     user_id = jsonobject.StringProperty(default='cruella_deville')
+    time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None):
