@@ -27,19 +27,25 @@ class RunSqlLazy(migrations.RunSQL):
     """
     def __init__(self, sql_template_path, reverse_sql_template_path, template_context=None):
         self.template_context = template_context or {}
+        self.rendered_forwards = False
+        self.rendered_backwards = False
         super(RunSqlLazy, self).__init__(sql_template_path, reverse_sql_template_path)
 
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         db_alias = schema_editor.connection.alias
         if allow_migrate(db_alias, app_label):
-            self.sql = self._render_template(self.sql)
+            if not self.rendered_forwards:
+                self.sql = self._render_template(self.sql)
+                self.rendered_forwards = True
             super(RunSqlLazy, self).database_forwards(app_label, schema_editor, from_state, to_state)
 
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
         db_alias = schema_editor.connection.alias
         if allow_migrate(db_alias, app_label):
             if self.reverse_sql:
-                self.reverse_sql = self._render_template(self.reverse_sql)
+                if not self.rendered_backwards:
+                    self.reverse_sql = self._render_template(self.reverse_sql)
+                    self.rendered_backwards = True
             super(RunSqlLazy, self).database_backwards(app_label, schema_editor, from_state, to_state)
 
     def _render_template(self, path):
