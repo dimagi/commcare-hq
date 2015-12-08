@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionType,
 )
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.domain.signals import commcare_domain_post_save
@@ -65,6 +66,10 @@ def _get_subscription_properties_by_user(couch_user):
     def _is_a_pro_bono_status(status):
         return 'yes' if status in [s.pro_bono_status for s in all_subscriptions] else 'no'
 
+    def _is_on_extended_trial():
+        service_types = [s.subscription_type for s in all_subscriptions]
+        return 'yes' if SubscriptionType.EXTENDED_TRIAL in service_types else 'no'
+
     return {
         'is_on_community_plan': _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
         'is_on_standard_plan': _is_one_of_editions(SoftwarePlanEdition.STANDARD),
@@ -72,6 +77,7 @@ def _get_subscription_properties_by_user(couch_user):
         'is_on_advanced_plan': _is_one_of_editions(SoftwarePlanEdition.ADVANCED),
         'is_on_enterprise_plan': _is_one_of_editions(SoftwarePlanEdition.ENTERPRISE),
         'is_on_pro_bono_or_discounted_plan': _is_a_pro_bono_status(ProBonoStatus.YES),
+        'is_on_extended_trial_plan': _is_on_extended_trial(),
     }
 
 
