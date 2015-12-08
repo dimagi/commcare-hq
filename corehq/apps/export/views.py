@@ -959,7 +959,6 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
                 _("Issue fetching list of exports: {}").format(e),
                 log_error=True,
                 exception=e,
-                request=self.request,
             )
         return format_angular_success({
             'exports': saved_exports,
