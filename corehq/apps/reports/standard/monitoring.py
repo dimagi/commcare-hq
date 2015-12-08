@@ -22,6 +22,7 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.debug import print_return_value
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
@@ -919,10 +920,11 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
+
+
                 key = make_form_couch_key(
                     self.domain,
                     user_id=user.user_id,
@@ -944,16 +946,17 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
                          for t in all_times]
 
-        return [(t.weekday(), t.hour) for t in all_times]
+        aggregated_times = defaultdict(int)
+        for t in all_times:
+            aggregated_times[(t.weekday(), t.hour)] += 1
+        return aggregated_times
 
     @property
     def report_context(self):
-        chart_data = defaultdict(int)
-        for time in self.activity_times:
-            chart_data[time] += 1
+        no_data = not self.activity_times.keys()
         return dict(
-            chart_url=self.generate_chart(chart_data, timezone=self.timezone),
-            no_data=not self.activity_times,
+            chart_url=self.generate_chart(self.activity_times, timezone=self.timezone),
+            no_data=no_data,
             timezone=self.timezone,
         )
 
