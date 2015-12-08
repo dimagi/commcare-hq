@@ -1,4 +1,17 @@
 import os
+####### Database config. This assumes Postgres ####### 
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'localhost',
+        'PORT': '5432'
+    }
+}
+
 # Custom databases can be used to configure a separate database for specific UCR data sources
 # The key is what you will reference in the datasource, e.g. 'custom_ucr_database'
 # The value is the sql connection string "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
