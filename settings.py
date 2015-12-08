@@ -943,16 +943,6 @@ UCR_DATABASE_URL = None
 CUSTOM_DATABASES = {}
 
 DATABASE_ROUTERS = []
-PARTITION_DATABASE_CONFIG = {
-    'shards': {
-        'default': [0, 100]
-    },
-    'groups': {
-        'main': ['default'],
-        'proxy': ['default'],
-        'form_processing': ['default'],
-    }
-}
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35

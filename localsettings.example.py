@@ -1,6 +1,17 @@
 import os
 ####### Database config. This assumes Postgres ####### 
 
+PARTITION_DATABASE_CONFIG = {
+    'shards': {
+        'default': [0, 100]
+    },
+    'groups': {
+        'main': ['default'],
+        'proxy': ['default'],
+        'form_processing': ['default'],
+    }
+}
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
