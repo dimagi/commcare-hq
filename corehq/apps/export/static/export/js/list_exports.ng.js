@@ -86,7 +86,7 @@
         };
         $scope.sendExportAnalytics = function() {
             window.analytics.track("Clicked Export button");
-        }
+        };
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + component.groupId).modal('hide');
             component.updatingData = true;
