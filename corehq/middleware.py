@@ -6,6 +6,8 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.views import logout as django_logout
 
+from corehq.apps.domain.models import Domain
+
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 try:
@@ -90,14 +92,38 @@ class TimingMiddleware(object):
 
 class TimeoutMiddleware(object):
 
-    def process_request(self, request):
+    def _session_expired(self, timeout, activity, time):
+        if activity is None:
+            return False
+        if time - string_to_utc_datetime(activity) > datetime.timedelta(minutes=timeout):
+            return True
+        else:
+            return False
+
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated():
             return
 
+        secure_session = request.session.get('secure_session')
         now = datetime.datetime.utcnow()
+
+        if not secure_session and hasattr(request, 'domain'):
+            domain = Domain.get_by_name(request.domain)
+            if domain.secure_sessions:
+                if self._session_expired(settings.SECURE_TIMEOUT, request.user.last_login, now):
+                    django_logout(request, template_name=settings.BASE_TEMPLATE)
+                    # this must be after logout so it is attached to the new session
+                    request.session['secure_session'] = True
+                    return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
+                else:
+                    request.session['secure_session'] = True
+                    request.session['last_request'] = json_format_datetime(now)
+                    return
+
         last_request = request.session.get('last_request')
-        if last_request is not None and now - string_to_utc_datetime(last_request) > datetime.timedelta(minutes=settings.INACTIVITY_TIMEOUT):
-                del request.session['last_request']
-                django_logout(request, **{"template_name": settings.BASE_TEMPLATE})
-                return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
+        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
+        if self._session_expired(timeout, last_request, now):
+            django_logout(request, template_name=settings.BASE_TEMPLATE)
+            return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
         request.session['last_request'] = json_format_datetime(now)
