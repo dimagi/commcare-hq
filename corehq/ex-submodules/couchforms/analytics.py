@@ -4,7 +4,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import json_format_datetime
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, doc_types
 
 
 def update_analytics_indexes():
@@ -62,6 +62,21 @@ def get_number_of_forms_of_all_types(domain):
     # todo: this is only used to display the "filtered from __ entries" in the "raw forms" report
     # and can probably be removed
     startkey = [domain]
+    endkey = startkey + [{}]
+    submissions = XFormInstance.view(
+        "couchforms/all_submissions_by_domain",
+        startkey=startkey,
+        endkey=endkey,
+        reduce=True,
+        stale=stale_ok(),
+    ).one()
+    return submissions['value'] if submissions else 0
+
+
+def get_number_of_forms_by_type(domain, type_):
+    # todo: this is only used to display totals in the "raw forms" report and can probably be removed
+    assert type_ in doc_types()
+    startkey = [domain, type_]
     endkey = startkey + [{}]
     submissions = XFormInstance.view(
         "couchforms/all_submissions_by_domain",

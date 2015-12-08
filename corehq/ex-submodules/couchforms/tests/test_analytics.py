@@ -9,7 +9,7 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
     get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
     get_last_form_submission_for_user_for_app, get_number_of_submissions, get_form_analytics_metadata, \
-    get_number_of_forms_of_all_types
+    get_number_of_forms_of_all_types, get_number_of_forms_by_type
 from couchforms.models import XFormInstance, XFormError
 
 
@@ -106,4 +106,16 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
         self.assertEqual(
             get_number_of_forms_of_all_types(self.domain),
             len(self.all_forms)
+        )
+
+    def test_get_number_of_forms_by_type_xforminstance(self):
+        self.assertEqual(
+            get_number_of_forms_by_type(self.domain, 'XFormInstance'),
+            len(self.forms)
+        )
+
+    def test_get_number_of_forms_by_type_xformerror(self):
+        self.assertEqual(
+            get_number_of_forms_by_type(self.domain, 'XFormError'),
+            len(self.error_forms)
         )
