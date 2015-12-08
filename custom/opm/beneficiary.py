@@ -549,7 +549,7 @@ class OPMCaseRow(object):
                 return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 6)
+                for form in self.filtered_forms(CFU1_XMLNS, 7)
             )
 
     @property
