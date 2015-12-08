@@ -28,23 +28,12 @@ INVALID_SHARD_RANGE = {
     }
 }
 
+db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
-    'default': {
-        'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-    },
-    'proxy': {
-        'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-    },
-    'db1': {
-        'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-    },
-    'db2': {
-        'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-    },
+    'default': db_dict,
+    'proxy': db_dict,
+    'db1': db_dict,
+    'db2': db_dict,
 }
 
 
@@ -54,7 +43,7 @@ class TestPartitionConfig(SimpleTestCase):
 
     def test_dbs_by_group(self):
         config = PartitionConfig()
-        dbs = config.dbs_by_group('form_processing')
+        dbs = config.get_form_processing_dbs()
         self.assertIn('db1', dbs)
         self.assertIn('db2', dbs)
 
