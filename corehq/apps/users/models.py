@@ -539,6 +539,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 return
 
         domain_obj = Domain.get_by_name(domain, strict=True)
+        # if you haven't seen any of these by Feb 2016 you should delete this code.
         _soft_assert = soft_assert(notify_admins=True)
         if not _soft_assert(domain_obj,
                             "Domain membership added before domain created",
