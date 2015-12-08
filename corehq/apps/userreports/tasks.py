@@ -71,6 +71,7 @@ def rebuild_indicators(indicator_config_id):
             config.save()
         except ResourceConflict:
             current_config = DataSourceConfiguration.get(config._id)
+            # check that a new build has not yet started
             if config.meta.build.initiated == current_config.meta.build.initiated:
                 current_config.meta.build.finished = True
                 current_config.save()
