@@ -99,8 +99,8 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         return ElasticAPIQuerySet(
             payload=es_query,
             model=wrapper,
-            es_client=self.xform_es(domain)).order_by('-received_on'
-        )
+            es_client=self.xform_es(domain)
+        ).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
         ordering = ['received_on']
@@ -433,8 +433,8 @@ class HOPECaseResource(CommCareCaseResource):
         return ElasticAPIQuerySet(
             payload=query,
             model=HOPECase,
-            es_client=self.case_es(domain)).order_by('server_modified_on',
-        )
+            es_client=self.case_es(domain),
+        ).order_by('server_modified_on')
 
     def alter_list_data_to_serialize(self, request, data):
 
