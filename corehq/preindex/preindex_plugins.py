@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 import os
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch import sync_docs
@@ -17,6 +18,8 @@ def get_preindex_plugin(app_label):
 
 class PreindexPlugin(object):
 
+    __metaclass__ = ABCMeta
+
     def __init__(self, app_label, dir, app_db_map=None):
         self.app_label = app_label
         self.dir = dir
@@ -34,6 +37,7 @@ class PreindexPlugin(object):
         dir = os.path.abspath(os.path.dirname(file))
         register_preindex_plugin(cls(app_label, dir, app_db_map))
 
+    @abstractmethod
     def get_designs(self):
         raise NotImplementedError()
 
