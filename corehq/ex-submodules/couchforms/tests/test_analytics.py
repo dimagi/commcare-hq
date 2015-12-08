@@ -13,6 +13,7 @@ from couchforms.models import XFormInstance
 
 
 class CouchformsAnalyticsTest(TestCase, DocTestMixin):
+    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain']
 
     @classmethod
     def setUpClass(cls):

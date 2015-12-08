@@ -9,6 +9,7 @@ from couchforms.models import XFormInstance, XFormError
 
 
 class TestDBAccessors(TestCase):
+    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor']
 
     @classmethod
     def setUpClass(cls):
