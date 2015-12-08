@@ -717,3 +717,10 @@ GRID_MENUS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+SECURE_SESSIONS_CHECKBOX = StaticToggle(
+    'secure_sessions_checkbox',
+    'Show secure sessions checkbox',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
