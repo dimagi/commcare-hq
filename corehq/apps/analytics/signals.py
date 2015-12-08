@@ -51,30 +51,27 @@ def _get_subscription_properties_by_user(couch_user):
 
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
-    properties = {
-        SoftwarePlanEdition.COMMUNITY: "no",
-        SoftwarePlanEdition.STANDARD: "no",
-        SoftwarePlanEdition.PRO: "no",
-        SoftwarePlanEdition.ADVANCED: "no",
-        SoftwarePlanEdition.ENTERPRISE: "no",
-        "Pro Bono": "no",
-    }
-
+    all_subscriptions = []
+    subscribed_editions = []
     for domain_name in couch_user.domains:
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
+        subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
-            if subscription.pro_bono_status == ProBonoStatus.YES:
-                properties["Pro Bono"] = "yes"
-        edition = plan_version.plan.edition
-        if edition in properties:
-            properties[edition] = "yes"
+            all_subscriptions.append(subscription)
+
+    def _is_one_of_editions(edition):
+        return 'yes' if edition in subscribed_editions else 'no'
+
+    def _is_a_pro_bono_status(status):
+        return 'yes' if status in [s.pro_bono_status for s in all_subscriptions] else 'no'
+
     return {
-        'is_on_community_plan': properties[SoftwarePlanEdition.COMMUNITY],
-        'is_on_standard_plan': properties[SoftwarePlanEdition.STANDARD],
-        'is_on_pro_plan': properties[SoftwarePlanEdition.PRO],
-        'is_on_advanced_plan': properties[SoftwarePlanEdition.ADVANCED],
-        'is_on_enterprise_plan': properties[SoftwarePlanEdition.ENTERPRISE],
-        'is_on_pro_bono_or_discounted_plan': properties["Pro Bono"],
+        'is_on_community_plan': _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
+        'is_on_standard_plan': _is_one_of_editions(SoftwarePlanEdition.STANDARD),
+        'is_on_pro_plan': _is_one_of_editions(SoftwarePlanEdition.PRO),
+        'is_on_advanced_plan': _is_one_of_editions(SoftwarePlanEdition.ADVANCED),
+        'is_on_enterprise_plan': _is_one_of_editions(SoftwarePlanEdition.ENTERPRISE),
+        'is_on_pro_bono_or_discounted_plan': _is_a_pro_bono_status(ProBonoStatus.YES),
     }
 
 
