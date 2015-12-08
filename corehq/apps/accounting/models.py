@@ -4,6 +4,8 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
+from django.db.models.manager import Manager
+
 from corehq.util.quickcache import quickcache
 from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
@@ -1694,6 +1696,7 @@ class InvoiceBase(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = InvoiceBaseManager()
+    api_objects = Manager()
 
     class Meta:
         abstract = True

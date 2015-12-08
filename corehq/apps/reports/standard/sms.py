@@ -265,18 +265,13 @@ class MessageLogReport(BaseCommConnectLogReport):
         return lambda message_types: True
 
     def get_location_filter(self):
-        locations = []
+        locations_ids = []
         location_id = OptionalAsyncLocationFilter.get_value(self.request, self.domain)
         if location_id:
-            locations = SQLLocation.objects.get(
-                location_id=location_id
-            ).get_descendants(
-                include_self=True
-            ).filter(
-                location_type__administrative=False
-            ).values_list('location_id', flat=True)
+            locations_ids = SQLLocation.objects.get(location_id=location_id).get_descendants(include_self=True)\
+                .values_list('location_id', flat=True)
 
-        return locations
+        return locations_ids
 
     @staticmethod
     def _get_message_types(message):
