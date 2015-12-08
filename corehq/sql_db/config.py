@@ -24,6 +24,11 @@ class PartitionConfig(object):
                 raise PartitionValidationError('{} has shards that other dbs point to'.format(group))
             shards_seen |= current_shards
 
+        num_shards = len(shards_seen)
+
+        if not _is_power_of_2(num_shards):
+            raise PartitionValidationError('Total number of shards must be a power of 2')
+
     @property
     def partition_config(self):
         return settings.PARTITION_DATABASE_CONFIG
@@ -55,3 +60,7 @@ class PartitionConfig(object):
         for db, shard_range in shards.items():
             shard_mapping.update({shard: db for shard in range(shard_range[0], shard_range[1] + 1)})
         return shard_mapping
+
+
+def _is_power_of_2(num):
+    return num and not (num & (num - 1))
