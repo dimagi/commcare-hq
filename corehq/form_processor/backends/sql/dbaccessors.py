@@ -1,7 +1,7 @@
 import logging
 from itertools import groupby
 
-from django.db import connection, InternalError
+from django.db import connections, InternalError
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
@@ -10,6 +10,7 @@ from corehq.form_processor.models import (
     CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
     case_transaction_adapter, case_index_adapter, case_attachment_adapter
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 
 doc_type_to_state = {
@@ -20,6 +21,11 @@ doc_type_to_state = {
     "XFormArchived": XFormInstanceSQL.ARCHIVED,
     "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
 }
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -100,7 +106,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
             result = fetchone_as_namedtuple(cursor)
             return result.form_exists
@@ -108,7 +114,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(domain, form_ids):
         assert isinstance(form_ids, list)
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT * FROM hard_delete_forms(%s, %s)', [domain, form_ids])
             result = fetchone_as_namedtuple(cursor)
             return result.deleted_count
@@ -123,7 +129,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def _archive_unarchive_form(form_id, user_id, archive):
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s)', [form_id, archive])
 
@@ -145,7 +151,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form = form
         form.clear_tracked_models()
 
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s)',
                 [form, unsaved_attachments, operations]
@@ -180,7 +186,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def update_form_problem_and_state(form):
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT update_form_problem_and_state(%s, %s, %s)',
                 [form.form_id, form.problem, form.state]
@@ -189,7 +195,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @unit_testing_only
     def get_form_ids_in_domain(domain, user_id=None):
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT form_id FROM get_form_ids_in_domain(%s, %s)', [domain, user_id])
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
@@ -219,14 +225,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Return True if a case has been modified since the given modification date.
         Assumes that the case exists in the DB.
         """
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
             result = fetchone_as_namedtuple(cursor)
             return result.case_modified
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT form_id FROM get_case_form_ids(%s)', [case_id])
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
@@ -258,7 +264,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT * FROM hard_delete_cases(%s, %s)', [domain, case_ids])
             result = fetchone_as_namedtuple(cursor)
             return result.deleted_count
@@ -300,7 +306,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain(domain, type_=None):
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
@@ -321,7 +327,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
         )"""
         query = query.format(CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             try:
                 cursor.execute(query, [
                     case,

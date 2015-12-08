@@ -7,6 +7,12 @@ SQL_ACCESSORS_APP = 'sql_accessors'
 
 class PartitionRouter(object):
 
+    def db_for_read(self, model, **hints):
+        return db_for_read_write(model)
+
+    def db_for_write(self, model, **hints):
+        return db_for_read_write(model)
+
     def allow_migrate(self, db, model):
         app_label = model._meta.app_label
         return allow_migrate(db, app_label)
@@ -31,3 +37,12 @@ def allow_migrate(db, app_label):
         return db in partition_config.get_form_processing_dbs()
     else:
         return db == partition_config.get_main_db()
+
+
+def db_for_read_write(model):
+    app_label = model._meta.app_label
+    config = PartitionConfig()
+    if app_label == FORM_PROCESSOR_APP:
+        return config.get_proxy_db()
+    else:
+        return config.get_main_db()

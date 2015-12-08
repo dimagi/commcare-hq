@@ -14,7 +14,7 @@ from django.db import models
 from uuidfield import UUIDField
 
 from corehq.form_processor.track_related import TrackRelatedChanges
-
+from corehq.sql_db.routers import db_for_read_write
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators.memoized import memoized
@@ -114,8 +114,7 @@ class RestrictedManager(models.Manager):
 
     def raw(self, raw_query, params=None, translations=None, using=None):
         from django.db.models.query import RawQuerySet
-        if using is None:
-            using = self._db
+        using = db_for_read_write(self.model)
         return RawQuerySet(raw_query, model=self.model,
                 params=params, translations=translations,
                 using=using)
