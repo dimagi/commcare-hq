@@ -8,11 +8,13 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
     app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
     get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
-    get_last_form_submission_for_user_for_app, get_number_of_submissions, get_form_analytics_metadata
-from couchforms.models import XFormInstance
+    get_last_form_submission_for_user_for_app, get_number_of_submissions, get_form_analytics_metadata, \
+    get_number_of_forms_of_all_types, get_number_of_forms_by_type
+from couchforms.models import XFormInstance, XFormError
 
 
 class CouchformsAnalyticsTest(TestCase, DocTestMixin):
+    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain']
 
     @classmethod
     def setUpClass(cls):
@@ -32,14 +34,16 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
                           app_id=cls.app_id, xmlns=cls.xmlns,
                           form={'meta': {'userID': cls.user_id, 'username': 'frank'}}),
         ]
-        for form in cls.forms:
+        cls.error_forms = [XFormError(domain=cls.domain)]
+        cls.all_forms = cls.forms + cls.error_forms
+        for form in cls.all_forms:
             form.save()
 
         update_analytics_indexes()
 
     @classmethod
     def tearDownClass(cls):
-        for form in cls.forms:
+        for form in cls.all_forms:
             form.delete()
 
     def test_domain_has_submission_in_last_30_days(self):
@@ -97,3 +101,21 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
         info = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
         self.assertEqual(self.xmlns, info['xmlns'])
         self.assertEqual(2, info['submissions'])
+
+    def test_get_number_of_forms_of_all_types(self):
+        self.assertEqual(
+            get_number_of_forms_of_all_types(self.domain),
+            len(self.all_forms)
+        )
+
+    def test_get_number_of_forms_by_type_xforminstance(self):
+        self.assertEqual(
+            get_number_of_forms_by_type(self.domain, 'XFormInstance'),
+            len(self.forms)
+        )
+
+    def test_get_number_of_forms_by_type_xformerror(self):
+        self.assertEqual(
+            get_number_of_forms_by_type(self.domain, 'XFormError'),
+            len(self.error_forms)
+        )
