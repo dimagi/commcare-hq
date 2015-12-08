@@ -72,18 +72,6 @@ def get_number_of_forms_by_type(domain, type_):
     return submissions['value'] if submissions else 0
 
 
-def get_number_of_forms_of_all_types(domain):
-    startkey = [domain]
-    endkey = startkey + [{}]
-    submissions = XFormInstance.view(
-        "couchforms/all_submissions_by_domain",
-        startkey=startkey,
-        endkey=endkey,
-        reduce=True,
-    ).one()
-    return submissions['value'] if submissions else 0
-
-
 def get_number_of_forms_all_domains_in_couch():
     """
     Return number of non-error, non-log forms total across all domains

@@ -12,6 +12,7 @@ def update_analytics_indexes():
     Mostly for testing; wait until analytics data sources are up to date
     so that calls to analytics functions return up-to-date
     """
+    XFormInstance.get_db().view('couchforms/all_submissions_by_domain', limit=1).all()
     XFormInstance.get_db().view('reports_forms/all_forms', limit=1).all()
     XFormInstance.get_db().view('exports_forms/by_xmlns', limit=1).all()
 
@@ -52,6 +53,24 @@ def get_number_of_forms_in_domain(domain):
         stale=stale_ok(),
     ).one()
     return row["value"] if row else 0
+
+
+def get_number_of_forms_of_all_types(domain):
+    """
+    Gets a count of all form-like things in a domain (including errors and duplicates)
+    """
+    # todo: this is only used to display the "filtered from __ entries" in the "raw forms" report
+    # and can probably be removed
+    startkey = [domain]
+    endkey = startkey + [{}]
+    submissions = XFormInstance.view(
+        "couchforms/all_submissions_by_domain",
+        startkey=startkey,
+        endkey=endkey,
+        reduce=True,
+        stale=stale_ok(),
+    ).one()
+    return submissions['value'] if submissions else 0
 
 
 def get_first_form_submission_received(domain):
