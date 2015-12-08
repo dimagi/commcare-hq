@@ -202,7 +202,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                         css_class='col-sm-6',
                     ),
                     Div(
-                        HTML(_("<p>days after the case was last modified</p>")),
+                        HTML(_("<p><strong>days after the case was last modified</strong></p>")),
                         css_class='col-sm-6',
                     ),
                     label_class=self.helper.label_class,
