@@ -942,7 +942,7 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
+USE_PARTITIONED_DATABASE = False
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
@@ -1046,6 +1046,11 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 if not UCR_DATABASE_URL or UNIT_TESTING:
     # by default just use the reporting DB for UCRs
     UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
+if USE_PARTITIONED_DATABASE:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
+else:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
