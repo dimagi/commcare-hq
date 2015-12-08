@@ -1,13 +1,13 @@
 from optparse import make_option
 
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
-from django.db import connection
+from django.core.management.base import BaseCommand
+from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import PartitionConfig
 
-SHARD_TEMPLATE = "p{SHARD_ID} 'dbname={NAME} hostname={HOST} port={PORT}'"
+SHARD_TEMPLATE = "p{SHARD_ID} 'dbname={NAME} host={HOST} port={PORT}'"
 
 SERVER_TEMPLATE = """
     CREATE SERVER {server_name} FOREIGN DATA WRAPPER plproxy
@@ -34,39 +34,47 @@ class Command(BaseCommand):
             default=False),
         )
 
-
     def handle(self, *args, **options):
         if not settings.USE_PARTITIONED_DATABASE:
             print "System not configured to use a partitioned database"
 
         verbose = options['verbose']
         if cluster_exists(settings.PL_PROXY_CLUSTER_NAME):
-            pass # prompt user to confirm and then drop
+            confirm_update = raw_input("Cluster configuration already exists. Are you sure you want to change it?")
+            if confirm_update == 'yes':
+                create_pl_proxy_cluster(verbose, drop_existing=True)
         else:
             create_pl_proxy_cluster(verbose)
 
 
-def create_pl_proxy_cluster(verbose=False):
+def create_pl_proxy_cluster(verbose=False, drop_existing=False):
     config = PartitionConfig()
     proxy_db = config.get_proxy_db()
-    config_sql = get_pl_proxy_server_config_sql(config.shard_mapping())
 
-    proxy_db_config = settings.DATABASES[proxy_db].copy()
-    proxy_db_config['server_name'] = settings.PL_PROXY_CLUSTER_NAME
-    user_mapping_sql = USER_MAPPING_TEMPLATE.format(**proxy_db_config)
+    if drop_existing:
+        with connections[proxy_db].cursor() as cursor:
+            cursor.execute(get_drop_server_sql())
+
+    config_sql = get_pl_proxy_server_config_sql(config.shard_mapping())
+    user_mapping_sql = get_user_mapping_sql()
 
     if verbose:
         print 'Running SQL'
         print config_sql
         print user_mapping_sql
 
-    with connection.cursor() as cursor:
+    with connections[proxy_db].cursor() as cursor:
         cursor.execute(config_sql)
         cursor.execute(user_mapping_sql)
 
 
+def get_drop_server_sql():
+    return 'DROP SERVER IF EXISTS {} CASCADE;'.format(settings.PL_PROXY_CLUSTER_NAME)
+
+
 def cluster_exists(cluster_name):
-    with connection.cursor() as cursor:
+    proxy_db = PartitionConfig().get_proxy_db()
+    with connections[proxy_db].cursor() as cursor:
         cursor.execute('SELECT srvname from pg_foreign_server where srvname = %s', [cluster_name])
         result = fetchall_as_namedtuple(cursor)
         return bool(result)
@@ -81,6 +89,13 @@ def get_pl_proxy_server_config_sql(shard_mapping):
     )
 
     return server_sql
+
+
+def get_user_mapping_sql():
+    proxy_db = PartitionConfig().get_proxy_db()
+    proxy_db_config = settings.DATABASES[proxy_db].copy()
+    proxy_db_config['server_name'] = settings.PL_PROXY_CLUSTER_NAME
+    return USER_MAPPING_TEMPLATE.format(**proxy_db_config)
 
 
 def get_shard_config_strings(shard_mapping):

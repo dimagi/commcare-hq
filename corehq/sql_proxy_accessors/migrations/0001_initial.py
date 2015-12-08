@@ -4,13 +4,30 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models, migrations
 
-from corehq.sql_db.operations import HqRunSQL
+from corehq.sql_db.config import PartitionConfig
+from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_drop_server_sql, \
+    get_pl_proxy_server_config_sql, get_user_mapping_sql
+from corehq.sql_db.operations import HqRunSQL, HqRunPython
 from corehq.util.migration import RawSQLMigration
 
 
 migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
     'PL_PROXY_CLUSTER_NAME': settings.PL_PROXY_CLUSTER_NAME
 })
+
+
+def create_update_pl_proxy_config():
+    drop_server_sql = get_drop_server_sql()
+    sql_statements = [
+        drop_server_sql,
+        get_pl_proxy_server_config_sql(PartitionConfig().shard_mapping()),
+        get_user_mapping_sql()
+    ]
+
+    return HqRunSQL(
+        '\n'.join(sql_statements),
+        drop_server_sql
+    )
 
 
 class Migration(migrations.Migration):
@@ -27,6 +44,7 @@ class Migration(migrations.Migration):
             'CREATE EXTENSION IF NOT EXISTS hashlib',
             'DROP EXTENSION hashlib'
         ),
+        create_update_pl_proxy_config(),
         migrator.get_migration('archive_unarchive_form.sql'),
         migrator.get_migration('case_modified_since.sql'),
         migrator.get_migration('check_form_exists.sql'),
