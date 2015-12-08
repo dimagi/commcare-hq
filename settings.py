@@ -242,7 +242,7 @@ HQ_APPS = (
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
-    'corehq.db',
+    'corehq.sql_db',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -942,7 +942,7 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
-DATABASE_ROUTERS = ['corehq.db.routers.MonolithRouter']
+DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35

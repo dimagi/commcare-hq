@@ -4,7 +4,7 @@ from sqlagg.columns import MonthColumn, YearColumn, YearQuarterColumn
 from sqlagg.filters import IN
 
 from corehq.apps.reports.sqlreport import SqlReportException, AggregateColumn, DatabaseColumn
-from corehq.db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager
 from custom.apps.cvsu.sqldata import combine_month_year, format_date, combine_quarter_year, format_year
 
 

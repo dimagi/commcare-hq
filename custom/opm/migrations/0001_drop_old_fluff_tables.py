@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import logging
 
 from sqlalchemy import Table, MetaData
-from corehq.db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager
 from corehq.util.decorators import change_log_level
 from django.db import migrations
 
