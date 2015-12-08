@@ -195,7 +195,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 hqcrispy.B3MultiField(
                     _("Close Case"),
                     Div(
-                        InlineField(
+                        hqcrispy.MultiInlineField(
                             'server_modified_boundary',
                             ng_model='server_modified_boundary',
                         ),
