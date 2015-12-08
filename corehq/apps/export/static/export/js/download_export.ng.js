@@ -255,6 +255,7 @@
 
         $scope.sendAnalytics = function () {
             analytics.usage("Download Export", _(exportDownloadService.exportType).capitalize(), "Saved");
+            window.analytics.track("Clicked Download button");
         };
     };
     download_export.controller(exportsControllers);
