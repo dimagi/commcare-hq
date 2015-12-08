@@ -25,8 +25,5 @@ class PartitionRouter(object):
 
 class MonolithRouter(object):
 
-    def __init__(self):
-        self.config = PartitionConfig()
-
     def allow_migrate(self, db, app_label, model=None, **hints):
         return app_label != PROXY_APP
