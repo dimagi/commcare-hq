@@ -5,6 +5,7 @@ from django.test import SimpleTestCase
 from corehq.apps.es import FormES
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests import get_simple_form_xml
+from corehq.form_processor.tests.utils import TestFormMetadata
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.pillows.xform import XFormPillow
 from pillowtop.tests import require_explicit_elasticsearch_testing
@@ -18,42 +19,71 @@ class XFormESTestCase(SimpleTestCase):
     @classmethod
     @require_explicit_elasticsearch_testing
     def setUpClass(cls):
-        cls.domain = 'xform-es-tests-{}'.format(uuid.uuid4().hex)
         cls.now = datetime.datetime.utcnow()
-        cls.forms = [
-            _make_es_ready_form(cls.domain),
-            _make_es_ready_form(cls.domain),
-        ]
+        cls.forms = []
         cls.pillow = XFormPillow()
-        for form_pair in cls.forms:
-            cls.pillow.change_transport(form_pair.json_form)
 
+    @classmethod
+    def _ship_forms_to_es(cls, metadatas):
+        for form_metadata in metadatas:
+            form_pair = _make_es_ready_form(form_metadata)
+            cls.forms.append(form_pair)
+            cls.pillow.change_transport(form_pair.json_form)
         # have to refresh the index to make sure changes show up
         cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDown(cls):
         for form in cls.forms:
             cls.pillow.get_es_new().delete(cls.pillow.es_index, cls.pillow.es_type, form.wrapped_form.form_id)
+        cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
+        cls.forms = []
 
     def test_forms_are_in_index(self):
+        self._ship_forms_to_es([None, None])
+        self.assertEqual(2, len(self.forms))
         for form in self.forms:
             self.assertTrue(self.pillow.doc_exists(form.wrapped_form.form_id))
 
     def test_query_by_domain(self):
-        query_set = FormES().domain(self.domain).run()
-        self.assertEqual(2, query_set.total)
-        self.assertEqual(set([f.wrapped_form.form_id for f in self.forms]), set(query_set.doc_ids))
+        domain1 = 'test1-{}'.format(uuid.uuid4().hex)
+        domain2 = 'test2-{}'.format(uuid.uuid4().hex)
+        self._ship_forms_to_es(
+            2 * [TestFormMetadata(domain=domain1)] +
+            1 * [TestFormMetadata(domain=domain2)]
+        )
+        self.assertEqual(2, FormES().domain(domain1).run().total)
+        self.assertEqual(1, FormES().domain(domain2).run().total)
+
+    def test_query_by_user(self):
+        test_id = uuid.uuid4().hex
+        domain = 'test-by-user-{}'.format(test_id)
+        user1 = 'user1-{}'.format(test_id)
+        user2 = 'user2-{}'.format(test_id)
+        self._ship_forms_to_es(
+            2 * [TestFormMetadata(domain=domain, user_id=user1)] +
+            1 * [TestFormMetadata(domain=domain, user_id=user2)]
+        )
+        self.assertEqual(2, FormES().user_id([user1]).run().total)
+        self.assertEqual(1, FormES().user_id([user2]).run().total)
+        self.assertEqual(3, FormES().user_id([user1, user2]).run().total)
+        # also test with domain filter
+        self.assertEqual(3, FormES().domain(domain).run().total)
+        self.assertEqual(2, FormES().domain(domain).user_id([user1]).run().total)
+        self.assertEqual(1, FormES().domain(domain).user_id([user2]).run().total)
+        self.assertEqual(3, FormES().domain(domain).user_id([user1, user2]).run().total)
 
 
-def _make_es_ready_form(domain):
+def _make_es_ready_form(metadata=None):
     # this is rather complicated due to form processor abstractions and ES restrictions
     # on what data needs to be in the index and is allowed in the index
+    metadata = metadata or TestFormMetadata()
+    metadata.domain = metadata.domain or uuid.uuid4().hex
     form_id = uuid.uuid4().hex
-    form_xml = get_simple_form_xml(form_id=form_id)
+    form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
     form_json = convert_xform_to_json(form_xml)
-    wrapped_form = FormProcessorInterface(domain=domain).new_xform(form_json)
-    wrapped_form.domain = domain
+    wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
+    wrapped_form.domain = metadata.domain
     json_form = wrapped_form.to_json()
     json_form['form']['meta'].pop('appVersion')  # hack - ES chokes on this
     return WrappedJsonFormPair(wrapped_form, json_form)
