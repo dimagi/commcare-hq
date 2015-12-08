@@ -38,7 +38,7 @@ class PartitionConfig(object):
         return settings.DATABASES
 
     def get_proxy_db(self):
-        return self._dbs_by_group(PROXY_GROUP, 1)
+        return self._dbs_by_group(PROXY_GROUP, 1)[0]
 
     def get_main_db(self):
         return self._dbs_by_group(MAIN_GROUP, 1)[0]
