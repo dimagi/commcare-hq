@@ -135,7 +135,7 @@ class ConfigurableReportDataSource(SqlData):
             ProgrammingError,
         ) as e:
             raise UserReportsError(unicode(e))
-        except TableNotFoundException as e:
+        except TableNotFoundException:
             raise TableNotFoundWarning
 
         return self._sort_data(ret)
