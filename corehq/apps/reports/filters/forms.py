@@ -3,7 +3,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
 import re
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import RemoteApp, Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
@@ -13,51 +13,20 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
+REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 MISSING_APP_ID = "_MISSING_APP_ID"
-
-PARAM_SLUG_STATUS = 'status'
-PARAM_SLUG_APP_ID = 'app_id'
-PARAM_SLUG_MODULE = 'module'
-PARAM_SLUG_XMLNS = 'xmlns'
-
-PARAM_VALUE_STATUS_ACTIVE = 'active'
-PARAM_VALUE_STATUS_DELETED = 'deleted'
-
-
-class FormsByApplicationFilterParams(object):
-    def __init__(self, params):
-        self.app_id = self.status = self.module = self.xmlns = self.most_granular_filter = None
-        for param in params:
-            slug = param['slug']
-            value = param['value']
-            if slug == PARAM_SLUG_STATUS:
-                self.status = value
-            elif slug == PARAM_SLUG_APP_ID:
-                self.app_id = value
-            elif slug == PARAM_SLUG_MODULE:
-                self.module = value
-            elif slug == PARAM_SLUG_XMLNS:
-                self.xmlns = value
-            # we rely on the fact that the filters come in order of granularity
-            # some logic depends on this
-            self.most_granular_filter = slug
-
-    @property
-    def show_active(self):
-        return self.status == PARAM_VALUE_STATUS_ACTIVE
 
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
         Use this filter to drill down by
-        (Active Applications or Deleted Applications >) Application > Module > Form
+        (Active Applications or Deleted Applications or Remote Applications >) Application > Module > Form
 
-        You may also select Unknown Forms for forms that can't be matched to any known Application or
-        Application-Deleted for this domain. Form submissions for remote apps will also show up
-        in Unknown Forms
+        You may also select Unknown Forms for forms that can't be matched to any known Application, Application-Deleted,
+        RemoteApp, or RemoteApp-Deleted for this domain.
 
-        You may also hide/show fuzzy results (where fuzzy means you can't match that XMLNS to exactly one
-        Application or Application-Deleted).
+        You may also hide/show fuzzy results (where fuzzy means you can't match that XMLNS to exactly one Application
+        or Application-Deleted).
     """
     slug = "form"
     label = ugettext_lazy("Filter Forms")
@@ -66,8 +35,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                                          "to choose from. Please create an application!")
     template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
+    app_slug = 'app_id'
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
+    unknown_remote_app_id = 'unknown_remote_app'
     display_app_type = False # whether we're displaying the application type select box in the filter
 
     @property
@@ -84,16 +55,17 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Current supported types are:
             - Active Application (Application)
             - Deleted Application (Application-Deleted)
+            - Remote Application (RemoteApp and RemoteApp-Deleted)
         """
         labels = self.get_labels()
-        if self.drilldown_map and self.drilldown_map[0]['val'] == PARAM_VALUE_STATUS_ACTIVE:
+        if self.drilldown_map and self.drilldown_map[0]['val'] == 'active':
             labels = [
                  (_('Application Type'),
                   _("Select an Application Type") if self.use_only_last else _("Show all Application Types"),
                   'status'),
                  (_('Application'),
                   _("Select Application...") if self.use_only_last else _("Show all Forms of this Application Type..."),
-                  PARAM_SLUG_APP_ID),
+                  self.app_slug),
              ] + labels[1:]
         return labels
 
@@ -119,14 +91,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         })
 
         if self.display_app_type and not context['selected']:
-            context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
-        context["show_advanced"] = (
-            self.request.GET.get('show_advanced') == 'on'
-            or context["unknown"]["show"]
-            or context["hide_fuzzy"]["checked"]
-            or (len(context['selected']) > 0
-                and context['selected'][0] != PARAM_VALUE_STATUS_ACTIVE)
-        )
+            context['selected'] = ['active']
+        context["show_advanced"] = self.request.GET.get('show_advanced') == 'on' or context["unknown"]["show"] or \
+                                   context["hide_fuzzy"]["checked"] or \
+                                   (len(context['selected']) > 0 and context['selected'][0] != 'active')
         return context
 
     @property
@@ -134,13 +102,16 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     def drilldown_map(self):
         final_map = []
         map_active = []
+        map_remote = []
         map_deleted = []
 
         all_forms = self._application_forms_info.copy()
+        all_forms.update(self._remote_forms_info.copy())
 
         for app_map in all_forms.values():
             app_langs = app_map['app']['langs']
             is_deleted = app_map['is_deleted']
+            is_remote = app_map.get('is_remote', False)
 
             app_name = self.get_translated_value(self.display_lang, app_langs, app_map['app']['names'])
             if is_deleted:
@@ -158,24 +129,24 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         module['next'].append(self._map_structure(form_map['xmlns'], form_name))
                     app['next'].append(module)
 
-            if is_deleted:
+
+            if is_remote:
+                map_remote.append(app)
+            elif is_deleted:
                 map_deleted.append(app)
             else:
                 map_active.append(app)
 
-        if (bool(map_deleted) + bool(map_active)) > 1:
+        if (bool(map_remote) + bool(map_deleted) + bool(map_active)) > 1:
             self.display_app_type = True
             if map_active:
-                final_map.append(
-                    self._map_structure(PARAM_VALUE_STATUS_ACTIVE, _('Active CommCare Applications'), map_active)
-                )
+                final_map.append(self._map_structure('active', _('Active CommCare Applications'), map_active))
+            if map_remote:
+                final_map.append(self._map_structure('remote', _('Remote CommCare Applications'), map_remote))
             if map_deleted:
-                final_map.append(
-                    self._map_structure(PARAM_VALUE_STATUS_DELETED, _('Deleted CommCare Applications'),
-                                        map_deleted)
-                )
+                final_map.append(self._map_structure('deleted', _('Deleted CommCare Applications'), map_deleted))
         else:
-            final_map.extend(map_active or map_deleted)
+            final_map.extend(map_active or map_remote or map_deleted)
 
         return final_map
 
@@ -275,15 +246,124 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
+    def _remote_forms(self):
+        """
+            These are forms with an xmlns that can be matched to a RemoteApp or RemoteApp-Deleted id or
+            they have an xmlns which follows our remote app namespacing pattern.
+        """
+        result = {}
+
+        all_forms = set(self._all_forms)
+        std_app_forms = set(self._application_forms)
+        other_forms = list(all_forms.difference(std_app_forms))
+
+        key = ["", self.domain]
+        remote_app_data = RemoteApp.get_db().view('reports_apps/remote',
+            reduce=False,
+            startkey=key,
+            endkey=key+[{}],
+        ).all()
+        remote_apps = dict([(d['id'], d['value']) for d in remote_app_data])
+
+        for form in other_forms:
+            if form:
+                xmlns, app_id = self.split_xmlns_app_key(form)
+                remote_xmlns = re.search(REMOTE_APP_WILDCARD, xmlns)
+                if app_id in remote_apps.keys() or remote_xmlns:
+                    if app_id in remote_apps.keys():
+                        app_info = copy.copy(remote_apps[app_id])
+                    else:
+                        app_info = {
+                            'app': {
+                                'is_unknown': True,
+                                'id': self.unknown_remote_app_id,
+                                'names': 'Name Unknown',
+                                'langs': None,
+                            },
+                            'is_deleted': False,
+                        }
+
+                    # A little hokey, but for the RemoteApps that follow our expected namespacing we can lift
+                    # the module and form names from the xmlns.
+                    module_desc = xmlns.split('/')
+                    form_name = self.get_unknown_form_name(xmlns, app_id=app_id if app_id else None, none_if_not_found=True)
+                    if remote_xmlns:
+                        module_name = module_desc[-2] if len(module_desc) > 1 else None
+                        if not form_name:
+                            form_name = module_desc[-1] if module_desc else None
+                    else:
+                        module_name = None
+
+                    app_info.update({
+                        'module': {
+                            'names': module_name or "Unknown Module",
+                            'id': module_name or "unknown_module",
+                        },
+                        'form': {
+                            'names': form_name or "Unknown Name",
+                            'id': form_name or 'unknown_form',
+                        },
+                        'xmlns': xmlns,
+                    })
+                    result[form] = app_info
+        return result
+
+    @property
+    @memoized
+    def _remote_forms_info(self):
+        """
+            Used for placing remote forms into the drilldown_map. Outputs the same structure as _application_forms_info.
+        """
+        remote_forms = {}
+        for form, info in self._remote_forms.items():
+            app_id = info['app']['id']
+            if not app_id in remote_forms:
+                module_names = sorted(set([d['module']['names'] for d in self._remote_forms.values()
+                                       if d['app']['id'] == app_id]))
+                remote_forms[app_id] = {
+                    'app': info['app'],
+                    'is_user_registration': False,
+                    'is_remote': True,
+                    'is_deleted': info['is_deleted'],
+                    'module_names': module_names,
+                    'modules': [None]*len(module_names)
+                }
+
+            module_index = remote_forms[app_id]['module_names'].index(info['module']['names'])
+            if remote_forms[app_id]['modules'][module_index] is None:
+                form_names = sorted(set([d['form']['names'] for d in self._remote_forms.values()
+                                     if d['app']['id'] == app_id and d['module']['id'] == info['module']['id']]))
+                remote_forms[app_id]['modules'][module_index] = {
+                    'module': {
+                        'names': info['module']['names'],
+                        'id': module_index
+                    },
+                    'form_names': form_names,
+                    'forms': [None]*len(form_names),
+                }
+
+            form_index = remote_forms[app_id]['modules'][module_index]['form_names'].index(info['form']['names'])
+            remote_forms[app_id]['modules'][module_index]['forms'][form_index] = {
+                'form': {
+                    'names': info['form']['names'],
+                    'id': form_index,
+                },
+                'xmlns': info['xmlns'],
+            }
+        return remote_forms
+
+    @property
+    @memoized
     def _nonmatching_app_forms(self):
         """
-        These are forms that we could not find exact matches for in known or deleted apps
-        (including remote apps)
+            These are forms that we could not find exact matches for in remote apps or in
+
         """
         all_forms = set(self._all_forms)
         std_app_forms = set(self._application_forms)
+        remote_app_forms = set(self._remote_forms.keys())
         nonmatching = all_forms.difference(std_app_forms)
-        return list(nonmatching)
+        return list(nonmatching.difference(remote_app_forms))
 
     @property
     @memoized
@@ -347,6 +427,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
         return ''
 
+    def _clean_remote_id(self, app_id):
+        return app_id if app_id != self.unknown_remote_app_id else MISSING_APP_ID
+
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
         if app_id is not None and app_id != '_MISSING_APP_ID':
@@ -400,7 +483,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] == PARAM_SLUG_APP_ID:
+            if param['slug'] == cls.app_slug:
                 return True
         return False
 
@@ -413,18 +496,56 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             if self._application_forms:
                 key = ["app module form", self.domain]
                 data.extend(self._raw_data(key))
+            if self._remote_forms:
+                data.extend([{'value': v} for v in self._remote_forms.values()])
             return data
 
-        parsed_params = FormsByApplicationFilterParams(filter_results)
-        if parsed_params.xmlns:
-            status = parsed_params.status or PARAM_VALUE_STATUS_ACTIVE
-            key = ["status xmlns app", self.domain, status, parsed_params.xmlns, parsed_params.app_id]
-            return self._raw_data(key)
+        use_remote_form_data = bool(
+            (
+                filter_results[0]['slug'] == 'status' and
+                filter_results[0]['value'] == 'remote'
+            ) or (
+                filter_results[0]['slug'] == self.app_slug and self._remote_forms
+            )
+        )
+
+        if filter_results[-1]['slug'] == 'xmlns':
+            xmlns = filter_results[-1]['value']
+            app_id = filter_results[-3]['value']
+            if use_remote_form_data:
+                app_id = self._clean_remote_id(app_id)
+                data = [{'value': self._remote_forms[self.make_xmlns_app_key(xmlns, app_id)]}]
+            else:
+                status = filter_results[0]['value'] if filter_results[0]['slug'] == 'status' else 'active'
+                key = ["status xmlns app", self.domain, status, filter_results[-1]['value'], filter_results[-3]['value']]
+                data = self._raw_data(key)
         else:
-            if self._application_forms:
+            data = []
+
+            if use_remote_form_data:
+                all_forms = []
+                if filter_results[-1]['slug'] == 'module':
+                    app_id = filter_results[-2]['value']
+                    try:
+                        module_id = int(filter_results[-1]['value'])
+                        all_forms.extend(self._remote_forms_info[app_id]['modules'][module_id]['forms'])
+                    except (KeyError, ValueError):
+                        pass
+                else:
+                    app_id = filter_results[-1]['value']
+                    try:
+                        for module in self._remote_forms_info[app_id]['modules']:
+                            all_forms.extend(module['forms'])
+                    except KeyError:
+                        pass
+                app_id = self._clean_remote_id(app_id)
+                data.extend([{'value': self._remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
+
+            if (self._application_forms and
+                not (filter_results[0]['slug'] == 'status' and filter_results[0]['value'] == 'remote')):
                 prefix = "app module form"
                 key = [self.domain]
-                if parsed_params.status:
+                if filter_results[0]['slug'] == 'status':
                     prefix = "%s %s" % ("status", prefix)
                 for f in filter_results:
                     val = f['value']
@@ -434,9 +555,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         except Exception:
                             break
                     key.append(val)
-                return self._raw_data([prefix] + key)
-            else:
-                return []
+                data.extend(self._raw_data([prefix]+key))
+        return data
 
     def _get_selected_forms(self, filter_results):
         """
@@ -450,12 +570,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             for line in data:
                 app = line['value']
                 app_id = app['app']['id']
+                app_id = self._clean_remote_id(app_id)
                 xmlns_app = self.make_xmlns_app_key(app['xmlns'], app_id)
                 if xmlns_app not in result:
                     result[xmlns_app] = self._generate_report_app_info(
                         app['xmlns'],
                         app_id,
                         self._formatted_name_from_app(self.display_lang, app),
+                        is_remote=app.get('is_remote', False),
                     )
 
             if not self._hide_fuzzy_results and self._fuzzy_forms:
@@ -474,12 +596,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return result
 
     @staticmethod
-    def _generate_report_app_info(xmlns, app_id, name, is_fuzzy=False):
+    def _generate_report_app_info(xmlns, app_id, name, is_fuzzy=False, is_remote=False):
         return {
             'xmlns': xmlns,
             'app_id': app_id,
             'name': name,
             'is_fuzzy': is_fuzzy,
+            'is_remote': is_remote
         }
 
     def _get_selected_forms_for_unknown_apps(self):
@@ -536,15 +659,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @classmethod
     def get_labels(cls):
         return [
-            (_('Application'),
-             _("Select an Application") if cls.use_only_last
-             else _("Show Forms in all Applications"), PARAM_SLUG_APP_ID),
-            (_('Module'),
-             _("Select a Module") if cls.use_only_last
-             else _("Show Forms from all Modules in selected Application"), PARAM_SLUG_MODULE),
-            (_('Form'),
-             _("Select a Form") if cls.use_only_last
-             else _("Show all Forms in selected Module"), PARAM_SLUG_XMLNS),
+            (_('Application'), _("Select an Application") if cls.use_only_last
+                                    else _("Show Forms in all Applications"), cls.app_slug),
+            (_('Module'), _("Select a Module") if cls.use_only_last
+                                    else _("Show Forms from all Modules in selected Application"), 'module'),
+            (_('Form'), _("Select a Form") if cls.use_only_last
+                                    else _("Show all Forms in selected Module"), 'xmlns'),
         ]
 
     @classmethod
