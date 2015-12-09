@@ -16,7 +16,7 @@ def tableau(request, domain, workbook, worksheet):
     context = {
         'report_workbook': workbook,
         'report_worksheet': worksheet,
-        'view_by': location_type_name,
+        'user_view_by': location_type_name,
         user_location_level_key: location_name,
     }
 
