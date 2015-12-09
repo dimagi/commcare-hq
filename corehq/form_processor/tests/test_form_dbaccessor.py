@@ -8,7 +8,8 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml
+from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml, FormProcessorTestUtils
+from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-form-accessor'
@@ -17,6 +18,10 @@ DOMAIN = 'test-form-accessor'
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class FormAccessorTestsSQL(TestCase):
     dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
+
+    def setUp(self):
+        FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
+        FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
