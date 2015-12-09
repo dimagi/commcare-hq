@@ -353,7 +353,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def nonmatching_app_forms(self):
+    def _nonmatching_app_forms(self):
         """
             These are forms that we could not find exact matches for in remote apps or in
 
@@ -370,7 +370,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         matches = {}
         app_data = self._raw_data(["xmlns app", self.domain], group=True)
         app_xmlns = [d['key'][-2] for d in app_data]
-        for form in self.nonmatching_app_forms:
+        for form in self._nonmatching_app_forms:
             xmlns = self.split_xmlns_app_key(form, only_xmlns=True)
             if xmlns in app_xmlns:
                 matches[form] = {
@@ -406,7 +406,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     @memoized
     def unknown_forms(self):
-        nonmatching = set(self.nonmatching_app_forms)
+        nonmatching = set(self._nonmatching_app_forms)
         fuzzy_forms = set(self.fuzzy_forms.keys())
 
         unknown = list(nonmatching.difference(fuzzy_forms))
