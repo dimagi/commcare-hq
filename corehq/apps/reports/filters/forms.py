@@ -581,27 +581,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
             Returns the appropriate form information based on the current filter selection.
         """
-        def _generate_report_app_info(xmlns, app_id, name, is_fuzzy=False, is_remote=False):
-            return {
-                'xmlns': xmlns,
-                'app_id': app_id,
-                'name': name,
-                'is_fuzzy': is_fuzzy,
-                'is_remote': is_remote
-            }
-
-        result = {}
         if self._show_unknown:
-            all_unknown = [self._selected_unknown_xmlns] if self._selected_unknown_xmlns else self._unknown_forms
-            for form in all_unknown:
-                xmlns, app_id = self.split_xmlns_app_key(form)
-                if form not in result:
-                    result[xmlns] = _generate_report_app_info(
-                        xmlns,
-                        None if self._selected_unknown_xmlns else app_id,
-                        "%s; ID: %s" % (self.get_unknown_form_name(xmlns), xmlns)
-                    )
+            return self._get_selected_forms_for_unknown_apps()
         else:
+            result = {}
             data = self._get_filtered_data(filter_results)
             for line in data:
                 app = line['value']
@@ -609,7 +592,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 app_id = self._clean_remote_id(app_id)
                 xmlns_app = self.make_xmlns_app_key(app['xmlns'], app_id)
                 if xmlns_app not in result:
-                    result[xmlns_app] = _generate_report_app_info(
+                    result[xmlns_app] = self._generate_report_app_info(
                         app['xmlns'],
                         app_id,
                         self._formatted_name_from_app(self.display_lang, app),
@@ -622,13 +605,36 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 for xmlns, info in self._fuzzy_form_data.items():
                     for app_map in info['apps']:
                         if xmlns in selected_xmlns and app_map['app']['id'] in selected_apps:
-                            result["%s %s" % (xmlns, self.fuzzy_slug)] = _generate_report_app_info(
+                            result["%s %s" % (xmlns, self.fuzzy_slug)] = self._generate_report_app_info(
                                 xmlns,
                                 info['unknown_id'],
                                 "%s [Fuzzy Submissions]" % self._formatted_name_from_app(
                                     self.display_lang, app_map),
                                 is_fuzzy=True,
                             )
+            return result
+
+    @staticmethod
+    def _generate_report_app_info(xmlns, app_id, name, is_fuzzy=False, is_remote=False):
+        return {
+            'xmlns': xmlns,
+            'app_id': app_id,
+            'name': name,
+            'is_fuzzy': is_fuzzy,
+            'is_remote': is_remote
+        }
+
+    def _get_selected_forms_for_unknown_apps(self):
+        result = {}
+        all_unknown = [self._selected_unknown_xmlns] if self._selected_unknown_xmlns else self._unknown_forms
+        for form in all_unknown:
+            xmlns, app_id = self.split_xmlns_app_key(form)
+            if form not in result:
+                result[xmlns] = self._generate_report_app_info(
+                    xmlns,
+                    None if self._selected_unknown_xmlns else app_id,
+                    "%s; ID: %s" % (self.get_unknown_form_name(xmlns), xmlns)
+                )
         return result
 
     def _raw_data(self, startkey, endkey=None, reduce=False, group=False):
