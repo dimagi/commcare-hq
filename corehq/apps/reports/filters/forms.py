@@ -495,10 +495,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 )
         return result
 
-    def _raw_data(self, startkey, endkey=None, reduce=False, group=False):
+    def _raw_data(self, startkey, endkey=None, group=False):
         if endkey is None:
             endkey = startkey
-        kwargs = dict(group=group) if group else dict(reduce=reduce)
+        kwargs = dict(group=group) if group else dict(reduce=False)
         return Application.get_db().view('reports_forms/by_app_info',
             startkey=startkey,
             endkey=endkey+[{}],
