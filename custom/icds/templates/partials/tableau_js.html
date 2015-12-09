@@ -92,7 +92,8 @@
                 // Split out params and filters to be applied
                 var FILTER_KEY_SUBSTRING = 'ATTR(js_key_Location Key',
                     FILTER_VALUE_SUBSTRING = 'ATTR(js_key_Location Name',
-                    PARAM_SUBSTRING = 'ATTR(js_param_';
+                    PARAM_SUBSTRING = 'ATTR(js_param_',
+                    PARAM_UNCHANGED = 'CURRENT';
                 if(pair.fieldName.includes(FILTER_KEY_SUBSTRING)) {
                     filter_key = pair.formattedValue;
                 }
@@ -101,8 +102,24 @@
                     filters[filter_key] = filter_value;
                 }
                 if(pair.fieldName.includes(PARAM_SUBSTRING)) {
-                    var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1);
-                    params[param_key] = pair.formattedValue;
+                    var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
+                        param_value = pair.formattedValue;
+                    if(param_value = PARAM_UNCHANGED) {
+                        workbook.getParametersAsync()
+                                .then(function(current_parameters) {
+                                    // TODO: Do I need to deal with the case where the passed in param is not in the server params? I don't think so
+                                    _.each(current_parameters, function(current_param) {
+                                        if (current_param.getName() === param_key) {
+                                            params[param_key] = current_param.getCurrentValue()
+                                        }
+                                    })
+                                })
+                                .otherwise(function(err) {
+                                    alert(err);
+                                });
+                    } else {
+                        params[param_key] = param_value;
+                    }
                 }
 
             }
