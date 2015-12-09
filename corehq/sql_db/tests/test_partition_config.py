@@ -38,6 +38,7 @@ TEST_DATABASES = {
 }
 
 
+@override_settings(USE_PARTITIONED_DATABASE=True)
 @override_settings(PARTITION_DATABASE_CONFIG=TEST_PARTITION_CONFIG)
 @override_settings(DATABASES=TEST_DATABASES)
 class TestPartitionConfig(SimpleTestCase):
