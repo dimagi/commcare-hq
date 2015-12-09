@@ -429,7 +429,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return ''
 
     @staticmethod
-    def formatted_name_from_app(display_lang, app):
+    def _formatted_name_from_app(display_lang, app):
         langs = app['app']['langs']
         app_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['app']['names'])
         module_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['module']['names'])
@@ -612,7 +612,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     result[xmlns_app] = _generate_report_app_info(
                         app['xmlns'],
                         app_id,
-                        self.formatted_name_from_app(self.display_lang, app),
+                        self._formatted_name_from_app(self.display_lang, app),
                         is_remote=app.get('is_remote', False),
                     )
 
@@ -625,7 +625,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                             result["%s %s" % (xmlns, self.fuzzy_slug)] = _generate_report_app_info(
                                 xmlns,
                                 info['unknown_id'],
-                                "%s [Fuzzy Submissions]" % self.formatted_name_from_app(
+                                "%s [Fuzzy Submissions]" % self._formatted_name_from_app(
                                     self.display_lang, app_map),
                                 is_fuzzy=True,
                             )
