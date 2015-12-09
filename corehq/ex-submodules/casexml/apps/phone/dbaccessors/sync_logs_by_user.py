@@ -1,5 +1,5 @@
 from django.conf import settings
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -22,3 +22,18 @@ def get_all_sync_logs_docs():
         reduce=False,
     )]
     return iter_docs(SyncLog.get_db(), all_sync_log_ids)
+
+
+def get_sync_logs_for_user(user_id, limit):
+    sync_log_ids = [row['id'] for row in SyncLog.view(
+        "phone/sync_logs_by_user",
+        startkey=[user_id, {}],
+        endkey=[user_id],
+        descending=True,
+        reduce=False,
+        limit=limit,
+    )]
+    return [
+        properly_wrap_sync_log(sync_log_json)
+        for sync_log_json in iter_docs(SyncLog.get_db(), sync_log_ids)
+    ]
