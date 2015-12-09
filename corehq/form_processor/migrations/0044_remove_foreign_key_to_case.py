@@ -17,4 +17,9 @@ class Migration(migrations.Migration):
             field=models.CharField(max_length=255, db_index=True),
             preserve_default=True,
         ),
+        migrations.RenameField(
+            model_name='ledgervalue',
+            old_name='case',
+            new_name='case_id',
+        ),
     ]
