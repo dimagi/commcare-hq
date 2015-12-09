@@ -7,8 +7,10 @@ register = template.Library()
 LANG_BUTTON = ' <span style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-inverse btn-langcode-preprocessed%(extra_class)s">%(lang)s</span>'
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
+
 @register.simple_tag
-def translate(t, lang, langs=[]):
+def translate(t, lang, langs=None):
+    langs = langs or []
     for lang in [lang] + langs:
         if lang in t:
             return t[lang]

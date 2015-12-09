@@ -125,6 +125,21 @@ def get_last_form_submission_received(domain):
     return submission_time
 
 
+def get_last_form_submission_by_xmlns(domain, xmlns):
+    from corehq.apps.reports.util import make_form_couch_key
+    key = make_form_couch_key(domain, xmlns=xmlns)
+    return XFormInstance.view(
+        "reports_forms/all_forms",
+        reduce=False,
+        endkey=key,
+        startkey=key + [{}],
+        descending=True,
+        limit=1,
+        include_docs=True,
+        stale=stale_ok(),
+    ).first()
+
+
 def get_last_form_submission_for_user_for_app(domain, user_id, app_id=None):
     if app_id:
         key = ['submission app user', domain, app_id, user_id]

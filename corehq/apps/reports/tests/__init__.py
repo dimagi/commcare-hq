@@ -1,4 +1,5 @@
 try:
+    from .test_analytics import *
     from .test_case_export import *
     from .test_cache import *
     from .test_data_sources import *

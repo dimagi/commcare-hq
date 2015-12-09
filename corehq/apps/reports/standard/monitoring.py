@@ -4,11 +4,13 @@ from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+from pygooglechart import ScatterChart
 import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.analytics.esaccessors import get_last_submission_time_for_user, \
+    get_submission_counts_by_user
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -27,7 +29,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -977,11 +979,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
-        try:
-            from pygooglechart import ScatterChart
-        except ImportError:
-            raise Exception("WorkerActivityTimes requires pygooglechart.")
-
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
@@ -1089,36 +1086,15 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             return self.combined_users
 
-    def es_form_submissions(self, datespan=None):
-        datespan = datespan or self.datespan
-        form_query = (FormES()
-                      .domain(self.domain)
-                      .completed(gte=datespan.startdate.date(),
-                                 lte=datespan.enddate.date())
-                      .user_facet()
-                      .size(1))
-        return form_query.run()
-
     def es_last_submissions(self, datespan=None):
         """
-            Creates a dict of userid => date of last submission
+        Creates a dict of userid => date of last submission
         """
         datespan = datespan or self.datespan
-
-        def es_q(user_id):
-            form_query = FormES() \
-                .domain(self.domain) \
-                .user_id([user_id]) \
-                .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
-                .sort("form.meta.timeEnd", desc=True) \
-                .size(1)
-            results = form_query.run().raw_hits
-            return results[0]['_source']['form']['meta']['timeEnd'] if results else None
-
-        def convert_date(date):
-            return string_to_datetime(date).date() if date else None
-
-        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
+        return {
+            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], datespan)
+            for u in self.users_to_iterate
+        }
 
     def es_case_queries(self, date_field, user_field, datespan=None):
         datespan = datespan or self.datespan
@@ -1165,10 +1141,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
-        form_data = self.es_form_submissions()
-        submissions_by_user = form_data.facets.user.counts_by_term()
-        avg_form_data = self.es_form_submissions(datespan=avg_datespan)
-        avg_submissions_by_user = avg_form_data.facets.user.counts_by_term()
+        submissions_by_user = get_submission_counts_by_user(self.domain, self.datespan)
+        avg_submissions_by_user = get_submission_counts_by_user(self.domain, avg_datespan)
 
         if self.view_by == 'groups':
             active_users_by_group = {
