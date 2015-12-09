@@ -245,7 +245,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def remote_forms(self):
+    def _remote_forms(self):
         """
             These are forms with an xmlns that can be matched to a RemoteApp or RemoteApp-Deleted id or
             they have an xmlns which follows our remote app namespacing pattern.
@@ -314,10 +314,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Used for placing remote forms into the drilldown_map. Outputs the same structure as _application_forms_info.
         """
         remote_forms = {}
-        for form, info in self.remote_forms.items():
+        for form, info in self._remote_forms.items():
             app_id = info['app']['id']
             if not app_id in remote_forms:
-                module_names = sorted(set([d['module']['names'] for d in self.remote_forms.values()
+                module_names = sorted(set([d['module']['names'] for d in self._remote_forms.values()
                                        if d['app']['id'] == app_id]))
                 remote_forms[app_id] = {
                     'app': info['app'],
@@ -330,7 +330,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
             module_index = remote_forms[app_id]['module_names'].index(info['module']['names'])
             if remote_forms[app_id]['modules'][module_index] is None:
-                form_names = sorted(set([d['form']['names'] for d in self.remote_forms.values()
+                form_names = sorted(set([d['form']['names'] for d in self._remote_forms.values()
                                      if d['app']['id'] == app_id and d['module']['id'] == info['module']['id']]))
                 remote_forms[app_id]['modules'][module_index] = {
                     'module': {
@@ -360,7 +360,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
         all_forms = set(self._all_forms)
         std_app_forms = set(self._application_forms)
-        remote_app_forms = set(self.remote_forms.keys())
+        remote_app_forms = set(self._remote_forms.keys())
         nonmatching = all_forms.difference(std_app_forms)
         return list(nonmatching.difference(remote_app_forms))
 
@@ -518,8 +518,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             if self._application_forms:
                 key = ["app module form", self.domain]
                 data.extend(self._raw_data(key))
-            if self.remote_forms:
-                data.extend([{'value': v} for v in self.remote_forms.values()])
+            if self._remote_forms:
+                data.extend([{'value': v} for v in self._remote_forms.values()])
             return data
 
         use_remote_form_data = bool(
@@ -527,7 +527,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 filter_results[0]['slug'] == 'status' and
                 filter_results[0]['value'] == 'remote'
             ) or (
-                filter_results[0]['slug'] == self.app_slug and self.remote_forms
+                filter_results[0]['slug'] == self.app_slug and self._remote_forms
             )
         )
 
@@ -536,7 +536,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             app_id = filter_results[-3]['value']
             if use_remote_form_data:
                 app_id = self._clean_remote_id(app_id)
-                data = [{'value': self.remote_forms[self.make_xmlns_app_key(xmlns, app_id)]}]
+                data = [{'value': self._remote_forms[self.make_xmlns_app_key(xmlns, app_id)]}]
             else:
                 status = filter_results[0]['value'] if filter_results[0]['slug'] == 'status' else 'active'
                 key = ["status xmlns app", self.domain, status, filter_results[-1]['value'], filter_results[-3]['value']]
@@ -561,7 +561,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     except KeyError:
                         pass
                 app_id = self._clean_remote_id(app_id)
-                data.extend([{'value': self.remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
+                data.extend([{'value': self._remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
 
             if (self._application_forms and
                 not (filter_results[0]['slug'] == 'status' and filter_results[0]['value'] == 'remote')):
