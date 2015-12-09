@@ -6,6 +6,7 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
+from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
 from corehq.form_processor.tests import FormProcessorTestUtils
@@ -397,7 +398,7 @@ def _create_case(domain=None, form_id=None, case_type=None):
         case.track_create(CaseTransaction.form_transaction(case, form))
         cases = [case]
 
-    FormProcessorSQL.save_processed_models(form, cases)
+    FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return CaseAccessorSQL.get_case(case_id)
 
 

@@ -6,6 +6,7 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
+from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml, FormProcessorTestUtils
@@ -237,7 +238,7 @@ class FormAccessorTestsSQL(TestCase):
     def test_save_processed_models_deprecated(self):
         existing_form, new_form = _simulate_form_edit()
 
-        FormProcessorSQL.save_processed_models(new_form, deprecated_form=existing_form)
+        FormProcessorSQL.save_processed_models(ProcessedForms(new_form, existing_form))
 
         self._validate_deprecation(existing_form, new_form)
 

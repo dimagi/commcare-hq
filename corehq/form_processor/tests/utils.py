@@ -9,7 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
 from dimagi.ext import jsonobject
@@ -181,7 +181,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
         cases = [case]
 
     if save:
-        FormProcessorSQL.save_processed_models([form], cases)
+        FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return form
 
 
