@@ -86,6 +86,9 @@
             <text id="y-max">
               <xpath function="10"/>
             </text>
+            <text id="x-labels">
+              <xpath function="concat('{5:&quot;',instance('commcaresession')/session/context/username,'&quot;}')"/>
+            </text>
             <text id="x-min">
               <xpath function="0"/>
             </text>
@@ -125,6 +128,7 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <instance id="item-list:table1" src="jr://fixture/item-list:table1"/>
     <session>
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='my_awesome_case_type'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
