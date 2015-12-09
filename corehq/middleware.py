@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.views import logout as django_logout
 
 from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
@@ -92,7 +93,8 @@ class TimingMiddleware(object):
 
 class TimeoutMiddleware(object):
 
-    def _session_expired(self, timeout, activity, time):
+    @staticmethod
+    def _session_expired(timeout, activity, time):
         if activity is None:
             return False
         if time - string_to_utc_datetime(activity) > datetime.timedelta(minutes=timeout):
@@ -100,6 +102,13 @@ class TimeoutMiddleware(object):
         else:
             return False
 
+    @staticmethod
+    @quickcache(['domain_name', 'secure_session'], timeout=10 * 60)
+    def _secure_domain_not_session(secure_session, domain_name):
+        if secure_session:
+            return False
+        else:
+            return Domain.get_by_name(domain_name).secure_sessions
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated():
@@ -108,22 +117,20 @@ class TimeoutMiddleware(object):
         secure_session = request.session.get('secure_session')
         now = datetime.datetime.utcnow()
 
-        if not secure_session and hasattr(request, 'domain'):
-            domain = Domain.get_by_name(request.domain)
-            if domain.secure_sessions:
-                if self._session_expired(settings.SECURE_TIMEOUT, request.user.last_login, now):
-                    django_logout(request, template_name=settings.BASE_TEMPLATE)
-                    # this must be after logout so it is attached to the new session
-                    request.session['secure_session'] = True
-                    return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
-                else:
-                    request.session['secure_session'] = True
-                    request.session['last_request'] = json_format_datetime(now)
-                    return
-
-        last_request = request.session.get('last_request')
-        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
-        if self._session_expired(timeout, last_request, now):
-            django_logout(request, template_name=settings.BASE_TEMPLATE)
-            return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
-        request.session['last_request'] = json_format_datetime(now)
+        if hasattr(request, 'domain') and self._secure_domain_not_session(secure_session, request.domain):
+            if self._session_expired(settings.SECURE_TIMEOUT, request.user.last_login, now):
+                django_logout(request, template_name=settings.BASE_TEMPLATE)
+                # this must be after logout so it is attached to the new session
+                request.session['secure_session'] = True
+                return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
+            else:
+                request.session['secure_session'] = True
+                request.session['last_request'] = json_format_datetime(now)
+                return
+        else:
+            last_request = request.session.get('last_request')
+            timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
+            if self._session_expired(timeout, last_request, now):
+                django_logout(request, template_name=settings.BASE_TEMPLATE)
+                return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
+            request.session['last_request'] = json_format_datetime(now)
