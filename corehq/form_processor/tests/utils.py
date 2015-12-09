@@ -194,8 +194,8 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
 
 
 SIMPLE_FORM = """<?xml version='1.0' ?>
-<data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
-    xmlns="http://openrosa.org/formdesigner/form-processor">
+<data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+    xmlns="{xmlns}">
     <dalmation_count>yes</dalmation_count>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>DEV IL</n1:deviceID>
@@ -212,6 +212,8 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 
 class TestFormMetadata(jsonobject.JsonObject):
     domain = jsonobject.StringProperty(required=False)
+    xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
+    form_name = jsonobject.StringProperty(default='New Form')
     user_id = jsonobject.StringProperty(default='cruella_deville')
     time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
 
