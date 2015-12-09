@@ -121,7 +121,7 @@ class FormProcessorInterface(object):
                           extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            xforms_being_saved = [form.form_id for form in forms]
+            xforms_being_saved = [form.form_id for form in forms if form]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
                 type(e).__name__,
                 unicode(e),
@@ -169,4 +169,4 @@ def _list_to_processed_forms_tuple(forms):
         return ProcessedForms(forms[0], None)
     else:
         assert len(forms) == 2
-        return ProcessedForms(*sorted(forms, key=lambda form: not form.is_deprecated))
+        return ProcessedForms(*sorted(forms, key=lambda form: form.is_deprecated))
