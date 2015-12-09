@@ -83,7 +83,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'default_text': "Select an Unknown Form..." if self.use_only_last else "Show All Unknown Forms...",
             },
             'hide_fuzzy': {
-                'show': not self.show_unknown and self.show_global_hide_fuzzy_checkbox and self.fuzzy_forms,
+                'show': not self.show_unknown and self.show_global_hide_fuzzy_checkbox and self._fuzzy_forms,
                 'slug': '%s_%s' % (self.slug, self.fuzzy_slug),
                 'checked': self.hide_fuzzy_results,
             },
@@ -366,7 +366,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def fuzzy_forms(self):
+    def _fuzzy_forms(self):
         matches = {}
         app_data = self._raw_data(["xmlns app", self.domain], group=True)
         app_xmlns = [d['key'][-2] for d in app_data]
@@ -382,13 +382,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     @memoized
     def fuzzy_xmlns(self):
-        return [d['xmlns'] for d in self.fuzzy_forms.values()]
+        return [d['xmlns'] for d in self._fuzzy_forms.values()]
 
     @property
     @memoized
     def fuzzy_form_data(self):
         fuzzy = {}
-        for form in self.fuzzy_forms:
+        for form in self._fuzzy_forms:
             xmlns, unknown_id = self.split_xmlns_app_key(form)
             key = ["xmlns", self.domain, xmlns]
             info = self._raw_data(key)
@@ -407,7 +407,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def unknown_forms(self):
         nonmatching = set(self._nonmatching_app_forms)
-        fuzzy_forms = set(self.fuzzy_forms.keys())
+        fuzzy_forms = set(self._fuzzy_forms.keys())
 
         unknown = list(nonmatching.difference(fuzzy_forms))
         return [u for u in unknown if u is not None]
@@ -619,7 +619,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         is_remote=app.get('is_remote', False),
                     )
 
-            if self.fuzzy_forms and not self.hide_fuzzy_results:
+            if self._fuzzy_forms and not self.hide_fuzzy_results:
                 selected_xmlns = [r['xmlns'] for r in result.values()]
                 selected_apps = [r['app_id'] for r in result.values()]
                 for xmlns, info in self.fuzzy_form_data.items():
