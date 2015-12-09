@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.models import RemoteApp, Application
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseMultipleOptionFilter, BaseTagsFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.cache import cache_core
@@ -159,12 +159,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         form_buckets = get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain)
         all_submitted = {self.make_xmlns_app_key(xmlns, app_id)
                          for xmlns, app_id in form_buckets}
-        from_apps = set(self.application_forms)
+        from_apps = set(self._application_forms)
         return list(all_submitted.union(from_apps))
 
     @property
     @memoized
-    def application_forms(self):
+    def _application_forms(self):
         """
             These are forms with an xmlns that can be matched to an Application or Application-Deleted
             id with certainty.
@@ -253,7 +253,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         result = {}
 
         all_forms = set(self.all_forms)
-        std_app_forms = set(self.application_forms)
+        std_app_forms = set(self._application_forms)
         other_forms = list(all_forms.difference(std_app_forms))
 
         key = ["", self.domain]
@@ -359,7 +359,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         """
         all_forms = set(self.all_forms)
-        std_app_forms = set(self.application_forms)
+        std_app_forms = set(self._application_forms)
         remote_app_forms = set(self.remote_forms.keys())
         nonmatching = all_forms.difference(std_app_forms)
         return list(nonmatching.difference(remote_app_forms))
@@ -515,7 +515,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
         if not filter_results:
             data = []
-            if self.application_forms:
+            if self._application_forms:
                 key = ["app module form", self.domain]
                 data.extend(self._raw_data(key))
             if self.remote_forms:
@@ -563,7 +563,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 app_id = self._clean_remote_id(app_id)
                 data.extend([{'value': self.remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
 
-            if (self.application_forms and
+            if (self._application_forms and
                 not (filter_results[0]['slug'] == 'status' and filter_results[0]['value'] == 'remote')):
                 prefix = "app module form"
                 key = [self.domain]
