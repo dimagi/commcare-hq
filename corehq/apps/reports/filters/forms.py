@@ -107,7 +107,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         map_deleted = []
 
         all_forms = self._application_forms_info.copy()
-        all_forms.update(self.remote_forms_info.copy())
+        all_forms.update(self._remote_forms_info.copy())
 
         for app_map in all_forms.values():
             app_langs = app_map['app']['langs']
@@ -309,7 +309,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def remote_forms_info(self):
+    def _remote_forms_info(self):
         """
             Used for placing remote forms into the drilldown_map. Outputs the same structure as _application_forms_info.
         """
@@ -550,13 +550,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     app_id = filter_results[-2]['value']
                     try:
                         module_id = int(filter_results[-1]['value'])
-                        all_forms.extend(self.remote_forms_info[app_id]['modules'][module_id]['forms'])
+                        all_forms.extend(self._remote_forms_info[app_id]['modules'][module_id]['forms'])
                     except (KeyError, ValueError):
                         pass
                 else:
                     app_id = filter_results[-1]['value']
                     try:
-                        for module in self.remote_forms_info[app_id]['modules']:
+                        for module in self._remote_forms_info[app_id]['modules']:
                             all_forms.extend(module['forms'])
                     except KeyError:
                         pass
