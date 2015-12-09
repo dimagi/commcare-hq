@@ -574,7 +574,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 data.extend(self._raw_data([prefix]+key))
         return data
 
-    def get_selected_forms(self, filter_results):
+    def _get_selected_forms(self, filter_results):
         """
             Returns the appropriate form information based on the current filter selection.
         """
@@ -682,7 +682,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             Gets the value of this filter---to be used by the relevant report.
         """
         filter_results, instance = super(FormsByApplicationFilter, cls).get_value(request, domain)
-        return instance.get_selected_forms(filter_results)
+        return instance._get_selected_forms(filter_results)
 
 
 class SingleFormByApplicationFilter(FormsByApplicationFilter):
