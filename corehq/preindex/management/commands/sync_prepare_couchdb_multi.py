@@ -1,8 +1,6 @@
 from optparse import make_option
 from traceback import print_stack
-from dimagi.utils.couch import sync_docs
 from corehq.preindex import get_preindex_plugins
-from django.apps import apps
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from datetime import datetime
@@ -12,16 +10,6 @@ setattr(settings, 'COUCHDB_TIMEOUT', 999999)
 
 
 POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
-
-
-def do_sync(app):
-    """
-    Get the app for the given index.
-    For multiprocessing can't pass a complex object hence the call here...again
-    """
-
-    sync_docs.sync(app.models_module, verbosity=2, temp='tmp')
-    print "Preindex %s complete" % app.label
 
 
 class Command(BaseCommand):
@@ -72,17 +60,13 @@ class Command(BaseCommand):
         # pooling is only important when there's a serious reindex
         # (but when there is, boy is it important!)
         pool = Pool(self.num_pool)
-        app_configs = [app_config for app_config in apps.get_app_configs()
-                       if app_config.models_module is not None]
-
-        for app_config in app_configs:
-            print "Preindex view {}".format(app_config.label)
-            pool.spawn(do_sync, app_config)
-
         for plugin in get_preindex_plugins():
-            print "Custom preindex for plugin %s" % (
-                plugin.app_label
-            )
+            plugin_class_name = plugin.__class__.__name__
+            if plugin_class_name == 'DefaultPreindexPlugin':
+                print "Preindex for app {}".format(plugin.app_label)
+            else:
+                print "Preindex for app {} using {}".format(
+                    plugin.app_label, plugin_class_name)
             pool.spawn(plugin.sync_design_docs, temp='tmp')
 
         print "All apps loaded into jobs, waiting..."

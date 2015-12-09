@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import os
+
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch import sync_docs
 from dimagi.utils.couch.sync_docs import DesignInfo
@@ -12,34 +13,19 @@ def register_preindex_plugin(plugin):
     PREINDEX_PLUGINS[plugin.app_label] = plugin
 
 
-def get_preindex_plugin(app_label):
-    return PREINDEX_PLUGINS[app_label]
-
-
 class PreindexPlugin(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, app_label, dir, app_db_map=None):
-        self.app_label = app_label
-        self.dir = dir
-        self.app_db_map = app_db_map
-        self.synced = False
-
-    @classmethod
-    def register(cls, app_label, file, app_db_map=None):
-        """
-        use
-            <PreindexPlugin subclass>.register(<app_label>, __file__)
-        to register a module as a couchapps root
-
-        """
-        dir = os.path.abspath(os.path.dirname(file))
-        register_preindex_plugin(cls(app_label, dir, app_db_map))
+    synced = False
 
     @abstractmethod
     def get_designs(self):
         raise NotImplementedError()
+
+    @classmethod
+    def register(cls, *args, **kwargs):
+        register_preindex_plugin(cls(*args, **kwargs))
 
     def sync_design_docs(self, temp=None):
         if self.synced:
@@ -79,8 +65,12 @@ class PreindexPlugin(object):
             self=self,
         )
 
-    def get_dbs(self, app_label):
-        return get_dbs_from_app_label_and_map(app_label, self.app_db_map)
+    def __init__(self, app_label, file):
+        # once the fluff part of this has been merged we can get rid of this
+        # this is just to make it easy for me in the meantime
+        assert 'FluffPreindexPlugin' == self.__class__.__name__
+        self.app_label = app_label
+        self.dir = os.path.abspath(os.path.dirname(file))
 
 
 def get_dbs_from_app_label_and_map(app_label, app_db_map):
@@ -100,7 +90,19 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
     :param app_db_map:  A dictionary mapping child apps to couch databases.
                         e.g. {'my_app': 'meta'} will result in 'my_app' being synced
                         to the '{main_db}__meta' database.
+
+    use e.g.
+        CouchAppsPreindexPlugin.register('couchapps', __file__, {
+            'myview': <list of db slugs to sync to>
+            ...
+        })
+    to register a module as a couchapps root
+
     """
+    def __init__(self, app_label, file, app_db_map=None):
+        self.app_label = app_label
+        self.dir = os.path.abspath(os.path.dirname(file))
+        self.app_db_map = app_db_map
 
     def get_couchapps(self):
         return [d for d in os.listdir(self.dir)
@@ -114,8 +116,18 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
             for db in self.get_dbs(app_label)
         ]
 
+    def get_dbs(self, app_label):
+        return get_dbs_from_app_label_and_map(app_label, self.app_db_map)
+
 
 class ExtraPreindexPlugin(PreindexPlugin):
+    """
+    ExtraPreindexPlugin.register('myapp', __file__, <list of db slugs to sync to>)
+    """
+    def __init__(self, app_label, file, db_names=None):
+        self.app_label = app_label
+        self.dir = os.path.abspath(os.path.dirname(file))
+        self.db_names = db_names
 
     def get_designs(self):
         return [
@@ -127,10 +139,5 @@ class ExtraPreindexPlugin(PreindexPlugin):
             for db in self.get_dbs(self.app_label)
         ]
 
-    @classmethod
-    def register(cls, app_label, file, db_names):
-        super(ExtraPreindexPlugin, cls).register(app_label, file, {app_label: db_names})
-
-
-def get_preindex_plugins():
-    return PREINDEX_PLUGINS.values()
+    def get_dbs(self, app_label):
+        return get_dbs_from_app_label_and_map(app_label, {app_label: self.db_names})
