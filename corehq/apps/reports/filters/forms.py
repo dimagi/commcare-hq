@@ -85,7 +85,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             'hide_fuzzy': {
                 'show': not self.show_unknown and self.show_global_hide_fuzzy_checkbox and self._fuzzy_forms,
                 'slug': '%s_%s' % (self.slug, self.fuzzy_slug),
-                'checked': self.hide_fuzzy_results,
+                'checked': self._hide_fuzzy_results,
             },
             'display_app_type': self.display_app_type,
             'support_email': settings.SUPPORT_EMAIL,
@@ -394,7 +394,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return fuzzy
 
     @property
-    def hide_fuzzy_results(self):
+    def _hide_fuzzy_results(self):
         return self.request.GET.get('%s_%s' % (self.slug, self.fuzzy_slug)) == 'yes'
 
     @property
@@ -613,7 +613,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         is_remote=app.get('is_remote', False),
                     )
 
-            if self._fuzzy_forms and not self.hide_fuzzy_results:
+            if self._fuzzy_forms and not self._hide_fuzzy_results:
                 selected_xmlns = [r['xmlns'] for r in result.values()]
                 selected_apps = [r['app_id'] for r in result.values()]
                 for xmlns, info in self._fuzzy_form_data.items():
