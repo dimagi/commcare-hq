@@ -381,7 +381,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def fuzzy_form_data(self):
+    def _fuzzy_form_data(self):
         fuzzy = {}
         for form in self._fuzzy_forms:
             xmlns, unknown_id = self.split_xmlns_app_key(form)
@@ -617,7 +617,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             if self._fuzzy_forms and not self.hide_fuzzy_results:
                 selected_xmlns = [r['xmlns'] for r in result.values()]
                 selected_apps = [r['app_id'] for r in result.values()]
-                for xmlns, info in self.fuzzy_form_data.items():
+                for xmlns, info in self._fuzzy_form_data.items():
                     for app_map in info['apps']:
                         if xmlns in selected_xmlns and app_map['app']['id'] in selected_apps:
                             result["%s %s" % (xmlns, self.fuzzy_slug)] = _generate_report_app_info(
