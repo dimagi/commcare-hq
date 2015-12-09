@@ -394,7 +394,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return fuzzy
 
     @property
-    @memoized
     def hide_fuzzy_results(self):
         return self.request.GET.get('%s_%s' % (self.slug, self.fuzzy_slug)) == 'yes'
 
