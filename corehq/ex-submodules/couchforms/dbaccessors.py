@@ -1,8 +1,8 @@
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.util.couch import stale_ok
 from corehq.util.test_utils import unit_testing_only
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance, doc_types
-from django.conf import settings
 
 
 def get_form_ids_by_type(domain, type_, start=None, end=None):
@@ -98,5 +98,5 @@ def get_exports_by_form(domain):
         startkey=[domain],
         endkey=[domain, {}],
         group=True,
-        stale=settings.COUCH_STALE_QUERY
+        stale=stale_ok()
     )
