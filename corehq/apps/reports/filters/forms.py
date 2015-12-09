@@ -506,7 +506,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 return True
         return False
 
-    def get_filtered_data(self, filter_results):
+    def _get_filtered_data(self, filter_results):
         """
         Returns the raw form data based on the current filter selection.
         """
@@ -602,7 +602,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         "%s; ID: %s" % (self.get_unknown_form_name(xmlns), xmlns)
                     )
         else:
-            data = self.get_filtered_data(filter_results)
+            data = self._get_filtered_data(filter_results)
             for line in data:
                 app = line['value']
                 app_id = app['app']['id']
