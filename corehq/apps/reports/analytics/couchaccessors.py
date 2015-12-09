@@ -3,6 +3,10 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.cache import cache_core
 
 
+def update_reports_analytics_indexes():
+    XFormInstance.get_db().view('reports_forms/name_by_xmlns', limit=1).all()
+
+
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
     key = ["xmlns", domain, xmlns]
     results = cache_core.cached_view(
