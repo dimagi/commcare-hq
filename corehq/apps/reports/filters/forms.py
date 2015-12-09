@@ -4,7 +4,8 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.models import Application
-from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns
+from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
+    get_all_form_definitions_grouped_by_app_and_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.debug import print_return_value
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
@@ -498,7 +499,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @memoized
     def _get_all_forms_grouped_by_app_and_xmlns(self):
-        return self._raw_data(["xmlns app", self.domain], group=True)
+        return get_all_form_definitions_grouped_by_app_and_xmlns(self.domain)
 
     @staticmethod
     def _raw_data(startkey, endkey=None, group=False):

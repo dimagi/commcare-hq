@@ -1,6 +1,12 @@
+from collections import namedtuple
+from corehq.apps.app_manager.models import Application
+from corehq.util.couch import stale_ok
 from corehq.util.quickcache import quickcache
 from couchforms.analytics import get_last_form_submission_by_xmlns
 from couchforms.models import XFormInstance
+
+
+FormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
 
 
 def update_reports_analytics_indexes():
@@ -11,3 +17,14 @@ def update_reports_analytics_indexes():
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
     last_form = get_last_form_submission_by_xmlns(domain, xmlns)
     return last_form.form.get('@name') if last_form else None
+
+
+def get_all_form_definitions_grouped_by_app_and_xmlns(domain):
+    startkey = ["xmlns app", domain]
+    return Application.get_db().view(
+        'reports_forms/by_app_info',
+        startkey=startkey,
+        endkey=startkey + [{}],
+        group=True,
+        stale=stale_ok(),
+    ).all()
