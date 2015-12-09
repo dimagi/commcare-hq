@@ -595,7 +595,7 @@ class SubscriptionForm(forms.Form):
             raise ValidationError(_("You must specify a start date"))
 
         end_date = self.cleaned_data.get('end_date')
-        if end_date is not None and start_date > end_date:
+        if end_date and start_date > end_date:
             raise ValidationError(_("End date must be after start date."))
 
         if end_date and end_date <= datetime.date.today():
