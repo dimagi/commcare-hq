@@ -78,7 +78,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             'unknown': {
                 'show': self.show_unknown,
                 'slug': self.unknown_slug,
-                'selected': self.selected_unknown_xmlns,
+                'selected': self._selected_unknown_xmlns,
                 'options': self._unknown_forms_options,
                 'default_text': "Select an Unknown Form..." if self.use_only_last else "Show All Unknown Forms...",
             },
@@ -421,8 +421,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return [dict(val=x, text="%s; ID: %s" % (self.get_unknown_form_name(x), x)) for x in self.unknown_xmlns]
 
     @property
-    @memoized
-    def selected_unknown_xmlns(self):
+    def _selected_unknown_xmlns(self):
         if self.show_unknown:
             return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
         return ''
@@ -589,13 +588,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         result = {}
         if self.show_unknown:
-            all_unknown = [self.selected_unknown_xmlns] if self.selected_unknown_xmlns else self._unknown_forms
+            all_unknown = [self._selected_unknown_xmlns] if self._selected_unknown_xmlns else self._unknown_forms
             for form in all_unknown:
                 xmlns, app_id = self.split_xmlns_app_key(form)
                 if form not in result:
                     result[xmlns] = _generate_report_app_info(
                         xmlns,
-                        None if self.selected_unknown_xmlns else app_id,
+                        None if self._selected_unknown_xmlns else app_id,
                         "%s; ID: %s" % (self.get_unknown_form_name(xmlns), xmlns)
                     )
         else:
