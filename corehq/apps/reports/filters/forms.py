@@ -26,6 +26,30 @@ PARAM_VALUE_STATUS_REMOTE = 'remote'
 PARAM_VALUE_STATUS_DELETED = 'deleted'
 
 
+class FormsByApplicationFilterParams(object):
+    def __init__(self, params):
+        self.app_id = self.status = self.module = self.xmlns = None
+        for param in params:
+            slug = param['slug']
+            value = param['value']
+            if slug == PARAM_SLUG_STATUS:
+                self.status = value
+            elif slug == PARAM_SLUG_APP_ID:
+                self.app_id = value
+            elif slug == PARAM_SLUG_MODULE:
+                self.module = value
+            elif slug == PARAM_SLUG_XMLNS:
+                self.xmlns = value
+
+    @property
+    def show_remote(self):
+        return self.status == PARAM_VALUE_STATUS_REMOTE
+
+    @property
+    def show_active(self):
+        return self.status == PARAM_VALUE_STATUS_ACTIVE
+
+
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
         Use this filter to drill down by
@@ -508,14 +532,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 data.extend([{'value': v} for v in self._remote_forms.values()])
             return data
 
-        use_remote_form_data = bool(
-            (
-                filter_results[0]['slug'] == 'status' and
-                filter_results[0]['value'] == 'remote'
-            ) or (
-                filter_results[0]['slug'] == PARAM_SLUG_APP_ID and self._remote_forms
-            )
-        )
+        parsed_params = FormsByApplicationFilterParams(filter_results)
+        use_remote_form_data = parsed_params.show_remote
+
         if filter_results[-1]['slug'] == 'xmlns':
             xmlns = filter_results[-1]['value']
             app_id = filter_results[-3]['value']
