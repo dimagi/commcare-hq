@@ -10,6 +10,7 @@ from dimagi.ext.couchdbkit import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
 import json
 import couchexport
+from corehq.blobs.mixin import BlobMixin
 from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
@@ -928,11 +929,13 @@ class GroupExportConfiguration(Document):
         """
         return zip(self.all_configs, self.all_export_schemas)
 
-class SavedBasicExport(Document):
+
+class SavedBasicExport(BlobMixin, Document):
     """
     A cache of an export that lives in couch.
     Doesn't do anything smart, just works off an index
     """
+    migrating_blobs_from_couch = True
     configuration = SchemaProperty(ExportConfiguration)
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
@@ -940,12 +943,12 @@ class SavedBasicExport(Document):
     @property
     def size(self):
         try:
-            return self._attachments[self.get_attachment_name()]["length"]
+            return self.blobs[self.get_attachment_name()].content_length
         except KeyError:
             return 0
 
     def has_file(self):
-        return self.get_attachment_name() in self._attachments
+        return self.get_attachment_name() in self.blobs
 
     def get_attachment_name(self):
         # obfuscate this because couch doesn't like attachments that start with underscores
