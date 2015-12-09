@@ -26,5 +26,3 @@ class ReportsAnalyticsTest(TestCase):
         interface.save_processed_models(wrapped_form, [wrapped_form])
         update_reports_analytics_indexes()
         self.assertEqual(form_name, guess_form_name_from_submissions_using_xmlns(domain, xmlns))
-
-
