@@ -202,8 +202,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         id with certainty.
         """
         data = self._get_all_forms_grouped_by_app_and_xmlns()
-        all_forms = self.get_xmlns_app_keys(data)
-        return all_forms
+        return [self.make_xmlns_app_key(d.xmlns, d.app_id) for d in data]
 
     @property
     @memoized
@@ -292,12 +291,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     def _fuzzy_forms(self):
         matches = {}
         app_data = self._get_all_forms_grouped_by_app_and_xmlns()
-        app_xmlns = [d['key'][-2] for d in app_data]
+        app_xmlns = [d.xmlns for d in app_data]
         for form in self._nonmatching_app_forms:
             xmlns = self.split_xmlns_app_key(form, only_xmlns=True)
             if xmlns in app_xmlns:
                 matches[form] = {
-                    'app_ids': [d['key'][-1] for d in app_data if d['key'][-2] == xmlns],
+                    'app_ids': [d.app_id for d in app_data if d.xmlns == xmlns],
                     'xmlns': xmlns,
                     }
         return matches
@@ -512,9 +511,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             **kwargs
         ).all()
 
-    @classmethod
-    def get_xmlns_app_keys(cls, data):
-        return [cls.make_xmlns_app_key(d['key'][-2], d['key'][-1]) for d in data]
+
 
     @classmethod
     def make_xmlns_app_key(cls, xmlns, app_id):

@@ -20,11 +20,16 @@ def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
 
 
 def get_all_form_definitions_grouped_by_app_and_xmlns(domain):
+    def _row_to_form_info(row):
+        return FormInfo(app_id=row['key'][3], xmlns=row['key'][2])
+
     startkey = ["xmlns app", domain]
-    return Application.get_db().view(
-        'reports_forms/by_app_info',
-        startkey=startkey,
-        endkey=startkey + [{}],
-        group=True,
-        stale=stale_ok(),
-    ).all()
+    return [
+        _row_to_form_info(r) for r in Application.get_db().view(
+            'reports_forms/by_app_info',
+            startkey=startkey,
+            endkey=startkey + [{}],
+            group=True,
+            stale=stale_ok(),
+        ).all()
+    ]
