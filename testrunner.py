@@ -8,11 +8,9 @@ from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.apps import AppConfig
 from django.conf import settings
-from django.core.management import call_command
 from django.test import TransactionTestCase
 from django.utils import unittest
 from mock import patch, Mock
-from corehq.preindex import get_preindex_plugin
 from corehq.tests.optimizer import OptimizedTestRunnerMixin
 
 import settingshelper
@@ -80,8 +78,6 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             is_test=True)
         settings.EXTRA_COUCHDB_DATABASES = settings.COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
-        call_command('sync_couch_views')
-        get_preindex_plugin('sms').sync_design_docs()
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):

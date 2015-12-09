@@ -1,15 +1,16 @@
 from couchdbkit.ext.django import syncdb
-from django.db.models import signals, get_app
-from corehq.preindex.preindex_plugins import PREINDEX_PLUGINS
+from django.db.models import signals
+from corehq.preindex import get_preindex_plugin
 
 
 def catch_signal(sender, **kwargs):
     """Function used by syncdb signal"""
+    print 'catch_signal', sender.label
     app_name = sender.label.rsplit('.', 1)[0]
     app_label = app_name.split('.')[-1]
-    if app_label in PREINDEX_PLUGINS:
-        PREINDEX_PLUGINS[app_label].sync_design_docs()
-    syncdb(get_app(sender.label), None, **kwargs)
+    plugin = get_preindex_plugin(app_label)
+    if plugin:
+        plugin.sync_design_docs()
 
-
-signals.post_migrate.connect(catch_signal)
+signals.pre_migrate.connect(catch_signal)
+signals.post_syncdb.disconnect(syncdb)
