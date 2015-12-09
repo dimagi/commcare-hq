@@ -21,6 +21,10 @@ PARAM_SLUG_APP_ID = 'app_id'
 PARAM_SLUG_MODULE = 'module'
 PARAM_SLUG_XMLNS = 'xmlns'
 
+PARAM_VALUE_STATUS_ACTIVE = 'active'
+PARAM_VALUE_STATUS_REMOTE = 'remote'
+PARAM_VALUE_STATUS_DELETED = 'deleted'
+
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
@@ -62,7 +66,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             - Remote Application (RemoteApp and RemoteApp-Deleted)
         """
         labels = self.get_labels()
-        if self.drilldown_map and self.drilldown_map[0]['val'] == 'active':
+        if self.drilldown_map and self.drilldown_map[0]['val'] == PARAM_VALUE_STATUS_ACTIVE:
             labels = [
                  (_('Application Type'),
                   _("Select an Application Type") if self.use_only_last else _("Show all Application Types"),
@@ -95,10 +99,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         })
 
         if self.display_app_type and not context['selected']:
-            context['selected'] = ['active']
+            context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
         context["show_advanced"] = self.request.GET.get('show_advanced') == 'on' or context["unknown"]["show"] or \
                                    context["hide_fuzzy"]["checked"] or \
-                                   (len(context['selected']) > 0 and context['selected'][0] != 'active')
+                                   (len(context['selected']) > 0 and context['selected'][0] != PARAM_VALUE_STATUS_ACTIVE)
         return context
 
     @property
@@ -144,11 +148,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if (bool(map_remote) + bool(map_deleted) + bool(map_active)) > 1:
             self.display_app_type = True
             if map_active:
-                final_map.append(self._map_structure('active', _('Active CommCare Applications'), map_active))
+                final_map.append(self._map_structure(PARAM_VALUE_STATUS_ACTIVE, _('Active CommCare Applications'), map_active))
             if map_remote:
-                final_map.append(self._map_structure('remote', _('Remote CommCare Applications'), map_remote))
+                final_map.append(self._map_structure(PARAM_VALUE_STATUS_REMOTE, _('Remote CommCare Applications'), map_remote))
             if map_deleted:
-                final_map.append(self._map_structure('deleted', _('Deleted CommCare Applications'), map_deleted))
+                final_map.append(self._map_structure(PARAM_VALUE_STATUS_DELETED, _('Deleted CommCare Applications'), map_deleted))
         else:
             final_map.extend(map_active or map_remote or map_deleted)
 
