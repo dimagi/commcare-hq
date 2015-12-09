@@ -408,7 +408,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def unknown_xmlns(self):
+    def _unknown_xmlns(self):
         return list(set([self.split_xmlns_app_key(x, only_xmlns=True) for x in self._unknown_forms]))
 
     @property
@@ -418,7 +418,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     @memoized
     def _unknown_forms_options(self):
-        return [dict(val=x, text="%s; ID: %s" % (self.get_unknown_form_name(x), x)) for x in self.unknown_xmlns]
+        return [dict(val=x, text="%s; ID: %s" % (self.get_unknown_form_name(x), x)) for x in self._unknown_xmlns]
 
     @property
     def _selected_unknown_xmlns(self):
