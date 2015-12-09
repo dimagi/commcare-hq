@@ -99,11 +99,15 @@ def get_user_mapping_sql():
 
 
 def get_shard_config_strings(shard_mapping):
+    from django.db.backends.creation import TEST_DATABASE_PREFIX
+
     shard_configs = []
     for shard_id in sorted(shard_mapping.keys()):
         django_db_name = shard_mapping[shard_id]
         db_config = settings.DATABASES[django_db_name].copy()
         db_config['SHARD_ID'] = shard_id
+        if settings.UNIT_TESTING:
+            db_config['NAME'] = TEST_DATABASE_PREFIX + db_config['NAME']
         shard_configs.append(
             SHARD_TEMPLATE.format(**db_config)
         )
