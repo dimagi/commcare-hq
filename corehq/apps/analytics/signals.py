@@ -86,14 +86,14 @@ def _get_subscription_properties_by_user(couch_user):
         return 'yes' if status in [s.pro_bono_status for s in all_subscriptions] else 'no'
 
     def _is_on_extended_trial():
-        service_types = [s.subscription_type for s in all_subscriptions]
+        service_types = [s.service_type for s in all_subscriptions]
         return 'yes' if SubscriptionType.EXTENDED_TRIAL in service_types else 'no'
 
     def _max_edition():
         for edition in paying_subscribed_editions:
             assert edition in [e[0] for e in SoftwarePlanEdition.CHOICES]
 
-        return max(paying_subscribed_editions) if paying_subscribed_editions else None
+        return max(paying_subscribed_editions) if paying_subscribed_editions else ''
 
     return {
         'is_on_community_plan': _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
