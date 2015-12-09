@@ -64,6 +64,11 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS revoke_restore_case_transactions_for_form(TEXT, BOOLEAN)",
             "SELECT 1",
         ),
+        # replaced by delete_test_data
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS get_form_ids_in_domain(text, text);",
+            "SELECT 1",
+        ),
         migrator.get_migration('archive_unarchive_form.sql'),
         migrator.get_migration('case_modified_since.sql'),
         migrator.get_migration('check_form_exists.sql'),
@@ -81,7 +86,8 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_form_attachment_by_name.sql'),
         migrator.get_migration('get_form_attachments.sql'),
         migrator.get_migration('get_form_by_id.sql'),
-        migrator.get_migration('get_form_ids_in_domain.sql'),
+        migrator.get_migration('delete_test_forms.sql', testing_only=True),
+        migrator.get_migration('delete_test_cases.sql', testing_only=True),
         migrator.get_migration('get_form_operations.sql'),
         migrator.get_migration('get_forms_by_id.sql'),
         migrator.get_migration('get_forms_by_state.sql'),

@@ -1,5 +1,6 @@
 import os
 
+from django.conf import settings
 from django.db import migrations
 from django.template import Context
 from django.template.loader import get_template_from_string
@@ -68,7 +69,10 @@ class RawSQLMigration(object):
         self.template_context = template_context
         self.base_path = os.path.join(*base_path_tuple)
 
-    def get_migration(self, forward_template, reverse_template=Ellipsis):
+    def get_migration(self, forward_template, reverse_template=Ellipsis, testing_only=False):
+        if testing_only and not settings.UNIT_TESTING:
+            return noop_migration()
+
         forward_path = os.path.join(self.base_path, forward_template)
 
         if reverse_template is Ellipsis:

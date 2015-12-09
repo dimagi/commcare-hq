@@ -197,11 +197,9 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @unit_testing_only
-    def get_form_ids_in_domain(domain, user_id=None):
+    def delete_test_forms(domain=None, user_id=None):
         with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT form_id FROM get_form_ids_in_domain(%s, %s)', [domain, user_id])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
+            cursor.execute('SELECT delete_test_forms(%s, %s)', [domain, user_id])
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -313,6 +311,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
+
+    @staticmethod
+    @unit_testing_only
+    def delete_test_cases(domain=None):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT delete_test_cases(%s)', [domain])
 
     @staticmethod
     def save_case(case):
