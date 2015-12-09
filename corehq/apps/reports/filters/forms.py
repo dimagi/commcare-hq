@@ -533,10 +533,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return data
 
         parsed_params = FormsByApplicationFilterParams(filter_results)
-        use_remote_form_data = parsed_params.show_remote
 
         if parsed_params.xmlns:
-            if use_remote_form_data:
+            if parsed_params.show_remote:
                 app_id = self._clean_remote_id(parsed_params.app_id)
                 data = [{'value': self._remote_forms[self.make_xmlns_app_key(parsed_params.xmlns, app_id)]}]
             else:
@@ -545,8 +544,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 data = self._raw_data(key)
         else:
             data = []
-
-            if use_remote_form_data:
+            if parsed_params.show_remote:
                 all_forms = []
                 if filter_results[-1]['slug'] == 'module':
                     app_id = filter_results[-2]['value']
