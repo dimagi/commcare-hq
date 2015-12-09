@@ -45,8 +45,8 @@ def get_forms_by_type(domain, type_, recent_first=False,
     ).all()
 
 
+@unit_testing_only
 def get_forms_of_all_types(domain):
-    assert settings.UNIT_TESTING
     startkey = [domain]
     endkey = startkey + [{}]
     return XFormInstance.view(
