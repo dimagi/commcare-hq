@@ -161,7 +161,8 @@ all of the commands from [Set up your django environment](https://github.com/dim
 in the main README, except instead of `./manage.py`, use the full path of the
 Python binary for the production virtualenv.  For example:
 
-    /home/cchq/www/myserver/python_env/bin/python manage.py syncdb --noinput
+    /home/cchq/www/myserver/python_env/bin/python manage.py sync_couch_views
+    /home/cchq/www/myserver/python_env/bin/python manage.py migrate --noinput
 
 Note that for the touchforms localsettings, it should correspond to whatever
 `env.django_port` is for the environment you added the the fabfile, so
