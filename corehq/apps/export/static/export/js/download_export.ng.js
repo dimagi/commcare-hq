@@ -123,7 +123,7 @@
         $scope.prepareExport = function () {
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
-            window.analytics.workflow("Clicked Prepare Export");
+            analytics.workflow("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -255,7 +255,7 @@
 
         $scope.sendAnalytics = function () {
             analytics.usage("Download Export", _(exportDownloadService.exportType).capitalize(), "Saved");
-            window.analytics.track("Clicked Download button");
+            analytics.workflow("Clicked Download button");
         };
     };
     download_export.controller(exportsControllers);

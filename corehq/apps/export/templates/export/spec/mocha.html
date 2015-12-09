@@ -14,7 +14,8 @@
 {% block mocha_tests %}
 <script>
     var analytics = {
-        usage: sinon.stub()
+        usage: sinon.stub(),
+        workflow: sinon.stub()
     };
 </script>
 <script src="{% new_static 'export/spec/utils/list_exports.utils.mo.js' %}"></script>
