@@ -6,7 +6,7 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
+from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.parsers.form import apply_deprecation
 from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml, FormProcessorTestUtils
 from corehq.sql_db.routers import db_for_read_write
@@ -25,7 +25,7 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(XFormInstanceSQL)):
             form = FormAccessorSQL.get_form(form.form_id)
         self._check_simple_form(form)
 
@@ -51,14 +51,14 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             form.get_attachment_meta('form.xml')
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(2, using=db_for_read_write(XFormAttachmentSQL)):
             form = FormAccessorSQL.get_with_attachments(form.form_id)
 
         self._check_simple_form(form)
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
             attachment_meta = form.get_attachment_meta('form.xml')
 
         self.assertEqual(form.form_id, attachment_meta.form_id)
@@ -72,7 +72,7 @@ class FormAccessorTestsSQL(TestCase):
         with self.assertRaises(AttachmentNotFound):
             FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
 
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             attachment_meta = FormAccessorSQL.get_attachment_by_name(form.form_id, 'form.xml')
 
         self.assertEqual(form.form_id, attachment_meta.form_id)
@@ -114,7 +114,7 @@ class FormAccessorTestsSQL(TestCase):
         forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic.form_id, plain_form.form_id])
         self.assertEqual(2, len(forms))
         self.assertEqual(form_with_pic.form_id, forms[0].form_id)
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
             expected = {
                 'form.xml': 'text/xml',
                 'pic.jpg': 'image/jpeg',
@@ -123,7 +123,7 @@ class FormAccessorTestsSQL(TestCase):
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
             expected = {
                 'form.xml': 'text/xml',
             }
