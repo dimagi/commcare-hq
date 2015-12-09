@@ -7,11 +7,11 @@ DECLARE
     curtime TIMESTAMP := clock_timestamp() AT TIME ZONE 'utc';
 BEGIN
     IF $3 THEN
-        new_state := 1;
-        operation := 'archive';
+        new_state := {{ FORM_STATE_ARCHIVED }};
+        operation := '{{ FORM_OPERATION_ARCHIVE }}';
     ELSE
-        new_state := 0;
-        operation := 'unarchive';
+        new_state := {{ FORM_STATE_NORMAL }};
+        operation := '{{ FORM_OPERATION_UNARCHIVE }}';
     END IF;
 
     INSERT INTO form_processor_xformoperationsql (form_id, user_id, operation, date)

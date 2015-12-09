@@ -139,10 +139,16 @@ class FormAccessorSQL(AbstractFormAccessor):
             del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
                     unsaved_attachment.form = form
+
+        operations = form.get_tracked_models_to_create(XFormOperationSQL)
+        for operation in operations:
+            operation.form = form
+        form.clear_tracked_models()
+
         with connection.cursor() as cursor:
             cursor.execute(
-                'SELECT form_pk FROM save_new_form_with_attachments(%s, %s)',
-                [form, unsaved_attachments]
+                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s)',
+                [form, unsaved_attachments, operations]
             )
             result = fetchone_as_namedtuple(cursor)
             form.id = result.form_pk
@@ -156,8 +162,21 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         logging.debug('Deprecating form: %s', form)
 
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
+        attachments = form.get_attachments()
+        operations = form.history
+
+        form.id = None
+        for attachment in attachments:
+            attachment.id = None
+        form.unsaved_attachments = attachments
+
+        for operation in operations:
+            operation.id = None
+            form.track_create(operation)
+
+        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id])
+        assert deleted == 1
+        FormAccessorSQL.save_new_form(form)
 
     @staticmethod
     def update_form_problem_and_state(form):

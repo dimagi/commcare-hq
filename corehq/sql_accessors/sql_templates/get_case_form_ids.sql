@@ -2,8 +2,8 @@ DROP FUNCTION IF EXISTS get_case_form_ids(text);
 
 CREATE FUNCTION get_case_form_ids(case_id text) RETURNS TABLE (form_id VARCHAR(255)) AS $$
 DECLARE
-    type_form int := 0;
-    type_ledger int := 32;
+    type_form int := {{ TRANSACTION_TYPE_FORM }};
+    type_ledger int := {{ TRANSACTION_TYPE_LEDGER }};
 BEGIN
     RETURN QUERY
     SELECT form_processor_casetransaction.form_id FROM form_processor_casetransaction

@@ -15,6 +15,7 @@ casexml.apps.phone:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
   - corehq.apps.hqcase
   - corehq.apps.products
   - corehq.apps.reminders
@@ -28,6 +29,7 @@ casexml.apps.case:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
   - corehq.apps.hqcase
   - corehq.apps.products
   - corehq.apps.reminders
@@ -41,6 +43,7 @@ casexml.apps.stock:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
   - corehq.apps.commtrack
   - corehq.apps.hqcase
   - corehq.apps.locations
@@ -61,6 +64,7 @@ corehq.apps.commtrack:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
   - corehq.apps.consumption
   - corehq.apps.domain
   - corehq.apps.hqcase
@@ -87,6 +91,7 @@ corehq.apps.userreports:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
   - corehq.apps.app_manager
   - corehq.apps.commtrack
   - corehq.apps.domain
@@ -116,6 +121,7 @@ couchforms:
   - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
   - phonelog
 corehq.apps.receiverwrapper:
   - auditcare
@@ -133,6 +139,7 @@ corehq.apps.receiverwrapper:
   - corehq.apps.users
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
   - couchforms
   - django.contrib.admin
   - django_digest
@@ -162,6 +169,7 @@ corehq.form_processor:
   - corehq.apps.smsforms
   - corehq.apps.tzmigration
   - corehq.couchapps
+  - corehq.sql_accessors
   - couchforms
 corehq.apps.toggle_ui: []
 corehq.doctypemigrations:

@@ -242,6 +242,8 @@ HQ_APPS = (
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
+    'corehq.sql_accessors',
+    'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -940,6 +942,8 @@ UCR_DATABASE_URL = None
 
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
+
+PL_PROXY_CLUSTER_NAME = 'commcarehq'
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
