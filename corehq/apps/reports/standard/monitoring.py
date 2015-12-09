@@ -10,6 +10,7 @@ from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.analytics.esaccessors import get_last_submission_time_for_user
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -28,7 +29,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -1097,24 +1098,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def es_last_submissions(self, datespan=None):
         """
-            Creates a dict of userid => date of last submission
+        Creates a dict of userid => date of last submission
         """
         datespan = datespan or self.datespan
-
-        def es_q(user_id):
-            form_query = FormES() \
-                .domain(self.domain) \
-                .user_id([user_id]) \
-                .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
-                .sort("form.meta.timeEnd", desc=True) \
-                .size(1)
-            results = form_query.run().raw_hits
-            return results[0]['_source']['form']['meta']['timeEnd'] if results else None
-
-        def convert_date(date):
-            return string_to_datetime(date).date() if date else None
-
-        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
+        return {
+            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], datespan)
+            for u in self.users_to_iterate
+        }
 
     def es_case_queries(self, date_field, user_field, datespan=None):
         datespan = datespan or self.datespan
