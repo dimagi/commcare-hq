@@ -428,17 +428,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
         return ''
 
-    @staticmethod
-    def _formatted_name_from_app(display_lang, app):
-        langs = app['app']['langs']
-        app_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['app']['names'])
-        module_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['module']['names'])
-        form_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['form']['names'])
-        is_deleted = app.get('is_deleted', False)
-        if is_deleted:
-            app_name = "%s [Deleted]" % app_name
-        return "%s > %s > %s" % (app_name, module_name, form_name)
-
     def _clean_remote_id(self, app_id):
         return app_id if app_id != self.unknown_remote_app_id else MISSING_APP_ID
 
@@ -495,6 +484,17 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             if val:
                 return val
         return obj.get(obj.keys()[0], _('Untitled'))
+
+    @staticmethod
+    def _formatted_name_from_app(display_lang, app):
+        langs = app['app']['langs']
+        app_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['app']['names'])
+        module_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['module']['names'])
+        form_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['form']['names'])
+        is_deleted = app.get('is_deleted', False)
+        if is_deleted:
+            app_name = "%s [Deleted]" % app_name
+        return "%s > %s > %s" % (app_name, module_name, form_name)
 
     @classmethod
     def has_selections(cls, request):
