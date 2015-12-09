@@ -79,7 +79,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'show': self.show_unknown,
                 'slug': self.unknown_slug,
                 'selected': self.selected_unknown_xmlns,
-                'options': self.unknown_forms_options,
+                'options': self._unknown_forms_options,
                 'default_text': "Select an Unknown Form..." if self.use_only_last else "Show All Unknown Forms...",
             },
             'hide_fuzzy': {
@@ -417,7 +417,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def unknown_forms_options(self):
+    def _unknown_forms_options(self):
         return [dict(val=x, text="%s; ID: %s" % (self.get_unknown_form_name(x), x)) for x in self.unknown_xmlns]
 
     @property
