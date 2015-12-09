@@ -43,6 +43,7 @@ class ToggleListView(ToggleBaseView):
     def page_context(self):
         toggles = list(all_toggles())
         domain_counts = {}
+        active_domain_count = {}
         user_counts = {}
         last_used = {}
         last_modified = {}
@@ -54,16 +55,20 @@ class ToggleListView(ToggleBaseView):
                 except ResourceNotFound:
                     domain_counts[t.slug] = 0
                     user_counts[t.slug] = 0
+                    active_domain_count[t.slug] = 0
                 else:
                     for u in usage.enabled_users:
                         namespace = u.split(":", 1)[0] if u.find(":") != -1 else NAMESPACE_USER
                         counter[namespace] += 1
+                    usage_info = _get_usage_info(usage)
                     domain_counts[t.slug] = counter.get(NAMESPACE_DOMAIN, 0)
+                    active_domain_count[t.slug] = usage_info["_active_domains"]
                     user_counts[t.slug] = counter.get(NAMESPACE_USER, 0)
-                    last_used[t.slug] = _get_usage_info(usage)["_latest"]
+                    last_used[t.slug] = usage_info["_latest"]
                     last_modified[t.slug] = usage.last_modified
         return {
             'domain_counts': domain_counts,
+            'active_domain_count': active_domain_count,
             'page_url': self.page_url,
             'show_usage': self.show_usage,
             'toggles': toggles,
@@ -178,17 +183,21 @@ def _get_usage_info(toggle):
     """Returns usage information for each toggle
     """
     last_used = {}
+    active_domains = 0
     for enabled in toggle.enabled_users:
         name = _enabled_item_name(enabled)
         if _namespace_domain(enabled):
-            last_used[name] = _format_date(get_last_form_submission_received(name))
+            last_form_submission = get_last_form_submission_received(name)
+            last_used[name] = _format_date(last_form_submission)
+            if last_form_submission:
+                active_domains += 1
         else:
             try:
                 last_used[name] = _format_date(CouchUser.get_by_username(name).last_login)
             except ResourceNotFound:
                 last_used[name] = NOT_FOUND
     last_used["_latest"] = _get_most_recently_used(last_used)
-
+    last_used["_active_domains"] = active_domains
     return last_used
 
 
