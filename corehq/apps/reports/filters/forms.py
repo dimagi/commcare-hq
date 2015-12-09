@@ -120,9 +120,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         if self.display_app_type and not context['selected']:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
-        context["show_advanced"] = self.request.GET.get('show_advanced') == 'on' or context["unknown"]["show"] or \
-                                   context["hide_fuzzy"]["checked"] or \
-                                   (len(context['selected']) > 0 and context['selected'][0] != PARAM_VALUE_STATUS_ACTIVE)
+        context["show_advanced"] = (
+            self.request.GET.get('show_advanced') == 'on'
+            or context["unknown"]["show"]
+            or context["hide_fuzzy"]["checked"]
+            or (len(context['selected']) > 0
+                and context['selected'][0] != PARAM_VALUE_STATUS_ACTIVE)
+        )
         return context
 
     @property
@@ -162,9 +166,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if (bool(map_deleted) + bool(map_active)) > 1:
             self.display_app_type = True
             if map_active:
-                final_map.append(self._map_structure(PARAM_VALUE_STATUS_ACTIVE, _('Active CommCare Applications'), map_active))
+                final_map.append(
+                    self._map_structure(PARAM_VALUE_STATUS_ACTIVE, _('Active CommCare Applications'), map_active)
+                )
             if map_deleted:
-                final_map.append(self._map_structure(PARAM_VALUE_STATUS_DELETED, _('Deleted CommCare Applications'), map_deleted))
+                final_map.append(
+                    self._map_structure(PARAM_VALUE_STATUS_DELETED, _('Deleted CommCare Applications'),
+                                        map_deleted)
+                )
         else:
             final_map.extend(map_active or map_deleted)
 
@@ -425,7 +434,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         except Exception:
                             break
                     key.append(val)
-                return self._raw_data([prefix]+key)
+                return self._raw_data([prefix] + key)
             else:
                 return []
 
