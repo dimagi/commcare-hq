@@ -19,7 +19,7 @@ DOMAIN = 'test-form-accessor'
 class FormAccessorTestsSQL(TestCase):
     dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
 
-    def setUp(self):
+    def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
 

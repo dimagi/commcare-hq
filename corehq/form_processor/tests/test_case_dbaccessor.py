@@ -8,6 +8,7 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
+from corehq.form_processor.tests import FormProcessorTestUtils
 from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
@@ -17,6 +18,10 @@ DOMAIN = 'test-case-accessor'
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseAccessorTestsSQL(TestCase):
     dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
+        FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
 
     def test_get_case_by_id(self):
         case = _create_case()
