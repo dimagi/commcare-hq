@@ -129,7 +129,16 @@ var tfLoadingComplete = function (isError) {
     if (isError) {
         showError(translatedStrings.errSaving, $('#cloudcare-notifications'));
     }
-}
+};
+
+var tfSyncComplete = function (isError) {
+    hideLoading();
+    if (isError) {
+        $('#save-indicator').text(translatedStrings.errSyncing).removeClass('alert-warning alert-success').addClass('alert-danger').show();
+    } else {
+        $('#save-indicator').text(translatedStrings.synced).removeClass('alert-warning alert-danger').addClass('alert-success').show();
+    }
+};
 
 var hideLoading = function (selector) {
     NProgress.done();
