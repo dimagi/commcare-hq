@@ -114,17 +114,19 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             is_deleted = app_map['is_deleted']
             is_remote = app_map.get('is_remote', False)
 
-            app_name = self.get_translated_value(app_langs, app_map['app']['names'])
+            app_name = self.get_translated_value(self.display_lang, app_langs, app_map['app']['names'])
             if is_deleted:
                 app_name = "%s [Deleted Application]" % app_name
             app = self._map_structure(app_map['app']['id'], app_name)
 
             for module_map in app_map['modules']:
                 if module_map['module'] is not None:
-                    module_name = self.get_translated_value(app_langs, module_map['module']['names'])
+                    module_name = self.get_translated_value(
+                        self.display_lang, app_langs, module_map['module']['names'])
                     module = self._map_structure(module_map['module']['id'], module_name)
                     for form_map in module_map['forms']:
-                        form_name = self.get_translated_value(app_langs, form_map['form']['names'])
+                        form_name = self.get_translated_value(
+                            self.display_lang, app_langs, form_map['form']['names'])
                         module['next'].append(self._map_structure(form_map['xmlns'], form_name))
                     app['next'].append(module)
 
@@ -428,9 +430,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     def formatted_name_from_app(self, app):
         langs = app['app']['langs']
-        app_name = self.get_translated_value(langs, app['app']['names'])
-        module_name = self.get_translated_value(langs, app['module']['names'])
-        form_name = self.get_translated_value(langs, app['form']['names'])
+        app_name = self.get_translated_value(self.display_lang, langs, app['app']['names'])
+        module_name = self.get_translated_value(self.display_lang, langs, app['module']['names'])
+        form_name = self.get_translated_value(self.display_lang, langs, app['form']['names'])
         is_deleted = app.get('is_deleted', False)
         if is_deleted:
             app_name = "%s [Deleted]" % app_name
@@ -474,16 +476,17 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return data['value']
         return None if none_if_not_found else "Name Unknown"
 
-    def get_translated_value(self, app_langs, obj):
+    @staticmethod
+    def get_translated_value(display_lang, app_langs, obj):
         """
-            Given a list of lang codes and a dictionary of lang codes to strings, output
-            the value of the current display lang or the first lang available.
+        Given a list of lang codes and a dictionary of lang codes to strings, output
+        the value of the current display lang or the first lang available.
 
-            If obj is a string, just output that string.
+        If obj is a string, just output that string.
         """
         if isinstance(obj, basestring):
             return obj
-        val = obj.get(self.display_lang)
+        val = obj.get(display_lang)
         if val:
             return val
         for lang in app_langs:
