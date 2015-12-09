@@ -28,7 +28,7 @@ PARAM_VALUE_STATUS_DELETED = 'deleted'
 
 class FormsByApplicationFilterParams(object):
     def __init__(self, params):
-        self.app_id = self.status = self.module = self.xmlns = None
+        self.app_id = self.status = self.module = self.xmlns = self.most_granular_filter = None
         for param in params:
             slug = param['slug']
             value = param['value']
@@ -40,6 +40,9 @@ class FormsByApplicationFilterParams(object):
                 self.module = value
             elif slug == PARAM_SLUG_XMLNS:
                 self.xmlns = value
+            # we rely on the fact that the filters come in order of granularity
+            # some logic depends on this
+            self.most_granular_filter = slug
 
     @property
     def show_remote(self):
@@ -160,7 +163,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                             self.display_lang, app_langs, form_map['form']['names'])
                         module['next'].append(self._map_structure(form_map['xmlns'], form_name))
                     app['next'].append(module)
-
 
             if is_remote:
                 map_remote.append(app)
@@ -545,26 +547,26 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         else:
             if parsed_params.show_remote:
                 all_forms = []
-                if filter_results[-1]['slug'] == 'module':
-                    app_id = filter_results[-2]['value']
+                if parsed_params.most_granular_filter == PARAM_SLUG_MODULE:
                     try:
-                        module_id = int(filter_results[-1]['value'])
-                        all_forms.extend(self._remote_forms_info[app_id]['modules'][module_id]['forms'])
+                        module_id = int(parsed_params.module)
+                        all_forms.extend(
+                            self._remote_forms_info[parsed_params.app_id]['modules'][module_id]['forms']
+                        )
                     except (KeyError, ValueError):
                         pass
                 else:
-                    app_id = filter_results[-1]['value']
                     try:
-                        for module in self._remote_forms_info[app_id]['modules']:
+                        for module in self._remote_forms_info[parsed_params.app_id]['modules']:
                             all_forms.extend(module['forms'])
                     except KeyError:
                         pass
-                app_id = self._clean_remote_id(app_id)
+                app_id = self._clean_remote_id(parsed_params.app_id)
                 return [{'value': self._remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms]
             elif self._application_forms:
                 prefix = "app module form"
                 key = [self.domain]
-                if filter_results[0]['slug'] == 'status':
+                if parsed_params.status:
                     prefix = "%s %s" % ("status", prefix)
                 for f in filter_results:
                     val = f['value']
