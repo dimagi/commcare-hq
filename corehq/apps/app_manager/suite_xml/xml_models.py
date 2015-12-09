@@ -613,10 +613,10 @@ class Detail(OrderedXmlObject, IdNode):
             if field.template.form == 'graph':
                 s = etree.tostring(field.template.node)
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
-                result = result.union(_get_graph_config_xpaths(template.graph.configuration))
+                result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
                     result.add(series.nodeset)
-                    result = result.union(_get_graph_config_xpaths(series.configuration))
+                    result.update(_get_graph_config_xpaths(series.configuration))
             else:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
