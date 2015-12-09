@@ -465,6 +465,7 @@ class SubscriptionForm(forms.Form):
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             self.fields['no_invoice_reason'].initial = subscription.no_invoice_reason
+            self.fields['do_not_email'].initial = subscription.do_not_email
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
