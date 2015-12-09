@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from .config import PartitionConfig
 
 PROXY_APP = 'sql_proxy_accessors'
@@ -25,6 +27,9 @@ class MonolithRouter(object):
 
 
 def allow_migrate(db, app_label):
+    if not settings.USE_PARTITIONED_DATABASE:
+        return app_label != PROXY_APP
+
     partition_config = PartitionConfig()
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
@@ -40,6 +45,9 @@ def allow_migrate(db, app_label):
 
 
 def db_for_read_write(model):
+    if not settings.USE_PARTITIONED_DATABASE:
+        return 'default'
+
     app_label = model._meta.app_label
     config = PartitionConfig()
     if app_label == FORM_PROCESSOR_APP:

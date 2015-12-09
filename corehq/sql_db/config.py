@@ -9,6 +9,7 @@ MAIN_GROUP = 'main'
 class PartitionConfig(object):
 
     def __init__(self):
+        assert settings.USE_PARTITIONED_DATABASE
         self._validate()
 
     def _validate(self):
