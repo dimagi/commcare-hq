@@ -562,8 +562,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         pass
                 app_id = self._clean_remote_id(app_id)
                 data.extend([{'value': self._remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
-
-            if self._application_forms and not parsed_params.show_remote:
+            elif self._application_forms:
                 prefix = "app module form"
                 key = [self.domain]
                 if filter_results[0]['slug'] == 'status':
