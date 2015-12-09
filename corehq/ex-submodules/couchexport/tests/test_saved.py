@@ -49,6 +49,18 @@ class SavedExportTest(TestCase):
         self.assertEqual(1, len(saved_after_deletion))
         self.assertEqual(chosen_one._id, saved_after_deletion[0]._id)
 
+    def test_save_basic_export_to_blobdb(self):
+        index = ['single']
+        saved_export = SavedBasicExport(configuration=_mk_config(index=index))
+        saved_export.save()
+        saved_export.set_payload("content")
+        name = saved_export.get_attachment_name()
+        self.assertTrue(saved_export.has_file())
+        self.assertIn(name, saved_export.external_blobs)
+        self.assertEqual(saved_export.size, 7)
+        with saved_export.get_payload(stream=True) as fh:
+            self.assertEqual(fh.read(), "content")
+
 
 def _mk_config(name='some export name', index='dummy_index'):
     return ExportConfiguration(index=index, name=name, format='xlsx')
